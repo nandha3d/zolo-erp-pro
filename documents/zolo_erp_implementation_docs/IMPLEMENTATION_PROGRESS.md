@@ -34,6 +34,23 @@ Known limits remain: web and API transaction writers differ; generic stock write
 
 The user selected: extend existing `fiscal_years`, preserve existing date ranges, and migrate artificial 1970 opening-balance documents separately. Do not create a parallel `financial_years` authority or automatically convert history to April–March.
 
+## Phase 1, package A: additive schema and legacy backfill
+
+Implemented under documents 03/05:
+
+- Company, branch, membership and user-branch tables. Membership user IDs retain the existing unsigned INT type. Composite foreign keys prevent a membership from selecting another company's branch.
+- Nullable indexed company keys on 32 audited core tables when present, and a nullable warehouse branch key. Existing core keys, uniqueness and quantities remain unchanged. Operational/industry tables still need their own audited migrations.
+- Existing `fiscal_years` gains company ownership, status and lock/close metadata. Its table name, legacy boolean and date ranges remain available.
+- `erp:backfill-company-context --dry-run` reports counts and reference problems without creating even the default company. The real command initializes DEFAULT from safe general settings, creates MAIN, maps warehouses/users and assigns legacy core rows in batches of 500 inside one transaction. Existing legal names and role overrides are preserved. Closed legacy FYs become `closed`; their dates never change.
+- Real backfill requires maintenance mode; workers and the scheduler must also be paused. Unexpected company ownership, invalid branches, orphan references and overlapping/inverted FYs stop assignment. Failures roll back company creation and legacy assignments together. Source-confirmed zero sentinels for digital/service UOMs and opening-stock payment accounts are preserved. Default metadata uses the latest settings, and dry-run validates its timezone before reporting success.
+- Artificial 1970 opening records are reported and receive company ownership only. Their dates and balances remain unchanged; their later financial-year/open-item migration remains separate.
+
+Validation: 16 isolated integration tests, 83 assertions, cover dry-run, latest settings import, timezone validation, repeatability, legacy sentinels, orphan rejection, multi-company rejection, maintenance mode, FY overlap, branch isolation, migration rollback, interrupted backfill rollback, multiple batches and opening-date preservation. Phase 0 adds another 7 tests and 50 assertions. These are SQLite proofs; the MySQL migration rehearsal and original seeded feature suite remain unverified because no test MySQL connection is available.
+
+Effects: company/branch ownership metadata is added; stock quantities, journal values, tax, document references and payment balances are not rewritten. No capability, permission or request-scoping activation occurs in this package. No production database migration/backfill was executed. Package A is complete; phase 1 as a whole remains pending.
+
+Next gate: rehearse on disposable MySQL with representative legacy data; fix reported ownership/schema problems; implement context resolution and convert both Eloquent and raw-query readers/writers, jobs and cache keys; then verify isolation and company-aware uniqueness. Do not start dependent capability/ledger cutover or activate a second company before those gates pass.
+
 ## Delivery order
 
 1. Phase 0: baseline, writer inventory and passing transaction regressions.

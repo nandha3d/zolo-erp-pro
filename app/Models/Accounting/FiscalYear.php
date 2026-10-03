@@ -13,11 +13,18 @@ class FiscalYear extends Model
         'start_date',
         'end_date',
         'is_closed',
+        'company_id',
+        'status',
+        'lock_date',
+        'closed_at',
+        'closed_by',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'is_closed' => 'boolean',
+        'lock_date' => 'date',
+        'closed_at' => 'datetime',
     ];
 }
