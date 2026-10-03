@@ -31,7 +31,7 @@ Existing service transactions retain their document, stock, payment and accounti
 - Regressions exercise original commercial/accounting table definitions, service atomicity, stock, payments, balanced journals, receipt quantities and rollback on accounting failure.
 - Locked Composer dependencies are installed locally without upgrades or lockfile changes.
 
-Current ERP service proof: 14 tests, 82 assertions in the isolated suite. Fixtures support SQLite for isolated logic and an explicitly opted-in disposable MySQL database for schema/runtime proof.
+Current ERP service proof: 14 tests, 79 assertions in the isolated suite. Fixtures support SQLite for isolated logic and an explicitly opted-in disposable MySQL database for schema/runtime proof.
 
 Unresolved stabilization work includes web/API writer convergence, stock identities, authoritative numbering, posting configuration/precision, periods, idempotency and source-of-truth ledgers. Owning phases and cutover gates are listed in [the execution plan](../ZOLO_ERP_EXECUTION_PLAN.md).
 
@@ -64,17 +64,22 @@ Use [the runbook](COMPANY_BACKFILL_RUNBOOK.md) for explicit disposable database 
 - Setup requires active Admin/Owner membership after any company role override. Creation locks the company, rejects inclusive overlap and preserves historical dates. Inputs respect the existing 100-character name column and MySQL date range.
 - Missing current FY redirects a web administrator to setup or returns HTTP 409 with an authorized setup URL; staff receives an administrator-required response.
 
-The combined context/setup/catalog-reader tests currently contain 54 tests and 148 assertions. Setup form checks pass in headless Chrome at desktop/mobile widths, including labels, native validation, CSRF field and keyboard focus. These checks do not establish live legacy transaction browser parity.
+The combined context/setup/catalog/transaction-reader tests currently contain 61 tests and 256 assertions. Setup form checks pass in headless Chrome at desktop/mobile widths, including labels, native validation, CSRF field and keyboard focus. These checks do not establish live legacy transaction browser parity.
 
 ## Phase 1: implemented API reader isolation
 
-Six authenticated API GET routes currently enforce trusted company context:
+Ten authenticated API GET routes currently enforce trusted company context:
 
 - Product list, search and detail.
 - Customer and supplier lists.
 - Stock valuation.
+- Sales and purchase lists and details, including payments, product lines and associated journals.
 
 Explicit query scopes constrain root/nested master ownership. Stock rows must agree with their product and warehouse company, and their warehouse must belong to the selected branch. Catalog quantity is calculated from visible branch stock; stored aggregate quantities are preserved. Valuation rejects other-company/branch warehouse IDs. Real HTTP tests cover guessed IDs, header spoofing, authorized company switching, corrupt nested masters/stock and restricted branches.
+
+Sales/purchase root documents require company-owned warehouses in the selected branch and owned customer/biller or linked supplier. Legitimate null/zero purchase suppliers remain readable. Detail lines require company-owned products; nested product quantities use visible branch stock. Payments require matching company ownership, owned linked accounts and visible sale/purchase sources. Journal headers, items and accounts are company-scoped. Corrupt/foreign nested rows are excluded, and guessed foreign document IDs return 404.
+
+Seven transaction HTTP tests cover list/filter/pagination isolation, branch restrictions, party/warehouse corruption, line/payment/journal ownership, authorized company switching, closed-year historical reads and preserved Partial receipt quantities. The two original service tests retain relationship serialization assertions; HTTP response proof now belongs to the context suite.
 
 These read routes require migration/backfill and authorized memberships. Transaction writers and legacy/raw routes still require integration. Financial-year business-date mapping for historical transactions/openings remains a separate gate.
 
@@ -82,11 +87,11 @@ These read routes require migration/backfill and authorized memberships. Transac
 
 | Suite | Latest verified result | Scope |
 |---|---|---|
-| `phpunit.company.xml` on MySQL 8.4 | 95 tests, 354 assertions | Full source migrations/recovery, commercial services, backfill, context/setup, real bounded-reader HTTP isolation and reset safety |
+| Targeted company context + ERP regression suites on MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
 | `phpunit.legacy-mysql.xml` | 16 tests, 54 assertions | Original seeded accounting services/pages, POS/dashboard, API auth/catalog/accounting |
 | Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
-[CI run 37126819051](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051) passes both PHPUnit suites for code commit `7fa23eb`. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
+[CI run 37126819051](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051) passed both PHPUnit suites for earlier code commit `7fa23eb` (95 foundation tests/354 assertions and 16 seeded smoke tests/54 assertions). Current transaction-package CI proof is recorded after its push. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
 
 The original seed export lacks brand IDs 10/16/17 and unit IDs 4/9. The legacy bootstrap proves dry-run rejection, supplies labelled fixture-only parents, then rehearses dry-run/write/dry-run. Retained installations need reviewed master data; fixture placeholders are not production repairs.
 
@@ -100,7 +105,7 @@ The initial seeded-suite connection failure is resolved by the disposable MySQL 
 
 Remaining gates:
 
-1. Convert sales/purchase/journal readers and writers, actual web routes and raw queries; stamp trusted ownership and validate every parent, branch and posting date.
+1. Convert remaining transaction/accounting readers and all writers, actual web routes and raw queries; stamp trusted ownership and validate every parent, branch and posting date.
 2. Complete operational/settings ownership migrations/backfill, including imported schemas. Active references to floors/kitchens/menu_type/services lack creators in this repository.
 3. Convert applicable business uniqueness and validators; add reviewed same-company FKs and mandatory ownership after writer/backfill parity.
 4. Integrate scheduled writers, company caches/invalidation, imports, exports, downloads and public file storage/access.

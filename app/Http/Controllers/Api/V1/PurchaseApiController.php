@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Purchase;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Database\Eloquent\Builder;
 use App\Services\ERP\PurchaseService;
 use App\Models\Accounting\JournalEntry;
 use Illuminate\Http\Request;
@@ -19,9 +21,18 @@ class PurchaseApiController extends BaseApiController
         $this->purchaseService = $purchaseService;
     }
 
+    private function queryFor(CompanyContext $context): Builder
+    {
+        return Purchase::visibleIn($context)->with([
+            'supplier' => fn ($q) => $q->forCompany($context),
+            'warehouse' => fn ($q) => $q->forCompany($context),
+            'payments' => fn ($q) => $q->visibleIn($context),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $query = Purchase::with(['supplier', 'warehouse', 'payments']);
+        $query = $this->queryFor($this->companyContext($request));
 
         if ($request->filled('warehouse_id')) {
             $query->where('warehouse_id', $request->warehouse_id);
@@ -46,15 +57,20 @@ class PurchaseApiController extends BaseApiController
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        $purchase = Purchase::with(['supplier', 'warehouse', 'productPurchases.product', 'payments'])->find($id);
+        $context = $this->companyContext($request);
+        $purchase = $this->queryFor($context)->with([
+            'productPurchases' => fn ($q) => $q->forCompany($context)
+                ->whereHas('product', fn ($q) => $q->forCompany($context))
+                ->with(['product' => fn ($q) => $q->catalogFor($context)]),
+        ])->find($id);
 
         if (!$purchase) {
             return $this->sendError('Purchase not found', [], 404);
         }
 
-        $journalEntry = JournalEntry::with('items.account')
+        $journalEntry = JournalEntry::withOwnedItems($context)
             ->where('reference_type', 'purchase')
             ->where('reference_id', $purchase->id)
             ->first();

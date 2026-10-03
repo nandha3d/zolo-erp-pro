@@ -640,4 +640,183 @@ class CompanyContextTest extends ErpServiceTestCase
         $this->getJson('/api/v1/products')->assertOk()->assertJsonPath('data.0.id', 1);
     }
 
+    private function seedCompanyTransactionFixtures(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        DB::table('billers')->where('id', 1)->update(['company_id' => $this->company->id]);
+        DB::table('billers')->insert(['id' => 2, 'name' => 'Secret B', 'company_id' => $this->other->id]);
+        Schema::create('accounts', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->unsignedBigInteger('company_id')->nullable();
+        });
+        DB::table('accounts')->insert([
+            ['id' => 1, 'name' => 'Cash A', 'company_id' => $this->company->id],
+            ['id' => 2, 'name' => 'Secret B', 'company_id' => $this->other->id],
+        ]);
+        foreach ([1, 2, 3] as $id) {
+            $owner = $id === 2 ? $this->other->id : $this->company->id;
+            $party = $id === 2 ? 2 : 1;
+            $header = [
+                'id' => $id, 'reference_no' => 'DOC-'.$id, 'user_id' => 1,
+                'company_id' => $owner, 'warehouse_id' => $id, 'item' => 1, 'total_qty' => 10,
+                'total_discount' => 0, 'total_tax' => 0, 'grand_total' => 50,
+                'payment_status' => 3, 'paid_amount' => 10, 'created_at' => '2026-10-01 10:00:00',
+            ];
+            DB::table('sales')->insert($header + [
+                'customer_id' => $party, 'biller_id' => $party, 'total_price' => 50, 'sale_status' => 1,
+            ]);
+            DB::table('purchases')->insert($header + [
+                'supplier_id' => $party, 'total_cost' => 50, 'status' => 2,
+            ]);
+            foreach (['product_sales', 'product_purchases'] as $tableName) {
+                $line = [
+                    'id' => $id, 'product_id' => $party, 'company_id' => $owner,
+                    'qty' => 10, 'discount' => 0, 'tax_rate' => 0, 'tax' => 0, 'total' => 50,
+                ];
+                DB::table($tableName)->insert($line + ($tableName === 'product_sales'
+                    ? ['sale_id' => $id, 'sale_unit_id' => $party, 'net_unit_price' => 5]
+                    : ['purchase_id' => $id, 'purchase_unit_id' => $party, 'net_unit_cost' => 5, 'recieved' => 4]));
+            }
+        }
+        foreach (['sale', 'purchase'] as $type) {
+            DB::table('payments')->insert([
+                'company_id' => $this->company->id, $type.'_id' => 1, 'user_id' => 1,
+                'account_id' => 1, 'payment_reference' => 'PAY-'.$type,
+                'amount' => 10, 'change' => 0, 'paying_method' => 'Cash',
+            ]);
+            // The foreign journal deliberately precedes the owned journal for the same source ID.
+            foreach ([$this->other->id, $this->company->id] as $owner) {
+                $accountId = DB::table('chart_of_accounts')->insertGetId([
+                    'company_id' => $owner, 'code' => $type.'-'.$owner, 'name' => $owner === $this->other->id ? 'Secret B' : 'Inventory A',
+                    'type' => 'asset', 'sub_type' => 'inventory',
+                ]);
+                $journalId = DB::table('journal_entries')->insertGetId([
+                    'company_id' => $owner, 'entry_number' => $type.'-'.$owner,
+                    'entry_date' => '2026-10-01', 'reference_type' => $type, 'reference_id' => 1,
+                    'description' => $owner === $this->other->id ? 'Secret B' : 'Owned journal',
+                    'total_debit' => 50, 'total_credit' => 50,
+                ]);
+                DB::table('journal_items')->insert([
+                    'company_id' => $owner, 'journal_entry_id' => $journalId,
+                    'chart_of_account_id' => $accountId, 'debit' => 50, 'credit' => 50,
+                ]);
+            }
+        }
+    }
+
+    public function test_transaction_lists_details_filters_and_counts_are_company_and_branch_isolated(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        foreach (['sales', 'purchases'] as $path) {
+            $this->getJson('/api/v1/'.$path.'?per_page=1')->assertOk()
+                ->assertJsonPath('meta.pagination.total', 1)->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 1);
+            $this->getJson('/api/v1/'.$path.'?warehouse_id=2')->assertOk()->assertJsonPath('meta.pagination.total', 0);
+            $this->getJson('/api/v1/'.$path.'?warehouse_id=3')->assertOk()->assertJsonCount(0, 'data');
+            $this->getJson('/api/v1/'.$path.'/1')->assertOk()->assertJsonPath('data.id', 1)
+                ->assertJsonCount(1, 'data.payments')->assertJsonPath('data.journal_entry.description', 'Owned journal')
+                ->assertJsonCount(1, 'data.journal_entry.items')->assertDontSee('Secret B')->assertDontSee('Restricted stock');
+            foreach ([2, 3, 999] as $id) {
+                $this->getJson('/api/v1/'.$path.'/'.$id)->assertNotFound();
+            }
+        }
+        $this->getJson('/api/v1/sales/1')->assertJsonPath('data.product_sales.0.product.qty', 4);
+        $this->getJson('/api/v1/purchases/1')->assertJsonPath('data.product_purchases.0.qty', 10)
+            ->assertJsonPath('data.product_purchases.0.recieved', 4)->assertJsonPath('data.product_purchases.0.product.qty', 4);
+        $this->assertEquals(99, DB::table('products')->where('id', 1)->value('qty'));
+        $this->assertEquals(4, DB::table('product_purchases')->where('id', 1)->value('recieved'));
+    }
+
+    public function test_transaction_headers_require_owned_warehouse_and_parties(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        foreach (['sales' => ['warehouse_id', 'customer_id', 'biller_id'], 'purchases' => ['warehouse_id', 'supplier_id']] as $tableName => $fields) {
+            foreach ($fields as $field) {
+                DB::table($tableName)->where('id', 1)->update([$field => 2]);
+                $this->getJson('/api/v1/'.$tableName.'/1')->assertNotFound();
+                $this->getJson('/api/v1/'.$tableName)->assertJsonCount(0, 'data');
+                DB::table($tableName)->where('id', 1)->update([$field => 1]);
+            }
+        }
+        DB::table('purchases')->where('id', 1)->update(['supplier_id' => null]);
+        $this->getJson('/api/v1/purchases/1')->assertOk()->assertJsonPath('data.supplier', null);
+    }
+
+    public function test_transaction_lines_exclude_foreign_row_or_product_ownership(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        foreach (['product_sales' => 'sales', 'product_purchases' => 'purchases'] as $tableName => $path) {
+            DB::table($tableName)->where('id', 1)->update(['product_id' => 2]);
+            $this->getJson('/api/v1/'.$path.'/1')->assertOk()->assertJsonCount(0, 'data.'.$tableName)->assertDontSee('Secret B');
+            DB::table($tableName)->where('id', 1)->update(['product_id' => 1, 'company_id' => $this->other->id]);
+            $this->getJson('/api/v1/'.$path.'/1')->assertOk()->assertJsonCount(0, 'data.'.$tableName);
+        }
+    }
+
+    public function test_transaction_payments_reject_foreign_owner_account_and_mixed_source(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        foreach (['sales' => 'sale', 'purchases' => 'purchase'] as $path => $type) {
+            foreach ([
+                ['company_id' => $this->other->id],
+                ['account_id' => 2],
+                [$type === 'sale' ? 'purchase_id' : 'sale_id' => 2],
+                [$type === 'sale' ? 'purchase_id' : 'sale_id' => 3],
+            ] as $corruption) {
+                $row = (array) DB::table('payments')->where($type.'_id', 1)->first();
+                unset($row['id']);
+                DB::table('payments')->insert(array_replace($row, $corruption, ['payment_reference' => 'Secret B']));
+            }
+            $this->getJson('/api/v1/'.$path.'/1')->assertOk()->assertJsonCount(1, 'data.payments')->assertDontSee('Secret B');
+            DB::table('payments')->where($type.'_id', 1)->where('payment_reference', 'PAY-'.$type)->update(['account_id' => 0]);
+            $this->getJson('/api/v1/'.$path)->assertOk()->assertJsonCount(1, 'data.0.payments');
+        }
+    }
+
+    public function test_transaction_journal_items_cannot_expose_foreign_account_or_item(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        foreach (['sales' => 'sale', 'purchases' => 'purchase'] as $path => $type) {
+            $entry = DB::table('journal_entries')->where('company_id', $this->company->id)->where('reference_type', $type)->first();
+            $foreignAccount = DB::table('chart_of_accounts')->where('company_id', $this->other->id)->value('id');
+            $item = (array) DB::table('journal_items')->where('journal_entry_id', $entry->id)->first();
+            unset($item['id']);
+            DB::table('journal_items')->insert(array_replace($item, ['company_id' => $this->other->id, 'memo' => 'Secret B']));
+            DB::table('journal_items')->insert(array_replace($item, ['chart_of_account_id' => $foreignAccount, 'memo' => 'Secret B']));
+            $this->getJson('/api/v1/'.$path.'/1')->assertOk()->assertJsonCount(1, 'data.journal_entry.items')->assertDontSee('Secret B');
+            DB::table('journal_entries')->where('id', $entry->id)->update(['company_id' => null]);
+            $this->getJson('/api/v1/'.$path.'/1')->assertOk()->assertJsonPath('data.journal_entry', null);
+        }
+    }
+
+    public function test_transaction_company_selection_requires_membership_and_switches_cleanly(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        foreach (['sales', 'purchases'] as $path) {
+            $this->getJson('/api/v1/'.$path, ['X-Company-ID' => $this->other->id])->assertForbidden();
+            $this->getJson('/api/v1/'.$path.'/2', ['X-Company-ID' => $this->other->id])->assertForbidden();
+        }
+        $this->other->users()->attach(1);
+        DB::table('company_user_branches')->insert(['company_id' => $this->other->id, 'user_id' => 1, 'branch_id' => $this->otherBranch->id]);
+        foreach (['sales', 'purchases'] as $path) {
+            $this->getJson('/api/v1/'.$path, ['X-Company-ID' => $this->other->id])->assertOk()->assertJsonPath('data.0.id', 2);
+            $this->getJson('/api/v1/'.$path.'/2', ['X-Company-ID' => $this->other->id])->assertOk()->assertJsonPath('data.id', 2);
+            $this->getJson('/api/v1/'.$path.'/1', ['X-Company-ID' => $this->other->id])->assertNotFound();
+            $this->getJson('/api/v1/'.$path)->assertOk()->assertJsonPath('data.0.id', 1);
+        }
+    }
+
+    public function test_closed_year_transaction_reads_preserve_history_without_writing(): void
+    {
+        $this->seedCompanyTransactionFixtures();
+        $this->year->update(['status' => 'closed', 'is_closed' => true]);
+        foreach (['sales', 'purchases'] as $path) {
+            $this->getJson('/api/v1/'.$path.'/1', ['X-Financial-Year-ID' => $this->year->id])->assertOk();
+            DB::table($path)->where('id', 1)->update(['company_id' => null]);
+            $this->getJson('/api/v1/'.$path.'/1', ['X-Financial-Year-ID' => $this->year->id])->assertNotFound();
+        }
+        $this->assertEquals(99, DB::table('products')->where('id', 1)->value('qty'));
+        $this->assertSame(4, DB::table('journal_entries')->count());
+    }
+
 }

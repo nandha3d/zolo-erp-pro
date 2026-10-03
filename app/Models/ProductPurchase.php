@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 
 class ProductPurchase extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $table = 'product_purchases';
     protected $fillable =[
 

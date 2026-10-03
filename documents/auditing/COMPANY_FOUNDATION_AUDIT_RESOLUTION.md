@@ -18,7 +18,7 @@ Validation: canonical phase headings, obsolete-contract search, manifest/file pa
 | F-06/F-07/F-08/F-09 | Setup, selection, tuple switching and currency validation/FK corrected with targeted proof |
 | F-10/F-13/F-14 | Contract, explicit stabilization disposition and document inventory corrected |
 | F-12 | Audited purchase-creation defect corrected under the confirmed supplier-bill policy; subsequent receipt/web-update cutover remains gated |
-| F-02/F-03 | Six real API reader routes isolated; full transaction/legacy/raw/job/cache/file boundary remains open |
+| F-02/F-03 | Ten real API reader routes isolated; full transaction/legacy/raw/job/cache/file boundary remains open |
 | F-04 | Complete source ownership matrix delivered; remaining operational migrations/backfill and imported-schema decisions remain open |
 | F-05 | Company-aware business uniqueness, mandatory ownership and same-company FKs remain open until writers/backfill are ready |
 | F-11 | Full source chain, seeded backfill, failure recovery and original smoke suites pass on local/CI MySQL; retained-data/production-scale lock and reconciliation proof remains open |
@@ -80,3 +80,13 @@ This proves the bounded reader package. Sales/purchase/journal writers and HTTP 
 ## Latest combined CI proof
 
 [Reader-isolation CI run](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051) passes for code commit 7fa23eb: 95 foundation/isolation tests with 354 assertions, then 16 original seeded smoke tests with 54 assertions. All audit work packages were pushed independently. User-deleted old architecture files and the untracked archive were preserved. No production migration/backfill or deployment occurred.
+
+## F-02/F-03 sales/purchase read boundary package
+
+Four further authenticated GET routes require trusted company context: sales and purchase lists/details. Root documents require an owned warehouse in the selected branch and owned linked parties, preserving legitimate absent purchase suppliers. Detail lines require owned products; nested product quantities reuse the branch catalog scope. Payments require company ownership, owned linked accounts and visible source documents, including rejection of mixed links to foreign or restricted-branch documents. Associated journal headers/items/accounts are company-scoped. Foreign/unassigned nested rows are excluded and guessed foreign document IDs return 404.
+
+Seven real HTTP regressions cover pagination/filter counts, guessed IDs, branch restrictions, corrupt parents/lines/payments/journals, company selection/switching and closed-year reads. Partial purchase detail preserves ordered 10/received 4 without stock/journal mutations. Original service regression tests retain relationship serialization assertions; real authenticated HTTP serialization is now exercised in the context suite.
+
+Validation: SQLite context suite 61 tests/256 assertions; disposable MySQL context plus ERP service suite 75 tests/335 assertions. No migration or production data mutation is required by this package. Existing API envelopes and filters are retained. This is a read boundary; transaction FY assignment, all writers, legacy/raw/operational routes and final ownership constraints remain gated. Second-company/capability activation remains blocked.
+
+Progress evidence is consolidated into current behavior, including the approved supplier-bill policy. User-added UI specifications 31–33 are indexed in the README/master index/manifest and engineering reference. They retain Blade/Bootstrap/jQuery and the existing theme with shared component contracts; UI implementation remains staged behind its owning gates.

@@ -3,12 +3,26 @@
 namespace App\Models\Accounting;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalEntry extends Model
 {
+    use ScopesCompanyQueries;
+
+    public function scopeWithOwnedItems(Builder $query, CompanyContext $context): Builder
+    {
+        return $query->forCompany($context)->with([
+            'items' => fn ($q) => $q->forCompany($context)
+                ->whereHas('account', fn ($q) => $q->forCompany($context))
+                ->with(['account' => fn ($q) => $q->forCompany($context)]),
+        ]);
+    }
+
     protected $table = 'journal_entries';
 
     protected $fillable = [

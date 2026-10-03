@@ -49,17 +49,17 @@ Route::prefix('v1')->group(function () {
 
         // Sales & Invoicing
         Route::prefix('sales')->group(function () {
-            Route::get('/', [SaleApiController::class, 'index'])->name('api.v1.sales.index');
+            Route::get('/', [SaleApiController::class, 'index'])->middleware('company.context')->name('api.v1.sales.index');
             Route::post('/', [SaleApiController::class, 'store'])->name('api.v1.sales.store');
-            Route::get('{id}', [SaleApiController::class, 'show'])->name('api.v1.sales.show');
+            Route::get('{id}', [SaleApiController::class, 'show'])->middleware('company.context')->name('api.v1.sales.show');
             Route::post('{id}/payments', [SaleApiController::class, 'addPayment'])->name('api.v1.sales.add-payment');
         });
 
         // Purchases & Procurement
         Route::prefix('purchases')->group(function () {
-            Route::get('/', [PurchaseApiController::class, 'index'])->name('api.v1.purchases.index');
+            Route::get('/', [PurchaseApiController::class, 'index'])->middleware('company.context')->name('api.v1.purchases.index');
             Route::post('/', [PurchaseApiController::class, 'store'])->name('api.v1.purchases.store');
-            Route::get('{id}', [PurchaseApiController::class, 'show'])->name('api.v1.purchases.show');
+            Route::get('{id}', [PurchaseApiController::class, 'show'])->middleware('company.context')->name('api.v1.purchases.show');
         });
 
         // Products & Catalog

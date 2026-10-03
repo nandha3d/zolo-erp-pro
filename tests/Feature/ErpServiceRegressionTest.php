@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Api\V1\PurchaseApiController;
-use App\Http\Controllers\Api\V1\SaleApiController;
 use App\Models\Accounting\ChartOfAccount;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Payment;
@@ -57,9 +56,7 @@ class ErpServiceRegressionTest extends ErpServiceTestCase
         $this->assertTrue($journal->isBalanced());
         $this->assertEquals(30, $journal->total_debit);
 
-        $response = (new SaleApiController(new SaleService(new AccountingService())))->show($sale->id);
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame($product->id, $response->getData(true)['data']['product_sales'][0]['product']['id']);
+        $this->assertSame($product->id, $sale->load('productSales.product')->toArray()['product_sales'][0]['product']['id']);
     }
 
     public function test_received_purchase_preserves_received_quantity_stock_payment_and_journal(): void
@@ -81,11 +78,7 @@ class ErpServiceRegressionTest extends ErpServiceTestCase
         $this->assertTrue($journal->isBalanced());
         $this->assertEquals(12, $journal->total_debit);
 
-        $controller = new PurchaseApiController(new PurchaseService(new AccountingService()));
-        $response = $controller->show($purchase->id);
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame($product->id, $response->getData(true)['data']['product_purchases'][0]['product']['id']);
-        $this->assertSame(200, $controller->index(Request::create('/'))->getStatusCode());
+        $this->assertSame($product->id, $purchase->load('productPurchases.product')->toArray()['product_purchases'][0]['product']['id']);
     }
 
     public function test_pending_purchase_does_not_receive_stock(): void

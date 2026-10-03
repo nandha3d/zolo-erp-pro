@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Sale;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Database\Eloquent\Builder;
 use App\Services\ERP\SaleService;
 use App\Models\Accounting\JournalEntry;
 use Illuminate\Http\Request;
@@ -19,12 +21,20 @@ class SaleApiController extends BaseApiController
         $this->saleService = $saleService;
     }
 
-    /**
-     * Get paginated list of sales with optional filters.
-     */
+    private function queryFor(CompanyContext $context): Builder
+    {
+        return Sale::visibleIn($context)->with([
+            'customer' => fn ($q) => $q->forCompany($context),
+            'warehouse' => fn ($q) => $q->forCompany($context),
+            'biller' => fn ($q) => $q->forCompany($context),
+            'payments' => fn ($q) => $q->visibleIn($context),
+        ]);
+    }
+
+    /** Get paginated sales with optional filters within the authorized context. */
     public function index(Request $request): JsonResponse
     {
-        $query = Sale::with(['customer', 'warehouse', 'biller', 'payments']);
+        $query = $this->queryFor($this->companyContext($request));
 
         if ($request->filled('warehouse_id')) {
             $query->where('warehouse_id', $request->warehouse_id);
@@ -55,16 +65,21 @@ class SaleApiController extends BaseApiController
     /**
      * Get detailed sale with line items, payments, and double-entry journal entry.
      */
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        $sale = Sale::with(['customer', 'warehouse', 'biller', 'productSales.product', 'payments'])->find($id);
+        $context = $this->companyContext($request);
+        $sale = $this->queryFor($context)->with([
+            'productSales' => fn ($q) => $q->forCompany($context)
+                ->whereHas('product', fn ($q) => $q->forCompany($context))
+                ->with(['product' => fn ($q) => $q->catalogFor($context)]),
+        ])->find($id);
 
         if (!$sale) {
             return $this->sendError('Sale not found', [], 404);
         }
 
         // Fetch associated double-entry journal entry
-        $journalEntry = JournalEntry::with('items.account')
+        $journalEntry = JournalEntry::withOwnedItems($context)
             ->where('reference_type', 'sale')
             ->where('reference_id', $sale->id)
             ->first();

@@ -3,13 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sale extends Model
 {
+    use ScopesCompanyQueries;
+
     use SoftDeletes;
     
+    /** Only documents whose owning warehouse and parties belong to this context are readable. */
+    public function scopeVisibleIn(Builder $query, CompanyContext $context): Builder
+    {
+        return $query->forCompany($context)
+            ->whereHas('warehouse', fn ($q) => $q->forCompany($context)->where('branch_id', $context->branchId))
+            ->whereHas('customer', fn ($q) => $q->forCompany($context))
+            ->whereHas('biller', fn ($q) => $q->forCompany($context));
+    }
+
     protected $fillable =[
         "reference_no", "user_id", "cash_register_id", "table_id", "queue", "customer_id", "warehouse_id", "biller_id", "item", "total_qty", "total_discount", "total_tax", "total_price", "order_tax_rate", "order_tax", "order_discount_type", "order_discount_value", "order_discount", "coupon_id", "coupon_discount", "shipping_cost", "grand_total", "currency_id", "exchange_rate", "sale_status", "payment_status", "billing_name", "billing_phone", "billing_email", "billing_address", "billing_city", "billing_state", "billing_country", "billing_zip", "shipping_name", "shipping_phone", "shipping_email", "shipping_address", "shipping_city", "shipping_state","shipping_country","shipping_zip", "sale_type", "service_id", "waiter_id", "paid_amount", "document", "sale_note", "staff_note", "created_at", "woocommerce_order_id", "deleted_by",
     ];

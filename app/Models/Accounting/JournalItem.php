@@ -3,10 +3,13 @@
 namespace App\Models\Accounting;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalItem extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $table = 'journal_items';
 
     protected $fillable = [

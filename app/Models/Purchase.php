@@ -3,13 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
+    use ScopesCompanyQueries;
+
     use SoftDeletes;
     
+    /** Only documents whose owning warehouse and parties belong to this context are readable. */
+    public function scopeVisibleIn(Builder $query, CompanyContext $context): Builder
+    {
+        return $query->forCompany($context)
+            ->whereHas('warehouse', fn ($q) => $q->forCompany($context)->where('branch_id', $context->branchId))
+            ->where(fn ($q) => $q->whereNull('supplier_id')->orWhere('supplier_id', 0)
+                ->orWhereHas('supplier', fn ($q) => $q->forCompany($context)));
+    }
+
     protected $fillable =[
 
         "reference_no", "user_id", "warehouse_id", "supplier_id", "currency_id", "exchange_rate", "item", "total_qty", "total_discount", "total_tax", "total_cost", "order_tax_rate", "order_tax", "order_discount", "shipping_cost", "grand_total","paid_amount", "status", "payment_status", "document", "note", "purchase_type", "created_at", "deleted_by",

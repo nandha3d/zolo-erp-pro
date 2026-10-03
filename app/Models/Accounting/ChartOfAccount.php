@@ -3,11 +3,14 @@
 namespace App\Models\Accounting;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChartOfAccount extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $table = 'chart_of_accounts';
 
     protected $fillable = [
