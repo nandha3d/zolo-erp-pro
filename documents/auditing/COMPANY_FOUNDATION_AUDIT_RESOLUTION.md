@@ -46,3 +46,8 @@ Proof: 46 context/setup tests, 86 assertions on SQLite and MySQL. Real HTTP test
 ## CI evidence
 
 GitHub Actions passed the 74-test MySQL suite for migration commit 339576d and context commit daf96b6: [migration run](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37125075054), [context run](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37125118388). These establish CI proof for the tested fixtures; they do not establish production-scale locking or complete legacy isolation.
+## F-04 complete source ownership inventory
+
+[Ownership matrix](../zolo_erp_implementation_docs/COMPANY_TABLE_OWNERSHIP_MATRIX.md) accounts for 125 application tables: 123 active literal creators plus two configured Spatie creators. It records company/global/mixed/tenant ownership, parent/branch evidence, readers/writers, backfill rules, uniqueness/FK changes and required tests. Missing imported/dormant schemas and known ID-type mismatches are explicit. The manifest/index now include this execution evidence.
+
+This completes the audit's source inventory requirement. Operational ownership migrations, same-company constraints, raw-query/service/job/cache/file integration and actual route isolation remain open F-02/F-03/F-04/F-05 acceptance gates. Do not activate a second company or dependent capabilities.

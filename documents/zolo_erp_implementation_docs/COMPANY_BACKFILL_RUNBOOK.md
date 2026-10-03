@@ -45,8 +45,24 @@ Legacy writers can still produce new null company keys in this stage. Repeat dry
 
 The backfill is one database transaction with bounded row batches. An interrupted or failed run rolls back its writes and can be rerun. The transaction may hold locks for its duration; measure this on representative MySQL data before scheduling production downtime.
 
-Before multi-company activation, reverting the two new migrations removes ownership/FY metadata and the new company tables while retaining legacy business rows. Verify that these are the last two applied migrations before using `migrate:rollback --step=2`. Prefer restoring the verified rehearsal snapshot when rollback order is uncertain. Do not remove company ownership after real multi-company operation begins: that would collapse legal-entity boundaries. Later cutover requires its own reviewed reversal procedure.
+Before multi-company activation, reverting the company migrations removes ownership/FY metadata and the new company tables while retaining legacy business rows. Review the actual migration ledger and dependent FKs before rollback: 000003 removes the currency FK while preserving BIGINT width; 000002 removes core ownership/FY additions; 000001 removes platform company tables. Do not use an assumed fixed rollback step count. Prefer restoring the verified rehearsal snapshot when rollback order is uncertain. Do not remove company ownership after real multi-company operation begins: that would collapse legal-entity boundaries. Later cutover requires its own reviewed reversal procedure.
 
 ## Remaining activation checks
 
-Company/FY context middleware; all company-owned operational tables; service reference validation; Eloquent and query-builder isolation; company-aware number/semantic-account uniqueness; active-user, branch, permission and capability enforcement; job context; company cache keys; full API/web IDOR checks; and representative MySQL migration/reconciliation proof remain required before phase 1 can be marked complete.
+Integration of Company/FY context middleware (authorized FY setup is implemented); all company-owned operational tables; service reference validation; Eloquent and query-builder isolation; company-aware number/semantic-account uniqueness; active-user, branch, permission and capability enforcement; job context; company cache keys; full API/web IDOR checks; and representative MySQL migration/reconciliation proof remain required before phase 1 can be marked complete.
+
+## Disposable MySQL proof and CI
+
+The source chain and failure recovery pass on official MySQL 8.4.0. Run the isolated suite with explicit disposable credentials:
+
+```powershell
+$env:ERP_TEST_MYSQL='1'
+$env:ERP_TEST_MYSQL_DATABASE='zolo_test_foundation'
+$env:ERP_TEST_MYSQL_USER='zolo_test'
+$env:ERP_TEST_MYSQL_PASSWORD='<disposable fixture password>'
+php vendor/bin/phpunit -c phpunit.company.xml
+```
+
+The fixture account must have privileges only on this disposable database. The suite clears it between tests and requires an explicit `zolo_test_*` or `zolo_audit_*` database name. Host/port may be supplied through `ERP_TEST_MYSQL_HOST` and `ERP_TEST_MYSQL_PORT`. Never point fixtures at retained data. GitHub Actions uses an isolated MySQL 8.4 service with fixture-only credentials. Production-scale locking/duration, retained-data reconciliation and original SalePro browser flows require a separate rehearsal.
+
+The core-key DDL preflights every existing artifact before changes and resumes missing columns/indexes after a failed MySQL ALTER. Investigate incompatible-artifact errors instead of deleting retained columns. Currency defaults are validated during dry-run; migration 000003 refuses orphan references before adding the FK. CLI writers and the scheduler must still be paused during backfill.

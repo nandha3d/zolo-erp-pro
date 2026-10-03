@@ -54,3 +54,4 @@ Document 26 defines canonical phases 0–12. Extend existing `fiscal_years`, pre
 - [Writer audit](STOCK_AND_TRANSACTION_WRITER_AUDIT.md): source inventory for transaction cutover.
 
 SQLite fixtures prove isolated logic only. MySQL schema/recovery, concurrency and representative cutover evidence remain required. Additive inactive foundations may precede deferred stabilization work under the execution plan's explicit disposition; full isolation and capability activation may not.
+- [Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md): all 125 application tables, source owners, migration/constraint requirements, missing schema and remaining isolation gates.

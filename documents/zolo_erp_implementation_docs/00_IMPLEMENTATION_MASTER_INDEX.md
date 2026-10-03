@@ -83,3 +83,4 @@ The numbered 00–30 documents are authoritative specifications. Execution state
 - [Stock/transaction writer audit](STOCK_AND_TRANSACTION_WRITER_AUDIT.md): source inventory; recheck before cutover.
 
 Use [the execution plan](../ZOLO_ERP_EXECUTION_PLAN.md) for source-specific tasks, with document 26's canonical phases 0–12. CompanyContext is `App\Services\Platform\CompanyContext`; FY authority is existing `fiscal_years`; DEFAULT/MAIN initialization belongs to `erp:backfill-company-context`.
+- [Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md): all 125 application tables, source owners, migration/constraint requirements, missing schema and remaining isolation gates.
