@@ -702,7 +702,7 @@
                         <i class="dripicons-truck"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #0284c7;">DK Track Logistics</div>
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #0284c7;">Water Logistics</div>
                         <div style="font-size: 13px; font-weight: 700; color: var(--neo-text-primary);">
                             {{ $addon_stats['water_tankers'] ?? 0 }} Tankers Active &bull; {{ $addon_stats['water_trips_today'] ?? 0 }} Trips
                         </div>

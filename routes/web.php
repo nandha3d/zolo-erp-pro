@@ -868,7 +868,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
         Route::post('semantic-account-mappings/update', [\App\Http\Controllers\Accounting\SemanticMappingController::class, 'store'])->name('accounting.semantic-mappings.update');
     });
 
-    // Module: DK Track - Water Supply Logistics
+    // Module: Water Supply & Fleet Logistics
     Route::controller(\App\Http\Controllers\WaterLogisticsController::class)->group(function () {
         Route::get('water-logistics', 'index')->name('water-logistics.index');
         Route::post('water-logistics/trip-sheets', 'storeTripSheet')->name('water-logistics.trip-sheets.store');

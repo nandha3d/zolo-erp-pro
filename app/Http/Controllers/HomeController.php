@@ -71,7 +71,7 @@ class HomeController extends Controller
         $addons = [
             [
                 'key' => 'water_logistics',
-                'name' => 'DK Track - Water Logistics & Tanker Fleet',
+                'name' => 'Water Logistics & Tanker Fleet',
                 'category' => 'Industry Solution',
                 'description' => 'Bulk water tanker fleet trip sheets (9KL, 16KL, 24KL), diesel & toll expense vouchers, site receiver signatures, and Tata Ace 20L Can distribution with live inventory balancing and corporate 15/30-day B2B credit aging.',
                 'icon' => 'dripicons-drop',
@@ -82,7 +82,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'cafe_bakery',
-                'name' => 'zolo Bakery & Cafe POS Operations',
+                'name' => 'Bakery & Cafe POS Operations',
                 'category' => 'Hospitality & Retail',
                 'description' => 'Fast touch POS counter terminal, kitchen raw materials consumption tracking (~10 ingredients), morning float and evening cash & UPI drawer reconciliation directly linked to ERP general ledger.',
                 'icon' => 'dripicons-store',
@@ -93,7 +93,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'repair',
-                'name' => 'zolo Repair & RMA Service Center',
+                'name' => 'Repair & RMA Service Center',
                 'category' => 'Services & Hardware',
                 'description' => 'Complete job sheet workflow for smartphones, laptops, electronics and water dispensers. Defect diagnosis, spare parts inventory deduction, technician notes, and revenue billing.',
                 'icon' => 'dripicons-wrench',
@@ -104,7 +104,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'project_management',
-                'name' => 'zolo Project & Task Management',
+                'name' => 'Project & Task Management',
                 'category' => 'Productivity & Delivery',
                 'description' => 'Project milestones, task delegation, team assignments, budget tracking, and progress metrics connected with customer accounts.',
                 'icon' => 'dripicons-briefcase',
@@ -115,7 +115,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'manufacturing',
-                'name' => 'zolo Manufacturing & Production BOM',
+                'name' => 'Manufacturing & Production BOM',
                 'category' => 'Industrial & Assembly',
                 'description' => 'Bill of Materials (BOM recipes), batch production runs, automated raw material stock deduction and finished goods creation with overhead costing.',
                 'icon' => 'dripicons-industrial',
@@ -126,7 +126,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'installment_plans',
-                'name' => 'zolo Consumer Financing & EMI Plans',
+                'name' => 'Consumer Financing & EMI Plans',
                 'category' => 'Financial Services',
                 'description' => 'Customer installment plans, down payments, EMI schedule generator, auto-interest calculations, late payment penalty accruals, and ledger integration.',
                 'icon' => 'dripicons-calendar',
@@ -137,7 +137,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'catalogue_qr',
-                'name' => 'zolo Dynamic QR Digital Catalogue',
+                'name' => 'Dynamic QR Digital Catalogue',
                 'category' => 'Digital Commerce',
                 'description' => 'Instant contactless digital menus and interactive product catalogues accessible via table/counter QR codes, with real-time price and stock sync from ERP.',
                 'icon' => 'dripicons-view-thumb',
@@ -148,7 +148,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'damage_stock',
-                'name' => 'zolo Damage Stock & Shrinkage Audit',
+                'name' => 'Damage Stock & Shrinkage Audit',
                 'category' => 'Warehouse & Inventory',
                 'description' => 'Log damaged, expired, or spoiled merchandise with reason codes and automated journal entries posting from Inventory Asset to Damage Loss (5010).',
                 'icon' => 'dripicons-trash',
@@ -159,7 +159,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'exchange',
-                'name' => 'zolo Product Return & Exchange Counter',
+                'name' => 'Product Return & Exchange Counter',
                 'category' => 'Retail POS',
                 'description' => 'Counter product returns and exchanges, calculate value differentials, generate return credit notes or collect balance payments directly linked to ERP sales ledger.',
                 'icon' => 'dripicons-retweet',
@@ -170,7 +170,7 @@ class HomeController extends Controller
             ],
             [
                 'key' => 'api',
-                'name' => 'zoloERP RESTful API Engine (v1)',
+                'name' => 'RESTful API Engine (v1)',
                 'category' => 'Developer & Mobile',
                 'description' => 'High-performance Sanctum authenticated RESTful API layer for mobile driver apps, external POS hardware, automated webhooks, and third-party integrations.',
                 'icon' => 'dripicons-code',

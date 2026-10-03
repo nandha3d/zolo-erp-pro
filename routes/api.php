@@ -85,7 +85,7 @@ Route::prefix('v1')->group(function () {
         Route::get('customers', [PartnerApiController::class, 'customers'])->name('api.v1.customers.index');
         Route::get('suppliers', [PartnerApiController::class, 'suppliers'])->name('api.v1.suppliers.index');
 
-        // INDUSTRY ADDON: Water Logistics ("DK Track")
+        // INDUSTRY ADDON: Water Logistics
         Route::prefix('water')->group(function () {
             Route::get('routes', [WaterLogisticsApiController::class, 'routes'])->name('api.v1.water.routes');
             Route::post('trip-sheets', [WaterLogisticsApiController::class, 'storeTripSheet'])->name('api.v1.water.trip-sheets');

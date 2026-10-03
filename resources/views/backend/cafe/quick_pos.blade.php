@@ -30,9 +30,14 @@
     <!-- Left: Product Grid & Category Filter -->
     <div class="flex-grow-1 p-4 overflow-auto">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h4 class="font-weight-bold text-dark m-0">Bakery &amp; Cafe Touch Counter POS</h4>
-                <small class="text-muted">1-Tap item selection, dine-in &amp; takeaway quick ticketing</small>
+            <div class="d-flex align-items-center">
+                @if(!empty($general_setting->site_logo))
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 40px; max-width: 120px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                @endif
+                <div>
+                    <h4 class="font-weight-bold text-dark m-0">{{ $general_setting->site_title ?? 'Bakery & Cafe' }} &bull; Touch Counter POS</h4>
+                    <small class="text-muted">Fast item selection, dine-in &amp; takeaway quick ticketing</small>
+                </div>
             </div>
             <div>
                 <a href="{{ route('cafe.index') }}" class="btn btn-outline-secondary btn-sm">

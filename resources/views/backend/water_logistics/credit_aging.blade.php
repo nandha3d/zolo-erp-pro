@@ -4,9 +4,14 @@
 <section class="forms">
     <div class="container-fluid">
         <div class="row align-items-center mb-4">
-            <div class="col-md-8">
-                <h3 class="font-weight-bold text-dark m-0">Corporate B2B Credit Aging &amp; Overdue Recovery Board</h3>
-                <p class="text-muted small m-0">Track 15-day and 30-day corporate billing cycles (Textile Mills, Factories, Colleges) to recover stalled credit.</p>
+            <div class="col-md-8 d-flex align-items-center">
+                @if(!empty($general_setting->site_logo))
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 44px; max-width: 140px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                @endif
+                <div>
+                    <h3 class="font-weight-bold text-dark m-0">Corporate B2B Credit Aging &amp; Overdue Recovery Board</h3>
+                    <p class="text-muted small m-0">Track 15-day and 30-day corporate billing cycles (Textile Mills, Factories, Colleges) to recover stalled credit.</p>
+                </div>
             </div>
             <div class="col-md-4 text-right">
                 <a href="{{ route('water-logistics.index') }}" class="btn btn-outline-secondary btn-sm">

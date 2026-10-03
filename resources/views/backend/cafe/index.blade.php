@@ -11,9 +11,14 @@
 <section class="forms">
     <div class="container-fluid">
         <div class="row align-items-center mb-4">
-            <div class="col-md-7">
-                <h3 class="font-weight-bold text-dark m-0">Bakery &amp; Cafe Operations Hub</h3>
-                <p class="text-muted small m-0">Fast counter order tracking, daily raw materials consumption, and evening 3-minute cash drawer reconciliation.</p>
+            <div class="col-md-7 d-flex align-items-center">
+                @if(!empty($general_setting->site_logo))
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 48px; max-width: 140px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                @endif
+                <div>
+                    <h3 class="font-weight-bold text-dark m-0">Bakery &amp; Cafe Operations Hub</h3>
+                    <p class="text-muted small m-0">Fast counter order tracking, daily raw materials consumption, and evening 3-minute cash drawer reconciliation.</p>
+                </div>
             </div>
             <div class="col-md-5 text-right">
                 <a href="{{ route('cafe.pos') }}" class="btn btn-primary btn-sm mr-2">

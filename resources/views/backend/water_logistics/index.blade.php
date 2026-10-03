@@ -12,9 +12,14 @@
     <div class="container-fluid">
         <!-- Header -->
         <div class="row align-items-center mb-4">
-            <div class="col-md-7">
-                <h3 class="font-weight-bold text-dark m-0">Water Supply &amp; Logistics ("DK Track")</h3>
-                <p class="text-muted small m-0">Bulk water tanker fleet trip management (9KL/16KL/24KL) &amp; 20L can distribution with anti-theft tracking.</p>
+            <div class="col-md-7 d-flex align-items-center">
+                @if(!empty($general_setting->site_logo))
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 48px; max-width: 140px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                @endif
+                <div>
+                    <h3 class="font-weight-bold text-dark m-0">Water Supply &amp; Logistics</h3>
+                    <p class="text-muted small m-0">Bulk water tanker fleet trip management (9KL/16KL/24KL) &amp; 20L can distribution with route tracking.</p>
+                </div>
             </div>
             <div class="col-md-5 text-right">
                 <a href="{{ route('water-logistics.credit-aging') }}" class="btn btn-outline-danger btn-sm mr-2">

@@ -315,12 +315,12 @@
     <!-- SECTION: INDUSTRY ADDONS & MODULAR SOLUTIONS -->
     <li class="sidebar-heading"><span>Industry Addons</span></li>
 
-    {{-- Water Logistics ("DK Track") --}}
+    {{-- Water Logistics --}}
     @if(in_array('water_logistics', explode(',', $general_setting->modules ?? '')))
         <li>
             <a href="#water-logistics-menu" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-drop"></i>
-                <span>Water Logistics (DK)</span>
+                <span>Water Logistics</span>
             </a>
             <ul id="water-logistics-menu" class="collapse list-unstyled">
                 <li><a href="{{route('water-logistics.index')}}">Fleet Trips &amp; Can Routes</a></li>

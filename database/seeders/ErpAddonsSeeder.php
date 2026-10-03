@@ -30,7 +30,7 @@ class ErpAddonsSeeder extends Seeder
             );
         }
 
-        // 2. Water Tankers Fleet (DK Track)
+        // 2. Water Tankers Fleet
         $tankers = [
             ['vehicle_number' => 'TN-74-AA-1001', 'model_type' => 'Ashok Leyland 16KL', 'capacity_kl' => 16, 'capacity_liters' => 16000, 'driver_name' => 'Murugan', 'driver_phone' => '+91 98421 11001', 'is_active' => true],
             ['vehicle_number' => 'TN-74-BB-2002', 'model_type' => 'BharatBenz 24KL', 'capacity_kl' => 24, 'capacity_liters' => 24000, 'driver_name' => 'Selvam', 'driver_phone' => '+91 98421 22002', 'is_active' => true],
