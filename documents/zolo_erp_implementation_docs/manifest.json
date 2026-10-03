@@ -1,7 +1,7 @@
 {
   "repository": "vigneshsinna/zolo-erp-pro",
   "generated": "2026-10-03",
-  "markdown_count": 35,
+  "markdown_count": 36,
   "entrypoint": "00_IMPLEMENTATION_MASTER_INDEX.md",
   "codex_entrypoint": "26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md",
   "files": [
@@ -39,7 +39,8 @@
     "30_IMPLEMENTATION_BACKLOG_AND_ACCEPTANCE_CRITERIA.md",
     "COMPANY_BACKFILL_RUNBOOK.md",
     "IMPLEMENTATION_PROGRESS.md",
-    "STOCK_AND_TRANSACTION_WRITER_AUDIT.md"
+    "STOCK_AND_TRANSACTION_WRITER_AUDIT.md",
+    "COMPANY_TABLE_OWNERSHIP_MATRIX.md"
   ],
   "categories": {
     "authoritative_specification": [
@@ -83,7 +84,8 @@
     ],
     "execution_evidence": [
       "IMPLEMENTATION_PROGRESS.md",
-      "STOCK_AND_TRANSACTION_WRITER_AUDIT.md"
+      "STOCK_AND_TRANSACTION_WRITER_AUDIT.md",
+      "COMPANY_TABLE_OWNERSHIP_MATRIX.md"
     ]
   }
 }

@@ -32,8 +32,8 @@ class CompanyFinancialYearController extends Controller
     {
         $company = $this->company($request);
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'start_date' => 'required|date_format:Y-m-d',
+            'name' => 'required|string|max:100',
+            'start_date' => 'required|date_format:Y-m-d|after_or_equal:1000-01-01',
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
         ]);
         $year = DB::transaction(function () use ($company, $data) {

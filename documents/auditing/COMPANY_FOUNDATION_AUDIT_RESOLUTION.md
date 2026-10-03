@@ -51,3 +51,6 @@ GitHub Actions passed the 74-test MySQL suite for migration commit 339576d and c
 [Ownership matrix](../zolo_erp_implementation_docs/COMPANY_TABLE_OWNERSHIP_MATRIX.md) accounts for 125 application tables: 123 active literal creators plus two configured Spatie creators. It records company/global/mixed/tenant ownership, parent/branch evidence, readers/writers, backfill rules, uniqueness/FK changes and required tests. Missing imported/dormant schemas and known ID-type mismatches are explicit. The manifest/index now include this execution evidence.
 
 This completes the audit's source inventory requirement. Operational ownership migrations, same-company constraints, raw-query/service/job/cache/file integration and actual route isolation remain open F-02/F-03/F-04/F-05 acceptance gates. Do not activate a second company or dependent capabilities.
+## FY input/schema parity review
+
+Read-only onboarding review found two setup validation gaps. FY names now match the existing 100-character column; dates below MySQL's supported year 1000 are rejected before insertion. The web form uses the same limits. A targeted regression verifies both limits and zero writes after rejection.

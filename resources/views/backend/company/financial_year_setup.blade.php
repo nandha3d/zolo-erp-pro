@@ -31,9 +31,9 @@
     @endif
     <form method="post" action="{{ route('company.financial-years.store', ['company_id' => $company->id]) }}">
         @csrf
-        <label for="name">Year name</label><input id="name" name="name" maxlength="255" required value="{{ old('name') }}">
-        <label for="start_date">Start date</label><input type="date" id="start_date" name="start_date" required value="{{ old('start_date') }}">
-        <label for="end_date">End date</label><input type="date" id="end_date" name="end_date" required value="{{ old('end_date') }}">
+        <label for="name">Year name</label><input id="name" name="name" maxlength="100" required value="{{ old('name') }}">
+        <label for="start_date">Start date</label><input type="date" id="start_date" name="start_date" min="1000-01-01" required value="{{ old('start_date') }}">
+        <label for="end_date">End date</label><input type="date" id="end_date" name="end_date" min="1000-01-01" required value="{{ old('end_date') }}">
         <br><button type="submit">Create financial year</button>
     </form>
 </body>

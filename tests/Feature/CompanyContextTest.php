@@ -504,4 +504,18 @@ class CompanyContextTest extends ErpServiceTestCase
         $this->getJson('/api/v1/company-context/financial-years')->assertUnauthorized();
     }
 
+    public function test_setup_rejects_names_beyond_existing_column_width_and_mysql_invalid_years(): void
+    {
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => str_repeat('x', 101), 'start_date' => '2027-01-01', 'end_date' => '2027-12-31',
+        ])->assertUnprocessable()->assertJsonValidationErrors('name');
+        foreach (['0000-01-01', '0999-01-01'] as $startDate) {
+            $this->postJson('/api/v1/company-context/financial-years', [
+                'name' => 'Invalid era', 'start_date' => $startDate, 'end_date' => '0999-12-31',
+            ])->assertUnprocessable()->assertJsonValidationErrors('start_date');
+        }
+        $this->assertSame(1, $this->company->fiscalYears()->count());
+    }
+
 }
