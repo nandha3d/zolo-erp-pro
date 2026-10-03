@@ -60,3 +60,6 @@ project.status_changed
 - API and web creation of equivalent sale produce equivalent stock/journal/open-item results.
 - Same idempotency key cannot create duplicates.
 - Webhook retries do not duplicate downstream event identity.
+## Current bounded read contract
+
+Product list/search/detail, customer/supplier lists and stock valuation require `company.context` after Sanctum authentication. Root and nested reads use the authorized company. Stock/warehouse reads require the selected branch; a valuation warehouse ID outside it returns 404. Product catalog `qty` is the sum of visible branch stock; it does not expose the legacy product aggregate across branches. Stored quantities remain unchanged. These routes require migration/backfill and authorized memberships. Setup routes are available before FY resolution. Other transaction/industry API paths remain gated for full ownership, posting and permission integration; this reader package does not establish full API isolation.

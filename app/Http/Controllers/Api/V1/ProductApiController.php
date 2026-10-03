@@ -10,7 +10,7 @@ class ProductApiController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['category', 'brand', 'unit']);
+        $query = Product::catalogFor($this->companyContext($request));
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
@@ -39,9 +39,14 @@ class ProductApiController extends BaseApiController
         ]);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        $product = Product::with(['category', 'brand', 'unit', 'productWarehouse.warehouse'])->find($id);
+        $context = $this->companyContext($request);
+        $product = Product::catalogFor($context)->with([
+            'productWarehouse' => fn ($q) => $q->visibleIn($context)->with([
+                'warehouse' => fn ($w) => $w->forCompany($context)->where('branch_id', $context->branchId),
+            ]),
+        ])->find($id);
 
         if (!$product) {
             return $this->sendError('Product not found', [], 404);
@@ -50,15 +55,16 @@ class ProductApiController extends BaseApiController
         return $this->sendResponse($product, 'Product retrieved successfully');
     }
 
-    public function search(string $term): JsonResponse
+    public function search(Request $request, string $term): JsonResponse
     {
-        $products = Product::where('is_active', true)
+        $products = Product::catalogFor($this->companyContext($request), ['products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.image'])
+            ->where('is_active', true)
             ->where(function ($q) use ($term) {
                 $q->where('name', 'LIKE', "%{$term}%")
                   ->orWhere('code', 'LIKE', "%{$term}%");
             })
             ->limit(20)
-            ->get(['id', 'name', 'code', 'price', 'cost', 'qty', 'image']);
+            ->get();
 
         return $this->sendResponse($products, 'Search results');
     }

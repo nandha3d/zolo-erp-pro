@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 
 class Warehouse extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $fillable =[
 
         "name", "phone", "email", "address", "is_active"

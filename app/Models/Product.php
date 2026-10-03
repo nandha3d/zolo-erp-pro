@@ -3,12 +3,39 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Database\Eloquent\Builder;
 
 class Product extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $fillable =[
         "name", "code", "type", "slug", "barcode_symbology", "brand_id", "category_id", "unit_id", "purchase_unit_id", "sale_unit_id", "cost", "profit_margin", "profit_margin_type", "price", "wholesale_price", "qty", "alert_quantity", "daily_sale_objective", "promotion", "promotion_price", "starting_date", "last_date", "tax_id", "tax_method", "image", "file", "is_embeded", "is_batch", "is_variant", "is_diffPrice", "is_imei", "featured", "product_list", "variant_list", "qty_list", "price_list", "product_details", "short_description", "specification", "related_products", "is_addon", "extras", "menu_type", "variant_option", "variant_value", "is_active", "is_online", "kitchen_id", "in_stock", "track_inventory", "is_sync_disable", "woocommerce_product_id","woocommerce_media_id","tags","meta_title","meta_description", "warranty", "guarantee", "warranty_type", "guarantee_type","wastage_percent","combo_unit_id","production_cost","is_recipe"
     ];
+
+    public function productWarehouse()
+    {
+        return $this->hasMany(Product_Warehouse::class, 'product_id');
+    }
+
+    /** Catalog quantity is the selected branch's visible stock, preserving the legacy stored aggregate. */
+    public function scopeCatalogFor(
+        Builder $query,
+        CompanyContext $context,
+        array $columns = ['products.*'],
+    ): Builder {
+        return $query->forCompany($context)->select($columns)->selectSub(
+            Product_Warehouse::visibleIn($context)->selectRaw('COALESCE(SUM(product_warehouse.qty), 0)')
+                ->whereColumn('product_warehouse.product_id', 'products.id'),
+            'qty',
+        )->with([
+            'category' => fn ($q) => $q->forCompany($context),
+            'brand' => fn ($q) => $q->forCompany($context),
+            'unit' => fn ($q) => $q->forCompany($context),
+        ]);
+    }
 
     public function category()
     {

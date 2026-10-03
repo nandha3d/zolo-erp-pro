@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 
 class Brand extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $fillable =[
 
         "title", "image", "page_title", "short_description", "slug", "is_active"

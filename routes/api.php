@@ -64,14 +64,14 @@ Route::prefix('v1')->group(function () {
 
         // Products & Catalog
         Route::prefix('products')->group(function () {
-            Route::get('/', [ProductApiController::class, 'index'])->name('api.v1.products.index');
-            Route::get('search/{term}', [ProductApiController::class, 'search'])->name('api.v1.products.search');
-            Route::get('{id}', [ProductApiController::class, 'show'])->name('api.v1.products.show');
+            Route::get('/', [ProductApiController::class, 'index'])->middleware('company.context')->name('api.v1.products.index');
+            Route::get('search/{term}', [ProductApiController::class, 'search'])->middleware('company.context')->name('api.v1.products.search');
+            Route::get('{id}', [ProductApiController::class, 'show'])->middleware('company.context')->name('api.v1.products.show');
         });
 
         // Inventory & Warehouse Logistics
         Route::prefix('inventory')->group(function () {
-            Route::get('valuation', [InventoryApiController::class, 'valuation'])->name('api.v1.inventory.valuation');
+            Route::get('valuation', [InventoryApiController::class, 'valuation'])->middleware('company.context')->name('api.v1.inventory.valuation');
             Route::post('transfer', [InventoryApiController::class, 'transfer'])->name('api.v1.inventory.transfer');
         });
 
@@ -86,8 +86,8 @@ Route::prefix('v1')->group(function () {
         });
 
         // Partners (Customers & Suppliers)
-        Route::get('customers', [PartnerApiController::class, 'customers'])->name('api.v1.customers.index');
-        Route::get('suppliers', [PartnerApiController::class, 'suppliers'])->name('api.v1.suppliers.index');
+        Route::get('customers', [PartnerApiController::class, 'customers'])->middleware('company.context')->name('api.v1.customers.index');
+        Route::get('suppliers', [PartnerApiController::class, 'suppliers'])->middleware('company.context')->name('api.v1.suppliers.index');
 
         // INDUSTRY ADDON: Water Logistics
         Route::prefix('water')->group(function () {

@@ -518,4 +518,126 @@ class CompanyContextTest extends ErpServiceTestCase
         $this->assertSame(1, $this->company->fiscalYears()->count());
     }
 
+    private function seedCompanyReaderFixtures(): void
+    {
+        foreach (['categories', 'brands', 'units', 'customer_groups'] as $tableName) {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name');
+                $table->unsignedBigInteger('company_id')->nullable();
+            });
+            DB::table($tableName)->insert([
+                ['id' => 1, 'name' => 'Visible A', 'company_id' => $this->company->id],
+                ['id' => 2, 'name' => 'Secret B', 'company_id' => $this->other->id],
+            ]);
+        }
+        Schema::table('products', function (Blueprint $table) {
+            $table->boolean('is_active')->default(true);
+            $table->string('image')->nullable();
+            foreach (['category_id', 'brand_id', 'unit_id'] as $column) {
+                $table->unsignedInteger($column)->nullable();
+            }
+        });
+        Schema::table('customers', function (Blueprint $table) {
+            $table->boolean('is_active')->default(true);
+            $table->string('phone_number')->nullable();
+            $table->string('email')->nullable();
+            $table->unsignedInteger('customer_group_id')->nullable();
+        });
+        Schema::table('suppliers', function (Blueprint $table) {
+            $table->boolean('is_active')->default(true);
+            $table->string('phone_number')->nullable();
+            $table->string('company_name')->nullable();
+        });
+        foreach (['customers', 'suppliers'] as $tableName) {
+            DB::table($tableName)->where('id', 1)->update(['name' => 'Visible A', 'company_id' => $this->company->id]);
+            DB::table($tableName)->insert(['id' => 2, 'name' => 'Secret B', 'company_id' => $this->other->id]);
+        }
+        DB::table('customers')->where('id', 1)->update(['customer_group_id' => 1]);
+        DB::table('customers')->where('id', 2)->update(['customer_group_id' => 2]);
+        DB::table('warehouses')->where('id', 1)->update(['company_id' => $this->company->id, 'branch_id' => $this->branch->id]);
+        DB::table('warehouses')->where('id', 2)->update(['company_id' => $this->other->id, 'branch_id' => $this->otherBranch->id]);
+        $north = $this->company->branches()->create(['code' => 'NORTH', 'name' => 'Restricted branch']);
+        DB::table('warehouses')->insert(['id' => 3, 'name' => 'Restricted stock', 'company_id' => $this->company->id, 'branch_id' => $north->id]);
+        DB::table('products')->insert([
+            ['id' => 1, 'name' => 'Visible A', 'code' => 'A', 'qty' => 99, 'cost' => 5, 'price' => 10, 'company_id' => $this->company->id, 'category_id' => 1, 'brand_id' => 1, 'unit_id' => 1],
+            ['id' => 2, 'name' => 'Secret B', 'code' => 'B', 'qty' => 8, 'cost' => 7, 'price' => 15, 'company_id' => $this->other->id, 'category_id' => 2, 'brand_id' => 2, 'unit_id' => 2],
+        ]);
+        DB::table('product_warehouse')->insert([
+            ['product_id' => '1', 'warehouse_id' => 1, 'qty' => 4, 'company_id' => $this->company->id],
+            ['product_id' => '1', 'warehouse_id' => 3, 'qty' => 95, 'company_id' => $this->company->id],
+            ['product_id' => '2', 'warehouse_id' => 2, 'qty' => 8, 'company_id' => $this->other->id],
+        ]);
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+    }
+
+    public function test_real_product_list_search_and_detail_are_company_and_branch_isolated(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        $this->getJson('/api/v1/products')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', 1)->assertJsonPath('data.0.qty', 4)->assertDontSee('Secret B');
+        $this->getJson('/api/v1/products/search/Secret')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/products/search/Visible')->assertOk()->assertJsonPath('data.0.qty', 4);
+        $this->getJson('/api/v1/products/1')->assertOk()->assertJsonPath('data.qty', 4)
+            ->assertJsonCount(1, 'data.product_warehouse')->assertDontSee('Restricted stock');
+        $this->getJson('/api/v1/products/2')->assertNotFound()->assertDontSee('Secret B');
+        $this->assertEquals(99, DB::table('products')->where('id', 1)->value('qty'));
+    }
+
+    public function test_real_partner_lists_scope_roots_and_nested_groups(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        $this->getJson('/api/v1/customers')->assertOk()->assertJsonCount(1, 'data')->assertDontSee('Secret B');
+        $this->getJson('/api/v1/suppliers')->assertOk()->assertJsonCount(1, 'data')->assertDontSee('Secret B');
+        DB::table('customers')->where('id', 1)->update(['customer_group_id' => 2]);
+        $this->getJson('/api/v1/customers')->assertOk()->assertJsonPath('data.0.customer_group', null)->assertDontSee('Secret B');
+    }
+
+    public function test_real_product_nested_master_references_cannot_leak_other_company(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        DB::table('products')->where('id', 1)->update(['category_id' => 2, 'brand_id' => 2, 'unit_id' => 2]);
+        $this->getJson('/api/v1/products/1')->assertOk()->assertJsonPath('data.category', null)
+            ->assertJsonPath('data.brand', null)->assertJsonPath('data.unit', null)->assertDontSee('Secret B');
+    }
+
+    public function test_real_valuation_rejects_company_and_branch_warehouse_spoofing(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        $this->getJson('/api/v1/inventory/valuation')->assertOk()
+            ->assertJsonPath('data.total_quantity', 4)->assertJsonCount(1, 'data.items');
+        $this->getJson('/api/v1/inventory/valuation?warehouse_id=2')->assertNotFound();
+        $this->getJson('/api/v1/inventory/valuation?warehouse_id=3')->assertNotFound();
+        $this->getJson('/api/v1/inventory/valuation?warehouse_id=invalid')->assertUnprocessable();
+    }
+
+    public function test_corrupt_stock_parent_or_row_ownership_is_excluded_from_real_reads(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        DB::table('product_warehouse')->insert([
+            ['product_id' => '2', 'warehouse_id' => 1, 'qty' => 100, 'company_id' => $this->company->id],
+            ['product_id' => '1', 'warehouse_id' => 1, 'qty' => 200, 'company_id' => $this->other->id],
+        ]);
+        $this->getJson('/api/v1/inventory/valuation')->assertOk()->assertJsonPath('data.total_quantity', 4);
+        $this->getJson('/api/v1/products/1')->assertOk()->assertJsonPath('data.qty', 4)->assertJsonCount(1, 'data.product_warehouse');
+    }
+
+    public function test_reader_company_headers_cannot_grant_unowned_company(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        foreach (['products', 'customers', 'suppliers', 'inventory/valuation'] as $path) {
+            $this->getJson('/api/v1/'.$path, ['X-Company-ID' => $this->other->id])->assertForbidden();
+        }
+    }
+
+    public function test_reader_switches_to_an_authorized_company_without_stale_data(): void
+    {
+        $this->seedCompanyReaderFixtures();
+        $this->other->users()->attach(1);
+        DB::table('company_user_branches')->insert(['company_id' => $this->other->id, 'user_id' => 1, 'branch_id' => $this->otherBranch->id]);
+        $this->getJson('/api/v1/products', ['X-Company-ID' => $this->other->id])->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', 2)->assertJsonPath('data.0.qty', 8)->assertDontSee('Visible A');
+        $this->getJson('/api/v1/products')->assertOk()->assertJsonPath('data.0.id', 1);
+    }
+
 }

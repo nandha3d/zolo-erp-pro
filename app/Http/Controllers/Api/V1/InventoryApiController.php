@@ -22,8 +22,14 @@ class InventoryApiController extends BaseApiController
      */
     public function valuation(Request $request): JsonResponse
     {
+        $context = $this->companyContext($request);
+        $request->validate(['warehouse_id' => 'nullable|integer|min:1']);
         $warehouseId = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
-        $report = $this->inventoryService->getStockValuation($warehouseId);
+        if ($warehouseId !== null && !\App\Models\Warehouse::forCompany($context)
+            ->where('branch_id', $context->branchId)->whereKey($warehouseId)->exists()) {
+            return $this->sendError('Warehouse not found', [], 404);
+        }
+        $report = $this->inventoryService->getStockValuation($warehouseId, $context);
 
         return $this->sendResponse($report, 'Stock valuation retrieved successfully');
     }

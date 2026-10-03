@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 
 class Supplier extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $fillable =[
         "name", "image", "company_name", "vat_number", "email", "phone_number", "address", "city", "state", "postal_code", "country", "opening_balance", "pay_term_no", "pay_term_period", "is_active"
     ];

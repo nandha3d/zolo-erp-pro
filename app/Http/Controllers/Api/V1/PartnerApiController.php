@@ -12,7 +12,8 @@ class PartnerApiController extends BaseApiController
 {
     public function customers(Request $request): JsonResponse
     {
-        $query = Customer::with('customerGroup');
+        $context = $this->companyContext($request);
+        $query = Customer::forCompany($context)->with(['customerGroup' => fn ($q) => $q->forCompany($context)]);
         if ($request->filled('search')) {
             $term = $request->search;
             $query->where(function ($q) use ($term) {
@@ -34,7 +35,7 @@ class PartnerApiController extends BaseApiController
 
     public function suppliers(Request $request): JsonResponse
     {
-        $query = Supplier::query();
+        $query = Supplier::forCompany($this->companyContext($request));
         if ($request->filled('search')) {
             $term = $request->search;
             $query->where(function ($q) use ($term) {

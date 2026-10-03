@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 
 class Customer extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $fillable =[
         "customer_group_id", "user_id", "name", "company_name",
         "email", "type", "phone_number", "wa_number", "tax_no", "address", "city",

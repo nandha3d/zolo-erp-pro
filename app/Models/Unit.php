@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\ScopesCompanyQueries;
 
 class Unit extends Model
 {
+    use ScopesCompanyQueries;
+
     protected $fillable =[
 
         "unit_code", "unit_name", "base_unit", "operator", "operation_value", "is_active"

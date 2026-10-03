@@ -12,6 +12,7 @@ use App\Models\ProductTransfer;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use App\Services\Platform\CompanyContext;
 
 class InventoryService
 {
@@ -25,9 +26,12 @@ class InventoryService
     /**
      * Get real-time stock levels with valuation for a warehouse or all warehouses.
      */
-    public function getStockValuation(?int $warehouseId = null): array
+    public function getStockValuation(?int $warehouseId = null, ?CompanyContext $context = null): array
     {
-        $query = Product_Warehouse::with(['product', 'warehouse']);
+        $query = $context === null ? Product_Warehouse::with(['product', 'warehouse']) : Product_Warehouse::visibleIn($context)->with([
+            'product' => fn ($q) => $q->forCompany($context),
+            'warehouse' => fn ($q) => $q->forCompany($context)->where('branch_id', $context->branchId),
+        ]);
         if ($warehouseId) {
             $query->where('warehouse_id', $warehouseId);
         }

@@ -4,9 +4,22 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Auth\Access\AuthorizationException;
+use App\Services\Platform\CompanyContext;
 
 class BaseApiController extends Controller
 {
+    protected function companyContext(Request $request): CompanyContext
+    {
+        $context = $request->attributes->get(CompanyContext::class);
+        if (!$context instanceof CompanyContext) {
+            throw new AuthorizationException('Authorized company context required.');
+        }
+
+        return $context;
+    }
+
     /**
      * Standard success JSON response.
      */
