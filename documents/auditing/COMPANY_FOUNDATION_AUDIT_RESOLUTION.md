@@ -54,3 +54,8 @@ This completes the audit's source inventory requirement. Operational ownership m
 ## FY input/schema parity review
 
 Read-only onboarding review found two setup validation gaps. FY names now match the existing 100-character column; dates below MySQL's supported year 1000 are rejected before insertion. The web form uses the same limits. A targeted regression verifies both limits and zero writes after rejection.
+## F-11 original seeded rehearsal
+
+The original AccountingServiceTest, AccountingWebTest, ApiV1Test and UserTest pass on disposable MySQL: 16 tests, 54 assertions. The original tenant/account seeders expose missing brand IDs 10/16/17 and unit IDs 4/9. The repeatable legacy bootstrap first proves that dry-run rejects these orphans, then inserts explicitly labelled fixture-only parent masters and runs dry-run/write/dry-run before the original smoke suite. No production data or original seeder content is changed.
+
+A dedicated `phpunit.legacy-mysql.xml` and second CI step repeat this proof. Fresh empty-fixture migration time was 3.617 seconds; fresh migration, seeders and backfill rehearsal took 4.878 seconds locally. These are fixture timings, not production lock/downtime estimates. Real retained installations need reviewed missing master data and representative scale/locking reconciliation.

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.2/phpunit.xsd" bootstrap="tests/Support/legacy_mysql_bootstrap.php" colors="true" cacheDirectory=".phpunit.cache">
+  <testsuites>
+    <testsuite name="Original seeded SalePro smoke">
+      <file>tests/Feature/AccountingServiceTest.php</file>
+      <file>tests/Feature/AccountingWebTest.php</file>
+      <file>tests/Feature/ApiV1Test.php</file>
+      <file>tests/Feature/UserTest.php</file>
+    </testsuite>
+  </testsuites>
+  <php>
+    <env name="APP_ENV" value="testing"/>
+    <env name="APP_KEY" value="base64:dGVzdC1vbmx5LWF1ZGl0LWZpeHR1cmUta2V5LTEyMzQ="/>
+    <env name="CACHE_DRIVER" value="array"/>
+    <env name="SESSION_DRIVER" value="array"/>
+    <env name="QUEUE_CONNECTION" value="sync"/>
+  </php>
+</phpunit>

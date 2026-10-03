@@ -43,3 +43,5 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
       - name: Migrations, committed-DDL recovery, ERP, backfill, context and reset safety
         run: php vendor/bin/phpunit -c phpunit.company.xml
+      - name: Original seeded SalePro web, API and accounting smoke
+        run: php vendor/bin/phpunit -c phpunit.legacy-mysql.xml
