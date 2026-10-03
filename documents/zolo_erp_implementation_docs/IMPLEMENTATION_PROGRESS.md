@@ -49,7 +49,22 @@ Validation: 16 isolated integration tests, 83 assertions, cover dry-run, latest 
 
 Effects: company/branch ownership metadata is added; stock quantities, journal values, tax, document references and payment balances are not rewritten. No capability, permission or request-scoping activation occurs in this package. No production database migration/backfill was executed. Package A is complete; phase 1 as a whole remains pending.
 
-Next gate: rehearse on disposable MySQL with representative legacy data; fix reported ownership/schema problems; implement context resolution and convert both Eloquent and raw-query readers/writers, jobs and cache keys; then verify isolation and company-aware uniqueness. Do not start dependent capability/ledger cutover or activate a second company before those gates pass.
+Next gate: rehearse on disposable MySQL with representative legacy data; fix reported ownership/schema problems; integrate context resolution and convert both Eloquent and raw-query readers/writers, jobs and cache keys; then verify isolation and company-aware uniqueness. Do not start dependent capability/ledger cutover or activate a second company before those gates pass.
+
+## Phase 1, package B: company/FY context primitives
+
+Implemented under documents 03/22:
+
+- Immutable `CompanyContext` holds company, branch and financial-year IDs.
+- `CompanyContextResolver` verifies active/non-deleted user identity, membership, active company and explicit user-branch assignments. Default selection requires exactly one default company and an authorized MAIN branch. Financial years are selected only inside the company; implicit selection requires exactly one matching existing date range, using the company's timezone.
+- Historical reads may select closed years. Explicit `assertPostingDate` checks the actual FY record, validates ISO dates, rejects dates outside the year, and blocks legacy closed, soft-closed and locked periods. Lock dates are inclusive. Closing Company A does not lock Company B.
+- `company.context` middleware validates integer context headers or session IDs, rejects inactive/deleted users and spoofed company/branch/FY selection, exposes the immutable context through request attributes and clears it after success or failure. Body `company_id` is not trusted as context.
+
+Validation: 27 isolated tests, 34 assertions, exercise company/branch/FY spoofing, branch restrictions, default ambiguity, company closure, period locks, malformed dates, overlapping FY selection, header/session validation and precedence, timezone rollover, deleted identities and request cleanup. These are resolver/middleware tests, not evidence that existing sale/journal routes are isolated.
+
+Effects: middleware is registered but not attached to legacy routes; transaction services do not yet enforce the new context or period assertion. Existing quantities, journals, tax, numbering, history and user flows remain unchanged. Controllers/services must consume the context only after membership middleware runs. Permissions, capabilities, company scopes, raw queries, job context and concurrency protection still require integration before activation.
+
+Total targeted proof so far: 50 tests, 167 assertions across ERP regressions and company packages A/B. Full phase 1 and all dependent phases remain pending. The requested disposable MySQL rehearsal connection is still needed; the original feature suite and production-schema/data cutover remain unverified.
 
 ## Delivery order
 

@@ -76,6 +76,7 @@ class Kernel extends HttpKernel
         'validate_mobile_token' => \App\Http\Middleware\ValidateMobileToken::class,
         'hasPermanentDeletePermission' => \App\Http\Middleware\HasPermanentDeletePermission::class,
         'permission' => \App\Http\Middleware\PermissionMiddleware::class,
+        'company.context' => \App\Http\Middleware\ResolveCompanyContext::class,
     ];
 
     /**
