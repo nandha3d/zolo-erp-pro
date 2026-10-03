@@ -260,40 +260,87 @@ class AccountingService
      * Automatically post double-entry journal for a Purchase.
      *
      * Accounting logic:
-     * Dr. Merchandise Inventory Asset (Total Purchase Cost + Order Tax)
+     * Dr. Received inventory and supplier-billed goods awaiting receipt
      * Cr. Bank / Cash (Paid Amount)
      * Cr. Accounts Payable (Due Amount)
      */
     public function postPurchaseJournal(Purchase $purchase): ?JournalEntry
     {
+        if ((int) $purchase->status === 4) {
+            return null; // An ordered purchase is not a supplier bill.
+        }
         $cashAccount = $this->getAccount('1010');
         $bankAccount = $this->getAccount('1020');
         $invAccount  = $this->getAccount('1200'); // Merchandise Inventory
         $apAccount   = $this->getAccount('2010'); // Accounts Payable
 
         if (!$invAccount || !$apAccount) {
-            return null;
+            throw new InvalidArgumentException('Purchase inventory and payable accounts must be configured before posting.');
         }
 
         $grandTotal = (float) $purchase->grand_total;
         $paidAmount = (float) ($purchase->paid_amount ?? 0);
         $dueAmount  = max(0.0, $grandTotal - $paidAmount);
+        if ($grandTotal == 0 && $paidAmount == 0) {
+            return null; // Free goods have a quantity effect but no monetary journal.
+        }
+
+        $lines = $purchase->productPurchases;
+        $orderedValue = 0.0;
+        $receivedValue = 0.0;
+        $orderedQty = 0.0;
+        $receivedQty = 0.0;
+        foreach ($lines as $line) {
+            $qty = (float) $line->qty;
+            $received = (float) $line->recieved;
+            if ($qty <= 0 || $received < 0 || $received > $qty || (float) $line->total < 0) {
+                throw new InvalidArgumentException('Purchase receipt lines are invalid for posting.');
+            }
+            $orderedValue += (float) $line->total;
+            $receivedValue += (float) $line->total * $received / $qty;
+            $orderedQty += $qty;
+            $receivedQty += $received;
+        }
+        if ($orderedQty <= 0) {
+            throw new InvalidArgumentException('Purchase bill must contain receipt lines before posting.');
+        }
+        // Allocate bill-level charges/discounts proportionally; free lines use quantity.
+        $receivedRatio = $orderedValue > 0 ? $receivedValue / $orderedValue : $receivedQty / $orderedQty;
+        $inventoryValue = round($grandTotal * $receivedRatio, 4);
+        $transitValue = round($grandTotal - $inventoryValue, 4);
+        $transitAccount = $transitValue > 0 ? $this->getAccount('goods_in_transit') : null;
+        if ($transitValue > 0 && (!$transitAccount || !$transitAccount->is_active || $transitAccount->type !== 'asset')) {
+            throw new InvalidArgumentException('Configure an active asset account with sub_type goods_in_transit before posting an unreceived bill.');
+        }
 
         $items = [];
 
-        // 1. Debit Inventory Asset
+        // 1. Debit received inventory; unreceived supplier-billed value remains in transit.
         $items[] = [
             'chart_of_account_id' => $invAccount->id,
-            'debit' => $grandTotal,
+            'debit' => $inventoryValue,
             'credit' => 0,
             'memo' => "Inventory received from Purchase PO {$purchase->reference_no}",
             'partner_type' => 'supplier',
             'partner_id' => $purchase->supplier_id,
         ];
+        if ($transitValue > 0) {
+            $items[] = [
+                'chart_of_account_id' => $transitAccount->id,
+                'debit' => $transitValue, 'credit' => 0,
+                'memo' => "Supplier-billed goods awaiting receipt {$purchase->reference_no}",
+                'partner_type' => 'supplier', 'partner_id' => $purchase->supplier_id,
+            ];
+        }
 
         // 2. Credit Paid amount (Cash/Bank)
         if ($paidAmount > 0) {
-            $paymentAccount = ($cashAccount ?? $bankAccount);
+            $method = $purchase->payments->first()?->paying_method ?? 'Cash';
+            $paymentAccount = in_array($method, ['Bank', 'Cheque', 'Credit Card'], true)
+                ? $bankAccount : $cashAccount;
+            if (!$paymentAccount) {
+                throw new InvalidArgumentException('Purchase payment account must be configured before posting.');
+            }
             $items[] = [
                 'chart_of_account_id' => $paymentAccount->id,
                 'debit' => 0,

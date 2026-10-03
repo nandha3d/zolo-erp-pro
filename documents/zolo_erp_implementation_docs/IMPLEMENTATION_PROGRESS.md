@@ -78,3 +78,13 @@ Total targeted proof so far: 50 tests, 167 assertions across ERP regressions and
 8. Phases 7–12: tax, returns/documents, operations, industry profiles, UI/API/security, migration/UAT/deployment.
 
 Each completed work package is validated, committed and pushed before dependent work starts. Full phase completion requires its documented acceptance criteria; an additive schema package alone does not establish company isolation.
+
+## Audit correction: purchase receipt and supplier-bill recognition
+
+Audit F-12 identified status 2 as Partial, not Pending. `PurchaseService` now validates per-line `received_qty` for Partial, records only actual receipts in stock and `product_purchases.recieved`, and uses status 3 for Pending. Received records full quantity. Ordered is an unbilled PO with no stock/journal/payment effect at creation.
+
+Confirmed policy: the supplier bill recognizes full AP/payment, with received value in inventory and unreceived value in an active `goods_in_transit` asset account. Missing required mappings roll back purchase, stock, cost and payment. Bill charges/discounts are apportioned by line value; free lines use quantity. Free goods avoid zero-value journals. Initial bank payments credit bank rather than cash.
+
+Validation: 14 isolated ERP regression tests, 82 assertions pass. New proof covers 4-of-10 receipts, billed inventory/transit/AP split, pending transit, missing-account rollback, invalid receipt quantities, API validation, unbilled orders, free goods and bank payment classification.
+
+This closes the audited purchase-creation regression. Subsequent receipt release, legacy web update parity, service-item posting, company scope, posting-cost valuation, tax semantics and idempotency still belong to their gated shared-engine phases. No historical purchase or journal was rewritten.

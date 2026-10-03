@@ -70,10 +70,12 @@ class PurchaseApiController extends BaseApiController
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'required|integer|exists:suppliers,id',
             'warehouse_id' => 'required|integer|exists:warehouses,id',
+            'status' => 'sometimes|integer|in:1,2,3,4',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.qty' => 'required|numeric|min:0.01',
             'items.*.net_unit_cost' => 'required|numeric|min:0',
+            'items.*.received_qty' => 'required_if:status,2|numeric|min:0|lte:items.*.qty',
         ]);
 
         if ($validator->fails()) {
@@ -82,7 +84,7 @@ class PurchaseApiController extends BaseApiController
 
         try {
             $purchase = $this->purchaseService->createPurchase($request->all(), $request->user()?->id);
-            return $this->sendResponse($purchase, 'Purchase created and double-entry posted successfully', 201);
+            return $this->sendResponse($purchase, 'Purchase created successfully', 201);
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }

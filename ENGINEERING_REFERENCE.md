@@ -253,7 +253,7 @@ A posted purchase atomically writes its document/lines, number, applicable recei
 - Reverse charge and other tax treatments require server-side eligibility, not an unrestricted checkbox.
 - Preserve supplier document references and distinguish cloning from reprinting.
 
-The baseline repair persists the existing mandatory `product_purchases.recieved` field as quantity for received purchases and zero for pending purchases. This compatibility repair does not implement the target receipt, stock identity or accounting architecture.
+The audit correction preserves `product_purchases.recieved` while accepting API `received_qty`: Received records full quantity, Partial records validated line receipts, Pending records zero, and Ordered remains an unbilled PO. The confirmed supplier-bill policy recognizes full payment/AP and splits received inventory from goods-in-transit. Configure an active asset account with sub_type `goods_in_transit`; missing required accounts roll back creation. Subsequent receipt release and legacy web update parity remain shared-engine integration gates.
 
 ## 06 Inventory, manufacturing and job work
 

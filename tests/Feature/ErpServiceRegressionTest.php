@@ -30,6 +30,7 @@ class ErpServiceRegressionTest extends ErpServiceTestCase
             ['1010', 'asset', 'cash'], ['1100', 'asset', 'accounts_receivable'],
             ['1200', 'asset', 'inventory'], ['2010', 'liability', 'accounts_payable'],
             ['4010', 'revenue', 'sales_revenue'], ['5010', 'expense', 'cogs'],
+            ['GIT', 'asset', 'goods_in_transit'],
         ] as [$code, $type, $subType]) {
             ChartOfAccount::create([
                 'code' => $code, 'name' => $subType, 'type' => $type, 'sub_type' => $subType,
@@ -91,13 +92,119 @@ class ErpServiceRegressionTest extends ErpServiceTestCase
     {
         $product = $this->stock();
         $purchase = (new PurchaseService(new AccountingService()))->createPurchase([
-            'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 2,
+            'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 3,
             'items' => [['product_id' => $product->id, 'qty' => 2, 'net_unit_cost' => 6]],
         ], 1);
 
         $this->assertEquals(0, $purchase->productPurchases->sole()->recieved);
         $this->assertEquals(20, $product->fresh()->qty);
         $this->assertEquals(20, Product_Warehouse::first()->qty);
+        $this->assertEquals(12, ChartOfAccount::where('sub_type', 'goods_in_transit')->sole()->current_balance);
+        $this->assertEquals(0, ChartOfAccount::where('sub_type', 'inventory')->sole()->current_balance);
+        $this->assertTrue(JournalEntry::sole()->isBalanced());
+    }
+
+    public function test_partial_purchase_receives_four_of_ten_and_recognizes_full_supplier_bill(): void
+    {
+        $product = $this->stock();
+        $purchase = (new PurchaseService(new AccountingService()))->createPurchase([
+            'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 2, 'paid_amount' => 10,
+            'shipping_cost' => 5,
+            'items' => [['product_id' => $product->id, 'qty' => 10, 'received_qty' => 4, 'net_unit_cost' => 5]],
+        ], 1);
+        $this->assertEquals(4, $purchase->productPurchases->sole()->recieved);
+        $this->assertEquals(24, $product->fresh()->qty);
+        $this->assertEquals(24, Product_Warehouse::first()->qty);
+        $this->assertEquals(22, ChartOfAccount::where('sub_type', 'inventory')->sole()->current_balance);
+        $this->assertEquals(33, ChartOfAccount::where('sub_type', 'goods_in_transit')->sole()->current_balance);
+        $this->assertEquals(45, ChartOfAccount::where('sub_type', 'accounts_payable')->sole()->current_balance);
+        $this->assertEquals(55, JournalEntry::sole()->total_debit);
+        $this->assertTrue(JournalEntry::sole()->isBalanced());
+    }
+
+    public function test_unreceived_bill_without_transit_account_rolls_back_purchase_and_payment(): void
+    {
+        $product = $this->stock();
+        ChartOfAccount::where('sub_type', 'goods_in_transit')->delete();
+        try {
+            (new PurchaseService(new AccountingService()))->createPurchase([
+                'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 2, 'paid_amount' => 5,
+                'items' => [['product_id' => $product->id, 'qty' => 10, 'received_qty' => 4, 'net_unit_cost' => 5]],
+            ], 1);
+            $this->fail('Missing transit account must fail.');
+        } catch (InvalidArgumentException $error) {
+            $this->assertStringContainsString('goods_in_transit', $error->getMessage());
+        }
+        $this->assertSame(0, Purchase::count());
+        $this->assertSame(0, Payment::count());
+        $this->assertSame(0, JournalEntry::count());
+        $this->assertEquals(20, $product->fresh()->qty);
+        $this->assertEquals(20, Product_Warehouse::first()->qty);
+    }
+
+    public function test_partial_purchase_rejects_missing_or_excess_received_quantity_before_writes(): void
+    {
+        $product = $this->stock();
+        foreach ([null, -1, 11, 'invalid'] as $received) {
+            try {
+                (new PurchaseService(new AccountingService()))->createPurchase([
+                    'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 2,
+                    'items' => [['product_id' => $product->id, 'qty' => 10, 'received_qty' => $received, 'net_unit_cost' => 5]],
+                ], 1);
+                $this->fail('Invalid receipt must fail.');
+            } catch (InvalidArgumentException $error) {
+                $this->assertStringContainsString('received_qty', $error->getMessage());
+            }
+        }
+        $this->assertSame(0, Purchase::count());
+        $this->assertEquals(20, $product->fresh()->qty);
+    }
+
+    public function test_ordered_purchase_has_no_stock_or_supplier_bill_journal(): void
+    {
+        $product = $this->stock();
+        (new PurchaseService(new AccountingService()))->createPurchase([
+            'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 4,
+            'items' => [['product_id' => $product->id, 'qty' => 10, 'net_unit_cost' => 5]],
+        ], 1);
+        $this->assertSame(0, JournalEntry::count());
+        $this->assertEquals(20, $product->fresh()->qty);
+    }
+
+    public function test_api_partial_purchase_requires_received_quantity(): void
+    {
+        $product = $this->stock();
+        $request = Request::create('/api/v1/purchases', 'POST', [
+            'supplier_id' => 1, 'warehouse_id' => 1, 'status' => 2,
+            'items' => [['product_id' => $product->id, 'qty' => 10, 'net_unit_cost' => 5]],
+        ]);
+        $response = (new PurchaseApiController(new PurchaseService(new AccountingService())))->store($request);
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertSame(0, Purchase::count());
+        $this->assertEquals(20, $product->fresh()->qty);
+    }
+
+    public function test_free_received_goods_have_stock_effect_without_zero_value_journal(): void
+    {
+        $product = $this->stock();
+        (new PurchaseService(new AccountingService()))->createPurchase([
+            'supplier_id' => 1, 'warehouse_id' => 1,
+            'items' => [['product_id' => $product->id, 'qty' => 2, 'net_unit_cost' => 0]],
+        ], 1);
+        $this->assertEquals(22, $product->fresh()->qty);
+        $this->assertSame(0, JournalEntry::count());
+    }
+
+    public function test_purchase_bank_payment_credits_bank_instead_of_cash(): void
+    {
+        $bank = ChartOfAccount::create(['code' => '1020', 'name' => 'Bank', 'type' => 'asset', 'sub_type' => 'bank']);
+        $product = $this->stock();
+        (new PurchaseService(new AccountingService()))->createPurchase([
+            'supplier_id' => 1, 'warehouse_id' => 1, 'paid_amount' => 10, 'paying_method' => 'Bank',
+            'items' => [['product_id' => $product->id, 'qty' => 2, 'net_unit_cost' => 5]],
+        ], 1);
+        $this->assertEquals(-10, $bank->fresh()->current_balance);
+        $this->assertEquals(0, ChartOfAccount::where('sub_type', 'cash')->sole()->current_balance);
     }
 
     public function test_completed_transfer_moves_warehouse_stock_without_changing_product_total(): void

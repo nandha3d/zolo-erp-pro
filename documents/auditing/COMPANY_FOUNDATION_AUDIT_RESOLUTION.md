@@ -21,3 +21,9 @@ Second-company activation and dependent capability work remain blocked. New evid
 Source inspection during the ownership audit found `reset:db` scheduled every minute, dropping every database table without a demo guard. Removed that scheduled event. Manual reset now requires the demo environment, an explicit `--confirm-demo-reset` option and a readable nonempty dump before any cache/database work.
 
 Validation: `ConsoleSafetyTest` verifies schedule exclusion, rejection outside demo even with confirmation, and mandatory explicit confirmation in demo. Three tests, 11 assertions pass using the targeted PHPUnit file. This closes the discovered reset activation hazard; other legacy scheduled writers still need company-context integration.
+
+## F-12 purchase-creation correction
+
+The user selected full supplier-bill AP recognition with received inventory and goods-in-transit separation. Received/Partial/Pending quantities now match native status meanings; status 4 Ordered remains an unbilled PO. Required `received_qty` is validated at API and service boundaries. Missing required accounts roll back all effects. Bank payment classification and zero-value goods are covered.
+
+Proof: 14 ERP regression tests, 82 assertions pass on isolated SQLite fixtures. Purchase creation is corrected. Subsequent receipt release, legacy web update parity, company isolation and valuation/tax integration remain phase gates; this is not full commercial cutover.

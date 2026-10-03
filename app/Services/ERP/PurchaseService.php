@@ -32,6 +32,30 @@ class PurchaseService
         if (empty($data['items']) || !is_array($data['items'])) {
             throw new InvalidArgumentException("Purchase must contain at least one product item.");
         }
+        $status = filter_var($data['status'] ?? 1, FILTER_VALIDATE_INT);
+        if (!in_array($status, [1, 2, 3, 4], true)) {
+            throw new InvalidArgumentException('Purchase status must be Received, Partial, Pending or Ordered.');
+        }
+        $data['status'] = $status;
+        foreach ($data['items'] as &$item) {
+            $qty = $item['qty'] ?? null;
+            $cost = $item['net_unit_cost'] ?? null;
+            if (!is_numeric($qty) || !is_finite((float) $qty) || (float) $qty <= 0
+                || !is_numeric($cost) || !is_finite((float) $cost) || (float) $cost < 0) {
+                throw new InvalidArgumentException('Purchase quantity must be positive and unit cost must be nonnegative.');
+            }
+            $received = $status === 1 ? $qty : ($status === 2 ? ($item['received_qty'] ?? null) : 0);
+            if (!is_numeric($received) || !is_finite((float) $received)
+                || (float) $received < 0 || (float) $received > (float) $qty) {
+                throw new InvalidArgumentException('Partial purchases require received_qty between zero and ordered quantity for every line.');
+            }
+            if (isset($item['received_qty']) && (!is_numeric($item['received_qty'])
+                || (float) $item['received_qty'] !== (float) $received)) {
+                throw new InvalidArgumentException('received_qty contradicts the purchase status.');
+            }
+            $item['received_qty'] = (float) $received;
+        }
+        unset($item);
 
         return DB::transaction(function () use ($data, $userId) {
             $referenceNo = 'pr-' . date("Ymd") . '-' . date("his");
@@ -57,6 +81,10 @@ class PurchaseService
             $shippingCost = (float) ($data['shipping_cost'] ?? 0);
             $grandTotal = (float) ($data['grand_total'] ?? ($totalCost + $orderTax + $shippingCost - $orderDiscount));
             $paidAmount = (float) ($data['paid_amount'] ?? 0);
+            if (!is_finite($grandTotal) || $grandTotal < 0 || !is_finite($paidAmount)
+                || $paidAmount < 0 || $paidAmount > $grandTotal || ($data['status'] === 4 && $paidAmount > 0)) {
+                throw new InvalidArgumentException('Payment must be within the bill total; an unbilled order cannot receive payment here.');
+            }
 
             $paymentStatus = 2; // Due
             if ($paidAmount >= $grandTotal) {
@@ -99,7 +127,7 @@ class PurchaseService
                     'variant_id' => $item['variant_id'] ?? null,
                     'imei_number' => $item['imei_number'] ?? null,
                     'qty' => $qty,
-                    'recieved' => ($data['status'] ?? 1) == 1 ? $qty : 0,
+                    'recieved' => $item['received_qty'],
                     'purchase_unit_id' => $item['purchase_unit_id'] ?? 1,
                     'net_unit_cost' => $unitCost,
                     'discount' => (float) ($item['discount'] ?? 0),
@@ -108,20 +136,17 @@ class PurchaseService
                     'total' => (float) ($item['total'] ?? ($qty * $unitCost)),
                 ]);
 
-                // Increment stock if purchase is Received
-                if (($data['status'] ?? 1) == 1) {
-                    $product = Product::find($productId);
-                    if ($product) {
-                        // Update product cost and quantity
-                        $product->increment('qty', $qty);
-                        $product->update(['cost' => $unitCost]);
-                    }
+                // Receive only the validated physical quantity, including partial receipts.
+                $product = Product::findOrFail($productId);
+                if ($item['received_qty'] > 0) {
+                    $product->increment('qty', $item['received_qty']);
+                    $product->update(['cost' => $unitCost]);
 
                     $pw = Product_Warehouse::firstOrNew([
                         'product_id' => $productId,
                         'warehouse_id' => $data['warehouse_id'],
                     ]);
-                    $pw->qty = (float)$pw->qty + $qty;
+                    $pw->qty = (float)$pw->qty + $item['received_qty'];
                     $pw->save();
                 }
             }
@@ -140,8 +165,8 @@ class PurchaseService
                 ]);
             }
 
-            // ATOMIC DOUBLE-ENTRY JOURNAL POSTING
-            // Dr. Inventory Asset = Cr. Cash/Bank (paid) + Cr. Accounts Payable (due)
+            // Supplier-bill recognition: received inventory + goods-in-transit = payment + AP.
+            // Ordered is an unbilled PO; it has no stock or financial posting.
             $this->accountingService->postPurchaseJournal($purchase);
 
             return $purchase->load(['supplier', 'warehouse', 'productPurchases']);

@@ -56,3 +56,13 @@ manual
 - Batch/expiry, serial and dimension receipts preserve identities.
 - Freight allocation persists inventory valuation cost.
 - Purchase return reverses stock/AP/tax correctly.
+
+## Confirmed supplier-bill recognition and receipt status
+
+The user selected supplier-bill recognition for the combined legacy purchase record. Status 1 Received records full ordered quantity; status 2 Partial requires validated per-line `received_qty`; status 3 Pending records zero received quantity. Status 4 Ordered is an unbilled PO and does not post a journal or accept payment through this creation command.
+
+For a billed purchase, recognize the full bill as payment plus accounts payable. Debit received value to inventory and unreceived value to an active asset account with `sub_type = goods_in_transit`. Bill-level charges/discounts are allocated proportionally by billed line value; zero-value lines use quantity. Missing required accounts fail the entire transaction. Account configuration uses the existing chart UI; do not seed guessed account IDs.
+
+`PurchaseService` persists the compatible physical column `product_purchases.recieved` while the API accepts `received_qty`. Free received goods can have a quantity effect without a zero-value journal. Cash/bank posting follows the recorded initial payment method.
+
+Subsequent receipt must release goods-in-transit into inventory without recognizing AP again. The later shared receipt/movement integration must implement this event and reconcile valuation. This creation correction does not establish legacy web receipt-update parity, movement-ledger authority, company isolation or landed-cost valuation projections.
