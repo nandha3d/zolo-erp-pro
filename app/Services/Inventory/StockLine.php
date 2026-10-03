@@ -51,7 +51,8 @@ final readonly class StockLine
             batchId: $int('product_batch_id') ?? $int('batch_id'),
             unitCost: isset($line['unit_cost']) ? (float) $line['unit_cost'] : null,
             uomId: $int('uom_id'),
-            serials: array_values(array_filter(array_map('trim', (array) $serials), 'strlen')),
+            // Legacy forms post the literal "null" for lines without IMEI numbers.
+            serials: array_values(array_filter(array_map('trim', (array) $serials), fn ($serial) => $serial !== '' && $serial !== 'null')),
             batch: $line['batch'] ?? null,
             identityId: $int('stock_identity_id'),
             dimensions: $line['dimensions'] ?? null,

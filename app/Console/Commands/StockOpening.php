@@ -85,7 +85,7 @@ class StockOpening extends Command
     {
         $product = DB::table('products')->where('id', $row->product_id)->first();
         $qty = round((float) $row->qty, 4);
-        $serials = array_values(array_filter(array_map('trim', explode(',', (string) ($row->imei_number ?? ''))), 'strlen'));
+        $serials = StockLine::fromArray(['product_id' => $row->product_id, 'imei_number' => (string) ($row->imei_number ?? '')])->serials;
         // Serials are imported only when they account for every unit; otherwise the quantity stays anonymous.
         $serials = $qty > 0 && count($serials) === (int) $qty && abs($qty - (int) $qty) < 0.00005 ? $serials : [];
 
