@@ -10,7 +10,7 @@ class ResetDB extends Command
 {
     use \App\Traits\CacheForget;
 
-    protected $signature = 'reset:db';
+    protected $signature = 'reset:db {--confirm-demo-reset : Confirm resetting the demo database}';
 
     protected $description = 'Reset DB in the demo';
 
@@ -21,6 +21,20 @@ class ResetDB extends Command
 
     public function handle()
     {
+        if (!$this->laravel->environment('demo') || !$this->option('confirm-demo-reset')) {
+            $this->error('Database reset requires the demo environment and --confirm-demo-reset.');
+            return self::FAILURE;
+        }
+        $dumpPath = base_path('salepropos.sql');
+        if (!is_file($dumpPath) || !is_readable($dumpPath) || !filesize($dumpPath)) {
+            $this->error('Demo database dump is missing or unreadable; no data changed.');
+            return self::FAILURE;
+        }
+        $dump = file_get_contents($dumpPath);
+        if ($dump === false || trim($dump) === '') {
+            $this->error('Demo database dump is empty; no data changed.');
+            return self::FAILURE;
+        }
         //clearing all the cached queries
         $this->cacheForget('biller_list');
         $this->cacheForget('brand_list');
@@ -52,6 +66,7 @@ class ResetDB extends Command
         DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
 
         //importing data from DB
-        DB::unprepared(file_get_contents(base_path('salepropos.sql')));
+        DB::unprepared($dump);
+        return self::SUCCESS;
     }
 }

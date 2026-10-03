@@ -15,3 +15,9 @@ Validation: canonical phase headings, obsolete-contract search, manifest/file pa
 F-01 through F-09, F-11 and F-12 remain open pending their implementation and proof. F-02/F-03/F-04/F-05 require complete ownership, reader/writer, constraint, route and job/cache/file integration. They cannot be closed merely by enabling middleware. F-11 additionally needs representative legacy data and MySQL evidence.
 
 Second-company activation and dependent capability work remain blocked. New evidence is appended below per delivered package.
+
+## Scheduler safety correction
+
+Source inspection during the ownership audit found `reset:db` scheduled every minute, dropping every database table without a demo guard. Removed that scheduled event. Manual reset now requires the demo environment, an explicit `--confirm-demo-reset` option and a readable nonempty dump before any cache/database work.
+
+Validation: `ConsoleSafetyTest` verifies schedule exclusion, rejection outside demo even with confirmation, and mandatory explicit confirmation in demo. Three tests, 11 assertions pass using the targeted PHPUnit file. This closes the discovered reset activation hazard; other legacy scheduled writers still need company-context integration.

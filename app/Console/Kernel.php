@@ -28,7 +28,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('purchase:auto')->everyFiveMinutes();
         $schedule->command('dsoalert:find')->dailyAt('00:00');
-        $schedule->command('reset:db')->everyMinute();
+        // Database resets are explicit demo operations, never scheduled business work.
         // Testing Purpose
         $schedule->command('quote:daily')->everyMinute();
     }
