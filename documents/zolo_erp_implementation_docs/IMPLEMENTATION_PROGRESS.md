@@ -1,113 +1,121 @@
 # Implementation progress
 
-This execution follows document 26, using the shared services and staged migrations specified in documents 01–05. The implementation pack supersedes the earlier textile-only engineering reference.
+Current implementation state, reviewed 2026-10-03. This file describes the latest behavior; historical audit snapshots and package evidence are retained in [the audit resolution log](../auditing/COMPANY_FOUNDATION_AUDIT_RESOLUTION.md).
 
-## Phase 0: baseline and transaction regressions
+Execution follows [document 26](26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md), using one shared ERP core. The implementation pack includes authoritative specifications 00–33; docs 31–33 define the modern UI, Optech workflow mapping and common component contracts.
 
-Source baseline: `edecfa1`, branch `main`, 2026-10-03. The working tree was clean before execution. A Codebase Onboarding Engineer performed read-only source inspection.
+## Current phase and activation gates
 
-Observed behavior: API sale, purchase and transfer services write their documents and effects inside database transactions, then eager-load missing model relationships. The resulting exceptions roll back otherwise valid transactions. Purchases also omit the mandatory `product_purchases.recieved` field. The existing `ProductPurchase` class and import are valid.
+Phase 0's delivered regression package is complete. Phase 1 remains in progress: schema/backfill, authorized context/setup and bounded API reader isolation are delivered. Full legal-company isolation is not complete.
 
-Implemented behavior:
+Do not activate a second company or Phase 2 capabilities until all Phase 1 acceptance gates pass. Audit F-13 Option B permits inactive additive foundations while the execution plan's D1–D12 stabilization work remains assigned to its owning phases; it does not permit unsafe writer activation.
 
-- `Sale.productSales` and `Product_Sale.product` support transaction results and API detail reads.
-- `Purchase.productPurchases` and `Purchase.payments` support transaction results, list and detail reads.
-- `Transfer.productTransfers` reuses the existing `products` relationship.
-- Received purchase lines persist `recieved = qty`; pending lines persist zero, matching existing web receipt semantics.
-- Dedicated in-memory SQLite fixtures exercise real ERP/accounting services, reuse original commercial/accounting migrations, and preserve required receipt constraints. They never access the configured MySQL database.
-- Regression checks cover completed sales, received/pending purchases, warehouse transfers, journal balance, API detail/list serialization and rollback after accounting failure.
+No production migration, backfill or deployment has been performed. Existing posted numbers, fiscal-year dates, opening balances, stock quantities and journal values have not been rewritten.
 
-Baseline validation:
+## Confirmed business policies
 
-- Initial Artisan commands could not run because `vendor/autoload.php` was absent. Locked Composer dependencies were installed locally, without dependency upgrades or lockfile edits.
-- `php artisan about`: Laravel 10.49.1, PHP 8.3.32; application boots.
-- `php artisan route:list --except-vendor`: succeeds, 843 routes. Route listing does not prove every handler is callable.
-- Original `php artisan test`: 2 passed, 16 failed. Feature tests require a seeded MySQL database; connection is refused. Original tests are not a clean-room migration suite and some write journals without automatic rollback.
-- `npm run production`: fails because `cross-env`/`node_modules` are absent. The root Mix configuration and JavaScript lockfile are also absent. No frontend source changed in this phase.
-- Before repairs, the new regression tests reproduced missing sale/transfer relations and the required purchase receipt constraint.
+- Extend existing `fiscal_years`; preserve calendar-year and other historical ranges. Do not introduce `financial_years` or automatically change dates to April–March.
+- Migrate artificial 1970 opening documents separately. Current backfill assigns ownership while preserving their dates and balances.
+- A supplier bill recognizes its full payable/payment. Received value posts to inventory; unreceived value posts to an active `goods_in_transit` asset account.
+- Purchase status 1 Received persists full ordered quantity in `product_purchases.recieved`; status 2 Partial requires validated line-level `received_qty`; status 3 Pending persists zero received quantity. Status 4 Ordered is an unbilled PO with no stock, journal or payment effect at creation.
+- Partial/Pending purchases require the goods-in-transit account when unreceived value exists. Missing required mappings roll back all purchase effects. Charges/discounts are apportioned by line value; free lines use quantity. Free goods avoid zero-value journals. Bank payments credit bank.
 
-Effect review: company scope, capabilities and permission rules remain legacy behavior. Existing quantity projections and journal rules are preserved; the receipt field now records the quantity already added to stock. Tax calculation and document numbering are unchanged. No open-item or audit subsystem is introduced. API responses now load the intended existing records. No migration or historical-data rewrite is needed for these repairs.
+Subsequent receipt release, legacy web update parity, service-item posting, tax/valuation semantics and idempotency remain gated shared-engine work.
 
-Known limits remain: web and API transaction writers differ; generic stock writes ignore batch/variant identities; numbering uses timestamps/counts; missing accounting configuration can skip posting; payment/accounting precision and period controls need later phases. SQLite fixtures do not prove MySQL migration compatibility, concurrent posting safety, full HTTP authorization, or production-data parity.
+## Phase 0: delivered transaction regression baseline
 
-## Confirmed financial-year policy
+Existing service transactions retain their document, stock, payment and accounting effects while returning their intended relationships:
 
-The user selected: extend existing `fiscal_years`, preserve existing date ranges, and migrate artificial 1970 opening-balance documents separately. Do not create a parallel `financial_years` authority or automatically convert history to April–March.
+- Sale line/product, purchase line/payment and transfer line relationships are repaired.
+- Required purchase receipt fields reflect the approved Received/Partial/Pending/Ordered behavior above.
+- Regressions exercise original commercial/accounting table definitions, service atomicity, stock, payments, balanced journals, receipt quantities and rollback on accounting failure.
+- Locked Composer dependencies are installed locally without upgrades or lockfile changes.
 
-## Phase 1, package A: additive schema and legacy backfill
+Current ERP service proof: 14 tests, 82 assertions in the isolated suite. Fixtures support SQLite for isolated logic and an explicitly opted-in disposable MySQL database for schema/runtime proof.
 
-Implemented under documents 03/05:
+Unresolved stabilization work includes web/API writer convergence, stock identities, authoritative numbering, posting configuration/precision, periods, idempotency and source-of-truth ledgers. Owning phases and cutover gates are listed in [the execution plan](../ZOLO_ERP_EXECUTION_PLAN.md).
 
-- Company, branch, membership and user-branch tables. Membership user IDs retain the existing unsigned INT type. Composite foreign keys prevent a membership from selecting another company's branch.
-- Nullable indexed company keys on 32 audited core tables when present, and a nullable warehouse branch key. Existing core keys, uniqueness and quantities remain unchanged. Operational/industry tables still need their own audited migrations.
-- Existing `fiscal_years` gains company ownership, status and lock/close metadata. Its table name, legacy boolean and date ranges remain available.
-- `erp:backfill-company-context --dry-run` reports counts and reference problems without creating even the default company. The real command initializes DEFAULT from safe general settings, creates MAIN, maps warehouses/users and assigns legacy core rows in batches of 500 inside one transaction. Existing legal names and role overrides are preserved. Closed legacy FYs become `closed`; their dates never change.
-- Real backfill requires maintenance mode; workers and the scheduler must also be paused. Unexpected company ownership, invalid branches, orphan references and overlapping/inverted FYs stop assignment. Failures roll back company creation and legacy assignments together. Source-confirmed zero sentinels for digital/service UOMs and opening-stock payment accounts are preserved. Default metadata uses the latest settings, and dry-run validates its timezone before reporting success.
-- Artificial 1970 opening records are reported and receive company ownership only. Their dates and balances remain unchanged; their later financial-year/open-item migration remains separate.
+## Phase 1: company schema, migration and backfill
 
-Validation: 16 isolated integration tests, 83 assertions, cover dry-run, latest settings import, timezone validation, repeatability, legacy sentinels, orphan rejection, multi-company rejection, maintenance mode, FY overlap, branch isolation, migration rollback, interrupted backfill rollback, multiple batches and opening-date preservation. Phase 0 adds another 7 tests and 50 assertions. These are SQLite proofs; the MySQL migration rehearsal and original seeded feature suite remain unverified because no test MySQL connection is available.
+Delivered foundation:
 
-Effects: company/branch ownership metadata is added; stock quantities, journal values, tax, document references and payment balances are not rewritten. No capability, permission or request-scoping activation occurs in this package. No production database migration/backfill was executed. Package A is complete; phase 1 as a whole remains pending.
+- Company, branch, company membership and user-branch tables. Membership IDs respect legacy unsigned INT users; composite FKs prevent cross-company branch membership.
+- Nullable indexed `company_id` on 32 audited core tables when present, plus nullable warehouse `branch_id`. Other operational/industry ownership migrations remain pending.
+- Existing fiscal years gain company, status and lock/close metadata; original dates and `is_closed` are preserved.
+- Core company-key DDL validates all existing artifacts before mutation and resumes missing columns/indexes after partially committed MySQL DDL.
+- Company currency defaults must exist during dry-run. Migration 000003 widens `base_currency_id` to match the BIGINT currency ID and adds a validated restricting FK.
+- `erp:backfill-company-context --dry-run` performs zero writes. Real backfill requires maintenance mode and paused writers/workers/scheduler, initializes DEFAULT/MAIN, and assigns audited rows/memberships in one transaction with batches of 500.
+- Unexpected ownership, invalid branches, orphan references and overlapping/inverted fiscal years block assignment. Existing legal names and role overrides survive repeat runs; known legitimate zero sentinels are preserved.
+- The unsafe scheduled full-database reset is removed. Manual reset requires the demo environment, explicit confirmation and a readable nonempty dump.
 
-Next gate: rehearse on disposable MySQL with representative legacy data; fix reported ownership/schema problems; integrate context resolution and convert both Eloquent and raw-query readers/writers, jobs and cache keys; then verify isolation and company-aware uniqueness. Do not start dependent capability/ledger cutover or activate a second company before those gates pass.
+Proof: 21 foundation tests, 97 assertions; three MySQL migration/recovery tests, 16 assertions; three scheduler/reset safety tests, 11 assertions. The MySQL proof includes the full source migration chain, injected failure after committed ALTER, resumption, rollback without row loss, currency width/FK validation, and backfill dry-run/write/repeat.
 
-## Phase 1, package B: company/FY context primitives
+Use [the runbook](COMPANY_BACKFILL_RUNBOOK.md) for explicit disposable database guards, rehearsal and reviewed rollback order.
 
-Implemented under documents 03/22:
+## Phase 1: authorized context and financial-year setup
 
-- Immutable `CompanyContext` holds company, branch and financial-year IDs.
-- `CompanyContextResolver` verifies active/non-deleted user identity, membership, active company and explicit user-branch assignments. Default selection requires exactly one default company and an authorized MAIN branch. Financial years are selected only inside the company; implicit selection requires exactly one matching existing date range, using the company's timezone.
-- Historical reads may select closed years. Explicit `assertPostingDate` checks the actual FY record, validates ISO dates, rejects dates outside the year, and blocks legacy closed, soft-closed and locked periods. Lock dates are inclusive. Closing Company A does not lock Company B.
-- `company.context` middleware validates integer context headers or session IDs, rejects inactive/deleted users and spoofed company/branch/FY selection, exposes the immutable context through request attributes and clears it after success or failure. Body `company_id` is not trusted as context.
+- Immutable `App\Services\Platform\CompanyContext` contains company, branch and FY IDs.
+- Resolver checks active/non-deleted user, active company, membership, branch grants and company-owned fiscal years.
+- Default company selection requires exactly one default membership. Implicit branch selection uses the sole authorized active branch, including non-MAIN branches. Multiple authorized branches require explicit selection.
+- Company-local date must match exactly one existing FY unless an authorized FY is explicitly selected. Closed historical years remain readable; posting assertions reject closed/non-open periods, out-of-year dates and inclusive lock dates.
+- Header/session tuple uses `company_id`, `branch_id`, `financial_year_id`. A company-header switch discards stale dependent session values. Body IDs are not trusted as context.
+- Middleware exposes context through request attributes and clears it after success/failure.
+- Authenticated web `/company/financial-years/setup` and API `/api/v1/company-context/financial-years` remain reachable before branch/FY resolution.
+- Setup requires active Admin/Owner membership after any company role override. Creation locks the company, rejects inclusive overlap and preserves historical dates. Inputs respect the existing 100-character name column and MySQL date range.
+- Missing current FY redirects a web administrator to setup or returns HTTP 409 with an authorized setup URL; staff receives an administrator-required response.
 
-Validation: 27 isolated tests, 34 assertions, exercise company/branch/FY spoofing, branch restrictions, default ambiguity, company closure, period locks, malformed dates, overlapping FY selection, header/session validation and precedence, timezone rollover, deleted identities and request cleanup. These are resolver/middleware tests, not evidence that existing sale/journal routes are isolated.
+The combined context/setup/catalog-reader tests currently contain 54 tests and 148 assertions. Setup form checks pass in headless Chrome at desktop/mobile widths, including labels, native validation, CSRF field and keyboard focus. These checks do not establish live legacy transaction browser parity.
 
-Effects: middleware is registered but not attached to legacy routes; transaction services do not yet enforce the new context or period assertion. Existing quantities, journals, tax, numbering, history and user flows remain unchanged. Controllers/services must consume the context only after membership middleware runs. Permissions, capabilities, company scopes, raw queries, job context and concurrency protection still require integration before activation.
+## Phase 1: implemented API reader isolation
 
-Total targeted proof so far: 50 tests, 167 assertions across ERP regressions and company packages A/B. Full phase 1 and all dependent phases remain pending. The requested disposable MySQL rehearsal connection is still needed; the original feature suite and production-schema/data cutover remain unverified.
+Six authenticated API GET routes currently enforce trusted company context:
+
+- Product list, search and detail.
+- Customer and supplier lists.
+- Stock valuation.
+
+Explicit query scopes constrain root/nested master ownership. Stock rows must agree with their product and warehouse company, and their warehouse must belong to the selected branch. Catalog quantity is calculated from visible branch stock; stored aggregate quantities are preserved. Valuation rejects other-company/branch warehouse IDs. Real HTTP tests cover guessed IDs, header spoofing, authorized company switching, corrupt nested masters/stock and restricted branches.
+
+These read routes require migration/backfill and authorized memberships. Transaction writers and legacy/raw routes still require integration. Financial-year business-date mapping for historical transactions/openings remains a separate gate.
+
+## Current validation evidence
+
+| Suite | Latest verified result | Scope |
+|---|---|---|
+| `phpunit.company.xml` on MySQL 8.4 | 95 tests, 354 assertions | Full source migrations/recovery, commercial services, backfill, context/setup, real bounded-reader HTTP isolation and reset safety |
+| `phpunit.legacy-mysql.xml` | 16 tests, 54 assertions | Original seeded accounting services/pages, POS/dashboard, API auth/catalog/accounting |
+| Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
+
+[CI run 37126819051](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051) passes both PHPUnit suites for code commit `7fa23eb`. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
+
+The original seed export lacks brand IDs 10/16/17 and unit IDs 4/9. The legacy bootstrap proves dry-run rejection, supplies labelled fixture-only parents, then rehearses dry-run/write/dry-run. Retained installations need reviewed master data; fixture placeholders are not production repairs.
+
+Fresh empty-fixture migration time was 3.617 seconds; migration/seed/backfill preparation took 4.878 seconds locally. These are fixture timings, not production lock/downtime estimates.
+
+The initial seeded-suite connection failure is resolved by the disposable MySQL rehearsal. Frontend dependency/build configuration remains unverified; the historical build baseline failed with absent dependencies/configuration. No frontend dependency changes were needed for the delivered backend packages.
+
+## Open Phase 1 work
+
+[Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md) inventories all 125 application tables: 123 active literal creators and two configured Spatie creators. Discovery is complete; ownership migration and runtime isolation are not.
+
+Remaining gates:
+
+1. Convert sales/purchase/journal readers and writers, actual web routes and raw queries; stamp trusted ownership and validate every parent, branch and posting date.
+2. Complete operational/settings ownership migrations/backfill, including imported schemas. Active references to floors/kitchens/menu_type/services lack creators in this repository.
+3. Convert applicable business uniqueness and validators; add reviewed same-company FKs and mandatory ownership after writer/backfill parity.
+4. Integrate scheduled writers, company caches/invalidation, imports, exports, downloads and public file storage/access.
+5. Rehearse retained representative data at production scale, including locks, concurrency, reconciliation and live transaction browser flows.
+
+Full F-02/F-03/F-04/F-05 acceptance remains open. F-11 local/CI fixture proof is delivered; production-scale retained-data acceptance is pending.
+
+## UI modernization direction
+
+Docs [31](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [32](32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md) and [33](33_COMMON_UI_COMPONENT_LIBRARY.md) are specifications, not claims that their components/screens exist.
+
+Retain Blade/Bootstrap/jQuery and extend `public/css/salepro-neo.css`. Preserve Optech operator workflows/shortcuts using shared backend services, General Trading terminology, capability/profile extensions, and common components. Migrate UI incrementally with responsive, keyboard, accessibility, state and visual proof. UI planning does not bypass company/engine gates.
 
 ## Delivery order
 
-1. Phase 0: baseline, writer inventory and passing transaction regressions.
-2. Phase 1: additive company/branch/membership schema; extend `fiscal_years`; dry-run backfill; validate ownership and uniqueness before enabling isolation.
-3. Phase 2: capabilities and profiles with legacy module compatibility.
-4. Phase 3: atomic document series.
-5. Phase 4: inventory movement ledger and reconciliation.
-6. Phase 5: accounting hardening and open items.
-7. Phase 6: converge sales/purchase application services and web/API writers.
-8. Phases 7–12: tax, returns/documents, operations, industry profiles, UI/API/security, migration/UAT/deployment.
+Canonical phases remain: 0 regression baseline; 1 Company/Branch/FY; 2 capabilities; 3 atomic series; 4 inventory ledger; 5 accounting/open items; 6 shared commercial services; 7 tax; 8 returns/documents; 9 manufacturing/job work; 10 profiles; 11 UI/API/security completion; 12 migration/UAT/deployment.
 
-Each completed work package is validated, committed and pushed before dependent work starts. Full phase completion requires its documented acceptance criteria; an additive schema package alone does not establish company isolation.
-
-## Audit correction: purchase receipt and supplier-bill recognition
-
-Audit F-12 identified status 2 as Partial, not Pending. `PurchaseService` now validates per-line `received_qty` for Partial, records only actual receipts in stock and `product_purchases.recieved`, and uses status 3 for Pending. Received records full quantity. Ordered is an unbilled PO with no stock/journal/payment effect at creation.
-
-Confirmed policy: the supplier bill recognizes full AP/payment, with received value in inventory and unreceived value in an active `goods_in_transit` asset account. Missing required mappings roll back purchase, stock, cost and payment. Bill charges/discounts are apportioned by line value; free lines use quantity. Free goods avoid zero-value journals. Initial bank payments credit bank rather than cash.
-
-Validation: 14 isolated ERP regression tests, 82 assertions pass. New proof covers 4-of-10 receipts, billed inventory/transit/AP split, pending transit, missing-account rollback, invalid receipt quantities, API validation, unbilled orders, free goods and bank payment classification.
-
-This closes the audited purchase-creation regression. Subsequent receipt release, legacy web update parity, service-item posting, company scope, posting-cost valuation, tax semantics and idempotency still belong to their gated shared-engine phases. No historical purchase or journal was rewritten.
-## Audit correction: migration recovery and MySQL proof
-
-F-01/F-09: resumable core company-key DDL validates existing artifacts before mutation. Company currency defaults are checked during dry-run; migration 000003 aligns the reference to BIGINT and adds a validated FK. MySQL 8.4.0 proof passes 74 tests, 249 assertions, including the full source chain, committed-DDL fault recovery, backfill and receipt/accounting regressions. A dedicated GitHub Actions workflow repeats the suite. This supersedes the earlier lack of a disposable MySQL connection. Production-scale locking/duration, representative retained production data and original seeded UI smoke flows remain unverified. No production migration was executed.
-## Audit correction: coherent context selection
-
-F-07/F-08: the sole authorized active branch is now the implicit branch, including non-MAIN branches. Company-header changes discard stale dependent session branch/FY IDs; explicit IDs remain authorized. Invalid company timezone fails setup validation. Context proof is now 33 tests, 43 assertions on MySQL. No-FY resolver failure is covered; the authorized setup path is the next correction. Legacy business route activation remains blocked on full isolation.
-## Audit correction: authorized FY setup
-
-F-06: company administrators can configure existing `fiscal_years` through authenticated web/API setup routes without a pre-existing branch/FY tuple. Active membership and effective Admin/Owner role are required. The company row lock serializes creation; inclusive overlap and malformed dates are rejected. No current FY produces an authorized setup redirect/409 response. Historical date ranges and artificial openings remain unchanged.
-
-Proof: 46 context/setup tests, 86 assertions pass on SQLite and MySQL; headless Chrome form checks pass at desktop/mobile widths. GitHub Actions passed the earlier 74-test suite for 339576d and daf96b6. Business-route activation is still blocked on comprehensive reader/writer, table, constraint, job/cache and file isolation.
-## Audit correction: complete table ownership inventory
-
-The Codebase Onboarding Engineer source inventory covers all 125 application tables in `COMPANY_TABLE_OWNERSHIP_MATRIX.md`. All 123 active literal creators and both configured Spatie creators are represented. The matrix distinguishes identity/reference metadata, company business rows, parent-derived rows and mixed settings. It records actual source owners, ID/FK mismatches, backfill/unique-index rules, missing schemas and required HTTP/raw/job/cache/file tests. F-04 discovery is complete; operational migrations and full F-02/F-03/F-04/F-05 acceptance remain open.
-## Audit correction: original seeded MySQL smoke
-
-Original SalePro tests now pass on an isolated full-source MySQL schema: 16 tests, 54 assertions covering web accounting pages/POS/dashboard, API auth/catalog/accounting and journal behavior. `phpunit.legacy-mysql.xml` prepares original tenant/account seeders, proves rejection of their missing brand/unit parents, adds labelled fixture-only masters, and rehearses dry-run/write/dry-run. The same suite is part of CI. Earlier original-suite failures from the unavailable seeded database are superseded by this proof. Retained-data repairs, production scale/locking and live browser transaction parity remain open acceptance checks.
-## Phase 1 reader package: actual API company and branch isolation
-
-Product list/search/detail, partner lists and stock valuation now attach `company.context` after Sanctum authentication and consume its trusted request attribute. Nine involved models expose explicit company query scopes. Nested masters and stock parents are constrained; stock warehouse ownership follows the selected branch. Product detail's absent stock relation is repaired. Catalog quantity is computed from visible branch stock without changing persisted aggregate quantity.
-
-Proof: seven real HTTP IDOR/ownership tests; combined MySQL suite passes 95 tests, 354 assertions. Original seeded smoke passes 16 tests, 54 assertions with the isolated full-source preparation. Read routes require migration/backfill and memberships before use. FY setup remains reachable without branch/FY context. Scope applies only to these proven reader routes; transaction writers, legacy/raw routes, other operational tables, uniqueness/FKs, jobs/caches/public files and full company activation remain pending.
-Latest CI for 7fa23eb passes both suites: [run 37126819051](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051). Phase 1 remains incomplete; F-02/F-03 transaction/legacy isolation, F-04 operational ownership and F-05 final constraints are the next implementation gates. Imported-schema scope for floors/kitchens/menu_type/services is awaiting user clarification. No second company or dependent capability is activated.
+Every completed work package is validated, committed and pushed before dependent work starts. Package completion does not establish full phase completion. Historical commit-by-commit corrections belong in the audit resolution log.

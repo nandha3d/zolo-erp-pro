@@ -1,7 +1,7 @@
 {
   "repository": "vigneshsinna/zolo-erp-pro",
   "generated": "2026-10-03",
-  "markdown_count": 36,
+  "markdown_count": 39,
   "entrypoint": "00_IMPLEMENTATION_MASTER_INDEX.md",
   "codex_entrypoint": "26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md",
   "files": [
@@ -40,7 +40,10 @@
     "COMPANY_BACKFILL_RUNBOOK.md",
     "IMPLEMENTATION_PROGRESS.md",
     "STOCK_AND_TRANSACTION_WRITER_AUDIT.md",
-    "COMPANY_TABLE_OWNERSHIP_MATRIX.md"
+    "COMPANY_TABLE_OWNERSHIP_MATRIX.md",
+    "31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md",
+    "32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md",
+    "33_COMMON_UI_COMPONENT_LIBRARY.md"
   ],
   "categories": {
     "authoritative_specification": [
@@ -74,7 +77,10 @@
       "27_REQUIREMENT_TRACEABILITY_MATRIX.md",
       "28_PHASED_DELIVERY_ROADMAP.md",
       "29_EXISTING_OPTECH_MODULE_DISPOSITION.md",
-      "30_IMPLEMENTATION_BACKLOG_AND_ACCEPTANCE_CRITERIA.md"
+      "30_IMPLEMENTATION_BACKLOG_AND_ACCEPTANCE_CRITERIA.md",
+      "31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md",
+      "32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md",
+      "33_COMMON_UI_COMPONENT_LIBRARY.md"
     ],
     "overview": [
       "README.md"

@@ -55,3 +55,10 @@ Document 26 defines canonical phases 0–12. Extend existing `fiscal_years`, pre
 
 SQLite fixtures prove isolated logic only. MySQL schema/recovery, concurrency and representative cutover evidence remain required. Additive inactive foundations may precede deferred stabilization work under the execution plan's explicit disposition; full isolation and capability activation may not.
 - [Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md): all 125 application tables, source owners, migration/constraint requirements, missing schema and remaining isolation gates.
+## UI modernization specifications
+
+- [31 — Modern UI design system and screen migration](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md): extend the existing Blade/Bootstrap design foundation; preserve workflow speed and keyboard/accessibility behavior.
+- [32 — Optech workflow-to-screen mapping](32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md): use screenshots as operator evidence with shared ERP services and profile extensions.
+- [33 — Common UI component library](33_COMMON_UI_COMPONENT_LIBRARY.md): target rendering/interaction contracts; components require implementation and validation.
+
+Read these with document 20 when migrating a screen. Existing backend/ownership acceptance gates still apply.

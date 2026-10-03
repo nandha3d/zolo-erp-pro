@@ -377,6 +377,8 @@ Sources: [UI and setup](documents/zolo_erp_implementation_docs/20_UI_UX_NAVIGATI
 
 ### UI and setup
 
+UI modernization follows [design system and migration rules](documents/zolo_erp_implementation_docs/31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [Optech screen mapping](documents/zolo_erp_implementation_docs/32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md), and [common component contracts](documents/zolo_erp_implementation_docs/33_COMMON_UI_COMPONENT_LIBRARY.md). Retain Blade/Bootstrap/jQuery and extend the existing `salepro-neo.css` foundation. Preserve operator speed/shortcuts; use profile extensions and shared services. These specifications do not imply implemented components or completed company/engine gates.
+
 Extend the existing Blade/Bootstrap application progressively. Establish shared business behavior before any frontend framework rewrite. Integrate scripts/views through explicit application hooks, not response-string HTML injection.
 
 Use business navigation: Home, Sales, Purchases, Inventory, Accounts, People, Operations, Reports and Settings. Show entries based on company capabilities and permissions. Historical access remains available when supported.

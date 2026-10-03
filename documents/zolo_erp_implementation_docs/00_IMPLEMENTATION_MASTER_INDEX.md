@@ -76,7 +76,7 @@ Optional SaaS Tenant
 
 ## Supporting execution documents
 
-The numbered 00–30 documents are authoritative specifications. Execution state and operations are maintained separately:
+The numbered 00–33 documents are authoritative specifications. Execution state and operations are maintained separately:
 
 - [Company backfill runbook](COMPANY_BACKFILL_RUNBOOK.md): command guards, rehearsal and rollback procedure.
 - [Implementation progress](IMPLEMENTATION_PROGRESS.md): delivered packages, recorded proof and remaining activation gates.
@@ -84,3 +84,10 @@ The numbered 00–30 documents are authoritative specifications. Execution state
 
 Use [the execution plan](../ZOLO_ERP_EXECUTION_PLAN.md) for source-specific tasks, with document 26's canonical phases 0–12. CompanyContext is `App\Services\Platform\CompanyContext`; FY authority is existing `fiscal_years`; DEFAULT/MAIN initialization belongs to `erp:backfill-company-context`.
 - [Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md): all 125 application tables, source owners, migration/constraint requirements, missing schema and remaining isolation gates.
+## UI modernization specifications
+
+- [31 — Modern UI design system and screen migration](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md): extend the existing Blade/Bootstrap design foundation; preserve workflow speed and keyboard/accessibility behavior.
+- [32 — Optech workflow-to-screen mapping](32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md): use screenshots as operator evidence with shared ERP services and profile extensions.
+- [33 — Common UI component library](33_COMMON_UI_COMPONENT_LIBRARY.md): target rendering/interaction contracts; components require implementation and validation.
+
+Read these with document 20 when migrating a screen. Existing backend/ownership acceptance gates still apply.
