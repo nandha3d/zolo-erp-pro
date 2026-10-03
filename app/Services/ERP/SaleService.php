@@ -8,6 +8,9 @@ use App\Models\Product;
 use App\Models\Product_Warehouse;
 use App\Models\Payment;
 use App\Services\Accounting\AccountingService;
+use App\Services\Inventory\InventoryMovementService;
+use App\Services\Inventory\StockLine;
+use App\Services\Inventory\StockMovementCommand;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
@@ -140,21 +143,21 @@ class SaleService
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitPrice)),
                 ]);
+            }
 
-                // Deduct stock if sale is completed
-                if (($data['sale_status'] ?? 1) == 1) {
-                    $product = Product::find($productId);
-                    if ($product) {
-                        $product->decrement('qty', $qty);
-                    }
-
-                    $pw = Product_Warehouse::where('product_id', $productId)
-                        ->where('warehouse_id', $data['warehouse_id'])
-                        ->first();
-                    if ($pw) {
-                        $pw->decrement('qty', $qty);
-                    }
-                }
+            // A completed sale issues stock through the ledger; COGS is the cost persisted on the movement.
+            if (($data['sale_status'] ?? 1) == 1) {
+                $movement = app(InventoryMovementService::class)->issue(new StockMovementCommand(
+                    date: $sale->created_at->toDateString(),
+                    lines: array_map(fn ($item) => StockLine::fromArray(['uom_id' => $item['sale_unit_id'] ?? null] + $item), $data['items']),
+                    warehouseId: (int) $data['warehouse_id'],
+                    sourceType: 'sale',
+                    sourceId: $sale->id,
+                    sourceNo: $referenceNo,
+                    idempotencyKey: 'sale:'.$sale->id,
+                    userId: $userId,
+                ));
+                $totalCost = -(float) $movement->lines->sum('value');
             }
 
             // Create Payment record if paid amount > 0
