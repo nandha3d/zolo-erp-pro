@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Services\Inventory;
+
+use App\Services\Platform\CompanyContext;
+use InvalidArgumentException;
+
+/**
+ * $warehouseId is the receiving/issuing/adjusting warehouse, or the transfer source.
+ * $idempotencyKey must be namespaced by the caller, e.g. "sale:42".
+ */
+final readonly class StockMovementCommand
+{
+    /** @param list<StockLine> $lines */
+    public function __construct(
+        public string $date,
+        public array $lines,
+        public ?int $warehouseId = null,
+        public ?int $toWarehouseId = null,
+        public ?string $sourceType = null,
+        public ?int $sourceId = null,
+        public ?string $sourceNo = null,
+        public ?string $idempotencyKey = null,
+        public ?string $reason = null,
+        public ?int $userId = null,
+        public ?CompanyContext $context = null,
+    ) {
+        if ($lines === [] || array_filter($lines, fn ($line) => !$line instanceof StockLine) !== []) {
+            throw new InvalidArgumentException('A stock movement needs at least one stock line.');
+        }
+        if (strtotime($date) === false) {
+            throw new InvalidArgumentException('A stock movement needs a valid date.');
+        }
+    }
+}
