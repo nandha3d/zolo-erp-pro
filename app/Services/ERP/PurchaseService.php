@@ -99,6 +99,7 @@ class PurchaseService
                     'variant_id' => $item['variant_id'] ?? null,
                     'imei_number' => $item['imei_number'] ?? null,
                     'qty' => $qty,
+                    'recieved' => ($data['status'] ?? 1) == 1 ? $qty : 0,
                     'purchase_unit_id' => $item['purchase_unit_id'] ?? 1,
                     'net_unit_cost' => $unitCost,
                     'discount' => (float) ($item['discount'] ?? 0),

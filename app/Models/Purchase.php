@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
@@ -42,6 +43,16 @@ class Purchase extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class,'product_purchases')->withPivot('qty','tax','tax_rate','discount','total');
+    }
+
+    public function productPurchases(): HasMany
+    {
+        return $this->hasMany(ProductPurchase::class, 'purchase_id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'purchase_id');
     }
 
     public function getCreatedAtFormattedAttribute()

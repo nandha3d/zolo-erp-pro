@@ -24,6 +24,11 @@ class Sale extends Model
         return $this->belongsToMany('App\Models\Product', 'product_sales');
     }
 
+    public function productSales(): HasMany
+    {
+        return $this->hasMany(Product_Sale::class, 'sale_id');
+    }
+
     public function biller()
     {
         return $this->belongsTo('App\Models\Biller');

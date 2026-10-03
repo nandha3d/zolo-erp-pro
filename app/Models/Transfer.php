@@ -30,4 +30,9 @@ class Transfer extends Model
     {
          return $this->hasMany('App\Models\ProductTransfer','transfer_id');
     }
+
+    public function productTransfers()
+    {
+        return $this->products();
+    }
 }
