@@ -90,3 +90,7 @@ Seven real HTTP regressions cover pagination/filter counts, guessed IDs, branch 
 Validation: SQLite context suite 61 tests/256 assertions; disposable MySQL context plus ERP service suite 75 tests/335 assertions. No migration or production data mutation is required by this package. Existing API envelopes and filters are retained. This is a read boundary; transaction FY assignment, all writers, legacy/raw/operational routes and final ownership constraints remain gated. Second-company/capability activation remains blocked.
 
 Progress evidence is consolidated into current behavior, including the approved supplier-bill policy. User-added UI specifications 31–33 are indexed in the README/master index/manifest and engineering reference. They retain Blade/Bootstrap/jQuery and the existing theme with shared component contracts; UI implementation remains staged behind its owning gates.
+
+### Transaction-reader CI proof
+
+[CI run 37134384890](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37134384890) passes on code commit `523fb93`: the combined company foundation suite has 102 tests/459 assertions, followed by 16 original seeded smoke tests/54 assertions. Current progress/reference evidence is updated to these results. The local disposable MySQL server was stopped after validation; retained fixture files remain isolated under ignored scratch storage.

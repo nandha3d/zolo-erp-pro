@@ -87,11 +87,12 @@ These read routes require migration/backfill and authorized memberships. Transac
 
 | Suite | Latest verified result | Scope |
 |---|---|---|
-| Targeted company context + ERP regression suites on MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
+| `phpunit.company.xml` in CI on MySQL 8.4 | 102 tests, 459 assertions | Full source migrations/recovery, backfill, commercial services, context/setup, ten bounded HTTP readers and reset safety |
+| Targeted company context + ERP regression suites on local MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
 | `phpunit.legacy-mysql.xml` | 16 tests, 54 assertions | Original seeded accounting services/pages, POS/dashboard, API auth/catalog/accounting |
 | Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
-[CI run 37126819051](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051) passed both PHPUnit suites for earlier code commit `7fa23eb` (95 foundation tests/354 assertions and 16 seeded smoke tests/54 assertions). Current transaction-package CI proof is recorded after its push. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
+[CI run 37134384890](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37134384890) passes both PHPUnit suites for code commit `523fb93`. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
 
 The original seed export lacks brand IDs 10/16/17 and unit IDs 4/9. The legacy bootstrap proves dry-run rejection, supplies labelled fixture-only parents, then rehearses dry-run/write/dry-run. Retained installations need reviewed master data; fixture placeholders are not production repairs.
 
