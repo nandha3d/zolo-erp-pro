@@ -91,3 +91,6 @@ This closes the audited purchase-creation regression. Subsequent receipt release
 ## Audit correction: migration recovery and MySQL proof
 
 F-01/F-09: resumable core company-key DDL validates existing artifacts before mutation. Company currency defaults are checked during dry-run; migration 000003 aligns the reference to BIGINT and adds a validated FK. MySQL 8.4.0 proof passes 74 tests, 249 assertions, including the full source chain, committed-DDL fault recovery, backfill and receipt/accounting regressions. A dedicated GitHub Actions workflow repeats the suite. This supersedes the earlier lack of a disposable MySQL connection. Production-scale locking/duration, representative retained production data and original seeded UI smoke flows remain unverified. No production migration was executed.
+## Audit correction: coherent context selection
+
+F-07/F-08: the sole authorized active branch is now the implicit branch, including non-MAIN branches. Company-header changes discard stale dependent session branch/FY IDs; explicit IDs remain authorized. Invalid company timezone fails setup validation. Context proof is now 33 tests, 43 assertions on MySQL. No-FY resolver failure is covered; the authorized setup path is the next correction. Legacy business route activation remains blocked on full isolation.

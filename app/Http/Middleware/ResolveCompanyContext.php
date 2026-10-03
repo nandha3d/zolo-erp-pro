@@ -22,11 +22,16 @@ class ResolveCompanyContext
             throw new AuthorizationException('Active user required for company access.');
         }
 
+        $companyId = $this->id($request, 'X-Company-ID', 'company_id');
+        $sessionCompany = $request->hasSession() ? $request->session()->get('company_id') : null;
+        // A company header selects a new tuple; old-company dependent session IDs are invalid.
+        $useSessionDependents = !$request->headers->has('X-Company-ID')
+            || ($sessionCompany !== null && filter_var($sessionCompany, FILTER_VALIDATE_INT) === $companyId);
         $context = $this->resolver->resolve(
             $user->id,
-            $this->id($request, 'X-Company-ID', 'company_id'),
-            $this->id($request, 'X-Branch-ID', 'branch_id'),
-            $this->id($request, 'X-Financial-Year-ID', 'financial_year_id'),
+            $companyId,
+            $this->id($request, 'X-Branch-ID', 'branch_id', $useSessionDependents),
+            $this->id($request, 'X-Financial-Year-ID', 'financial_year_id', $useSessionDependents),
         );
         $request->attributes->set(CompanyContext::class, $context);
         try {
@@ -37,10 +42,10 @@ class ResolveCompanyContext
         }
     }
 
-    private function id(Request $request, string $header, string $sessionKey): ?int
+    private function id(Request $request, string $header, string $sessionKey, bool $useSession = true): ?int
     {
         $value = $request->header($header);
-        if ($value === null && $request->hasSession()) {
+        if ($value === null && $useSession && $request->hasSession()) {
             $value = $request->session()->get($sessionKey);
         }
         if ($value === null) {

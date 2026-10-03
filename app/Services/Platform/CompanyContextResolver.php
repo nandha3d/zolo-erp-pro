@@ -38,16 +38,19 @@ class CompanyContextResolver
         if (!$company) {
             throw new AuthorizationException('Company access denied.');
         }
+        if (!in_array($company->timezone, timezone_identifiers_list(), true)) {
+            throw ValidationException::withMessages(['company_id' => 'Company timezone requires valid setup.']);
+        }
 
         $branches = $company->branches()->where('is_active', true)
             ->whereIn('id', DB::table('company_user_branches')->select('branch_id')
                 ->where('company_id', $companyId)->where('user_id', $userId));
         if ($branchId === null) {
-            $main = (clone $branches)->where('code', 'MAIN')->first();
-            if (!$main) {
+            $authorized = (clone $branches)->get();
+            if ($authorized->count() !== 1) {
                 throw ValidationException::withMessages(['branch_id' => 'Select an authorized branch.']);
             }
-            $branchId = $main->id;
+            $branchId = $authorized->sole()->id;
         } elseif (!(clone $branches)->whereKey($branchId)->exists()) {
             throw new AuthorizationException('Branch access denied.');
         }

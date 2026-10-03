@@ -299,4 +299,69 @@ class CompanyContextTest extends ErpServiceTestCase
         $this->assertSame($nextYear->id, $this->resolver->resolve(1)->financialYearId);
         $this->assertSame($this->otherYear->id, $this->resolver->resolve(2)->financialYearId);
     }
+
+    public function test_sole_authorized_non_main_branch_is_selected(): void
+    {
+        $this->branch->update(['code' => 'NORTH']);
+        $this->assertSame($this->branch->id, $this->resolver->resolve(1)->branchId);
+    }
+
+    public function test_multiple_authorized_branches_require_explicit_selection(): void
+    {
+        $branch = $this->company->branches()->create(['code' => 'NORTH', 'name' => 'North']);
+        DB::table('company_user_branches')->insert([
+            'company_id' => $this->company->id, 'user_id' => 1, 'branch_id' => $branch->id,
+        ]);
+        $this->expectException(ValidationException::class);
+        $this->resolver->resolve(1);
+    }
+
+    public function test_company_switch_discards_previous_company_session_dependents(): void
+    {
+        $this->other->users()->attach(1);
+        DB::table('company_user_branches')->insert([
+            'company_id' => $this->other->id, 'user_id' => 1, 'branch_id' => $this->otherBranch->id,
+        ]);
+        $request = Request::create('/', server: ['HTTP_X_COMPANY_ID' => $this->other->id]);
+        $request->setUserResolver(fn () => User::find(1));
+        $session = new Store('context-test', new ArraySessionHandler(120));
+        $session->put([
+            'company_id' => $this->company->id, 'branch_id' => $this->branch->id,
+            'financial_year_id' => $this->year->id,
+        ]);
+        $request->setLaravelSession($session);
+        (new ResolveCompanyContext($this->resolver))->handle($request, function (Request $request) {
+            $context = $request->attributes->get(CompanyContext::class);
+            $this->assertSame($this->other->id, $context->companyId);
+            $this->assertSame($this->otherBranch->id, $context->branchId);
+            $this->assertSame($this->otherYear->id, $context->financialYearId);
+            return response('success');
+        });
+        $this->assertSame($this->company->id, $session->get('company_id'));
+    }
+
+    public function test_explicit_wrong_branch_is_not_discarded_during_company_switch(): void
+    {
+        $this->other->users()->attach(1);
+        $request = Request::create('/', server: [
+            'HTTP_X_COMPANY_ID' => $this->other->id, 'HTTP_X_BRANCH_ID' => $this->branch->id,
+        ]);
+        $request->setUserResolver(fn () => User::find(1));
+        $this->expectException(AuthorizationException::class);
+        (new ResolveCompanyContext($this->resolver))->handle($request, fn () => $this->fail('Handler must not run.'));
+    }
+
+    public function test_invalid_company_timezone_returns_setup_validation_error(): void
+    {
+        $this->company->update(['timezone' => 'invalid/timezone']);
+        $this->expectException(ValidationException::class);
+        $this->resolver->resolve(1);
+    }
+
+    public function test_company_with_no_financial_year_cannot_resolve_business_context(): void
+    {
+        $this->year->delete();
+        $this->expectException(ValidationException::class);
+        $this->resolver->resolve(1);
+    }
 }
