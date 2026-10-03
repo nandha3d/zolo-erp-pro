@@ -26,6 +26,11 @@ class CompanyFoundationTest extends ErpServiceTestCase
             $table->timestamps();
         });
         DB::table('users')->insert(['id' => 1, 'name' => 'Existing operator']);
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('code');
+        });
+        DB::table('currencies')->insert([['id' => 1, 'code' => 'INR'], ['id' => 2, 'code' => 'USD']]);
         Schema::create('general_settings', function (Blueprint $table) {
             $table->increments('id');
             $table->string('company_name')->nullable();
@@ -174,7 +179,7 @@ class CompanyFoundationTest extends ErpServiceTestCase
     public function test_mid_backfill_failure_rolls_back_company_and_legacy_assignments(): void
     {
         DB::listen(function (QueryExecuted $query) {
-            if (str_starts_with($query->sql, 'update "products"')) {
+            if (preg_match('/^update [`"]products[`"]/', $query->sql)) {
                 throw new RuntimeException('Simulated interrupted backfill');
             }
         });
@@ -211,12 +216,13 @@ class CompanyFoundationTest extends ErpServiceTestCase
             'reference_no' => 'opening', 'user_id' => 1, 'customer_id' => 1,
             'warehouse_id' => 1, 'biller_id' => 1, 'item' => 0, 'total_qty' => 0,
             'total_discount' => 0, 'total_tax' => 0, 'total_price' => 100, 'grand_total' => 100,
-            'sale_status' => 1, 'payment_status' => 2, 'created_at' => '1970-01-01 00:00:00',
+            // Noon is inside MySQL TIMESTAMP's valid range; retain the legacy opening date exactly.
+            'sale_status' => 1, 'payment_status' => 2, 'created_at' => '1970-01-01 12:00:00',
         ]);
 
         $this->assertSame(0, Artisan::call('erp:backfill-company-context'));
         $this->assertStringContainsString('sales: 1 legacy opening-date records', Artisan::output());
-        $this->assertSame('1970-01-01 00:00:00', DB::table('sales')->value('created_at'));
+        $this->assertSame('1970-01-01 12:00:00', DB::table('sales')->value('created_at'));
         $this->assertEquals(100, DB::table('sales')->value('grand_total'));
     }
 
@@ -266,5 +272,62 @@ class CompanyFoundationTest extends ErpServiceTestCase
 
         $this->assertSame(0, Artisan::call('erp:backfill-company-context'));
         $this->assertSame('Asia/Kolkata', Company::sole()->timezone);
+    }
+
+    public function test_invalid_numeric_currency_blocks_dry_run_without_writes(): void
+    {
+        DB::table('general_settings')->update(['currency' => '999']);
+        $this->assertSame(1, Artisan::call('erp:backfill-company-context', ['--dry-run' => true]));
+        $this->assertStringContainsString('currency ID does not exist', Artisan::output());
+        $this->assertSame(0, Company::count());
+        $this->assertNull(DB::table('products')->value('company_id'));
+    }
+
+    public function test_existing_company_currency_is_validated_on_repeat(): void
+    {
+        $this->assertSame(0, Artisan::call('erp:backfill-company-context'));
+        Company::sole()->update(['base_currency_id' => 999]);
+        $this->assertSame(1, Artisan::call('erp:backfill-company-context', ['--dry-run' => true]));
+    }
+
+    public function test_company_key_migration_can_resume_completed_or_partially_applied_ddl(): void
+    {
+        $migration = require database_path('migrations/2026_10_03_000002_add_nullable_company_keys_to_core_tables.php');
+        $migration->up();
+        $migration->down();
+        Schema::table('products', fn (Blueprint $table) => $table->unsignedBigInteger('company_id')->nullable());
+        $migration->up();
+        $this->assertTrue(Schema::hasIndex('products', 'products_company_id_index'));
+        $this->assertTrue(Schema::hasColumn('customers', 'company_id'));
+        $this->assertSame(1, DB::table('products')->count());
+        $this->assertEquals(20, DB::table('products')->value('qty'));
+    }
+
+    public function test_incompatible_preexisting_column_blocks_all_company_key_ddl(): void
+    {
+        $migration = require database_path('migrations/2026_10_03_000002_add_nullable_company_keys_to_core_tables.php');
+        $migration->down();
+        Schema::table('products', fn (Blueprint $table) => $table->string('company_id')->nullable());
+        try {
+            $migration->up();
+            $this->fail('Incompatible column must fail preflight.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('Incompatible column products.company_id', $error->getMessage());
+        }
+        $this->assertFalse(Schema::hasColumn('customers', 'company_id'));
+    }
+
+    public function test_incompatible_preexisting_index_blocks_all_company_key_ddl(): void
+    {
+        $migration = require database_path('migrations/2026_10_03_000002_add_nullable_company_keys_to_core_tables.php');
+        $migration->down();
+        Schema::table('products', fn (Blueprint $table) => $table->index('qty', 'products_company_id_index'));
+        try {
+            $migration->up();
+            $this->fail('Incompatible index must fail preflight.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('Incompatible index products_company_id_index', $error->getMessage());
+        }
+        $this->assertFalse(Schema::hasColumn('customers', 'company_id'));
     }
 }

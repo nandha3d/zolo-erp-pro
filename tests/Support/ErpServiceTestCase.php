@@ -15,11 +15,16 @@ use Tests\TestCase;
  */
 abstract class ErpServiceTestCase extends TestCase
 {
+    use UsesDisposableMysql;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        config([
+        if (getenv('ERP_TEST_MYSQL') === '1') {
+            $this->configureDisposableMysql();
+        } else {
+            config([
             'database.default' => 'erp_regression',
             'database.connections.erp_regression' => [
                 'driver' => 'sqlite',
@@ -27,7 +32,8 @@ abstract class ErpServiceTestCase extends TestCase
                 'prefix' => '',
                 'foreign_key_constraints' => true,
             ],
-        ]);
+            ]);
+        }
 
         $this->createFixtures();
     }

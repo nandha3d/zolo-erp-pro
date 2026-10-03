@@ -66,6 +66,12 @@ class BackfillCompanyContext extends Command
             $this->error('Legacy backfill requires a single DEFAULT company. Review ownership before adding other companies.');
             return self::FAILURE;
         }
+        if ($default && $default->base_currency_id !== null
+            && (!Schema::hasTable('currencies')
+                || !DB::table('currencies')->where('id', $default->base_currency_id)->exists())) {
+            $this->error('DEFAULT company currency ID does not exist in currencies. No data changed.');
+            return self::FAILURE;
+        }
 
         $tables = [];
         $rows = [];
@@ -222,12 +228,17 @@ class BackfillCompanyContext extends Command
         if (!in_array($timezone, timezone_identifiers_list(), true)) {
             throw new RuntimeException('General settings contain an invalid timezone.');
         }
+        $currencyId = isset($settings->currency) && ctype_digit((string) $settings->currency)
+            ? (int) $settings->currency : null;
+        if ($currencyId !== null && (!Schema::hasTable('currencies')
+            || !DB::table('currencies')->where('id', $currencyId)->exists())) {
+            throw new RuntimeException('General settings currency ID does not exist in currencies.');
+        }
 
         return [
             'legal_name' => ($settings->company_name ?? null) ?: ($settings->site_title ?? config('app.name', 'zoloERP')),
             'trade_name' => $settings->site_title ?? null,
-            'base_currency_id' => isset($settings->currency) && ctype_digit((string) $settings->currency)
-                ? (int) $settings->currency : null,
+            'base_currency_id' => $currencyId,
             'timezone' => $timezone,
             'status' => 'active',
         ];
