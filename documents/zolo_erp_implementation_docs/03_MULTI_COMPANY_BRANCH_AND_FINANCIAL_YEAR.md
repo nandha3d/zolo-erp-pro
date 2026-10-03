@@ -40,7 +40,7 @@ company_user
 company_user_branches
   company_id, user_id, branch_id
 
-financial_years
+fiscal_years (extend the existing table; never create financial_years)
   company_id, name, start_date, end_date
   status, lock_date, closed_at, closed_by
 ```
@@ -49,21 +49,24 @@ Add `company_id` to all company-owned masters/transactions/accounting records af
 
 ## Services and ownership
 
-`ResolveCompanyContext` middleware validates session/API context.  
-`ResolveFinancialYearContext` validates the selected FY and business date.  
-`CompanyContext` exposes immutable IDs to downstream services.
+`App\Services\Platform\CompanyContext` exposes immutable company, branch and financial-year IDs. `CompanyContextResolver` combines membership, branch and FY resolution; no separate FY middleware is required. `ResolveCompanyContext` validates the coherent header/session tuple. Write services explicitly call `assertPostingDate`.
+
+Session keys: `company_id`, `branch_id`, `financial_year_id`. Header values take precedence; a company-header switch must discard dependent session IDs from the previous company. Choose the sole authorized active branch when unambiguous; otherwise require explicit selection.
+
+Preserve existing FY start/end dates, including calendar-year history. Migrate artificial 1970 opening records separately. Missing/ambiguous FY setup must be resolved through an authorized setup path before business-route activation.
 
 API convention:
 
 ```text
 X-Company-ID
+X-Branch-ID          optional only when branch selection is unambiguous
 X-Financial-Year-ID   optional when server can derive
 ```
 
 ## Implementation sequence
 
-1. Seed `DEFAULT` company from current general settings.
-2. Create `MAIN` branch and map existing warehouses.
+1. Add nullable ownership keys before backfill.
+2. Initialize DEFAULT/MAIN, map warehouses and memberships inside `erp:backfill-company-context`; dry-run creates nothing. Validate currency references and timezone first.
 3. Add nullable company keys to scoped tables.
 4. Run `erp:backfill-company-context --dry-run`, then real backfill.
 5. Validate zero orphan/null rows and company-aware uniqueness.

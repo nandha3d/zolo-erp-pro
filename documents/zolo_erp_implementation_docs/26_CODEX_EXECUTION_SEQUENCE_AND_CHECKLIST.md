@@ -41,6 +41,12 @@ Execution order:
 12 Migration/UAT/deployment
 ```
 
+## Stabilization and activation gates
+
+Phase numbering here is canonical for the execution plan and progress records. Audit F-13 Option B permits inactive additive foundation packages before all legacy stabilization defects are repaired. The execution plan assigns D1–D12 to their responsible phases and mandatory cutover gates. This exception does not permit activation of unsafe writers or optional routes.
+
+Phase 1 is complete only after scoped readers/writers, authorized context, usable FY setup, ownership constraints, jobs/cache/files and real HTTP isolation proofs pass on representative MySQL data. The capability phase and second-company activation remain blocked until then.
+
 ## Implementation sequence
 
 1. Run `git status`, record branch, `php artisan about`, `php artisan route:list`, test suite and frontend build baseline.

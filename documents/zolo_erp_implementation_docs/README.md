@@ -44,3 +44,13 @@ Start with `00_IMPLEMENTATION_MASTER_INDEX.md`. For coding, give Codex `26_CODEX
 - Stock ledger reconciles to warehouse quantity projections.
 - Trial balance balances and open items reconcile to control accounts.
 - Company isolation and permissions are enforced server-side.
+
+## Execution contracts and evidence
+
+Document 26 defines canonical phases 0–12. Extend existing `fiscal_years`, preserving dates; migrate artificial 1970 opening documents separately. Use `App\Services\Platform\CompanyContext`, combined FY resolution, and session keys `company_id`, `branch_id`, `financial_year_id`. DEFAULT/MAIN initialization is part of `erp:backfill-company-context`.
+
+- [Runbook](COMPANY_BACKFILL_RUNBOOK.md): guarded backfill and rehearsal procedure.
+- [Progress](IMPLEMENTATION_PROGRESS.md): delivered packages, evidence and incomplete gates.
+- [Writer audit](STOCK_AND_TRANSACTION_WRITER_AUDIT.md): source inventory for transaction cutover.
+
+SQLite fixtures prove isolated logic only. MySQL schema/recovery, concurrency and representative cutover evidence remain required. Additive inactive foundations may precede deferred stabilization work under the execution plan's explicit disposition; full isolation and capability activation may not.

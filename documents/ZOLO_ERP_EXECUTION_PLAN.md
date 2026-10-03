@@ -7,6 +7,31 @@
 
 ---
 
+## Canonical execution contract and stabilization decision
+
+Document 26 owns the canonical phases 0–12. Discovery is preparatory work within Phase 0; it is not a separate numbered phase. This plan follows that numbering.
+
+This revision adopts audit F-13 Option B: additive, inactive foundation packages may be delivered while dependent legacy defects remain open. This permits schema/context primitives, not activation or a declaration that the platform phase is complete. New capabilities wait for complete Phase 1 isolation and its acceptance gates.
+
+| Defect | Responsible phase | Gate and reason |
+|---|---|---|
+| D1 invalid journal call signatures | 5 accounting; 9 affected operations | Fix before enabling affected transaction paths; shared posting contract owns the invariant |
+| D2 missing/misclassified accounts | 5 accounting; 9 operations | Semantic mappings and balanced effect tests before affected posting |
+| D3 missing route targets | 0 baseline | Correct handler/view and route reflection before affected routes are exposed |
+| D4 stale settings cache | 1 company integration | Invalidate by company before switching or settings activation |
+| D5 non-atomic legacy writers | 4 inventory; 6 commercial | No affected writer cutover without transaction/rollback proof |
+| D6 unsafe runtime custom-field DDL | 1 security containment; 2 attributes | Freeze unsafe creation and enforce permissions before platform activation; normalized attributes replace it |
+| D7 unregistered role alias | 1 authorization | Correct before protected route activation |
+| D8 shared user-role cache | 1 company integration | Key by user/company before multi-company activation |
+| D9 production reversal gaps | 9 manufacturing | Keep affected operations outside activation until line history/reversal tests pass |
+| D10 unguarded optional routes | 1 authorization; 2 capabilities | Restrict unconverted routes before activation; capability checks complete in Phase 2 |
+| D11 purchase payment race/status/atomicity | 5 accounting; 6 commercial | No affected payment cutover without allocation/rollback/concurrency proof |
+| D12 unsafe numbering | 3 numbering | Replace and prove concurrency before numbering cutover |
+
+The Partial/Pending purchase regression is a baseline correction, separate from D1–D12. Resolve it before dependent purchasing work. Preserve existing `fiscal_years` date ranges and migrate 1970 opening records separately.
+
+SQLite service fixtures may prove isolated logic. They cannot substitute for MySQL DDL/recovery, concurrency, representative legacy-data rehearsal or original SalePro smoke flows. Completion requires evidence, not scaffolds.
+
 ## How to use this plan
 
 1. Start every session with: *"Read `documents/ZOLO_ERP_EXECUTION_PLAN.md` §0 and Phase N. Then read the spec docs listed in Phase N."*
@@ -31,14 +56,14 @@ zoloERP is **one ERP for many kinds of business** — a small FMCG maker, a timb
 
 ---
 
-# §0 Phase 0 — Documentation Discovery (DONE — consolidated facts)
+# §0 Repository discovery snapshot (2026-10-03)
 
-Everything below was verified against the repo on 2026-10-03. Re-verify line numbers before editing (they drift).
+The discovery tables below describe the pre-foundation source snapshot. Company schema/backfill and context primitives have since been delivered; see `zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md`. Re-trace current readers/writers before editing; historical line numbers drift.
 
 ### 0.1 Stack facts
 
 - Laravel 10 / PHP 8.2, `nwidart/laravel-modules ^8.3`, Sanctum, `spatie/laravel-permission ^5.8`, dompdf, `mike42/escpos-php` (ESC/POS + usable for ESC/P dot-matrix), `maatwebsite/excel`, Twilio.
-- MySQL only (`config/database.php:18`, strict mode). 264 MySQL-flavoured migrations (enum, `->after()`) → **no sqlite tests**.
+- MySQL only (`config/database.php:18`, strict mode). 264 MySQL-flavoured migrations (enum, `->after()`) SQLite is permitted for isolated service fixtures only. Full schema, backfill, concurrency and cutover parity must also be proven on MySQL.
 - Frontend: Blade + jQuery 3 + Bootstrap 4 + bootstrap-select + DataTables, prebuilt assets in `public/vendor/*`. No working build (no `webpack.mix.js`, no Vite). Layout `resources/views/backend/layout/main.blade.php`, sidebar `resources/views/backend/layout/sidebar.blade.php` (633 lines), POS `resources/views/backend/sale/pos.blade.php` (5513 lines).
 - Fresh install = `InstallController::installProcess` → `migrate --force` + `db:seed --force` (`app/Http/Controllers/InstallController.php:46-48`). Module migrations load via provider `loadMigrationsFrom`.
 
@@ -64,7 +89,7 @@ Everything below was verified against the repo on 2026-10-03. Re-verify line num
 | Permissions | Custom `permission` middleware (role_id based) `app/Http/Middleware/PermissionMiddleware.php:18-45`; controllers `Role::find(Auth::user()->role_id)->hasPermissionTo('products-index')` (`ProductController.php:49-50`); sidebar `Auth::user()->can('sidebar_*')`; Blade `@can` override `AppServiceProvider.php:81-104`; seeds `database/seeders/Tenant/TenantDatabaseSeeder.php:114+` | Works via `users.role_id`; **nothing calls `assignRole`** → Spatie `can()` path likely fails for non-admins. |
 | Settings cache | `app/Http/Middleware/Common.php:22-120` — keys `general_setting`, `user_role` (shared across users — bug), `role_has_permissions_list{role_id}` | |
 | API | `routes/api.php` `prefix('v1')`, `auth:sanctum`, controllers `app/Http/Controllers/Api/V1/*` with `BaseApiController::sendResponse` | Extend, don't fork (doc 21). |
-| Tests | `tests/Feature/{AccountingServiceTest,AccountingWebTest,ApiV1Test}.php` need live seeded MySQL (`User::first()`, account codes 1010/3010); `phpunit.xml` sets `DB_CONNECTION=mysql`, no DB name; no `.env.testing`; factories: `UserFactory`, `CountryFactory` only | Must build harness in Phase 1. |
+| Tests | `tests/Feature/{AccountingServiceTest,AccountingWebTest,ApiV1Test}.php` need live seeded MySQL (`User::first()`, account codes 1010/3010); `phpunit.xml` sets `DB_CONNECTION=mysql`, no DB name; no `.env.testing`; factories: `UserFactory`, `CountryFactory` only | Must build harness in Phase 0. |
 
 ### 0.3 What does NOT exist (do not assume)
 
@@ -76,7 +101,7 @@ Everything below was verified against the repo on 2026-10-03. Re-verify line num
 - Model `$fillable` lists columns no migration creates (products: `slug, is_online, kitchen_id…`; sales: `billing_*, waiter_id…`). Run `SHOW COLUMNS` on any real DB before trusting.
 - `sales.paying_method` does not exist, yet `AccountingService.php:161` reads it → sale receipts always debit cash.
 
-### 0.4 Known defects to fix before building on them (Phase 1)
+### 0.4 Known defects and stabilization dependencies
 
 | # | Defect | Evidence |
 |---|---|---|
@@ -93,7 +118,7 @@ Everything below was verified against the repo on 2026-10-03. Re-verify line num
 | D11 | `PaymentService::payForPurchase` no txn, `Payment::latest()->first()` race (:83), inverted payment_status (:50) | |
 | D12 | Time-based refs collide within a second: `SaleService.php:56` `'posr-'.date("Ymd").'-'.date("his")`, `PurchaseService.php:37`, `InventoryService.php:102`, `AccountingService.php:72-73` (`count()+1`), `DamageStockController.php:44` (`rand`), `ReturnController:333`, `ReturnPurchaseController:422`, `TransferController:313,988`, `AdjustmentController:262`, `ProductionController:226`, `PackingSlipController:247`, `ExchangeController:68` | |
 
-### 0.5 Direct stock writers (inventory for Phase 5 cutover)
+### 0.5 Direct stock writers (inventory for Phase 4 cutover)
 
 | File | Approx. lines | Context |
 |---|---|---|
@@ -110,7 +135,7 @@ Everything below was verified against the repo on 2026-10-03. Re-verify line num
 | `app/Http/Controllers/PackingSlipController.php` | 200-238; 316-323 | 9 |
 | `ExchangeController.php` 128-139; `DamageStockController.php` 66-68; `CafeOperationsController.php` 57; `ProductController.php` 615,718,725 (+bulk insert 2058-2071); `WarehouseController.php` 41; `app/Console/Commands/AutoPurchase.php` 110,119 | | misc |
 
-Regenerate before Phase 5: `grep -rnE "(increment|decrement)\('qty'|->qty\s*[+-]?=|\['qty'\]\s*[+-]" app Modules`.
+Regenerate before Phase 4: `grep -rnE "(increment|decrement)\('qty'|->qty\s*[+-]?=|\['qty'\]\s*[+-]" app Modules`.
 
 Journal writers: only `AccountingService.php:75,90` create rows. Legacy web `SaleController`/`PurchaseController` post **no journals at all** → web-made sales/purchases are invisible to the new ledger today.
 
@@ -120,7 +145,7 @@ Journal writers: only `AccountingService.php:75,90` create rows. Legacy web `Sal
 |---|---|
 | HTML plan + `ENGINEERING_REFERENCE.md:38-58,218-236` say "zero core modification", separate `tex_*`/`optech_*` tables, `/express-pos`, `tex_vouchers` second ledger | **Superseded** by docs 02/10/26/29: additive core changes allowed; one ledger; one sales engine; no `tex_*` transaction tables. Keep the HTML's *operator UX* (F2/F12/F9, HUD, Xerox, AutoSave, 68-line DM). |
 | HTML roadmap textile-first (Weeks 1-24) | Use doc 28 order: platform → sources of truth → commercial → operations → profiles → go-live. |
-| `ENGINEERING_REFERENCE.md:239-401` designs `optech_companies` / `optech_financial_years` / `VerifyOptechCompanySession` | Use generic `companies` / `financial_years` / `ResolveCompanyContext` (doc 03). Borrow its middleware shape (`:315-351`) only. |
+| `ENGINEERING_REFERENCE.md:239-401` designs `optech_companies` / `optech_financial_years` / `VerifyOptechCompanySession` | Use generic `companies`, extend existing `fiscal_years`, and use `ResolveCompanyContext` (doc 03). The engineering reference now documents the shared architecture. |
 | Existing `fiscal_years` table (global) | Extend it (add `company_id`, `status`, `lock_date`, `closed_at/by`) rather than creating a second FY table. |
 | Legacy `accounts` (payment accounts used by `payments.account_id`) vs `chart_of_accounts` | Keep `accounts` as "Cash/Bank payment account" UI; add `accounts.chart_of_account_id` link; postings always hit COA. |
 
@@ -145,7 +170,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 1 — Baseline, test harness, stabilise known defects
+# Phase 0 — Baseline, test harness, stabilise known defects
 
 **Spec:** doc 01, doc 24 §1, doc 26 step 1.
 
@@ -156,7 +181,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
    - Add `tests/Concerns/SeedsErpBaseline.php` that runs `migrate:fresh` once per suite + `TenantDatabaseSeeder` + `ChartOfAccountsSeeder`; new tests use `DatabaseTransactions`.
    - Add factories for Product, Customer, Supplier, Warehouse, Unit, Tax (copy shape from `database/factories/UserFactory.php`).
    - Fix `ExampleTest`/`UserTest` to actually use their traits.
-3. Fix D1–D11 (§0.4). For D1 copy the call shape from `Accounting/JournalEntryController.php:59-64`; resolve accounts via `getAccount()` — no new hard-coded codes beyond what exists (Phase 6 removes them). For D2 add missing COA rows to `ChartOfAccountsSeeder` or remap to existing codes; fix repair revenue. For D6 replace raw SQL with `Schema::table` + validated column name/type allow-list and **freeze** new custom-field creation behind a config flag (Phase 3 replaces it with attributes).
+3. Follow the stabilization disposition above for D1–D12 (§0.4). Correct baseline route defects and purchase receipt regressions here. Company integration contains unsafe custom-field DDL and closes authorization/cache defects before activation. Accounting and operational phases repair their journal callers and mappings before affected cutover. Additive primitives do not authorize unsafe routes.
 4. Guard `restaurant/ecommerce/woocommerce/project` module strings: helper `module_installed('restaurant')` = in modules string **and** `Module::find()` exists.
 
 **Verify**
@@ -170,16 +195,16 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 2 — Company, Branch, Financial Year
+# Phase 1 — Company, Branch, Financial Year
 
-**Spec:** docs 03, 05, 22 (company isolation). Copy middleware shape from `ENGINEERING_REFERENCE.md:315-351` with generic names.
+**Spec:** docs 03, 05, 22 (company isolation), the company backfill runbook, and the current engineering reference.
 
 **Do**
 1. Migrations (additive): `companies`, `company_branches`, `company_user`, `company_user_branches`; extend `fiscal_years` (company_id, status open|soft_closed|closed, lock_date, closed_at, closed_by). Column lists = doc 03 §Data model.
-2. Seeder/command `erp:bootstrap-default-company`: create `DEFAULT` company from `general_settings` (`company_name`, `vat_registration_number`, `timezone`, `currency`), branch `MAIN`, map all `warehouses` → MAIN (add `warehouses.branch_id`), attach all users.
+2. DEFAULT/MAIN initialization is integrated into `erp:backfill-company-context`; do not add a separate bootstrap command. It must: create `DEFAULT` company from `general_settings` (`company_name`, `vat_registration_number`, `timezone`, `currency`), branch `MAIN`, map all `warehouses` → MAIN (add `warehouses.branch_id`), attach all users.
 3. Add nullable `company_id` (+ `branch_id` where meaningful) in small migrations to the table list in doc 05 §Data model. Index each.
 4. `php artisan erp:backfill-company-context {--dry-run}`: batched, prints per-table row counts / nulls / orphan FKs.
-5. `App\Support\Company\CompanyContext` (immutable ids), middleware `ResolveCompanyContext` (session `active_company_id`, API header `X-Company-ID`, verify membership) and `ResolveFinancialYearContext`. Register aliases in `app/Http/Kernel.php:58-79`; add to the `['common','auth','active']` group in `routes/web.php:186` and Sanctum group in `routes/api.php`.
+5. Use implemented `App\Services\Platform\CompanyContext` and `CompanyContextResolver` with combined branch/FY resolution. `ResolveCompanyContext` uses session `company_id`, `branch_id`, `financial_year_id` and headers `X-Company-ID`, `X-Branch-ID`, `X-Financial-Year-ID`. Treat the tuple coherently on switching. Call `assertPostingDate` in write services. Attach `company.context` after authentication only when backfill, reader/writer isolation, FY setup, constraints, jobs/cache and HTTP IDOR proofs pass.
 6. Trait `BelongsToCompany` (sets `company_id` on create from context; global scope **off by default**, enabled per model only after parity check).
 7. Company/FY switcher in top bar (`resources/views/backend/layout/top-head.blade.php`).
 8. Queue jobs: `CompanyAware` job middleware restoring context.
@@ -195,7 +220,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 3 — Capability engine, business profiles, vocabulary, attributes
+# Phase 2 — Capability engine, business profiles, vocabulary, attributes
 
 **Spec:** docs 04, 06 (attributes), 20 (navigation/labels), 05 (custom-field replacement). This is the phase that makes the ERP "understandable by different business persons".
 
@@ -222,7 +247,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 4 — Atomic document series
+# Phase 3 — Atomic document series
 
 **Spec:** doc 12 (series part), doc 27 row "Auto series".
 
@@ -243,11 +268,11 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 5 — Stock movement ledger (source of truth)
+# Phase 4 — Stock movement ledger (source of truth)
 
-**Spec:** doc 09 (+ doc 06 UOM). Biggest-risk phase — split into 5a/5b/5c, separate sessions/PRs.
+**Spec:** doc 09 (+ doc 06 UOM). Biggest-risk phase — split into 4a/4b/4c, separate sessions/PRs.
 
-### 5a — Ledger + generic services
+### 4a — Ledger + generic services
 1. Tables `stock_movements`, `stock_movement_lines`, `stock_batches`(or extend `product_batches` — **prefer extend**: add company_id, mfg_date, mrp, status), `stock_serials` (normalised from `product_warehouse.imei_number` CSV), `stock_dimensions`, `stock_identities` (doc 09). Quantity columns `decimal(18,4)`; base-qty only.
 2. `product_uom_conversions` (doc 06); `UomConversionService` reading it, falling back to `units.operator/operation_value`.
 3. `App\Services\Inventory\InventoryMovementService`: `receive`, `issue`, `transfer`, `adjust`, `reverse` (command DTOs). In the same DB transaction: lock projection rows (`lockForUpdate`), enforce negative-stock policy (company setting Allow/Warn/Block — Optech FEATURES video), validate batch/serial/dimension identity, persist `unit_cost`/`value` (weighted average per company setting), update projections `products.qty`, `product_warehouse.qty`, `product_batches.qty`, `product_variants.qty`, serial status.
@@ -255,11 +280,11 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 5. Opening-balance command: one `opening` movement per product/warehouse/batch from current projections (so ledger == projections at cutover).
 6. Convert `SaleService`, `PurchaseService`, `InventoryService` to the movement service.
 
-### 5b — Legacy commercial controllers (shadow → cutover)
+### 4b — Legacy commercial controllers (shadow → cutover)
 1. Shadow mode: in `SaleController`, `PurchaseController`, `ReturnController`, `ReturnPurchaseController` add movement recording **beside** the existing writes (flag `inventory.ledger_mode=shadow`), wrap each store/update/destroy in one transaction (fixes D5).
 2. Run reconciliation daily in UAT; when clean, flip to `ledger_mode=authoritative`: remove the direct writes per controller method, one method per commit.
 
-### 5c — Remaining writers
+### 4c — Remaining writers
 `AdjustmentController`, `TransferController`, `PackingSlipController`, `ProductionController`, `ExchangeController`, `DamageStockController`, `CafeOperationsController`, `ProductController` (opening + autoPurchase), `AutoPurchase` command, `WarehouseController`.
 
 **Verify**
@@ -272,7 +297,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 6 — Accounting hardening, open items, vouchers
+# Phase 5 — Accounting hardening, open items, vouchers
 
 **Spec:** doc 10; Optech VOUCHER ENTRY / ACCOUNTS videos (HTML Screen 07, 08-11).
 
@@ -297,12 +322,12 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 7 — Shared sales & purchase application services + fast modes
+# Phase 6 — Shared sales & purchase application services + fast modes
 
 **Spec:** docs 07, 08; HTML Screens 03/04 + Sub-sections 1.1–1.12, 2.1–2.7.
 
 **Do**
-1. `SalePostingService::post(Sale $sale)` — effects only: stock issue (Phase 5), journal (Phase 6), AR open item, tax snapshot hook (Phase 8). Idempotent by posting key.
+1. `SalePostingService::post(Sale $sale)` — effects only: stock issue (Phase 4), journal (Phase 5), AR open item, tax snapshot hook (Phase 7). Idempotent by posting key.
 2. `SaleApplicationService::create(SaleCommand)` — full doc 07 flow (context → party/credit → price → tax → number → stock reserve → write → `SalePostingService::post` → commit → after-commit events). Idempotency store table `idempotency_keys(company_id, key, request_hash, response_ref)`.
 3. Legacy `SaleController::store/update/destroy` and POS: keep their line-building logic but call `SalePostingService` (and reversal on update/destroy) — this is how web sales finally reach the ledger. `Api/V1/SaleApiController` → `SaleApplicationService`.
 4. Same for purchases: `PurchasePostingService` + `PurchaseApplicationService`; landed cost (by value/qty/weight/manual); service items = no stock; optional PO → GRN → bill linkage (not mandatory); "update item cost/HSN on save" checkbox.
@@ -322,7 +347,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 8 — GST / India compliance
+# Phase 7 — GST / India compliance
 
 **Spec:** doc 11; HTML "Automated GST Engine". Repurpose `Modules/OptechGST` as `IndiaCompliance` (or core `app/Services/Compliance`).
 
@@ -342,7 +367,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 9 — Returns/reversals, printing, dispatch
+# Phase 8 — Returns/reversals, printing, dispatch
 
 **Spec:** docs 12 (print/dispatch), 13; HTML SERIES/ENTRY videos.
 
@@ -358,7 +383,7 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 10 — Manufacturing refactor + generic Job Work
+# Phase 9 — Manufacturing refactor + generic Job Work
 
 **Spec:** docs 14, 15; HTML DC & GRN video / Screen 05-06 / Sub-sections 4.1-4.5.
 
@@ -372,13 +397,13 @@ Append one line per finished phase: `Phase N — date — PR/commit — tests: X
 
 ---
 
-# Phase 11 — Industry packs (one session each)
+# Phase 10 — Industry packs (one session each)
 
 Packs = **seed data + capability config + vocabulary + attributes + report presets + small focused extensions**. Location: `database/seeders/Profiles/{Fmcg,Textile,Timber,Solar,GeneralTrading}ProfileSeeder.php`; extensions only where a capability needs code. No pack creates sales/purchase/stock/ledger tables.
 
 Each pack ships a **plain-language "Getting started" checklist** (dashboard card) and a one-page help guide in the profile's vocabulary.
 
-### 11a General Trading (do first — proves nothing textile leaks)
+### 10a General Trading (do first — proves nothing textile leaks)
 Profile: core only + multi-UOM optional. UAT: purchase → sale → payment → return (doc 24). Assert no textile/FMCG/timber/solar field visible.
 
 ### 11b FMCG — doc 16
@@ -394,13 +419,13 @@ Batch/expiry/MRP capture on purchase; FEFO suggestion in sale + expiry block pol
 Extend existing `projects` (from `2026_09_19_000007`) with site address/contact/system kW/roof notes/survey attachments + status flow; system kit = BOM expanded into quotation/order lines; serial allocation/reservation to project; dispatch → install → commission status; installed-serial history; warranty/AMC records from installed serials; project profitability from movements + journals + expenses. UAT: 5 kW quote → project → shortage PO → serial allocation → dispatch → commission → invoice → payment.
 
 ### 11f Existing prototypes (water, cafe/bakery, repair)
-Map to profiles/capabilities, gate routes, route their stock/journal effects through shared services (already partially fixed in Phase 1/5c). No new feature work unless a customer needs it.
+Map to profiles/capabilities, gate routes, route their stock/journal effects through shared services (already partially fixed in Phase 0/4c). No new feature work unless a customer needs it.
 
 **Verify (all packs)** — doc 24 UAT per profile on fixtures `database/seeders/Uat/*`; `erp:stock-reconcile` + `erp:ledger-reconcile` clean after each UAT run.
 
 ---
 
-# Phase 12 — Onboarding, UX polish, API, security completion
+# Phase 11 — Onboarding, UX polish, API, security completion
 
 **Spec:** docs 20, 21, 22.
 
@@ -418,7 +443,7 @@ Map to profiles/capabilities, gate routes, route their stock/journal effects thr
 
 ---
 
-# Phase 13 — Data migration, performance, deployment, go-live
+# Phase 12 — Data migration, performance, deployment, go-live
 
 **Spec:** docs 23, 24, 25, 28.
 
@@ -433,7 +458,7 @@ Map to profiles/capabilities, gate routes, route their stock/journal effects thr
 
 ---
 
-# Phase 14 — Final verification
+## Final verification — Phase 12 acceptance
 
 1. Every spec doc 03–25 acceptance list ticked with test name or UAT evidence → `documents/ACCEPTANCE_EVIDENCE.md`.
 2. Anti-pattern greps (all must be 0 outside allowed files):
@@ -462,8 +487,8 @@ Map to profiles/capabilities, gate routes, route their stock/journal effects thr
 | Decision | Default in this plan |
 |---|---|
 | Where new platform/core code lives | `app/Services/{Platform,Inventory,Accounting,Commercial,Compliance}` + `app/Support/Company`; nwidart Modules only for optional operations (JobWork, FastSales UI, IndiaCompliance, Printing) |
-| SaaS multi-tenant (separate DB per customer) | Out of scope; single-DB, multi-company. Dead SaaS code left inert, removed in Phase 12 if unused. |
+| SaaS multi-tenant (separate DB per customer) | Out of scope; single-DB, multi-company. Dead SaaS code left inert, removed in Phase 11 if unused. |
 | Valuation method | Weighted average default; FIFO later per company setting |
-| GSTIN provider | Interface + one adapter chosen at Phase 8 (needs API account) |
+| GSTIN provider | Interface + one adapter chosen at Phase 7 (needs API account) |
 | Prototype verticals (water/cafe/repair) | Kept as optional profiles; no new investment |
 | First pilot customer | Optech textile client — but General Trading UAT must pass first (doc 28) |

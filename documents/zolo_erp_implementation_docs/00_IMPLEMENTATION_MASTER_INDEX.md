@@ -73,3 +73,13 @@ Optional SaaS Tenant
 - Every implementation PR cites the relevant document in this pack.
 - No new core feature is implemented only inside an industry module.
 - Every transaction-changing PR identifies stock, accounting, tax, open-item and audit effects, or explicitly marks them N/A.
+
+## Supporting execution documents
+
+The numbered 00–30 documents are authoritative specifications. Execution state and operations are maintained separately:
+
+- [Company backfill runbook](COMPANY_BACKFILL_RUNBOOK.md): command guards, rehearsal and rollback procedure.
+- [Implementation progress](IMPLEMENTATION_PROGRESS.md): delivered packages, recorded proof and remaining activation gates.
+- [Stock/transaction writer audit](STOCK_AND_TRANSACTION_WRITER_AUDIT.md): source inventory; recheck before cutover.
+
+Use [the execution plan](../ZOLO_ERP_EXECUTION_PLAN.md) for source-specific tasks, with document 26's canonical phases 0–12. CompanyContext is `App\Services\Platform\CompanyContext`; FY authority is existing `fiscal_years`; DEFAULT/MAIN initialization belongs to `erp:backfill-company-context`.
