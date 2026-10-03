@@ -1,0 +1,15 @@
+{
+    "Woocommerce": true,
+    "Ecommerce": true,
+    "Middleware": true,
+    "Manufacturing": true,
+    "Restaurant": true,
+    "Project": true,
+    "OptechCompany": true,
+    "OptechMaster": true,
+    "OptechSpeedBilling": true,
+    "OptechJobWork": true,
+    "OptechAccounting": true,
+    "OptechGST": true,
+    "OptechPrinting": true
+}

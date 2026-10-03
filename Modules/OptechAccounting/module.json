@@ -1,0 +1,13 @@
+{
+    "name": "OptechAccounting",
+    "alias": "optechaccounting",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\OptechAccounting\\Providers\\OptechAccountingServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

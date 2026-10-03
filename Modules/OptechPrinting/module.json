@@ -1,0 +1,13 @@
+{
+    "name": "OptechPrinting",
+    "alias": "optechprinting",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\OptechPrinting\\Providers\\OptechPrintingServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

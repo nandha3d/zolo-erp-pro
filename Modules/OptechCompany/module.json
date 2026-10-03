@@ -1,0 +1,13 @@
+{
+    "name": "OptechCompany",
+    "alias": "optechcompany",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\OptechCompany\\Providers\\OptechCompanyServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

@@ -1,0 +1,1795 @@
+/**
+ * ====================================================================
+ * SalePro Neo - Next-Generation Modern ERP Design System
+ * Modern Typography, Slate Palette, Glassmorphism, Micro-interactions
+ * ====================================================================
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Core Color Tokens */
+  --neo-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --neo-mono: 'JetBrains Mono', monospace;
+
+  --neo-primary: #4f46e5;
+  --neo-primary-hover: #4338ca;
+  --neo-primary-light: #eef2ff;
+  --neo-primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+
+  --neo-success: #10b981;
+  --neo-success-light: #ecfdf5;
+  --neo-warning: #f59e0b;
+  --neo-warning-light: #fffbeb;
+  --neo-danger: #ef4444;
+  --neo-danger-light: #fef2f2;
+  --neo-info: #0ea5e9;
+  --neo-info-light: #f0f9ff;
+
+  /* Neutrals (Slate scale) */
+  --neo-bg: #f8fafc;
+  --neo-surface: #ffffff;
+  --neo-surface-card: #ffffff;
+  --neo-border: #e2e8f0;
+  --neo-border-light: #f1f5f9;
+  --neo-text-primary: #0f172a;
+  --neo-text-secondary: #475569;
+  --neo-text-muted: #94a3b8;
+
+  /* Side Panel in Light Mode: Distinct Modern Theme Color (Dark Slate Navy) */
+  --neo-sidebar-bg: #0f172a;
+  --neo-sidebar-surface: #1e293b;
+  --neo-sidebar-border: rgba(255, 255, 255, 0.08);
+  --neo-sidebar-text: #cbd5e1;
+  --neo-sidebar-text-active: #ffffff;
+  --neo-sidebar-text-muted: #94a3b8;
+  --neo-sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  --neo-sidebar-active-bg: rgba(99, 102, 241, 0.18);
+  --neo-sidebar-active-border: #6366f1;
+
+  /* Shadows & Radius */
+  --neo-radius-sm: 6px;
+  --neo-radius-md: 10px;
+  --neo-radius-lg: 14px;
+  --neo-radius-xl: 18px;
+  --neo-shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --neo-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  --neo-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --neo-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --neo-shadow-glow: 0 0 15px rgba(79, 70, 229, 0.25);
+}
+
+/* Dark Mode Tokens - Deep OLED Midnight Theme */
+body.dark-mode {
+  --neo-bg: #0b0f19;
+  --neo-surface: #111827;
+  --neo-surface-card: #151d2f;
+  --neo-border: #1e293b;
+  --neo-border-light: #1f2937;
+  --neo-text-primary: #f8fafc;
+  --neo-text-secondary: #cbd5e1;
+  --neo-text-muted: #64748b;
+  --neo-primary-light: rgba(79, 70, 229, 0.15);
+  --neo-success-light: rgba(16, 185, 129, 0.15);
+  --neo-warning-light: rgba(245, 158, 11, 0.15);
+  --neo-danger-light: rgba(239, 68, 68, 0.15);
+  --neo-info-light: rgba(14, 165, 233, 0.15);
+
+  /* Side Panel in Dark Mode */
+  --neo-sidebar-bg: #080c14;
+  --neo-sidebar-surface: #0f172a;
+  --neo-sidebar-border: #1e293b;
+  --neo-sidebar-text: #cbd5e1;
+  --neo-sidebar-text-active: #ffffff;
+  --neo-sidebar-text-muted: #64748b;
+  --neo-sidebar-hover-bg: rgba(255, 255, 255, 0.04);
+  --neo-sidebar-active-bg: rgba(99, 102, 241, 0.22);
+  --neo-sidebar-active-border: #6366f1;
+}
+
+/* ====================================================================
+   GLOBAL TYPOGRAPHY & RESET
+   ==================================================================== */
+body {
+  font-family: var(--neo-font) !important;
+  background-color: var(--neo-bg) !important;
+  color: var(--neo-text-primary) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+.font-monospace {
+  font-family: var(--neo-mono) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--neo-font);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--neo-text-primary);
+}
+
+/* ====================================================================
+   SIDEBAR & NAVIGATION REDESIGN - THEMED SIDE PANEL
+   ==================================================================== */
+.side-navbar {
+  background: var(--neo-sidebar-bg) !important;
+  border-right: 1px solid var(--neo-sidebar-border) !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12) !important;
+  width: 256px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 999;
+}
+
+/* Align main content container perfectly with 256px sidebar to prevent any content clipping */
+.page {
+  position: relative;
+  margin-left: 256px !important;
+  width: calc(100% - 256px) !important;
+  min-height: 100vh;
+  padding-bottom: 60px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.page.active,
+.side-navbar.shrink ~ .page,
+.side-navbar.hide ~ .page {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1199px) {
+  .page {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+.side-navbar .brand-big {
+  padding: 18px 20px !important;
+  border-bottom: 1px solid var(--neo-sidebar-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  background: transparent !important;
+}
+
+.zolo-brand-link {
+  text-decoration: none !important;
+  display: flex;
+  align-items: center;
+}
+
+.zolo-brand-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zolo-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  flex-shrink: 0;
+}
+
+.zolo-brand-badge {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.zolo-brand-badge .zolo-accent,
+.zolo-brand-badge span {
+  color: #818cf8;
+  margin-left: 1px;
+}
+
+/* Sidebar Section Headers */
+.sidebar-heading {
+  font-size: 10.5px !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+  color: var(--neo-sidebar-text-muted) !important;
+  padding: 16px 18px 6px !important;
+  margin: 0 !important;
+  display: block !important;
+  user-select: none;
+}
+
+/* Sidebar Navigation Links */
+.side-navbar li a {
+  padding: 8px 14px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: var(--neo-sidebar-text) !important;
+  border-radius: 10px !important;
+  margin: 3px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  text-decoration: none !important;
+}
+
+.side-navbar li a:hover {
+  background: var(--neo-sidebar-hover-bg) !important;
+  color: #ffffff !important;
+  transform: translateX(2px);
+}
+
+.side-navbar li.active > a,
+.side-navbar li a[aria-expanded="true"] {
+  background: var(--neo-sidebar-active-bg) !important;
+  color: var(--neo-sidebar-text-active) !important;
+  font-weight: 600 !important;
+}
+
+/* Module-Specific Colorful Theme Icon Badges with Proper Padding & Alignment */
+.side-navbar li a i {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  margin-right: 12px !important;
+  font-size: 15px !important;
+  text-align: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.side-navbar li a:hover i {
+  transform: scale(1.08);
+}
+
+/* Colorful Theme Mapping for Modules */
+#side-main-menu li#dashboard-menu a i,
+#side-main-menu a[href*="dashboard"] i,
+#side-main-menu i.dripicons-meter {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #818cf8 !important;
+}
+
+#side-main-menu a[href="#product"] i,
+#side-main-menu i.dripicons-list {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #34d399 !important;
+}
+
+#side-main-menu a[href="#purchase"] i,
+#side-main-menu i.dripicons-card {
+  background: rgba(14, 165, 233, 0.18) !important;
+  color: #38bdf8 !important;
+}
+
+#side-main-menu a[href="#sale"] i,
+#side-main-menu i.dripicons-cart {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+}
+
+#side-main-menu a[href="#quotation"] i,
+#side-main-menu i.dripicons-document {
+  background: rgba(244, 63, 94, 0.18) !important;
+  color: #fb7185 !important;
+}
+
+#side-main-menu a[href="#transfer"] i,
+#side-main-menu i.dripicons-export {
+  background: rgba(168, 85, 247, 0.18) !important;
+  color: #c084fc !important;
+}
+
+#side-main-menu a[href="#accounting"] i,
+#side-main-menu a[href*="accounting"] i,
+#side-main-menu i.dripicons-briefcase {
+  background: rgba(59, 130, 246, 0.20) !important;
+  color: #60a5fa !important;
+}
+
+#side-main-menu a[href="#expense"] i,
+#side-main-menu i.dripicons-wallet {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #f87171 !important;
+}
+
+#side-main-menu a[href="#income"] i,
+#side-main-menu i.dripicons-trophy {
+  background: rgba(34, 197, 94, 0.18) !important;
+  color: #4ade80 !important;
+}
+
+#side-main-menu a[href="#people"] i,
+#side-main-menu i.dripicons-user {
+  background: rgba(129, 140, 248, 0.18) !important;
+  color: #a5b4fc !important;
+}
+
+#side-main-menu a[href="#hrm"] i,
+#side-main-menu i.dripicons-user-group {
+  background: rgba(20, 184, 166, 0.18) !important;
+  color: #2dd4bf !important;
+}
+
+#side-main-menu a[href="#report"] i,
+#side-main-menu i.dripicons-graph-bar {
+  background: rgba(251, 146, 60, 0.18) !important;
+  color: #fdba74 !important;
+}
+
+#side-main-menu a[href="#setting"] i,
+#side-main-menu i.dripicons-gear {
+  background: rgba(148, 163, 184, 0.18) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Silence legacy FontAwesome pseudo-element from style.default.css */
+.side-navbar li a[data-toggle="collapse"]::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Pure CSS clean rotating Chevron arrow - no font dependency, no square boxes */
+.side-navbar li a[data-toggle="collapse"]::after {
+  content: "" !important;
+  display: inline-block !important;
+  width: 6.5px !important;
+  height: 6.5px !important;
+  border-right: 2px solid currentColor !important;
+  border-bottom: 2px solid currentColor !important;
+  transform: rotate(-45deg) !important;
+  margin-left: auto !important;
+  margin-right: 6px !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease !important;
+  opacity: 0.65 !important;
+}
+
+.side-navbar li a[data-toggle="collapse"][aria-expanded="true"]::after {
+  transform: rotate(45deg) !important;
+  color: var(--neo-primary, #6366f1) !important;
+  opacity: 1 !important;
+}
+
+/* Submenu Hierarchy & Guide Lines */
+.side-navbar ul.collapse {
+  padding: 4px 0 6px 0 !important;
+  margin-left: 28px !important;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+}
+
+.side-navbar ul.collapse li a {
+  padding: 6px 12px 6px 14px !important;
+  font-size: 12.8px !important;
+  margin: 2px 8px !important;
+  color: var(--neo-sidebar-text-muted) !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.side-navbar ul.collapse li a::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  margin-right: 8px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.side-navbar ul.collapse li a:hover,
+.side-navbar ul.collapse li.active a {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.side-navbar ul.collapse li a:hover::before,
+.side-navbar ul.collapse li.active a::before {
+  background: #6366f1;
+  box-shadow: 0 0 6px #6366f1;
+}
+
+/* ====================================================================
+   TOP NAVBAR
+   ==================================================================== */
+nav.navbar {
+  background: var(--neo-surface) !important;
+  border-bottom: 1px solid var(--neo-border) !important;
+  padding: 10px 24px !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  min-height: 64px;
+}
+
+nav.navbar a.menu-btn {
+  background: var(--neo-bg) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: 10px !important;
+  color: var(--neo-text-secondary) !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+nav.navbar a.menu-btn:hover {
+  background: var(--neo-primary-light) !important;
+  border-color: var(--neo-primary) !important;
+  color: var(--neo-primary) !important;
+}
+
+nav.navbar .nav-menu {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 0 !important;
+}
+
+nav.navbar .nav-menu > li > a,
+nav.navbar .nav-menu .dropdown > a {
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--neo-text-secondary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-pos {
+  background: var(--neo-primary-gradient) !important;
+  border: none !important;
+  border-radius: var(--neo-radius-md) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+  padding: 6px 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-pos:hover {
+  box-shadow: var(--neo-shadow-glow) !important;
+  transform: translateY(-1px);
+}
+
+.btn-pos i {
+  color: #fff !important;
+}
+
+/* ====================================================================
+   MODERN CARDS & CONTAINERS
+   ==================================================================== */
+.card, .neo-card {
+  background-color: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: var(--neo-radius-lg) !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--neo-border) !important;
+  padding: 16px 20px !important;
+}
+
+/* Metric Count Cards */
+.count-title {
+  border: 1px solid var(--neo-border) !important;
+  border-radius: var(--neo-radius-lg) !important;
+  background: var(--neo-surface-card) !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+  padding: 22px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.count-title:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--neo-shadow-md) !important;
+  border-color: var(--neo-primary) !important;
+}
+
+.count-title .icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  background: var(--neo-primary-light);
+}
+
+.count-title .icon i {
+  font-size: 22px !important;
+  width: auto !important;
+}
+
+.count-title .count-number {
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2 !important;
+  color: var(--neo-text-primary) !important;
+}
+
+.count-title .name strong {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--neo-text-secondary) !important;
+}
+
+/* Date filter buttons */
+.filter-toggle .date-btn {
+  background: var(--neo-surface) !important;
+  border: 1px solid var(--neo-border) !important;
+  color: var(--neo-text-secondary) !important;
+  font-weight: 600 !important;
+  border-radius: var(--neo-radius-md) !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  margin-left: 4px !important;
+  transition: all 0.15s ease !important;
+}
+
+/* ====================================================================
+   COMMAND CENTER HERO HEADER & CONTROLS
+   ==================================================================== */
+.zolo-dashboard-header {
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: var(--neo-radius-lg) !important;
+  padding: 20px 24px !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.zolo-dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--neo-primary-gradient);
+}
+
+.zolo-greeting-title {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.4px !important;
+  color: var(--neo-text-primary) !important;
+  margin-bottom: 4px !important;
+}
+
+.zolo-accent-name {
+  background: var(--neo-primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.zolo-greeting-subtitle {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--neo-text-secondary) !important;
+  margin-bottom: 0 !important;
+}
+
+.zolo-filter-bar {
+  gap: 10px;
+}
+
+.zolo-warehouse-picker {
+  display: inline-flex;
+  align-items: center;
+  background: var(--neo-bg);
+  border: 1px solid var(--neo-border);
+  border-radius: 10px;
+  padding: 2px 10px;
+}
+
+.zolo-date-filter-btn {
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 7px 16px !important;
+  background: var(--neo-bg) !important;
+  border: 1px solid var(--neo-border) !important;
+  color: var(--neo-text-primary) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zolo-dropdown-menu {
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--neo-shadow-lg) !important;
+  padding: 6px !important;
+}
+
+.zolo-dropdown-menu .dropdown-item {
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--neo-text-secondary) !important;
+  padding: 8px 14px !important;
+  transition: all 0.2s ease;
+}
+
+.zolo-dropdown-menu .dropdown-item:hover,
+.zolo-dropdown-menu .dropdown-item.active {
+  background: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* ====================================================================
+   BUTTONS & INPUTS
+   ==================================================================== */
+.btn {
+  font-family: var(--neo-font) !important;
+  font-weight: 600 !important;
+  border-radius: var(--neo-radius-md) !important;
+  padding: 8px 18px !important;
+  font-size: 13.5px !important;
+  letter-spacing: -0.01em;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary, .neo-btn-primary {
+  background: var(--neo-primary) !important;
+  border-color: var(--neo-primary) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover, .neo-btn-primary:hover {
+  background: var(--neo-primary-hover) !important;
+  border-color: var(--neo-primary-hover) !important;
+  box-shadow: var(--neo-shadow-glow) !important;
+  transform: translateY(-1px);
+}
+
+.neo-btn-glow {
+  background: var(--neo-primary-gradient) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+}
+
+.neo-btn-glow:hover {
+  box-shadow: var(--neo-shadow-glow) !important;
+  color: #fff !important;
+}
+
+.btn-info {
+  background: var(--neo-info) !important;
+  border-color: var(--neo-info) !important;
+}
+
+.btn-success {
+  background: var(--neo-success) !important;
+  border-color: var(--neo-success) !important;
+}
+
+.btn-danger {
+  background: var(--neo-danger) !important;
+  border-color: var(--neo-danger) !important;
+}
+
+/* Form Controls */
+.form-control, input[type="text"], input[type="number"], input[type="date"], select {
+  font-family: var(--neo-font) !important;
+  background-color: var(--neo-surface) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  color: var(--neo-text-primary) !important;
+  padding: 9px 14px !important;
+  font-size: 13.5px !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.form-control:focus {
+  background-color: var(--neo-surface) !important;
+  border-color: var(--neo-primary) !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+  outline: none !important;
+}
+
+/* ====================================================================
+   TABLES & DATATABLES - MODERN INTELLIGENT ALIGNMENT
+   ==================================================================== */
+.table, .neo-table, table.dataTable {
+  color: var(--neo-text-primary) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  overflow: hidden !important;
+  margin-top: 10px !important;
+  margin-bottom: 16px !important;
+}
+
+.table thead th, .neo-table thead th, table.dataTable thead th {
+  background-color: var(--neo-bg) !important;
+  border-top: none !important;
+  border-bottom: 2px solid var(--neo-border) !important;
+  color: #475569 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 13px 18px !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+}
+
+body.dark-mode .table thead th,
+body.dark-mode .neo-table thead th,
+body.dark-mode table.dataTable thead th {
+  background-color: #111827 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #1e293b !important;
+}
+
+.table tbody td, .neo-table tbody td, table.dataTable tbody td {
+  border-bottom: 1px solid var(--neo-border-light) !important;
+  border-top: none !important;
+  padding: 13px 18px !important;
+  font-size: 13.5px !important;
+  vertical-align: middle !important;
+  color: var(--neo-text-primary) !important;
+  transition: background-color 0.15s ease !important;
+}
+
+body.dark-mode .table tbody td,
+body.dark-mode .neo-table tbody td,
+body.dark-mode table.dataTable tbody td {
+  border-bottom-color: #1e293b !important;
+  color: var(--neo-text-primary) !important;
+}
+
+.table-hover tbody tr:hover td,
+table.dataTable.table-hover tbody tr:hover td {
+  background-color: rgba(99, 102, 241, 0.04) !important;
+}
+
+body.dark-mode .table-hover tbody tr:hover td {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+}
+
+/* DataTables Controls: Length Select & Filter Search */
+.dataTables_wrapper {
+  padding: 6px 0 !important;
+  font-size: 13px !important;
+}
+
+.dataTables_wrapper .dataTables_length {
+  margin-bottom: 14px !important;
+}
+
+.dataTables_wrapper .dataTables_length select {
+  height: 36px !important;
+  padding: 4px 28px 4px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--neo-border) !important;
+  background-color: var(--neo-surface) !important;
+  color: var(--neo-text-primary) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  outline: none !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: var(--neo-primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  margin-bottom: 14px !important;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  font-weight: 500 !important;
+  color: var(--neo-text-secondary) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  height: 38px !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--neo-border) !important;
+  background-color: var(--neo-surface) !important;
+  color: var(--neo-text-primary) !important;
+  font-size: 13px !important;
+  outline: none !important;
+  width: 220px !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  transition: all 0.2s ease !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  width: 260px !important;
+  border-color: var(--neo-primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* DataTables Pagination & Info */
+.dataTables_wrapper .dataTables_info {
+  font-size: 12.5px !important;
+  color: var(--neo-text-muted) !important;
+  padding-top: 14px !important;
+}
+
+.dataTables_wrapper .dataTables_paginate {
+  padding-top: 10px !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  padding: 6px 13px !important;
+  margin: 0 2px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--neo-border) !important;
+  background: var(--neo-surface) !important;
+  color: var(--neo-text-secondary) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+  border-color: var(--neo-primary) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: var(--neo-primary-gradient) !important;
+  color: #ffffff !important;
+  border-color: var(--neo-primary) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
+}
+
+/* Table Action Buttons with Clean Proper Alignment */
+.table td .btn-outline-primary,
+.table td .btn-action,
+.table td a.btn.btn-sm.btn-outline-primary {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  background: rgba(99, 102, 241, 0.08) !important;
+  color: #6366f1 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.table td .btn-outline-primary:hover,
+.table td .btn-action:hover,
+.table td a.btn.btn-sm.btn-outline-primary:hover {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* Badges with Soft Tint & Vibrant Pill Style */
+.badge-pill {
+  border-radius: 20px !important;
+  padding: 4px 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.badge-soft-primary {
+  background-color: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+}
+
+.badge-soft-success, .badge-success-soft {
+  background-color: var(--neo-success-light) !important;
+  color: var(--neo-success) !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+}
+
+.badge-soft-warning {
+  background-color: var(--neo-warning-light) !important;
+  color: var(--neo-warning) !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+}
+
+.badge-soft-danger {
+  background-color: var(--neo-danger-light) !important;
+  color: var(--neo-danger) !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+}
+
+.badge-soft-info {
+  background-color: var(--neo-info-light) !important;
+  color: var(--neo-info) !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+}
+
+.bg-soft-primary {
+  background-color: var(--neo-primary-light) !important;
+}
+
+.bg-soft-success {
+  background-color: var(--neo-success-light) !important;
+}
+
+.bg-soft-danger {
+  background-color: var(--neo-danger-light) !important;
+}
+
+/* ====================================================================
+   UNIFIED MODALS & DIALOGS DESIGN SYSTEM
+   ==================================================================== */
+.modal-backdrop, .modal-backdrop.show {
+  background-color: #0b0f19 !important;
+  opacity: 0.72 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.modal-dialog {
+  margin: 1.75rem auto;
+  max-width: 600px;
+}
+
+.modal-content, .neo-modal .modal-content {
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  overflow: hidden !important;
+  position: relative !important;
+  color: var(--neo-text-primary) !important;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: var(--neo-primary-gradient);
+  z-index: 2;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--neo-border) !important;
+  padding: 20px 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: transparent !important;
+}
+
+.modal-title, .modal-header h5 {
+  font-family: var(--neo-font) !important;
+  font-size: 17.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--neo-text-primary) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.modal-header .close {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--neo-border) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--neo-text-secondary) !important;
+  font-size: 15px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  opacity: 0.85 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modal-header .close:hover {
+  background: var(--neo-danger-light) !important;
+  color: var(--neo-danger) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  opacity: 1 !important;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 24px 28px !important;
+  color: var(--neo-text-primary) !important;
+}
+
+.modal-body p.italic small {
+  color: var(--neo-text-muted) !important;
+  font-size: 12px !important;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--neo-border) !important;
+  padding: 16px 26px !important;
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Unified Form Groups & Inputs Across Modals & Pages */
+.form-group {
+  margin-bottom: 20px !important;
+}
+
+.form-group label {
+  font-family: var(--neo-font) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--neo-text-secondary) !important;
+  margin-bottom: 7px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.form-control,
+input[type="text"].form-control,
+input[type="number"].form-control,
+input[type="email"].form-control,
+input[type="password"].form-control,
+textarea.form-control {
+  background: var(--neo-surface) !important;
+  border: 1.5px solid var(--neo-border) !important;
+  border-radius: 10px !important;
+  color: var(--neo-text-primary) !important;
+  padding: 9px 14px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.form-control:focus,
+input[type="text"].form-control:focus,
+input[type="number"].form-control:focus,
+input[type="email"].form-control:focus,
+input[type="password"].form-control:focus,
+textarea.form-control:focus {
+  border-color: var(--neo-primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  background: var(--neo-surface) !important;
+  outline: none !important;
+}
+
+.form-control::placeholder {
+  color: var(--neo-text-muted) !important;
+  font-size: 13px !important;
+}
+
+/* Unified Buttons Across Platform */
+.btn-primary,
+input[type="submit"].btn.btn-primary,
+.modal-body input[type="submit"],
+.modal-footer .btn-primary {
+  background: var(--neo-primary-gradient) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 9px 22px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.35) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  cursor: pointer !important;
+}
+
+.btn-primary:hover,
+input[type="submit"].btn.btn-primary:hover,
+.modal-body input[type="submit"]:hover,
+.modal-footer .btn-primary:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.btn-secondary,
+.modal-footer .btn-secondary,
+.modal-footer .btn-default {
+  background: var(--neo-surface) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: 10px !important;
+  color: var(--neo-text-secondary) !important;
+  padding: 8px 18px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-secondary:hover,
+.modal-footer .btn-secondary:hover,
+.modal-footer .btn-default:hover {
+  background: var(--neo-border-light) !important;
+  color: var(--neo-text-primary) !important;
+  border-color: var(--neo-border) !important;
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(14, 165, 233, 0.3) !important;
+}
+
+.btn-info:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4) !important;
+  color: #ffffff !important;
+}
+
+/* Unified Bootstrap Select & Dropdowns */
+.bootstrap-select > .dropdown-toggle {
+  background: var(--neo-surface) !important;
+  border: 1.5px solid var(--neo-border) !important;
+  border-radius: 10px !important;
+  color: var(--neo-text-primary) !important;
+  padding: 9px 14px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.bootstrap-select > .dropdown-toggle:focus,
+.bootstrap-select > .dropdown-toggle:active {
+  border-color: var(--neo-primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  outline: none !important;
+}
+
+.bootstrap-select .dropdown-menu {
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.3) !important;
+  padding: 6px !important;
+  z-index: 1060 !important;
+}
+
+.bootstrap-select .dropdown-menu li a {
+  border-radius: 8px !important;
+  color: var(--neo-text-primary) !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease !important;
+}
+
+.bootstrap-select .dropdown-menu li a:hover,
+.bootstrap-select .dropdown-menu li.selected a {
+  background: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+  font-weight: 600 !important;
+}
+
+.bootstrap-select .bs-searchbox input.form-control {
+  border-radius: 8px !important;
+  margin-bottom: 6px !important;
+  height: 36px !important;
+}
+
+.dropdown-header {
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+  color: var(--neo-text-muted) !important;
+  padding: 6px 12px !important;
+}
+
+/* ====================================================================
+   POS INTERFACE REFINEMENT
+   ==================================================================== */
+.pos-page {
+  background-color: var(--neo-bg) !important;
+}
+
+.pos-page #product-table td {
+  border: 1px solid var(--neo-border) !important;
+  border-radius: var(--neo-radius-md) !important;
+  background: var(--neo-surface) !important;
+  transition: all 0.2s ease !important;
+}
+
+.pos-page #product-table td:hover {
+  transform: translateY(-2px);
+  border-color: var(--neo-primary) !important;
+  box-shadow: var(--neo-shadow-md) !important;
+}
+
+/* ====================================================================
+   GOOGLE STITCH / zoloERP REFINEMENTS
+   ==================================================================== */
+
+/* Sidebar Category Headings */
+.sidebar-heading {
+  font-size: 10.5px !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: #94a3b8 !important;
+  padding: 16px 20px 6px !important;
+  margin: 0 !important;
+  display: block !important;
+  user-select: none;
+}
+
+body.dark-mode .sidebar-heading {
+  color: #64748b !important;
+}
+
+/* Brand Badge in Navigation */
+.zolo-brand-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none !important;
+}
+
+.zolo-brand-badge {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.zolo-brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: -0.01em;
+  padding-left: 2px;
+}
+
+/* Modern Stitch KPI Cards */
+.zolo-kpi-card {
+  background: var(--neo-surface);
+  border: 1px solid var(--neo-border);
+  border-radius: var(--neo-radius-lg);
+  padding: 20px 22px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--neo-shadow-xs);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.zolo-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--neo-shadow-md);
+  border-color: #cbd5e1;
+}
+
+body.dark-mode .zolo-kpi-card:hover {
+  border-color: #334155;
+}
+
+.zolo-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.zolo-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: transform 0.2s ease;
+}
+
+.zolo-kpi-card:hover .zolo-kpi-icon {
+  transform: scale(1.08);
+}
+
+.icon-purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.icon-orange {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+}
+
+.icon-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.icon-blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.zolo-kpi-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.01em;
+}
+
+.badge-purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #6d28d9;
+}
+
+.badge-orange {
+  background: rgba(249, 115, 22, 0.1);
+  color: #c2410c;
+}
+
+.badge-emerald {
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+}
+
+.badge-blue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1d4ed8;
+}
+
+.zolo-kpi-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.zolo-kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  font-family: var(--neo-font);
+  color: var(--neo-text-primary);
+  line-height: 1.2;
+  margin-bottom: 4px;
+  letter-spacing: -0.03em;
+}
+
+.zolo-kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neo-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zolo-kpi-label svg,
+.zolo-kpi-label i {
+  font-size: 14px;
+  color: var(--neo-text-muted);
+}
+
+/* Modern Welcome Banner Card */
+.zolo-banner-card {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+  border-radius: var(--neo-radius-lg);
+  padding: 24px 28px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.3);
+  margin-bottom: 24px;
+}
+
+.zolo-banner-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.zolo-banner-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.zolo-banner-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.zolo-banner-subtitle {
+  font-size: 13.5px;
+  color: #c7d2fe;
+  margin-bottom: 0;
+  font-weight: 400;
+}
+
+/* POS Radiant Top Action Button */
+.pos-top-btn {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  border-radius: 20px !important;
+  padding: 6px 16px !important;
+  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.35) !important;
+  border: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.pos-top-btn:hover {
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.5) !important;
+  transform: translateY(-1px) !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   UNIFIED DATATABLES CONTROLS (SEARCH, LENGTH DROPDOWN, BUTTONS)
+   ========================================================================== */
+.dataTables_wrapper .dataTables_length {
+  margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dataTables_length label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--neo-text-secondary) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  margin-bottom: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_length .btn-group,
+.dataTables_wrapper .dataTables_length .btn-group > .btn {
+  min-width: 70px !important;
+  height: 36px !important;
+  padding: 4px 12px !important;
+  border-radius: 10px !important;
+  background: var(--neo-surface-card) !important;
+  color: var(--neo-text-primary) !important;
+  border: 1px solid var(--neo-border) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.dataTables_wrapper .dataTables_filter {
+  margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--neo-text-secondary) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  margin-bottom: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  min-width: 220px !important;
+  height: 36px !important;
+  padding: 6px 14px !important;
+  border-radius: 10px !important;
+  background: var(--neo-surface-card) !important;
+  color: var(--neo-text-primary) !important;
+  border: 1px solid var(--neo-border) !important;
+  font-size: 13px !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+  border-color: var(--neo-primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+
+/* ====================================================================
+   COMPACT EXECUTIVE DASHBOARD STYLES (zoloERP Command Center)
+   ==================================================================== */
+.dashboard-counts .count-number,
+.compact-kpi .count-number,
+.zolo-kpi-value .count-number {
+  font-size: 1.45rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  color: var(--neo-text-primary) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.zolo-kpi-card {
+  padding: 13px 15px !important;
+  border-radius: var(--neo-radius-md) !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zolo-kpi-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+  border-color: var(--neo-border-focus) !important;
+}
+
+.zolo-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px !important;
+}
+
+.zolo-kpi-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 8px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px !important;
+}
+
+.zolo-kpi-badge {
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  padding: 2px 7px !important;
+  border-radius: 12px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.zolo-kpi-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.zolo-kpi-value {
+  font-size: 1.45rem !important;
+  font-weight: 750 !important;
+  font-family: var(--neo-font) !important;
+  color: var(--neo-text-primary) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 2px !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 2px !important;
+}
+
+.zolo-kpi-currency {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  opacity: 0.8 !important;
+  margin-right: 1px !important;
+}
+
+.zolo-kpi-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--neo-text-secondary) !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+.zolo-kpi-subtext {
+  font-size: 11px !important;
+  color: var(--neo-text-muted) !important;
+  margin-top: 4px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Color Accents for KPI cards */
+.kpi-purple .zolo-kpi-icon { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.kpi-purple .zolo-kpi-badge { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+
+.kpi-blue .zolo-kpi-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.kpi-blue .zolo-kpi-badge { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+
+.kpi-cyan .zolo-kpi-icon { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+.kpi-cyan .zolo-kpi-badge { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+
+.kpi-emerald .zolo-kpi-icon { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.kpi-emerald .zolo-kpi-badge { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+
+.kpi-orange .zolo-kpi-icon { background: rgba(249, 115, 22, 0.12); color: #f97316; }
+.kpi-orange .zolo-kpi-badge { background: rgba(249, 115, 22, 0.12); color: #f97316; }
+
+.kpi-rose .zolo-kpi-icon { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
+.kpi-rose .zolo-kpi-badge { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
+
+.kpi-amber .zolo-kpi-icon { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.kpi-amber .zolo-kpi-badge { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+
+.kpi-teal .zolo-kpi-icon { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
+.kpi-teal .zolo-kpi-badge { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
+
+/* Constrained Chart Canvas Heights */
+.zolo-chart-box {
+  position: relative;
+  height: 250px !important;
+  max-height: 250px !important;
+  width: 100%;
+}
+
+.zolo-donut-box {
+  position: relative;
+  height: 230px !important;
+  max-height: 230px !important;
+  width: 100%;
+}
+
+/* Quick Action Toolbar */
+.zolo-quick-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.zolo-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--neo-border) !important;
+  background: var(--neo-surface-card) !important;
+  color: var(--neo-text-primary) !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.zolo-quick-btn:hover {
+  background: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+  border-color: var(--neo-primary) !important;
+  transform: translateY(-1px);
+}
+
+.zolo-quick-btn.primary {
+  background: var(--neo-primary-gradient) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: var(--neo-shadow-sm) !important;
+}
+
+.zolo-quick-btn.primary:hover {
+  box-shadow: var(--neo-shadow-glow) !important;
+  color: #ffffff !important;
+}
+
+/* Addon Pulse Cards */
+.zolo-addon-pulse-card {
+  background: var(--neo-surface-card);
+  border: 1px solid var(--neo-border);
+  border-radius: var(--neo-radius-md);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.zolo-addon-pulse-card:hover {
+  border-color: var(--neo-primary);
+  transform: translateY(-1px);
+}
+
+.zolo-pulse-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+
