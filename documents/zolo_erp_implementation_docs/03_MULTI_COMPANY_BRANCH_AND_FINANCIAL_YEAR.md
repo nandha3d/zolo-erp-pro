@@ -79,3 +79,8 @@ X-Financial-Year-ID   optional when server can derive
 - Same document sequence code can exist in two companies.
 - FY close in one company does not affect another.
 - Background jobs restore company context before querying.
+## Implemented setup and selection contract
+
+Company/branch/FY session keys are `company_id`, `branch_id`, `financial_year_id`. An explicit company-header switch discards stale dependent session values. A sole authorized active branch is selected implicitly regardless of its code; multiple authorized branches require explicit selection.
+
+Authenticated web `/company/financial-years/setup` and API `/api/v1/company-context/financial-years` are setup exceptions to business FY middleware. They reuse active company membership, require the existing active Admin/Owner role (1/2) after a company role override, and create user-selected non-overlapping `fiscal_years` under a company row lock. No current FY redirects authorized web administrators to setup, or returns HTTP 409 with an API setup URL; staff must contact an administrator. Closed historical years remain selectable for reads. Existing dates and 1970 opening documents are not rewritten.

@@ -19,28 +19,8 @@ class CompanyContextResolver
         ?int $financialYearId = null,
         ?string $businessDate = null,
     ): CompanyContext {
-        $user = User::find($userId);
-        if (!$user || !$user->is_active || $user->is_deleted) {
-            throw new AuthorizationException('Active user required for company access.');
-        }
-        $memberships = DB::table('company_user')->where('user_id', $userId);
-        if ($companyId === null) {
-            $defaults = (clone $memberships)->where('is_default', true)->pluck('company_id');
-            if ($defaults->count() !== 1) {
-                throw ValidationException::withMessages(['company_id' => 'Select a company with an authorized membership.']);
-            }
-            $companyId = (int) $defaults->sole();
-        }
-        if (!(clone $memberships)->where('company_id', $companyId)->exists()) {
-            throw new AuthorizationException('Company access denied.');
-        }
-        $company = Company::whereKey($companyId)->where('status', 'active')->first();
-        if (!$company) {
-            throw new AuthorizationException('Company access denied.');
-        }
-        if (!in_array($company->timezone, timezone_identifiers_list(), true)) {
-            throw ValidationException::withMessages(['company_id' => 'Company timezone requires valid setup.']);
-        }
+        $company = $this->authorizedCompany($userId, $companyId);
+        $companyId = $company->id;
 
         $branches = $company->branches()->where('is_active', true)
             ->whereIn('id', DB::table('company_user_branches')->select('branch_id')
@@ -68,13 +48,55 @@ class CompanyContextResolver
             $date = $businessDate === null ? CarbonImmutable::now($company->timezone)->toDateString() : $this->date($businessDate);
             $matches = $years->whereDate('start_date', '<=', $date)->whereDate('end_date', '>=', $date)->get();
             if ($matches->count() !== 1) {
-                throw ValidationException::withMessages(['financial_year_id' => 'Business date must match exactly one company financial year.']);
+                throw new \App\Exceptions\CompanyFinancialYearSetupRequired($companyId);
             }
             $year = $matches->sole();
         }
 
         // Historical reads are allowed even when the year is closed.
         return new CompanyContext($companyId, $branchId, $year->id);
+    }
+
+    /** Company authorization is also available before a branch/FY is configured. */
+    public function authorizedCompany(int $userId, ?int $companyId = null): Company
+    {
+        $user = User::find($userId);
+        if (!$user || !$user->is_active || $user->is_deleted) {
+            throw new AuthorizationException('Active user required for company access.');
+        }
+        $memberships = DB::table('company_user')->where('user_id', $userId);
+        if ($companyId === null) {
+            $defaults = (clone $memberships)->where('is_default', true)->pluck('company_id');
+            if ($defaults->count() !== 1) {
+                throw ValidationException::withMessages(['company_id' => 'Select a company with an authorized membership.']);
+            }
+            $companyId = (int) $defaults->sole();
+        }
+        if (!(clone $memberships)->where('company_id', $companyId)->exists()) {
+            throw new AuthorizationException('Company access denied.');
+        }
+        $company = Company::whereKey($companyId)->where('status', 'active')->first();
+        if (!$company) {
+            throw new AuthorizationException('Company access denied.');
+        }
+        if (!in_array($company->timezone, timezone_identifiers_list(), true)) {
+            throw ValidationException::withMessages(['company_id' => 'Company timezone requires valid setup.']);
+        }
+
+        return $company;
+    }
+
+    public function canManageFinancialYears(int $userId, int $companyId): bool
+    {
+        $membership = DB::table('company_user')->where('company_id', $companyId)->where('user_id', $userId)->first();
+        $user = User::find($userId);
+        if (!$membership || !$user || !$user->is_active || $user->is_deleted) {
+            return false;
+        }
+        $roleId = (int) ($membership->role_id_override ?? $user->role_id);
+        // Existing RoleController/SettingController reserve administration for Admin/Owner (1/2).
+        return in_array($roleId, [1, 2], true)
+            && DB::table('roles')->where('id', $roleId)->where('is_active', true)->exists();
     }
 
     public function assertPostingDate(CompanyContext $context, string $businessDate): void

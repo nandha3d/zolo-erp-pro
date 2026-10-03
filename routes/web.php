@@ -177,6 +177,12 @@ if (!$isInstalled) {
 
 Auth::routes();
 
+// Company setup remains reachable before business context exists and before Common reads business data.
+Route::middleware('auth')->group(function () {
+    Route::get('company/financial-years/setup', [\App\Http\Controllers\CompanyFinancialYearController::class, 'index'])->name('company.financial-years.setup');
+    Route::post('company/financial-years/setup', [\App\Http\Controllers\CompanyFinancialYearController::class, 'store'])->name('company.financial-years.store');
+});
+
 Route::group(['middleware' => 'auth'], function () {
     Route::controller(HomeController::class)->group(function () {
         Route::get('home', 'home');

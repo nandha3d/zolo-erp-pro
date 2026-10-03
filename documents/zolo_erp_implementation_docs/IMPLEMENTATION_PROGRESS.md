@@ -94,3 +94,8 @@ F-01/F-09: resumable core company-key DDL validates existing artifacts before mu
 ## Audit correction: coherent context selection
 
 F-07/F-08: the sole authorized active branch is now the implicit branch, including non-MAIN branches. Company-header changes discard stale dependent session branch/FY IDs; explicit IDs remain authorized. Invalid company timezone fails setup validation. Context proof is now 33 tests, 43 assertions on MySQL. No-FY resolver failure is covered; the authorized setup path is the next correction. Legacy business route activation remains blocked on full isolation.
+## Audit correction: authorized FY setup
+
+F-06: company administrators can configure existing `fiscal_years` through authenticated web/API setup routes without a pre-existing branch/FY tuple. Active membership and effective Admin/Owner role are required. The company row lock serializes creation; inclusive overlap and malformed dates are rejected. No current FY produces an authorized setup redirect/409 response. Historical date ranges and artificial openings remain unchanged.
+
+Proof: 46 context/setup tests, 86 assertions pass on SQLite and MySQL; headless Chrome form checks pass at desktop/mobile widths. GitHub Actions passed the earlier 74-test suite for 339576d and daf96b6. Business-route activation is still blocked on comprehensive reader/writer, table, constraint, job/cache and file isolation.

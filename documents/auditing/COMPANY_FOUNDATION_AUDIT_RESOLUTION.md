@@ -37,3 +37,12 @@ Proof: isolated official MySQL 8.4.0, 74 tests and 249 assertions, including the
 Implicit branch selection uses the sole active authorized branch regardless of its code. Multiple authorized branches require explicit selection. A company header switch discards dependent session branch/FY values from the previous company; explicit headers remain validated. Invalid company timezone is rejected as setup validation.
 
 Proof: 33 context tests, 43 assertions pass on MySQL in the combined suite. They cover non-MAIN selection, ambiguity, company switching, explicit spoofed dependencies, invalid timezone, no-FY rejection and prior authorization/period cases. Real legacy routes and writers remain gated; this does not close F-02/F-03.
+## F-06 authorized financial-year setup
+
+Web `/company/financial-years/setup` and API `/api/v1/company-context/financial-years` provide authorized setup before branch/FY context exists. They reuse company membership/active-user authorization, the existing active Admin/Owner role policy, and company role overrides. Creation serializes on the company row and rejects inclusive overlaps; dates remain user-selected and historical years/openings are preserved. Missing current FY returns HTTP 409 with an authorized setup URL, or redirects a web administrator to the setup form. Staff receives an administrator-required response.
+
+Proof: 46 context/setup tests, 86 assertions on SQLite and MySQL. Real HTTP tests cover first-year creation, historical-only installations, other-company access, role overrides, invalid dates, overlaps, body-ID spoofing, authentication, web creation and setup responses. Headless Chrome verifies the rendered form at desktop/mobile sizes, required inputs, labels, CSRF field and keyboard focus with no page errors. Live original SalePro browser-flow parity remains a separate F-11 gate. This closes the setup-path defect; broad business middleware activation remains dependent on F-02/F-03/F-04/F-05.
+
+## CI evidence
+
+GitHub Actions passed the 74-test MySQL suite for migration commit 339576d and context commit daf96b6: [migration run](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37125075054), [context run](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37125118388). These establish CI proof for the tested fixtures; they do not establish production-scale locking or complete legacy isolation.

@@ -27,12 +27,25 @@ class ResolveCompanyContext
         // A company header selects a new tuple; old-company dependent session IDs are invalid.
         $useSessionDependents = !$request->headers->has('X-Company-ID')
             || ($sessionCompany !== null && filter_var($sessionCompany, FILTER_VALIDATE_INT) === $companyId);
-        $context = $this->resolver->resolve(
-            $user->id,
-            $companyId,
-            $this->id($request, 'X-Branch-ID', 'branch_id', $useSessionDependents),
-            $this->id($request, 'X-Financial-Year-ID', 'financial_year_id', $useSessionDependents),
-        );
+        try {
+            $context = $this->resolver->resolve(
+                $user->id,
+                $companyId,
+                $this->id($request, 'X-Branch-ID', 'branch_id', $useSessionDependents),
+                $this->id($request, 'X-Financial-Year-ID', 'financial_year_id', $useSessionDependents),
+            );
+        } catch (\App\Exceptions\CompanyFinancialYearSetupRequired $error) {
+            $admin = $this->resolver->canManageFinancialYears($user->id, $error->companyId);
+            if (!$request->expectsJson() && $admin) {
+                return redirect()->route('company.financial-years.setup', ['company_id' => $error->companyId]);
+            }
+
+            return response()->json([
+                'message' => $admin ? 'Company financial year requires setup or explicit historical selection.' : 'Ask a company administrator to configure a financial year.',
+                'errors' => $error->errors(),
+                'setup_url' => $admin ? route('api.v1.company.financial-years.setup', ['company_id' => $error->companyId]) : null,
+            ], 409);
+        }
         $request->attributes->set(CompanyContext::class, $context);
         try {
             return $next($request);

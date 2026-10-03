@@ -39,9 +39,21 @@ class CompanyContextTest extends ErpServiceTestCase
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
+            $table->unsignedInteger('role_id')->default(1);
             $table->boolean('is_active')->default(true);
             $table->boolean('is_deleted')->default(false);
         });
+        $viewCache = storage_path('framework/views');
+        if (!is_dir($viewCache)) {
+            mkdir($viewCache, 0777, true);
+        }
+        config(['view.compiled' => $viewCache]);
+        config(['app.key' => 'base64:dGVzdC1vbmx5LWF1ZGl0LWZpeHR1cmUta2V5LTEyMzQ=']);
+        Schema::create('roles', function (Blueprint $table) {
+            $table->increments('id');
+            $table->boolean('is_active')->default(true);
+        });
+        DB::table('roles')->insert([['id' => 1], ['id' => 2], ['id' => 4]]);
         DB::table('users')->insert([['id' => 1, 'name' => 'First operator'], ['id' => 2, 'name' => 'Other operator']]);
         (require database_path('migrations/2026_10_03_000001_create_company_context_tables.php'))->up();
         (require database_path('migrations/2026_10_03_000002_add_nullable_company_keys_to_core_tables.php'))->up();
@@ -364,4 +376,132 @@ class CompanyContextTest extends ErpServiceTestCase
         $this->expectException(ValidationException::class);
         $this->resolver->resolve(1);
     }
+    public function test_admin_can_create_first_year_via_real_api_without_company_context(): void
+    {
+        $this->year->delete();
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->getJson('/api/v1/company-context/financial-years')->assertOk()->assertJsonPath('financial_years', []);
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => 'Operational 2026', 'start_date' => '2026-01-01', 'end_date' => '2026-12-31',
+        ])->assertCreated()->assertJsonPath('financial_year.company_id', $this->company->id);
+        $context = $this->resolver->resolve(1);
+        $this->assertSame($this->company->id, $context->companyId);
+    }
+
+    public function test_setup_rejects_other_company_even_for_an_admin(): void
+    {
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->getJson('/api/v1/company-context/financial-years', ['X-Company-ID' => $this->other->id])->assertForbidden();
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => '2030', 'start_date' => '2030-01-01', 'end_date' => '2030-12-31',
+        ], ['X-Company-ID' => $this->other->id])->assertForbidden();
+        $this->assertSame(1, $this->other->fiscalYears()->count());
+    }
+
+    public function test_company_role_override_limits_admin_setup(): void
+    {
+        DB::table('company_user')->where('company_id', $this->company->id)->update(['role_id_override' => 4]);
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->getJson('/api/v1/company-context/financial-years')->assertForbidden();
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => '2030', 'start_date' => '2030-01-01', 'end_date' => '2030-12-31',
+        ])->assertForbidden();
+    }
+
+    public function test_explicit_admin_override_allows_member_setup(): void
+    {
+        DB::table('users')->where('id', 1)->update(['role_id' => 4]);
+        DB::table('company_user')->where('company_id', $this->company->id)->update(['role_id_override' => 1]);
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->getJson('/api/v1/company-context/financial-years')->assertOk();
+    }
+
+    public function test_setup_rejects_inactive_administration_role(): void
+    {
+        DB::table('roles')->where('id', 1)->update(['is_active' => false]);
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->getJson('/api/v1/company-context/financial-years')->assertForbidden();
+    }
+
+    public function test_setup_blocks_inclusive_overlap_and_preserves_existing_dates(): void
+    {
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => 'Overlap', 'start_date' => '2026-12-31', 'end_date' => '2027-12-31',
+        ])->assertUnprocessable()->assertJsonValidationErrors('start_date');
+        $this->assertSame('2026-01-01', $this->year->fresh()->start_date->toDateString());
+        $this->assertSame(1, $this->company->fiscalYears()->count());
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => '2027', 'start_date' => '2027-01-01', 'end_date' => '2027-12-31',
+        ])->assertCreated();
+    }
+
+    public function test_setup_validates_dates_before_writing(): void
+    {
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => 'Invalid', 'start_date' => '2027-02-30', 'end_date' => '2027-01-01',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['start_date', 'end_date']);
+        $this->assertSame(1, $this->company->fiscalYears()->count());
+    }
+
+    public function test_setup_does_not_trust_body_company_id(): void
+    {
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'company_id' => $this->other->id, 'name' => '2027',
+            'start_date' => '2027-01-01', 'end_date' => '2027-12-31',
+        ])->assertCreated()->assertJsonPath('financial_year.company_id', $this->company->id);
+        $this->assertSame(1, $this->other->fiscalYears()->count());
+    }
+
+    public function test_historical_only_company_can_create_current_year_without_changing_history(): void
+    {
+        $this->year->update(['start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_closed' => true, 'status' => 'closed']);
+        \Laravel\Sanctum\Sanctum::actingAs(User::findOrFail(1));
+        $this->getJson('/api/v1/company-context/financial-years')->assertOk();
+        $this->postJson('/api/v1/company-context/financial-years', [
+            'name' => '2026', 'start_date' => '2026-01-01', 'end_date' => '2026-12-31',
+        ])->assertCreated();
+        $this->assertSame('2025-01-01', $this->year->fresh()->start_date->toDateString());
+        $this->assertNotSame($this->year->id, $this->resolver->resolve(1)->financialYearId);
+    }
+
+    public function test_web_setup_form_and_creation_work_without_an_existing_year(): void
+    {
+        $this->year->delete();
+        $this->actingAs(User::findOrFail(1));
+        $this->get('/company/financial-years/setup')->assertOk()->assertSee('No financial year exists')->assertSee('name="start_date"', false);
+        $this->post('/company/financial-years/setup', [
+            'name' => '2026', 'start_date' => '2026-01-01', 'end_date' => '2026-12-31',
+        ])->assertRedirect(route('company.financial-years.setup', ['company_id' => $this->company->id]));
+        $this->assertSame(1, $this->company->fiscalYears()->count());
+    }
+
+    public function test_context_routes_admin_to_setup_without_a_year(): void
+    {
+        $this->year->delete();
+        \Illuminate\Support\Facades\Route::middleware(['web', 'auth', 'company.context'])
+            ->get('/__test/company-context', fn () => response('Business route'));
+        $this->actingAs(User::findOrFail(1));
+        $this->get('/__test/company-context')->assertRedirect(route('company.financial-years.setup', ['company_id' => $this->company->id]));
+        $this->getJson('/__test/company-context')->assertStatus(409)->assertJsonPath('setup_url',
+            route('api.v1.company.financial-years.setup', ['company_id' => $this->company->id]));
+    }
+
+    public function test_nonadmin_missing_year_response_does_not_expose_admin_setup(): void
+    {
+        $this->year->delete();
+        DB::table('users')->where('id', 1)->update(['role_id' => 4]);
+        \Illuminate\Support\Facades\Route::middleware(['web', 'auth', 'company.context'])
+            ->get('/__test/company-context', fn () => response('Business route'));
+        $this->actingAs(User::findOrFail(1));
+        $this->getJson('/__test/company-context')->assertStatus(409)->assertJsonPath('setup_url', null);
+    }
+
+    public function test_setup_requires_authentication(): void
+    {
+        $this->getJson('/api/v1/company-context/financial-years')->assertUnauthorized();
+    }
+
 }

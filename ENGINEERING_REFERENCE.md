@@ -118,7 +118,8 @@ Company packages A/B have delivered:
 - `erp:backfill-company-context` with a zero-write dry run, validation, maintenance-mode guard and transactional DEFAULT/MAIN assignment.
 - Immutable `CompanyContext` with company, branch and financial-year IDs.
 - `CompanyContextResolver` for active user/company membership, branch access and FY selection; explicit `assertPostingDate` for date/period validation.
-- `ResolveCompanyContext`, registered as `company.context`, exposing context through request attributes and clearing it after success or failure.
+- `ResolveCompanyContext`, registered as `company.context`, exposing context through request attributes and clearing it after success or failure. Sole authorized branch selection and coherent header/session switching are implemented.
+- Authorized web/API financial-year setup works before a branch/FY tuple exists. Active Admin/Owner membership and company role overrides are enforced; creation locks the company and rejects overlapping dates. Missing current FY directs administrators to setup.
 
 Middleware reads positive integer `X-Company-ID`, `X-Branch-ID` and `X-Financial-Year-ID` headers, with `company_id`, `branch_id` and `financial_year_id` session fallbacks. Request-body company IDs are not authoritative. Defaults require unambiguous authorized selection.
 
@@ -497,7 +498,7 @@ The recorded targeted suite totals **50 tests and 167 assertions**. See [impleme
 
 The application boot and route baseline succeeded. The original feature suite recorded 2 passed and 16 failed because seeded MySQL was unavailable. The frontend build baseline failed with absent dependencies/build configuration. SQLite proof does not establish MySQL migration compatibility, concurrent safety, full HTTP isolation or production-data parity.
 
-Phase 1 remains pending integration and representative MySQL rehearsal. All dependent phases remain pending. No production migration/backfill or deployment has been performed by these packages.
+MySQL 8.4 local and GitHub Actions proof now covers full source migrations, committed-DDL recovery, backfill and commercial regressions (74 tests, 249 assertions before the FY setup addition). Context/setup proof adds real authenticated HTTP setup cases (46 tests, 86 assertions). Phase 1 remains pending full isolation integration and representative retained-data cutover. All dependent phases remain pending. No production migration/backfill or deployment has been performed by these packages.
 
 ### Validation and UAT
 

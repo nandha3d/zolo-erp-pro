@@ -37,6 +37,10 @@ Route::prefix('v1')->group(function () {
     // Protected ERP Endpoints (Sanctum Token Required)
     Route::middleware('auth:sanctum')->group(function () {
 
+        // Setup deliberately does not require an existing branch or financial year.
+        Route::get('company-context/financial-years', [\App\Http\Controllers\CompanyFinancialYearController::class, 'index'])->name('api.v1.company.financial-years.setup');
+        Route::post('company-context/financial-years', [\App\Http\Controllers\CompanyFinancialYearController::class, 'store'])->name('api.v1.company.financial-years.store');
+
         // User & Session
         Route::prefix('auth')->group(function () {
             Route::get('me', [AuthController::class, 'me'])->name('api.v1.auth.me');
