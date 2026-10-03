@@ -10,9 +10,20 @@ F-13: the execution plan formally adopts Option B. Inactive additive foundations
 
 Validation: canonical phase headings, obsolete-contract search, manifest/file parity and Markdown link checks. No runtime behavior changes in this package.
 
-## Remaining implementation findings
+## Current finding status
 
-F-01 through F-09, F-11 and F-12 remain open pending their implementation and proof. F-02/F-03/F-04/F-05 require complete ownership, reader/writer, constraint, route and job/cache/file integration. They cannot be closed merely by enabling middleware. F-11 additionally needs representative legacy data and MySQL evidence.
+| Findings | Current disposition |
+|---|---|
+| F-01 | Corrected and proven with committed-DDL recovery on local/CI MySQL |
+| F-06/F-07/F-08/F-09 | Setup, selection, tuple switching and currency validation/FK corrected with targeted proof |
+| F-10/F-13/F-14 | Contract, explicit stabilization disposition and document inventory corrected |
+| F-12 | Audited purchase-creation defect corrected under the confirmed supplier-bill policy; subsequent receipt/web-update cutover remains gated |
+| F-02/F-03 | Six real API reader routes isolated; full transaction/legacy/raw/job/cache/file boundary remains open |
+| F-04 | Complete source ownership matrix delivered; remaining operational migrations/backfill and imported-schema decisions remain open |
+| F-05 | Company-aware business uniqueness, mandatory ownership and same-company FKs remain open until writers/backfill are ready |
+| F-11 | Full source chain, seeded backfill, failure recovery and original smoke suites pass on local/CI MySQL; retained-data/production-scale lock and reconciliation proof remains open |
+
+F-02/F-03/F-04/F-05 cannot be closed merely by enabling middleware. The active source also references floors, kitchens, menu_type and services without creators; their supported scope or authoritative imported schemas must be resolved before complete operational ownership cutover.
 
 Second-company activation and dependent capability work remain blocked. New evidence is appended below per delivered package.
 
@@ -66,3 +77,6 @@ Six actual authenticated GET routes now require authorized company context: prod
 Proof: seven real HTTP isolation tests cover guessed product IDs, header spoofing, two-company switching, nested-master corruption, stock parent/row corruption, restricted-branch stock and valuation IDs. The combined MySQL suite passes 95 tests, 354 assertions; seeded legacy parity passes 16 tests, 54 assertions after reviewed fixture preparation.
 
 This proves the bounded reader package. Sales/purchase/journal writers and HTTP details/reports/exports/downloads, legacy web/raw readers, operational migrations, global unique-key conversion, ownership constraints, jobs/caches and public file access remain open. No global model scope or second-company activation is asserted.
+## Latest combined CI proof
+
+[Reader-isolation CI run](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37126819051) passes for code commit 7fa23eb: 95 foundation/isolation tests with 354 assertions, then 16 original seeded smoke tests with 54 assertions. All audit work packages were pushed independently. User-deleted old architecture files and the untracked archive were preserved. No production migration/backfill or deployment occurred.
