@@ -54,6 +54,90 @@ class CompanyWriterTest extends CompanyContextTestCase
             new CompanyContext($this->other->id, $this->otherBranch->id, $this->otherYear->id));
     }
 
+    public function test_supplier_settlement_is_owned_dated_and_reduces_payable_without_touching_stock(): void
+    {
+        $purchase = $this->postJson('/api/v1/purchases', $this->payload('purchases'))->assertCreated()->json('data.id');
+        $before = $this->snapshot();
+        $this->postJson('/api/v1/purchases/'.$purchase.'/payments', ['amount' => 1, 'paying_method' => 'Gift Card'])->assertUnprocessable();
+        $this->assertSame($before, $this->snapshot());
+        $stock = DB::table('product_warehouse')->orderBy('id')->get()->toJson();
+        $payableBefore = (float) ChartOfAccount::where('company_id', $this->company->id)->where('code', '2010')->value('current_balance');
+        $before = $this->snapshot();
+        $this->postJson('/api/v1/purchases/'.$purchase.'/payments',
+            ['amount' => 2, 'paying_method' => 'Bank', 'account_id' => 2])->assertUnprocessable();
+        $this->assertSame($before, $this->snapshot());
+        $payment = $this->postJson('/api/v1/purchases/'.$purchase.'/payments', [
+            'amount' => 2, 'paying_method' => 'Bank', 'account_id' => 1, 'business_date' => '2026-10-04',
+            'company_id' => $this->other->id, 'user_id' => 2,
+        ])->assertCreated()->assertJsonPath('data.company_id', $this->company->id)
+            ->assertJsonPath('data.user_id', 1)->assertJsonPath('data.purchase_id', $purchase);
+        $journal = \App\Models\Accounting\JournalEntry::where('reference_type', 'payment')->where('reference_id', $payment->json('data.id'))->firstOrFail();
+        $this->assertSame('2026-10-04', $journal->entry_date->toDateString());
+        $this->assertEquals($payableBefore - 2, ChartOfAccount::where('company_id', $this->company->id)->where('code', '2010')->value('current_balance'));
+        $this->assertEquals(7, DB::table('purchases')->where('id', $purchase)->value('paid_amount'));
+        $this->assertSame($stock, DB::table('product_warehouse')->orderBy('id')->get()->toJson());
+        $before = $this->snapshot();
+        $this->postJson('/api/v1/purchases/'.$purchase.'/payments', ['amount' => 4, 'paying_method' => 'Cash'])->assertStatus(400);
+        $this->assertSame($before, $this->snapshot());
+        $this->year->update(['lock_date' => '2026-10-04']);
+        $before = $this->snapshot();
+        $this->postJson('/api/v1/purchases/'.$purchase.'/payments', [
+            'amount' => 1, 'paying_method' => 'Cash', 'business_date' => '2026-10-04',
+        ])->assertUnprocessable();
+        $this->assertSame($before, $this->snapshot());
+        $this->postJson('/api/v1/purchases/'.$purchase.'/payments', ['amount' => 1, 'paying_method' => 'Cash'],
+            ['X-Company-ID' => $this->other->id])->assertForbidden();
+    }
+
+    public function test_unbilled_order_and_backdated_settlement_leave_no_effects(): void
+    {
+        foreach (['sale', 'purchase'] as $type) {
+            $collection = $type === 'sale' ? 'sales' : 'purchases';
+            $id = $this->postJson('/api/v1/'.$collection, $this->payload($collection))->assertCreated()->json('data.id');
+            $before = $this->snapshot();
+            $this->postJson('/api/v1/'.$collection.'/'.$id.'/payments', [
+                'amount' => 1, 'paying_method' => 'Cash', 'business_date' => '2026-10-02',
+            ])->assertStatus(400);
+            $this->assertSame($before, $this->snapshot());
+        }
+        $payload = $this->payload('purchases');
+        $payload['status'] = 4;
+        $payload['paid_amount'] = 0;
+        $id = $this->postJson('/api/v1/purchases', $payload)->assertCreated()->json('data.id');
+        $before = $this->snapshot();
+        $this->postJson('/api/v1/purchases/'.$id.'/payments', ['amount' => 1, 'paying_method' => 'Cash'])->assertStatus(400);
+        $this->assertSame($before, $this->snapshot());
+    }
+
+    public function test_concurrent_supplier_settlements_cannot_overpay_or_leave_failed_numbers(): void
+    {
+        if (getenv('ERP_TEST_MYSQL') !== '1') {
+            $this->markTestSkipped('Concurrent settlement proof requires disposable MySQL.');
+        }
+        $id = $this->postJson('/api/v1/purchases', $this->payload('purchases'))->assertCreated()->json('data.id');
+        $processes = [];
+        for ($i = 0; $i < 2; $i++) {
+            $process = new \Symfony\Component\Process\Process([PHP_BINARY, base_path('tests/Support/document_number_worker.php'),
+                (string) $this->company->id, (string) $this->branch->id, (string) $this->year->id, 'purchase-payment', (string) $id]);
+            $process->setTimeout(45);
+            $process->start();
+            $processes[] = $process;
+        }
+        $posted = [];
+        foreach ($processes as $process) {
+            $process->wait();
+            $this->assertTrue($process->isSuccessful(), $process->getErrorOutput().$process->getOutput());
+            $posted[] = json_decode($process->getOutput(), true, flags: JSON_THROW_ON_ERROR)['posted'];
+        }
+        sort($posted);
+        $this->assertSame([false, true], $posted);
+        $this->assertEquals(9, DB::table('purchases')->where('id', $id)->value('paid_amount'));
+        $this->assertSame(2, DB::table('payments')->where('purchase_id', $id)->count());
+        $this->assertSame(2, DB::table('journal_entries')->count());
+        $this->assertSame(2, DB::table('document_number_reservations')->where('document_type', 'purchase_payment')->where('status', 'assigned')->count());
+        $this->assertSame(3, (int) DB::table('document_series')->where('document_type', 'purchase_payment')->value('next_number'));
+    }
+
     private function payload(string $type): array
     {
         $line = ['product_id' => 1, 'qty' => 2];

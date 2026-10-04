@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [PurchaseApiController::class, 'index'])->middleware('company.context')->name('api.v1.purchases.index');
             Route::post('/', [PurchaseApiController::class, 'store'])->middleware('company.context')->name('api.v1.purchases.store');
             Route::get('{id}', [PurchaseApiController::class, 'show'])->middleware('company.context')->name('api.v1.purchases.show');
+            Route::post('{id}/payments', [PurchaseApiController::class, 'addPayment'])->middleware('company.context')->name('api.v1.purchases.add-payment');
         });
 
         // Products & Catalog

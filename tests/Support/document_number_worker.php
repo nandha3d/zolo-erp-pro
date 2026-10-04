@@ -22,6 +22,20 @@ config([
 ]);
 $context = new CompanyContext((int) $argv[1], (int) $argv[2], (int) $argv[3]);
 try {
+    if (($argv[4] ?? null) === 'purchase-payment') {
+        try {
+            $payment = app(\App\Services\ERP\PurchaseService::class)->addPayment(
+                \App\Models\Purchase::findOrFail((int) $argv[5]),
+                ['amount' => 4, 'paying_method' => 'Cash', 'business_date' => '2026-10-03'], 1, $context);
+            echo json_encode(['posted' => true, 'number' => $payment->payment_reference], JSON_THROW_ON_ERROR);
+        } catch (InvalidArgumentException $error) {
+            if ($error->getMessage() !== 'Payment exceeds the outstanding document amount.') {
+                throw $error;
+            }
+            echo json_encode(['posted' => false, 'reason' => $error->getMessage()], JSON_THROW_ON_ERROR);
+        }
+        exit(0);
+    }
     $sale = app(SaleService::class)->createSale([
     'customer_id' => 1, 'warehouse_id' => 1, 'business_date' => '2026-10-03', 'sale_status' => 2,
     'items' => [['product_id' => 1, 'qty' => 1, 'net_unit_price' => 10]],

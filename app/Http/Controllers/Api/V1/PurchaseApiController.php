@@ -107,4 +107,26 @@ class PurchaseApiController extends BaseApiController
             return $this->sendError($e->getMessage(), [], 400);
         }
     }
+
+    public function addPayment(Request $request, int $id): JsonResponse
+    {
+        $context = $this->companyContext($request);
+        $purchase = Purchase::visibleIn($context)->find($id);
+        if (!$purchase) {
+            return $this->sendError('Purchase not found', [], 404);
+        }
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'paying_method' => 'required|string',
+            'account_id' => 'nullable|integer|min:1',
+        ]);
+        try {
+            $payment = $this->purchaseService->addPayment($purchase, $request->all(), $request->user()->id, $context);
+            return $this->sendResponse($payment, 'Supplier payment recorded and posted successfully', 201);
+        } catch (\Illuminate\Validation\ValidationException | \Illuminate\Auth\Access\AuthorizationException | \Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            return $this->sendError($e->getMessage(), [], 400);
+        }
+    }
 }

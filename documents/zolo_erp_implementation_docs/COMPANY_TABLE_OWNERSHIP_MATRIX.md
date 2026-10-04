@@ -1,8 +1,8 @@
 # Company table ownership matrix
 
-Source inventory for audit F-04, reviewed 2026-10-03 by the Codebase Onboarding Engineer. This is a migration and isolation checklist, not an activation certificate.
+Source inventory for audit F-04, reviewed 2026-10-04 by the Codebase Onboarding Engineer. This is a migration and isolation checklist, not an activation certificate.
 
-The source defines **125 application tables**: 123 active literal creators and two configured Spatie creators. Framework `migrations` metadata is additional. A live database may differ; reconcile its schema before cutover. The company package adds nullable indexed ownership to 32 existing tables and creates four platform tables. It does not cover all business data.
+The source defines **131 application tables**: the original 123 active literal creators, six additive capability/numbering creators and two configured Spatie creators. Framework `migrations` metadata is additional. A live database may differ; reconcile its schema before cutover. The company package adds nullable indexed ownership to 32 existing tables and creates four platform tables. It does not cover all business data.
 
 ## Interpretation and common acceptance gates
 
@@ -34,6 +34,17 @@ Controller names refer to `app/Http/Controllers`; API names to its `Api/V1` dire
 | `currencies` | M; shared reference plus mutable exchange-rate policy | CurrencyController, Common, settings, transactions | IDs are unsigned BIGINT; separate shared identity from company rate policy; reference FKs require compatible widths |
 
 Configured Spatie table names must be checked against deployed `config('permission.table_names')`.
+
+## Additive capability and numbering ownership
+
+| Tables | State / required scope | Readers and writers | Constraints and remaining gates |
+|---|---|---|---|
+| `capabilities`, `business_profiles`, `business_profile_capabilities` | T; shared registry and presets | CapabilitySeeder, CapabilityService | Stable unique keys and restricting parent references; optional activation remains gated |
+| `company_capabilities` | Explicit company override | Company administrator API, CapabilityService | Unique company/capability pair, restricting FKs, committed cache invalidation; configuration does not authorize optional operations while gated |
+| `document_series` | Explicit company/branch/FY/type/code | DocumentNumberService, administrator API | Unique code/default per scope; actor and same-company branch/FY revalidated before allocation; used series immutable |
+| `document_number_reservations` | Company and owned series/source | Shared commercial/payment/accounting writers | Unique sequence/formatted number/source binding; allocation and assignment in the source transaction; retained references preserved |
+
+Both additive migrations resume missing indexes/FKs after committed MySQL CREATE TABLE interruptions. These tables do not establish ownership for remaining legacy modules.
 
 ## Existing 32-table ownership package
 
