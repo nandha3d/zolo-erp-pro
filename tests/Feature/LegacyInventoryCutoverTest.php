@@ -106,7 +106,10 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
                 $table->string($column)->nullable();
             }
         });
-        Schema::create('mail_settings', fn (Blueprint $table) => $table->increments('id'));
+        Schema::create('mail_settings', function (Blueprint $table) {
+            $table->increments('id');
+            $table->timestamps();
+        });
         Schema::create('custom_fields', function (Blueprint $table) {
             $table->increments('id');
             $table->string('belongs_to');
