@@ -18,6 +18,8 @@ final class CapabilityCatalog
         'inventory.batch_expiry' => ['Batch and expiry', ['core.inventory']],
         'inventory.serial_tracking' => ['Serial tracking', ['core.inventory']],
         'inventory.dimension_tracking' => ['Dimension tracking', ['core.inventory']],
+        'inventory.lot_tracking' => ['Lot tracking', ['core.inventory']],
+        'sales.wholesale' => ['Wholesale sales', ['core.sales']],
         'sales.fast_counter' => ['Fast counter', ['core.sales']],
         'purchases.fast_entry' => ['Fast purchase', ['core.purchases']],
         'sales.route_distribution' => ['Route distribution', ['core.sales', 'core.inventory']],
@@ -27,7 +29,8 @@ final class CapabilityCatalog
         'sales.woocommerce' => ['WooCommerce', ['sales.ecommerce']],
         'sales.catalogue_qr' => ['QR catalogue', ['core.sales']],
         'inventory.damage_stock' => ['Damage stock', ['core.inventory']],
-        'manufacturing.production' => ['Production', ['core.inventory']],
+        'manufacturing.bom' => ['BOM and system kits', ['core.inventory']],
+        'manufacturing.production' => ['Production', ['manufacturing.bom', 'core.accounting']],
         'operations.job_work' => ['Job work', ['core.inventory', 'core.purchases']],
         'operations.projects' => ['Projects', ['core.sales']],
         'operations.installation' => ['Installation', ['operations.projects', 'inventory.serial_tracking']],
@@ -43,10 +46,10 @@ final class CapabilityCatalog
 
     public const PROFILES = [
         'general_trading' => ['General Trading', []],
-        'fmcg' => ['FMCG', ['inventory.multi_uom', 'inventory.batch_expiry']],
-        'textile' => ['Textile', ['inventory.multi_uom', 'operations.job_work', 'printing.dot_matrix']],
-        'timber' => ['Timber', ['inventory.multi_uom', 'inventory.dimension_tracking']],
-        'solar' => ['Solar', ['operations.projects', 'inventory.serial_tracking', 'operations.installation']],
+        'fmcg' => ['FMCG', ['inventory.multi_uom', 'inventory.batch_expiry', 'sales.fast_counter', 'sales.wholesale', 'communications.whatsapp']],
+        'textile' => ['Textile', ['inventory.multi_uom', 'sales.fast_counter', 'sales.wholesale', 'operations.job_work', 'printing.dot_matrix', 'communications.whatsapp']],
+        'timber' => ['Timber', ['inventory.multi_uom', 'inventory.dimension_tracking', 'inventory.lot_tracking', 'sales.wholesale']],
+        'solar' => ['Solar', ['operations.projects', 'inventory.serial_tracking', 'operations.installation', 'manufacturing.bom', 'service.warranty_amc', 'communications.whatsapp']],
     ];
 
     public const CONFIGURATION = [

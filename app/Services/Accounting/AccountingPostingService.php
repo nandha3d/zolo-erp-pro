@@ -162,6 +162,9 @@ class AccountingPostingService
             return;
         }
         $model = match ($type) {
+            'production' => \App\Models\Operations\ProductionOrder::class,
+            'job_work_receipt' => \App\Models\Operations\JobWorkReceipt::class,
+            'stock_loss' => \App\Models\Inventory\StockMovement::class,
             'sale' => \App\Models\Sale::class, 'purchase' => \App\Models\Purchase::class,
             'payment' => \App\Models\Payment::class, 'expense' => \App\Models\Expense::class,
             'reversal' => JournalEntry::class,
@@ -174,8 +177,15 @@ class AccountingPostingService
             $model::visibleIn($context)->whereKey($header['reference_id'])->lockForUpdate()->firstOrFail();
         } else {
             $source = $guard->owned($model, $header['reference_id'], $context, 'reference_id');
+            if (in_array($type, ['production', 'job_work_receipt', 'stock_loss'], true)
+                && ((int) $source->branch_id !== $context->branchId || (int) $source->financial_year_id !== $context->financialYearId)) {
+                throw new InvalidArgumentException('Operational accounting source is outside the selected branch or financial year.');
+            }
             if ($type === 'expense' && $source->warehouse_id) {
                 $guard->warehouse($source->warehouse_id, $context, $actor);
+            }
+            if ($type === 'stock_loss' && ($source->movement_type !== 'expiry_writeoff' || $source->status !== 'posted')) {
+                throw new InvalidArgumentException('Stock loss accounting requires a posted expiry disposal.');
             }
             if ($type === 'reversal' && ((int) $source->branch_id !== $context->branchId || $source->status !== 'posted'
                 || $source->reversal_of_id || (int) ($header['reversal_of_id'] ?? 0) !== $source->id)) {

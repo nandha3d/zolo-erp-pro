@@ -82,6 +82,7 @@ class CapabilityEngineTest extends CompanyContextTestCase
         }
         $this->assertTrue($this->service->enabled('inventory.serial_tracking', $this->context));
         $this->service->disable('operations.installation', $this->context, 1);
+        $this->service->disable('service.warranty_amc', $this->context, 1);
         $this->service->disable('inventory.serial_tracking', $this->context, 1);
         $this->assertFalse($this->service->enabled('inventory.serial_tracking', $this->context));
     }
@@ -139,6 +140,7 @@ class CapabilityEngineTest extends CompanyContextTestCase
     {
         $this->assertFalse($this->service->enabled('manufacturing.production', $this->context));
         DB::beginTransaction();
+        $this->service->enable('manufacturing.bom', [], $this->context, 1);
         $this->service->enable('manufacturing.production', [], $this->context, 1);
         $this->assertTrue($this->service->enabled('manufacturing.production', $this->context));
         DB::rollBack();
@@ -226,6 +228,7 @@ class CapabilityEngineTest extends CompanyContextTestCase
         $disabled = view('backend.layout.sidebar', $data)->render();
         $this->assertStringNotContainsString('id="manufacturing"', $disabled);
         $this->assertStringContainsString('id="sale-list-menu"', $disabled);
+        $this->service->enable('manufacturing.bom', [], $this->context, 1);
         $this->service->enable('manufacturing.production', [], $this->context, 1);
         $enabled = view('backend.layout.sidebar', $data)->render();
         $this->assertStringContainsString('id="manufacturing"', $enabled);

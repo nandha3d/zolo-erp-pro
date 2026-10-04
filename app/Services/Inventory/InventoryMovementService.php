@@ -43,6 +43,33 @@ class InventoryMovementService
         return $this->post('issue', $command);
     }
 
+    public function productionConsume(StockMovementCommand $command): StockMovement
+    {
+        return $this->post('issue', $command, 'production_consume');
+    }
+
+    public function productionOutput(StockMovementCommand $command): StockMovement
+    {
+        return $this->post('receipt', $command, 'production_output');
+    }
+
+    public function productionScrap(StockMovementCommand $command): StockMovement
+    {
+        return $this->post('receipt', $command, 'production_scrap');
+    }
+
+    /** An explicit expiry disposal; expired stock remains blocked in ordinary issue paths. */
+    public function writeOffExpired(StockMovementCommand $command): StockMovement
+    {
+        foreach ($command->lines as $line) {
+            $batch = $line->batchId ? DB::table('product_batches')->find($line->batchId) : null;
+            if (!$batch || (int) $batch->product_id !== $line->productId || !$batch->expired_date || substr($batch->expired_date, 0, 10) >= $command->date) {
+                throw new InvalidArgumentException('Expiry disposal requires an expired batch of the selected product.');
+            }
+        }
+        return $this->post('issue', $command, 'expiry_writeoff');
+    }
+
     public function transfer(StockMovementCommand $command): StockMovement
     {
         return $this->post('transfer', $command);
@@ -135,11 +162,12 @@ class InventoryMovementService
         }));
     }
 
-    private function post(string $type, StockMovementCommand $command): StockMovement
+    private function post(string $type, StockMovementCommand $command, ?string $ledgerType = null): StockMovement
     {
         // The service's own projection writes are never captured as legacy shadow changes.
-        return $this->shadow->paused(fn () => DB::transaction(function () use ($type, $command) {
-            if ($command->idempotencyKey !== null && ($existing = $this->replay($type, $command->idempotencyKey))) {
+        $ledgerType ??= $type;
+        return $this->shadow->paused(fn () => DB::transaction(function () use ($type, $ledgerType, $command) {
+            if ($command->idempotencyKey !== null && ($existing = $this->replay($ledgerType, $command->idempotencyKey))) {
                 return $existing;
             }
             $from = $command->warehouseId;
@@ -160,7 +188,7 @@ class InventoryMovementService
             $companyId = $this->companyFor($command->context, array_values(array_unique($warehouseIds)));
             $products = $this->lockProducts(array_map(fn (StockLine $line) => $line->productId, $command->lines), $companyId);
 
-            $movement = $this->createHeader($type, [
+            $movement = $this->createHeader($ledgerType, [
                 'company_id' => $companyId,
                 'branch_id' => $command->context?->branchId,
                 'financial_year_id' => $command->context?->financialYearId,
@@ -433,7 +461,7 @@ class InventoryMovementService
             throw new InvalidArgumentException("Batch {$line->batchId} does not belong to product {$product->id}.");
         }
         $date = $run->movement->movement_date->toDateString();
-        if ($type === 'issue' && $batch->expired_date !== null && substr((string) $batch->expired_date, 0, 10) < $date) {
+        if ($type === 'issue' && $run->movement->movement_type !== 'expiry_writeoff' && $batch->expired_date !== null && substr((string) $batch->expired_date, 0, 10) < $date) {
             $message = "Batch {$batch->batch_no} of product {$product->id} expired on ".substr((string) $batch->expired_date, 0, 10).'.';
             match ($run->shadow ? 'warn' : $this->policy->expiredBatch($run->companyId)) {
                 'block' => throw new StockPolicyException($message),
@@ -521,6 +549,7 @@ class InventoryMovementService
 
     private function createPiece(Product $product, array $dimensions, ?int $batchId, PostingRun $run): StockIdentity
     {
+        $dimensions = app(DimensionCalculationService::class)->calculate($dimensions);
         $number = trim((string) ($dimensions['identity_no'] ?? ''))
             ?: sprintf('%s-%d', $run->movement->movement_no, $run->lineNo + 1);
         if (StockIdentity::where('product_id', $product->id)->where('identity_type', StockIdentity::PIECE)->where('identity_no', $number)->exists()) {
@@ -534,16 +563,19 @@ class InventoryMovementService
         $size = fn ($key) => isset($dimensions[$key]) && is_numeric($dimensions[$key]) ? (float) $dimensions[$key] : null;
         $pieces = max(1, (int) ($dimensions['pieces'] ?? 1));
         [$length, $width, $thickness] = [$size('length'), $size('width'), $size('thickness')];
-        StockDimension::create([
+        $values = [
             'stock_identity_id' => $identity->id,
             'length' => $length, 'width' => $width, 'thickness' => $thickness,
             'dimension_uom' => $dimensions['dimension_uom'] ?? null,
             'pieces' => $pieces,
-            'computed_volume' => $length !== null && $width !== null && $thickness !== null
-                ? round($length * $width * $thickness * $pieces, 6) : null,
-            'volume_uom' => $dimensions['volume_uom'] ?? null,
+            'computed_volume' => $dimensions['computed_volume'],
+            'volume_uom' => $dimensions['normalized_volume_uom'],
             'grade' => $dimensions['grade'] ?? null,
-        ]);
+        ];
+        foreach (['computed_cbm', 'computed_cft', 'formula_version'] as $column) {
+            if ($this->hasColumn('stock_dimensions', $column)) $values[$column] = $dimensions[$column];
+        }
+        StockDimension::create($values);
 
         return $identity;
     }
@@ -555,6 +587,22 @@ class InventoryMovementService
         $label = ucfirst($identity->identity_type).' '.$identity->identity_no;
         $inStockHere = $identity->status === StockIdentity::IN_STOCK && (int) $identity->warehouse_id === $warehouseId;
         if ($qty < 0) {
+            if (Schema::hasTable('project_serial_reservations')) {
+                $reservation = DB::table('project_serial_reservations')->where('stock_identity_id', $identity->id)
+                    ->whereNotNull('active_key')->lockForUpdate()->first();
+                if ($reservation) {
+                    $ownDispatch = $run->movement->source_type === 'project_serial_reservations'
+                        && (int) $run->movement->source_id === (int) $reservation->id;
+                    $ownSale = $run->movement->source_type === 'sale'
+                        && in_array($reservation->status, ['dispatched', 'installed', 'commissioned'], true)
+                        && DB::table('project_document_links')->where('company_id', $run->companyId)->where('project_id', $reservation->project_id)
+                            ->where('source_type', 'sale')->where('source_id', $run->movement->source_id)->exists();
+                    $reverse = $run->movement->movement_type === 'reversal';
+                    if (!$ownDispatch && !$ownSale && !$reverse) {
+                        throw new StockPolicyException('Serial is reserved for a project; use its dispatch or linked sale.');
+                    }
+                }
+            }
             if (!$inStockHere) {
                 throw new StockPolicyException("{$label} is not in stock in warehouse {$warehouseId}.");
             }

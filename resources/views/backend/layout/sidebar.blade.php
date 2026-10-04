@@ -397,7 +397,7 @@
                 <span>Project Management</span>
             </a>
             <ul id="project-mgmt-menu" class="collapse list-unstyled">
-                <li><a href="{{route('project-management.projects')}}">Projects List</a></li>
+                <li><a href="{{url('/operations/projects')}}">Projects List</a></li>
                 <li><a href="{{route('project-management.tasks')}}">Task Board</a></li>
                 <li><a href="{{route('project-management.categories')}}">Project Categories</a></li>
             </ul>
@@ -412,9 +412,9 @@
                 <span>{{__('db.Manufacturing')}}</span>
             </a>
             <ul id="manufacturing" class="collapse list-unstyled">
-                <li id="production-list-menu"><a href="{{route('productions.index')}}">{{__('db.Production List')}}</a></li>
-                <li id="production-create-menu"><a href="{{route('productions.create')}}">{{__('db.Add Production')}}</a></li>
-                <li id="recipe-menu"><a href="{{route('recipes.index')}}">{{__('db.Recipe')}}</a></li>
+                <li id="production-list-menu"><a href="{{url('/operations/manufacturing')}}">{{__('db.Production List')}}</a></li>
+                <li id="production-create-menu"><a href="{{url('/operations/manufacturing')}}">{{__('db.Add Production')}}</a></li>
+                <li id="recipe-menu"><a href="{{url('/operations/manufacturing')}}">{{__('db.Recipe')}}</a></li>
             </ul>
         </li>
     @endif

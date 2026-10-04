@@ -82,7 +82,7 @@ class CapabilityService
                 ];
             }
             return $states;
-        });
+        }, profileKey: $key);
     }
 
     /** Import is additive and never overrides an explicit company decision. */
@@ -130,7 +130,7 @@ class CapabilityService
         return true;
     }
 
-    private function change(?CompanyContext $context, ?int $actor, callable $change, bool $importOnly = false): void
+    private function change(?CompanyContext $context, ?int $actor, callable $change, bool $importOnly = false, ?string $profileKey = null): void
     {
         $resolver = app(CompanyContextResolver::class);
         $actor ??= auth()->id();
@@ -138,7 +138,7 @@ class CapabilityService
         if (!$resolver->canManageFinancialYears($actor, $context->companyId)) {
             throw new AuthorizationException('Company administrator required to configure capabilities.');
         }
-        DB::transaction(function () use ($context, $actor, $change, $importOnly) {
+        DB::transaction(function () use ($context, $actor, $change, $importOnly, $profileKey) {
             \App\Models\Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
             $previousStates = $this->load($context->companyId);
             $states = $change($previousStates);
@@ -166,6 +166,9 @@ class CapabilityService
                     'enabled_by' => $newlyEnabled ? $actor : $existing?->enabled_by,
                     'created_at' => $existing?->created_at ?? now(), 'updated_at' => now(),
                 ]);
+            }
+            if ($profileKey && \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')) {
+                app(\App\Services\Industry\IndustryProfileService::class)->installDefaults($profileKey, $context, $actor);
             }
             DB::afterCommit(fn () => Cache::forget($this->cacheKey($context->companyId)));
         }, 3);

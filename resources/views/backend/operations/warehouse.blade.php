@@ -1,0 +1,1 @@
+<label>{{ $warehouseLabel ?? 'Warehouse' }}<select name="{{ $warehouseField ?? 'warehouse_id' }}" required><option value="">Select warehouse</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>@endforeach</select></label>

@@ -1,4 +1,6 @@
 <?php
+$operationsApi = true;
+require __DIR__.'/operations.php';
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;

@@ -16,4 +16,10 @@ class StockDimension extends Model
         'thickness' => 'decimal:4',
         'computed_volume' => 'decimal:6',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('Received dimensions are immutable.'));
+        static::deleting(fn () => throw new \LogicException('Received dimensions cannot be deleted.'));
+    }
 }

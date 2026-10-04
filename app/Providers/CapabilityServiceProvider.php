@@ -43,6 +43,11 @@ class CapabilityServiceProvider extends ServiceProvider
                 if ($key) {
                     $auth = str_starts_with($route->uri(), 'api/') ? 'auth:sanctum' : 'auth';
                     $route->middleware([$auth, 'company.context', RequireCapability::class.':'.$key]);
+                    $operationsArea = match ($controller) {
+                        'ProductionController', 'RecipeController', 'ManufacturingController' => 'manufacturing',
+                        'OptechJobWorkController' => 'job-work', 'ProjectManagementController' => 'projects', default => null,
+                    };
+                    if ($operationsArea) $route->middleware(\App\Http\Middleware\LegacyOperationsCutover::class.':'.$operationsArea);
                 }
                 if ($route->getName() === 'api.v1.addons.status') {
                     $route->middleware(['auth:sanctum', 'company.context']);

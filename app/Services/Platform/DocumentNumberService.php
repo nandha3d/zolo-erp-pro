@@ -17,6 +17,10 @@ use LogicException;
 class DocumentNumberService
 {
     private const TYPES = [
+        'production' => [\App\Models\Operations\ProductionOrder::class, 'reference_no', 'PROD'],
+        'job_work_order' => [\App\Models\Operations\JobWorkOrder::class, 'reference_no', 'JWO'],
+        'job_work_dispatch' => [\App\Models\Operations\JobWorkDispatch::class, 'reference_no', 'JWD'],
+        'job_work_receipt' => [\App\Models\Operations\JobWorkReceipt::class, 'reference_no', 'JWR'],
         'sale' => [Sale::class, 'reference_no', 'SAL'],
         'purchase' => [Purchase::class, 'reference_no', 'PUR'],
         'transfer' => [Transfer::class, 'reference_no', 'TRF'],

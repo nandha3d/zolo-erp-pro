@@ -5,6 +5,7 @@
     const base = document.body.dataset.base;
     const priceField = kind === 'sale' ? 'net_unit_price' : 'net_unit_cost';
     const unitField = kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id';
+    const quantityStep = String(10 ** -Number(document.body.dataset.quantityScale || 4));
     let items = [], party = null, key = crypto.randomUUID(), draft = null, busy = false, dirty = false, revision = 0, previewTimer;
     let previewSequence = 0, searchSequence = {parties: 0, products: 0}, lastFocus = null, trackingIndex = null, inlineResource = null, inlineKey = null, inlineBusy = false;
     const text = (node, value) => { node.textContent = value; };
@@ -26,6 +27,10 @@
             transport_name: $('transport').value, lr_number: $('lr-number').value,
             [kind === 'sale' ? 'sale_note' : 'note']: $('note').value, idempotency_key: key};
         if (kind === 'sale' && $('override').value) data.credit_override_reason = $('override').value;
+        if (document.body.dataset.projectId) data.project_id = Number(document.body.dataset.projectId);
+        for (const [id, field] of [['lr-date','lr_date'],['bale-count','bale_count'],['bundle-count','bundle_count']]) {
+            if ($(id)?.value) data[field] = $(id).value;
+        }
         if (kind === 'purchase') {
             data.status = Number($('receipt-status').value);
             data.landed_cost_method = $('landed-method').value;
@@ -84,7 +89,7 @@
             const fields = ['qty', priceField, ...(kind === 'purchase' ? ['received_qty'] : [])];
             fields.forEach(field => {
                 const cell = document.createElement('td'), input = document.createElement('input');
-                input.type = 'number'; input.min = field === 'qty' ? '0.0001' : '0'; input.step = '0.0001'; input.value = item[field] ?? 0;
+                input.type = 'number'; input.min = field === 'qty' ? quantityStep : '0'; input.step = ['qty','received_qty'].includes(field) ? quantityStep : '0.0001'; input.value = item[field] ?? 0;
                 input.setAttribute('aria-label', `${field === 'qty' ? 'Quantity' : field === 'received_qty' ? 'Received quantity' : 'Net rate'} for ${item.name}`);
                 input.addEventListener('input', () => { item[field] = Number(input.value); changed(); });
                 input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.ctrlKey) { event.preventDefault(); const next = input.closest('td').nextElementSibling?.querySelector('input'); (next || $('product-search')).focus(); } });
@@ -137,8 +142,68 @@
     function openInline(resource) { inlineResource=resource; inlineKey=crypto.randomUUID(); $('inline-form').reset(); $('master-code').required=resource==='products'; text($('inline-title'),resource==='products'?'New item':'New party'); $('party-fields').hidden=resource==='products'; $('product-fields').hidden=resource!=='products'; text($('inline-error'),''); showDialog($('inline-dialog')); $('master-name').focus(); }
     document.querySelectorAll('[data-inline]').forEach(button=>button.addEventListener('click',()=>openInline(button.dataset.inline)));
     $('inline-form').addEventListener('submit',async event=>{event.preventDefault();if(inlineBusy)return;inlineBusy=true;const data={...Object.fromEntries(new FormData(event.target)),idempotency_key:inlineKey};try {const record=await api('/masters/'+inlineResource,data);$('inline-dialog').close();inlineResource==='products'?addProduct(record):selectParty(record);}catch(error){text($('inline-error'),error.message);}finally{inlineBusy=false;} });
-    function openTracking(index) { trackingIndex=index; const item=items[index]; $('serials').value=(item.serials||[]).join(','); $('batch-id').value=item.product_batch_id||''; $('identity').value=item.stock_identity_id||''; $('variant').value=item.variant_id||''; if(kind==='purchase'){ $('batch-no').value=item.batch?.batch_no||''; $('expiry').value=item.batch?.expired_date||''; $('hsn-code').value=item.hsn_code||''; $('weight').value=item.weight||''; $('manual-freight').value=item.landed_cost||''; $('piece-number').value=item.dimensions?.identity_no||''; for(const field of ['length','width','thickness']) $('piece-'+field).value=item.dimensions?.[field]||'';} showDialog($('tracking-dialog')); }
-    $('tracking-form').addEventListener('submit',event=>{event.preventDefault();try {const item=items[trackingIndex]; item.serials=$('serials').value.split(',').map(value=>value.trim()).filter(Boolean); for(const [id,field] of [['batch-id','product_batch_id'],['identity','stock_identity_id'],['variant','variant_id']]){ if($(id).value)item[field]=Number($(id).value);else delete item[field]; } if(kind==='purchase'){ item.hsn_code=$('hsn-code').value; if($('batch-no').value)item.batch={batch_no:$('batch-no').value,expired_date:$('expiry').value||null};else delete item.batch; for(const [id,field] of [['weight','weight'],['manual-freight','landed_cost']]){if($(id).value)item[field]=Number($(id).value);else delete item[field];}if($('piece-number').value){item.dimensions={identity_no:$('piece-number').value};for(const field of ['length','width','thickness']){const size=Number($('piece-'+field).value);if(!(size>0))throw new Error('Enter positive length, width and thickness.');item.dimensions[field]=size;}}else delete item.dimensions;} $('tracking-dialog').close();changed();}catch(error){message(error.message,true);} });
+    function openTracking(index) {
+        trackingIndex = index; const item = items[index];
+        $('serials').value = (item.serials || []).join(','); $('batch-id').value = item.product_batch_id || '';
+        $('identity').value = item.stock_identity_id || ''; $('variant').value = item.variant_id || '';
+        if ($('quantity-scheme')) {
+            [...$('quantity-scheme').options].forEach(option => { option.hidden = !!option.dataset.product && Number(option.dataset.product) !== item.product_id; });
+            $('quantity-scheme').value = item.quantity_scheme_id || '';
+        }
+        if ($('piece-select')) $('piece-select').replaceChildren(new Option('Find pieces first', ''));
+        if (kind === 'purchase') {
+            $('batch-no').value = item.batch?.batch_no || ''; $('expiry').value = item.batch?.expired_date || '';
+            $('hsn-code').value = item.hsn_code || ''; $('weight').value = item.weight || ''; $('manual-freight').value = item.landed_cost || '';
+            if ($('piece-number')) {
+                $('piece-number').value = item.dimensions?.identity_no || '';
+                for (const field of ['length','width','thickness']) $('piece-' + field).value = item.dimensions?.[field] || '';
+                if (item.dimensions) $('piece-uom').value = item.dimensions.dimension_uom;
+                $('piece-count').value = item.dimensions?.pieces || 1; $('piece-grade').value = item.dimensions?.grade || '';
+            }
+        }
+        showDialog($('tracking-dialog'));
+    }
+    $('tracking-form').addEventListener('submit', event => {
+        event.preventDefault();
+        try {
+            const item = items[trackingIndex];
+            item.serials = $('serials').value.split(',').map(value => value.trim()).filter(Boolean);
+            for (const [id, field] of [['batch-id','product_batch_id'],['identity','stock_identity_id'],['variant','variant_id']]) {
+                if ($(id).value) item[field] = Number($(id).value); else delete item[field];
+            }
+            if ($('quantity-scheme')) { if ($('quantity-scheme').value) item.quantity_scheme_id = Number($('quantity-scheme').value); else delete item.quantity_scheme_id; }
+            if (kind === 'purchase') {
+                item.hsn_code = $('hsn-code').value;
+                if ($('batch-no').value) item.batch = {batch_no: $('batch-no').value, expired_date: $('expiry').value || null}; else delete item.batch;
+                for (const [id, field] of [['weight','weight'],['manual-freight','landed_cost']]) {
+                    if ($(id).value) item[field] = Number($(id).value); else delete item[field];
+                }
+                if ($('piece-number')?.value) {
+                    item.dimensions = {identity_no: $('piece-number').value, dimension_uom: $('piece-uom').value,
+                        pieces: Number($('piece-count').value), grade: $('piece-grade').value};
+                    for (const field of ['length','width','thickness']) {
+                        const size = Number($('piece-' + field).value);
+                        if (!(size > 0)) throw new Error('Enter positive length, width and thickness.');
+                        item.dimensions[field] = size;
+                    }
+                } else delete item.dimensions;
+            }
+            $('tracking-dialog').close(); changed();
+        } catch (error) { message(error.message, true); }
+    });
+    $('find-pieces')?.addEventListener('click', async () => {
+        const index = trackingIndex, product = items[index].product_id;
+        try {
+            const response = await fetch('/operations/inventory/pieces?' + new URLSearchParams({product_id: product,
+                warehouse_id: $('warehouse').value, q: $('piece-filter').value}), {headers: {'Accept':'application/json'}});
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Piece lookup failed.');
+            if (index !== trackingIndex) return;
+            $('piece-select').replaceChildren(new Option('Select piece', ''), ...result.data.map(piece => new Option(
+                `${piece.identity_no} · ${piece.species || ''} ${piece.grade || ''} · ${piece.length} × ${piece.width} × ${piece.thickness} ${piece.dimension_uom} · Balance ${piece.qty_base}`, piece.id)));
+        } catch (error) { message(error.message, true); }
+    });
+    $('piece-select')?.addEventListener('change', () => { $('identity').value = $('piece-select').value; });
     $('entry-form').addEventListener('change', changed);
     $('entry-form').addEventListener('submit',async event=>{event.preventDefault();if(busy)return;if(!party||!items.length)return message('Select a party and add at least one item.',true);busy=true;$('post').disabled=true;$('entry-form').inert=true;
         try {const data=payload();if(draft)data.draft_id=draft.id;const result=await api('',data);dirty=false;draft=null;message('Saved '+result.reference_no); const button=document.createElement('button');text(button,'Print invoice');button.addEventListener('click',()=>window.open(kind==='sale'?'/sales/gen_invoice/'+result.id:'/purchases/'+result.id,'_blank','noopener'));text($('info-title'),result.posted_at?'Invoice posted':'Document saved without posting');$('info-content').replaceChildren(button);showDialog($('info-dialog'));items=[];key=crypto.randomUUID();render();$('paid').value='0';text($('draft-status'),'Draft cleared');const summary=await api('/party/'+party.id);party.outstanding=summary.outstanding;text($('previous'),Number(summary.outstanding).toFixed(4));await preview();}catch(error){message(error.message,true);}finally{busy=false;$('post').disabled=false;$('entry-form').inert=false;} });
@@ -156,4 +221,6 @@
     });
     window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
     $('party-search').focus();
+    if (document.body.dataset.projectCustomer) api('/party/' + document.body.dataset.projectCustomer)
+        .then(result => selectParty(result.party)).catch(error => message(error.message, true));
 })();

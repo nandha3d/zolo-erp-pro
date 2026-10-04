@@ -38,8 +38,20 @@ class CommercialController extends Controller
     {
         $context = $this->context($request);
         app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $request->user()->id);
+        $industry = config('operations.enabled') && \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')
+            ? app(\App\Services\Industry\IndustryProfileService::class)->settings($context) : ['profile' => 'general_trading', 'settings' => ['quantity_scale' => 4]];
+        $project = null;
+        if ($kind === 'sale' && $request->filled('project_id')) {
+            $request->validate(['project_id' => 'integer|min:1']);
+            app(\App\Services\Operations\OperationPosting::class)->authorize('operations.projects', 'projects.manage', $context, $request->user()->id);
+            $project = \App\Models\Operations\Project::visibleIn($context)->findOrFail($request->project_id);
+        }
         return view('backend.commercial.entry', [
             'kind' => $kind, 'context' => $context,
+            'industry' => $industry, 'project' => $project,
+            'dimensionsEnabled' => config('operations.enabled') && app(\App\Services\Platform\CapabilityService::class)->enabled('inventory.dimension_tracking', $context),
+            'schemes' => $kind === 'sale' && $industry['profile'] === 'fmcg'
+                ? DB::table('sales_quantity_schemes')->where('company_id', $context->companyId)->where('is_active', true)->get() : collect(),
             'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->get(['id', 'name']),
             'units' => DB::table('units')->where('company_id', $context->companyId)->get(['id', 'unit_name']),
             'categories' => DB::table('categories')->where('company_id', $context->companyId)->get(['id', 'name']),

@@ -14,7 +14,7 @@ class StockMovement extends Model
 {
     use ScopesCompanyQueries;
 
-    public const TYPES = ['opening', 'receipt', 'issue', 'transfer', 'adjustment', 'reversal'];
+    public const TYPES = ['opening', 'receipt', 'issue', 'transfer', 'adjustment', 'reversal', 'production_consume', 'production_output', 'production_scrap', 'expiry_writeoff'];
 
     protected $table = 'stock_movements';
 

@@ -12,6 +12,7 @@ use InvalidArgumentException;
 class SemanticAccountResolver
 {
     public const ROLES = [
+        'production_costs' => ['production_costs', 'expense'],
         'ar' => ['accounts_receivable', 'asset'], 'ap' => ['accounts_payable', 'liability'],
         'cash' => ['cash', 'asset'], 'bank' => ['bank', 'asset'],
         'inventory' => ['inventory', 'asset'], 'sales' => ['sales_revenue', 'revenue'],

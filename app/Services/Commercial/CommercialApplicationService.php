@@ -49,6 +49,9 @@ class CommercialApplicationService
             if (isset($party->is_active) && !$party->is_active) {
                 throw ValidationException::withMessages(['party_id' => 'Select an active party.']);
             }
+            if ($kind === 'sale' && is_array($data['items'] ?? null)) {
+                $data['items'] = app(\App\Services\Industry\FmcgInventoryService::class)->prepareSale($data['items'], (int) $data['warehouse_id'], $date, $context, $actor);
+            }
             $products = [];
             validator($data, ['sale_note' => 'nullable|string|max:10000', 'note' => 'nullable|string|max:10000',
                 'update_item_cost' => 'sometimes|boolean', 'update_item_hsn' => 'sometimes|boolean'])->validate();
@@ -70,6 +73,13 @@ class CommercialApplicationService
                     throw ValidationException::withMessages(['items' => 'This product needs its reviewed posting path.']);
                 }
                 $products[$product->id] = $product;
+                unset($line['attributes']['stock_dimension']);
+                if ($kind === 'sale' && !empty($line['stock_identity_id']) && \Illuminate\Support\Facades\Schema::hasColumn('stock_dimensions', 'computed_cbm')) {
+                    $identity = \App\Models\Inventory\StockIdentity::forCompany($context)->where('product_id', $product->id)
+                        ->where('warehouse_id', $data['warehouse_id'])->where('status', 'in_stock')->lockForUpdate()->findOrFail($line['stock_identity_id']);
+                    $dimension = DB::table('stock_dimensions')->where('stock_identity_id', $identity->id)->first();
+                    if ($dimension) $line['attributes']['stock_dimension'] = (array) $dimension;
+                }
                 $rate = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
                     ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0;
                 if (isset($line['tax_rate']) && (float) $line['tax_rate'] !== $rate) {
@@ -112,6 +122,9 @@ class CommercialApplicationService
             }
             $document->forceFill(['branch_id' => $context->branchId, 'financial_year_id' => $context->financialYearId,
                 'attributes_json' => $attributes, 'replaces_id' => $replacesId])->save();
+            if (!empty($data['project_id'])) {
+                app(\App\Services\Industry\ProjectService::class)->link((int) $data['project_id'], $kind, $document->id, $context, $actor);
+            }
             $lines = ($kind === 'sale' ? $document->productSales() : $document->productPurchases())->orderBy('id')->get();
             foreach ($lines as $i => $line) {
                 $details = array_intersect_key($data['items'][$i], array_flip([
@@ -159,7 +172,8 @@ class CommercialApplicationService
 
     private function attributes(array $data): array
     {
-        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no']));
+        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no']));
+        foreach (['bale_count', 'bundle_count'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
         foreach ($attributes as $key => $value) {
             if ($value === null) {
                 unset($attributes[$key]);
