@@ -24,6 +24,8 @@ final readonly class StockMovementCommand
         public ?string $reason = null,
         public ?int $userId = null,
         public ?CompanyContext $context = null,
+        // Shadow: describe quantities a legacy writer already changed; projections are untouched and policy only warns.
+        public bool $shadow = false,
     ) {
         if ($lines === [] || array_filter($lines, fn ($line) => !$line instanceof StockLine) !== []) {
             throw new InvalidArgumentException('A stock movement needs at least one stock line.');

@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\ProductPurchase;
 use App\Models\Product_Warehouse;
+use App\Services\Inventory\LegacyStockShadow;
 use DB;
 
 class AutoPurchase extends Command
@@ -41,6 +42,12 @@ class AutoPurchase extends Command
      * @return int
      */
     public function handle()
+    {
+        // Scheduled every five minutes; its stock changes are recorded as one shadow movement per run.
+        app(LegacyStockShadow::class)->record('command.purchase_auto', fn () => $this->purchase(), null, Purchase::class);
+    }
+
+    private function purchase(): void
     {
         $product_data = Product::where('is_active', true)
                         ->whereColumn('alert_quantity', '>', 'qty')
@@ -115,6 +122,7 @@ class AutoPurchase extends Command
                     $lims_product_warehouse_data->product_id = $product->id;
                     $lims_product_warehouse_data->warehouse_id = $data['warehouse_id'];
                     $lims_product_warehouse_data->qty = 10;
+                    $lims_product_warehouse_data->save();
                 }
                 $product->qty += 10;
                 $product->save();

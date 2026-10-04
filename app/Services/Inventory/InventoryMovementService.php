@@ -29,6 +29,7 @@ class InventoryMovementService
     public function __construct(
         private readonly UomConversionService $uom,
         private readonly InventoryPolicy $policy,
+        private readonly LegacyStockShadow $shadow,
     ) {
     }
 
@@ -66,7 +67,7 @@ class InventoryMovementService
             throw new InvalidArgumentException('A stock reversal needs a reason.');
         }
 
-        return DB::transaction(function () use ($movement, $reason, $userId, $date) {
+        return $this->shadow->paused(fn () => DB::transaction(function () use ($movement, $reason, $userId, $date) {
             $original = StockMovement::whereKey($movement instanceof StockMovement ? $movement->id : $movement)
                 ->lockForUpdate()->firstOrFail();
             if ($original->movement_type === 'reversal') {
@@ -92,9 +93,11 @@ class InventoryMovementService
                 'idempotency_key' => 'reversal:'.$original->id,
                 'reason' => $reason,
                 'created_by' => $userId,
+                'projection_mode' => $original->projection_mode ?? 'applied',
             ]);
-            // An opening only described existing projections, so its reversal does not change them either.
-            $run = new PostingRun($reversal, $original->company_id, $original->movement_type !== 'opening', 'removed');
+            // Openings and shadow movements only described projections, so their reversals do not change them either.
+            $describes = $original->movement_type === 'opening' || $original->projection_mode === 'shadow';
+            $run = new PostingRun($reversal, $original->company_id, !$describes, 'removed', $original->projection_mode === 'shadow');
 
             // Remove stock before restoring it so identities never appear in two places.
             foreach ($lines->sortBy(fn ($line) => [(float) $line->qty_base > 0 ? 0 : 1, $line->line_no]) as $line) {
@@ -114,12 +117,13 @@ class InventoryMovementService
             $original->save();
 
             return $this->finish($run);
-        });
+        }));
     }
 
     private function post(string $type, StockMovementCommand $command): StockMovement
     {
-        return DB::transaction(function () use ($type, $command) {
+        // The service's own projection writes are never captured as legacy shadow changes.
+        return $this->shadow->paused(fn () => DB::transaction(function () use ($type, $command) {
             if ($command->idempotencyKey !== null && ($existing = $this->replay($type, $command->idempotencyKey))) {
                 return $existing;
             }
@@ -154,8 +158,10 @@ class InventoryMovementService
                 'idempotency_key' => $command->idempotencyKey,
                 'reason' => $command->reason,
                 'created_by' => $command->userId,
+                'projection_mode' => $command->shadow ? 'shadow' : 'applied',
             ]);
-            $run = new PostingRun($movement, $companyId, $type !== 'opening', $type === 'issue' ? StockIdentity::ISSUED : 'removed');
+            $run = new PostingRun($movement, $companyId, $type !== 'opening' && !$command->shadow,
+                $type === 'issue' ? StockIdentity::ISSUED : 'removed', $command->shadow);
 
             foreach ($command->lines as $line) {
                 $product = $products[$line->productId];
@@ -165,7 +171,7 @@ class InventoryMovementService
             }
 
             return $this->finish($run);
-        });
+        }));
     }
 
     private function replay(string $type, string $key): ?StockMovement
@@ -218,7 +224,7 @@ class InventoryMovementService
         $unitCost = $line->unitCost === null ? null : round($line->unitCost * abs($line->qty) / $qty, 6);
         $warehouseId = $line->warehouseId ?? $command->warehouseId;
 
-        $this->assertVariant($product, $line->variantId, $type);
+        $this->assertVariant($product, $line->variantId, $type, $run);
         $batchId = $this->resolveBatch($type, $product, $line, $outbound, $run);
 
         foreach ($this->identityChunks($type, $product, $line, $qty, $outbound, $batchId, $run) as [$chunk, $identity]) {
@@ -252,7 +258,16 @@ class InventoryMovementService
         $run->valuation[$product->id] ??= $this->ledgerBalance($product->id);
 
         if ($posting['identity'] !== null) {
-            $this->moveIdentity($run, $posting['identity'], (int) $posting['warehouse_id'], $qty);
+            try {
+                $this->moveIdentity($run, $posting['identity'], (int) $posting['warehouse_id'], $qty);
+            } catch (StockPolicyException $error) {
+                // A shadow line still records the legacy quantity; identity conflicts are left for reconciliation.
+                if (!$run->shadow) {
+                    throw $error;
+                }
+                $run->warnings[] = $error->getMessage();
+                $posting['identity'] = null;
+            }
         }
         if ($run->updateProjections) {
             $this->applyProjections($run, $product, $posting, $qty);
@@ -314,6 +329,13 @@ class InventoryMovementService
             };
         }
         $row->qty = $after;
+        if ($posting['identity']?->identity_type === StockIdentity::SERIAL && $this->hasColumn('product_warehouse', 'imei_number')) {
+            // Legacy screens read in-stock serials from the comma-separated imei_number projection.
+            $serials = StockLine::parseSerials((string) $row->imei_number);
+            $serials = $qty > 0 ? [...array_diff($serials, [$posting['identity']->identity_no]), $posting['identity']->identity_no]
+                : array_diff($serials, [$posting['identity']->identity_no]);
+            $row->imei_number = $serials === [] ? null : implode(',', $serials);
+        }
         $row->save();
 
         DB::table('products')->where('id', $product->id)->increment('qty', $qty);
@@ -355,11 +377,11 @@ class InventoryMovementService
         return $row;
     }
 
-    private function assertVariant(Product $product, ?int $variantId, string $type): void
+    private function assertVariant(Product $product, ?int $variantId, string $type, PostingRun $run): void
     {
         if ($variantId === null) {
             if ($product->is_variant && $type !== 'opening') {
-                throw new StockPolicyException("Product {$product->id} has variants; specify the variant.");
+                $this->violate($run, "Product {$product->id} has variants; specify the variant.");
             }
 
             return;
@@ -387,7 +409,7 @@ class InventoryMovementService
             }
         } else {
             if ($product->is_batch && $type !== 'opening') {
-                throw new StockPolicyException("Product {$product->id} is batch-tracked; specify the batch.");
+                $this->violate($run, "Product {$product->id} is batch-tracked; specify the batch.");
             }
 
             return null;
@@ -398,7 +420,7 @@ class InventoryMovementService
         $date = $run->movement->movement_date->toDateString();
         if ($type === 'issue' && $batch->expired_date !== null && substr((string) $batch->expired_date, 0, 10) < $date) {
             $message = "Batch {$batch->batch_no} of product {$product->id} expired on ".substr((string) $batch->expired_date, 0, 10).'.';
-            match ($this->policy->expiredBatch($run->companyId)) {
+            match ($run->shadow ? 'warn' : $this->policy->expiredBatch($run->companyId)) {
                 'block' => throw new StockPolicyException($message),
                 'warn' => $run->warnings[] = $message,
                 default => null,
@@ -444,7 +466,9 @@ class InventoryMovementService
                 $identity = StockIdentity::where('product_id', $product->id)->where('identity_type', StockIdentity::SERIAL)
                     ->where('identity_no', $serial)->lockForUpdate()->first();
                 if (!$identity && $outbound) {
-                    throw new StockPolicyException("Serial {$serial} of product {$product->id} is not in stock.");
+                    $this->violate($run, "Serial {$serial} of product {$product->id} is not in stock.");
+
+                    return [1.0, null];
                 }
 
                 return [1.0, $identity ?? StockIdentity::create([
@@ -474,7 +498,7 @@ class InventoryMovementService
             return [[$qty, $this->createPiece($product, $line->dimensions, $batchId, $run)]];
         }
         if ($product->is_imei && $type !== 'opening') {
-            throw new StockPolicyException("Product {$product->id} is serial-tracked; provide its serial numbers.");
+            $this->violate($run, "Product {$product->id} is serial-tracked; provide its serial numbers.");
         }
 
         return [[$qty, null]];
@@ -536,6 +560,15 @@ class InventoryMovementService
         }
         $identity->last_movement_id = $run->movement->id;
         $identity->save();
+    }
+
+    /** Identity rules block applied postings; a shadow posting records the legacy quantity with a warning. */
+    private function violate(PostingRun $run, string $message): void
+    {
+        if (!$run->shadow) {
+            throw new StockPolicyException($message);
+        }
+        $run->warnings[] = $message;
     }
 
     private function identityBalance(int $identityId): float

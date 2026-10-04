@@ -37,10 +37,6 @@ final readonly class StockLine
     /** Accepts legacy-style line arrays; imei_number may be a comma-separated list. */
     public static function fromArray(array $line): self
     {
-        $serials = $line['serials'] ?? ($line['imei_number'] ?? []);
-        if (is_string($serials)) {
-            $serials = explode(',', $serials);
-        }
         $int = fn ($key) => isset($line[$key]) && $line[$key] !== '' && (int) $line[$key] !== 0 ? (int) $line[$key] : null;
 
         return new self(
@@ -51,12 +47,23 @@ final readonly class StockLine
             batchId: $int('product_batch_id') ?? $int('batch_id'),
             unitCost: isset($line['unit_cost']) ? (float) $line['unit_cost'] : null,
             uomId: $int('uom_id'),
-            // Legacy forms post the literal "null" for lines without IMEI numbers.
-            serials: array_values(array_filter(array_map('trim', (array) $serials), fn ($serial) => $serial !== '' && $serial !== 'null')),
+            serials: self::parseSerials($line['serials'] ?? ($line['imei_number'] ?? [])),
             batch: $line['batch'] ?? null,
             identityId: $int('stock_identity_id'),
             dimensions: $line['dimensions'] ?? null,
             attributes: $line['attributes'] ?? [],
         );
+    }
+
+    /** @return list<string> serials from a list or the legacy comma-separated imei_number text */
+    public static function parseSerials(mixed $serials): array
+    {
+        if (is_string($serials)) {
+            $serials = explode(',', $serials);
+        }
+
+        // Legacy forms post the literal "null" for lines without IMEI numbers.
+        return array_values(array_filter(array_map(fn ($serial) => trim((string) $serial), (array) $serials),
+            fn ($serial) => $serial !== '' && $serial !== 'null'));
     }
 }

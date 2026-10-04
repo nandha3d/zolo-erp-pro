@@ -44,5 +44,6 @@ trait CreatesInventoryLedgerFixtures
         }
 
         (require database_path('migrations/2026_10_04_000001_create_stock_ledger_tables.php'))->up();
+        (require database_path('migrations/2026_10_04_000002_add_projection_mode_to_stock_movements.php'))->up();
     }
 }

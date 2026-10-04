@@ -1471,7 +1471,7 @@ class ProductController extends Controller
                     }
                     Product_Warehouse::where('product_id', $productVariant->product_id)
                         ->where('variant_id', $productVariant->variant_id)
-                        ->delete();
+                        ->get()->each->delete(); // per-row deletes reach the stock ledger shadow
 
                     $productVariant->delete();
                 }

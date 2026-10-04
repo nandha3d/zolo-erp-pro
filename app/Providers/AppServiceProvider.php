@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\Product_Warehouse;
 use App\Models\Translation;
+use App\Services\Inventory\LegacyStockShadow;
+use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Cache;
@@ -28,14 +32,36 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(LegacyStockShadow::class);
     }
 
+    /** Feeds legacy product_warehouse changes and transaction outcomes to the phase 4b stock shadow. */
+    private function bootLegacyStockShadow(): void
+    {
+        $shadow = fn () => $this->app->make(LegacyStockShadow::class);
+        foreach (['created', 'updated', 'deleted'] as $event) {
+            Product_Warehouse::{$event}(fn (Product_Warehouse $row) => $shadow()->capture($row, $event));
+        }
+        Event::listen('eloquent.created: *', fn (string $name, array $models) => $shadow()->created($models[0]));
+        Event::listen(TransactionRolledBack::class, fn ($event) => $shadow()->rolledBack($event->connection->transactionLevel()));
+        Event::listen(TransactionCommitted::class, fn ($event) => $shadow()->committed($event->connection->transactionLevel()));
+        // Attach to loaded and cached routes, including module routes registered later.
+        $this->app->booted(function () {
+            foreach ($this->app['router']->getRoutes() as $route) {
+                [$controller, $method] = array_pad(explode('@', $route->getActionName()), 2, null);
+                [$document, $methods] = LegacyStockShadow::WRITERS[$controller] ?? [null, []];
+                if (in_array($method, $methods, true)) {
+                    $route->middleware('legacy.stock'.($document ? ':'.$document : ''));
+                }
+            }
+        });
+    }
 
     public function boot()
     {
         Schema::defaultStringLength(191);
         $this->app->bind(\App\ViewModels\ISmsModel::class, \App\ViewModels\SmsModel::class);
+        $this->bootLegacyStockShadow();
 
         if (app()->runningInConsole()) {
             return;

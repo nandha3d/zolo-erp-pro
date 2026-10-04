@@ -77,6 +77,7 @@ class Kernel extends HttpKernel
         'hasPermanentDeletePermission' => \App\Http\Middleware\HasPermanentDeletePermission::class,
         'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         'company.context' => \App\Http\Middleware\ResolveCompanyContext::class,
+        'legacy.stock' => \App\Http\Middleware\RecordLegacyStockShadow::class,
     ];
 
     /**
