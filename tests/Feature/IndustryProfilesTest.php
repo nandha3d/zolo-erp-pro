@@ -125,6 +125,12 @@ class IndustryProfilesTest extends OperationsTestCase
                 $this->assertEquals(100, $sale->grand_total);
             }
         }
+        $serviceData = ['event' => 'inspection', 'notes' => 'Warranty inspection passed', 'business_date' => '2026-10-03', 'idempotency_key' => 'inspection'];
+        $this->postJson('/operations/project-service/'.$installed[0]->id, $serviceData)->assertCreated();
+        $events = DB::table('serial_service_events')->count();
+        $this->postJson('/operations/project-service/'.$installed[0]->id, $serviceData)->assertCreated();
+        $this->assertSame($events, DB::table('serial_service_events')->count());
+        $this->get('/operations/project/'.$project->id)->assertOk()->assertSee('Warranty inspection passed')->assertSee('continues contract');
         $margin = $service->margin($project->id, $this->context(), 1);
         $this->assertSame('100.0000', $margin['revenue']); $this->assertSame('50.0000', $margin['material_cost']); $this->assertSame('50.0000', $margin['margin']);
         $this->assertSame('replaced', $installed[0]->fresh()->status);

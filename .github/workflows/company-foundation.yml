@@ -43,5 +43,7 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
       - name: Migrations, committed-DDL recovery, ERP, backfill, context and reset safety
         run: php vendor/bin/phpunit -c phpunit.company.xml
+      - name: Gated manufacturing, job work and industry flow invariants
+        run: php vendor/bin/phpunit -c phpunit.operations.xml
       - name: Legacy seeded ERP web, API and accounting smoke
         run: php vendor/bin/phpunit -c phpunit.legacy-mysql.xml

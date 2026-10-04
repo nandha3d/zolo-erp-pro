@@ -98,7 +98,15 @@
                 input.setAttribute('aria-label', `${field === 'qty' ? 'Quantity' : field === 'received_qty' ? 'Received quantity' : 'Net rate'} for ${item.name}`);
                 input.addEventListener('input', () => { item[field] = Number(input.value); changed(); });
                 input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.ctrlKey) { event.preventDefault(); const next = input.closest('td').nextElementSibling?.querySelector('input'); focusControl(next || $('product-search')); } });
-                cell.append(input); row.append(cell);
+                cell.append(input);
+                if (field === 'qty' && $('line-unit-options')) {
+                    const unit = $('line-unit-options').content.firstElementChild.cloneNode(true);
+                    unit.setAttribute('aria-label', 'Unit for ' + item.name);
+                    if (item[unitField]) unit.value = item[unitField]; else unit.value = '';
+                    unit.addEventListener('change', () => { item[unitField] = Number(unit.value); changed(); });
+                    cell.append(unit);
+                }
+                row.append(cell);
             });
             const tracking = document.createElement('td'), button = document.createElement('button'); button.type = 'button'; text(button, 'Tracking');
             button.addEventListener('click', () => openTracking(index)); tracking.append(button); row.append(tracking);
@@ -196,6 +204,7 @@
         if ($('piece-select')) $('piece-select').replaceChildren(new Option('Find pieces first', ''));
         if (kind === 'purchase') {
             $('batch-no').value = item.batch?.batch_no || ''; $('expiry').value = item.batch?.expired_date || '';
+            if ($('mfg-date')) { $('mfg-date').value = item.batch?.mfg_date || ''; $('batch-mrp').value = item.batch?.mrp ?? ''; }
             $('hsn-code').value = item.hsn_code || ''; $('weight').value = item.weight || ''; $('manual-freight').value = item.landed_cost || '';
             if ($('piece-number')) {
                 $('piece-number').value = item.dimensions?.identity_no || '';
@@ -218,6 +227,10 @@
             if (kind === 'purchase') {
                 item.hsn_code = $('hsn-code').value;
                 if ($('batch-no').value) item.batch = {batch_no: $('batch-no').value, expired_date: $('expiry').value || null}; else delete item.batch;
+                if (item.batch && $('mfg-date')) {
+                    if ($('mfg-date').value) item.batch.mfg_date = $('mfg-date').value;
+                    if ($('batch-mrp').value !== '') item.batch.mrp = Number($('batch-mrp').value);
+                }
                 for (const [id, field] of [['weight','weight'],['manual-freight','landed_cost']]) {
                     if ($(id).value) item[field] = Number($(id).value); else delete item[field];
                 }

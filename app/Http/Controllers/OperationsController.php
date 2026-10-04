@@ -25,7 +25,12 @@ use Illuminate\Support\Str;
 class OperationsController extends Controller
 {
     private function context(Request $request): CompanyContext { return $request->attributes->get(CompanyContext::class); }
-    private function key(Request $request): string { return $request->header('Idempotency-Key', $request->input('idempotency_key', '')); }
+    private function key(Request $request): string
+    {
+        $key = $request->header('Idempotency-Key') ?? $request->input('idempotency_key', '');
+        validator(['key' => $key], ['key' => 'nullable|string|max:150'])->validate();
+        return $key ?? '';
+    }
 
     public function hub(Request $request, string $area)
     {
@@ -98,6 +103,13 @@ class OperationsController extends Controller
                 ->select('i.id', 'i.identity_no', 'p.name')->limit(200)->get();
             $data['reservations'] = \App\Models\Operations\SerialReservation::visibleIn($context)->where('project_id', $id)->get();
             $data['installations'] = \App\Models\Operations\ProjectInstallation::visibleIn($context)->where('project_id', $id)->get();
+            $data['reservedIdentities'] = \App\Models\Inventory\StockIdentity::forCompany($context)
+                ->whereIn('id', $data['reservations']->pluck('stock_identity_id'))->pluck('identity_no', 'id');
+            $data['contracts'] = DB::table('warranty_contracts')->where('company_id', $context->companyId)
+                ->whereIn('installation_id', $data['installations']->pluck('id'))->orderBy('ends_on')->get()->groupBy('installation_id');
+            $data['serviceEvents'] = DB::table('serial_service_events')->where('company_id', $context->companyId)
+                ->whereIn('installation_id', $data['installations']->pluck('id'))->orderBy('business_date')->orderBy('id')->get()->groupBy('installation_id');
+            $data['documentLinks'] = DB::table('project_document_links')->where('company_id', $context->companyId)->where('project_id', $id)->get();
             $data['margin'] = app(ProjectService::class)->margin($id, $context, $actor);
             $data['templates'] = Bom::forCompany($context)->where('status', 'published')->get();
         }
@@ -124,6 +136,8 @@ class OperationsController extends Controller
             'project-dispatch' => app(ProjectService::class)->dispatch($id, $data, $key, $context, $actor),
             'project-install' => app(ProjectService::class)->install($id, $data, $key, $context, $actor),
             'project-commission' => app(ProjectService::class)->commission($id, $data, $key, $context, $actor),
+            'project-service' => app(ProjectService::class)->recordService($id, $data, $key, $context, $actor),
+            'project-link' => $this->linkProject($id, $request, $context, $actor),
             'expiry-writeoff' => app(FmcgInventoryService::class)->writeOff($data, $key, $context, $actor),
             default => abort(404),
         };
@@ -150,6 +164,13 @@ class OperationsController extends Controller
             default => abort(404),
         };
         return $request->expectsJson() ? response()->json(['data' => $data]) : back()->with('message', 'Configuration saved.');
+    }
+
+    private function linkProject(int $id, Request $request, CompanyContext $context, int $actor): Project
+    {
+        $data = $request->validate(['source_type' => 'required|in:sale,purchase,expense', 'source_id' => 'required|integer|min:1']);
+        app(ProjectService::class)->link($id, $data['source_type'], $data['source_id'], $context, $actor);
+        return Project::visibleIn($context)->findOrFail($id);
     }
 
     public function attributes(Request $request, int $id)

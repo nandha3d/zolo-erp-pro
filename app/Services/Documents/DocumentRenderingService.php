@@ -36,6 +36,7 @@ class DocumentRenderingService
             $product = Product::forCompany($context)->findOrFail($line->product_id); $snapshot = $line->tax_snapshot_json ?? [];
             $rows[] = ['name' => $snapshot['product_name'] ?? $product->name, 'code' => $snapshot['product_code'] ?? $product->code,
                 'qty' => (float) $line->qty, 'price' => (float) $line->{$sale ? 'net_unit_price' : 'net_unit_cost'},
+                'dimensions' => $line->stock_details_json['attributes']['stock_dimension'] ?? null,
                 'taxable_value' => $snapshot['taxable_value'] ?? (float) $line->total - (float) $line->tax,
                 'tax_rate' => $snapshot['rate'] ?? (float) $line->tax_rate, 'cess_rate' => $snapshot['cess_rate'] ?? 0,
                 'tax' => (float) $line->tax, 'total' => (float) $line->total, 'hsn_sac' => $snapshot['hsn_sac'] ?? $product->hsn_code,
@@ -52,7 +53,9 @@ class DocumentRenderingService
             'lines' => $rows, 'total_tax' => (float) $source->total_tax + (float) $source->order_tax,
             'discount' => (float) ($source->order_discount ?? 0), 'shipping' => (float) ($source->shipping_cost ?? 0),
             'grand_total' => (float) $source->grand_total, 'source_number' => $note ? $source->attributes_json['source_no'] : null,
-            'transport' => array_intersect_key($source->attributes_json ?? [], array_flip(['transport_name', 'lr_number', 'vehicle_number'])),
+            'quantity_scale' => \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')
+                ? app(\App\Services\Industry\IndustryProfileService::class)->settings($context)['settings']['quantity_scale'] : 4,
+            'transport' => array_intersect_key($source->attributes_json ?? [], array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count'])),
         ];
     }
 
@@ -94,9 +97,14 @@ class DocumentRenderingService
         $body = [];
         foreach ($document['lines'] as $line) {
             $body[] = $safe($line['code'].' '.$line['name']);
-            $body[] = $safe('Qty '.self::amount($line['qty']).' Rate '.self::amount($line['price']).' Tax '.self::amount($line['tax']).' Total '.self::amount($line['total']));
+            $body[] = $safe('Qty '.number_format($line['qty'], $document['quantity_scale'] ?? 4, '.', '').' Rate '.self::amount($line['price']).' Tax '.self::amount($line['tax']).' Total '.self::amount($line['total']));
             $body[] = $safe('HSN/SAC '.$line['hsn_sac'].' CGST '.self::amount($line['cgst']).' SGST '.self::amount($line['sgst']).' IGST '.self::amount($line['igst']).' Cess '.self::amount($line['cess']));
+            if ($dimension = $line['dimensions'] ?? null) {
+                $body[] = $safe('Piece '.($dimension['identity_no'] ?? '').' '.$dimension['length'].' x '.$dimension['width'].' x '.$dimension['thickness'].' '.$dimension['dimension_uom']);
+                $body[] = $safe('CFT '.($dimension['line_cft'] ?? $dimension['computed_cft']).' CBM '.($dimension['line_cbm'] ?? $dimension['computed_cbm']).' '.$dimension['formula_version']);
+            }
         }
+        foreach ($document['transport'] as $label => $value) $body[] = $safe(ucfirst(str_replace('_', ' ', $label)).': '.$value);
         foreach ($profile['copies'] as $copy) {
             $pages = array_chunk($body, $height - 13);
             foreach ($pages ?: [[]] as $index => $lines) {

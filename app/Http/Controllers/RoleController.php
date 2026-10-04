@@ -73,7 +73,9 @@ class RoleController extends Controller
                 $all_permission[] = $permission->name;
             if(empty($all_permission))
                 $all_permission[] = 'dummy text';
-            return view('backend.role.permission', compact('lims_role_data', 'all_permission'));
+            return view('backend.role.permission', ['lims_role_data' => $lims_role_data, 'all_permission' => $all_permission, 'operation_permissions' => Permission::where(function ($query) {
+                foreach (['manufacturing.%', 'job_work.%', 'profiles.%', 'projects.%'] as $prefix) $query->orWhere('name', 'like', $prefix);
+            })->orderBy('name')->pluck('name')]);
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -86,9 +88,10 @@ class RoleController extends Controller
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         
         $lims_permissions = Permission::pluck('name')->toArray();
+        $operations = $request->validate(['operation_permissions' => 'sometimes|array', 'operation_permissions.*' => ['string', Rule::in($lims_permissions)]])['operation_permissions'] ?? [];
         
         $lims_new_request_permissions = array_diff(
-            array_keys($request->except('_token', 'role_id', 'credit_override')),
+            array_keys($request->except('_token', 'role_id', 'credit_override', 'operation_permissions')),
             $lims_permissions
         );
         
@@ -100,7 +103,7 @@ class RoleController extends Controller
         foreach ($lims_permissions as $permission_name) {
             $permission = Permission::firstOrCreate(['name' => $permission_name]);
             
-            if($permission_name === 'sales.override_credit' ? $request->boolean('credit_override') : $request->has($permission_name)) {
+            if($permission_name === 'sales.override_credit' ? $request->boolean('credit_override') : ($request->has($permission_name) || in_array($permission_name, $operations, true))) {
                 if(!$role->hasPermissionTo($permission_name)) {
                     $role->givePermissionTo($permission);
                 }

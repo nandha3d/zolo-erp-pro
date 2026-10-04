@@ -49,9 +49,6 @@ class CommercialApplicationService
             if (isset($party->is_active) && !$party->is_active) {
                 throw ValidationException::withMessages(['party_id' => 'Select an active party.']);
             }
-            if ($kind === 'sale' && is_array($data['items'] ?? null)) {
-                $data['items'] = app(\App\Services\Industry\FmcgInventoryService::class)->prepareSale($data['items'], (int) $data['warehouse_id'], $date, $context, $actor);
-            }
             $products = [];
             validator($data, ['sale_note' => 'nullable|string|max:10000', 'note' => 'nullable|string|max:10000',
                 'update_item_cost' => 'sometimes|boolean', 'update_item_hsn' => 'sometimes|boolean'])->validate();
@@ -63,25 +60,45 @@ class CommercialApplicationService
                     throw ValidationException::withMessages(['items' => 'Each line must be an object.']);
                 }
             }
+            // Validate the original contract before any profile expands its lines.
+            $guard->products($data['items'], $context, $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id');
+            if ($kind === 'sale') {
+                $data['items'] = app(\App\Services\Industry\FmcgInventoryService::class)->prepareSale($data['items'], (int) $data['warehouse_id'], $date, $context, $actor);
+                if (count($data['items']) > 500) throw ValidationException::withMessages(['items' => 'Expanded invoice exceeds 500 lines.']);
+            }
             $products = $guard->products($data['items'], $context, $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id')->all();
             foreach ($data['items'] as &$line) {
                 validator($line, ['attributes' => 'nullable|array', 'serials' => 'nullable|array', 'serials.*' => 'string|max:255',
                     'batch' => 'nullable|array', 'batch.batch_no' => 'required_with:batch|string|max:255',
-                    'batch.expired_date' => 'nullable|date_format:Y-m-d', 'dimensions' => 'nullable|array',
+                    'batch.expired_date' => 'nullable|date_format:Y-m-d',
+                    'batch.mfg_date' => 'nullable|date_format:Y-m-d', 'batch.mrp' => 'nullable|numeric|min:0|max:999999999', 'dimensions' => 'nullable|array',
                     'dimensions.identity_no' => 'nullable|string|max:255', 'dimensions.length' => 'nullable|numeric|gt:0',
                     'dimensions.width' => 'nullable|numeric|gt:0', 'dimensions.thickness' => 'nullable|numeric|gt:0',
                     'dimensions.pieces' => 'nullable|integer|min:1', 'stock_identity_id' => 'nullable|integer|min:1'])->validate();
+                if (!empty($line['batch']['mfg_date']) && !empty($line['batch']['expired_date']) && $line['batch']['mfg_date'] > $line['batch']['expired_date']) {
+                    throw ValidationException::withMessages(['batch.mfg_date' => 'Manufacturing date cannot follow expiry.']);
+                }
                 $product = $products[$line['product_id']];
                 if ((isset($product->is_active) && !$product->is_active) || !in_array($product->type, ['standard', 'service', 'digital'], true)) {
                     throw ValidationException::withMessages(['items' => 'This product needs its reviewed posting path.']);
                 }
-                $products[$product->id] = $product;
                 unset($line['attributes']['stock_dimension']);
                 if ($kind === 'sale' && !empty($line['stock_identity_id']) && \Illuminate\Support\Facades\Schema::hasColumn('stock_dimensions', 'computed_cbm')) {
                     $identity = \App\Models\Inventory\StockIdentity::forCompany($context)->where('product_id', $product->id)
                         ->where('warehouse_id', $data['warehouse_id'])->where('status', 'in_stock')->lockForUpdate()->findOrFail($line['stock_identity_id']);
                     $dimension = DB::table('stock_dimensions')->where('stock_identity_id', $identity->id)->first();
-                    if ($dimension) $line['attributes']['stock_dimension'] = (array) $dimension;
+                    if ($dimension) {
+                        $initial = (float) DB::table('stock_movement_lines')->where('company_id', $context->companyId)
+                            ->where('stock_identity_id', $identity->id)->where('qty_base', '>', 0)->orderBy('id')->value('qty_base');
+                        $quantity = app(\App\Services\Inventory\UomConversionService::class)->toBase($product, (float) $line['qty'], (int) $line['sale_unit_id']);
+                        if ($initial <= 0) throw ValidationException::withMessages(['stock_identity_id' => 'Piece needs reviewed opening stock.']);
+                        $line['attributes']['stock_dimension'] = (array) $dimension + ['identity_no' => $identity->identity_no,
+                            'line_cbm' => round($dimension->computed_cbm * $quantity / $initial, 6),
+                            'line_cft' => round($dimension->computed_cft * $quantity / $initial, 6)];
+                    }
+                }
+                if ($kind === 'purchase' && !empty($line['dimensions']) && \Illuminate\Support\Facades\Schema::hasColumn('stock_dimensions', 'computed_cbm')) {
+                    $line['attributes']['stock_dimension'] = app(\App\Services\Inventory\DimensionCalculationService::class)->calculate($line['dimensions']);
                 }
                 $rate = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
                     ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0;
@@ -139,7 +156,10 @@ class CommercialApplicationService
             if ($kind === 'purchase' && (!empty($data['update_item_cost']) || !empty($data['update_item_hsn']))) {
                 app(CommercialPermission::class)->assert('products-edit', $context, $actor);
                 foreach ($data['items'] as $line) {
-                    $product = $products[$line['product_id']];
+                    if (!empty($line['batch']['mfg_date']) && !empty($line['batch']['expired_date']) && $line['batch']['mfg_date'] > $line['batch']['expired_date']) {
+                    throw ValidationException::withMessages(['batch.mfg_date' => 'Manufacturing date cannot follow expiry.']);
+                }
+                $product = $products[$line['product_id']];
                     if (!empty($data['update_item_cost'])) {
                         $product->cost = $line['net_unit_cost'];
                     }

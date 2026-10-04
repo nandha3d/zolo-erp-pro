@@ -216,6 +216,18 @@ class ProjectService
             });
     }
 
+    public function recordService(int $id, array $data, string $key, CompanyContext $context, int $actor): ProjectInstallation
+    {
+        $data['installation_id'] = $id;
+        return app(OperationPosting::class)->run('project_service', ProjectInstallation::class, 'service.warranty_amc', 'projects.warranty',
+            $data, $key, $context, $actor, function ($data, $date) use ($id, $context, $actor) {
+                validator($data, ['event' => 'required|in:inspection,repair', 'notes' => 'required|string|max:5000'])->validate();
+                $record = ProjectInstallation::visibleIn($context)->findOrFail($id);
+                $this->serviceEvent($id, $data['event'], $date, $data['notes'], $context, $actor);
+                return $record;
+            });
+    }
+
     public function serviceEvent(int $id, string $event, string $date, string $notes, CompanyContext $context, int $actor): void
     {
         app(OperationPosting::class)->authorize('service.warranty_amc', 'projects.warranty', $context, $actor);
@@ -240,8 +252,18 @@ class ProjectService
             $model = match ($link->source_type) { 'sale' => \App\Models\Sale::class, 'purchase' => \App\Models\Purchase::class, 'expense' => \App\Models\Expense::class };
             $source = $model::forCompany($context)->find($link->source_id);
             if (!$source || $source->reversed_at || ($link->source_type !== 'expense' && !$source->posted_at)) continue;
+            $notes = collect();
+            $noteTable = $link->source_type === 'sale' ? 'returns' : 'return_purchases';
+            if ($link->source_type !== 'expense' && \Illuminate\Support\Facades\Schema::hasColumn($noteTable, 'posted_at')) {
+                $notes = DB::table($noteTable)->where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                    ->where($link->source_type.'_id', $link->source_id)->whereNotNull('posted_at')->get(['id', 'note_type']);
+            }
+            // Approved commercial adjustments belong to their source project without another link or posting.
             $journals = DB::table('journal_entries')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)
-                ->where('reference_type', $link->source_type)->where('reference_id', $link->source_id)->where('status', 'posted')->pluck('id');
+                ->where('status', 'posted')->where(function ($query) use ($link, $notes) {
+                    $query->where(fn ($q) => $q->where('reference_type', $link->source_type)->where('reference_id', $link->source_id));
+                    foreach ($notes as $note) $query->orWhere(fn ($q) => $q->where('reference_type', $link->source_type.'_'.$note->note_type.'_note')->where('reference_id', $note->id));
+                })->pluck('id');
             $cogs = $link->source_type === 'sale' ? app(\App\Services\Accounting\SemanticAccountResolver::class)->resolve('cogs', $context)->id : null;
             $rows = DB::table('journal_items as i')->join('chart_of_accounts as a', 'a.id', '=', 'i.chart_of_account_id')
                 ->whereIn('i.journal_entry_id', $journals)->where('i.company_id', $context->companyId)->where('a.company_id', $context->companyId)->get(['i.debit', 'i.credit', 'i.chart_of_account_id', 'a.type', 'a.sub_type']);

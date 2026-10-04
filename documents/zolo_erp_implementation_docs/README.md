@@ -63,3 +63,5 @@ SQLite fixtures prove isolated logic only. MySQL schema/recovery, concurrency an
 - [33 — Common UI component library](33_COMMON_UI_COMPONENT_LIBRARY.md): target rendering/interaction contracts; components require implementation and validation.
 
 Read these with document 20 when migrating a screen. Existing backend/ownership acceptance gates still apply.
+
+- [Phase 9–10 operations and profiles](PHASE_9_10_OPERATIONS_AND_PROFILES.md): gated delivery, shared owners, industry acceptance proof, migrations and remaining UAT gates.

@@ -171,6 +171,9 @@
 								</tr>
 
 
+                                @foreach($operation_permissions as $permission)
+                                <tr><td>{{ $permission }}</td><td colspan="5"><input type="checkbox" id="operation-{{ $loop->index }}" name="operation_permissions[]" value="{{ $permission }}" @checked(in_array($permission, $all_permission))><label for="operation-{{ $loop->index }}">Allow {{ $permission }}</label></td></tr>
+                                @endforeach
 						        @if(config('commercial.enabled'))
                                 <tr><td>Sales credit override</td><td colspan="5"><input type="checkbox" id="credit_override" name="credit_override" value="1" @checked(in_array('sales.override_credit', $all_permission))><label for="credit_override">Approve a credit limit or overdue override with an audited reason</label></td></tr>
                                 @endif

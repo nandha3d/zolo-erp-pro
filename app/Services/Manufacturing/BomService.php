@@ -78,7 +78,7 @@ class BomService
         return $data;
     }
 
-    private function assertAcyclic(int $product, int $output, CompanyContext $context, array $visited): void
+    private function assertAcyclic(int $product, int $output, CompanyContext $context, array $visited, array $extra = []): void
     {
         if ($product === $output) throw ValidationException::withMessages(['lines' => 'BOM component graph must not contain cycles.']);
         if (isset($visited[$product])) return;
@@ -86,7 +86,7 @@ class BomService
         $children = DB::table('bom_lines')->join('boms', 'boms.id', '=', 'bom_lines.bom_id')
             ->where('boms.company_id', $context->companyId)->where('boms.product_id', $product)->where('boms.status', 'published')
             ->pluck('component_product_id');
-        foreach ($children as $child) $this->assertAcyclic((int) $child, $output, $context, $visited);
+        foreach ([...$children, ...($extra[$product] ?? [])] as $child) $this->assertAcyclic((int) $child, $output, $context, $visited, $extra);
     }
 
     /** Validate every legacy row before importing any; preserve the source arrays and prices. */
@@ -112,6 +112,8 @@ class BomService
                     'effective_from' => $product->updated_at->toDateString(), 'output_qty' => 1, 'output_uom_id' => $product->unit_id,
                     'is_default' => false, 'legacy_import' => true, 'lines' => $lines], $context);
             }
+            $graph = array_map(fn ($row) => array_column($row['lines'], 'component_product_id'), $rows);
+            foreach ($rows as $id => $row) foreach ($row['lines'] as $line) $this->assertAcyclic((int) $line['component_product_id'], $id, $context, [], $graph);
             if (!$dryRun) foreach ($rows as $id => $row) $this->create($row, 'legacy-bom:'.$id, $context, $actor);
             return ['recipes' => count($rows), 'dry_run' => $dryRun];
         });

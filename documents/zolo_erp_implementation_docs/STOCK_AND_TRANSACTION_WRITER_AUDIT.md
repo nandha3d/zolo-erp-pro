@@ -60,3 +60,10 @@ Company and membership keys must match existing unsigned INT user/warehouse IDs.
 - Background jobs, imports, cache keys, raw queries and downloads require context enforcement before multi-company activation.
 
 Full migration and isolation gates require an isolated MySQL database and representative data. No production data was inspected or rewritten during this audit.
+
+
+## Phase 9–10 gated writer disposition
+
+New `ProductionService`, `JobWorkService`, `FmcgInventoryService` and `ProjectService` construct shared inventory commands and shared accounting/commercial postings. They do not update quantity projections or create a second ledger. Legacy Manufacturing/Recipe, OptechJobWork and ProjectManagement HTTP boundaries redirect authorized reads and reject legacy writes, including cached module routes; historical tables remain.
+
+Stock owner extensions add production consume/output/scrap, explicit expiry disposal, reserved-serial protection and persisted normalized dimensions. Shared commercial/document owners freeze profile precision, transport metadata and dimensional invoice results. [Phase 9–10 delivery notes](PHASE_9_10_OPERATIONS_AND_PROFILES.md) record normal/retry/failure/reversal effects, company/branch/FY/permission guards and tests. Production activation and retained-data reconciliation remain gated.

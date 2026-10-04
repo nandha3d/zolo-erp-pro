@@ -161,6 +161,11 @@ class JobWorkService
                 }
                 if (!$saved) throw ValidationException::withMessages(['lines' => 'Enter at least one received or lost quantity.']);
                 $material = null; $output = null; $lossMovement = null; $rejectedMovement = null;
+                // Reduce an identity's external balance before relocating its surviving material.
+                if ($consumes) $material = app(InventoryMovementService::class)->issue($stock->command($receipt, $date, $consumes,
+                    $order->external_warehouse_id, $context, $actor, 'convert'));
+                if ($losses) $lossMovement = app(InventoryMovementService::class)->issue($stock->command($receipt, $date, $losses,
+                    $order->external_warehouse_id, $context, $actor, 'loss'));
                 if ($returns) $material = app(InventoryMovementService::class)->transfer($stock->command($receipt, $date, $returns,
                     $order->external_warehouse_id, $context, $actor, 'return', $warehouse->id));
                 if ($rejects) {
@@ -171,10 +176,6 @@ class JobWorkService
                     $rejectedMovement = app(InventoryMovementService::class)->transfer($stock->command($receipt, $date, $rejects,
                         $order->external_warehouse_id, $context, $actor, 'rejected', $quarantine->id));
                 }
-                if ($consumes) $material = app(InventoryMovementService::class)->issue($stock->command($receipt, $date, $consumes,
-                    $order->external_warehouse_id, $context, $actor, 'convert'));
-                if ($losses) $lossMovement = app(InventoryMovementService::class)->issue($stock->command($receipt, $date, $losses,
-                    $order->external_warehouse_id, $context, $actor, 'loss'));
                 if ($conversion) {
                     // Allocate actual movement cost to outputs; subcontract service charges stay on a normal purchase.
                     $value = $material ? -$stock->value($material) : 0;

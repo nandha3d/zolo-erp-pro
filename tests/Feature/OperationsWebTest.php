@@ -13,6 +13,7 @@ class OperationsWebTest extends OperationsTestCase
 {
     public function test_web_forms_and_http_production_use_same_transaction_engine(): void
     {
+        $this->postJson('/operations/production-plan', ['idempotency_key' => []])->assertUnprocessable();
         $this->withoutExceptionHandling();
         $input = $this->material(100); $output = $this->material(0); $bom = $this->bom($input, $output);
         $this->get('/operations/manufacturing')->assertOk()->assertSee('Create BOM version')->assertSee('Publish BOM');
@@ -40,6 +41,18 @@ class OperationsWebTest extends OperationsTestCase
         DB::table('job_work_orders')->where('id', $order->id)->update(['company_id' => $this->other->id]);
         $this->getJson('/operations/job-work/'.$order->id)->assertNotFound();
         $this->getJson('/operations/dispatch/'.$dispatch->id.'/print')->assertNotFound();
+    }
+
+    public function test_industry_profiles_expose_the_shared_sales_and_purchase_entry_with_profile_fields(): void
+    {
+        $this->withoutExceptionHandling();
+        foreach (['fmcg' => 'distribution', 'textile' => 'wholesale', 'timber' => 'trading', 'solar' => 'epc'] as $profile => $subtype) {
+            app(IndustryProfileService::class)->apply($profile, $subtype, $this->context(), 1);
+            $this->get('/commercial/sale/entry')->assertOk()->assertSee('line-unit-options', false);
+            $purchase = $this->get('/commercial/purchase/entry')->assertOk();
+            if ($profile === 'fmcg') $purchase->assertSee('Manufacturing date')->assertSee('Batch MRP');
+            else $purchase->assertDontSee('Batch MRP');
+        }
     }
 
     public function test_gate_permission_and_foreign_context_reject_before_operations(): void

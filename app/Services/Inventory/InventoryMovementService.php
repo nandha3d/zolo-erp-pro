@@ -554,7 +554,11 @@ class InventoryMovementService
 
     private function createPiece(Product $product, array $dimensions, ?int $batchId, PostingRun $run): StockIdentity
     {
-        $dimensions = app(DimensionCalculationService::class)->calculate($dimensions);
+        // Before the dimensional migration, legacy quantities have no normalized unit contract.
+        // Never reinterpret that geometry as CBM/CFT. Migrated receipts require explicit units.
+        $calculated = $this->hasColumn('stock_dimensions', 'formula_version')
+            ? app(DimensionCalculationService::class)->calculate($dimensions) : [];
+        $dimensions = $calculated + $dimensions;
         $number = trim((string) ($dimensions['identity_no'] ?? ''))
             ?: sprintf('%s-%d', $run->movement->movement_no, $run->lineNo + 1);
         if (StockIdentity::where('product_id', $product->id)->where('identity_type', StockIdentity::PIECE)->where('identity_no', $number)->exists()) {
@@ -573,8 +577,9 @@ class InventoryMovementService
             'length' => $length, 'width' => $width, 'thickness' => $thickness,
             'dimension_uom' => $dimensions['dimension_uom'] ?? null,
             'pieces' => $pieces,
-            'computed_volume' => $dimensions['computed_volume'],
-            'volume_uom' => $dimensions['normalized_volume_uom'],
+            'computed_volume' => $calculated['computed_volume'] ?? ($length !== null && $width !== null && $thickness !== null
+                ? round($length * $width * $thickness * $pieces, 6) : null),
+            'volume_uom' => $calculated['normalized_volume_uom'] ?? $dimensions['volume_uom'] ?? null,
             'grade' => $dimensions['grade'] ?? null,
         ];
         foreach (['computed_cbm', 'computed_cft', 'formula_version'] as $column) {

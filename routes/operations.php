@@ -10,7 +10,7 @@ Route::prefix($api ? 'v1/operations' : 'operations')->name($api ? 'api.operation
         Route::get('{area}', [OperationsController::class, 'hub'])->where('area', 'manufacturing|job-work|profiles|projects|stock')->name('hub');
         Route::get('{kind}/{id}', [OperationsController::class, 'detail'])->where('kind', 'production|job-work|project')->whereNumber('id')->name('detail');
         Route::post('{action}', [OperationsController::class, 'action'])->where('action', 'bom|production-plan|job-order|project|expiry-writeoff');
-        Route::post('{action}/{id}', [OperationsController::class, 'action'])->where('action', 'production-complete|production-reverse|job-dispatch|job-receive|job-bill|job-reverse-dispatch|job-reverse-receipt|project-quotation|project-allocate|project-dispatch|project-install|project-commission')->whereNumber('id');
+        Route::post('{action}/{id}', [OperationsController::class, 'action'])->where('action', 'production-complete|production-reverse|job-dispatch|job-receive|job-bill|job-reverse-dispatch|job-reverse-receipt|project-quotation|project-allocate|project-dispatch|project-install|project-commission|project-service|project-link')->whereNumber('id');
         Route::post('configure/{action}', [OperationsController::class, 'configure'])->where('action', 'profile|process|scheme');
         Route::match(['GET', 'POST'], 'product/{id}/attributes', [OperationsController::class, 'attributes'])->whereNumber('id');
         Route::get('inventory/fefo', [OperationsController::class, 'fefo']);

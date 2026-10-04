@@ -37,7 +37,7 @@ class DimensionCalculationService
         $cft = $cbm / 0.028316846592;
         $volumeUnit = strtolower($data['volume_uom'] ?? (in_array($data['dimension_uom'], ['in', 'ft'], true) ? 'cft' : 'cbm'));
         $volumeUnit = match ($volumeUnit) { 'm3' => 'cbm', 'ft3' => 'cft', default => $volumeUnit };
-        if (!in_array($volumeUnit, ['cbm', 'cft'], true) || !is_finite($cbm) || $cft > 999999999999) {
+        if (!in_array($volumeUnit, ['cbm', 'cft'], true) || !is_finite($cbm) || round($cbm, 6) <= 0 || $cft > 999999999999) {
             throw \Illuminate\Validation\ValidationException::withMessages(['dimensions' => 'Use CFT/CBM within supported dimension range.']);
         }
         return $data + ['pieces' => $pieces, 'computed_cbm' => round($cbm, 6), 'computed_cft' => round($cft, 6),

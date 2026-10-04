@@ -79,6 +79,8 @@ return new class extends Migration
             Schema::table('stock_dimensions', fn (Blueprint $t) => $t->decimal($column, 18, 6)->nullable());
         }
         if (!Schema::hasColumn('stock_dimensions', 'formula_version')) Schema::table('stock_dimensions', fn (Blueprint $t) => $t->string('formula_version', 30)->nullable());
+        // Refresh system presets only; existing company choices remain untouched.
+        if (Schema::hasTable('business_profile_capabilities')) (new \Database\Seeders\CapabilitySeeder)->run();
     }
 
     private function document(Blueprint $t): void

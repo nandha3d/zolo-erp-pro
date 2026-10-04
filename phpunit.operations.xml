@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
+  <testsuites><testsuite name="Manufacturing, job work and industry profiles">
+    <file>tests/Feature/ManufacturingJobWorkTest.php</file>
+    <file>tests/Feature/OperationalConversionTest.php</file>
+    <file>tests/Feature/IndustryProfilesTest.php</file>
+    <file>tests/Feature/IndustryFlowIntegrationTest.php</file>
+    <file>tests/Feature/OperationsWebTest.php</file>
+    <file>tests/Feature/OperationsConcurrencyTest.php</file>
+    <file>tests/Feature/OperationsBrowserFixtureTest.php</file>
+  </testsuite></testsuites>
+  <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/></php>
+</phpunit>

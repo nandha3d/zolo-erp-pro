@@ -406,6 +406,12 @@
     @endif
 
     {{-- Manufacturing --}}
+    @if(config('operations.enabled') && in_array('operations.job_work', $enabledCapabilities, true))
+        <li><a href="{{ url('/operations/job-work') }}"><i class="dripicons-network-3"></i><span>Subcontracting / Job work</span></a></li>
+    @endif
+    @if(config('operations.enabled') && auth()->user()->role_id <= 2)
+        <li><a href="{{ url('/operations/profiles') }}"><i class="dripicons-gear"></i><span>Business profile</span></a></li>
+    @endif
     @if(in_array('manufacturing.production', $enabledCapabilities, true))
         <li>
             <a href="#manufacturing" aria-expanded="false" data-toggle="collapse">

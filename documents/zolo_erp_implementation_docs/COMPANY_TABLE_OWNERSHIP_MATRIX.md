@@ -200,3 +200,10 @@ Required proof per table/group: schema/backfill recovery, orphan/conflict checks
 
 Use [implementation progress](IMPLEMENTATION_PROGRESS.md), [the backfill runbook](COMPANY_BACKFILL_RUNBOOK.md) and [the audit resolution log](../auditing/COMPANY_FOUNDATION_AUDIT_RESOLUTION.md) for current delivered corrections and remaining gates.
 
+
+
+## Phase 9–10 additive ownership
+
+New BOM, production, job-work, operation-request/audit, profile/attribute/scheme, installation/reservation, project-link and warranty/service-history roots carry company ownership. Operational document roots also carry trusted branch, fiscal year and actor fields. BOM lines, production outputs and job-work dispatch/receipt lines inherit ownership through their scoped parent; every referenced product, unit, party, warehouse and source document is checked by the responsible shared guard.
+
+Existing `projects`, `productions`, `warehouses` and `stock_dimensions` are extended rather than replaced. Legacy ownership additions remain nullable until reviewed backfill. Dimensional formula and volume are historical snapshots. See [Phase 9–10 ownership/effect contracts](PHASE_9_10_OPERATIONS_AND_PROFILES.md) for entry points, immutable records, reversal order and migration gates. This appendix does not reclassify the original 136-table audit or approve its remaining live-schema/backfill requirements.
