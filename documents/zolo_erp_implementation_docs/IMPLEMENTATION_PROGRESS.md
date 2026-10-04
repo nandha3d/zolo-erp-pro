@@ -1,12 +1,12 @@
 # Implementation progress
 
-Current implementation state, reviewed 2026-10-03. This file describes the latest behavior; historical audit snapshots and package evidence are retained in [the audit resolution log](../auditing/COMPANY_FOUNDATION_AUDIT_RESOLUTION.md).
+Current implementation state, reviewed 2026-10-04. This file describes the latest behavior; historical audit snapshots and package evidence are retained in [the audit resolution log](../auditing/COMPANY_FOUNDATION_AUDIT_RESOLUTION.md).
 
 Execution follows [document 26](26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md), using one shared ERP core. The implementation pack includes authoritative specifications 00–33; docs 31–33 define the modern UI, Optech workflow mapping and common component contracts.
 
 ## Current phase and activation gates
 
-Phase 0's delivered regression package is complete. Phase 1 remains in progress: schema/backfill, authorized context/setup and bounded API reader isolation are delivered. Full legal-company isolation is not complete.
+Phase 0's delivered regression package is complete. Phase 1 remains in progress: schema/backfill, authorized context/setup, bounded API readers, shared commercial writers and double-entry accounting paths are delivered. Full legal-company isolation is not complete.
 
 Do not activate a second company or Phase 2 capabilities until all Phase 1 acceptance gates pass. Audit F-13 Option B permits inactive additive foundations while the execution plan's D1–D12 stabilization work remains assigned to its owning phases; it does not permit unsafe writer activation.
 
@@ -83,19 +83,40 @@ Sales/purchase root documents require company-owned warehouses in the selected b
 
 Seven transaction HTTP tests cover list/filter/pagination isolation, branch restrictions, party/warehouse corruption, line/payment/journal ownership, authorized company switching, closed-year historical reads and preserved Partial receipt quantities. The two original service tests retain relationship serialization assertions; HTTP response proof now belongs to the context suite.
 
-These read routes require migration/backfill and authorized memberships. Transaction writers and legacy/raw routes still require integration. Financial-year business-date mapping for historical transactions/openings remains a separate gate.
+These read routes require migration/backfill and authorized memberships. The shared writers and double-entry accounting paths below now consume the same context; raw legacy/operational routes still require integration. Financial-year business-date mapping for historical transactions/openings remains a separate gate.
+
+## Phase 1: shared writers and double-entry accounting
+
+The reviewed shared services now require an authorized actor and company/branch/FY context. Explicit service tuples are revalidated; missing actors and forged company tuples are rejected. Request-body ownership fields never select the company or actor.
+
+- Sales and purchases validate owned parties, billers, products, units and selected-branch warehouses. Transfers require authorized source and destination branches in the same company.
+- Company/FY row locks serialize reviewed postings. Company-local business dates must be valid ISO dates inside the selected open FY and after its inclusive lock date.
+- Documents, lines, payments, stock projections, numbers and journals commit together. Invalid ownership, shortages, ambiguous/corrupt stock, missing accounts and posting failures roll back every effect.
+- `PaymentService` owns subsequent customer and supplier settlements, reused by both commercial services. The purchase payment endpoint is `POST /api/v1/purchases/{id}/payments`; the existing sale endpoint remains compatible. Payments cannot exceed outstanding amounts, precede the source document, or settle unbilled purchase orders. Settlement amounts and outstanding/paid totals use the existing four-decimal journal precision, avoiding binary-float residue on final-cent payments. Payments carry their own validated posting date and do not move stock. Cash, Bank, Cheque and Credit Card use reviewed mappings; wallet/gift-card/other methods require their owned settlement integration.
+- Five accounting API readers and manual journal posting now require company context. Chart children, posted journal headers/items, account resolution and report aggregates are scoped. Account lookup never falls back to a different company. Manual and automatic journals must balance at the existing four-decimal line precision before any number or journal is written.
+- Double-entry web charts, journal list/detail/posting, trial balance, P&L, balance sheet, general ledger, cash-flow summary and mapping metadata use the same context. Chart setup and mapping changes require the effective company Admin/Owner role. Foreign parents and accounts are rejected, and multi-mapping updates are atomic.
+- Scoped web pages resolve context before shared middleware. Company reads bypass mutable shared caches; legacy cache keys retain their existing invalidation contract. Company identity, currency and timezone come from trusted context. Navigation respects membership role overrides.
+- Global quick-create, notification and report-selector modals are omitted from company-context pages until their owning modules are isolated. Shared identities do not provide notification ownership.
+- Inventory-close POST aliases consistently return HTTP 409 before any writes. The preview is current authorized-branch stock at product master cost; it makes no historical valuation, weighted-average, period-lock or company-wide GL reconciliation claim.
+- New ledger accounts start at zero. Existing undated openings and historical FY dates are preserved for the separate opening migration. Semantic mappings are company-owned metadata; automatic postings continue to use system account codes/subtypes until reviewed mapping integration.
+
+Serial inventory and operational references without reviewed ownership paths remain rejected. Native company-aware uniqueness/FKs, reversals, open items, dated openings and complete raw legacy integration remain owning-phase work. This package does not activate a second company.
 
 ## Current validation evidence
 
 | Suite | Latest verified result | Scope |
 |---|---|---|
-| `phpunit.company.xml` in CI on MySQL 8.4 | 102 tests, 459 assertions | Full source migrations/recovery, backfill, commercial services, context/setup, ten bounded HTTP readers and reset safety |
-| Targeted company context + ERP regression suites on local MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
-| `phpunit.company.xml`, `feature/phase-4b-legacy-shadow` | Local SQLite: 197 tests, 1,143 assertions, 6 MySQL-only skipped. Disposable official MySQL 8.4.0: 197 tests, 1,196 assertions, 0 skipped (at `ffdddde`) | Phase 2/3 + 4a merge, stock ledger incl. concurrency and MySQL migration chain, ledger-backed ERP services, legacy writer shadow recording |
-| `phpunit.legacy-mysql.xml` on disposable MySQL 8.4.0 | 28 tests, 200 assertions (at `38c9395`) | Original 16 seeded smoke tests, 9 legacy web E2E shadow tests and 3 known-gap tests |
-| Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
+| Previous `phpunit.company.xml` CI baseline on MySQL 8.4 | 102 tests, 459 assertions | Foundation and original ten API readers; later writer/accounting packages have additional proof below |
+| Local MySQL 8.4 combined foundation suite before the final supplier-settlement addition | 160 tests, 918 assertions | Foundation/context, shared writers, accounting API/web isolation, capabilities, numbering and invoice concurrency |
+| Final targeted shared-writer/accounting/numbering/migration suites on disposable MySQL 8.4 | 55 tests, 462 assertions | Customer and supplier settlements, owned accounting paths, atomic numbers, migration recovery and six-process invoice concurrency |
+| Concurrent supplier-settlement test on disposable MySQL 8.4 | 1 test, 9 assertions | Two processes race against one payable; exactly one posts, with no overpayment or failed number reservation |
+| Targeted SQLite commercial writer/accounting suites before the final method guard | 33 tests, 374 assertions | Commercial policies, supplier settlements, posting dates, owned reports, mapping/chart guards and web context |
+| Final SQLite commercial writer/method-guard suite | 29 tests, 277 assertions; one MySQL concurrency case skipped | Reviewed payment methods and source/account/period rejection |
+| `phpunit.company.xml`, merged phases 2/3/4 and shared-writer accounting, disposable official MySQL 8.4.0 | 213 tests, 2,128 assertions, 0 skipped | Foundation/context, capabilities, atomic numbering, stock ledger incl. 4-process last-unit race and MySQL migration chain, ledger-backed ERP services, legacy writer shadow recording, supplier/customer settlement incl. two-process race, owned accounting paths, whole-database wipe lockdown |
+| `phpunit.legacy-mysql.xml` on the same disposable MySQL 8.4.0 | 28 tests, 200 assertions | Original 16 seeded smoke tests, 9 legacy web E2E shadow tests (full middleware stack) and 3 audited known-gap tests |
+| Headless Chrome accounting and setup checks | Passed | Accounting close disabled at desktop/mobile widths, unsafe modals and foreign rows absent, chart modal/zero openings, mapping policy, no page errors; rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
-[CI run 37134384890](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37134384890) passes both PHPUnit suites for code commit `523fb93`. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
+[CI run 37134384890](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37134384890) is the previous passing baseline for code commit `523fb93`; it does not certify later changes. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
 
 The original seed export lacks brand IDs 10/16/17 and unit IDs 4/9. The legacy bootstrap proves dry-run rejection, supplies labelled fixture-only parents, then rehearses dry-run/write/dry-run. Retained installations need reviewed master data; fixture placeholders are not production repairs.
 
@@ -105,21 +126,21 @@ The initial seeded-suite connection failure is resolved by the disposable MySQL 
 
 ## Open Phase 1 work
 
-[Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md) inventories all 125 application tables: 123 active literal creators and two configured Spatie creators. Discovery is complete; ownership migration and runtime isolation are not.
+[Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md) inventories the original 125 application tables plus six capability/numbering tables. Discovery is complete; ownership migration and runtime isolation are not.
 
 Remaining gates:
 
-1. Convert remaining transaction/accounting readers and all writers, actual web routes and raw queries; stamp trusted ownership and validate every parent, branch and posting date.
+1. Convert raw legacy sales/purchase/transfer/payment controllers, legacy cash-account/money-transfer paths, remaining operational readers/writers and public/module routes; preserve the reviewed shared-service ownership and posting-date invariants.
 2. Complete operational/settings ownership migrations/backfill, including imported schemas. Active references to floors/kitchens/menu_type/services lack creators in this repository.
 3. Convert applicable business uniqueness and validators; add reviewed same-company FKs and mandatory ownership after writer/backfill parity.
-4. Integrate scheduled writers, company caches/invalidation, imports, exports, downloads and public file storage/access.
+4. Integrate scheduled writers, remaining module caches/invalidation, imports, exports, downloads and public file storage/access.
 5. Rehearse retained representative data at production scale, including locks, concurrency, reconciliation and live transaction browser flows.
 
 Full F-02/F-03/F-04/F-05 acceptance remains open. F-11 local/CI fixture proof is delivered; production-scale retained-data acceptance is pending.
 
 ## Phase 4a: stock movement ledger and generic services
 
-Built on branch `feature/phase-4-stock-ledger` and merged with the Phase 2/3 package on `feature/phase-2-3-capabilities-numbering`. It is not activated in production. Legacy web controllers and the remaining writers still mutate quantities directly; their changes are recorded as shadow movements (see 4b/4c below).
+Merged into `main` together with the Phase 2/3 package and the shared-writer accounting package. It is not activated in production. Legacy web controllers and the remaining writers still mutate quantities directly; their changes are recorded as shadow movements (see 4b/4c below).
 
 Schema (`2026_10_04_000001_create_stock_ledger_tables`):
 
@@ -169,7 +190,7 @@ Merged state with Phase 2/3:
 
 ## Phase 4b/4c: legacy writer shadow recording
 
-Branch `feature/phase-4b-legacy-shadow`. Shadow mode is in place for every audited legacy stock writer. Authoritative cutover has not started. The writer inventory, known gaps and route list are in [the legacy stock shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md).
+Merged into `main`. Shadow mode is in place for every audited legacy stock writer. Authoritative cutover has not started. The writer inventory, known gaps and route list are in [the legacy stock shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md).
 
 `App\Services\Inventory\LegacyStockShadow` runs each legacy writer unchanged inside one database transaction:
 

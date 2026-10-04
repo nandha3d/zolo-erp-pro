@@ -7,8 +7,8 @@ Shared ERP architecture and implementation guide for SalePro / Laravel 10.
 - **Platform:** Existing Laravel application, MySQL, Blade/Bootstrap UI, and `nwidart/laravel-modules` where modular packaging fits.
 - **Architecture:** One commercial, inventory, accounting, tax and document foundation; optional operational capabilities and industry presets.
 - **Status:** Implementation specification with staged foundation packages delivered. Full company isolation and later phases remain pending.
-- **Updated:** 2026-10-03.
-- **Implementation snapshot:** `b2df894`; see [implementation progress](documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md).
+- **Updated:** 2026-10-04.
+- **Implementation snapshot:** Reviewed shared commercial writers and double-entry accounting paths; see [implementation progress](documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md).
 
 This reference consolidates the [implementation pack](documents/zolo_erp_implementation_docs/README.md) and its [master index](documents/zolo_erp_implementation_docs/00_IMPLEMENTATION_MASTER_INDEX.md). It supersedes the earlier textile-only, isolated Optech architecture in this file. Detailed implementation requirements remain in the linked documents. The confirmed financial-year policy below resolves the pack's conflicting table names.
 
@@ -123,7 +123,7 @@ Company packages A/B have delivered:
 
 Middleware reads positive integer `X-Company-ID`, `X-Branch-ID` and `X-Financial-Year-ID` headers, with `company_id`, `branch_id` and `financial_year_id` session fallbacks. Request-body company IDs are not authoritative. Defaults require unambiguous authorized selection.
 
-**The middleware is not attached to legacy routes. Transaction services do not yet consume or enforce the new context/period guards.** These primitives do not establish application-wide isolation. Production migration/backfill has not been executed.
+**Implemented:** shared sales/purchase creation, customer/supplier payments, transfers, accounting API readers/manual posting and double-entry accounting web paths consume authorized context and period guards. Referenced parents, stock identities, nested journals and report aggregates are scoped. All required effects and atomic number reservations roll back together. Inventory-close posting remains blocked until reviewed inventory-ledger valuation and reconciliation. Raw legacy/operational routes, jobs, files and final constraints remain incomplete; second-company activation is still unsafe. Production migration/backfill has not been executed.
 
 Before activation, rehearse on representative disposable MySQL data; validate ownership and uniqueness; convert all affected readers/writers and jobs; enforce necessary constraints; prove cross-company rejection and legacy parity. Do not activate a second company before these gates pass.
 
@@ -135,11 +135,13 @@ Sources: [capability engine](documents/zolo_erp_implementation_docs/04_BUSINESS_
 
 Business profiles are presets. Companies can enable supported capabilities independently, subject to dependencies. Capability availability and user permission are separate checks.
 
-Target tables are `capabilities`, `business_profiles`, `business_profile_capabilities` and `company_capabilities`. Store stable keys, provider ownership, dependencies, configuration schema, company configuration and the actor/time of changes.
+**Implemented as gated foundations:** `capabilities`, `business_profiles`, `business_profile_capabilities` and `company_capabilities`. Store stable keys, provider ownership, dependencies, configuration schema, company configuration and the actor/time of changes.
 
 Examples include `core.sales`, `core.purchases`, `core.inventory`, `core.accounting`, `core.gst`, `inventory.multi_uom`, `inventory.batch_expiry`, `inventory.serial_tracking`, `inventory.dimension_tracking`, `sales.fast_counter`, `manufacturing.production`, `operations.job_work`, `operations.projects`, `printing.dot_matrix` and `communications.whatsapp`.
 
 A shared capability service resolves availability/configuration, validates dependencies and supplies navigation. Cache by company and invalidate on changes. Enforce enabled capabilities at routes and business services, not only in menus. Disabling a capability prevents new operations while preserving history.
+
+The implemented capability service validates configuration/dependencies and effective company administration. Optional capabilities remain inactive behind the fixed Phase 1 acceptance gate. Legacy imports preserve metadata without enabling operations. See [capability/numbering evidence](documents/zolo_erp_implementation_docs/PHASE_2_3_IMPLEMENTATION.md).
 
 Existing `general_settings.modules` is a migration compatibility input. It must not remain the authoritative company capability engine.
 
@@ -179,9 +181,11 @@ Source: [document engine](documents/zolo_erp_implementation_docs/12_DOCUMENT_SER
 
 ### Numbering
 
-Use one `DocumentNumberService` backed by `document_series` and `document_number_reservations`. Series support company, branch where applicable, FY, document type, code, prefix/suffix, padding, next number, reset policy and default selection.
+**Implemented for reviewed shared writers:** one `DocumentNumberService` backed by `document_series` and `document_number_reservations`. Series support company, branch where applicable, FY, document type, code, prefix/suffix, padding, next number, reset policy and default selection.
 
 Reserve/increment under database row locking inside the posting transaction. Database uniqueness and idempotency protect concurrent posting and retries. Authoritative numbers must not use `count()+1` or second-level timestamps. Preserve historical numbers; replacing the numbering mechanism does not renumber posted documents.
+
+Committed MySQL table creation resumes missing validated indexes/FKs. Used series cannot be reset or reformatted; retained source references, including soft-deleted documents, cannot be reused. Source/linked journal reference lengths are enforced. Raw legacy writers still retain their existing numbering until conversion.
 
 FY reset follows actual configured date ranges and occurs once per applicable series/company. Failed or retried posting must leave explainable reservation state without duplicate numbers.
 
@@ -318,9 +322,11 @@ Source: [accounting specification](documents/zolo_erp_implementation_docs/10_ACC
 
 Extend existing `chart_of_accounts`, `journal_entries`, `journal_items` and `semantic_account_mappings`. Harden existing `AccountingService` rather than building an Optech ledger.
 
-Accounting owns company-scoped semantic account resolution, balanced posting, idempotency, reversal, open items, allocations, reports and period close. Service boundaries may be extracted when ownership requires them.
+The target accounting authority owns company-scoped semantic account resolution, balanced posting, idempotency, reversal, open items, allocations, reports and period close. The current shared posting service validates owned active accounts and source documents, enforces business dates and writes owned journals/items atomically. API and double-entry web readers are scoped. Reversals, open items, dated openings and close remain deferred. Service boundaries may be extracted when ownership requires them.
 
-Posting rules request semantic roles such as AR, AP, cash, bank, inventory, sales, COGS, tax input/output, discounts, returns, rounding, freight, damage and variance. Do not add hard-coded account IDs or silently skip required posting when mappings are absent.
+The current mapping editor updates company-owned metadata atomically and requires company administration. It does not silently activate legacy hard-coded mapping IDs. New chart accounts start at zero; historical openings remain unchanged.
+
+Target posting rules request semantic roles such as AR, AP, cash, bank, inventory, sales, COGS, tax input/output, discounts, returns, rounding, freight, damage and variance. Do not add hard-coded account IDs or silently skip required posting when mappings are absent.
 
 Posted journals balance exactly at the defined currency precision. Use consistent decimal arithmetic and documented rounding. Persist posting keys and enforce uniqueness so source retries produce one posting. Posted journal entries/lines are immutable; correction creates linked reversal and replacement.
 

@@ -216,4 +216,9 @@ class PurchaseService
             return $purchase->load(['supplier', 'warehouse', 'productPurchases']);
         });
     }
+
+    public function addPayment(Purchase $purchase, array $paymentData, ?int $userId = null, ?CompanyContext $context = null): Payment
+    {
+        return app(PaymentService::class)->addPayment($purchase, $paymentData, $userId, $context);
+    }
 }

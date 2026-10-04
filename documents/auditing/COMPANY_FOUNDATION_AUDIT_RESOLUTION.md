@@ -94,3 +94,20 @@ Progress evidence is consolidated into current behavior, including the approved 
 ### Transaction-reader CI proof
 
 [CI run 37134384890](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37134384890) passes on code commit `523fb93`: the combined company foundation suite has 102 tests/459 assertions, followed by 16 original seeded smoke tests/54 assertions. Current progress/reference evidence is updated to these results. The local disposable MySQL server was stopped after validation; retained fixture files remain isolated under ignored scratch storage.
+
+### Shared commercial writers and double-entry accounting — 2026-10-04
+
+The reviewed shared sales, purchases, customer/supplier payments and transfers now revalidate company/branch/FY membership and posting actor, validate owned parents, stamp ownership from context, and enforce open-period business dates. Company/FY locks protect posting and atomic number allocation. Required stock, payment and journal failures roll back their whole document transaction.
+
+`PaymentService` consolidates customer and supplier settlement. Both API paths reject foreign sources/accounts, overpayment, settlement before the source date, and payments against unbilled purchase orders. Supplier settlements reduce payable without changing inventory.
+
+Accounting API readers/manual posting and double-entry web charts/journals/reports now scope root and nested ownership. Company chart setup and mapping metadata changes require effective Admin/Owner membership; mapping batches are atomic. Existing undated opening balances remain unchanged, new chart accounts start at zero, and mapping metadata does not silently replace reviewed system posting codes/subtypes.
+
+Both previously broken inventory-close POST aliases now return HTTP 409 before any effect, matching the user's approved deferral until the inventory-ledger phase. The view describes only current authorized-branch stock and product cost. It no longer promises weighted-average historical valuation, GL reconciliation or a period lock.
+
+The accounting layout omits global notification, quick-create and report-selection modals. Context resolves before shared middleware; company-owned reads stay fresh instead of using mutable shared caches. Legacy cache names preserve existing invalidation, and sidebar permissions follow company membership role overrides.
+
+Proof: combined disposable MySQL foundation run 160 tests/918 assertions before final supplier settlement; final targeted MySQL shared-writer/accounting/numbering/migration run 55 tests/462 assertions; targeted SQLite run 33 tests/374 assertions. Actual accounting HTML passes headless Chrome checks for disabled close on desktop/mobile, omitted unsafe selectors, zero-opening chart modal, mapping policy and no page errors.
+
+Full F-02/F-03/F-04/F-05 acceptance remains open for raw legacy controllers, operational/imported schemas, jobs, files, remaining caches and final native uniqueness/FKs. Second-company and optional-capability activation are not authorized by this package's tests.
+The concurrent supplier-settlement proof passes on disposable MySQL: one test/nine assertions. Two processes race against the same outstanding payable; one settlement posts and the other rolls back without overpayment, duplicate numbers or orphan journals. The original seeded compatibility suite passes again: 16 tests/54 assertions.

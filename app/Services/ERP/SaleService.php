@@ -227,56 +227,6 @@ class SaleService
      */
     public function addPayment(Sale $sale, array $paymentData, ?int $userId = null, ?CompanyContext $context = null): Payment
     {
-        $userId = $userId ?: auth()->id();
-        $guard = app(CompanyWriteGuard::class);
-        $context = $guard->context($context, $userId);
-        $amount = (float) $paymentData['amount'];
-
-        if (!is_finite($amount) || $amount <= 0) {
-            throw new InvalidArgumentException("Payment amount must be greater than zero.");
-        }
-
-        return DB::transaction(function () use ($sale, $paymentData, $amount, $userId, $context, $guard) {
-            $date = $guard->begin($context, $guard->businessDate($paymentData));
-            $guard->rejectUnscopedReferences($paymentData);
-            $sale = Sale::visibleIn($context)->lockForUpdate()->findOrFail($sale->id);
-            if ($amount > (float) $sale->grand_total - (float) $sale->paid_amount) {
-                throw new InvalidArgumentException('Payment exceeds the outstanding sale amount.');
-            }
-            $paymentData['account_id'] = $guard->paymentAccount($paymentData, $context);
-            $numbers = app(DocumentNumberService::class);
-            $reservation = $numbers->reserve('sale_payment', $context, $date, $userId);
-            $payment = (new Payment)->forceFill([
-                'company_id' => $context->companyId,
-                'created_at' => $date,
-                'payment_at' => $date,
-                'payment_reference' => $reservation->formatted_number,
-                'user_id' => $userId,
-                'sale_id' => $sale->id,
-                'account_id' => $paymentData['account_id'] ?? 1,
-                'amount' => $amount,
-                'change' => 0,
-                'paying_method' => $paymentData['paying_method'] ?? 'Cash',
-                'payment_note' => $paymentData['payment_note'] ?? null,
-            ]);
-            $payment->save();
-            $numbers->assign($reservation, $payment);
-
-            $newPaidAmount = (float)$sale->paid_amount + $amount;
-            $paymentStatus = 3; // Partial
-            if ($newPaidAmount >= (float)$sale->grand_total) {
-                $paymentStatus = 4; // Paid
-            }
-
-            $sale->update([
-                'paid_amount' => $newPaidAmount,
-                'payment_status' => $paymentStatus,
-            ]);
-
-            // Post double-entry journal (Dr. Cash/Bank, Cr. AR)
-            $this->accountingService->postPaymentJournal($payment, $context, $userId);
-
-            return $payment;
-        });
+        return app(PaymentService::class)->addPayment($sale, $paymentData, $userId, $context);
     }
 }

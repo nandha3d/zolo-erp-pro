@@ -89,6 +89,9 @@ class CompanyWriteGuard
 
     public function paymentAccount(array $data, CompanyContext $context): int
     {
+        if (!in_array($data['paying_method'] ?? 'Cash', ['Cash', 'Bank', 'Cheque', 'Credit Card'], true)) {
+            throw ValidationException::withMessages(['paying_method' => 'This payment method requires its reviewed company-owned settlement path.']);
+        }
         $id = $data['account_id'] ?? \App\Models\Account::where('company_id', $context->companyId)->orderBy('id')->value('id');
         $account = $this->owned(\App\Models\Account::class, $id, $context, 'account_id');
         if (array_key_exists('is_active', $account->getAttributes()) && !$account->is_active) {
