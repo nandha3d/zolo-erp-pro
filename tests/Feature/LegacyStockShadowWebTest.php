@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Inventory\StockMovement;
 use App\Models\User;
 use App\Services\Inventory\InventoryReconciliationService;
+use App\Services\Platform\CapabilityService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -41,6 +42,9 @@ class LegacyStockShadowWebTest extends TestCase
         );
         $this->items['a'] = $this->item('SHADOW-A', [$this->main => 20]);
         $this->items['b'] = $this->item('SHADOW-B', [$this->main => 5, $this->branchStore => 3]);
+        // Known-gap fixtures: stock only in the second store, and a batch-tracked item.
+        $this->items['c'] = $this->item('SHADOW-C', [$this->branchStore => 3]);
+        $this->items['d'] = $this->item('SHADOW-D', [$this->main => 10], 'BATCH-D');
         $this->artisan('erp:stock-opening', ['--date' => now()->toDateString()])->assertSuccessful();
         // The original seed export already disagrees with itself (e.g. product 1 total vs warehouse rows).
         $this->baseline = $this->differences();
@@ -191,9 +195,99 @@ class LegacyStockShadowWebTest extends TestCase
             [[$a['id'], $this->main, -2], [$b['id'], $this->main, 1]]);
     }
 
-    private function ajaxSale(array $item, float $qty): TestResponse
+    /** Known gap #5: the warehouse-row guard has no else, so only products.qty moves and the shadow sees nothing. */
+    public function test_known_gap_sale_without_a_warehouse_row_is_a_product_level_difference(): void
     {
-        return $this->actingAs($this->admin)->post(route('sales.store'), $this->salePayload($item, $qty) + ['pos' => 1],
+        $c = $this->items['c'];
+        $last = StockMovement::max('id');
+
+        $this->ajaxSale($c, 2);
+
+        $this->assertSame($last, StockMovement::max('id'), 'no warehouse row changed, so nothing is recorded');
+        $this->assertSame(1.0, (float) DB::table('products')->where('id', $c['id'])->value('qty'));
+        $this->assertSame([[
+            'level' => 'product', 'product_id' => $c['id'], 'warehouse_id' => null, 'variant_id' => null, 'batch_id' => null,
+            'ledger_qty' => 3.0, 'projection_qty' => 1.0, 'difference' => 2.0, 'has_ledger' => true,
+        ]], $this->newDifferences());
+    }
+
+    /** Known gap #7: SaleController::destroy decrements the batch it should restore; the shadow records the row's +qty. */
+    public function test_known_gap_sale_destroy_batch_sign_bug_is_a_batch_level_difference(): void
+    {
+        $d = $this->items['d'];
+        $saleId = (int) $this->ajaxSale($d, 2, $d['batch_id'])->json();
+        $this->assertSame([], $this->newDifferences(), 'the batch sale itself reconciles');
+
+        $this->actingAs($this->admin)->delete(route('sales.destroy', $saleId))->assertRedirect();
+
+        $receipt = StockMovement::where('source_type', 'legacy:sales.destroy')->where('source_id', $saleId)->sole();
+        $this->assertSame($d['batch_id'], (int) $receipt->lines()->sole()->batch_id);
+        $this->assertSame(10.0, $this->warehouseQty($d['id'], $this->main));
+        $this->assertSame(6.0, (float) DB::table('product_batches')->where('id', $d['batch_id'])->value('qty'));
+        $this->assertSame([[
+            'level' => 'batch', 'product_id' => $d['id'], 'warehouse_id' => null, 'variant_id' => null, 'batch_id' => $d['batch_id'],
+            'ledger_qty' => 10.0, 'projection_qty' => 6.0, 'difference' => 4.0, 'has_ledger' => true,
+        ]], $this->newDifferences());
+    }
+
+    /** Known gap #3: cafe raw-material consumption decrements products.qty only. */
+    public function test_known_gap_cafe_raw_material_consumption_is_a_product_level_difference(): void
+    {
+        $a = $this->items['a'];
+        $this->enableCafeForFixtureCompany();
+        $last = StockMovement::max('id');
+
+        $response = $this->actingAs($this->admin)->post(route('cafe.raw-material.store'), [
+            'product_id' => $a['id'], 'opening_stock' => 20, 'consumed_today' => 1.5,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame(1, DB::table('cafe_raw_materials')->where('product_id', $a['id'])->count(), $this->describe($response));
+        $this->assertSame($last, StockMovement::max('id'));
+        $this->assertSame(20.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertSame([[
+            'level' => 'product', 'product_id' => $a['id'], 'warehouse_id' => null, 'variant_id' => null, 'batch_id' => null,
+            'ledger_qty' => 20.0, 'projection_qty' => 18.5, 'difference' => 1.5, 'has_ledger' => true,
+        ]], $this->newDifferences());
+    }
+
+    /**
+     * Fixture-only activation. Optional capabilities are hard-gated off until Phase 1 acceptance
+     * (CapabilityCatalog::OPTIONAL_ACTIVATION_READY), so this route is unreachable in production today; the test
+     * opens that gate through CapabilityService's protected seam, writes the capability rows directly and adds
+     * a fiscal year covering today for context resolution.
+     */
+    private function enableCafeForFixtureCompany(): void
+    {
+        $this->app->instance(CapabilityService::class, new class extends CapabilityService {
+            protected function optionalActivationReady(): bool
+            {
+                return true;
+            }
+        });
+        $capabilities = DB::table('capabilities')->whereIn('key', ['core.sales', 'core.inventory', 'operations.cafe_bakery'])->pluck('id', 'key');
+        $this->assertCount(3, $capabilities, 'capability catalog must be seeded');
+        foreach ($capabilities as $id) {
+            DB::table('company_capabilities')->updateOrInsert(['company_id' => 1, 'capability_id' => $id],
+                ['enabled' => 1, 'config_json' => '[]', 'enabled_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        }
+        $today = now()->toDateString();
+        if (!DB::table('fiscal_years')->where('company_id', 1)->where('start_date', '<=', $today)->where('end_date', '>=', $today)->exists()) {
+            DB::table('fiscal_years')->insert([
+                'company_id' => 1, 'name' => 'Shadow fixture FY', 'start_date' => now()->startOfYear()->toDateString(),
+                'end_date' => now()->endOfYear()->toDateString(), 'is_closed' => 0, 'status' => 'open',
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        cache()->flush();
+    }
+
+    private function ajaxSale(array $item, float $qty, ?int $batchId = null): TestResponse
+    {
+        $payload = $this->salePayload($item, $qty);
+        $payload['product_batch_id'] = [$batchId ?? ''];
+
+        return $this->actingAs($this->admin)->post(route('sales.store'), $payload + ['pos' => 1],
             ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
     }
 
@@ -304,22 +398,33 @@ class LegacyStockShadowWebTest extends TestCase
         return "[HTTP {$response->getStatusCode()} ".json_encode($flash).' '.trim(implode(' ', array_map(fn ($l) => substr($l, 0, 240), $warnings))).']';
     }
 
-    private function item(string $code, array $stock): array
+    /** A consistent legacy item; with $batchNo every warehouse row belongs to one unexpired batch. */
+    private function item(string $code, array $stock, ?string $batchNo = null): array
     {
         $row = (array) DB::table('products')->find(5);
         unset($row['id']);
         $id = DB::table('products')->insertGetId(array_merge($row, [
             'name' => 'Shadow proof '.$code, 'code' => $code, 'qty' => array_sum($stock), 'cost' => 4,
-            'type' => 'standard', 'is_variant' => null, 'is_batch' => null, 'is_imei' => null, 'is_active' => 1,
+            'type' => 'standard', 'is_variant' => null, 'is_batch' => $batchNo ? 1 : null, 'is_imei' => null, 'is_active' => 1,
         ]));
+        $batchId = $batchNo === null ? null : DB::table('product_batches')->insertGetId([
+            'product_id' => $id, 'batch_no' => $batchNo, 'expired_date' => now()->addYear()->toDateString(),
+            'qty' => array_sum($stock), 'company_id' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
         foreach ($stock as $warehouse => $qty) {
             DB::table('product_warehouse')->insert([
                 'product_id' => $id, 'warehouse_id' => $warehouse, 'qty' => $qty, 'company_id' => 1,
-                'created_at' => now(), 'updated_at' => now(),
+                'product_batch_id' => $batchId, 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
 
-        return ['id' => $id, 'code' => $code];
+        return ['id' => $id, 'code' => $code, 'batch_id' => $batchId];
+    }
+
+    /** Reconciliation differences that are not in the seed baseline. */
+    private function newDifferences(): array
+    {
+        return array_values(array_filter($this->differences(), fn ($diff) => !in_array($diff, $this->baseline, true)));
     }
 
     private function warehouseQty(int $productId, int $warehouseId): float
