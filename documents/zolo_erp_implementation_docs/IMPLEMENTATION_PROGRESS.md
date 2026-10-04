@@ -91,8 +91,8 @@ These read routes require migration/backfill and authorized memberships. Transac
 |---|---|---|
 | `phpunit.company.xml` in CI on MySQL 8.4 | 102 tests, 459 assertions | Full source migrations/recovery, backfill, commercial services, context/setup, ten bounded HTTP readers and reset safety |
 | Targeted company context + ERP regression suites on local MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
-| `phpunit.company.xml` on local SQLite, `feature/phase-4b-legacy-shadow` | 197 tests, 1,140 assertions, 6 MySQL-only skipped | Phase 2/3 + 4a merge, stock ledger, ledger-backed ERP services and legacy writer shadow recording |
-| `phpunit.legacy-mysql.xml` | 16 tests, 54 assertions | Original seeded accounting services/pages, POS/dashboard, API auth/catalog/accounting |
+| `phpunit.company.xml`, `feature/phase-4b-legacy-shadow` | Local SQLite: 197 tests, 1,143 assertions, 6 MySQL-only skipped. Disposable official MySQL 8.4.0: 197 tests, 1,193 assertions, 0 skipped (at `08efa76`) | Phase 2/3 + 4a merge, stock ledger incl. concurrency and MySQL migration chain, ledger-backed ERP services, legacy writer shadow recording |
+| `phpunit.legacy-mysql.xml` on disposable MySQL 8.4.0 | 25 tests, 180 assertions (at `08efa76`) | Original 16 seeded smoke tests plus 9 legacy web E2E shadow tests |
 | Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
 [CI run 37134384890](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37134384890) passes both PHPUnit suites for code commit `523fb93`. Fixture clearing requires explicit disposable database opt-in/name and a fixture-only account.
@@ -175,7 +175,7 @@ Branch `feature/phase-4b-legacy-shadow`. Shadow mode is in place for every audit
 
 - Eloquent `created`, `updated` and `deleted` events on `product_warehouse` capture quantity and `imei_number` serial changes. Each change is keyed by product, warehouse, variant and batch. Partial models such as `select('id', 'qty')` reload their keys by ID.
 - Each change is tagged with its transaction level. A rolled-back transaction or savepoint discards its changes; a committed savepoint hands them to its parent.
-- On success the net change becomes one movement with `projection_mode = shadow`. It is a receipt if every change is inbound (valued at `products.cost`, which legacy purchases maintain), an issue if every change is outbound, and otherwise a signed adjustment. The source is `legacy:{route name}`, with the first created document of the writer's class or the route's document ID.
+- On success the net change becomes one movement with `projection_mode = shadow`. It is a receipt if every change is inbound (valued at `products.cost`, which legacy purchases maintain), an issue if every change is outbound, a transfer when matched quantities leave one warehouse and enter one other, and otherwise a signed adjustment. The source is `legacy:{route name}`, with the first created document of the writer's class or the route's document ID.
 - Shadow movements never change projections. Expiry and identity rules only add warnings, so the legacy result stays authoritative. A shadow record that fails is logged and never blocks the legacy write.
 - A thrown exception, or a response carrying a rendered exception, rolls back all of the writer's changes. This closes the partial-write gap (D5) for these routes.
 - **Behaviour change on errors:** previously, a writer that failed mid-request kept whatever its inner transactions had already committed. For example, `sales.store` without `paid_by_id` returns HTTP 500 but leaves the sale row and its stock decrement. In shadow mode the whole request rolls back.
@@ -194,7 +194,7 @@ Related changes:
 
 Known gaps that reconciliation will report are audit items 3–13: writers that change `products`, variant or batch quantities without a warehouse row. Examples are missing-row guards without an `else`, cafe raw-material consumption, adjustment-update reverts and the batch sign bug in sale deletes. These are fixed at each writer's cutover, not in shadow mode.
 
-Proof: `LegacyStockShadowTest` contains 13 tests with 94 assertions. They cover:
+Proof: `LegacyStockShadowTest` contains 13 tests with 97 assertions. They cover:
 
 - capture of saves, increments, creates and deletes;
 - savepoint rollback, thrown and rendered failures, and leaked transactions;
@@ -202,7 +202,9 @@ Proof: `LegacyStockShadowTest` contains 13 tests with 94 assertions. They cover:
 - serial identities and the serial projection;
 - logged failures, off mode, shadow reversal, middleware attribution and route coverage.
 
-The full local SQLite `phpunit.company.xml` gives 197 tests and 1,140 assertions, with 6 skipped. Real legacy controller flows, MySQL concurrency and the seeded suite have not run yet; they need the disposable MySQL rehearsal.
+The full local SQLite `phpunit.company.xml` gives 197 tests and 1,143 assertions, with 6 skipped. On disposable official MySQL 8.4.0 it gives 197 tests and 1,193 assertions with none skipped, so `StockLedgerConcurrencyTest` and the MySQL migration chain ran.
+
+`LegacyStockShadowWebTest` (in `phpunit.legacy-mysql.xml`, seeded original schema, full middleware stack, after `erp:stock-opening`) runs each request twice: first with recording off (then rolled back), then with shadow on. It asserts the same HTTP status, identical `products`/`product_warehouse` results, exactly one shadow movement of the expected type, source and lines, and unchanged reconciliation differences. Covered: web (via `genInvoice`) and POS sales, sale destroy, purchase, sale return, purchase return, completed transfer, pending transfer completed by `changeStatus`, mixed quantity adjustment, and a purchase whose controller rolls back its own transaction (nothing recorded). The seeded data already disagrees with itself (product 1: `qty` 624.7 against a warehouse row of 10), so the tests compare against the pre-request baseline. The audited gaps 3–13 are not exercised by these paths. The suite gives 25 tests and 180 assertions. The MySQL proof found the `genInvoice` leaked-transaction defect, now fixed.
 
 Cutover gate, per writer method, in this order:
 

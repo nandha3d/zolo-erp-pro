@@ -229,10 +229,21 @@ class LegacyStockShadow
             );
         }
 
+        [$from, $to] = $inbound || $outbound ? [null, null] : $this->transferPair($lines);
+        if ($from !== null) {
+            // Exactly matched out/in quantities between two warehouses: record the source side as a transfer.
+            $lines = array_values(array_map(fn (StockLine $line) => new StockLine(
+                productId: $line->productId, qty: -$line->qty, warehouseId: $from,
+                variantId: $line->variantId, batchId: $line->batchId, serials: $line->serials,
+            ), array_filter($lines, fn (StockLine $line) => $line->qty < 0)));
+        }
+
         $model = $this->scope['model'];
         $command = new StockMovementCommand(
             date: now()->toDateString(),
             lines: $lines,
+            warehouseId: $from,
+            toWarehouseId: $to,
             sourceType: 'legacy:'.$this->scope['source'],
             sourceId: $model?->getKey() ?? $this->scope['source_id'],
             sourceNo: $model?->getAttribute('reference_no'),
@@ -247,6 +258,7 @@ class LegacyStockShadow
             DB::transaction(fn () => match (true) {
                 $inbound => $movements->receive($command),
                 $outbound => $movements->issue($command),
+                $from !== null => $movements->transfer($command),
                 default => $movements->adjust($command),
             });
         } catch (Throwable $error) {
@@ -254,5 +266,33 @@ class LegacyStockShadow
                 'source' => $this->scope['source'], 'source_id' => $command->sourceId, 'error' => $error->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * @param list<StockLine> $lines signed lines
+     * @return array{0: ?int, 1: ?int} source and destination warehouse when the lines are one clean transfer
+     */
+    private function transferPair(array $lines): array
+    {
+        $sides = [-1 => [], 1 => []];
+        $warehouses = [-1 => [], 1 => []];
+        foreach ($lines as $line) {
+            $sign = $line->qty < 0 ? -1 : 1;
+            $key = $line->productId.'|'.$line->variantId.'|'.$line->batchId;
+            $sides[$sign][$key] = ($sides[$sign][$key] ?? 0) + abs($line->qty);
+            $warehouses[$sign][$line->warehouseId] = true;
+        }
+        ksort($sides[-1]);
+        ksort($sides[1]);
+        if (count($warehouses[-1]) !== 1 || count($warehouses[1]) !== 1 || array_keys($sides[-1]) !== array_keys($sides[1])) {
+            return [null, null];
+        }
+        foreach ($sides[-1] as $key => $qty) {
+            if (abs($qty - $sides[1][$key]) > InventoryMovementService::EPSILON) {
+                return [null, null];
+            }
+        }
+
+        return [array_key_first($warehouses[-1]), array_key_first($warehouses[1])];
     }
 }

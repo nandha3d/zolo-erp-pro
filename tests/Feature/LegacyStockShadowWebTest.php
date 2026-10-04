@@ -149,7 +149,7 @@ class LegacyStockShadowWebTest extends TestCase
 
         $response->assertRedirect();
         $transfer = DB::table('transfers')->orderByDesc('id')->first();
-        $this->assertShadow($movement, 'adjustment', 'legacy:transfers.store', $transfer->id,
+        $this->assertShadow($movement, 'transfer', 'legacy:transfers.store', $transfer->id,
             [[$b['id'], $this->main, -2], [$b['id'], $this->branchStore, 2]]);
         $this->assertSame(3.0, $this->warehouseQty($b['id'], $this->main));
         $this->assertSame(5.0, $this->warehouseQty($b['id'], $this->branchStore));

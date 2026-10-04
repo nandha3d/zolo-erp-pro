@@ -151,20 +151,28 @@ class LegacyStockShadowTest extends InventoryLedgerTestCase
         $this->assertReconciled();
     }
 
-    public function test_mixed_changes_record_a_signed_adjustment_and_new_rows_are_captured(): void
+    public function test_matched_moves_record_a_transfer_and_other_mixes_a_signed_adjustment(): void
     {
         $product = $this->stocked(10);
+        $other = $this->stocked(5, ['code' => 'OTHER']);
 
+        // New destination row is captured as well.
         $this->shadow()->record('transfers.store', function () use ($product) {
             $this->legacyChange($product, -4, 1);
             $this->legacyChange($product, 4, 2);
-            Product::whereKey($product->id)->decrement('qty', 0);
+        });
+        $this->shadow()->record('qty_adjustment.store', function () use ($product, $other) {
+            $this->legacyChange($product, -1, 1);
+            $this->legacyChange($other, 2, 1);
         });
 
-        $movement = StockMovement::where('projection_mode', 'shadow')->sole();
-        $this->assertSame('adjustment', $movement->movement_type);
-        $this->assertEquals([1 => -4, 2 => 4], $movement->lines->pluck('qty_base', 'warehouse_id')->map(fn ($qty) => (float) $qty)->all());
-        $this->assertEquals(0, $movement->lines->sum('value'));
+        [$transfer, $adjustment] = StockMovement::where('projection_mode', 'shadow')->orderBy('id')->get();
+        $this->assertSame(['transfer', 1, 2], [$transfer->movement_type, (int) $transfer->warehouse_from_id, (int) $transfer->warehouse_to_id]);
+        $this->assertEquals([1 => -4, 2 => 4], $transfer->lines->pluck('qty_base', 'warehouse_id')->map(fn ($qty) => (float) $qty)->all());
+        $this->assertEquals(0, $transfer->lines->sum('value'));
+        $this->assertSame('adjustment', $adjustment->movement_type);
+        $this->assertEquals([$product->id => -1, $other->id => 2],
+            $adjustment->lines->pluck('qty_base', 'product_id')->map(fn ($qty) => (float) $qty)->all());
         $this->assertReconciled();
     }
 
