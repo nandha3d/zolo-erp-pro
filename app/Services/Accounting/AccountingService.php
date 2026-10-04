@@ -67,9 +67,9 @@ class AccountingService
         }
 
         // Strict validation: Debits must equal Credits
-        if (abs($totalDebit - $totalCredit) > 0.005) {
+        if (round($totalDebit - $totalCredit, 4) != 0.0) {
             throw new InvalidArgumentException(
-                sprintf("Double-entry unbalanced: Total Debits (%.2f) must equal Total Credits (%.2f)", $totalDebit, $totalCredit)
+                sprintf("Double-entry unbalanced: Total Debits (%.4f) must equal Total Credits (%.4f)", $totalDebit, $totalCredit)
             );
         }
 

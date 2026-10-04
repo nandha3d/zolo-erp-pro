@@ -153,6 +153,20 @@ class CompanyWriterTest extends CompanyContextTestCase
         }
     }
 
+    public function test_manual_journal_rejects_an_imbalance_at_persisted_precision_atomically(): void
+    {
+        $cash = ChartOfAccount::where('company_id', $this->company->id)->where('code', '1010')->value('id');
+        $revenue = ChartOfAccount::where('company_id', $this->company->id)->where('code', '4010')->value('id');
+        $before = $this->snapshot();
+        $this->postJson('/api/v1/accounting/journal-entries', [
+            'entry_date' => '2026-10-03',
+            'description' => 'Reject an imbalance at journal precision',
+            'items' => [['chart_of_account_id' => $cash, 'debit' => 1],
+                ['chart_of_account_id' => $revenue, 'credit' => 0.9999]],
+        ])->assertStatus(400);
+        $this->assertSame($before, $this->snapshot());
+    }
+
     private function payload(string $type): array
     {
         $line = ['product_id' => 1, 'qty' => 2];
