@@ -80,28 +80,6 @@ class CouponController extends Controller
         return 'Coupon deleted successfully!';
     }
 
-    public function updateCoupon(Request $request)
-    {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        $tables = DB::select('SHOW TABLES');
-        $str = 'Tables_in_' . env('DB_DATABASE');
-        foreach ($tables as $table) {
-            DB::table($table->$str)->truncate();
-        }
-        $dir = $request->data;
-        $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
-        $files = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::CHILD_FIRST);
-        foreach($files as $file) {
-            if ($file->isDir()){
-                rmdir($file->getRealPath());
-            }
-            else {
-                unlink($file->getRealPath());
-            }
-        }
-        rmdir($dir);
-    }
-
     public function destroy($id)
     {
         $lims_coupon_data = Coupon::find($id);

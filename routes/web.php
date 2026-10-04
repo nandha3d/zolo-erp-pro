@@ -128,8 +128,6 @@ Route::get('clear', function () {
     return response()->json(['status' => 'success', 'message' => 'Cache cleared successfully']);
 })->middleware(['auth', 'role:Admin']);
 
-// SECURITY: Route /update-coupon dipindahkan ke dalam middleware auth (lihat di bawah)
-
 // SECURITY: Installer routes otomatis dinonaktifkan jika sudah terinstall
 // SECURITY: Cek status instalasi
 $isInstalled = false;
@@ -190,9 +188,6 @@ Route::group(['middleware' => 'auth'], function () {
 });
 
 Route::group(['middleware' => ['common', 'auth', 'active']], function () {
-
-    // SECURITY: Route update-coupon sekarang dilindungi auth
-    Route::get('update-coupon', [CouponController::class, 'updateCoupon']);
 
     Route::get('/languages', [LanguageController::class, 'index'])->name('languages');
     Route::post('/languages/create', [LanguageController::class, 'store']);
@@ -657,7 +652,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
             Route::post('sms_setting_store', 'smsSettingStore')->name('setting.smsStore');
             Route::get('pos_setting', 'posSetting')->name('setting.pos');
             Route::post('pos_setting_store', 'posSettingStore')->name('setting.posStore');
-            Route::get('empty-database', 'emptyDatabase')->name('setting.emptyDatabase');
+            Route::post('empty-database', 'emptyDatabase')->name('setting.emptyDatabase');
 
         });
         Route::get('backup', 'backup')->name('setting.backup');

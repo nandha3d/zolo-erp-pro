@@ -39,8 +39,31 @@ class SettingController extends Controller
         $this->_smsService = $smsService;
     }
 
-    public function emptyDatabase()
+    /** Typed by the operator; the views prompt for it and the server re-checks it. */
+    public const EMPTY_DATABASE_CONFIRMATION = 'DELETE ALL DATA';
+
+    /**
+     * Platform foundation and configuration that must survive a data wipe: truncating company, branch,
+     * membership or capability rows would leave the remaining users without a company.
+     */
+    private const KEEP_ON_EMPTY = [
+        'accounts','general_settings','hrm_settings','languages','migrations','password_resets',
+        'permissions','pos_setting','roles','role_has_permissions','users','currencies',
+        'reward_point_settings','ecommerce_settings','external_services','translations','invoice_settings',
+        'companies','company_branches','company_user','company_user_branches','fiscal_years',
+        'capabilities','business_profiles','business_profile_capabilities','company_capabilities',
+        'chart_of_accounts','semantic_account_mappings',
+    ];
+
+    /** Wipes all business data of every company. POST only, Owner/Admin only, typed confirmation required. */
+    public function emptyDatabase(Request $request)
     {
+        $user = Auth::user();
+        abort_unless($user && $user->is_active && in_array((int) $user->role_id, [1, 2], true),
+            403, 'Only an Owner or Admin can empty the database.');
+        if ($request->input('confirmation') !== self::EMPTY_DATABASE_CONFIRMATION) {
+            return redirect()->back()->with('not_permitted', 'Type '.self::EMPTY_DATABASE_CONFIRMATION.' to confirm emptying the database.');
+        }
         if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
@@ -76,13 +99,13 @@ class SettingController extends Controller
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         foreach ($tables as $table) {
-            if(!in_array($table->$str, [
-                'accounts','general_settings','hrm_settings','languages','migrations','password_resets',
-                'permissions','pos_setting','roles','role_has_permissions','users','currencies',
-                'reward_point_settings','ecommerce_settings','external_services','translations','invoice_settings'
-            ])) {
+            if(!in_array($table->$str, self::KEEP_ON_EMPTY, true)) {
                 DB::table($table->$str)->truncate();
             }
+        }
+        // Journals are gone, so the kept chart of accounts must not show their cached balances.
+        if (DB::getSchemaBuilder()->hasTable('chart_of_accounts')) {
+            DB::table('chart_of_accounts')->update(['current_balance' => DB::raw('opening_balance')]);
         }
 
         // Re-enable FK checks

@@ -1011,7 +1011,8 @@
                       @endif
                       @if($empty_database_permission_active)
                       <li>
-                        <a onclick="return confirm('Are you sure want to delete? If you do this all of your data will be lost.')" href="{{route('setting.emptyDatabase')}}"><i class="dripicons-stack"></i> {{__('db.Empty Database')}}</a>
+                        <a href="#" onclick="event.preventDefault(); var c = prompt('All business data of every company will be lost. Type DELETE ALL DATA to confirm.'); if (c === 'DELETE ALL DATA') { var f = document.getElementById('empty-database-form'); f.confirmation.value = c; f.submit(); }"><i class="dripicons-stack"></i> {{__('db.Empty Database')}}</a>
+                        <form id="empty-database-form" method="POST" action="{{ route('setting.emptyDatabase') }}" style="display: none;">@csrf<input type="hidden" name="confirmation" value=""></form>
                       </li>
                       @endif
                       <li>

@@ -12,6 +12,7 @@
       <file>tests/Feature/CompanyFoundationTest.php</file>
       <file>tests/Feature/CompanyContextTest.php</file>
       <file>tests/Feature/CompanyWriterTest.php</file>
+      <file>tests/Feature/DestructiveRoutesTest.php</file>
       <file>tests/Feature/CompanyAccountingWebTest.php</file>
       <file>tests/Feature/ConsoleSafetyTest.php</file>
       <file>tests/Feature/CapabilityEngineTest.php</file>
