@@ -91,6 +91,7 @@ These read routes require migration/backfill and authorized memberships. Transac
 |---|---|---|
 | `phpunit.company.xml` in CI on MySQL 8.4 | 102 tests, 459 assertions | Full source migrations/recovery, backfill, commercial services, context/setup, ten bounded HTTP readers and reset safety |
 | Targeted company context + ERP regression suites on local MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
+| `phpunit.company.xml` on local SQLite, `feature/phase-4b-legacy-shadow` | 197 tests, 1,139 assertions, 6 MySQL-only skipped | Phase 2/3 + 4a merge, stock ledger, ledger-backed ERP services and legacy writer shadow recording |
 | `phpunit.legacy-mysql.xml` | 16 tests, 54 assertions | Original seeded accounting services/pages, POS/dashboard, API auth/catalog/accounting |
 | Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
@@ -118,7 +119,7 @@ Full F-02/F-03/F-04/F-05 acceptance remains open. F-11 local/CI fixture proof is
 
 ## Phase 4a: stock movement ledger and generic services
 
-Built on branch `feature/phase-4-stock-ledger` and merged with the Phase 2/3 package on `feature/phase-2-3-capabilities-numbering`. It is not activated in production. Legacy web controllers (4b) and the remaining writers (4c) still mutate quantities directly.
+Built on branch `feature/phase-4-stock-ledger` and merged with the Phase 2/3 package on `feature/phase-2-3-capabilities-numbering`. It is not activated in production. Legacy web controllers and the remaining writers still mutate quantities directly; their changes are recorded as shadow movements (see 4b/4c below).
 
 Schema (`2026_10_04_000001_create_stock_ledger_tables`):
 
@@ -157,7 +158,7 @@ Proof: 21 new tests; 20 run on local SQLite fixtures. They cover:
 - immutability, availability and company checks;
 - the opening and reconcile commands, and the converted services.
 
-The full `phpunit.company.xml` suite gives 123 tests and 603 assertions, with 4 MySQL-only tests skipped locally. `StockLedgerConcurrencyTest` has four barrier-synchronized processes compete for the last unit while holding a row lock, and asserts that exactly one succeeds. That test and the MySQL migration chain run only in CI and are not yet verified there.
+On the 4a branch alone, the full `phpunit.company.xml` suite gave 123 tests and 603 assertions, with 4 MySQL-only tests skipped locally. After the Phase 2/3 merge (`868ad0b`) it gives 184 tests and 1,046 assertions, with 6 skipped. `StockLedgerConcurrencyTest` has four barrier-synchronized processes compete for the last unit while holding a row lock, and asserts that exactly one succeeds. That test and the MySQL migration chain run only in CI and are not yet verified there.
 
 Merged state with Phase 2/3:
 
@@ -166,7 +167,49 @@ Merged state with Phase 2/3:
 - The guard no longer rejects `imei_number`; serial counts and locations are validated by the ledger.
 - `ErpServiceRegressionTest` and `ErpServiceStockLedgerTest` share `CompanyErpServiceTestCase` (company A/MAIN fixtures and mapped accounts).
 
-Next: 4b shadow recording in Sale/Purchase/Return/ReturnPurchase controllers, then a per-method authoritative cutover after clean UAT reconciliation. After that, 4c covers the remaining writers.
+## Phase 4b/4c: legacy writer shadow recording
+
+Branch `feature/phase-4b-legacy-shadow`. Shadow mode is in place for every audited legacy stock writer. Authoritative cutover has not started. The writer inventory, known gaps and route list are in [the legacy stock shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md).
+
+`App\Services\Inventory\LegacyStockShadow` runs each legacy writer unchanged inside one database transaction:
+
+- Eloquent `created`, `updated` and `deleted` events on `product_warehouse` capture quantity and `imei_number` serial changes. Each change is keyed by product, warehouse, variant and batch. Partial models such as `select('id', 'qty')` reload their keys by ID.
+- Each change is tagged with its transaction level. A rolled-back transaction or savepoint discards its changes; a committed savepoint hands them to its parent.
+- On success the net change becomes one movement with `projection_mode = shadow`. It is a receipt if every change is inbound (valued at `products.cost`, which legacy purchases maintain), an issue if every change is outbound, and otherwise a signed adjustment. The source is `legacy:{route name}`, with the first created document of the writer's class or the route's document ID.
+- Shadow movements never change projections. Expiry and identity rules only add warnings, so the legacy result stays authoritative. A shadow record that fails is logged and never blocks the legacy write.
+- A thrown exception, or a response carrying a rendered exception, rolls back all of the writer's changes. This closes the partial-write gap (D5) for these routes. A writer that leaves a transaction open is rolled back, as it would be at request end. Any other response commits, preserving legacy partial-success behaviour.
+- `InventoryMovementService` pauses capture while it updates projections itself, so applied postings inside a wrapped request are not counted twice. Reversing a shadow movement does not touch projections.
+
+Coverage: `LegacyStockShadow::WRITERS` lists 39 routed controller methods across Sale, Purchase, Return, ReturnPurchase, Adjustment, Transfer (including `changeStatus`), PackingSlip, Product, DamageStock, Exchange, CafeOperations and Manufacturing Production. `AppServiceProvider` attaches the `legacy.stock` middleware to them centrally, including cached and module routes; GET/HEAD requests pass through. The scheduled `purchase:auto` command wraps itself. A test fails if any listed method is unwrapped.
+
+Related changes:
+
+- Applied serial postings now keep the legacy `product_warehouse.imei_number` list current.
+- `ProductController::updateProduct` deletes variant stock rows one by one so the deletes are captured.
+- `AutoPurchase` now saves the warehouse row it creates. Previously it raised `products.qty` by 10 with no warehouse row on every five-minute run when the row was missing.
+- Set `INVENTORY_LEGACY_LEDGER_MODE=off` to stop recording in an emergency; the ledger then drifts.
+
+Known gaps that reconciliation will report are audit items 3–13: writers that change `products`, variant or batch quantities without a warehouse row. Examples are missing-row guards without an `else`, cafe raw-material consumption, adjustment-update reverts and the batch sign bug in sale deletes. These are fixed at each writer's cutover, not in shadow mode.
+
+Proof: `LegacyStockShadowTest` contains 13 tests with 93 assertions. They cover:
+
+- capture of saves, increments, creates and deletes;
+- savepoint rollback, thrown and rendered failures, and leaked transactions;
+- no double counting of applied postings, signed adjustments, partial models and price-only saves;
+- serial identities and the serial projection;
+- logged failures, off mode, shadow reversal, middleware attribution and route coverage.
+
+The full local SQLite `phpunit.company.xml` gives 197 tests and 1,139 assertions, with 6 skipped. Real legacy controller flows, MySQL concurrency and the seeded suite have not run yet; they need the disposable MySQL rehearsal.
+
+Cutover gate, per writer method, in this order:
+
+1. Run `erp:stock-opening` after backfill, with writers paused.
+2. Run `erp:stock-reconcile` daily in UAT until the method's documents show zero unexplained differences.
+3. In one commit per method, replace the direct writes with `InventoryMovementService` calls and remove the method from `WRITERS`.
+
+The phase is complete when the §0.5 regeneration grep finds only `InventoryMovementService` projection writes.
+
+Security finding from the audit, unchanged: `GET /update-coupon` (`CouponController::updateCoupon`) truncates every table and recursively deletes a request-supplied path, with no permission check or CSRF protection. `GET /setting/empty-database` is gated only by an environment flag. Both need an owner decision.
 
 ## UI modernization direction
 
