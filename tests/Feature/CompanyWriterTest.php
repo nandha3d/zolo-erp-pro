@@ -193,7 +193,9 @@ class CompanyWriterTest extends CompanyContextTestCase
     {
         DB::table('product_warehouse')->where('warehouse_id', 1)->update(['company_id' => $this->other->id]);
         $before = $this->snapshot();
-        $this->postJson('/api/v1/sales', $this->payload('sales'))->assertUnprocessable();
+        // The inventory ledger rejects foreign projection rows as a stock policy failure.
+        $this->postJson('/api/v1/sales', $this->payload('sales'))->assertStatus(400)
+            ->assertJsonFragment(['message' => 'Stock ownership or identity of product 1 in warehouse 1 requires reconciliation.']);
         $this->assertSame($before, $this->snapshot());
         DB::table('product_warehouse')->where('warehouse_id', 1)->update(['company_id' => $this->company->id]);
         $data = $this->payload('sales');

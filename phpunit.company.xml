@@ -2,6 +2,10 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.2/phpunit.xsd" bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
   <testsuites>
     <testsuite name="Company foundation">
+      <file>tests/Feature/InventoryMovementServiceTest.php</file>
+      <file>tests/Feature/StockLedgerCommandsTest.php</file>
+      <file>tests/Feature/StockLedgerConcurrencyTest.php</file>
+      <file>tests/Feature/ErpServiceStockLedgerTest.php</file>
       <file>tests/Feature/MysqlCompanyMigrationTest.php</file>
       <file>tests/Feature/ErpServiceRegressionTest.php</file>
       <file>tests/Feature/CompanyFoundationTest.php</file>

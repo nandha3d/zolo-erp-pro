@@ -116,6 +116,58 @@ Remaining gates:
 
 Full F-02/F-03/F-04/F-05 acceptance remains open. F-11 local/CI fixture proof is delivered; production-scale retained-data acceptance is pending.
 
+## Phase 4a: stock movement ledger and generic services
+
+Built on branch `feature/phase-4-stock-ledger` and merged with the Phase 2/3 package on `feature/phase-2-3-capabilities-numbering`. It is not activated in production. Legacy web controllers (4b) and the remaining writers (4c) still mutate quantities directly.
+
+Schema (`2026_10_04_000001_create_stock_ledger_tables`):
+
+- `stock_movements` and signed `stock_movement_lines`: quantities are base-unit `decimal(18,4)`. Each line persists its unit cost and value. Every movement has a company, source reference, unique idempotency key, and either a reversal link or a reversal.
+- `stock_identities` holds serials and dimensioned pieces, with a single warehouse and status. `stock_dimensions` holds piece sizes and computed volume. The plan's `stock_serials` concept is implemented as identities of type `serial`.
+- `product_uom_conversions` adds normalized per-product factors. `product_batches` gains `company_id`, `mfg_date`, `mrp` and `status` instead of a parallel batch table.
+- Model guards make posted movements and lines immutable. Changes are made by posting reversals.
+
+`App\Services\Inventory\InventoryMovementService` provides `receive`, `issue`, `transfer`, `adjust`, `opening` and `reverse`. Each call is one transaction:
+
+- It locks the affected products in ID order, then the warehouse rows.
+- It enforces negative-stock and expired-batch policy, plus the serial, piece, batch and variant rules.
+- It converts units, posts weighted-average cost, and updates `products`, `product_warehouse`, `product_variants` and `product_batches` quantities.
+
+Other components:
+
+- `InventoryPolicy` reads `companies.settings_json.inventory`: `negative_stock` allow/warn/block, `expired_batch` allow/warn/block, and `valuation` weighted_average/standard. When the company sets no `negative_stock` policy, `without_stock=yes` means allow and anything else means block. Warnings are stored on the movement.
+- `UomConversionService` uses product conversions first and falls back to the legacy `units` operator/value.
+- `InventoryAvailabilityService` reports on-hand from projections, the ledger balance, and stock reserved by Pending/Processing sales.
+- `InventoryReconciliationService` and `erp:stock-reconcile {--company} {--rebuild} {--force}` compare the ledger with all four projections. A rebuild changes only products that have ledger history.
+- `erp:stock-opening {--date} {--dry-run}` records each nonzero `product_warehouse` row once (key `opening:pw:{id}`) without changing projections. It imports the IMEI list as serials only when the list accounts for every unit. Run it with stock writers paused, after the company backfill and before converted services write.
+
+`SaleService`, `PurchaseService` and `InventoryService` now post through the ledger, using source keys `sale:{id}`, `purchase:{id}` and `transfer:{id}`. Behaviour changes for API callers:
+
+- Overselling is blocked by default.
+- Serial, batch and variant products must identify the stock they move.
+- An explicit `sale_unit_id` or `purchase_unit_id` is converted to the base unit.
+- Sale COGS uses the cost posted on the issue movement, not the current `products.cost`.
+- Purchases still overwrite `products.cost` with the last unit cost (legacy behaviour retained).
+
+Proof: 21 new tests; 20 run on local SQLite fixtures. They cover:
+
+- receipt→issue reconciliation at weighted-average cost, and transfer netting;
+- serial single-location rules, expired-batch block/warn, and negative-stock block/allow/warn atomicity;
+- reversal history, idempotent replay, unit conversion (BOX/CASE/125.375 MTR), variants and dimensioned pieces;
+- immutability, availability and company checks;
+- the opening and reconcile commands, and the converted services.
+
+The full `phpunit.company.xml` suite gives 123 tests and 603 assertions, with 4 MySQL-only tests skipped locally. `StockLedgerConcurrencyTest` has four barrier-synchronized processes compete for the last unit while holding a row lock, and asserts that exactly one succeeds. That test and the MySQL migration chain run only in CI and are not yet verified there.
+
+Merged state with Phase 2/3:
+
+- The three ERP services keep `CompanyWriteGuard` validation and Phase 3 numbering, then post stock with their authorized `CompanyContext` and business date. Movements carry company, branch and FY; the internal movement reference is `SM-{id}`.
+- `CompanyWriteGuard::stock` and its direct quantity writes are removed. Its rejection of duplicate or other-company `product_warehouse` rows now lives in the movement service and fails as a stock policy error (HTTP 400 through the API, like a shortage).
+- The guard no longer rejects `imei_number`; serial counts and locations are validated by the ledger.
+- `ErpServiceRegressionTest` and `ErpServiceStockLedgerTest` share `CompanyErpServiceTestCase` (company A/MAIN fixtures and mapped accounts).
+
+Next: 4b shadow recording in Sale/Purchase/Return/ReturnPurchase controllers, then a per-method authoritative cutover after clean UAT reconciliation. After that, 4c covers the remaining writers.
+
 ## UI modernization direction
 
 Docs [31](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [32](32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md) and [33](33_COMMON_UI_COMPONENT_LIBRARY.md) are specifications, not claims that their components/screens exist.

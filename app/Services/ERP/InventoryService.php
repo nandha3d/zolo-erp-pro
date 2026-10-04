@@ -10,6 +10,9 @@ use App\Models\ProductAdjustment;
 use App\Models\Transfer;
 use App\Models\ProductTransfer;
 use App\Services\Accounting\AccountingService;
+use App\Services\Inventory\InventoryMovementService;
+use App\Services\Inventory\StockLine;
+use App\Services\Inventory\StockMovementCommand;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use App\Services\Platform\CompanyContext;
@@ -169,22 +172,24 @@ class InventoryService
                     'tax' => 0,
                     'total' => $qty * (float) $item['net_unit_cost'],
                 ])->save();
+            }
 
-                if (($data['status'] ?? 1) == 1) {
-                    // Decrement from source
-                    $sourcePw = $guard->stock($item, $fromId, $context);
-                    if (!$sourcePw->exists || (float) $sourcePw->qty < $qty) {
-                        throw new InvalidArgumentException('Insufficient source stock.');
-                    }
-                    if ($sourcePw) {
-                        $sourcePw->decrement('qty', $qty);
-                    }
-
-                    // Increment at destination
-                    $destPw = $guard->stock($item, $toId, $context);
-                    $destPw->qty = (float)$destPw->qty + $qty;
-                    $destPw->save();
-                }
+            // A completed transfer moves stock out of the source and into the destination at unchanged cost.
+            if (($data['status'] ?? 1) == 1) {
+                app(InventoryMovementService::class)->transfer(new StockMovementCommand(
+                    date: $date,
+                    lines: array_map(fn ($item) => StockLine::fromArray(
+                        ['uom_id' => $item['purchase_unit_id'] ?? null, 'unit_cost' => null] + $item,
+                    ), $data['items']),
+                    warehouseId: $fromId,
+                    toWarehouseId: $toId,
+                    sourceType: 'transfer',
+                    sourceId: $transfer->id,
+                    sourceNo: $referenceNo,
+                    idempotencyKey: 'transfer:'.$transfer->id,
+                    userId: $userId,
+                    context: $context,
+                ));
             }
 
             return $transfer->load(['fromWarehouse', 'toWarehouse', 'productTransfers']);

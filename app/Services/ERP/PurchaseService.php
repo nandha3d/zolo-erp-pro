@@ -11,6 +11,9 @@ use App\Models\Product;
 use App\Models\Product_Warehouse;
 use App\Models\Payment;
 use App\Services\Accounting\AccountingService;
+use App\Services\Inventory\InventoryMovementService;
+use App\Services\Inventory\StockLine;
+use App\Services\Inventory\StockMovementCommand;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
@@ -161,16 +164,29 @@ class PurchaseService
                     'total' => (float) ($item['total'] ?? ($qty * $unitCost)),
                 ])->save();
 
-                // Receive only the validated physical quantity, including partial receipts.
-                $product = Product::forCompany($context)->findOrFail($productId);
                 if ($item['received_qty'] > 0) {
-                    $product->increment('qty', $item['received_qty']);
-                    $product->update(['cost' => $unitCost]);
-
-                    $pw = $guard->stock($item, (int) $data['warehouse_id'], $context);
-                    $pw->qty = (float)$pw->qty + $item['received_qty'];
-                    $pw->save();
+                    Product::forCompany($context)->findOrFail($productId)->update(['cost' => $unitCost]);
                 }
+            }
+
+            // Receive only the validated physical quantity, including partial receipts, through the ledger.
+            $received = array_values(array_filter($data['items'], fn ($item) => $item['received_qty'] > 0));
+            if ($received !== []) {
+                app(InventoryMovementService::class)->receive(new StockMovementCommand(
+                    date: $date,
+                    lines: array_map(fn ($item) => StockLine::fromArray([
+                        'qty' => $item['received_qty'],
+                        'unit_cost' => $item['net_unit_cost'],
+                        'uom_id' => $item['purchase_unit_id'] ?? null,
+                    ] + $item), $received),
+                    warehouseId: (int) $data['warehouse_id'],
+                    sourceType: 'purchase',
+                    sourceId: $purchase->id,
+                    sourceNo: $referenceNo,
+                    idempotencyKey: 'purchase:'.$purchase->id,
+                    userId: $userId,
+                    context: $context,
+                ));
             }
 
             // Record payment if paid amount > 0

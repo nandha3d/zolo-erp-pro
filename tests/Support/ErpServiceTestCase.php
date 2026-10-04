@@ -16,6 +16,7 @@ use Tests\TestCase;
 abstract class ErpServiceTestCase extends TestCase
 {
     use UsesDisposableMysql;
+    use CreatesInventoryLedgerFixtures;
 
     protected function setUp(): void
     {
@@ -132,6 +133,7 @@ abstract class ErpServiceTestCase extends TestCase
         });
 
         (require database_path('migrations/2026_09_19_000001_create_double_entry_accounting_tables.php'))->up();
+        $this->createInventoryLedgerFixtures();
     }
 
     protected function stock(float $qty = 20, float $cost = 5): Product

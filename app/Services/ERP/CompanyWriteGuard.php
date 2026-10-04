@@ -4,7 +4,6 @@ namespace App\Services\ERP;
 
 use App\Models\Company;
 use App\Models\Product;
-use App\Models\Product_Warehouse;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use App\Services\Platform\CompanyContext;
@@ -70,30 +69,8 @@ class CompanyWriteGuard
                 throw ValidationException::withMessages(['items.'.$field => 'The reference must belong to the selected product.']);
             }
         }
-        if (!empty($line['imei_number'])) {
-            throw ValidationException::withMessages(['items.imei_number' => 'Serial inventory requires the reviewed inventory-ledger path.']);
-        }
+        // Serials, batches and projection ownership are validated by InventoryMovementService.
         return $product;
-    }
-
-    /** Reject corrupt ownership and ambiguous stock identity before creating or changing stock. */
-    public function stock(array $line, int $warehouseId, CompanyContext $context): Product_Warehouse
-    {
-        $identity = ['product_id' => $line['product_id'], 'warehouse_id' => $warehouseId];
-        $query = Product_Warehouse::where($identity);
-        foreach (['product_batch_id', 'variant_id'] as $field) {
-            $identity[$field] = $line[$field] ?? null;
-            if ($identity[$field] === null) {
-                $query->where(fn ($q) => $q->whereNull($field)->orWhere($field, 0));
-            } else {
-                $query->where($field, $identity[$field]);
-            }
-        }
-        $rows = $query->lockForUpdate()->get();
-        if ($rows->count() > 1 || ($rows->isNotEmpty() && (int) $rows->first()->company_id !== $context->companyId)) {
-            throw ValidationException::withMessages(['items.product_id' => 'Stock ownership or identity requires reconciliation.']);
-        }
-        return $rows->first() ?? (new Product_Warehouse)->forceFill($identity + ['company_id' => $context->companyId, 'qty' => 0]);
     }
 
     public function businessDate(array $data): ?string
