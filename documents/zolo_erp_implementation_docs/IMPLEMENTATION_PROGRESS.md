@@ -91,7 +91,7 @@ These read routes require migration/backfill and authorized memberships. Transac
 |---|---|---|
 | `phpunit.company.xml` in CI on MySQL 8.4 | 102 tests, 459 assertions | Full source migrations/recovery, backfill, commercial services, context/setup, ten bounded HTTP readers and reset safety |
 | Targeted company context + ERP regression suites on local MySQL 8.4 | 75 tests, 335 assertions | Current context/setup, catalog and sales/purchase HTTP isolation, commercial services and preserved receipt/accounting behavior |
-| `phpunit.company.xml` on local SQLite, `feature/phase-4b-legacy-shadow` | 197 tests, 1,139 assertions, 6 MySQL-only skipped | Phase 2/3 + 4a merge, stock ledger, ledger-backed ERP services and legacy writer shadow recording |
+| `phpunit.company.xml` on local SQLite, `feature/phase-4b-legacy-shadow` | 197 tests, 1,140 assertions, 6 MySQL-only skipped | Phase 2/3 + 4a merge, stock ledger, ledger-backed ERP services and legacy writer shadow recording |
 | `phpunit.legacy-mysql.xml` | 16 tests, 54 assertions | Original seeded accounting services/pages, POS/dashboard, API auth/catalog/accounting |
 | Headless Chrome setup form checks | Passed | Rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
@@ -177,7 +177,10 @@ Branch `feature/phase-4b-legacy-shadow`. Shadow mode is in place for every audit
 - Each change is tagged with its transaction level. A rolled-back transaction or savepoint discards its changes; a committed savepoint hands them to its parent.
 - On success the net change becomes one movement with `projection_mode = shadow`. It is a receipt if every change is inbound (valued at `products.cost`, which legacy purchases maintain), an issue if every change is outbound, and otherwise a signed adjustment. The source is `legacy:{route name}`, with the first created document of the writer's class or the route's document ID.
 - Shadow movements never change projections. Expiry and identity rules only add warnings, so the legacy result stays authoritative. A shadow record that fails is logged and never blocks the legacy write.
-- A thrown exception, or a response carrying a rendered exception, rolls back all of the writer's changes. This closes the partial-write gap (D5) for these routes. A writer that leaves a transaction open is rolled back, as it would be at request end. Any other response commits, preserving legacy partial-success behaviour.
+- A thrown exception, or a response carrying a rendered exception, rolls back all of the writer's changes. This closes the partial-write gap (D5) for these routes.
+- **Behaviour change on errors:** previously, a writer that failed mid-request kept whatever its inner transactions had already committed. For example, `sales.store` without `paid_by_id` returns HTTP 500 but leaves the sale row and its stock decrement. In shadow mode the whole request rolls back.
+- A writer that leaves a transaction open loses only the work after the unclosed `BEGIN`, as at disconnect. Everything before it is recorded and committed. `SaleController::store` hits this on every completed non-AJAX sale, because `genInvoice` begins a transaction it never commits.
+- Any other response commits, preserving legacy partial-success behaviour.
 - `InventoryMovementService` pauses capture while it updates projections itself, so applied postings inside a wrapped request are not counted twice. Reversing a shadow movement does not touch projections.
 
 Coverage: `LegacyStockShadow::WRITERS` lists 39 routed controller methods across Sale, Purchase, Return, ReturnPurchase, Adjustment, Transfer (including `changeStatus`), PackingSlip, Product, DamageStock, Exchange, CafeOperations and Manufacturing Production. `AppServiceProvider` attaches the `legacy.stock` middleware to them centrally, including cached and module routes; GET/HEAD requests pass through. The scheduled `purchase:auto` command wraps itself. A test fails if any listed method is unwrapped.
@@ -191,7 +194,7 @@ Related changes:
 
 Known gaps that reconciliation will report are audit items 3–13: writers that change `products`, variant or batch quantities without a warehouse row. Examples are missing-row guards without an `else`, cafe raw-material consumption, adjustment-update reverts and the batch sign bug in sale deletes. These are fixed at each writer's cutover, not in shadow mode.
 
-Proof: `LegacyStockShadowTest` contains 13 tests with 93 assertions. They cover:
+Proof: `LegacyStockShadowTest` contains 13 tests with 94 assertions. They cover:
 
 - capture of saves, increments, creates and deletes;
 - savepoint rollback, thrown and rendered failures, and leaked transactions;
@@ -199,7 +202,7 @@ Proof: `LegacyStockShadowTest` contains 13 tests with 93 assertions. They cover:
 - serial identities and the serial projection;
 - logged failures, off mode, shadow reversal, middleware attribution and route coverage.
 
-The full local SQLite `phpunit.company.xml` gives 197 tests and 1,139 assertions, with 6 skipped. Real legacy controller flows, MySQL concurrency and the seeded suite have not run yet; they need the disposable MySQL rehearsal.
+The full local SQLite `phpunit.company.xml` gives 197 tests and 1,140 assertions, with 6 skipped. Real legacy controller flows, MySQL concurrency and the seeded suite have not run yet; they need the disposable MySQL rehearsal.
 
 Cutover gate, per writer method, in this order:
 

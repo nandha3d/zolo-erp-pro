@@ -80,13 +80,15 @@ class LegacyStockShadow
         try {
             $result = $writer();
             $after = $connection->transactionLevel();
+            if ($after > $level + 1) {
+                // Without this wrapper a leaked transaction is discarded at disconnect, but work committed before it
+                // persists (e.g. SaleController::genInvoice begins and never commits). Drop only the leaked levels.
+                Log::warning('Legacy stock writer left a transaction open; changes after it were rolled back.', ['source' => $source]);
+                $connection->rollBack($level + 1);
+            }
             if (is_object($result) && ($result->exception ?? null) !== null) {
                 $connection->rollBack($level);
-            } elseif ($after > $level + 1) {
-                // The writer left a transaction open; without this wrapper it would be discarded at request end.
-                Log::warning('Legacy stock writer left a transaction open; its changes were rolled back.', ['source' => $source]);
-                $connection->rollBack($level);
-            } elseif ($after === $level + 1) {
+            } elseif ($connection->transactionLevel() === $level + 1) {
                 $this->flush();
                 $connection->commit();
             } else {

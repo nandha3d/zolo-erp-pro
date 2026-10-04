@@ -113,18 +113,23 @@ class LegacyStockShadowTest extends InventoryLedgerTestCase
         $this->assertEquals(10, $product->fresh()->qty);
     }
 
-    public function test_writer_leaving_a_transaction_open_is_rolled_back_like_a_request_end(): void
+    public function test_leaked_transaction_loses_only_work_after_it_like_a_request_end(): void
     {
         $product = $this->stocked(10);
 
+        // SaleController::store commits the sale, then genInvoice begins a transaction it never commits.
         $this->shadow()->record('sales.store', function () use ($product) {
+            DB::beginTransaction();
+            $this->legacyChange($product, -2);
+            DB::commit();
             DB::beginTransaction();
             $this->legacyChange($product, -4);
         });
 
         $this->assertSame(0, DB::transactionLevel());
-        $this->assertEquals(10, $this->warehouseQty($product));
-        $this->assertSame(0, StockMovement::where('projection_mode', 'shadow')->count());
+        $this->assertEquals(8, $this->warehouseQty($product));
+        $this->assertEquals(-2, StockMovement::where('projection_mode', 'shadow')->sole()->lines->sole()->qty_base);
+        $this->assertReconciled();
     }
 
     public function test_movement_service_postings_inside_a_scope_are_not_recorded_twice(): void
