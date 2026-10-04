@@ -6,6 +6,7 @@
       <file>tests/Feature/AccountingWebTest.php</file>
       <file>tests/Feature/ApiV1Test.php</file>
       <file>tests/Feature/UserTest.php</file>
+      <file>tests/Feature/LegacyStockShadowWebTest.php</file>
     </testsuite>
   </testsuites>
   <php>
