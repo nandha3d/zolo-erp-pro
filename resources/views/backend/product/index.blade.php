@@ -257,7 +257,7 @@
     $("ul#product").addClass("show");
     $("ul#product #product-list-menu").addClass("active");
 
-    @if(config('database.connections.saleprosaas_landlord'))
+    @if(config('database.connections.zoloerp_landlord'))
         if(localStorage.getItem("message")) {
             alert(localStorage.getItem("message"));
             localStorage.removeItem("message");

@@ -137,7 +137,7 @@ class CategoryController extends Controller
         if ($image) {
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/category'), $imageName);
             }
@@ -162,7 +162,7 @@ class CategoryController extends Controller
             }
             $ext = pathinfo($icon->getClientOriginalName(), PATHINFO_EXTENSION);
             $iconName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $iconName = $iconName . '.' . $ext;
                 $icon->move(public_path('images/category/icons/'), $iconName);
             }
@@ -231,7 +231,7 @@ class CategoryController extends Controller
 
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/category'), $imageName);
             }
@@ -260,7 +260,7 @@ class CategoryController extends Controller
 
             $ext = pathinfo($icon->getClientOriginalName(), PATHINFO_EXTENSION);
             $iconName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $iconName = $iconName . '.' . $ext;
                 $icon->move(public_path('images/category/icons/'), $iconName);
             }

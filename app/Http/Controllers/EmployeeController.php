@@ -139,7 +139,7 @@ class EmployeeController extends Controller
         if ($image) {
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/employee'), $imageName);
             }
@@ -222,7 +222,7 @@ class EmployeeController extends Controller
             $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/employee'), $imageName);
             }

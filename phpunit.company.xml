@@ -14,7 +14,7 @@
       <file>tests/Feature/CompanyWriterTest.php</file>
       <file>tests/Feature/DestructiveRoutesTest.php</file>
       <file>tests/Feature/CompanyAccountingWebTest.php</file>
-      <file>tests/Feature/ConsoleSafetyTest.php</file>
+      <file>tests/Feature/CommandSafetyTest.php</file>
       <file>tests/Feature/CapabilityEngineTest.php</file>
       <file>tests/Feature/DocumentNumberServiceTest.php</file>
       <file>tests/Feature/PlatformMigrationTest.php</file>

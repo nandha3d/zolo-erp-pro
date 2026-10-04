@@ -167,7 +167,7 @@
       style: 'btn-link',
     });
 
-    @if(config('database.connections.saleprosaas_landlord'))
+    @if(config('database.connections.zoloerp_landlord'))
         numberOfUserAccount = <?php echo json_encode($numberOfUserAccount)?>;
         $.ajax({
             type: 'GET',

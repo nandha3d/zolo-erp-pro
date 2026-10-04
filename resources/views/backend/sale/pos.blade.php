@@ -2199,8 +2199,8 @@
         }
     });
 
-    ////Start the code is for SaleproSaas///
-    @if(config('database.connections.saleprosaas_landlord'))
+    ////Start the code is for ZoloErpSaas///
+    @if(config('database.connections.zoloerp_landlord'))
         numberOfInvoice = <?php echo json_encode($numberOfInvoice)?>;
         $.ajax({
             type: 'GET',
@@ -2213,7 +2213,7 @@
             }
         });
     @endif
-    ////End the code is for SaleproSaas///
+    ////End the code is for ZoloErpSaas///
 
     ///NOT NEEDED - Check///
     $("ul#sale").siblings('a').attr('aria-expanded','true');

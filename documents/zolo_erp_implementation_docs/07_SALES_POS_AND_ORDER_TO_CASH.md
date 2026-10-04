@@ -1,7 +1,7 @@
 # 07 - Sales, POS and Order-to-Cash
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -11,7 +11,7 @@
 
 ## Purpose
 
-Use one sales engine for standard invoice entry, SalePro POS, fast wholesale billing, route sales and project-linked solar billing.
+Use one sales engine for standard invoice entry, zoloERP Pro POS, fast wholesale billing, route sales and project-linked solar billing.
 
 ## Target rules
 

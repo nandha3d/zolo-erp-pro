@@ -9,7 +9,7 @@
     <div class="container-fluid">
         <button class="btn btn-info" data-toggle="modal" data-target="#createModal"><i class="dripicons-plus"></i> {{__('db.Add Currency')}} </button>&nbsp;
     </div>
-    <div class="table-responsive">
+    <div class="table-responsive zolo-table-responsive" style="min-height: 280px; position: relative;">
         <table id="currency-table" class="table">
             <thead>
                 <tr>
@@ -30,23 +30,24 @@
                     <td>{{ $currency_data->symbol }}</td>
                     <td>{{ $currency_data->exchange_rate }}</td>
                     <td>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__('db.action')}}
-                                <span class="caret"></span>
-                                <span class="sr-only">Toggle Dropdown</span>
-                            </button>
-                            <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
-                                <li><button type="button" data-id="{{$currency_data->id}}" data-name="{{$currency_data->name}}" data-code="{{$currency_data->code}}" data-exchange_rate="{{$currency_data->exchange_rate}}" class="edit-btn btn btn-link" data-toggle="modal" data-target="#editModal"><i class="dripicons-document-edit"></i> {{__('db.edit')}}</button></li>
-                                @if($currency_data->exchange_rate != 1)
-                                <li class="divider"></li>
-                                {{ Form::open(['route' => ['currency.destroy', $currency_data->id], 'method' => 'DELETE'] ) }}
-                                <li>
-                                    <button type="submit" class="btn btn-link" onclick="return confirm('Are you sure want to delete?')"><i class="dripicons-trash"></i> {{__('db.delete')}}</button>
-                                </li>
-                                {{ Form::close() }}
-                                @endif
-                            </ul>
-                        </div>
+                        <x-ui.action-dropdown>
+                            <x-ui.action-item type="modal" 
+                                              target="#editModal" 
+                                              icon="dripicons-document-edit" 
+                                              :label="__('db.edit')" 
+                                              class="edit-btn" 
+                                              data-id="{{$currency_data->id}}" 
+                                              data-name="{{$currency_data->name}}" 
+                                              data-code="{{$currency_data->code}}" 
+                                              data-exchange_rate="{{$currency_data->exchange_rate}}" />
+                            @if($currency_data->exchange_rate != 1)
+                                <x-ui.action-item type="divider" />
+                                <x-ui.action-item type="delete" 
+                                                  :action="route('currency.destroy', $currency_data->id)" 
+                                                  :confirm="__('Are you sure want to delete?')" 
+                                                  :label="__('db.delete')" />
+                            @endif
+                        </x-ui.action-dropdown>
                     </td>
                 </tr>
                 @endforeach

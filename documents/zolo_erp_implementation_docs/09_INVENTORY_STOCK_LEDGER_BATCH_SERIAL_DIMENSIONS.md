@@ -1,7 +1,7 @@
 # 09 - Inventory, Stock Ledger, Batch, Serial and Dimensions
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -68,7 +68,7 @@ reverse(movement, reason)
 1. Create movement/identity tables and indexes.
 2. Implement projection updates in the same transaction as movement posting.
 3. Adapt SaleService, PurchaseService and InventoryService first.
-4. Adapt legacy SalePro controllers next.
+4. Adapt legacy zoloERP Pro controllers next.
 5. Adapt Manufacturing and vertical controllers last.
 6. Add reconciliation/rebuild commands.
 

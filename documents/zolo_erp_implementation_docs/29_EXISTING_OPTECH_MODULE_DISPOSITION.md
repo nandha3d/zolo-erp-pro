@@ -1,7 +1,7 @@
 # 29 - Existing Optech Module Disposition
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -24,7 +24,7 @@ Prevent the generated Optech module scaffolds from becoming duplicated ERP cores
 | Existing module | Disposition |
 |---|---|
 | `OptechCompany` | Do not build a textile company system; retire or repurpose only as generic platform context |
-| `OptechMaster` | Do not duplicate SalePro products/parties; retire scaffold |
+| `OptechMaster` | Do not duplicate zoloERP Pro products/parties; retire scaffold |
 | `OptechSpeedBilling` | May become FastSales UI; must call shared SaleApplicationService |
 | `OptechJobWork` | Repurpose as generic Subcontracting/Job Work |
 | `OptechAccounting` | Do not create second ledger; retire or make thin UI over core accounting |

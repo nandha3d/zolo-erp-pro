@@ -1,7 +1,7 @@
 # 20 - UI/UX, Navigation, Keyboard and Setup
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03

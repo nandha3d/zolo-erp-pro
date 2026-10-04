@@ -25,7 +25,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Super-admin & role-based permission resolution for SalePro
+        // Super-admin & role-based permission resolution for zoloERP Pro
         Gate::before(function ($user, $ability) {
             if ($user->role_id == 1) {
                 return true;

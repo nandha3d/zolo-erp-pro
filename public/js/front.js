@@ -1,6 +1,8 @@
 /*global $, document, Chart, LINECHART, data, options, window*/
 $(document).ready(function () {
-    $('nav.side-navbar').addClass('shrink');
+    if ($(window).outerWidth() <= 1199) {
+        $('nav.side-navbar').addClass('shrink');
+    }
 
     'use strict';
 
@@ -40,8 +42,13 @@ $(document).ready(function () {
         });
     }
 
-    //Custom select
-    $('select').selectpicker();
+    //Custom select - Universal anti-clipping container
+    if ($.fn.selectpicker) {
+        $.fn.selectpicker.Constructor.DEFAULTS.container = 'body';
+        $('select').selectpicker({
+            container: 'body'
+        });
+    }
 
     $('[data-toggle="tooltip"]').tooltip();
 

@@ -1,7 +1,7 @@
 {
-  "name": "SalePro",
-  "short_name": "SalePro",
-  "start_url": "/salepro/",
+  "name": "zoloERP Pro",
+  "short_name": "zoloERP Pro",
+  "start_url": "/",
   "background_color": "#fff",
   "display": "standalone",
   "orientation": "portrait",

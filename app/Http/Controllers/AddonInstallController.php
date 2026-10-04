@@ -31,7 +31,7 @@ class AddonInstallController extends Controller
     {
         $data = [
             'purchase_code' => $request->purchase_code,
-            'product' => (config('database.connections.saleprosaas_landlord')) ? 'saas_ecom' : 'ecom'
+            'product' => (config('database.connections.zoloerp_landlord')) ? 'saas_ecom' : 'ecom'
         ];
         $path = '/Modules/';
         $module = 'ecommerce';
@@ -42,7 +42,7 @@ class AddonInstallController extends Controller
     {
         $data = [
             'purchase_code' => $request->purchase_code,
-            'product' => (config('database.connections.saleprosaas_landlord')) ? 'saas_wcom' : 'wcom'
+            'product' => (config('database.connections.zoloerp_landlord')) ? 'saas_wcom' : 'wcom'
         ];
         $path = '/Modules/';
         $module = 'woocommerce';
@@ -53,7 +53,7 @@ class AddonInstallController extends Controller
     {
         $data = [
             'purchase_code' => $request->purchase_code,
-            'product' => (config('database.connections.saleprosaas_landlord')) ? 'saas_api' : 'api'
+            'product' => (config('database.connections.zoloerp_landlord')) ? 'saas_api' : 'api'
         ];
         $path = '/app/Http/Controllers/';
         $module = 'api';
@@ -63,7 +63,7 @@ class AddonInstallController extends Controller
     public function addonIstallUnzipMigrateRemoveTempFolder($data, $path, $module)
     {
         $db_str = '';
-        if(!config('database.connections.saleprosaas_landlord')) {
+        if(!config('database.connections.zoloerp_landlord')) {
             $db_str = 'db.';
         }
         if(!env('USER_VERIFIED')) {
@@ -103,7 +103,7 @@ class AddonInstallController extends Controller
                     return redirect('/');
                 }
 
-                if(!config('database.connections.saleprosaas_landlord')) {
+                if(!config('database.connections.zoloerp_landlord')) {
                     if ($module == 'ecommerce' || $module == 'woocommerce') {
                         Artisan::call('module:migrate', ['--force' => true]);
                     }

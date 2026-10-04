@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="all,follow">
     <link rel="manifest" href="{{url('manifest.json')}}">
-    @if(!config('database.connections.saleprosaas_landlord'))
+    @if(!config('database.connections.zoloerp_landlord'))
     <link rel="icon" type="image/png" href="{{url('logo', $general_setting->site_logo)}}" />
     <!-- Bootstrap CSS-->
     <link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
@@ -111,7 +111,7 @@
       </div>
 
       <!-- Quick Demo Access Bar -->
-      @if(!env('USER_VERIFIED') && !config('database.connections.saleprosaas_landlord'))
+      @if(!env('USER_VERIFIED') && !config('database.connections.zoloerp_landlord'))
       <div class="switch-theme" id="switch-theme">
         <div class="d-flex align-items-center justify-content-between flex-wrap">
           <div class="demo-label mb-1 mb-sm-0">
@@ -129,13 +129,13 @@
     </div>
   </body>
 </html>
-@if(!config('database.connections.saleprosaas_landlord'))
+@if(!config('database.connections.zoloerp_landlord'))
 <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.min.js') ?>"></script>
 @else
 <script type="text/javascript" src="<?php echo asset('../../vendor/jquery/jquery.min.js') ?>"></script>
 @endif
 <script>
-    @if(config('database.connections.saleprosaas_landlord'))
+    @if(config('database.connections.zoloerp_landlord'))
         if(localStorage.getItem("message")) {
             alert(localStorage.getItem("message"));
             localStorage.removeItem("message");

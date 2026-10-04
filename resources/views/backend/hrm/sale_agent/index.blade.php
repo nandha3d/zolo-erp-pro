@@ -247,7 +247,7 @@
         $("ul#hrm").addClass("show");
         $("ul#hrm #employee-menu").addClass("active");
 
-        @if (config('database.connections.saleprosaas_landlord'))
+        @if (config('database.connections.zoloerp_landlord'))
             if (localStorage.getItem("message")) {
                 alert(localStorage.getItem("message"));
                 localStorage.removeItem("message");

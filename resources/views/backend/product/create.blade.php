@@ -795,7 +795,7 @@
     $("ul#product").addClass("show");
     $("ul#product #product-create-menu").addClass("active");
 
-    @if(config('database.connections.saleprosaas_landlord'))
+    @if(config('database.connections.zoloerp_landlord'))
         numberOfProduct = <?php echo json_encode($numberOfProduct)?>;
         $.ajax({
             type: 'GET',

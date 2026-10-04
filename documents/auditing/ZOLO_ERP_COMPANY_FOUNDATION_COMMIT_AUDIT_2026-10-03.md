@@ -577,7 +577,7 @@ Before phase completion:
 - run dry-run / real backfill / dry-run
 - run company tests on MySQL
 - run representative legacy data
-- run original SalePro smoke flows
+- run original zoloERP Pro smoke flows
 - measure migration duration/locking
 - prove failure/recovery behavior
 
@@ -594,7 +594,7 @@ status 1 -> received = full qty, stock += full qty
 status != 1 -> received = 0, stock += 0
 ```
 
-The existing SalePro UI defines:
+The existing zoloERP Pro UI defines:
 
 ```text
 1 = Received
@@ -630,7 +630,7 @@ Pending:
   received_qty = 0
 ```
 
-Then explicitly define whether accounting/AP is recognized at PO, GRN, supplier bill or a combined SalePro purchase event.
+Then explicitly define whether accounting/AP is recognized at PO, GRN, supplier bill or a combined zoloERP Pro purchase event.
 
 ---
 

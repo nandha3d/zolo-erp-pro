@@ -8,7 +8,7 @@
 The Optech extensions are scaffolded into 6 targeted modules:
 
 ```
-d:/PROJECTS/WEBSITES/salepro-new/Modules/
+d:/PROJECTS/WEBSITES/zolo-erp-pro/Modules/
 │
 ├── OptechCompany/              # Multi-Company & FY Switching
 │   ├── Config/
@@ -81,7 +81,7 @@ npm run dev
 
 ## 3. Activation in `general_settings`
 
-In SalePro, modules are activated via the `modules` column in `general_settings`:
+In zoloERP Pro, modules are activated via the `modules` column in `general_settings`:
 
 ```php
 // In a dedicated seeder: Modules/OptechCompany/Database/Seeders/ActivateOptechModulesSeeder.php
@@ -117,7 +117,7 @@ class ActivateOptechModulesSeeder extends Seeder
 
 ## 4. Production Deployment & Verification Sequence
 
-1. **Database Backup:** Run full MySQL dump of existing SalePro database.
+1. **Database Backup:** Run full MySQL dump of existing zoloERP Pro database.
 2. **Migration Run:** Execute `php artisan module:migrate`. All new tables are prefixed with `optech_`.
 3. **Cache Clearing:**
    ```bash

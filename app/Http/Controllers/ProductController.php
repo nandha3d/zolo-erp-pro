@@ -548,7 +548,7 @@ class ProductController extends Controller
                 $imageName = date("Ymdhis") . ($key + 1);
 
                 // Handle multi-tenant logic if necessary
-                if (!config('database.connections.saleprosaas_landlord')) {
+                if (!config('database.connections.zoloerp_landlord')) {
                     $imageName = $imageName . '.' . $ext;
                 } else {
                     $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
@@ -1365,7 +1365,7 @@ class ProductController extends Controller
                 foreach ($images as $key => $image) {
                     $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
 
-                    if (!config('database.connections.saleprosaas_landlord')) {
+                    if (!config('database.connections.zoloerp_landlord')) {
                         $imageName = date("Ymdhis") . ($length + $key + 1) . '.' . $ext;
                     } else {
                         $imageName = $this->getTenantId() . '_' . date("Ymdhis") . ($length + $key + 1) . '.' . $ext;
@@ -1955,7 +1955,7 @@ class ProductController extends Controller
                                 $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
                                 $imageName = date("Ymdhis") . ($key + 1);
                                 // Handle multi-tenant logic if necessary
-                                if (!config('database.connections.saleprosaas_landlord')) {
+                                if (!config('database.connections.zoloerp_landlord')) {
                                     $imageName = $imageName . '.' . $ext;
                                 } else {
                                     $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
@@ -1974,7 +1974,7 @@ class ProductController extends Controller
                                 $ext = pathinfo($url, PATHINFO_EXTENSION) ?: 'jpg';
                                 $imageName = date("Ymdhis") . ($key + 1);
                                 // Handle multi-tenant logic if necessary
-                                if (!config('database.connections.saleprosaas_landlord')) {
+                                if (!config('database.connections.zoloerp_landlord')) {
                                     $imageName = $imageName . '.' . $ext;
                                 } else {
                                     $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;

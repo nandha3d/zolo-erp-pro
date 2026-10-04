@@ -7,7 +7,7 @@
 
 In accordance with the **Zero Core Modification Doctrine**:
 - Every Optech table is strictly prefixed with `optech_`.
-- All foreign keys to core SalePro tables (`products`, `customers`, `suppliers`, `sales`, `purchases`, `units`, `warehouses`, `users`) use standard indexing and cascade rules.
+- All foreign keys to core zoloERP Pro tables (`products`, `customers`, `suppliers`, `sales`, `purchases`, `units`, `warehouses`, `users`) use standard indexing and cascade rules.
 - Column types strictly match their business realities:
   - Currency: `DECIMAL(14,2)` or `DECIMAL(16,2)`
   - Textile Length / Weight: `DECIMAL(12,3)` (3-decimal precision for meters/kgs)

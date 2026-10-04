@@ -170,7 +170,7 @@ class PurchaseController extends Controller
 
                 $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
                 $documentName = date("Ymdhis");
-                if(!config('database.connections.saleprosaas_landlord')) {
+                if(!config('database.connections.zoloerp_landlord')) {
                     $documentName = $documentName . '.' . $ext;
                     $document->move(public_path('documents/purchase'), $documentName);
                 }
@@ -529,7 +529,7 @@ class PurchaseController extends Controller
 
                 $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
                 $documentName = date("Ymdhis");
-                if(!config('database.connections.saleprosaas_landlord')) {
+                if(!config('database.connections.zoloerp_landlord')) {
                     $documentName = $documentName . '.' . $ext;
                     $document->move(public_path('documents/purchase'), $documentName);
                 }
@@ -1171,7 +1171,7 @@ class PurchaseController extends Controller
 
             $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
             $documentName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $documentName = $documentName . '.' . $ext;
                 $document->move(public_path('documents/purchase'), $documentName);
             }
@@ -1967,7 +1967,7 @@ class PurchaseController extends Controller
 
             $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
             $documentName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $documentName = $documentName . '.' . $ext;
                 $document->move(public_path('documents/purchase'), $documentName);
             }

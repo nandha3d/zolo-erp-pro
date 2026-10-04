@@ -38,7 +38,7 @@ class Common
         date_default_timezone_set($timezone);
 
         $todayDate = date("Y-m-d");
-        if(config('database.connections.saleprosaas_landlord')) {
+        if(config('database.connections.zoloerp_landlord')) {
             $subdomain = $this->getTenantId();
             if($general_setting->expiry_date) {
                 $expiry_date = date("Y-m-d", strtotime($general_setting->expiry_date));

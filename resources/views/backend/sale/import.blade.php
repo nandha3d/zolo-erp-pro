@@ -186,7 +186,7 @@
     $("ul#sale").addClass("show");
     $("ul#sale #sale-import-menu").addClass("active");
 
-    @if(config('database.connections.saleprosaas_landlord'))
+    @if(config('database.connections.zoloerp_landlord'))
         numberOfInvoice = <?php echo json_encode($numberOfInvoice)?>;
         $.ajax({
             type: 'GET',

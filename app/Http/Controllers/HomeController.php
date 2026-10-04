@@ -41,7 +41,7 @@ class HomeController extends Controller
 
 	public function __construct()
     {
-        if(!config('database.connections.saleprosaas_landlord')) {
+        if(!config('database.connections.zoloerp_landlord')) {
             $this->versionUpgradeInfo = $this->isUpdateAvailable();
         }
 	}
@@ -58,7 +58,7 @@ class HomeController extends Controller
 
     public function addonList()
     {
-        if(!config('database.connections.saleprosaas_landlord')) {
+        if(!config('database.connections.zoloerp_landlord')) {
             $role = Role::find(Auth::user()->role_id);
             if(!$role->hasPermissionTo('addons')) {
                 return redirect('dashboard')->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -462,7 +462,7 @@ class HomeController extends Controller
             $addon_stats['repair_services_count'] = DB::table('repair_services')->count();
         }
 
-        $versionUpgradeData = (!config('database.connections.saleprosaas_landlord') && Auth::user()->role_id <= 2) ? ($this->versionUpgradeInfo ?? []) : [];
+        $versionUpgradeData = (!config('database.connections.zoloerp_landlord') && Auth::user()->role_id <= 2) ? ($this->versionUpgradeInfo ?? []) : [];
 
         return view('backend.index', compact(
             'revenue', 'purchase_due', 'total_sale', 'invoice_due', 'purchase', 'expense',

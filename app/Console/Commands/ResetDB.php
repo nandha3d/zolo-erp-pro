@@ -25,7 +25,7 @@ class ResetDB extends Command
             $this->error('Database reset requires the demo environment and --confirm-demo-reset.');
             return self::FAILURE;
         }
-        $dumpPath = base_path('salepropos.sql');
+        $dumpPath = base_path('zoloerp.sql');
         if (!is_file($dumpPath) || !is_readable($dumpPath) || !filesize($dumpPath)) {
             $this->error('Demo database dump is missing or unreadable; no data changed.');
             return self::FAILURE;

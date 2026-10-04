@@ -7318,14 +7318,14 @@ return array (
   1219 => 
   array (
     'locale' => 'sr',
-    'key' => 'Type envato purchase code for WooCommerce addon',
-    'value' => 'Unesite Envato kod za kupovinu za WooCommerce dodatak',
+    'key' => 'Type purchase code for WooCommerce addon',
+    'value' => 'Unesite kod za kupovinu za WooCommerce dodatak',
   ),
   1220 => 
   array (
     'locale' => 'sr',
-    'key' => 'Type envato purchase code for eCommerce addon',
-    'value' => 'Unesite Envato kod za kupovinu za eCommerce dodatak',
+    'key' => 'Type purchase code for eCommerce addon',
+    'value' => 'Unesite kod za kupovinu za eCommerce dodatak',
   ),
   1221 => 
   array (

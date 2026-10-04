@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class ConsoleSafetyTest extends TestCase
+class CommandSafetyTest extends TestCase
 {
     public function test_database_reset_is_never_scheduled(): void
     {

@@ -7,13 +7,62 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  @if(!config('database.connections.saleprosaas_landlord'))
+  @if(!config('database.connections.zoloerp_landlord'))
   <link rel="icon" type="image/png" href="{{url('logo', $general_setting->favicon ?? $general_setting->site_logo)}}" />
   <title>{{$general_setting->site_title}}</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="all,follow">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <!-- Critical Anti-FOUC Sidebar & Theme Rules: Render dark sidebar immediately on first paint with zero transitions -->
+  <style id="zolo-critical-sidebar-theme">
+    :root {
+      --neo-sidebar-bg: #0f172a;
+      --neo-sidebar-surface: #1e293b;
+      --neo-sidebar-border: rgba(255, 255, 255, 0.08);
+      --neo-sidebar-text: #cbd5e1;
+    }
+    .side-navbar,
+    nav.side-navbar {
+      background-color: #0f172a !important;
+      background: #0f172a !important;
+      color: #cbd5e1 !important;
+      width: 256px !important;
+      opacity: 1 !important;
+      transition: none !important;
+    }
+    .side-navbar ul,
+    .side-navbar li,
+    .side-navbar .side-menu,
+    .side-navbar .mCustomScrollBox,
+    .side-navbar .mCSB_container {
+      background-color: transparent !important;
+      background: transparent !important;
+    }
+    .side-navbar li a {
+      color: #cbd5e1 !important;
+    }
+    .side-navbar li ul,
+    .side-navbar ul.collapse,
+    .side-navbar .collapse {
+      background-color: #090d16 !important;
+      background: #090d16 !important;
+      border: 1px solid rgba(255, 255, 255, 0.06) !important;
+      border-radius: 10px !important;
+    }
+    .side-navbar li ul li a {
+      color: #94a3b8 !important;
+    }
+    .side-navbar .sidebar-heading {
+      color: #64748b !important;
+    }
+    @media (min-width: 1200px) {
+      .side-navbar.shrink {
+        width: 256px !important;
+        opacity: 1 !important;
+      }
+    }
+  </style>
   <!-- Bootstrap CSS-->
   <link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
   <link rel="preload" href="<?php echo asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -180,7 +229,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   @endif
 
   <!-- zoloERP Design System -->
-  <link rel="stylesheet" href="<?php echo asset('css/salepro-neo.css') ?>" type="text/css" id="salepro-neo-style">
+  <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
 
   @stack('css')
 
@@ -191,7 +240,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
 <body class="@if($theme == 'dark')dark-mode dripicons-brightness-low @endif  @if(Route::current()->getName() == 'sale.pos') pos-page @endif" onload="myFunction()">
   <div id="loader"></div>
   <!-- Side Navbar -->
-  <nav class="side-navbar shrink d-print-none">
+  <nav class="side-navbar d-print-none">
     <span class="brand-big">
       <a href="{{url('/dashboard') }}" class="zolo-brand-link">
         <div class="zolo-brand-container">
@@ -319,7 +368,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
           <li class="nav-item"><a class="btn-pos btn-sm" href="{{route('sale.pos') }}"><i class="dripicons-shopping-bag"></i><span> POS</span></a></li>
           @endif
           <li class="nav-item d-none d-lg-block"><a id="switch-theme" data-toggle="tooltip" title="{{ __('Switch Theme') }}"><i class="dripicons-brightness-max"></i></a></li>
-          @if(config('database.connections.saleprosaas_landlord'))
+          @if(config('database.connections.zoloerp_landlord'))
           <li class="nav-item"><a target="_blank" href="{{'https://'.env('CENTRAL_DOMAIN').'/contact-for-renewal?id='.$subdomain}}" data-toggle="tooltip" title="{{ __('Renew Subscription') }}"><i class="dripicons-clockwise"></i></a></li>
           @endif
           <li class="nav-item d-none d-lg-block"><a id="btnFullscreen" data-toggle="tooltip" title="{{ __('Full Screen') }}"><i class="dripicons-expand"></i></a></li>
@@ -1143,7 +1192,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
     <!-- end supplier modal -->
     @endunless
   </div>
-  @if(!config('database.connections.saleprosaas_landlord'))
+  @if(!config('database.connections.zoloerp_landlord'))
   <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery-ui.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/jquery/bootstrap-datepicker.min.js') ?>"></script>
@@ -1310,6 +1359,43 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
 
     $("div.alert").delay(4000);
 
+    // =========================================================================
+    // Global Anti-Clipping Dropdown Manager
+    // Ensures action dropdowns in tables and containers are never clipped
+    // =========================================================================
+    $(document).on('show.bs.dropdown', function (e) {
+      var $toggle = $(e.target).find('.dropdown-toggle');
+      var $menu = $(e.target).find('.dropdown-menu');
+      var $group = $(e.target).closest('.btn-group, .dropdown');
+      var $container = $(e.target).closest('.table-responsive, .card-body, .card');
+
+      if ($container.length) {
+        $container.addClass('dropdown-active');
+      }
+
+      if ($toggle.length) {
+        var offset = $toggle.offset();
+        var toggleHeight = $toggle.outerHeight();
+        var menuHeight = $menu.outerHeight() || 180;
+        var windowHeight = $(window).height();
+        var scrollTop = $(window).scrollTop();
+        var spaceBelow = windowHeight - (offset.top - scrollTop + toggleHeight);
+        var spaceAbove = (offset.top - scrollTop);
+
+        // If space below is constrained (< 200px) and there's more room above, flip to dropup
+        if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+          $group.addClass('dropup');
+        } else {
+          $group.removeClass('dropup');
+        }
+      }
+    });
+
+    $(document).on('hidden.bs.dropdown', function (e) {
+      $('.table-responsive, .card-body, .card').removeClass('dropdown-active');
+      $(e.target).closest('.btn-group, .dropdown').removeClass('dropup');
+    });
+
     function confirmDelete() {
       if (confirm("Are you sure want to delete?")) {
         return true;
@@ -1434,7 +1520,12 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
       todayHighlight: true
     });
 
+    if ($.fn.selectpicker) {
+      $.fn.selectpicker.Constructor.DEFAULTS.container = 'body';
+    }
+
     $('.selectpicker').selectpicker({
+      container: 'body',
       style: 'btn-link',
     });
 

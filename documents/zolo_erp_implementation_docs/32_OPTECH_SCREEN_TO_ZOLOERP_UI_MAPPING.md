@@ -1,7 +1,7 @@
 # 32 - Optech Screen to Modern zoloERP UI Mapping
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** UI modernization implementation specification  
 > **Source references:** `optech_screens/*`, `ENGINEERING_REFERENCE.md`, docs 07/08/10/12/15/20/27/29, `documents/ZOLO_ERP_EXECUTION_PLAN.md`  
 > **Date:** 2026-10-03
@@ -76,7 +76,7 @@ Do not infer unverified business rules from a single screenshot. During implemen
 
 ## Visual design
 
-Use the current zoloERP design foundation in `public/css/salepro-neo.css`.
+Use the current zoloERP design foundation in `public/css/zolo-erp-neo.css`.
 
 Prefer clean surfaces, clear hierarchy, restrained borders, modern spacing, readable typography, consistent status badges, consistent primary/secondary/destructive actions, clear empty/loading/error states, and dark-mode compatibility where supported.
 

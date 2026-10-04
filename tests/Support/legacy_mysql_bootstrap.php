@@ -1,6 +1,6 @@
 <?php
 
-// Original SalePro tests need a seeded schema. This bootstrap only clears an explicitly opted-in fixture database.
+// Legacy ERP tests need a seeded schema. This bootstrap only clears an explicitly opted-in fixture database.
 require __DIR__.'/../../vendor/autoload.php';
 
 $fixtureDatabase = getenv('ERP_TEST_MYSQL_DATABASE') ?: '';

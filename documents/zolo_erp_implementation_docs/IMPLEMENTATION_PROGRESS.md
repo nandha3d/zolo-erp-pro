@@ -241,7 +241,7 @@ Security finding from the audit, unchanged: `GET /update-coupon` (`CouponControl
 
 Docs [31](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [32](32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md) and [33](33_COMMON_UI_COMPONENT_LIBRARY.md) are specifications, not claims that their components/screens exist.
 
-Retain Blade/Bootstrap/jQuery and extend `public/css/salepro-neo.css`. Preserve Optech operator workflows/shortcuts using shared backend services, General Trading terminology, capability/profile extensions, and common components. Migrate UI incrementally with responsive, keyboard, accessibility, state and visual proof. UI planning does not bypass company/engine gates.
+Retain Blade/Bootstrap/jQuery and extend `public/css/zolo-erp-neo.css`. Preserve Optech operator workflows/shortcuts using shared backend services, General Trading terminology, capability/profile extensions, and common components. Migrate UI incrementally with responsive, keyboard, accessibility, state and visual proof. UI planning does not bypass company/engine gates.
 
 ## Delivery order
 

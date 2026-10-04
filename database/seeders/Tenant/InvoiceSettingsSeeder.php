@@ -11,11 +11,11 @@ class InvoiceSettingsSeeder extends Seeder
     public function run()
     {
         $baseData = [
-            'prefix'              => 'salepro',
+            'prefix'              => 'zoloerp',
             'number_of_digit'     => 4,
             'numbering_type'      => 'datewise',
             'start_number'        => 1000,
-            'header_text'         => 'SalePro',
+            'header_text'         => 'zoloERP Pro',
             'footer_text'         => 'Thank you for shopping with us',
             'footer_title'        => 'Thank you for shopping with us',
             'size'                => 'a4',

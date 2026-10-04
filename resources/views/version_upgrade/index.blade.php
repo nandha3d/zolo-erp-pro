@@ -1,5 +1,5 @@
 @php
-    $layout = config('database.connections.saleprosaas_landlord') ? 'landlord.layout.main' : 'backend.layout.main';
+    $layout = config('database.connections.zoloerp_landlord') ? 'landlord.layout.main' : 'backend.layout.main';
 @endphp
 
 @extends($layout)
@@ -45,7 +45,7 @@
                     <span class="sr-only">Loading...</span>
                 </div>
             </div>
-            <form action="{{ config('database.connections.saleprosaas_landlord') ? route('saas-version-upgrade') : route('version-upgrade') }}" method="post">
+            <form action="{{ config('database.connections.zoloerp_landlord') ? route('saas-version-upgrade') : route('version-upgrade') }}" method="post">
                 @csrf
                 <label>Purchase Code</label>
 		        <input type='text' placeholder="Ex: 123456789XXXXXXXX" required class="form-control" name="purchasecode">

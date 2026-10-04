@@ -631,7 +631,7 @@
     {{-- Addons menu --}}
     @if($isAdmin || $canNavigate('addons'))
         @if(\Auth::user()->role_id != 5)
-            @if(!config('database.connections.saleprosaas_landlord'))
+            @if(!config('database.connections.zoloerp_landlord'))
                 <li><a href="{{url('addon-list')}}" id="addon-list"><i class="dripicons-flag"></i><span>{{__('db.Addons')}}</span></a></li>
             @endif
             @if(in_array('sales.woocommerce', $enabledCapabilities, true) && Route::has('woocommerce.index'))

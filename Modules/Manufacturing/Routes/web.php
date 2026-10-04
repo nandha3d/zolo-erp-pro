@@ -17,7 +17,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 |
 */
 
-if(config('database.connections.saleprosaas_landlord')) {
+if(config('database.connections.zoloerp_landlord')) {
     Route::middleware(['common', 'auth', 'active', InitializeTenancyByDomain::class,PreventAccessFromCentralDomains::class])->group(function () {
         //production routes
         Route::controller(ProductionController::class)->group(function () {

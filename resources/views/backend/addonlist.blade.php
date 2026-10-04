@@ -1,6 +1,6 @@
 @php
     $layout = 'backend.layout.main';
-    if (config('database.connections.saleprosaas_landlord')) {
+    if (config('database.connections.zoloerp_landlord')) {
         $layout = 'landlord.layout.main';
     }
 @endphp

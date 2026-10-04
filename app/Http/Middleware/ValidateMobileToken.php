@@ -20,7 +20,7 @@ class ValidateMobileToken
     {
         $token = $request->query('token');
 
-        if (strpos(env('APP_URL'), 'salepropos.com/demo') != false && strpos(env('APP_URL'), 'salepropos.com/demo') >= 0) {
+        if (app()->environment('demo')) {
             return $next($request);
         }
 

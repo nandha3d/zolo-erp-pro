@@ -1,5 +1,5 @@
 # Section 00: The Zero Core Modification Architecture Rules
-## Non-Invasive Extension Doctrine for SalePro ERP
+## Non-Invasive Extension Doctrine for zoloERP Pro ERP
 
 ---
 
@@ -13,20 +13,20 @@
 > - `vendor/` (Composer dependencies)
 
 ### Why This Rule Is Strict
-1. **Vendor Updates:** SalePro releases upstream security patches, feature packs, and bug fixes. Any direct modification to core controllers (`SaleController`, `ProductController`, etc.) will result in merge conflicts or overwritten code during updates.
-2. **System Stability:** The existing SalePro logic (POS, standard retail, inventory deductions, permissions) must continue running normally for existing standard tenants.
-3. **Module Isolation:** Optech features can be enabled or disabled cleanly per tenant using SalePro's modular license/module toggle mechanism (`general_setting->modules`).
+1. **Vendor Updates:** zoloERP Pro releases upstream security patches, feature packs, and bug fixes. Any direct modification to core controllers (`SaleController`, `ProductController`, etc.) will result in merge conflicts or overwritten code during updates.
+2. **System Stability:** The existing zoloERP Pro logic (POS, standard retail, inventory deductions, permissions) must continue running normally for existing standard tenants.
+3. **Module Isolation:** Optech features can be enabled or disabled cleanly per tenant using zoloERP Pro's modular license/module toggle mechanism (`general_setting->modules`).
 
 ---
 
 ## 2. Extension Mechanisms: How We Extend Without Modifying
 
 ### Pattern A: Modular Encapsulation via `nwidart/laravel-modules`
-SalePro already incorporates `nwidart/laravel-modules` (proven by `Modules/Manufacturing`). All Optech capabilities are packaged inside dedicated modules under `Modules/`:
+zoloERP Pro already incorporates `nwidart/laravel-modules` (proven by `Modules/Manufacturing`). All Optech capabilities are packaged inside dedicated modules under `Modules/`:
 
 ```
-d:/PROJECTS/WEBSITES/salepro-new/Modules/
-├── Manufacturing/              # Pre-existing SalePro module
+d:/PROJECTS/WEBSITES/zolo-erp-pro/Modules/
+├── Manufacturing/              # Pre-existing zoloERP Pro module
 ├── OptechJobWork/              # Delivery Challan (DC) & Goods Received Note (GRN)
 ├── OptechAccounting/           # Vouchers, Bill-by-Bill, General Ledger, 12-Month Matrix
 ├── OptechGST/                  # Automated GSTIN Lookup, GSTR-1 & GSTR-3B Engines
@@ -46,7 +46,7 @@ Each module possesses its own:
 ---
 
 ### Pattern B: Model Extension via Traits, Macros, and Decorator Pattern
-When an Optech module requires relationships to core SalePro models (e.g., `Sale`, `Purchase`, `Product`, `Customer`), **do not edit the model file**. Use Laravel Model Macros or Module Entity Subclasses.
+When an Optech module requires relationships to core zoloERP Pro models (e.g., `Sale`, `Purchase`, `Product`, `Customer`), **do not edit the model file**. Use Laravel Model Macros or Module Entity Subclasses.
 
 #### Example: Attaching Optech Delivery Challan & Series to Core `Sale` Model
 In `Modules/OptechJobWork/Providers/OptechJobWorkServiceProvider.php`:
@@ -109,7 +109,7 @@ class OptechCustomer extends Customer
 ---
 
 ### Pattern C: Database Schema Isolation (`optech_*` Namespace)
-To prevent collisions with existing SalePro schema and future core migrations:
+To prevent collisions with existing zoloERP Pro schema and future core migrations:
 1. **Table Prefix:** Every new table must begin with `optech_`.
 2. **Nullable Extensions:** If an existing core table (`products`, `customers`, `units`) requires extra Optech attributes, create a companion table (`optech_product_details`, `optech_customer_details`) with a 1-to-1 foreign key, OR run a non-destructive add-column migration strictly inside the module's `Database/Migrations` directory with `nullable()` defaults:
 
@@ -150,7 +150,7 @@ return new class extends Migration {
 Core actions trigger domain events. Optech modules listen to these events without touching the core controller:
 
 ```
-[SalePro SaleController::store]
+[zoloERP Pro SaleController::store]
                |
                v (Fires Event)
       `SaleCreatedEvent`
@@ -164,7 +164,7 @@ Core actions trigger domain events. Optech modules listen to these events withou
 ---
 
 ### Pattern E: UI Injection Without Modifying Core Blade Views
-To inject the Optech Top HUD Bar (`F2 Counter Sales`, `F12 Inward`, `F9 Vouchers`, `Spacebar Search`) into SalePro pages without editing `resources/views/backend/layout/main.blade.php`:
+To inject the Optech Top HUD Bar (`F2 Counter Sales`, `F12 Inward`, `F9 Vouchers`, `Spacebar Search`) into zoloERP Pro pages without editing `resources/views/backend/layout/main.blade.php`:
 
 1. **Global Middleware Injection:** An Optech HTTP Middleware inspects responses. For HTML responses on backend routes, it injects the lightweight Optech Keyboard HUD and shortcuts script just before `</body>`.
 2. **View Composers:** Register a View Composer in `OptechSpeedBillingServiceProvider`:

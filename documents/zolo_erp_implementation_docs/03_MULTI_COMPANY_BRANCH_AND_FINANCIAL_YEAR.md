@@ -1,7 +1,7 @@
 # 03 - Multi-Company, Branch and Financial Year
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -11,7 +11,7 @@
 
 ## Purpose
 
-Make legal company context a first-class ERP concept. This is separate from optional SalePro SaaS tenancy, which may isolate an entire customer's database.
+Make legal company context a first-class ERP concept. This is separate from optional zoloERP Pro SaaS tenancy, which may isolate an entire customer's database.
 
 ## Target rules
 

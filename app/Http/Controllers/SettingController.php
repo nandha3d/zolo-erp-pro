@@ -88,7 +88,7 @@ class SettingController extends Controller
 
         $tables = DB::select('SHOW TABLES');
 
-        if(!config('database.connections.saleprosaas_landlord'))
+        if(!config('database.connections.zoloerp_landlord'))
             $database_name = env('DB_DATABASE');
         else
             $database_name = env('DB_PREFIX').$this->getTenantId();
@@ -138,7 +138,7 @@ class SettingController extends Controller
         $zones_array = array();
         $timestamp = time();
 
-        if(!config('database.connections.saleprosaas_landlord'))
+        if(!config('database.connections.zoloerp_landlord'))
             $installUrl = config('app.url');
         else
             $installUrl = "https://" .$this->getTenantId().'.'.env('CENTRAL_DOMAIN');
@@ -274,7 +274,7 @@ class SettingController extends Controller
         $host = env('DB_HOST');
         $username = env('DB_USERNAME');
         $password = env('DB_PASSWORD');
-        if(!config('database.connections.saleprosaas_landlord'))
+        if(!config('database.connections.zoloerp_landlord'))
             $database_name = env('DB_DATABASE');
         else
             $database_name = env('DB_PREFIX').$this->getTenantId();

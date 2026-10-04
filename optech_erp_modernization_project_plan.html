@@ -769,7 +769,7 @@
 
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="switchTab('overview')"><i class="fa-solid fa-compass"></i> Overview</button>
-      <button class="nav-tab" onclick="switchTab('comparison')"><i class="fa-solid fa-scale-balanced"></i> SalePro vs ERPNext</button>
+      <button class="nav-tab" onclick="switchTab('comparison')"><i class="fa-solid fa-scale-balanced"></i> zoloERP Pro vs ERPNext</button>
       <button class="nav-tab" onclick="switchTab('screens-srs')"><i class="fa-solid fa-layer-group"></i> All Screens & Options</button>
       <button class="nav-tab" onclick="switchTab('gst-automation')"><i class="fa-solid fa-calculator"></i> Automated GST Engine</button>
       <button class="nav-tab" onclick="switchTab('video-analysis')"><i class="fa-solid fa-film"></i> Video & Voiceover Analysis</button>
@@ -854,7 +854,7 @@
             <ul class="feature-list">
               <li><strong>1-Click GSTIN Auto-Fetch:</strong> Typing a 15-character GSTIN instantly queries the GST API to fetch Legal Name, Trade Name, Registered Address, Active Status, and automatically sets Intra-State (CGST+SGST) vs Inter-State (IGST) tax classification.</li>
               <li><strong>Statutory GSTR-1 & GSTR-3B:</strong> Automated generation of Table 4A (B2B), Table 7 (B2C Small), Table 9B (CDNR), and Table 12 (HSN Summary) with 1-click CSV export ready for the official GST Offline Tool.</li>
-              <li><strong>Zero Core Code Modification:</strong> Built as a decoupled modular extension on top of SalePro (Laravel), ensuring core database schemas and functionalities remain completely untouched.</li>
+              <li><strong>Zero Core Code Modification:</strong> Built as a decoupled modular extension on top of zoloERP Pro (Laravel), ensuring core database schemas and functionalities remain completely untouched.</li>
               <li><strong>Multi-Branch Cloud Accessibility:</strong> Access anywhere from web, tablet, or branch terminals with centralized data security and automatic daily cloud backups.</li>
             </ul>
           </div>
@@ -948,20 +948,20 @@
 
     </div>
 
-    <!-- TAB 2: SALEPRO VS ERPNEXT -->
+    <!-- TAB 2: zoloERP Pro VS ERPNEXT -->
     <div id="comparison" class="tab-pane">
       <div class="card">
         <div class="card-header">
-          <h3><i class="fa-solid fa-scale-balanced" style="color: var(--primary);"></i> Platform Evaluation: Customizing SalePro vs. ERPNext</h3>
+          <h3><i class="fa-solid fa-scale-balanced" style="color: var(--primary);"></i> Platform Evaluation: Customizing zoloERP Pro vs. ERPNext</h3>
         </div>
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-          The user explicitly specified: <strong>"whether we can customize the 'ERPNext' or 'salepro'. but they dont want any ultra modern features. easy to use, and handle."</strong> 
+          The user explicitly specified: <strong>"whether we can customize the 'ERPNext' or 'zoloERP Pro'. but they dont want any ultra modern features. easy to use, and handle."</strong> 
           Below is an objective technical and operational evaluation tailored specifically to wholesale textile counters in South India:
         </p>
 
         <div class="grid-2">
           
-          <!-- SalePro Card -->
+          <!-- zoloERP Pro Card -->
           <div class="compare-card winner">
             <div class="winner-badge"><i class="fa-solid fa-trophy"></i> Highly Recommended</div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
@@ -969,18 +969,18 @@
                 <i class="fa-brands fa-laravel"></i>
               </div>
               <div>
-                <h3 style="font-size: 1.3rem;">SalePro (Custom Laravel Extension)</h3>
+                <h3 style="font-size: 1.3rem;">zoloERP Pro (Custom Laravel Extension)</h3>
                 <span style="font-size: 0.8rem; color: var(--success); font-weight: 600;">Optimal Choice for Counter Speed & Usability</span>
               </div>
             </div>
 
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-              SalePro is already present in your workspace. Built with PHP 8 / Laravel and Blade, it provides the exact foundation needed to build an uncluttered, keyboard-first, lightning-fast counter interface.
+              zoloERP Pro is already present in your workspace. Built with PHP 8 / Laravel and Blade, it provides the exact foundation needed to build an uncluttered, keyboard-first, lightning-fast counter interface.
             </p>
 
             <ul class="feature-list" style="margin-bottom: 1.5rem;">
               <li><strong>Zero Framework Bloat:</strong> Extremely lightweight. A counter operator pressing F2 gets an instant billing screen with zero multi-second page loads.</li>
-              <li><strong>100% Core Preservation:</strong> We can create a dedicated <span class="shortcut-tag">/express-pos</span> and <span class="shortcut-tag">/vouchers</span> modular layer with separate tables (<span class="shortcut-tag">tex_vouchers</span>, <span class="shortcut-tag">tex_job_work</span>). Existing SalePro core tables remain untouched.</li>
+              <li><strong>100% Core Preservation:</strong> We can create a dedicated <span class="shortcut-tag">/express-pos</span> and <span class="shortcut-tag">/vouchers</span> modular layer with separate tables (<span class="shortcut-tag">tex_vouchers</span>, <span class="shortcut-tag">tex_job_work</span>). Existing zoloERP Pro core tables remain untouched.</li>
               <li><strong>No "Ultra-Modern" Confusion:</strong> We design the screens to match the exact, simple, keyboard-driven layout of Optech (F2 Sales, Spacebar Party, Enter field advance, live Dr balance in header). Operators learn it in 15 minutes.</li>
               <li><strong>Native Continuous Dot-Matrix Printing:</strong> Full control over raw 68-line continuous tractor-feed ESC/P output and Laser A4 formats.</li>
               <li><strong>Low Server Maintenance:</strong> Runs effortlessly on standard local shop PCs (XAMPP / Apache / MySQL) or simple cloud VPS ($5-$10/mo) without complex Redis/Celery background dependencies.</li>
@@ -1028,7 +1028,7 @@
             <thead>
               <tr>
                 <th>Operational Dimension</th>
-                <th>SalePro (Custom Laravel Extension)</th>
+                <th>zoloERP Pro (Custom Laravel Extension)</th>
                 <th>ERPNext (Frappe App)</th>
                 <th>Client Preference Alignment</th>
               </tr>
@@ -1038,19 +1038,19 @@
                 <td><strong>Counter Speed & Keyboard Flow</strong></td>
                 <td><span style="color: var(--success);"><i class="fa-solid fa-check"></i> Sub-second, keyboard-only</span> (F2, Spacebar, Enter, Alt+C)</td>
                 <td><span style="color: var(--warning);"><i class="fa-solid fa-exclamation-triangle"></i> Mouse/click-intensive</span> Desk forms</td>
-                <td>SalePro matches Optech 100%</td>
+                <td>zoloERP Pro matches Optech 100%</td>
               </tr>
               <tr>
                 <td><strong>Simplicity & Ease of Use</strong></td>
                 <td><span style="color: var(--success);"><i class="fa-solid fa-check"></i> Clean, focused, uncluttered</span> single-screen design</td>
                 <td><span style="color: var(--danger);"><i class="fa-solid fa-times"></i> Complex enterprise UI</span> with hundreds of settings</td>
-                <td>SalePro satisfies "no ultra-modern features"</td>
+                <td>zoloERP Pro satisfies "no ultra-modern features"</td>
               </tr>
               <tr>
                 <td><strong>Core Preservation Guarantee</strong></td>
                 <td><span style="color: var(--success);"><i class="fa-solid fa-check"></i> 100% Safe</span>. Built via isolated modular tables & routes</td>
                 <td>Requires overriding standard Frappe DocTypes</td>
-                <td>SalePro ensures zero core corruption</td>
+                <td>zoloERP Pro ensures zero core corruption</td>
               </tr>
               <tr>
                 <td><strong>GSTIN Automated Lookup</strong></td>
@@ -1062,13 +1062,13 @@
                 <td><strong>Textile Job-Work (DC & GRN)</strong></td>
                 <td><span style="color: var(--success);"><i class="fa-solid fa-check"></i> Dedicated lightweight</span> DC & GRN screens</td>
                 <td>Handled via complex Subcontracting Order workflows</td>
-                <td>SalePro is 5x faster to record</td>
+                <td>zoloERP Pro is 5x faster to record</td>
               </tr>
               <tr>
                 <td><strong>Continuous Dot-Matrix 68-Line Print</strong></td>
                 <td><span style="color: var(--success);"><i class="fa-solid fa-check"></i> Native raw text/ESC-P</span> printing engine</td>
                 <td>HTML-to-PDF engine; tricky for continuous tractor feed</td>
-                <td>SalePro handles legacy hardware effortlessly</td>
+                <td>zoloERP Pro handles legacy hardware effortlessly</td>
               </tr>
             </tbody>
           </table>
@@ -1404,7 +1404,7 @@
 
         </div>
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-          Every screen and option demonstrated across all 11 Optech videos is cataloged below, showing the exact fields, keyboard shortcuts, and how it is implemented in SalePro <strong>without altering the core codebase</strong>.
+          Every screen and option demonstrated across all 11 Optech videos is cataloged below, showing the exact fields, keyboard shortcuts, and how it is implemented in zoloERP Pro <strong>without altering the core codebase</strong>.
         </p>
 
         <!-- Master Screens -->
@@ -1429,9 +1429,9 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
-                  Uses SalePro's existing `products` table without schema modifications. Additional textile attributes (3-decimal precision, rack location, group tags) are stored in a linked lightweight extension table `tex_product_metadata` or JSON attributes column.
+                  Uses zoloERP Pro's existing `products` table without schema modifications. Additional textile attributes (3-decimal precision, rack location, group tags) are stored in a linked lightweight extension table `tex_product_metadata` or JSON attributes column.
                 </p>
                 <div class="voiceover-box" style="margin-top: 10px; font-size: 0.85rem;">
                   <strong>Operator Rule:</strong> Allows quick inline item creation during billing via <span class="shortcut-tag">F6</span> without leaving the sales screen.
@@ -1462,7 +1462,7 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
                   Preserves existing `customers`, `suppliers`, and `accounts` tables. An extension table `tex_party_details` holds credit limits, credit days, and GST auto-fetch verification status.
                 </p>
@@ -1497,9 +1497,9 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
-                  Created as an independent, ultra-lightweight Blade view at `/express-pos`. It posts standard completed sales to SalePro's `sales` and `product_sales` tables, while recording extended series numbering in `tex_series_logs`.
+                  Created as an independent, ultra-lightweight Blade view at `/express-pos`. It posts standard completed sales to zoloERP Pro's `sales` and `product_sales` tables, while recording extended series numbering in `tex_series_logs`.
                 </p>
                 <div class="voiceover-box" style="margin-top: 10px; font-size: 0.85rem;">
                   <strong>Operator Rule:</strong> 100% keyboard-operable. An experienced billing clerk can complete a 10-line wholesale bill in 25 seconds without touching the mouse.
@@ -1530,9 +1530,9 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
-                  Syncs directly into SalePro's `purchases` and `product_purchases` tables. Automatically increments warehouse stock and updates supplier ledger balances.
+                  Syncs directly into zoloERP Pro's `purchases` and `product_purchases` tables. Automatically increments warehouse stock and updates supplier ledger balances.
                 </p>
               </div>
             </div>
@@ -1556,9 +1556,9 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
-                  Implemented via dedicated extension tables `tex_job_work_dcs` and `tex_job_work_grns`. Raw materials move to a virtual "Job-Work Godown" and convert to finished items on GRN save, leaving SalePro core intact.
+                  Implemented via dedicated extension tables `tex_job_work_dcs` and `tex_job_work_grns`. Raw materials move to a virtual "Job-Work Godown" and convert to finished items on GRN save, leaving zoloERP Pro core intact.
                 </p>
               </div>
             </div>
@@ -1588,9 +1588,9 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
-                  Uses `tex_vouchers`, `tex_voucher_items`, and `tex_bill_references`. Links directly with SalePro's `payments` table so accounts remain fully balanced in both standard SalePro and the new financial vouchers.
+                  Uses `tex_vouchers`, `tex_voucher_items`, and `tex_bill_references`. Links directly with zoloERP Pro's `payments` table so accounts remain fully balanced in both standard zoloERP Pro and the new financial vouchers.
                 </p>
               </div>
             </div>
@@ -1615,9 +1615,9 @@
                 </ul>
               </div>
               <div>
-                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">SalePro Core Preservation Mapping:</strong>
+                <strong style="color: var(--success); font-size: 0.85rem; text-transform: uppercase;">zoloERP Pro Core Preservation Mapping:</strong>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5;">
-                  A dedicated high-performance SQL query service aggregates across both SalePro sales/purchases and `tex_vouchers` to generate instantaneous monthly financial matrices.
+                  A dedicated high-performance SQL query service aggregates across both zoloERP Pro sales/purchases and `tex_vouchers` to generate instantaneous monthly financial matrices.
                 </p>
               </div>
             </div>
@@ -9468,7 +9468,7 @@
                 Establish modular database extensions, city-prefixed ledger catalogs, and 1-click GSTIN auto-fetch integration.
               </p>
               <ul class="feature-list" style="font-size: 0.85rem;">
-                <li>Create modular migration tables (<span class="shortcut-tag">tex_vouchers</span>, <span class="shortcut-tag">tex_job_work</span>, <span class="shortcut-tag">tex_series</span>) preserving SalePro core.</li>
+                <li>Create modular migration tables (<span class="shortcut-tag">tex_vouchers</span>, <span class="shortcut-tag">tex_job_work</span>, <span class="shortcut-tag">tex_series</span>) preserving zoloERP Pro core.</li>
                 <li>Implement 1-click GSTIN Auto-Fetch API fetching Legal Name, Trade Name, State Code, and tax classification.</li>
                 <li>Build Master Catalogs: Fabric Item Master (3 decimals MTR 0.000, UQC codes) and City-prefixed Ledgers.</li>
               </ul>

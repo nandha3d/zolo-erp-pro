@@ -1,7 +1,7 @@
 # 01 - Repository Audit and Gap Analysis
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -11,7 +11,7 @@
 
 ## Purpose
 
-Freeze the facts about the current codebase before changing it. The repository is already a modified SalePro system with generic ERP services and multiple vertical experiments; the implementation should reuse working assets and remove duplication.
+Freeze the facts about the current codebase before changing it. The repository is already a modified zoloERP Pro system with generic ERP services and multiple vertical experiments; the implementation should reuse working assets and remove duplication.
 
 ## Current repository observations
 
@@ -28,7 +28,7 @@ Freeze the facts about the current codebase before changing it. The repository i
 
 ## Target rules
 
-- Preserve existing useful SalePro flows; wrap/refactor rather than rewrite everything.
+- Preserve existing useful zoloERP Pro flows; wrap/refactor rather than rewrite everything.
 - Do not complete every Optech scaffold as an independent subsystem.
 - Treat existing industry tables as optional pack prototypes, not the shared data model.
 - Stop adding new runtime schema mutations for customer-defined fields.

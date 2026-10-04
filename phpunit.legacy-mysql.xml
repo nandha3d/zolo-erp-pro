@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.2/phpunit.xsd" bootstrap="tests/Support/legacy_mysql_bootstrap.php" colors="true" cacheDirectory=".phpunit.cache">
   <testsuites>
-    <testsuite name="Original seeded SalePro smoke">
+    <testsuite name="Legacy seeded ERP smoke">
       <file>tests/Feature/AccountingServiceTest.php</file>
       <file>tests/Feature/AccountingWebTest.php</file>
       <file>tests/Feature/ApiV1Test.php</file>

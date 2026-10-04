@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Define reusable UI building blocks so zoloERP does not modernize each SalePro/Optech screen independently.
+Define reusable UI building blocks so zoloERP does not modernize each zoloERP Pro/Optech screen independently.
 
 These are target contracts. They do not imply every component already exists.
 

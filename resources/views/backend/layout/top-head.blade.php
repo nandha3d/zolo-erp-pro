@@ -9,7 +9,7 @@
     <meta name="robots" content="all,follow">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @if(!config('database.connections.saleprosaas_landlord'))
+    @if(!config('database.connections.zoloerp_landlord'))
     <link rel="icon" type="image/png" href="{{url('logo', $general_setting->favicon ?? $general_setting->site_logo)}}" />
     <!-- Bootstrap CSS-->
     <link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
@@ -85,7 +85,7 @@
     @endif
 
     <!-- zoloERP Design System -->
-    <link rel="stylesheet" href="<?php echo asset('css/salepro-neo.css') ?>" type="text/css" id="salepro-neo-style">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
 
     @stack('css')
 
@@ -97,7 +97,7 @@
           @yield('content')
       </div>
 
-    @if(!config('database.connections.saleprosaas_landlord'))
+    @if(!config('database.connections.zoloerp_landlord'))
     <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.min.js') ?>"></script>
     <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery-ui.min.js') ?>"></script>
     <script type="text/javascript" src="<?php echo asset('vendor/jquery/bootstrap-datepicker.min.js') ?>"></script>

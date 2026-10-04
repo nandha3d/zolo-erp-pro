@@ -28,12 +28,12 @@ In high-volume textile trade, counter operators bill between 300 and 1,000 invoi
 
 ---
 
-## 2. SalePro Architectural Alignment
+## 2. zoloERP Pro Architectural Alignment
 
-Standard SalePro POS is tailored to supermarket scanning with mouse clicks and cart drawers. For Optech compliance:
+Standard zoloERP Pro POS is tailored to supermarket scanning with mouse clicks and cart drawers. For Optech compliance:
 1. We implement a dedicated high-speed blade view under `Modules/OptechSpeedBilling/Resources/views/counter_sales.blade.php`.
 2. We link keyboard listeners using `Hotkeys.js` / `Mousetrap`.
-3. Saving a counter sale creates a standard SalePro `Sale` and `ProductSale` record, but enhances it with Optech Series numbering, customer live balance snapshots, and automated ledger postings.
+3. Saving a counter sale creates a standard zoloERP Pro `Sale` and `ProductSale` record, but enhances it with Optech Series numbering, customer live balance snapshots, and automated ledger postings.
 
 ---
 

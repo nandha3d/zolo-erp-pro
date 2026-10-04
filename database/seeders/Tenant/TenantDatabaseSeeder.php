@@ -32,7 +32,7 @@ class TenantDatabaseSeeder extends Seeder
             DB::table('general_settings')->insert([
                 [
                     'id' => 1,
-                    'site_title' => !empty(self::$tenantData) ? self::$tenantData['site_title'] : 'SalePro POS SaaS',
+                    'site_title' => !empty(self::$tenantData) ? self::$tenantData['site_title'] : 'zoloERP Pro',
                     'site_logo' => !empty(self::$tenantData) ? self::$tenantData['site_logo'] : '20250102042651.png',
                     'is_rtl' => 0,
                     'currency' => '1',
@@ -41,7 +41,7 @@ class TenantDatabaseSeeder extends Seeder
                     'staff_access' => 'own',
                     'without_stock' => 'no',
                     'date_format' => 'd/m/Y',
-                    'developed_by' => !empty(self::$tenantData) ? self::$tenantData['developed_by'] : 'Lioncoders',
+                    'developed_by' => !empty(self::$tenantData) ? self::$tenantData['developed_by'] : 'zoloERP Pro',
                     'invoice_format' => 'standard',
                     'decimal' => 2,
                     'state' => 1,
@@ -68,7 +68,7 @@ class TenantDatabaseSeeder extends Seeder
                     'password' => !empty(self::$tenantData) ? self::$tenantData['password'] : '$2y$10$DWAHTfjcvwCpOCXaJg11MOhsqns03uvlwiSUOQwkHL2YYrtrXPcL6',
                     'remember_token' => '6mN44MyRiQZfCi0QvFFIYAU9LXIUz9CdNIlrRS5Lg8wBoJmxVu8auzTP42ZW',
                     'phone' => !empty(self::$tenantData) ? self::$tenantData['phone'] : '12112',
-                    'company_name' => !empty(self::$tenantData) ? self::$tenantData['company_name'] : 'lioncoders',
+                    'company_name' => !empty(self::$tenantData) ? self::$tenantData['company_name'] : 'zoloERP Pro',
                     'role_id' => 1,
                     'biller_id' => NULL,
                     'warehouse_id' => NULL,
@@ -1027,7 +1027,7 @@ class TenantDatabaseSeeder extends Seeder
 
         $basic_permissions_role = [];
 
-        if(!config('database.connections.saleprosaas_landlord')) {
+        if(!config('database.connections.zoloerp_landlord')) {
             foreach ($permission_data as $row) {
                 $basic_permissions_role[] = [
                     'permission_id' => $row['id'],

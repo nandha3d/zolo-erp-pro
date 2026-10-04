@@ -1,6 +1,6 @@
 /**
  * ====================================================================
- * SalePro Neo - Next-Generation Modern ERP Design System
+ * zoloERP Pro Neo - Next-Generation Modern ERP Design System
  * Modern Typography, Slate Palette, Glassmorphism, Micro-interactions
  * ====================================================================
  */
@@ -115,10 +115,11 @@ h1, h2, h3, h4, h5, h6 {
    ==================================================================== */
 .side-navbar {
   background: var(--neo-sidebar-bg) !important;
+  background-color: var(--neo-sidebar-bg) !important;
   border-right: 1px solid var(--neo-sidebar-border) !important;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12) !important;
   width: 256px !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   z-index: 999;
 }
 
@@ -563,7 +564,8 @@ nav.navbar .nav-menu .dropdown > a {
   padding: 20px 24px !important;
   box-shadow: var(--neo-shadow-sm) !important;
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
+  z-index: 100 !important;
   margin-bottom: 12px;
 }
 
@@ -575,6 +577,8 @@ nav.navbar .nav-menu .dropdown > a {
   width: 4px;
   height: 100%;
   background: var(--neo-primary-gradient);
+  border-top-left-radius: var(--neo-radius-lg);
+  border-bottom-left-radius: var(--neo-radius-lg);
 }
 
 .zolo-greeting-title {
@@ -600,6 +604,9 @@ nav.navbar .nav-menu .dropdown > a {
 
 .zolo-filter-bar {
   gap: 10px;
+  overflow: visible !important;
+  position: relative;
+  z-index: 105;
 }
 
 .zolo-warehouse-picker {
@@ -609,6 +616,9 @@ nav.navbar .nav-menu .dropdown > a {
   border: 1px solid var(--neo-border);
   border-radius: 10px;
   padding: 2px 10px;
+  position: relative;
+  z-index: 110;
+  overflow: visible !important;
 }
 
 .zolo-date-filter-btn {
@@ -1791,5 +1801,258 @@ body.dark-mode .zolo-kpi-card:hover {
   background: #10b981;
   box-shadow: 0 0 8px #10b981;
 }
+
+/* ====================================================================
+   TABLES & GLOBAL ANTI-CLIPPING SYSTEM
+   ==================================================================== */
+.table-responsive {
+  min-height: 280px !important;
+  position: relative;
+}
+
+/* Ensure dropdowns inside tables sit cleanly above all container bounds */
+.table-responsive .dropdown-menu,
+.table .dropdown-menu,
+.dropdown-menu.edit-options {
+  z-index: 1065 !important;
+  border-radius: var(--neo-radius-md) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid var(--neo-border) !important;
+  background-color: var(--neo-surface-card) !important;
+  padding: 6px !important;
+  min-width: 140px !important;
+}
+
+.dropdown-menu.edit-options li {
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+.dropdown-menu.edit-options li .btn-link,
+.dropdown-menu.edit-options li a {
+  padding: 8px 14px !important;
+  border-radius: var(--neo-radius-sm) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--neo-text-primary) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+
+.dropdown-menu.edit-options li .btn-link:hover,
+.dropdown-menu.edit-options li a:hover {
+  background-color: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+}
+
+.dropdown-menu.edit-options li .btn-link i,
+.dropdown-menu.edit-options li a i {
+  font-size: 14px !important;
+  width: 18px !important;
+  text-align: center !important;
+  margin-right: 2px !important;
+  color: var(--neo-text-secondary) !important;
+}
+
+.dropdown-menu.edit-options li .btn-link:hover i,
+.dropdown-menu.edit-options li a:hover i {
+  color: var(--neo-primary) !important;
+}
+
+/* Dropup animation and positioning */
+.btn-group.dropup .dropdown-menu,
+.dropdown.dropup .dropdown-menu {
+  top: auto !important;
+  bottom: 100% !important;
+  margin-top: 0 !important;
+  margin-bottom: 4px !important;
+}
+
+/* On desktop, release overflow if table doesn't require horizontal scroll */
+@media (min-width: 992px) {
+  .table-responsive.dropdown-active {
+    overflow: visible !important;
+  }
+}
+
+/* Prevent clipping inside cards or sections containing tables */
+.card, .card-body {
+  overflow: visible !important;
+}
+
+/* ====================================================================
+   UNIVERSAL DROPDOWN ANTI-CLIPPING SYSTEM
+   Ensures dropdowns, selectpickers & action menus are NEVER clipped
+   ==================================================================== */
+/* Selectpicker container & dropdown menu high z-index & positioning */
+.bs-container,
+body > .bs-container {
+  z-index: 99999 !important;
+}
+
+.bs-container .dropdown-menu,
+.bootstrap-select .dropdown-menu {
+  z-index: 99999 !important;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--neo-border) !important;
+  max-height: 380px !important;
+}
+
+/* When any dropdown is open inside a table or container, release overflow */
+.table-responsive:has(.dropdown.show),
+.table-responsive:has(.btn-group.show),
+.table-responsive:has(.bootstrap-select.show),
+.table-responsive:has(.open),
+.table-responsive.dropdown-active {
+  overflow: visible !important;
+}
+
+.dataTables_wrapper,
+.dataTables_wrapper .row,
+.dataTables_wrapper div[class*="col-"] {
+  overflow: visible !important;
+}
+
+/* Table rows & cells hosting dropdown menus */
+.dataTable td,
+.table td {
+  position: static !important;
+}
+
+.dataTable td .btn-group,
+.dataTable td .dropdown,
+.table td .btn-group,
+.table td .dropdown {
+  position: relative !important;
+}
+
+/* Modal overflow handling for selectpickers & datepickers */
+.modal {
+  overflow-y: auto !important;
+}
+
+.modal-dialog {
+  overflow: visible !important;
+}
+
+.modal-content {
+  overflow: visible !important;
+}
+
+/* ====================================================================
+   AUTHORITATIVE ZOLO-ERP SIDEBAR & SUBMENU STYLES
+   Permanently eliminates white/light fallbacks in side navigation
+   ==================================================================== */
+.side-navbar,
+nav.side-navbar {
+  background-color: #0f172a !important;
+  background: #0f172a !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+  width: 256px !important;
+  opacity: 1 !important;
+}
+
+.side-navbar .side-menu,
+.side-navbar ul,
+.side-navbar li {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.side-navbar li a {
+  color: #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-size: 13.5px !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  margin: 2px 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.15s ease !important;
+}
+
+.side-navbar li a i {
+  color: #818cf8 !important;
+  font-size: 16px !important;
+  margin-right: 12px !important;
+  width: 20px !important;
+  text-align: center !important;
+}
+
+.side-navbar li a:hover,
+.side-navbar li a:focus {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.side-navbar li.active > a,
+.side-navbar li a[aria-expanded="true"] {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #818cf8 !important;
+  font-weight: 600 !important;
+}
+
+/* Sidebar Submenus (Accordion Collapse) */
+.side-navbar li ul,
+.side-navbar ul.collapse,
+.side-navbar .collapse {
+  background-color: #090d16 !important;
+  background: #090d16 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 10px !important;
+  padding: 6px !important;
+  margin: 4px 10px 8px 10px !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  list-style: none !important;
+}
+
+.side-navbar li ul li {
+  background: transparent !important;
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+.side-navbar li ul li a {
+  color: #94a3b8 !important;
+  font-size: 12.5px !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  margin: 1px 0 !important;
+  display: block !important;
+  line-height: 1.6 !important;
+}
+
+.side-navbar li ul li a:hover,
+.side-navbar li ul li.active > a {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.side-navbar .sidebar-heading {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: #64748b !important;
+  padding: 14px 16px 6px !important;
+  margin: 0 !important;
+  display: block !important;
+}
+
+/* Scrollbar container inside dark sidebar */
+.side-navbar .mCustomScrollBox,
+.side-navbar .mCSB_container {
+  background: transparent !important;
+}
+
 
 

@@ -68,7 +68,7 @@ class BillerController extends Controller
         if ($image) {
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/biller'), $imageName);
             }
@@ -126,7 +126,7 @@ class BillerController extends Controller
 
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/biller'), $imageName);
             }

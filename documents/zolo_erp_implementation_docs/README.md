@@ -1,7 +1,7 @@
 # zoloERP General ERP Implementation Pack
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -11,7 +11,7 @@
 
 ## Purpose
 
-This folder is the implementation pack for turning the current SalePro-derived repository into a configurable ERP that can serve different small and medium businesses without forking the application for every industry.
+This folder is the implementation pack for turning the current zoloERP Pro-derived repository into a configurable ERP that can serve different small and medium businesses without forking the application for every industry.
 
 The Optech blueprint remains the behavioral reference for fast entry, GST automation, bill-by-bill accounting, printing, job work and simple operator screens. This pack generalizes those strengths so they are optional capabilities rather than textile assumptions.
 
@@ -20,9 +20,9 @@ Start with `00_IMPLEMENTATION_MASTER_INDEX.md`. For coding, give Codex `26_CODEX
 ## Target rules
 
 - One authoritative sales engine, purchase engine, stock engine, accounting ledger, tax engine and document engine.
-- A legal Company is distinct from an optional SalePro SaaS Tenant.
+- A legal Company is distinct from an optional zoloERP Pro SaaS Tenant.
 - Industry templates enable capabilities; they do not clone core transaction tables.
-- Existing SalePro behavior stays available during migration through compatibility adapters.
+- Existing zoloERP Pro behavior stays available during migration through compatibility adapters.
 - Posted stock and accounting changes are reversible through new records, not destructive edits.
 - All web and API flows call the same application services.
 

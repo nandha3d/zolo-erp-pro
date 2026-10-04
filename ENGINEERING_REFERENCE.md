@@ -1,6 +1,6 @@
 # zoloERP Master Engineering Reference
 
-Shared ERP architecture and implementation guide for SalePro / Laravel 10.
+Shared ERP architecture and implementation guide for zoloERP Pro / Laravel 10.
 
 - **Repository:** `vigneshsinna/zolo-erp-pro`
 - **Product:** A general ERP with configurable General Trading, FMCG, Textile, Timber and Solar profiles.
@@ -383,7 +383,7 @@ Sources: [UI and setup](documents/zolo_erp_implementation_docs/20_UI_UX_NAVIGATI
 
 ### UI and setup
 
-UI modernization follows [design system and migration rules](documents/zolo_erp_implementation_docs/31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [Optech screen mapping](documents/zolo_erp_implementation_docs/32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md), and [common component contracts](documents/zolo_erp_implementation_docs/33_COMMON_UI_COMPONENT_LIBRARY.md). Retain Blade/Bootstrap/jQuery and extend the existing `salepro-neo.css` foundation. Preserve operator speed/shortcuts; use profile extensions and shared services. These specifications do not imply implemented components or completed company/engine gates.
+UI modernization follows [design system and migration rules](documents/zolo_erp_implementation_docs/31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [Optech screen mapping](documents/zolo_erp_implementation_docs/32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md), and [common component contracts](documents/zolo_erp_implementation_docs/33_COMMON_UI_COMPONENT_LIBRARY.md). Retain Blade/Bootstrap/jQuery and extend the existing `zolo-erp-neo.css` foundation. Preserve operator speed/shortcuts; use profile extensions and shared services. These specifications do not imply implemented components or completed company/engine gates.
 
 Extend the existing Blade/Bootstrap application progressively. Establish shared business behavior before any frontend framework rewrite. Integrate scripts/views through explicit application hooks, not response-string HTML injection.
 
@@ -524,7 +524,7 @@ Required industry UAT:
 | Timber | Dimensional receipt, selected-piece sale and conversion |
 | Solar | Project, serialized procurement, allocation, installation, invoice and payment |
 
-Preserve legacy SalePro critical flows and review original operator behavior through the [traceability matrix](documents/zolo_erp_implementation_docs/27_REQUIREMENT_TRACEABILITY_MATRIX.md).
+Preserve legacy zoloERP Pro critical flows and review original operator behavior through the [traceability matrix](documents/zolo_erp_implementation_docs/27_REQUIREMENT_TRACEABILITY_MATRIX.md).
 
 Initial performance budgets from document 24, to measure with representative data:
 

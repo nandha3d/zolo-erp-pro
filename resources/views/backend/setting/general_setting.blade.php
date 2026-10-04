@@ -49,7 +49,7 @@
                                         <label>{{__('db.RTL Layout')}}</label>
                                     </div>
                                 </div>
-                                @if(config('database.connections.saleprosaas_landlord'))
+                                @if(config('database.connections.zoloerp_landlord'))
                                     <div class="col-md-4 mt-4">
                                         <div class="form-group">
                                             @if($lims_general_setting_data->is_zatca)
@@ -403,7 +403,7 @@
                                 <div class="col-md-6">
                                     <div id="qrcode"></div>
                                 </div>
-                                @if(config('database.connections.saleprosaas_landlord'))
+                                @if(config('database.connections.zoloerp_landlord'))
                                     <br>
                                     <div class="col-md-2">
                                         <div class="form-group">
@@ -517,7 +517,7 @@
         $('#custom-style').attr('href', style_link);
     });
 
-    @if(config('database.connections.saleprosaas_landlord'))
+    @if(config('database.connections.zoloerp_landlord'))
         $.ajax({
             type: 'GET',
             async: false,

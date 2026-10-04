@@ -15,11 +15,11 @@ In legacy Optech Express ERP:
 
 ---
 
-## 2. SalePro Architectural Alignment
+## 2. zoloERP Pro Architectural Alignment
 
-SalePro offers multi-warehouse and role-based permissions, and in SaaS configurations, tenant databases via `stancl/tenancy`. For our non-invasive extension:
-1. We introduce `optech_companies` and `optech_financial_years` as an organization layer above SalePro's `warehouses` and `general_settings`.
-2. A single physical SalePro installation supports multiple active companies and fiscal years.
+zoloERP Pro offers multi-warehouse and role-based permissions, and in SaaS configurations, tenant databases via `stancl/tenancy`. For our non-invasive extension:
+1. We introduce `optech_companies` and `optech_financial_years` as an organization layer above zoloERP Pro's `warehouses` and `general_settings`.
+2. A single physical zoloERP Pro installation supports multiple active companies and fiscal years.
 3. Active company and fiscal period are maintained in session state (`session('optech_active_company_id')`, `session('optech_active_fy_id')`).
 
 ---

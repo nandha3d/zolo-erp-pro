@@ -8,15 +8,15 @@
 
 In textile manufacturing and distribution hubs:
 1. **Goods vs. Services in Item Master:** The product master manages both physical fabrics (*1001 Mull Grey, 40s Combed Cotton, Satin Bleached Bedspread*) and job-work processing services (*Bleaching Charges, Dyeing Charges, Ironing & Folding Charges, Stitching Charges*). Service items do not track physical inventory stock but carry tax slabs (typically 5% or 12%) and link to job-work billing.
-2. **3-Decimal Precision for Units:** While standard retail uses integer pieces, fabrics are measured in meters with 3 decimal places (e.g. `142.375 MTR`, `25.500 KG`). SalePro's default 2 decimals causes severe truncation losses across 10,000-meter consignments.
+2. **3-Decimal Precision for Units:** While standard retail uses integer pieces, fabrics are measured in meters with 3 decimal places (e.g. `142.375 MTR`, `25.500 KG`). zoloERP Pro's default 2 decimals causes severe truncation losses across 10,000-meter consignments.
 3. **Regional City-Prefixed Ledgers:** Over decades, textile operators in Erode/Tirupur organize Sundry Debtors and Creditors with their town prefix (*ERODE - BAPNA TEXTILES*, *ERNAKULAM - ATM TEX*, *SURAT - RADHEY SILK*). When an operator presses the spacebar at counter billing, typing `ERO` or `SUR` instantly narrows 2,000 parties down to the relevant local market.
 4. **Textile Classification Groups:** Products are categorized into fabric varieties (*Dhotis, Bedspreads, Mull, Grey Cloth, Bleached Cloth, Towels*) so that stock registers can be filtered in 1 click by fabric line.
 
 ---
 
-## 2. SalePro Architectural Extension
+## 2. zoloERP Pro Architectural Extension
 
-Without modifying SalePro's `products`, `units`, or `customers` tables:
+Without modifying zoloERP Pro's `products`, `units`, or `customers` tables:
 - We create companion table `optech_product_attributes` linked to `products.id`.
 - We add unit precision attributes supporting 3 decimals.
 - We implement standardized customer/supplier ledger decorators that enforce market/city prefixes and credit limits.
@@ -97,7 +97,7 @@ class TextileMasterService
     public function createTextileProduct(array $data): Product
     {
         return DB::transaction(function () use ($data) {
-            // 1. Create standard SalePro Product
+            // 1. Create standard zoloERP Pro Product
             $product = new Product();
             $product->name = $data['name'];
             $product->code = $data['code'];

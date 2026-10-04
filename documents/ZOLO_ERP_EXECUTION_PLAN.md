@@ -1,4 +1,4 @@
-# zoloERP — Phased Execution Plan (General ERP on SalePro)
+# zoloERP — Phased Execution Plan (General ERP on zoloERP Pro)
 
 > **Audience:** an engineer or a coding agent (Claude/Codex) that runs ONE phase per fresh chat session.
 > **Spec pack:** `documents/zolo_erp_implementation_docs/00..30` (authoritative for *what*). This file says *in what order, against which real code, and how to prove it worked*.
@@ -30,7 +30,7 @@ This revision adopts audit F-13 Option B: additive, inactive foundation packages
 
 The Partial/Pending purchase regression is a baseline correction, separate from D1–D12. Resolve it before dependent purchasing work. Preserve existing `fiscal_years` date ranges and migrate 1970 opening records separately.
 
-SQLite service fixtures may prove isolated logic. They cannot substitute for MySQL DDL/recovery, concurrency, representative legacy-data rehearsal or original SalePro smoke flows. Completion requires evidence, not scaffolds.
+SQLite service fixtures may prove isolated logic. They cannot substitute for MySQL DDL/recovery, concurrency, representative legacy-data rehearsal or original zoloERP Pro smoke flows. Completion requires evidence, not scaffolds.
 
 ## How to use this plan
 
@@ -95,7 +95,7 @@ The discovery tables below describe the pre-foundation source snapshot. Company 
 
 - No `company_id` / `branch_id` / `tenant_id` / `business_id` on any table. Only `users.biller_id`, `users.warehouse_id`.
 - No companies, branches, company membership, FY context middleware, document series, stock movement ledger, open items/allocations, tax registrations/rates/HSN, print profiles, dispatch logs, idempotency store, attribute definitions, capability tables.
-- SaaS tenancy (`stancl/tenancy`) **not installed**. `config('database.connections.saleprosaas_landlord')` is always null → single-DB mode. `app/Traits/TenantInfo.php`, `AppServiceProvider.php:106-142`, `Common.php:32-42` are dead SaaS remnants. Keep them inert; don't build on them.
+- SaaS tenancy (`stancl/tenancy`) **not installed**. `config('database.connections.zoloerp_landlord')` is always null → single-DB mode. `app/Traits/TenantInfo.php`, `AppServiceProvider.php:106-142`, `Common.php:32-42` are dead SaaS remnants. Keep them inert; don't build on them.
 - `Modules/Optech*` (7 modules) are unmodified `module:make` scaffolds: no migrations, stub controllers, no auth on routes.
 - `modules_statuses.json` lists Woocommerce/Ecommerce/Restaurant/Project/Middleware but those dirs are absent. Boot is safe; but `general_settings.modules` containing `restaurant` activates code paths querying missing tables (`SaleController` 15+ places, `ProductController.php:437,1221,1281`) and `DatabaseSeeder.php:20-22` would fatal.
 - Model `$fillable` lists columns no migration creates (products: `slug, is_online, kitchen_id…`; sales: `billing_*, waiter_id…`). Run `SHOW COLUMNS` on any real DB before trusting.

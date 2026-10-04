@@ -1,14 +1,14 @@
 # 31 - Modern zoloERP UI Design System and Screen Migration Rules
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** UI modernization implementation specification  
-> **Existing UI foundation:** Blade/Bootstrap + `public/css/salepro-neo.css` loaded by `resources/views/backend/layout/main.blade.php`  
+> **Existing UI foundation:** Blade/Bootstrap + `public/css/zolo-erp-neo.css` loaded by `resources/views/backend/layout/main.blade.php`  
 > **Date:** 2026-10-03
 
 ## Purpose
 
-Define the visual, interaction and migration rules for modernizing the existing SalePro-derived UI into zoloERP without sacrificing ERP speed, information density or compatibility.
+Define the visual, interaction and migration rules for modernizing the existing zoloERP Pro-derived UI into zoloERP without sacrificing ERP speed, information density or compatibility.
 
 This is **not** a full frontend-framework rewrite. The current application remains Blade/Bootstrap/jQuery unless a later approved architecture decision changes that. The first objective is consistency and usability, not replacing working server-rendered screens with a new JavaScript stack.
 
@@ -18,7 +18,7 @@ This is **not** a full frontend-framework rewrite. The current application remai
 
 ## Preserve behavior, modernize presentation
 
-Legacy SalePro and Optech interfaces provide workflow evidence.
+Legacy zoloERP Pro and Optech interfaces provide workflow evidence.
 
 Preserve:
 
@@ -59,7 +59,7 @@ Core screens use general business terminology. Industry-specific fields and voca
 
 The repository already has a global zoloERP stylesheet:
 
-`public/css/salepro-neo.css`
+`public/css/zolo-erp-neo.css`
 
 It is loaded from:
 
@@ -582,7 +582,7 @@ Recommended pattern within the current stack:
 resources/views/backend/components/
 resources/views/backend/partials/
 resources/views/backend/<domain>/
-public/css/salepro-neo.css
+public/css/zolo-erp-neo.css
 public/css/zolo-components.css          optional companion
 public/js/zolo/
 ```
@@ -597,7 +597,7 @@ Optional modules may own optional-operation views, but shared UI components stay
 
 For every migrated page:
 
-- [ ] Current SalePro screen inspected.
+- [ ] Current zoloERP Pro screen inspected.
 - [ ] Relevant Optech sequence inspected where applicable.
 - [ ] Functional spec identified.
 - [ ] Shared source-of-truth service identified.

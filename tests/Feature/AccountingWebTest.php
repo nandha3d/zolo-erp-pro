@@ -64,6 +64,6 @@ class AccountingWebTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser)->get(route('sale.pos'));
         $response->assertStatus(200)
-            ->assertSee('salepro-neo.css');
+            ->assertSee('zolo-erp-neo.css');
     }
 }

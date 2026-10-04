@@ -1,7 +1,7 @@
 # 24 - Testing, Performance and UAT
 
 > **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Target:** zoloERP on SalePro / Laravel 10  
+> **Target:** zoloERP Pro / Laravel 10  
 > **Status:** Implementation specification  
 > **Basis:** reviewed `main` branch + `optech_erp_modernization_project_plan.html`  
 > **Date:** 2026-10-03
@@ -51,4 +51,4 @@ Representative performance data should include large product/party/line volumes 
 - Textile: job-work send/receive → service bill → wholesale sale.
 - Timber: dimension receipt → selected sale → conversion.
 - Solar: project → serialized procurement → install → invoice.
-- Existing SalePro critical flows remain smoke-tested.
+- Existing zoloERP Pro critical flows remain smoke-tested.

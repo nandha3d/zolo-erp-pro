@@ -110,7 +110,7 @@
 
 
 @push('scripts')
-    @if (!config('database.connections.saleprosaas_landlord'))
+    @if (!config('database.connections.zoloerp_landlord'))
         <script type="text/javascript" src="<?php echo asset('vendor/emoji/vanillaEmojiPicker.js'); ?>"></script>
     @else
         <script type="text/javascript" src="<?php echo asset('../../vendor/emoji/vanillaEmojiPicker.js'); ?>"></script>

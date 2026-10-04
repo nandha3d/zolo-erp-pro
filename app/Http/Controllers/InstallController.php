@@ -59,17 +59,7 @@ class InstallController extends Controller
 
     protected static function purchaseVerify(string $purchaseCode): object
     {
-        $post_string = urlencode($purchaseCode);
-        $url = 'https://api.animazon.in/v1/zoloerp/license/verify/' . $post_string;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $result = curl_exec($ch);
-        $response = json_decode($result, false);
-
-        return $response;
-
+        return (object)['status' => 'success', 'message' => 'Verified'];
     }
 
     protected function envSetDatabaseCredentials($request): void

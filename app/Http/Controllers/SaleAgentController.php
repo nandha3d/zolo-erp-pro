@@ -148,7 +148,7 @@ class SaleAgentController extends Controller
                 $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
                 $imageName = date("Ymdhis");
 
-                if (!config('database.connections.saleprosaas_landlord')) {
+                if (!config('database.connections.zoloerp_landlord')) {
                     $imageName = $imageName . '.' . $ext;
                     $image->move(public_path('images/sale_agent'), $imageName);
                 } else {
@@ -220,7 +220,7 @@ class SaleAgentController extends Controller
             $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
             $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
             $imageName = date("Ymdhis");
-            if(!config('database.connections.saleprosaas_landlord')) {
+            if(!config('database.connections.zoloerp_landlord')) {
                 $imageName = $imageName . '.' . $ext;
                 $image->move(public_path('images/employee'), $imageName);
             }
@@ -266,7 +266,7 @@ class SaleAgentController extends Controller
 
         $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
 
-        // if($lims_employee_data->image && !config('database.connections.saleprosaas_landlord')) {
+        // if($lims_employee_data->image && !config('database.connections.zoloerp_landlord')) {
         //     unlink('images/employee/'.$lims_employee_data->image);
         // }
         // elseif($lims_employee_data->image) {

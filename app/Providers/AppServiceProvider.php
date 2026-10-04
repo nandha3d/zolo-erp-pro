@@ -129,7 +129,7 @@ class AppServiceProvider extends ServiceProvider
             });
         };
 
-        if (config('database.connections.saleprosaas_landlord')) {
+        if (config('database.connections.zoloerp_landlord')) {
             ///new code for superadmin//
             if (!app()->bound('tenancy')) {
                 $locale = null;
