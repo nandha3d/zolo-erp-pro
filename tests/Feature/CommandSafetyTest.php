@@ -11,11 +11,10 @@ class CommandSafetyTest extends TestCase
 {
     public function test_database_reset_is_never_scheduled(): void
     {
-        $events = $this->app->make(Schedule::class)->events();
-        foreach ($events as $event) {
-            $this->assertStringNotContainsString('reset:db', $event->command ?? '');
+        $commands = collect($this->app->make(Schedule::class)->events())->pluck('command')->implode("\n");
+        foreach (['reset:db', 'purchase:auto', 'dsoalert:find', 'quote:daily'] as $legacy) {
+            $this->assertStringNotContainsString($legacy, $commands);
         }
-        $this->assertNotEmpty($events);
     }
 
     public function test_even_confirmed_database_reset_is_rejected_outside_demo_before_queries(): void

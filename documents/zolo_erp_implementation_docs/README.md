@@ -65,3 +65,7 @@ SQLite fixtures prove isolated logic only. MySQL schema/recovery, concurrency an
 Read these with document 20 when migrating a screen. Existing backend/ownership acceptance gates still apply.
 
 - [Phase 9–10 operations and profiles](PHASE_9_10_OPERATIONS_AND_PROFILES.md): gated delivery, shared owners, industry acceptance proof, migrations and remaining UAT gates.
+- [Phase 11 workspace/API/security](PHASE_11_UI_API_SECURITY.md): authorized setup, capability/permission navigation, bounded reads, safe correlation and retired browser backup/updater.
+- [Phase 12 migration/deployment](PHASE_12_MIGRATION_UAT_DEPLOYMENT.md): reviewed opening batches, encrypted backups, isolated restore, health and deployment procedure.
+- [Phase 12 UAT/cutover record](PHASE_12_UAT_AND_CUTOVER_RECORD.md): pending customer evidence and signatures.
+- [Phase 11–12 changed files](PHASE_11_12_CHANGED_FILES.md): complete changes against the accepted Phase 9–10 checkpoint.

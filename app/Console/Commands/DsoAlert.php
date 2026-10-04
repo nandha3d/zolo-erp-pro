@@ -39,6 +39,10 @@ class DsoAlert extends Command
      */
     public function handle()
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
+            $this->error('This global legacy job is retired after company foundation. Use an authorized company service.');
+            return self::FAILURE;
+        }
         $date = date("Y-m-d", strtotime("-1 day"));
         config()->set('database.connections.mysql.strict', false);
         DB::reconnect();

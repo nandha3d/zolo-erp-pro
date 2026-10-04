@@ -26,7 +26,8 @@ class AccountingPostingService
         Validator::make($header, [
             'posting_key' => 'nullable|string|max:150', 'idempotency_key' => 'nullable|string|max:150',
             'description' => 'nullable|string|max:2000', 'reference_type' => 'nullable|string|max:100',
-            'reference_no' => 'nullable|string|max:100', 'due_date' => 'nullable|date_format:Y-m-d|after_or_equal:entry_date',
+            'reference_no' => 'nullable|string|max:100', 'due_date' => 'nullable|date_format:Y-m-d'.(($header['reference_type'] ?? '') === 'migration_opening' ? '' : '|after_or_equal:entry_date'),
+            'source_document_date' => 'nullable|date_format:Y-m-d|before_or_equal:entry_date',
             'cheque_no' => 'nullable|string|max:100', 'cheque_date' => 'nullable|date_format:Y-m-d',
             'reference_mode' => 'nullable|in:new_reference,against_reference,advance,on_account',
         ])->validate();
@@ -65,6 +66,7 @@ class AccountingPostingService
             $type, $header['reference_id'] ?? null, $header['description'] ?? 'Journal Entry',
             $header['voucher_type'] ?? null, $header['cheque_no'] ?? null, $header['cheque_date'] ?? null,
             $header['due_date'] ?? null, $header['reference_mode'] ?? 'new_reference', $header['allocations'] ?? [], $lines,
+            ...($type === 'migration_opening' ? [$header['source_document_date'] ?? null, $header['reference_no'] ?? null] : []),
         ], JSON_THROW_ON_ERROR));
 
         return DB::transaction(function () use ($header, $context, $guard, $actor, $lines, $debits, $credits, $type, $key, $hash) {
@@ -112,7 +114,7 @@ class AccountingPostingService
                 if (in_array($account->control_type, ['ar', 'ap'], true)) {
                     $expected = $account->control_type === 'ar' ? 'customer' : 'supplier';
                     if (($line['partner_type'] && $line['partner_type'] !== $expected)
-                        || (in_array($type, ['manual', 'voucher'], true) && !$line['partner_id'])) {
+                        || (in_array($type, ['manual', 'voucher', 'migration_opening'], true) && !$line['partner_id'])) {
                         throw new InvalidArgumentException('Control-account postings require their customer or supplier.');
                     }
                 }
@@ -162,6 +164,7 @@ class AccountingPostingService
             return;
         }
         $model = match ($type) {
+            'migration_opening' => \App\Models\ImportBatch::class,
             'production' => \App\Models\Operations\ProductionOrder::class,
             'job_work_receipt' => \App\Models\Operations\JobWorkReceipt::class,
             'stock_loss' => \App\Models\Inventory\StockMovement::class,
@@ -180,9 +183,12 @@ class AccountingPostingService
             $model::visibleIn($context)->whereKey($header['reference_id'])->lockForUpdate()->firstOrFail();
         } else {
             $source = $guard->owned($model, $header['reference_id'], $context, 'reference_id');
-            if (in_array($type, ['production', 'job_work_receipt', 'stock_loss', 'sale_credit_note', 'sale_debit_note', 'purchase_credit_note', 'purchase_debit_note', 'damage'], true)
+            if (in_array($type, ['migration_opening', 'production', 'job_work_receipt', 'stock_loss', 'sale_credit_note', 'sale_debit_note', 'purchase_credit_note', 'purchase_debit_note', 'damage'], true)
                 && ((int) $source->branch_id !== $context->branchId || (int) $source->financial_year_id !== $context->financialYearId)) {
                 throw new InvalidArgumentException('Operational accounting source is outside the selected branch or financial year.');
+            }
+            if ($type === 'migration_opening' && ($source->status !== 'committing' || !app(\App\Services\Platform\CompanyContextResolver::class)->canManageFinancialYears($actor, $context->companyId))) {
+                throw new InvalidArgumentException('Migration posting requires a reviewed opening batch under the company administrator.');
             }
             if ($type === 'expense' && $source->warehouse_id) {
                 $guard->warehouse($source->warehouse_id, $context, $actor);

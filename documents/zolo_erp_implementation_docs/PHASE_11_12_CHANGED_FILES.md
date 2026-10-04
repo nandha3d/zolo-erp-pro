@@ -1,0 +1,67 @@
+# Phase 11–12 changed files
+
+Baseline: accepted Phase 9–10 checkpoint `a0c01bc`. Branch: `codex/phase9-10-operations-profiles`. Includes Phase 11 commits `ef6c20c` and `7d2f957`, plus Phase 12 software, validation and runbooks. Runtime fixtures, credentials, database dumps and native binaries are ignored and excluded.
+
+See [Phase 11](PHASE_11_UI_API_SECURITY.md), [Phase 12](PHASE_12_MIGRATION_UAT_DEPLOYMENT.md) and [progress](IMPLEMENTATION_PROGRESS.md) for behavior, proof and pending acceptance. No new direct stock projection writer or parallel accounting ledger was created.
+
+- `.env.example`
+- `.github/workflows/company-foundation.yml`
+- `app/Console/Commands/AutoPurchase.php`
+- `app/Console/Commands/DailyQuote.php`
+- `app/Console/Commands/DsoAlert.php`
+- `app/Console/Commands/ErpBackup.php`
+- `app/Console/Commands/ErpHealth.php`
+- `app/Console/Commands/ImportOpening.php`
+- `app/Console/Commands/RestoreRehearsal.php`
+- `app/Console/Kernel.php`
+- `app/Exceptions/Handler.php`
+- `app/Http/Controllers/Api/V1/PartnerApiController.php`
+- `app/Http/Controllers/Api/V1/ProductApiController.php`
+- `app/Http/Controllers/Api/V1/PurchaseApiController.php`
+- `app/Http/Controllers/Api/V1/SaleApiController.php`
+- `app/Http/Controllers/HomeController.php`
+- `app/Http/Controllers/SettingController.php`
+- `app/Http/Controllers/WorkspaceController.php`
+- `app/Http/Kernel.php`
+- `app/Http/Middleware/RequestCorrelation.php`
+- `app/Http/Middleware/RequireCompanyPermission.php`
+- `app/Http/Middleware/ResolveCompanyContext.php`
+- `app/Http/Resources/CommercialDocumentResource.php`
+- `app/Http/Resources/PartyResource.php`
+- `app/Http/Resources/ProductResource.php`
+- `app/Models/ImportBatch.php`
+- `app/Models/Inventory/StockMovement.php`
+- `app/Providers/CapabilityServiceProvider.php`
+- `app/Providers/RouteServiceProvider.php`
+- `app/Services/Accounting/AccountingPostingService.php`
+- `app/Services/Accounting/OpenItemService.php`
+- `app/Services/Deployment/BackupService.php`
+- `app/Services/Deployment/ErpHealthService.php`
+- `app/Services/Deployment/OpeningImportService.php`
+- `app/Services/Inventory/InventoryMovementService.php`
+- `app/Services/Platform/CapabilityService.php`
+- `app/Services/Platform/CompanySetupService.php`
+- `app/Services/Platform/WorkspaceNavigation.php`
+- `app/Traits/AutoUpdateTrait.php`
+- `config/deployment.php`
+- `database/migrations/2026_10_09_000001_create_company_setup_audits.php`
+- `database/migrations/2026_10_10_000001_create_reviewed_opening_imports.php`
+- `documents/phase11-12-proof/company-setup.png`
+- `documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md`
+- `documents/zolo_erp_implementation_docs/PHASE_11_12_CHANGED_FILES.md`
+- `documents/zolo_erp_implementation_docs/PHASE_11_UI_API_SECURITY.md`
+- `documents/zolo_erp_implementation_docs/PHASE_12_MIGRATION_UAT_DEPLOYMENT.md`
+- `documents/zolo_erp_implementation_docs/PHASE_12_UAT_AND_CUTOVER_RECORD.md`
+- `documents/zolo_erp_implementation_docs/README.md`
+- `documents/zolo_erp_implementation_docs/manifest.json`
+- `phpunit.delivery.xml`
+- `public/css/zolo-erp-neo.css`
+- `resources/views/backend/layout/sidebar.blade.php`
+- `resources/views/backend/workspace/home.blade.php`
+- `resources/views/backend/workspace/layout.blade.php`
+- `resources/views/backend/workspace/setup.blade.php`
+- `routes/api.php`
+- `routes/workspace.php`
+- `tests/Feature/CommandSafetyTest.php`
+- `tests/Feature/DeploymentReadinessTest.php`
+- `tests/Feature/WorkspaceSecurityTest.php`

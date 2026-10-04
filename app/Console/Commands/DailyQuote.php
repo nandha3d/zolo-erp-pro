@@ -30,6 +30,7 @@ class DailyQuote extends Command
      */
     public function handle()
     {
+        if (!app()->environment('demo')) { $this->error('Test mailer requires the demo environment.'); return self::FAILURE; }
         $quotes = [
             'Mahatma Gandhi' => 'Live as if you were to die tomorrow. Learn as if you were to live forever.',
             'Friedrich Nietzsche' => 'That which does not kill us makes us stronger.',

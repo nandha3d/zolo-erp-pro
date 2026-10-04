@@ -43,6 +43,10 @@ class AutoPurchase extends Command
      */
     public function handle()
     {
+        if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
+            $this->error('This global legacy job is retired after company foundation. Use an authorized company service.');
+            return self::FAILURE;
+        }
         DB::transaction(fn () => $this->purchase());
         return self::SUCCESS;
     }

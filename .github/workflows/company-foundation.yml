@@ -45,5 +45,23 @@ jobs:
         run: php vendor/bin/phpunit -c phpunit.company.xml
       - name: Gated manufacturing, job work and industry flow invariants
         run: php vendor/bin/phpunit -c phpunit.operations.xml
+      - name: Create an empty restricted backup rehearsal target
+        env:
+          MYSQL_PWD: fixture-root-only
+        run: |
+          mysql --host=127.0.0.1 --port=3306 --user=root <<'SQL'
+          CREATE DATABASE zolo_test_restore_delivery CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER 'zolo_restore'@'%' IDENTIFIED BY 'fixture-only';
+          GRANT ALL PRIVILEGES ON zolo_test_restore_delivery.* TO 'zolo_restore'@'%';
+          SQL
+      - name: Workspace security, opening migration and encrypted MySQL restore
+        env:
+          ERP_DELIVERY_MYSQL_BACKUP: '1'
+          ERP_RESTORE_DB_HOST: 127.0.0.1
+          ERP_RESTORE_DB_PORT: '3306'
+          ERP_RESTORE_DB_DATABASE: zolo_test_restore_delivery
+          ERP_RESTORE_DB_USERNAME: zolo_restore
+          ERP_RESTORE_DB_PASSWORD: fixture-only
+        run: php vendor/bin/phpunit -c phpunit.delivery.xml
       - name: Legacy seeded ERP web, API and accounting smoke
         run: php vendor/bin/phpunit -c phpunit.legacy-mysql.xml

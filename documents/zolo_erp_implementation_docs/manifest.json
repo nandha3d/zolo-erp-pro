@@ -1,7 +1,7 @@
 {
   "repository": "vigneshsinna/zolo-erp-pro",
-  "generated": "2026-10-04",
-  "markdown_count": 47,
+  "generated": "2026-10-05",
+  "markdown_count": 51,
   "entrypoint": "00_IMPLEMENTATION_MASTER_INDEX.md",
   "codex_entrypoint": "26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md",
   "files": [
@@ -43,6 +43,10 @@
     "COMPANY_TABLE_OWNERSHIP_MATRIX.md",
     "IMPLEMENTATION_PROGRESS.md",
     "LEGACY_STOCK_SHADOW_AUDIT.md",
+    "PHASE_11_12_CHANGED_FILES.md",
+    "PHASE_11_UI_API_SECURITY.md",
+    "PHASE_12_MIGRATION_UAT_DEPLOYMENT.md",
+    "PHASE_12_UAT_AND_CUTOVER_RECORD.md",
     "PHASE_2_3_IMPLEMENTATION.md",
     "PHASE_4C_AUTHORITATIVE_CUTOVER.md",
     "PHASE_5_ACCOUNTING_HARDENING.md",
@@ -107,7 +111,11 @@
       "PHASE_6_SHARED_COMMERCIAL.md",
       "PHASE_7_8_TAX_RETURNS_AND_DOCUMENTS.md",
       "PHASE_9_10_OPERATIONS_AND_PROFILES.md",
-      "PHASE_9_10_CHANGED_FILES.md"
+      "PHASE_9_10_CHANGED_FILES.md",
+      "PHASE_11_UI_API_SECURITY.md",
+      "PHASE_11_12_CHANGED_FILES.md",
+      "PHASE_12_MIGRATION_UAT_DEPLOYMENT.md",
+      "PHASE_12_UAT_AND_CUTOVER_RECORD.md"
     ]
   }
 }

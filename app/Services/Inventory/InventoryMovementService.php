@@ -87,6 +87,12 @@ class InventoryMovementService
         return $this->post('opening', $command);
     }
 
+    /** A reviewed external opening import starts with zero projections and applies its stock once. */
+    public function importOpening(StockMovementCommand $command): StockMovement
+    {
+        return $this->post('receipt', $command, 'migration_opening');
+    }
+
     /** Empty projection metadata preserves legacy warehouse product selectors; it has no stock effect. */
     public function initializeWarehouse(int $warehouseId, ?CompanyContext $context = null): void
     {

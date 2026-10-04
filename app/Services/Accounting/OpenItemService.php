@@ -33,7 +33,7 @@ class OpenItemService
                 'party_type' => $line->partner_type, 'party_id' => $line->partner_id ?: null,
                 'source_type' => $entry->reference_type, 'source_id' => $entry->reference_id,
                 'document_no' => $entry->reference_no ?: $entry->entry_number,
-                'document_date' => $entry->entry_date->toDateString(),
+                'document_date' => $entry->reference_type === 'migration_opening' ? ($header['source_document_date'] ?? $entry->entry_date->toDateString()) : $entry->entry_date->toDateString(),
                 'due_date' => $header['due_date'] ?? $entry->entry_date->toDateString(),
                 'original_amount' => LedgerAmount::decimal($amount), 'open_amount' => LedgerAmount::decimal($amount),
                 'reference_mode' => $header['reference_mode'] ?? 'new_reference',

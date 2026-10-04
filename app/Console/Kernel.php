@@ -26,11 +26,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('purchase:auto')->everyFiveMinutes();
-        $schedule->command('dsoalert:find')->dailyAt('00:00');
-        // Database resets are explicit demo operations, never scheduled business work.
-        // Testing Purpose
-        $schedule->command('quote:daily')->everyMinute();
+        if (config('deployment.backup_enabled')) $schedule->command('erp:backup')->dailyAt('02:00')->withoutOverlapping();
+        if (config('commercial.enabled') && config('compliance.enabled') && config('deployment.dispatch_worker_confirmed')) {
+            $schedule->command('erp:dispatch-documents')->everyMinute()->withoutOverlapping();
+        }
+        // Global legacy purchase/alert jobs and the test mailer are not production schedules.
+
     }
 
     /**

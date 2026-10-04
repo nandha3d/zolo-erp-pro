@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        if (Schema::hasTable('company_setup_audits')) \App\Support\MigrationConstraints::requireColumns('company_setup_audits', ['company_id', 'actor_id', 'action', 'before_json', 'after_json', 'created_at']);
         if (Schema::hasTable('permissions')) {
             \Illuminate\Support\Facades\DB::table('permissions')->updateOrInsert(['name' => 'accounting.reports.view', 'guard_name' => 'web'], ['updated_at' => now()]);
         }
@@ -18,6 +19,9 @@ return new class extends Migration {
                 $t->index(['company_id', 'created_at']);
             });
         }
+        \App\Support\MigrationConstraints::foreign('company_setup_audits', 'company_setup_audits_company_id_foreign', ['company_id'], 'companies');
+        \App\Support\MigrationConstraints::foreign('company_setup_audits', 'company_setup_audits_actor_id_foreign', ['actor_id'], 'users');
+        \App\Support\MigrationConstraints::index('company_setup_audits', 'company_setup_audits_company_id_created_at_index', ['company_id', 'created_at']);
     }
     public function down(): void { throw new RuntimeException('Setup audit history requires a reviewed forward rollback.'); }
 };
