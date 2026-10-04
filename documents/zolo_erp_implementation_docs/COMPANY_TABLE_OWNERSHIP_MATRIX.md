@@ -2,7 +2,7 @@
 
 Source inventory for audit F-04, reviewed 2026-10-04 by the Codebase Onboarding Engineer. This is a migration and isolation checklist, not an activation certificate.
 
-The source defines **131 application tables**: the original 123 active literal creators, six additive capability/numbering creators and two configured Spatie creators. Framework `migrations` metadata is additional. A live database may differ; reconcile its schema before cutover. The company package adds nullable indexed ownership to 32 existing tables and creates four platform tables. It does not cover all business data.
+The source defines **136 application tables**: the original 123 active literal creators, six additive capability/numbering creators, five stock-ledger creators and two configured Spatie creators. Framework `migrations` metadata is additional. A live database may differ; reconcile its schema before cutover. The company package adds nullable indexed ownership to 32 existing tables and creates four platform tables. It does not cover all business data.
 
 ## Interpretation and common acceptance gates
 
@@ -45,6 +45,17 @@ Configured Spatie table names must be checked against deployed `config('permissi
 | `document_number_reservations` | Company and owned series/source | Shared commercial/payment/accounting writers | Unique sequence/formatted number/source binding; allocation and assignment in the source transaction; retained references preserved |
 
 Both additive migrations resume missing indexes/FKs after committed MySQL CREATE TABLE interruptions. These tables do not establish ownership for remaining legacy modules.
+
+## Stock ledger ownership (Phase 4)
+
+| Tables | State / required scope | Readers and writers | Constraints and remaining gates |
+|---|---|---|---|
+| `stock_movements`, `stock_movement_lines` | Company, nullable until backfill; stamped by the movement service from the authorized context, or from the owned warehouses when no context is passed | `InventoryMovementService` only (including `LegacyStockShadow` and `erp:stock-opening`); availability/reconciliation read | Immutable by model guard (corrections are reversals); unique idempotency key and reversal link; restricting FKs to products, warehouses, identities, batches and companies; mandatory ownership and company-aware uniqueness remain gates |
+| `stock_identities`, `stock_dimensions` | Company via product; one serial or piece per product/type/number | `InventoryMovementService` | Single location and status per identity; restricting FKs; dimension row unique per identity |
+| `product_uom_conversions` | Company via product | `UomConversionService` reads; no maintenance screen yet | Unique per product/from/to unit; restricting FKs |
+| `product_batches` (extended) | Gains nullable indexed `company_id`, `mfg_date`, `mrp`, `status`; ownership still derives from the product | Movement service and legacy controllers | `company_id` is not yet populated by `erp:backfill-company-context` for existing batches |
+
+Migration `2026_10_04_000001_create_stock_ledger_tables` is resumable after committed MySQL DDL: it creates only missing tables, adds only missing columns, indexes and foreign keys, and refuses a table lacking owned columns or an index of the wrong shape. Proof: `StockLedgerMigrationTest` interrupts it at eight statement boundaries on disposable MySQL and reruns it with retained rows.
 
 ## Existing 32-table ownership package
 

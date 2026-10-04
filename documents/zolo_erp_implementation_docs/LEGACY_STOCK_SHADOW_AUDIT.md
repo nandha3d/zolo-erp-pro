@@ -107,12 +107,14 @@ Unrouted writer methods, which are dead code: `PurchaseController::updateFromCli
 
 Seven writer routes are unnamed: the six `deletebyselection` routes and `/products/update`. Attach the middleware in `routes/web.php` by controller action, or use a controller `middleware(...)->only([...])` in each constructor, rather than by route name.
 
-## Security finding (outside shadow scope; fix before any activation)
+## Security findings (outside shadow scope) - resolved in `ff9310e`
+
+The findings below describe `868ad0b`. Both are fixed on `main`; the text is kept as the audit record.
 
 - **`GET /update-coupon` → `CouponController::updateCoupon` (CouponController.php:83-104).** Any authenticated, active user can trigger it with a GET request. It does three things:
   - disables FK checks;
   - truncates **every** table, including users, ledger and settings;
   - recursively deletes the directory named by the request parameter `data` (arbitrary path, `unlink`/`rmdir`).
 
-  There is no permission check and no CSRF protection, because the route is a GET. It came with the initial import (`38f265f`). **Recommend removing the route and method.**
-- **`GET /setting/empty-database` → `SettingController::emptyDatabase`.** The only gate is `env('USER_VERIFIED')`; there is no role permission check, and it is a GET. It truncates all business tables, including `product_warehouse` and every Phase 4 ledger table. **Recommend:** POST only, an Owner/Admin permission, explicit confirmation, and including the ledger tables deliberately.
+  There is no permission check and no CSRF protection, because the route is a GET. It came with the initial import (`38f265f`). **Resolved in `ff9310e`: the route and method were removed.**
+- **`GET /setting/empty-database` → `SettingController::emptyDatabase`.** The only gate is `env('USER_VERIFIED')`; there is no role permission check, and it is a GET. It truncates all business tables, including `product_warehouse` and every Phase 4 ledger table. **Resolved in `ff9310e`:** POST only, restricted to active Owner/Admin (role 1/2), and requires the typed phrase `DELETE ALL DATA`. Companies, branches, memberships, fiscal years, capabilities and the chart of accounts are kept; the ledger tables are emptied together with the business data.

@@ -112,7 +112,7 @@ Serial inventory and operational references without reviewed ownership paths rem
 | Concurrent supplier-settlement test on disposable MySQL 8.4 | 1 test, 9 assertions | Two processes race against one payable; exactly one posts, with no overpayment or failed number reservation |
 | Targeted SQLite commercial writer/accounting suites before the final method guard | 33 tests, 374 assertions | Commercial policies, supplier settlements, posting dates, owned reports, mapping/chart guards and web context |
 | Final SQLite commercial writer/method-guard suite | 29 tests, 277 assertions; one MySQL concurrency case skipped | Reviewed payment methods and source/account/period rejection |
-| `phpunit.company.xml`, merged phases 2/3/4 and shared-writer accounting, disposable official MySQL 8.4.0 | 213 tests, 2,128 assertions, 0 skipped | Foundation/context, capabilities, atomic numbering, stock ledger incl. 4-process last-unit race and MySQL migration chain, ledger-backed ERP services, legacy writer shadow recording, supplier/customer settlement incl. two-process race, owned accounting paths, whole-database wipe lockdown |
+| `phpunit.company.xml`, merged phases 2/3/4 and shared-writer accounting, disposable official MySQL 8.4.0 | 225 tests, 2,458 assertions, 0 skipped | Foundation/context, capabilities, atomic numbering, stock ledger incl. 4-process last-unit race, MySQL migration chain and ledger-migration recovery after DDL interrupted at eight statement boundaries, ledger-backed ERP services, legacy writer shadow recording, supplier/customer settlement incl. two-process race, owned accounting paths, whole-database wipe lockdown |
 | `phpunit.legacy-mysql.xml` on the same disposable MySQL 8.4.0 | 28 tests, 200 assertions | Original 16 seeded smoke tests, 9 legacy web E2E shadow tests (full middleware stack) and 3 audited known-gap tests |
 | Headless Chrome accounting and setup checks | Passed | Accounting close disabled at desktop/mobile widths, unsafe modals and foreign rows absent, chart modal/zero openings, mapping policy, no page errors; rendered desktop/mobile form, inputs, labels, CSRF field, keyboard focus, no page errors |
 
@@ -126,7 +126,7 @@ The initial seeded-suite connection failure is resolved by the disposable MySQL 
 
 ## Open Phase 1 work
 
-[Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md) inventories the original 125 application tables plus six capability/numbering tables. Discovery is complete; ownership migration and runtime isolation are not.
+[Company table ownership matrix](COMPANY_TABLE_OWNERSHIP_MATRIX.md) inventories the original 125 application tables plus six capability/numbering and five stock-ledger tables. Discovery is complete; ownership migration and runtime isolation are not.
 
 Remaining gates:
 
@@ -137,6 +137,17 @@ Remaining gates:
 5. Rehearse retained representative data at production scale, including locks, concurrency, reconciliation and live transaction browser flows.
 
 Full F-02/F-03/F-04/F-05 acceptance remains open. F-11 local/CI fixture proof is delivered; production-scale retained-data acceptance is pending.
+
+## Phase 4 completion status
+
+Phase 4 is **not complete**. Its exit criterion (execution plan, Phase 4 verification) is that the repository-wide direct-quantity search returns only `InventoryMovementService`; legacy controllers still write quantities directly.
+
+- **Done:** the ledger, `InventoryMovementService`, availability/reconciliation/opening commands and the generic ERP services (`SaleService`, `PurchaseService`, `InventoryService`) are authoritative. Legacy writers are recorded as shadow history; their old quantity code stays authoritative and the shadow does not change their results (proved on seeded MySQL through the real routes).
+- **Open 1 (4b cutover):** convert each legacy controller method to `InventoryMovementService` and remove it from `LegacyStockShadow::WRITERS`, one method per commit, after clean UAT reconciliation.
+- **Open 2 (known gaps):** gaps #3-#13 of [the shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md) show up as reconciliation differences until their writers are converted. #3, #5 and #7 are asserted in the MySQL suite; that proves detection, not completion.
+- **Open 3 (4c):** Adjustment, Transfer, PackingSlip, Production, Exchange, DamageStock, CafeOperations, Product opening/auto-purchase, the `purchase:auto` command and Warehouse creation.
+- **Open 4:** production-scale reconciliation on retained data, and `product_batches.company_id` backfill.
+- **Resilience:** the ledger migration is resumable after committed MySQL DDL (see the ownership matrix).
 
 ## Phase 4a: stock movement ledger and generic services
 

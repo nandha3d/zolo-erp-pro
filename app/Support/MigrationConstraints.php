@@ -23,6 +23,28 @@ final class MigrationConstraints
         });
     }
 
+    /** A plain (non-unique) index, resumed by name after an interrupted ALTER. */
+    public static function index(string $table, string $name, array $columns): void
+    {
+        $existing = collect(Schema::getIndexes($table))->firstWhere('name', $name);
+        if ($existing) {
+            if ($existing['columns'] !== $columns || $existing['unique'] || $existing['primary']) {
+                throw new RuntimeException('Unexpected existing index '.$table.'.'.$name.'.');
+            }
+            return;
+        }
+        Schema::table($table, fn (Blueprint $blueprint) => $blueprint->index($columns, $name));
+    }
+
+    /** Refuses to resume over a table that lacks columns this migration owns. */
+    public static function requireColumns(string $table, array $columns): void
+    {
+        $missing = array_diff($columns, Schema::getColumnListing($table));
+        if ($missing !== []) {
+            throw new RuntimeException('Incompatible existing table '.$table.': missing column(s) '.implode(', ', $missing).'; no further DDL was applied.');
+        }
+    }
+
     public static function foreign(string $table, string $name, array $columns, string $parent): void
     {
         $existing = collect(Schema::getForeignKeys($table))->first(fn ($key) => ($key['name'] ?? null) === $name

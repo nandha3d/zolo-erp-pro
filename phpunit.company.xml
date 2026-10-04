@@ -4,6 +4,7 @@
     <testsuite name="Company foundation">
       <file>tests/Feature/InventoryMovementServiceTest.php</file>
       <file>tests/Feature/StockLedgerCommandsTest.php</file>
+      <file>tests/Feature/StockLedgerMigrationTest.php</file>
       <file>tests/Feature/StockLedgerConcurrencyTest.php</file>
       <file>tests/Feature/ErpServiceStockLedgerTest.php</file>
       <file>tests/Feature/LegacyStockShadowTest.php</file>
