@@ -145,6 +145,7 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
     {
         return ['from_warehouse_id' => 1, 'to_warehouse_id' => 2, 'status' => $status,
             'product_id' => [$product->id], 'product_code' => [$product->code], 'qty' => [$qty],
+            'product_batch_id' => [''],
             'purchase_unit' => ['Each'], 'net_unit_cost' => [4], 'tax_rate' => [0], 'tax' => [0], 'subtotal' => [$qty * 4],
             'item' => 1, 'total_qty' => $qty, 'total_tax' => 0, 'total_cost' => $qty * 4, 'shipping_cost' => 0, 'grand_total' => $qty * 4];
     }

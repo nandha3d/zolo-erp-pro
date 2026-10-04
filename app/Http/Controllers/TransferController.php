@@ -363,7 +363,7 @@ class TransferController extends Controller
                 if ($product->is_variant) {
                     $product_transfer['variant_id'] = ProductVariant::FindExactProductWithCode($id, $product_code[$i])->firstOrFail()->variant_id;
                 }
-                $product_transfer['product_batch_id'] = $product_batch_id[$i] ?? null;
+                $product_transfer['product_batch_id'] = !empty($product_batch_id[$i]) ? (int) $product_batch_id[$i] : null;
 
                 $product_transfer['transfer_id'] = $lims_transfer_data->id ;
                 $product_transfer['product_id'] = $id;
@@ -1018,7 +1018,7 @@ class TransferController extends Controller
                 $unit = Unit::where('unit_name', $request->purchase_unit[$key])->firstOrFail();
                 ProductTransfer::create([
                     'transfer_id' => $id, 'product_id' => $productId, 'variant_id' => $variantId,
-                    'product_batch_id' => $request->product_batch_id[$key] ?? null,
+                    'product_batch_id' => !empty($request->product_batch_id[$key]) ? (int) $request->product_batch_id[$key] : null,
                     'imei_number' => $request->imei_number[$key] ?? null,
                     'qty' => $request->qty[$key], 'purchase_unit_id' => $unit->id,
                     'net_unit_cost' => $request->net_unit_cost[$key], 'tax_rate' => $request->tax_rate[$key],
