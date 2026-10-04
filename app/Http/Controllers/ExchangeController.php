@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Inventory\LegacyInventoryPosting;
+use App\Services\Inventory\StockLine;
+
 use App\Models\Customer;
 use App\Models\Exchange;
 use App\Models\Product;
-use App\Models\Product_Warehouse;
 use App\Models\Sale;
 use App\Models\Warehouse;
 use App\Services\Accounting\AccountingService;
@@ -60,8 +62,14 @@ class ExchangeController extends Controller
         $request->validate([
             'warehouse_id' => 'required',
             'customer_id' => 'required',
-            'returned_products' => 'required|array',
-            'exchanged_products' => 'required|array',
+            'returned_products' => 'required|array|min:1',
+            'returned_products.*.product_id' => 'required|integer|exists:products,id',
+            'returned_products.*.qty' => 'required|numeric|gt:0',
+            'returned_products.*.unit_price' => 'required|numeric|min:0',
+            'exchanged_products' => 'required|array|min:1',
+            'exchanged_products.*.product_id' => 'required|integer|exists:products,id',
+            'exchanged_products.*.qty' => 'required|numeric|gt:0',
+            'exchanged_products.*.unit_price' => 'required|numeric|min:0',
         ]);
 
         $refNo = 'EXC-' . date('Ymd') . '-' . rand(1000, 9999);
@@ -78,6 +86,9 @@ class ExchangeController extends Controller
                     'name' => $item['name'] ?? 'Item',
                     'qty' => $item['qty'],
                     'unit_price' => $item['unit_price'],
+                    'variant_id' => $item['variant_id'] ?? null,
+                    'product_batch_id' => $item['product_batch_id'] ?? null,
+                    'imei_number' => $item['imei_number'] ?? null,
                     'subtotal' => $sub
                 ];
             }
@@ -93,6 +104,9 @@ class ExchangeController extends Controller
                     'name' => $item['name'] ?? 'Item',
                     'qty' => $item['qty'],
                     'unit_price' => $item['unit_price'],
+                    'variant_id' => $item['variant_id'] ?? null,
+                    'product_batch_id' => $item['product_batch_id'] ?? null,
+                    'imei_number' => $item['imei_number'] ?? null,
                     'subtotal' => $sub
                 ];
             }
@@ -102,7 +116,7 @@ class ExchangeController extends Controller
 
         DB::transaction(function () use ($request, $refNo, $returnedItems, $returnedTotal, $exchangedItems, $exchangedTotal, $diff) {
             // Create exchange
-            Exchange::create([
+            $exchange = Exchange::create([
                 'reference_no' => $refNo,
                 'original_sale_id' => $request->sale_id,
                 'warehouse_id' => $request->warehouse_id,
@@ -119,25 +133,9 @@ class ExchangeController extends Controller
                 'user_id' => Auth::id() ?? 1,
             ]);
 
-            // Stock adjustments: Add returned items back to stock
-            foreach ($returnedItems as $ret) {
-                $pw = Product_Warehouse::firstOrCreate(
-                    ['warehouse_id' => $request->warehouse_id, 'product_id' => $ret['product_id']],
-                    ['qty' => 0]
-                );
-                $pw->increment('qty', $ret['qty']);
-                Product::where('id', $ret['product_id'])->increment('qty', $ret['qty']);
-            }
-
-            // Deduct exchanged items from stock
-            foreach ($exchangedItems as $exc) {
-                $pw = Product_Warehouse::firstOrCreate(
-                    ['warehouse_id' => $request->warehouse_id, 'product_id' => $exc['product_id']],
-                    ['qty' => 0]
-                );
-                $pw->decrement('qty', $exc['qty']);
-                Product::where('id', $exc['product_id'])->decrement('qty', $exc['qty']);
-            }
+            $posting = app(LegacyInventoryPosting::class);
+            $posting->post($exchange, 'receive', array_map(fn ($item) => StockLine::fromArray($item), $returnedItems), (int) $request->warehouse_id);
+            $posting->post($exchange, 'issue', array_map(fn ($item) => StockLine::fromArray($item), $exchangedItems), (int) $request->warehouse_id);
 
             // Accounting journal if diff != 0
             if (abs($diff) > 0) {

@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Inventory\InventoryMovementService;
+use App\Services\Inventory\StockMovementCommand;
+use App\Services\Inventory\StockLine;
+use App\Services\Platform\CompanyContext;
+
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Warehouse;
@@ -25,38 +30,52 @@ class CafeOperationsController extends Controller
         $cashDrawers = DB::table('cafe_cash_drawers')->latest()->take(15)->get();
         $products = Product::where('is_active', true)->select('id', 'name', 'code', 'cost', 'qty')->get();
 
-        return view('backend.cafe.index', compact('rawMaterials', 'cashDrawers', 'products'));
+        $warehouses = Warehouse::where('is_active', true)->get();
+        return view('backend.cafe.index', compact('rawMaterials', 'cashDrawers', 'products', 'warehouses'));
     }
 
     public function storeRawMaterial(Request $request)
     {
-        $request->validate([
-            'product_id' => 'required',
-            'consumed_today' => 'required|numeric|min:0.01',
-            'opening_stock' => 'required|numeric',
-        ]);
+        return DB::transaction(function () use ($request) {
+            $request->validate([
+                'product_id' => 'required|integer|exists:products,id',
+                'warehouse_id' => 'required|integer|exists:warehouses,id',
+                'consumed_today' => 'required|numeric|min:0.01',
+                'opening_stock' => 'required|numeric',
+            ]);
 
-        $product = Product::findOrFail($request->product_id);
-        $closing = (float)$request->opening_stock - (float)$request->consumed_today;
+            $product = Product::findOrFail($request->product_id);
+            $closing = (float) $request->opening_stock + (float) $request->received_today - (float) $request->consumed_today;
 
-        DB::table('cafe_raw_materials')->insert([
-            'log_date' => $request->log_date ?? now()->toDateString(),
-            'product_id' => $product->id,
-            'item_name' => $product->name,
-            'opening_stock' => $request->opening_stock,
-            'received_today' => $request->received_today ?? 0,
-            'consumed_today' => $request->consumed_today,
-            'closing_stock' => $closing,
-            'unit_code' => $request->unit_code ?? 'kg',
-            'user_id' => Auth::id() ?? 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            $logId = DB::table('cafe_raw_materials')->insertGetId([
+                'log_date' => $request->log_date ?? now()->toDateString(),
+                'product_id' => $product->id,
+                'item_name' => $product->name,
+                'opening_stock' => $request->opening_stock,
+                'received_today' => $request->received_today ?? 0,
+                'consumed_today' => $request->consumed_today,
+                'closing_stock' => $closing,
+                'unit_code' => $request->unit_code ?? 'kg',
+                'user_id' => Auth::id() ?? 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-        // Decrement product inventory
-        $product->decrement('qty', $request->consumed_today);
+            app(InventoryMovementService::class)->issue(new StockMovementCommand(
+                date: $request->log_date ?? now()->toDateString(),
+                lines: [StockLine::fromArray([
+                    'product_id' => $product->id, 'qty' => $request->consumed_today,
+                    'variant_id' => $request->variant_id, 'product_batch_id' => $request->product_batch_id,
+                    'imei_number' => $request->imei_number,
+                ])],
+                warehouseId: (int) $request->warehouse_id,
+                sourceType: 'legacy:cafe_raw_materials', sourceId: $logId, userId: Auth::id(),
+                context: $request->attributes->get(CompanyContext::class),
+            ));
 
-        return redirect()->back()->with('message', "Raw material consumption [{$product->name}] logged successfully.");
+            return redirect()->back()->with('message', "Raw material consumption [{$product->name}] logged successfully.");
+
+        });
     }
 
     public function storeDrawerReconcile(Request $request)

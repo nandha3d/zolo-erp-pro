@@ -4,6 +4,8 @@ Baseline: `868ad0b`. Read-only audit; no code changed. Supports the Phase 4b sha
 
 Line numbers are at `868ad0b`; re-check before editing. Commented-out code is excluded.
 
+Current disposition (2026-10-04): [Phase 4c](PHASE_4C_AUTHORITATIVE_CUTOVER.md) converts operational writers to applied movements and removes their shadow wrappers. Findings #3, #4, #8, #9, #10, #12 and #13 are repaired in those writers; #1 now rejects removal of nonempty stock metadata. Commercial findings #5, #6, #7 and #11 remain Phase 4b work. The findings and route inventory below retain their historical baseline; they do not describe the current shadow map.
+
 ## Summary
 
 - **(a)** No `DB::table('product_warehouse')` writes and no raw SQL writes exist outside the Phase 4 inventory services. Two whole-database truncations exist; see the security section.

@@ -8,6 +8,7 @@
       <file>tests/Feature/StockLedgerConcurrencyTest.php</file>
       <file>tests/Feature/ErpServiceStockLedgerTest.php</file>
       <file>tests/Feature/LegacyStockShadowTest.php</file>
+      <file>tests/Feature/LegacyInventoryCutoverTest.php</file>
       <file>tests/Feature/MysqlCompanyMigrationTest.php</file>
       <file>tests/Feature/ErpServiceRegressionTest.php</file>
       <file>tests/Feature/CompanyFoundationTest.php</file>

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Inventory\LegacyInventoryPosting;
+use App\Services\Inventory\StockLine;
+
 use Illuminate\Http\Request;
 use App\Models\Sale;
 use App\Models\Product_Sale;
@@ -141,6 +144,7 @@ class PackingSlipController extends Controller
 
         DB::beginTransaction();
         try {
+            $sale = Sale::whereKey($data['sale_id'])->lockForUpdate()->firstOrFail();
             $packing_slip = PackingSlip::create([
                                 "reference_no" => $reference_no,
                                 "sale_id" => $data['sale_id'],
@@ -148,6 +152,7 @@ class PackingSlipController extends Controller
                                 "status" => "Pending"
                             ]);
             
+            $stockLines = [];
             foreach ($data['is_packing'] as $key => $product_info) {
                 $product_info = explode("|", $product_info);
                 $product_id = $product_info[0];
@@ -170,76 +175,14 @@ class PackingSlipController extends Controller
                     ['variant_id', $variant_id]
                 ])->first();
 
+                if (!$product_sale_data || $product_sale_data->is_packing) {
+                    throw new \InvalidArgumentException('Sale line is missing or already packed.');
+                }
                 $product_sale_data->update(['is_packing' => true]);
-                //deduct product quantity
-                $product_data = Product::select('id', 'type', 'qty', 'product_list', 'variant_list', 'price_list', 'qty_list')->find($product_id);
-                if($product_data->type == 'combo') {
-                    $product_list = explode(",", $product_data->product_list);
-                    $variant_list = explode(",", $product_data->variant_list);
-                    if($product_data->variant_list)
-                        $variant_list = explode(",", $product_data->variant_list);
-                    else
-                        $variant_list = [];
-                    $qty_list = explode(",", $product_data->qty_list);
-                    $price_list = explode(",", $product_data->price_list);
-
-                    foreach ($product_list as $index => $child_id) {
-                        $child_data = Product::find($child_id);
-                        if(count($variant_list) && $variant_list[$index]) {
-                            $child_product_variant_data = ProductVariant::where([
-                                ['product_id', $child_id],
-                                ['variant_id', $variant_list[$index]]
-                            ])->first();
-
-                            $child_warehouse_data = Product_Warehouse::where([
-                                ['product_id', $child_id],
-                                ['variant_id', $variant_list[$index]],
-                                ['warehouse_id', $sale->warehouse_id],
-                            ])->first();
-
-                            $child_product_variant_data->qty -= $product_sale_data->qty * $qty_list[$index];
-                            $child_product_variant_data->save();
-                        }
-                        else {
-                            $child_warehouse_data = Product_Warehouse::where([
-                                ['product_id', $child_id],
-                                ['warehouse_id', $sale->warehouse_id],
-                            ])->first();
-                        }
-
-                        $child_data->qty -= $product_sale_data->qty * $qty_list[$index];
-                        $child_warehouse_data->qty -= $product_sale_data->qty * $qty_list[$index];
-
-                        $child_data->save();
-                        $child_warehouse_data->save();
-                    }
-                }
-                elseif($product_data->type == 'standard') {
-                    //deduct qty from product_warehouses table
-                    $product_warehouse_data = Product_Warehouse::where([
-                        ['product_id', $product_data->id],
-                        ['warehouse_id', $sale->warehouse_id],
-                        ['variant_id', $variant_id],
-                    ])->first();
-                    if($product_warehouse_data) {
-                        $product_warehouse_data->qty -= $product_sale_data->qty;
-                        $product_warehouse_data->save();
-                    }
-                    //deduct qty from product_variants table
-                    if($variant_id) {
-                        $product_vaiant_data = ProductVariant::where([
-                            ['product_id', $product_id],
-                            ['variant_id', $variant_id]
-                        ])->first();
-                        $product_vaiant_data->qty -= $product_sale_data->qty;
-                        $product_vaiant_data->save();
-                    }
-                    //deduct qty from products table
-                    $product_data->qty -= $product_sale_data->qty;
-                    $product_data->save();
-                }
+                $stockLines = array_merge($stockLines, app(LegacyInventoryPosting::class)->saleLines($product_sale_data));
             }
-            
+            app(LegacyInventoryPosting::class)->post($packing_slip, 'issue', $stockLines, (int) $sale->warehouse_id);
+
             $delivery = Delivery::where('sale_id', $sale->id)->first();
             if(!$delivery) {
                 //creating a new delivery
@@ -277,9 +220,9 @@ class PackingSlipController extends Controller
             $sale->save();
             DB::commit();
         }
-        catch(Exception $e) {
+        catch(\Throwable $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()]);
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     	return redirect()->back()->with('message', __('db.Packing slip created successfully'));
     }
@@ -293,48 +236,37 @@ class PackingSlipController extends Controller
 
     public function delete($id)
     {
-        $packing_slip_data = PackingSlip::with('sale')->find($id);
-        $packing_slip_product_data = PackingSlipProduct::where('packing_slip_id', $id)->get();
-        foreach($packing_slip_product_data as $packingSlipProduct) {
-            $product_data = Product::find($packingSlipProduct->product_id);
-            $product_sale_data = Product_Sale::where([
-                ['sale_id', $packing_slip_data->sale_id],
-                ['product_id', $packingSlipProduct->product_id],
-                ['variant_id', $packingSlipProduct->variant_id]
-            ])->first();
-            $product_warehouse_data = Product_Warehouse::where([
-                ['product_id', $packingSlipProduct->product_id],
-                ['warehouse_id', $packing_slip_data->sale->warehouse_id],
-                ['variant_id', $packingSlipProduct->variant_id]
-            ])->first();
-
-            if($packingSlipProduct->variant_id) {
-                $product_variant_data = ProductVariant::where([
-                    ['product_id', $packingSlipProduct->product_id],
-                    ['variant_id', $packingSlipProduct->variant_id]
-                ])->first();
-                $product_variant_data->qty += $product_sale_data->qty;
-                $product_variant_data->save();
+        return DB::transaction(function () use ($id) {
+            $packingSlip = PackingSlip::whereKey($id)->lockForUpdate()->firstOrFail();
+            $sale = Sale::whereKey($packingSlip->sale_id)->lockForUpdate()->firstOrFail();
+            $products = PackingSlipProduct::where('packing_slip_id', $id)->get();
+            $posting = app(LegacyInventoryPosting::class);
+            $posting->reverse($packingSlip, function () use ($posting, $packingSlip, $sale, $products) {
+                $lines = [];
+                foreach ($products as $product) {
+                    if (Product::findOrFail($product->product_id)->type === 'combo') {
+                        throw new \App\Services\Inventory\StockPolicyException('Historical combo packing slip requires a reviewed component snapshot before reversal.');
+                    }
+                    $saleLine = Product_Sale::where('sale_id', $sale->id)->where('product_id', $product->product_id)
+                        ->where('variant_id', $product->variant_id)->firstOrFail();
+                    $lines = array_merge($lines, $posting->saleLines($saleLine));
+                }
+                $posting->post($packingSlip, 'receive', $lines, (int) $sale->warehouse_id);
+            });
+            foreach ($products as $product) {
+                Product_Sale::where('sale_id', $sale->id)->where('product_id', $product->product_id)
+                    ->where('variant_id', $product->variant_id)->update(['is_packing' => false]);
+                $product->delete();
             }
-
-            $product_warehouse_data->qty += $product_sale_data->qty;
-            $product_warehouse_data->save();
-
-            $product_data->qty += $product_sale_data->qty;
-            $product_data->save();
-
-            $product_sale_data->is_packing = 0;
-            $product_sale_data->save();
-
-            $packingSlipProduct->delete();
-        }
-        $packing_slip_data->sale->sale_status = 2;
-        $packing_slip_data->sale->save();
-        $delivery_data = Delivery::where('sale_id', $packing_slip_data->sale_id)->first();
-        if($delivery_data) {
-            $delivery_data->delete();
-        }
-        $packing_slip_data->delete();
-        return redirect()->back()->with('message', __('db.Packing Slip deletes successfully'));
+            $packingSlip->delete();
+            $remaining = PackingSlip::where('sale_id', $sale->id)->pluck('id');
+            $sale->update(['sale_status' => $remaining->isEmpty() ? 2 : 5]);
+            if ($remaining->isEmpty()) {
+                Delivery::where('sale_id', $sale->id)->delete();
+            } else {
+                Delivery::where('sale_id', $sale->id)->update(['packing_slip_ids' => $remaining->implode(',')]);
+            }
+            return redirect()->back()->with('message', __('db.Packing Slip deletes successfully'));
+        });
     }
 }

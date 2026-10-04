@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Inventory\LegacyInventoryPosting;
+use App\Services\Inventory\StockLine;
+
 use App\Models\DamageStock;
 use App\Models\Product;
 use App\Models\Warehouse;
-use App\Models\Product_Warehouse;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,7 +46,7 @@ class DamageStockController extends Controller
         $refNo = 'DMG-' . date('Ymd') . '-' . rand(1000, 9999);
 
         DB::transaction(function () use ($request, $product, $unitCost, $totalLoss, $refNo) {
-            DamageStock::create([
+            $damage = DamageStock::create([
                 'reference_no' => $refNo,
                 'warehouse_id' => $request->warehouse_id,
                 'product_id' => $product->id,
@@ -57,15 +59,11 @@ class DamageStockController extends Controller
                 'user_id' => Auth::id() ?? 1,
             ]);
 
-            // Deduct stock from Product_Warehouse
-            $pw = Product_Warehouse::where('warehouse_id', $request->warehouse_id)
-                ->where('product_id', $product->id)
-                ->first();
-
-            if ($pw) {
-                $pw->decrement('qty', $request->qty);
-            }
-            $product->decrement('qty', $request->qty);
+            app(LegacyInventoryPosting::class)->post($damage, 'issue', [StockLine::fromArray([
+                'product_id' => $product->id, 'qty' => $request->qty,
+                'variant_id' => $request->variant_id, 'product_batch_id' => $request->product_batch_id,
+                'imei_number' => $request->imei_number,
+            ])], (int) $request->warehouse_id);
 
             // Post double-entry journal if total loss > 0
             if ($totalLoss > 0) {

@@ -34,16 +34,13 @@ class WarehouseController extends Controller
         $input = $request->all();
         $input['is_active'] = true;
 
-        $lims_warehouse_data = Warehouse::create($input);
+        DB::transaction(function () use ($input, $request) {
+            $warehouse = Warehouse::create($input);
+            app(\App\Services\Inventory\InventoryMovementService::class)->initializeWarehouse(
+                $warehouse->id, $request->attributes->get(\App\Services\Platform\CompanyContext::class),
+            );
+        });
 
-        $lims_product_data = Product::pluck('id');
-        foreach ($lims_product_data as $product) {
-            Product_Warehouse::create([
-                'product_id' => $product,
-                'warehouse_id' => $lims_warehouse_data->id,
-                'qty' => 0
-            ]);
-        }
         $this->cacheForget('warehouse_list');
         return redirect('warehouse')->with('message', __('db.Data inserted successfully'));
     }

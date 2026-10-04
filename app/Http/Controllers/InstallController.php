@@ -28,8 +28,8 @@ class InstallController extends Controller
 
     public function installProcess(InstallationRequest $request)
     {
-        // BYPASSED: Purchase code verification dihilangkan
-        // Langsung proses instalasi tanpa cek license
+        // Owner confirmed on 2026-10-04 that the SalePro license permits this fork/rebranding
+        // and removal of purchase-code verification. See PHASE_4C_AUTHORITATIVE_CUTOVER.md.
 
         $envPath = base_path('.env');
         if (!file_exists($envPath))
@@ -57,12 +57,7 @@ class InstallController extends Controller
         }
     }
 
-    protected static function purchaseVerify(string $purchaseCode): object
-    {
-        return (object)['status' => 'success', 'message' => 'Verified'];
-    }
-
-    protected function envSetDatabaseCredentials($request): void
+protected function envSetDatabaseCredentials($request): void
     {
         $this->dataWriteInENVFile('APP_URL', url('/'));
         $this->dataWriteInENVFile('DB_HOST', $request->db_host);

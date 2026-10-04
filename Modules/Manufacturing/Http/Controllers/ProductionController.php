@@ -2,6 +2,9 @@
 
 namespace Modules\Manufacturing\Http\Controllers;
 
+use App\Services\Inventory\LegacyInventoryPosting;
+use App\Services\Inventory\StockLine;
+
 use App\Models\GeneralSetting;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
@@ -23,7 +26,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductionController extends Controller
 {
-    use StaffAccess;
+    use StaffAccess, \App\Traits\FileHandleTrait;
 
     public function index(Request $request)
     {
@@ -219,6 +222,14 @@ class ProductionController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'warehouse_id' => 'required|integer|exists:warehouses,id',
+            'product_id' => 'required|integer|exists:products,id', 'total_qty' => 'required|numeric|gt:0',
+            'product_list' => 'required|array|min:1', 'product_list.*' => 'required|integer|exists:products,id',
+            'product_qty' => 'required|array|size:'.count((array) $request->product_list), 'product_qty.*' => 'required|numeric|gt:0',
+            'production_unit_ids' => 'required|array|size:'.count((array) $request->product_list),
+            'production_unit_ids.*' => 'required|integer|exists:units,id',
+        ]);
         try{
         DB::beginTransaction();
         $data = $request->except('document');
@@ -235,8 +246,10 @@ class ProductionController extends Controller
                     'extension' => 'in:jpg,jpeg,png,gif,pdf,csv,docx,xlsx,txt',
                 ]
             );
-            if ($v->fails())
+            if ($v->fails()) {
+                DB::rollBack();
                 return redirect()->back()->withErrors($v->errors());
+            }
 
             $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
             $documentName = date("Ymdhis");
@@ -264,228 +277,36 @@ class ProductionController extends Controller
         $data['total_tax'] = 0;
         $lims_production_data = Production::create($data);
 
-        // stock calculate
-
-        // product stock
-        $product->qty += $request->total_qty;
-        $product->save();
-
-        // wherehouse stock
-        $lims_product_warehouse = Product_Warehouse::query()
-            ->where([
-                ['product_id', $request->product_id],
-                ['warehouse_id', $request->warehouse_id]
-            ])
-            ->latest()
-            ->first();
-        if($lims_product_warehouse){
-            $lims_product_warehouse->qty = $lims_product_warehouse->qty + $request->total_qty;
-            $lims_product_warehouse->save();
-        }else{
-            $lims_product_warehouse = new Product_Warehouse();
-            $lims_product_warehouse->product_id = $request->product_id;
-            $lims_product_warehouse->warehouse_id = $request->warehouse_id;
-            $lims_product_warehouse->qty = $request->total_qty;
-            $lims_product_warehouse->save();
+        $posting = app(LegacyInventoryPosting::class);
+        $ingredients = [];
+        foreach ($request->product_list as $index => $productId) {
+            $ingredients[] = StockLine::fromArray([
+                'product_id' => $productId, 'qty' => $request->product_qty[$index],
+                'uom_id' => $request->production_unit_ids[$index],
+                'variant_id' => $request->variant_id[$index] ?? null,
+                'product_batch_id' => $request->product_batch_id[$index] ?? null,
+                'imei_number' => $request->imei_number[$index] ?? null,
+            ]);
         }
-
-
-        $product_id = $request->product_list;
-        $qty = $data['product_qty'];
-        $purchase_unit = $data['production_unit_ids'];
-        $net_unit_cost = $data['unit_price'];
-        // $tax_rate = $data['tax_rate'];
-        // $tax = $data['tax'];
-        $total = $data['subtotal'];
-
-        $child_variant_list = $request->variant_id ?? [];
-        foreach ($product_id as $index => $child_id) {
-            $lims_purchase_unit_data  = Unit::where('id', $purchase_unit[$index])->first();
-            $child_data = Product::find($child_id);
-            if ($lims_purchase_unit_data->operator == '*') {
-                    $reduced_qty = $qty[$index] * $lims_purchase_unit_data->operation_value;
-                }
-                else {
-                    $reduced_qty = $qty[$index] / $lims_purchase_unit_data->operation_value;
-                }
-            if(count($child_variant_list) && isset($child_variant_list[$index]) && $child_variant_list[$index]) {
-                $child_product_variant_data = ProductVariant::where([
-                    ['product_id', $child_id],
-                    ['variant_id', $child_variant_list[$index]]
-                ])->first();
-                $child_product_variant_data->qty -= $reduced_qty;
-                $child_product_variant_data->save();
-
-                $child_warehouse_data = Product_Warehouse::where([
-                    ['product_id', $child_id],
-                    ['variant_id', $child_variant_list[$index]],
-                    ['warehouse_id', $lims_production_data->warehouse_id ],
-                ])->first();
-            } else {
-                $child_warehouse_data = Product_Warehouse::where([
-                    ['product_id', $child_id],
-                    ['warehouse_id', $lims_production_data->warehouse_id ],
-                ])->first();
-            }
-
-            if($child_warehouse_data){
-                $child_warehouse_data->qty -= $reduced_qty;
-                $child_warehouse_data->save();
-            }
-
-            $child_data->qty -= $reduced_qty;
-            $child_data->save();
-        }
+        // Consume ingredients first; output cannot finance its own inputs under the negative-stock policy.
+        $posting->post($lims_production_data, 'issue', $ingredients, (int) $request->warehouse_id);
+        $posting->post($lims_production_data, 'receive', [StockLine::fromArray([
+            'product_id' => $product->id, 'qty' => $data['total_qty'], 'unit_cost' => $product->cost,
+            'variant_id' => $request->output_variant_id, 'product_batch_id' => $request->output_batch_id,
+            'imei_number' => $request->output_serials,
+        ])], (int) $request->warehouse_id);
         DB::commit();
         return redirect('manufacturing/productions')->with('message', __('db.Production created successfully'));
         }catch(\Throwable $e){
             DB::rollBack();
-            dd($e);
+            report($e);
              return redirect('manufacturing/productions')->with('not_permitted', __('db.Something error please try again'));
         }
 
     }
 
 
-    public function storebackup(Request $request)
-    {
-        $data = $request->except('document');
-        $data['user_id'] = Auth::id();
-        $data['reference_no'] = 'production-' . date("Ymd") . '-'. date("his");
-        $document = $request->document;
-        if ($document) {
-            $v = Validator::make(
-                [
-                    'extension' => strtolower($request->document->getClientOriginalExtension()),
-                ],
-                [
-                    'extension' => 'in:jpg,jpeg,png,gif,pdf,csv,docx,xlsx,txt',
-                ]
-            );
-            if ($v->fails())
-                return redirect()->back()->withErrors($v->errors());
 
-            $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
-            $documentName = date("Ymdhis");
-            if(!config('database.connections.zoloerp_landlord')) {
-                $documentName = $documentName . '.' . $ext;
-                $document->move('public/documents/production', $documentName);
-            }
-            else {
-                $documentName = $this->getTenantId() . '_' . $documentName . '.' . $ext;
-                $document->move('public/documents/production', $documentName);
-            }
-            $data['document'] = $documentName;
-        }
-        if(isset($data['created_at']))
-            $data['created_at'] = date("Y-m-d H:i:s", strtotime($data['created_at']));
-        else
-            $data['created_at'] = date("Y-m-d H:i:s");
-
-        $lims_production_data = Production::create($data);
-        $product_id = $data['product_id'];
-        $product_code = $data['product_code'];
-        $qty = $data['qty'];
-        $recieved = $data['recieved'];
-        $purchase_unit = $data['purchase_unit'];
-        $net_unit_cost = $data['net_unit_cost'];
-        $tax_rate = $data['tax_rate'];
-        $tax = $data['tax'];
-        $total = $data['subtotal'];
-        $product_production = [];
-
-        foreach ($product_id as $i => $id) {
-            $lims_purchase_unit_data  = Unit::where('unit_name', $purchase_unit[$i])->first();
-
-            if ($lims_purchase_unit_data->operator == '*') {
-                $quantity = $recieved[$i] * $lims_purchase_unit_data->operation_value;
-            } else {
-                $quantity = $recieved[$i] / $lims_purchase_unit_data->operation_value;
-            }
-            $lims_product_data = Product::find($id);
-
-            $child_product_list = explode(",", $lims_product_data->product_list);
-            $child_variant_list = explode(",", $lims_product_data->variant_list);
-            $child_qty_list = explode(",", $lims_product_data->qty_list);
-
-            if ($lims_purchase_unit_data->operator == '*') {
-                $reduced_qty = $qty[$i] * $lims_purchase_unit_data->operation_value;
-            }
-            else {
-                $reduced_qty = $qty[$i] / $lims_purchase_unit_data->operation_value;
-            }
-
-            //ducting quantity from child products
-            $child_product_list = explode(",", $lims_product_data->product_list);
-            if($lims_product_data->variant_list)
-                $child_variant_list = explode(",", $lims_product_data->variant_list);
-            else
-                $child_variant_list = [];
-
-            foreach ($child_product_list as $index => $child_id) {
-                $child_data = Product::find($child_id);
-                if(count($child_variant_list) && $child_variant_list[$index]) {
-                    $child_product_variant_data = ProductVariant::where([
-                        ['product_id', $child_id],
-                        ['variant_id', $child_variant_list[$index]]
-                    ])->first();
-
-                    $child_warehouse_data = Product_Warehouse::where([
-                        ['product_id', $child_id],
-                        ['variant_id', $child_variant_list[$index]],
-                        ['warehouse_id', $lims_production_data->warehouse_id ],
-                    ])->first();
-
-                    $child_product_variant_data->qty -= $reduced_qty * $child_qty_list[$index];
-                    $child_product_variant_data->save();
-                }
-                else {
-                    $child_warehouse_data = Product_Warehouse::where([
-                        ['product_id', $child_id],
-                        ['warehouse_id', $lims_production_data->warehouse_id ],
-                    ])->first();
-                }
-
-                $child_data->qty -= $reduced_qty * $child_qty_list[$index];
-                $child_warehouse_data->qty -= $reduced_qty * $child_qty_list[$index];
-
-                $child_data->save();
-                $child_warehouse_data->save();
-            }
-
-            $lims_product_warehouse_data = Product_Warehouse::where([
-                ['product_id', $id],
-                ['warehouse_id', $data['warehouse_id'] ],
-            ])->first();
-
-            //add quantity to product table
-            $lims_product_data->qty = $lims_product_data->qty + $quantity;
-            $lims_product_data->save();
-            //add quantity to warehouse
-            if ($lims_product_warehouse_data) {
-                $lims_product_warehouse_data->qty = $lims_product_warehouse_data->qty + $quantity;
-            }
-            else {
-                $lims_product_warehouse_data = new Product_Warehouse();
-                $lims_product_warehouse_data->product_id = $id;
-                $lims_product_warehouse_data->warehouse_id = $data['warehouse_id'];
-                $lims_product_warehouse_data->qty = $quantity;
-            }
-            $lims_product_warehouse_data->save();
-
-            $product_production['production_id'] = $lims_production_data->id ;
-            $product_production['product_id'] = $id;
-            $product_production['qty'] = $qty[$i];
-            $product_production['recieved'] = $recieved[$i];
-            $product_production['purchase_unit_id'] = $lims_purchase_unit_data->id;
-            $product_production['net_unit_cost'] = $net_unit_cost[$i];
-            $product_production['tax_rate'] = $tax_rate[$i];
-            $product_production['tax'] = $tax[$i];
-            $product_production['total'] = $total[$i];
-            ProductProduction::create($product_production);
-        }
-        return redirect('manufacturing/productions')->with('message', __('db.Production created successfully'));
-    }
 
     public function productProductionData($id)
     {
@@ -613,81 +434,29 @@ class ProductionController extends Controller
      */
     public function destroy($id)
     {
-        $lims_production_data = Production::find($id);
-        $lims_product_production_data = ProductProduction::where('production_id', $id)->get();
-        foreach ($lims_product_production_data as $product_production_data) {
-            $lims_production_unit_data = Unit::find($product_production_data->purchase_unit_id);
-            if ($lims_production_unit_data->operator == '*') {
-                $recieved_qty = $product_production_data->recieved * $lims_production_unit_data->operation_value;
-                $reduced_qty = $product_production_data->qty * $lims_production_unit_data->operation_value;
-
-            }
-            else {
-                $recieved_qty = $product_production_data->recieved / $lims_production_unit_data->operation_value;
-                $reduced_qty = $product_production_data->qty / $lims_production_unit_data->operation_value;
-            }
-
-            $lims_product_data = Product::find($product_production_data->product_id);
-            $lims_product_warehouse_data = Product_Warehouse::FindProductWithoutVariant($product_production_data->product_id, $lims_production_data->warehouse_id)
-                    ->first();
-
-            $child_product_list = explode(",", $lims_product_data->product_list);
-            $child_variant_list = explode(",", $lims_product_data->variant_list);
-            $child_qty_list = explode(",", $lims_product_data->qty_list);
-
-            //ducting quantity from child products
-            $child_product_list = explode(",", $lims_product_data->product_list);
-            if($lims_product_data->variant_list)
-                $child_variant_list = explode(",", $lims_product_data->variant_list);
-            else
-                $child_variant_list = [];
-            $child_qty_list = explode(",", $lims_product_data->qty_list);
-
-            foreach ($child_product_list as $index => $child_id) {
-                $child_data = Product::find($child_id);
-                if(count($child_variant_list) && $child_variant_list[$index]) {
-                    $child_product_variant_data = ProductVariant::where([
-                        ['product_id', $child_id],
-                        ['variant_id', $child_variant_list[$index]]
-                    ])->first();
-
-                    $child_warehouse_data = Product_Warehouse::where([
-                        ['product_id', $child_id],
-                        ['variant_id', $child_variant_list[$index]],
-                        ['warehouse_id', $lims_production_data->warehouse_id ],
-                    ])->first();
-
-                    $child_product_variant_data->qty += $reduced_qty * $child_qty_list[$index];
-                    $child_product_variant_data->save();
+        return DB::transaction(function () use ($id) {
+            $production = Production::whereKey($id)->lockForUpdate()->firstOrFail();
+            $posting = app(LegacyInventoryPosting::class);
+            $posting->reverse($production, function () use ($posting, $production) {
+                if (!$production->product_id || !$production->product_list || !$production->production_units_ids) {
+                    throw new \App\Services\Inventory\StockPolicyException('Historical production requires a reviewed ingredient snapshot before reversal.');
                 }
-                else {
-                    $child_warehouse_data = Product_Warehouse::where([
-                        ['product_id', $child_id],
-                        ['warehouse_id', $lims_production_data->warehouse_id ],
-                    ])->first();
+                $posting->post($production, 'issue', [new StockLine((int) $production->product_id, (float) $production->total_qty)], (int) $production->warehouse_id);
+                $quantities = explode(',', $production->qty_list);
+                $units = explode(',', $production->production_units_ids);
+                $costs = explode(',', $production->price_list);
+                $lines = [];
+                foreach (explode(',', $production->product_list) as $key => $productId) {
+                    $lines[] = new StockLine((int) $productId, (float) $quantities[$key],
+                        unitCost: isset($costs[$key]) ? (float) $costs[$key] : null, uomId: (int) $units[$key]);
                 }
-
-                $child_data->qty += $reduced_qty * $child_qty_list[$index];
-                $child_warehouse_data->qty += $reduced_qty * $child_qty_list[$index];
-
-                $child_data->save();
-                $child_warehouse_data->save();
-            }
-
-            //decucting qty from the combo
-            $lims_product_data->qty -= $recieved_qty;
-            $lims_product_warehouse_data->qty -= $recieved_qty;
-
-            $lims_product_warehouse_data->save();
-            $lims_product_data->save();
-            $product_production_data->delete();
-        }
-
-        if(file_exists('documents/production/'. $lims_production_data->document))
-            unlink('documents/production/'. $lims_production_data->document);
-        $lims_production_data->delete();
-
-        return redirect('manufacturing/productions')->with('not_permitted', __('db.Production deleted successfully'));
+                $posting->post($production, 'receive', $lines, (int) $production->warehouse_id);
+            });
+            ProductProduction::where('production_id', $id)->delete();
+            $production->delete();
+            DB::afterCommit(fn () => $this->fileDelete(public_path('documents/production/'), $production->document));
+            return redirect('manufacturing/productions')->with('not_permitted', __('db.Production deleted successfully'));
+        });
     }
 
     public function productWithoutVariant()

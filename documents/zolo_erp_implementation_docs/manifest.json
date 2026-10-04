@@ -1,7 +1,7 @@
 {
   "repository": "vigneshsinna/zolo-erp-pro",
-  "generated": "2026-10-03",
-  "markdown_count": 39,
+  "generated": "2026-10-04",
+  "markdown_count": 42,
   "entrypoint": "00_IMPLEMENTATION_MASTER_INDEX.md",
   "codex_entrypoint": "26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md",
   "files": [
@@ -43,7 +43,10 @@
     "COMPANY_TABLE_OWNERSHIP_MATRIX.md",
     "31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md",
     "32_OPTECH_SCREEN_TO_ZOLOERP_UI_MAPPING.md",
-    "33_COMMON_UI_COMPONENT_LIBRARY.md"
+    "33_COMMON_UI_COMPONENT_LIBRARY.md",
+    "PHASE_2_3_IMPLEMENTATION.md",
+    "LEGACY_STOCK_SHADOW_AUDIT.md",
+    "PHASE_4C_AUTHORITATIVE_CUTOVER.md"
   ],
   "categories": {
     "authoritative_specification": [
@@ -91,7 +94,10 @@
     "execution_evidence": [
       "IMPLEMENTATION_PROGRESS.md",
       "STOCK_AND_TRANSACTION_WRITER_AUDIT.md",
-      "COMPANY_TABLE_OWNERSHIP_MATRIX.md"
+      "COMPANY_TABLE_OWNERSHIP_MATRIX.md",
+      "PHASE_2_3_IMPLEMENTATION.md",
+      "LEGACY_STOCK_SHADOW_AUDIT.md",
+      "PHASE_4C_AUTHORITATIVE_CUTOVER.md"
     ]
   }
 }

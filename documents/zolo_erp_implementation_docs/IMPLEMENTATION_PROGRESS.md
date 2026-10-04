@@ -142,16 +142,16 @@ Full F-02/F-03/F-04/F-05 acceptance remains open. F-11 local/CI fixture proof is
 
 Phase 4 is **not complete**. Its exit criterion (execution plan, Phase 4 verification) is that the repository-wide direct-quantity search returns only `InventoryMovementService`; legacy controllers still write quantities directly.
 
-- **Done:** the ledger, `InventoryMovementService`, availability/reconciliation/opening commands and the generic ERP services (`SaleService`, `PurchaseService`, `InventoryService`) are authoritative. Legacy writers are recorded as shadow history; their old quantity code stays authoritative and the shadow does not change their results (proved on seeded MySQL through the real routes).
+- **Done:** the ledger, generic ERP services and the Phase 4c operational writers use `InventoryMovementService` authoritatively. The four Phase 4b commercial controllers retain direct stock writes with shadow history. See [the Phase 4c cutover package](PHASE_4C_AUTHORITATIVE_CUTOVER.md).
 - **Open 1 (4b cutover):** convert each legacy controller method to `InventoryMovementService` and remove it from `LegacyStockShadow::WRITERS`, one method per commit, after clean UAT reconciliation.
-- **Open 2 (known gaps):** gaps #3-#13 of [the shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md) show up as reconciliation differences until their writers are converted. #3, #5 and #7 are asserted in the MySQL suite; that proves detection, not completion.
-- **Open 3 (4c):** Adjustment, Transfer, PackingSlip, Production, Exchange, DamageStock, CafeOperations, Product opening/auto-purchase, the `purchase:auto` command and Warehouse creation.
+- **Open 2 (known gaps):** commercial gaps #5, #6, #7 and #11 of [the shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md) remain assigned to Phase 4b. Phase 4c removes the operational writers responsible for #3, #4, #8, #9, #10, #12 and #13. Historical inconsistencies still require reviewed reconciliation.
+- **Delivered implementation (4c):** Adjustment, Transfer, PackingSlip, Production, Exchange, DamageStock, CafeOperations, Product opening/auto-purchase, `purchase:auto` and Warehouse initialization. Retained-data UAT and production activation remain gated.
 - **Open 4:** production-scale reconciliation on retained data, and `product_batches.company_id` backfill.
 - **Resilience:** the ledger migration is resumable after committed MySQL DDL (see the ownership matrix).
 
 ## Phase 4a: stock movement ledger and generic services
 
-Merged into `main` together with the Phase 2/3 package and the shared-writer accounting package. It is not activated in production. Legacy web controllers and the remaining writers still mutate quantities directly; their changes are recorded as shadow movements (see 4b/4c below).
+Merged into `main` together with the Phase 2/3 package and the shared-writer accounting package. It is not activated in production. The four Phase 4b commercial controllers still mutate quantities directly and record shadow movements. Phase 4c operational writers use applied movements (see below).
 
 Schema (`2026_10_04_000001_create_stock_ledger_tables`):
 
@@ -199,9 +199,9 @@ Merged state with Phase 2/3:
 - The guard no longer rejects `imei_number`; serial counts and locations are validated by the ledger.
 - `ErpServiceRegressionTest` and `ErpServiceStockLedgerTest` share `CompanyErpServiceTestCase` (company A/MAIN fixtures and mapped accounts).
 
-## Phase 4b/4c: legacy writer shadow recording
+## Phase 4b: remaining commercial shadow recording
 
-Merged into `main`. Shadow mode is in place for every audited legacy stock writer. Authoritative cutover has not started. The writer inventory, known gaps and route list are in [the legacy stock shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md).
+The merged shadow package originally covered both commercial and operational writers. Phase 4c now removes its operational writers from the shadow map and converts them to applied movements. Sale, Purchase, Return and ReturnPurchase remain in shadow mode. The original inventory and historical findings are retained in [the legacy stock shadow audit](LEGACY_STOCK_SHADOW_AUDIT.md).
 
 `App\Services\Inventory\LegacyStockShadow` runs each legacy writer unchanged inside one database transaction:
 
@@ -215,18 +215,18 @@ Merged into `main`. Shadow mode is in place for every audited legacy stock write
 - Any other response commits, preserving legacy partial-success behaviour.
 - `InventoryMovementService` pauses capture while it updates projections itself, so applied postings inside a wrapped request are not counted twice. Reversing a shadow movement does not touch projections.
 
-Coverage: `LegacyStockShadow::WRITERS` lists 39 routed controller methods across Sale, Purchase, Return, ReturnPurchase, Adjustment, Transfer (including `changeStatus`), PackingSlip, Product, DamageStock, Exchange, CafeOperations and Manufacturing Production. `AppServiceProvider` attaches the `legacy.stock` middleware to them centrally, including cached and module routes; GET/HEAD requests pass through. The scheduled `purchase:auto` command wraps itself. A test fails if any listed method is unwrapped.
+Current coverage: `LegacyStockShadow::WRITERS` lists 18 methods across Sale, Purchase, Return and ReturnPurchase. `AppServiceProvider` attaches `legacy.stock` centrally, including cached routes. Phase 4c controller methods and `purchase:auto` no longer use shadow recording. A test fails if a remaining listed method is unwrapped.
 
 Related changes:
 
 - Applied serial postings now keep the legacy `product_warehouse.imei_number` list current.
-- `ProductController::updateProduct` deletes variant stock rows one by one so the deletes are captured.
-- `AutoPurchase` now saves the warehouse row it creates. Previously it raised `products.qty` by 10 with no warehouse row on every five-minute run when the row was missing.
-- Set `INVENTORY_LEGACY_LEDGER_MODE=off` to stop recording in an emergency; the ledger then drifts.
+- Phase 4c product updates reject removal of variants with nonzero warehouse quantities or serials; only empty projection metadata may be deleted.
+- Phase 4c `AutoPurchase` posts receipts through the movement service and reevaluates stock under product locks.
+- `INVENTORY_LEGACY_LEDGER_MODE=off` stops the remaining commercial shadow recording; its ledger then drifts. The flag never disables Phase 4c applied movements.
 
-Known gaps that reconciliation will report are audit items 3–13: writers that change `products`, variant or batch quantities without a warehouse row. Examples are missing-row guards without an `else`, cafe raw-material consumption, adjustment-update reverts and the batch sign bug in sale deletes. These are fixed at each writer's cutover, not in shadow mode.
+Current commercial gaps are audit #5, #6, #7 and #11, including missing-row guards and the batch sign in sale deletion. Operational gaps are repaired by Phase 4c code; this does not repair previously retained discrepancies.
 
-Proof: `LegacyStockShadowTest` contains 13 tests with 97 assertions. They cover:
+Historical shadow-package proof before Phase 4c: `LegacyStockShadowTest` contains 13 tests with 97 assertions. They cover:
 
 - capture of saves, increments, creates and deletes;
 - savepoint rollback, thrown and rendered failures, and leaked transactions;
@@ -234,9 +234,9 @@ Proof: `LegacyStockShadowTest` contains 13 tests with 97 assertions. They cover:
 - serial identities and the serial projection;
 - logged failures, off mode, shadow reversal, middleware attribution and route coverage.
 
-The full local SQLite `phpunit.company.xml` gives 197 tests and 1,143 assertions, with 6 skipped. On disposable official MySQL 8.4.0 at `ffdddde` it gives 197 tests and 1,196 assertions with none skipped, so `StockLedgerConcurrencyTest` and the MySQL migration chain ran.
+Before Phase 4c, the full local SQLite `phpunit.company.xml` gives 197 tests and 1,143 assertions, with 6 skipped. On disposable official MySQL 8.4.0 at `ffdddde` it gives 197 tests and 1,196 assertions with none skipped, so `StockLedgerConcurrencyTest` and the MySQL migration chain ran.
 
-`LegacyStockShadowWebTest` (in `phpunit.legacy-mysql.xml`, seeded original schema, full middleware stack, after `erp:stock-opening`) runs each request twice: first with recording off (then rolled back), then with shadow on. It asserts the same HTTP status, identical `products`/`product_warehouse` results, exactly one shadow movement of the expected type, source and lines, and unchanged reconciliation differences. Covered: web (via `genInvoice`) and POS sales, sale destroy, purchase, sale return, purchase return, completed transfer, pending transfer completed by `changeStatus`, mixed quantity adjustment, and a purchase whose controller rolls back its own transaction (nothing recorded). The seeded data already disagrees with itself (product 1: `qty` 624.7 against a warehouse row of 10), so the tests compare against the pre-request baseline. Three known-gap tests assert that audited gaps surface as exactly one reconciliation difference each. #5: a POS sale from a warehouse without a stock row records no movement and leaves a product-level difference. #7: a batch sale deletion decrements the batch and leaves a batch-level difference. #3: cafe raw-material consumption changes only the product. The cafe, damage-stock, exchange and production writers are wrapped but unreachable until optional capability activation; the #3 test opens the gate with a labelled fixture-only override. The suite gives 28 tests and 200 assertions at `38c9395`. The MySQL proof found the `genInvoice` leaked-transaction defect, now fixed.
+`LegacyStockShadowWebTest` (in `phpunit.legacy-mysql.xml`, seeded original schema, full middleware stack, after `erp:stock-opening`) runs each request twice: first with recording off (then rolled back), then with shadow on. It asserts the same HTTP status, identical `products`/`product_warehouse` results, exactly one shadow movement of the expected type, source and lines, and unchanged reconciliation differences. Covered: web (via `genInvoice`) and POS sales, sale destroy, purchase, sale return, purchase return, completed transfer, pending transfer completed by `changeStatus`, mixed quantity adjustment, and a purchase whose controller rolls back its own transaction (nothing recorded). The seeded data already disagrees with itself (product 1: `qty` 624.7 against a warehouse row of 10), so the tests compare against the pre-request baseline. Three known-gap tests assert that audited gaps surface as exactly one reconciliation difference each. #5: a POS sale from a warehouse without a stock row records no movement and leaves a product-level difference. #7: a batch sale deletion decrements the batch and leaves a batch-level difference. #3: cafe raw-material consumption changes only the product. The cafe, damage-stock, exchange and production writers are wrapped but unreachable until optional capability activation; the #3 test opens the gate with a labelled fixture-only override. The suite gives 28 tests and 200 assertions at `38c9395`. The MySQL proof found the `genInvoice` leaked-transaction defect, now fixed. These are historical results: Phase 4c updates transfer/adjustment/café assertions to applied movements and removes the café product-only gap assertion. Current proof is recorded below.
 
 Cutover gate, per writer method, in this order:
 
@@ -246,7 +246,17 @@ Cutover gate, per writer method, in this order:
 
 The phase is complete when the §0.5 regeneration grep finds only `InventoryMovementService` projection writes.
 
-Security finding from the audit, unchanged: `GET /update-coupon` (`CouponController::updateCoupon`) truncates every table and recursively deletes a request-supplied path, with no permission check or CSRF protection. `GET /setting/empty-database` is gated only by an environment flag. Both need an owner decision.
+Security findings from the audit were resolved in `ff9310e`: `/update-coupon` and `CouponController::updateCoupon` were removed. `/setting/empty-database` is POST-only, restricted to active Owner/Admin (roles 1/2), and requires typed `DELETE ALL DATA` confirmation. See [the resolved audit findings](LEGACY_STOCK_SHADOW_AUDIT.md#security-findings-outside-shadow-scope---resolved-in-ff9310e).
+
+## Phase 4c: operational authoritative cutover
+
+The [Phase 4c package](PHASE_4C_AUTHORITATIVE_CUTOVER.md) converts all ten remaining controller/command responsibilities to the movement service. Operational direct stock writes are removed, source documents are locked for edits/deletes, reversals use posted quantities/costs, and missing-row, adjustment-update, production-delete and combo-packing defects are corrected. No production data or migrations were executed.
+
+The owner confirmed their SalePro license permits the fork/rebranding and removal of verification. The unused always-successful verifier is removed. The unsafe remote add-on installer is retired: all four endpoints return 410 without downloads, ZIP extraction or migrations. The separate legacy auto-updater remains assigned to Phase 11 review.
+
+Validation: targeted SQLite inventory, shadow, command-safety and destructive-route tests pass. The cutover suite includes actual controller/command effects, rollback, historical compatibility, UOM, variants, serials, recipe changes, company mismatch and product opening stock. Local targeted proof: 75 tests, 1,315 assertions; PHP syntax and diff whitespace checks pass. MySQL CI proof is pending the draft PR run. The in-app browser verified the rendered café form using labelled fixtures: required warehouse selector, valid selection and no console errors. Full authenticated/UAT browser proof remains gated by optional-capability activation.
+
+Phase 4c implementation is delivered; retained-data reconciliation/UAT and production activation are not signed off. Phase 4b commercial cutover and the repository-wide Phase 4 exit criterion remain open. The shadow flag cannot roll back Phase 4c applied postings.
 
 ## UI modernization direction
 

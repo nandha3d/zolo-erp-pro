@@ -6,8 +6,8 @@ use Illuminate\Console\Command;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\ProductPurchase;
-use App\Models\Product_Warehouse;
-use App\Services\Inventory\LegacyStockShadow;
+use App\Services\Inventory\LegacyInventoryPosting;
+use App\Services\Inventory\StockLine;
 use DB;
 
 class AutoPurchase extends Command
@@ -43,16 +43,19 @@ class AutoPurchase extends Command
      */
     public function handle()
     {
-        // Scheduled every five minutes; its stock changes are recorded as one shadow movement per run.
-        app(LegacyStockShadow::class)->record('command.purchase_auto', fn () => $this->purchase(), null, Purchase::class);
+        DB::transaction(fn () => $this->purchase());
+        return self::SUCCESS;
     }
 
     private function purchase(): void
     {
         $product_data = Product::where('is_active', true)
                         ->whereColumn('alert_quantity', '>', 'qty')
-                        ->whereNull(['is_variant', 'is_batch'])
-                        ->get();
+                        ->where('type', 'standard')
+                        ->where(fn ($query) => $query->whereNull('is_variant')->orWhere('is_variant', false))
+                        ->where(fn ($query) => $query->whereNull('is_batch')->orWhere('is_batch', false))
+                        ->where(fn ($query) => $query->whereNull('is_imei')->orWhere('is_imei', false))
+                        ->orderBy('id')->lockForUpdate()->get();
         if(count($product_data)) {
             $pos_setting_data = DB::table('pos_setting')
                                 ->select('warehouse_id')
@@ -108,24 +111,6 @@ class AutoPurchase extends Command
                 $data['tax'][$key] = $tax;
                 $data['total'][$key] = $cost;
 
-                $product_warehouse_data = Product_Warehouse::select('id', 'qty')
-                                        ->where([
-                                            ['product_id', $product->id],
-                                            ['warehouse_id', $pos_setting_data->warehouse_id]
-                                        ])->first();
-                if($product_warehouse_data) {
-                    $product_warehouse_data->qty += 10;
-                    $product_warehouse_data->save();
-                }
-                else {
-                    $lims_product_warehouse_data = new Product_Warehouse();
-                    $lims_product_warehouse_data->product_id = $product->id;
-                    $lims_product_warehouse_data->warehouse_id = $data['warehouse_id'];
-                    $lims_product_warehouse_data->qty = 10;
-                    $lims_product_warehouse_data->save();
-                }
-                $product->qty += 10;
-                $product->save();
             }
             $data['order_tax'] = 0;
             $data['grand_total'] = $data['total_cost'];
@@ -144,6 +129,10 @@ class AutoPurchase extends Command
                     'total' => $data['total'][$key],
                 ]);
             }
+            app(LegacyInventoryPosting::class)->post($purchase_data, 'receive', array_map(
+                fn ($key) => new StockLine((int) $data['product_id'][$key], 10, unitCost: (float) $data['net_unit_cost'][$key]),
+                array_keys($data['product_id'])
+            ), (int) $data['warehouse_id']);
         }
     }
 }

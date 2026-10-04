@@ -137,6 +137,15 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="form-group mb-3">
+                        <label for="raw-material-warehouse" class="font-weight-600 small">Warehouse *</label>
+                        <select id="raw-material-warehouse" name="warehouse_id" class="form-control" required>
+                            <option value="">Select warehouse</option>
+                            @foreach($warehouses as $warehouse)
+                                <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
                         <label class="font-weight-600 small">Select Raw Material / Ingredient *</label>
                         <select name="product_id" class="form-control selectpicker" data-live-search="true" required>
                             @foreach($products as $prod)

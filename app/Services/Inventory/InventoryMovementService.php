@@ -60,6 +60,21 @@ class InventoryMovementService
         return $this->post('opening', $command);
     }
 
+    /** Empty projection metadata preserves legacy warehouse product selectors; it has no stock effect. */
+    public function initializeWarehouse(int $warehouseId, ?CompanyContext $context = null): void
+    {
+        $this->shadow->paused(fn () => DB::transaction(function () use ($warehouseId, $context) {
+            $companyId = $this->companyFor($context, [$warehouseId]);
+            $query = Product::query();
+            if ($companyId !== null && $this->hasColumn('products', 'company_id')) {
+                $query->where(fn ($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'));
+            }
+            foreach ($query->orderBy('id')->lockForUpdate()->get() as $product) {
+                $this->warehouseRow($companyId, $product->id, $warehouseId, null, null)->save();
+            }
+        }));
+    }
+
     /** Posts the exact negation of a movement at its original cost and marks it reversed. */
     public function reverse(StockMovement|int $movement, string $reason, ?int $userId = null, ?string $date = null): StockMovement
     {
@@ -317,7 +332,7 @@ class InventoryMovementService
     private function applyProjections(PostingRun $run, Product $product, array $posting, float $qty): void
     {
         $warehouseId = (int) $posting['warehouse_id'];
-        $row = $this->warehouseRow($run, $product->id, $warehouseId, $posting['variant_id'], $posting['batch_id']);
+        $row = $this->warehouseRow($run->companyId, $product->id, $warehouseId, $posting['variant_id'], $posting['batch_id']);
         $after = (float) $row->qty + $qty;
         if ($qty < 0 && $after < -self::EPSILON) {
             $message = sprintf('Insufficient stock for product %d in warehouse %d: %s available, %s requested.',
@@ -348,7 +363,7 @@ class InventoryMovementService
         }
     }
 
-    private function warehouseRow(PostingRun $run, int $productId, int $warehouseId, ?int $variantId, ?int $batchId): Product_Warehouse
+    private function warehouseRow(?int $companyId, int $productId, int $warehouseId, ?int $variantId, ?int $batchId): Product_Warehouse
     {
         $query = Product_Warehouse::where('product_id', $productId)->where('warehouse_id', $warehouseId);
         foreach (['variant_id' => $variantId, 'product_batch_id' => $batchId] as $column => $value) {
@@ -358,8 +373,8 @@ class InventoryMovementService
         }
         // Ambiguous or foreign projection rows must be reconciled before any posting touches them.
         $rows = $query->orderBy('id')->lockForUpdate()->get();
-        $foreign = $run->companyId !== null && $this->hasColumn('product_warehouse', 'company_id')
-            && $rows->contains(fn ($row) => (int) $row->company_id !== $run->companyId);
+        $foreign = $companyId !== null && $this->hasColumn('product_warehouse', 'company_id')
+            && $rows->contains(fn ($row) => (int) $row->company_id !== $companyId);
         if ($rows->count() > 1 || $foreign) {
             throw new StockPolicyException("Stock ownership or identity of product {$productId} in warehouse {$warehouseId} requires reconciliation.");
         }
@@ -371,7 +386,7 @@ class InventoryMovementService
             'variant_id' => $variantId, 'product_batch_id' => $batchId, 'qty' => 0,
         ]);
         if ($this->hasColumn('product_warehouse', 'company_id')) {
-            $row->company_id = $run->companyId;
+            $row->company_id = $companyId;
         }
 
         return $row;

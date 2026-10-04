@@ -28,14 +28,6 @@ class LegacyStockShadow
         'App\Http\Controllers\PurchaseController' => ['Purchase', ['store', 'update', 'importPurchase', 'deleteBySelection', 'destroy']],
         'App\Http\Controllers\ReturnController' => ['Returns', ['store', 'update', 'deleteBySelection', 'destroy']],
         'App\Http\Controllers\ReturnPurchaseController' => ['ReturnPurchase', ['store', 'update', 'deleteBySelection', 'destroy']],
-        'App\Http\Controllers\AdjustmentController' => ['Adjustment', ['store', 'update', 'deleteBySelection', 'destroy']],
-        'App\Http\Controllers\TransferController' => ['Transfer', ['store', 'update', 'importTransfer', 'deleteBySelection', 'destroy', 'changeStatus']],
-        'App\Http\Controllers\PackingSlipController' => ['PackingSlip', ['store', 'delete']],
-        'App\Http\Controllers\ProductController' => ['Product', ['store', 'updateProduct', 'importProduct']],
-        'App\Http\Controllers\DamageStockController' => ['DamageStock', ['store']],
-        'App\Http\Controllers\ExchangeController' => ['Exchange', ['store']],
-        'App\Http\Controllers\CafeOperationsController' => [null, ['storeRawMaterial']],
-        'Modules\Manufacturing\Http\Controllers\ProductionController' => ['Modules\\Manufacturing\\Entities\\Production', ['store', 'destroy']],
     ];
 
     private int $paused = 0;
