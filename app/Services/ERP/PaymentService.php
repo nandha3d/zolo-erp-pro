@@ -20,10 +20,10 @@ class PaymentService
 
     public function addPayment(Sale|Purchase $source, array $data, ?int $actor = null, ?CompanyContext $context = null): Payment
     {
-        $actor ??= auth()->id();
+        $actor = $actor ?: auth()->id();
         $guard = app(CompanyWriteGuard::class);
         $context = $guard->context($context, $actor);
-        $amount = (float) ($data['amount'] ?? 0);
+        $amount = round((float) ($data['amount'] ?? 0), 4);
         if (!is_numeric($data['amount'] ?? null) || !is_finite($amount) || $amount <= 0) {
             throw new InvalidArgumentException('Payment amount must be finite and positive.');
         }
@@ -35,7 +35,8 @@ class PaymentService
             if ($source instanceof Purchase && (int) $source->status === 4) {
                 throw new InvalidArgumentException('An unbilled purchase order cannot receive payment here.');
             }
-            if ($amount > (float) $source->grand_total - (float) $source->paid_amount) {
+            $outstanding = round((float) $source->grand_total - (float) $source->paid_amount, 4);
+            if ($amount > $outstanding) {
                 throw new InvalidArgumentException('Payment exceeds the outstanding document amount.');
             }
             if ($date < $source->created_at->toDateString()) {
@@ -53,7 +54,7 @@ class PaymentService
             ]);
             $payment->save();
             $numbers->assign($reservation, $payment);
-            $paidAmount = (float) $source->paid_amount + $amount;
+            $paidAmount = round((float) $source->paid_amount + $amount, 4);
             $source->update(['paid_amount' => $paidAmount, 'payment_status' => $paidAmount >= (float) $source->grand_total ? 4 : 3]);
             $this->accountingService->postPaymentJournal($payment, $context, $actor);
 

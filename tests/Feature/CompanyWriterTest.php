@@ -138,6 +138,21 @@ class CompanyWriterTest extends CompanyContextTestCase
         $this->assertSame(3, (int) DB::table('document_series')->where('document_type', 'purchase_payment')->value('next_number'));
     }
 
+    public function test_final_fractional_settlements_use_journal_precision_without_float_residue(): void
+    {
+        foreach (['sales' => 'net_unit_price', 'purchases' => 'net_unit_cost'] as $type => $priceField) {
+            $payload = $this->payload($type);
+            $payload['items'][0]['qty'] = 1;
+            $payload['items'][0][$priceField] = 0.3;
+            $payload['paid_amount'] = 0.2;
+            $id = $this->postJson('/api/v1/'.$type, $payload)->assertCreated()->json('data.id');
+            $this->postJson('/api/v1/'.$type.'/'.$id.'/payments',
+                ['amount' => 0.1, 'paying_method' => 'Cash'])->assertCreated();
+            $this->assertEquals(0.3, DB::table($type)->where('id', $id)->value('paid_amount'));
+            $this->assertSame(4, (int) DB::table($type)->where('id', $id)->value('payment_status'));
+        }
+    }
+
     private function payload(string $type): array
     {
         $line = ['product_id' => 1, 'qty' => 2];
