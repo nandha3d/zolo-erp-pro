@@ -81,6 +81,22 @@ abstract class CompanyContextTestCase extends ErpServiceTestCase
         (require database_path('migrations/2026_10_03_000005_create_document_numbering_tables.php'))->up();
     }
 
+    protected function installAccountingFoundation(): void
+    {
+        (require database_path('migrations/2026_09_19_000004_create_inventory_close_and_mappings_tables.php'))->up();
+        if (!Schema::hasColumn('semantic_account_mappings', 'company_id')) {
+            Schema::table('semantic_account_mappings', fn (Blueprint $table) => $table->unsignedBigInteger('company_id')->nullable());
+        }
+        if (!Schema::hasTable('accounts')) {
+            Schema::create('accounts', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name');
+                $table->unsignedBigInteger('company_id')->nullable();
+            });
+        }
+        (require database_path('migrations/2026_10_04_000002_harden_accounting_and_create_open_items.php'))->up();
+    }
+
     protected function tearDown(): void
     {
         CarbonImmutable::setTestNow();

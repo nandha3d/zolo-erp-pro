@@ -141,6 +141,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 1199px) {
+  /* Keep the fixed-width themed sidebar off the mobile form when collapsed. */
+  nav.side-navbar.shrink {
+    transform: translateX(-100%) !important;
+    pointer-events: none;
+  }
+  html[dir="rtl"] nav.side-navbar.shrink {
+    transform: translateX(100%) !important;
+  }
   .page {
     margin-left: 0 !important;
     width: 100% !important;

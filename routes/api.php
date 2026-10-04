@@ -84,6 +84,18 @@ Route::prefix('v1')->group(function () {
             Route::get('balance-sheet', [AccountingApiController::class, 'balanceSheet'])->middleware('company.context')->name('api.v1.accounting.balance-sheet');
             Route::get('general-ledger/{id}', [AccountingApiController::class, 'generalLedger'])->middleware('company.context')->name('api.v1.accounting.gl');
             Route::post('journal-entries', [AccountingApiController::class, 'storeJournalEntry'])->middleware('company.context')->name('api.v1.accounting.journal-entry.store');
+            Route::middleware('company.context')->controller(\App\Http\Controllers\Accounting\VoucherController::class)->group(function () {
+                Route::post('vouchers', 'store')->name('api.v1.accounting.vouchers.store');
+                Route::post('journal-entries/{id}/reverse', 'reverse')->name('api.v1.accounting.journal.reverse');
+                Route::get('open-items', 'openItems')->name('api.v1.accounting.open-items');
+                Route::post('allocations', 'allocate')->name('api.v1.accounting.allocations.store');
+                Route::post('allocations/{id}/reverse', 'reverseAllocation')->name('api.v1.accounting.allocations.reverse');
+                Route::post('period', 'period')->name('api.v1.accounting.period');
+                Route::get('day-book', 'book')->defaults('type', 'day')->name('api.v1.accounting.day-book');
+                Route::get('cash-book', 'book')->defaults('type', 'cash')->name('api.v1.accounting.cash-book');
+                Route::get('ageing', 'ageing')->name('api.v1.accounting.ageing');
+                Route::get('monthly-ledger/{id}', 'monthly')->name('api.v1.accounting.monthly-ledger');
+            });
         });
 
         // Partners (Customers & Suppliers)

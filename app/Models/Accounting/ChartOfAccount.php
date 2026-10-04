@@ -28,6 +28,9 @@ class ChartOfAccount extends Model
         'is_active',
         'is_system',
         'description',
+        'financial_report_group',
+        'control_type',
+        'allow_manual_posting',
     ];
 
     protected $casts = [
@@ -36,6 +39,7 @@ class ChartOfAccount extends Model
         'is_reconciled' => 'boolean',
         'is_active' => 'boolean',
         'is_system' => 'boolean',
+        'allow_manual_posting' => 'boolean',
     ];
 
     /**

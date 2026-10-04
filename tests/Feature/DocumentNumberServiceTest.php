@@ -60,6 +60,8 @@ class DocumentNumberServiceTest extends CompanyContextTestCase
         $product = $this->stock(50);
         $product->forceFill(['company_id' => $this->company->id])->save();
         DB::table('product_warehouse')->update(['company_id' => $this->company->id]);
+        $this->installAccountingFoundation();
+        app(\App\Services\Accounting\SemanticAccountResolver::class)->seedCompany($this->company->id);
     }
 
     private function reserve(string $type = 'sale', ?CompanyContext $context = null, string $date = '2026-10-03', int $actor = 1): DocumentNumberReservation

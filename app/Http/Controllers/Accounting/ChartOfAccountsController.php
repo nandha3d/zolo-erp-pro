@@ -29,7 +29,7 @@ class ChartOfAccountsController extends Controller
         $context = app(CompanyContextResolver::class)->forActor();
         abort_unless(app(CompanyContextResolver::class)->canManageFinancialYears($request->user()->id, $context->companyId), 403);
         $this->validate($request, [
-            'code' => 'required|string|max:50|unique:chart_of_accounts,code',
+            'code' => ['required', 'string', 'max:50', \Illuminate\Validation\Rule::unique('chart_of_accounts', 'code')->where('company_id', $context->companyId)],
             'name' => 'required|string|max:255',
             'type' => 'required|in:asset,liability,equity,revenue,expense',
             'sub_type' => 'required|string|max:100',

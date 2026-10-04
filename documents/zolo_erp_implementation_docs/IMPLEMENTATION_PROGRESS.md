@@ -264,6 +264,16 @@ Docs [31](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [32](32_OPTECH_SC
 
 Retain Blade/Bootstrap/jQuery and extend `public/css/zolo-erp-neo.css`. Preserve Optech operator workflows/shortcuts using shared backend services, General Trading terminology, capability/profile extensions, and common components. Migrate UI incrementally with responsive, keyboard, accessibility, state and visual proof. UI planning does not bypass company/engine gates.
 
+## Phase 5: accounting hardening and open items
+
+The [Phase 5 implementation package and setup runbook](PHASE_5_ACCOUNTING_HARDENING.md) refactors the existing accounting facade into one posting service, company semantic mappings, exact journal arithmetic, signed AR/AP open items and immutable allocations/reversals. It adds Voucher Hub and shortcuts, bill allocation, settlement-account links, FY/branch reports and ageing, audited period controls and ledger/cache reconciliation. Existing atomic numbering and company/branch/FY authorization are reused.
+
+Validation on 2026-10-04: final full SQLite company suite **280 tests, 2,473 assertions, 18 MySQL-only skips**; focused MySQL 8.4.11 accounting, accounting web and migration suite **35 tests, 272 assertions, none skipped**; seeded original-schema MySQL smoke **28 tests, 204 assertions**. The broader MySQL accounting/writer/numbering/report run passed its functional tests; a required subtype in the new migration fixture was corrected and separately verified (**1 test, 10 assertions**) before the final 35-test MySQL run. Additional command-safety proof: **4 tests, 17 assertions**. The final suite also proves manual API idempotency across numeric/string account IDs, and the existing manual journal form now supplies a retry key. PHP/JavaScript syntax and whitespace checks pass. Concurrency proves one journal for duplicate requests and no double allocation of a bill.
+
+Authenticated browser proof uses a separate disposable MySQL database: Contra, Payment, Receipt and Journal; F4–F7/Ctrl+Enter; exact balance and bill selection; a 10.0000 bill partially settled by 3.0000 leaving 7.0000; cheque fields and ageing; desktop/mobile layout; no console errors. Screenshots: [Voucher Hub desktop](evidence/phase5/voucher-hub-desktop.png), [mobile](evidence/phase5/voucher-hub-mobile.png), [ageing](evidence/phase5/ageing-desktop.png).
+
+Core Phase 5 implementation is delivered. Production migration, reviewed opening items/history, retained-data control reconciliation and UAT remain unsigned. This does not declare the preceding isolation/commercial cutover gates complete or activate optional routes. Legacy commercial/POS and purchase-payment adapter convergence remains Phase 6; unowned optional journal callers remain gated pending their operational conversion. Dated inventory-close posting remains blocked. The runbook records changed responsibilities, migration/rollback behavior and these limits.
+
 ## Delivery order
 
 Canonical phases remain: 0 regression baseline; 1 Company/Branch/FY; 2 capabilities; 3 atomic series; 4 inventory ledger; 5 accounting/open items; 6 shared commercial services; 7 tax; 8 returns/documents; 9 manufacturing/job work; 10 profiles; 11 UI/API/security completion; 12 migration/UAT/deployment.

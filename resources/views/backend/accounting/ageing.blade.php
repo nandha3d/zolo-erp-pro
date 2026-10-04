@@ -1,0 +1,9 @@
+@extends('backend.layout.main')
+@section('content')
+<section class="forms"><div class="container-fluid"><h1 class="h3">Receivable / Payable Ageing</h1><a href="{{ route('accounting.vouchers') }}">Voucher Hub</a>
+<form method="GET" class="row mt-3"><div class="col-md-4 form-group"><label for="ageing-party">Party type</label><select name="party_type" id="ageing-party" class="form-control"><option value="customer" @selected($report['party_type'] === 'customer')>Customers</option><option value="supplier" @selected($report['party_type'] === 'supplier')>Suppliers</option></select></div><div class="col-md-4 form-group"><label for="ageing-date">As of date</label><input class="form-control" id="ageing-date" name="as_of_date" type="date" value="{{ $report['as_of_date'] }}" required></div><div class="col-md-4 form-group align-self-end"><button class="btn btn-primary">Show ageing</button></div></form>
+<p>Age is measured from each bill's due date. Credits include unallocated advances and payments.</p>
+<dl class="row">@foreach($report['totals'] as $bucket => $amount)<div class="col-md-3"><dt>{{ $bucket }}{{ $bucket === 'credits' ? '' : ' days' }}</dt><dd>{{ $amount }}</dd></div>@endforeach</dl>
+<div class="card neo-card"><div class="table-responsive"><table class="table"><thead><tr><th scope="col">Bill</th><th scope="col">Party</th><th scope="col">Due date</th><th scope="col">Days</th><th scope="col">Bucket</th><th scope="col">Open amount</th></tr></thead><tbody>@forelse($report['rows'] as $row)<tr><td>{{ $row['item']->document_no }}</td><td>{{ $row['item']->party_type }} #{{ $row['item']->party_id }}</td><td>{{ $row['item']->due_date->format('Y-m-d') }}</td><td>{{ $row['days'] }}</td><td>{{ $row['bucket'] }}</td><td>{{ $row['open_amount'] }}</td></tr>@empty<tr><td colspan="6">No open items as of this date.</td></tr>@endforelse</tbody></table></div></div>
+</div></section>
+@endsection

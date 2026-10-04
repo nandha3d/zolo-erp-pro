@@ -176,6 +176,8 @@ class ErpServiceRegressionTest extends CompanyErpServiceTestCase
     {
         $bank = ChartOfAccount::create(['code' => '1020', 'name' => 'Bank', 'type' => 'asset', 'sub_type' => 'bank']);
         $bank->forceFill(['company_id' => $this->company->id])->save();
+        \App\Models\Accounting\SemanticAccountMapping::where('company_id', $this->company->id)
+            ->where('semantic_role', 'bank')->update(['account_id' => $bank->id]);
         $product = $this->stock();
         (new PurchaseService(new AccountingService()))->createPurchase([
             'supplier_id' => 1, 'warehouse_id' => 1, 'paid_amount' => 10, 'paying_method' => 'Bank',

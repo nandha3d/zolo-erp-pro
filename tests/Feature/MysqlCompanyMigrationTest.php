@@ -89,4 +89,45 @@ class MysqlCompanyMigrationTest extends TestCase
         $this->expectException(QueryException::class);
         DB::table('companies')->update(['base_currency_id' => 999]);
     }
+
+    public function test_accounting_migration_resumes_committed_ddl_preserves_records_and_refuses_unsafe_rollback(): void
+    {
+        $this->assertSame(0, Artisan::call('migrate', ['--database' => 'erp_regression', '--force' => true]));
+        $migration = require database_path('migrations/2026_10_04_000002_harden_accounting_and_create_open_items.php');
+        $migration->down();
+        DB::table('companies')->insert([
+            ['id' => 1, 'code' => 'A', 'legal_name' => 'Retained A'],
+            ['id' => 2, 'code' => 'B', 'legal_name' => 'Retained B'],
+        ]);
+        DB::table('chart_of_accounts')->insert(['company_id' => 1, 'code' => 'CASH', 'name' => 'Retained cash', 'type' => 'asset', 'sub_type' => 'cash']);
+        $fail = true;
+        DB::listen(function (QueryExecuted $query) use (&$fail) {
+            if ($fail && str_starts_with($query->sql, 'alter table `journal_entries` add `posted_at`')) {
+                $fail = false;
+                throw new RuntimeException('Injected accounting DDL failure');
+            }
+        });
+        try {
+            $migration->up();
+            $this->fail('Committed partial DDL must be interrupted.');
+        } catch (RuntimeException $error) {
+            $this->assertSame('Injected accounting DDL failure', $error->getMessage());
+        }
+        $this->assertTrue(Schema::hasColumn('journal_entries', 'posted_at'));
+        $this->assertFalse(Schema::hasTable('account_open_items'));
+        $migration->up();
+        $migration->up();
+        $this->assertSame('Retained cash', DB::table('chart_of_accounts')->value('name'));
+        $this->assertTrue(Schema::hasTable('account_allocations'));
+        $this->assertTrue(collect(Schema::getForeignKeys('account_allocations'))->contains('name', 'allocation_reversal_of_id_fk'));
+        DB::table('chart_of_accounts')->insert(['company_id' => 2, 'code' => 'CASH', 'name' => 'Company B cash', 'type' => 'asset', 'sub_type' => 'cash']);
+        try {
+            $migration->down();
+            $this->fail('Restoring global unique keys must refuse conflicting company data.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('company-specific', $error->getMessage());
+        }
+        $this->assertSame(2, DB::table('chart_of_accounts')->count());
+        $this->assertTrue(Schema::hasTable('account_open_items'));
+    }
 }

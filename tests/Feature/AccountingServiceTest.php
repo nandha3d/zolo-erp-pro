@@ -40,7 +40,7 @@ class AccountingServiceTest extends TestCase
         $entry = $this->accountingService->postJournalEntry(
             [
                 'entry_date' => now()->toDateString(),
-                'reference_type' => 'test',
+                'reference_type' => 'manual',
                 'description' => 'Test capital injection',
             ],
             [
@@ -79,7 +79,7 @@ class AccountingServiceTest extends TestCase
         $this->accountingService->postJournalEntry(
             [
                 'entry_date' => now()->toDateString(),
-                'reference_type' => 'test',
+                'reference_type' => 'manual',
                 'description' => 'Unbalanced entry',
             ],
             [

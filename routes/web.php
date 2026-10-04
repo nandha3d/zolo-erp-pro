@@ -860,6 +860,20 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     // Accounting Extended: Cash Flow, Periodic Inventory Close, Semantic Mappings
     Route::prefix('accounting')->middleware('company.context')->group(function () {
+        Route::controller(\App\Http\Controllers\Accounting\VoucherController::class)->group(function () {
+            Route::get('vouchers', 'index')->name('accounting.vouchers');
+            Route::post('vouchers', 'store')->name('accounting.vouchers.store');
+            Route::post('journal-entries/{id}/reverse', 'reverse')->name('accounting.journal.reverse');
+            Route::get('open-items', 'openItems')->name('accounting.open-items');
+            Route::post('allocations', 'allocate')->name('accounting.allocations.store');
+            Route::post('allocations/{id}/reverse', 'reverseAllocation')->name('accounting.allocations.reverse');
+            Route::post('period', 'period')->name('accounting.period');
+            Route::post('settlement-accounts/{id}/link', 'linkAccount')->name('accounting.settlement-accounts.link');
+            Route::get('day-book', 'book')->defaults('type', 'day')->name('accounting.day-book');
+            Route::get('cash-book', 'book')->defaults('type', 'cash')->name('accounting.cash-book');
+            Route::get('ageing', 'ageing')->name('accounting.ageing');
+            Route::get('monthly-ledger/{id}', 'monthly')->name('accounting.monthly-ledger');
+        });
         Route::get('cash-flow-statement', [\App\Http\Controllers\Accounting\FinancialReportController::class, 'cashFlowStatement'])->name('accounting.cash-flow');
         Route::get('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'index'])->name('accounting.inventory-close');
         Route::post('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'postClose'])->name('accounting.inventory-close.store');

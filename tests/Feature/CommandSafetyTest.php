@@ -33,4 +33,14 @@ class CommandSafetyTest extends TestCase
         DB::shouldReceive('statement')->never();
         $this->assertSame(1, Artisan::call('reset:db'));
     }
+
+    public function test_accounting_commands_require_company_actor_and_explicit_projection_rebuild(): void
+    {
+        DB::shouldReceive('select')->never();
+        DB::shouldReceive('statement')->never();
+        $this->assertSame(1, Artisan::call('erp:account-mappings'));
+        $this->assertSame(1, Artisan::call('erp:ledger-reconcile'));
+        $this->assertSame(1, Artisan::call('erp:ledger-reconcile', ['--company' => 1, '--actor' => 1, '--rebuild' => true]));
+        $this->assertStringContainsString('--force', Artisan::output());
+    }
 }

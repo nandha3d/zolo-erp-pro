@@ -18,6 +18,7 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
         parent::setUp();
         Cache::flush();
         $this->seedCompanyReaderFixtures();
+        $this->installAccountingFoundation();
         $this->actingAs(User::findOrFail(1));
         Schema::table('warehouses', fn (Blueprint $table) => $table->boolean('is_active')->default(true));
         Schema::table('products', fn (Blueprint $table) => $table->double('alert_quantity')->default(0));
@@ -59,18 +60,6 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
             $table->timestamps();
         });
         DB::table('general_settings')->insert($settings + ['created_at' => now()]);
-        Schema::create('semantic_account_mappings', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedBigInteger('company_id');
-            $table->string('semantic_role');
-            $table->unsignedBigInteger('account_id')->nullable();
-            $table->string('account_code')->nullable();
-            $table->string('account_name')->nullable();
-            $table->string('category')->default('core');
-            $table->string('description')->nullable();
-            $table->timestamps();
-        });
-        Schema::create('inventory_closes', fn (Blueprint $table) => $table->increments('id'));
         foreach ([$this->company->id, $this->other->id] as $owner) {
             foreach ([['1010', 'asset', 'cash'], ['4010', 'revenue', 'sales_revenue']] as [$code, $type, $subtype]) {
                 (new ChartOfAccount)->forceFill([
@@ -111,7 +100,7 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
         DB::table('journal_items')->insert(['company_id' => $this->other->id, 'journal_entry_id' => $entry->id,
             'chart_of_account_id' => 3, 'debit' => 100, 'credit' => 0]);
         $this->getJson('/accounting/journal-entries/'.$entry->id)->assertOk()->assertJsonCount(2, 'items');
-        $entry->forceFill(['company_id' => $this->other->id])->save();
+        DB::table('journal_entries')->where('id', $entry->id)->update(['company_id' => $this->other->id]);
         $this->getJson('/accounting/journal-entries/'.$entry->id)->assertNotFound();
         $payload['items'][1]['chart_of_account_id'] = 4;
         $this->postJson('/accounting/journal-entries', $payload)->assertUnprocessable();
@@ -174,5 +163,20 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
         $this->assertSame(['Updated B'], view()->shared('categories_list')->pluck('name')->all());
         $this->get('/accounting/chart-of-accounts')->assertOk()->assertSee('Visible cash')->assertDontSee('Secret B ledger');
         $this->assertSame(['Visible A'], view()->shared('categories_list')->pluck('name')->all());
+    }
+
+    public function test_voucher_hub_and_reports_render_owned_controls_and_named_permission_limits(): void
+    {
+        $this->get('/accounting/vouchers')->assertOk()->assertSee('Voucher Hub')->assertSee('Visible cash')
+            ->assertDontSee('Secret B ledger')->assertSee('accounting-voucher-form')->assertSee('Period controls');
+        foreach (['/accounting/day-book', '/accounting/cash-book', '/accounting/ageing', '/accounting/monthly-ledger/1'] as $uri) {
+            $this->get($uri)->assertOk()->assertDontSee('Secret B ledger');
+        }
+        DB::table('company_user')->where('company_id', $this->company->id)->where('user_id', 1)->update(['role_id_override' => 4]);
+        $this->get('/accounting/vouchers')->assertOk()->assertDontSee('accounting-voucher-form')
+            ->assertSee('Ask a company administrator')->assertDontSee('Period controls');
+        DB::table('permissions')->insert(['id' => 5, 'name' => 'accounting.voucher.post']);
+        DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => 5]);
+        $this->get('/accounting/vouchers')->assertOk()->assertSee('accounting-voucher-form')->assertDontSee('Period controls');
     }
 }

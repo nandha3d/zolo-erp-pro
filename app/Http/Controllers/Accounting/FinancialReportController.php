@@ -36,8 +36,8 @@ class FinancialReportController extends Controller
     {
         $context = app(CompanyContextResolver::class)->forActor();
         $timezone = Company::findOrFail($context->companyId)->timezone;
-        $startDate = $request->input('start_date', CarbonImmutable::now($timezone)->startOfYear()->toDateString());
-        $endDate = $request->input('end_date', CarbonImmutable::now($timezone)->toDateString());
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
         $report = $this->accountingService->getProfitAndLoss($startDate, $endDate, $context);
 
@@ -48,7 +48,7 @@ class FinancialReportController extends Controller
     {
         $context = app(CompanyContextResolver::class)->forActor();
         $timezone = Company::findOrFail($context->companyId)->timezone;
-        $asOfDate = $request->input('as_of_date', CarbonImmutable::now($timezone)->toDateString());
+        $asOfDate = $request->input('as_of_date');
 
         $report = $this->accountingService->getBalanceSheet($asOfDate, $context);
 
@@ -75,11 +75,9 @@ class FinancialReportController extends Controller
     {
         $context = app(CompanyContextResolver::class)->forActor();
         $timezone = Company::findOrFail($context->companyId)->timezone;
-        $startDate = $request->input('start_date', CarbonImmutable::now($timezone)->startOfMonth()->toDateString());
-        $endDate = $request->input('end_date', CarbonImmutable::now($timezone)->toDateString());
+        [$startDate, $endDate] = app(\App\Services\Accounting\FinancialReportService::class)->range($context, $request->start_date, $request->end_date);
 
-        // Cash Accounts: 1010 (Petty Cash), 1020 (Main Bank Account)
-        $cashAccounts = ChartOfAccount::forCompany($context)->whereIn('code', ['1010', '1020'])->pluck('id')->toArray();
+        $cashAccounts = ChartOfAccount::forCompany($context)->whereIn('control_type', ['cash', 'bank'])->pluck('id')->toArray();
 
         \Illuminate\Support\Facades\Validator::make(['start_date' => $startDate, 'end_date' => $endDate], [
             'start_date' => 'required|date_format:Y-m-d',
@@ -87,7 +85,7 @@ class FinancialReportController extends Controller
         ])->validate();
         $totals = JournalItem::forCompany($context)
             ->whereHas('journalEntry', function ($q) use ($startDate, $endDate, $context) {
-                $q->forCompany($context)->where('status', 'posted')
+                app(\App\Services\Accounting\FinancialReportService::class)->scopeEntries($q, $context)
                     ->whereDate('entry_date', '>=', $startDate)->whereDate('entry_date', '<=', $endDate);
             })->whereIn('chart_of_account_id', $cashAccounts)
             ->selectRaw('COALESCE(SUM(debit), 0) AS debits, COALESCE(SUM(credit), 0) AS credits')->first();

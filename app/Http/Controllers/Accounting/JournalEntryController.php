@@ -30,6 +30,8 @@ class JournalEntryController extends Controller
         if ($request->filled('reference_type')) {
             $query->where('reference_type', $request->reference_type);
         }
+        [$start, $end] = app(\App\Services\Accounting\FinancialReportService::class)->range($context, $request->start_date, $request->end_date);
+        app(\App\Services\Accounting\FinancialReportService::class)->scopeEntries($query, $context)->whereDate('entry_date', '>=', $start)->whereDate('entry_date', '<=', $end);
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereDate('entry_date', '>=', $request->start_date)->whereDate('entry_date', '<=', $request->end_date);
         }
@@ -44,6 +46,7 @@ class JournalEntryController extends Controller
     {
         $context = app(CompanyContextResolver::class)->forActor();
         $entry = JournalEntry::withOwnedItems($context)->with(['creator' => fn ($q) => $q->whereIn('id', \Illuminate\Support\Facades\DB::table('company_user')->select('user_id')->where('company_id', $context->companyId))])->findOrFail($id);
+        abort_if($entry->branch_id && (int) $entry->branch_id !== $context->branchId, 404);
         return response()->json($entry);
     }
 
@@ -65,6 +68,7 @@ class JournalEntryController extends Controller
                 'description' => $request->description,
                 'reference_type' => 'manual',
                 'created_by' => Auth::id(),
+                'idempotency_key' => $request->input('idempotency_key'),
             ], $request->items, app(CompanyContextResolver::class)->forActor());
 
             return redirect()->back()->with('message', 'Journal Entry posted successfully.');

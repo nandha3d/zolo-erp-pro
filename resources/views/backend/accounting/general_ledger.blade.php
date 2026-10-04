@@ -46,6 +46,7 @@
         </div>
 
         @if($report)
+            <p><a href="{{ route('accounting.monthly-ledger', $accountId) }}">View monthly breakup</a></p>
             <!-- Account Summary Header Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">

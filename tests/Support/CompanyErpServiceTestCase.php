@@ -41,6 +41,8 @@ abstract class CompanyErpServiceTestCase extends CompanyContextTestCase
                 'code' => $code, 'name' => $subType, 'type' => $type, 'sub_type' => $subType,
             ])->save();
         }
+        $this->installAccountingFoundation();
+        app(\App\Services\Accounting\SemanticAccountResolver::class)->seedCompany($this->company->id);
     }
 
     protected function stock(float $qty = 20, float $cost = 5): Product

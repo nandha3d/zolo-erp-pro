@@ -13,7 +13,7 @@
         <div class="row align-items-center mb-4">
             <div class="col-md-8">
                 <h3 class="font-weight-bold text-dark m-0">Semantic Account Mappings</h3>
-                <p class="text-muted small m-0">Maintain company account mapping metadata. Automatic postings currently use system account codes and subtypes; mapping activation requires a reviewed posting integration.</p>
+                <p class="text-muted small m-0">Configure company accounts for new automatic postings. Existing journal history remains unchanged.</p>
             </div>
             <div class="col-md-4 text-right">
                 <button type="submit" form="mapping-form" class="btn btn-primary">
@@ -59,7 +59,7 @@
                                             </select>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge {{ $map->account_code ? 'badge-secondary' : 'badge-warning' }} px-2 py-1">{{ $map->account_code ? 'Metadata only' : 'Review required' }}</span>
+                                            <span class="badge {{ $map->account_code ? 'badge-secondary' : 'badge-warning' }} px-2 py-1">{{ $map->account_code ? 'Mapped' : 'Setup required' }}</span>
                                         </td>
                                     </tr>
                                 @endforeach

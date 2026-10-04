@@ -44,6 +44,10 @@ class CompanyWriterTest extends CompanyContextTestCase
                     'name' => $role, 'type' => $type, 'sub_type' => $role])->save();
             }
         }
+        $this->installAccountingFoundation();
+        foreach ([$this->company->id, $this->other->id] as $owner) {
+            app(\App\Services\Accounting\SemanticAccountResolver::class)->seedCompany($owner);
+        }
     }
 
     public function test_explicit_account_lookup_cannot_use_a_forged_company_context(): void

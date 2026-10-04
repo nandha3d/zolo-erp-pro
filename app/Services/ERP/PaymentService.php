@@ -23,7 +23,7 @@ class PaymentService
         $actor = $actor ?: auth()->id();
         $guard = app(CompanyWriteGuard::class);
         $context = $guard->context($context, $actor);
-        $amount = round((float) ($data['amount'] ?? 0), 4);
+        $amount = (float) \App\Support\LedgerAmount::decimal(\App\Support\LedgerAmount::units($data['amount'] ?? 0));
         if (!is_numeric($data['amount'] ?? null) || !is_finite($amount) || $amount <= 0) {
             throw new InvalidArgumentException('Payment amount must be finite and positive.');
         }
@@ -32,6 +32,25 @@ class PaymentService
             $date = $guard->begin($context, $guard->businessDate($data));
             $guard->rejectUnscopedReferences($data);
             $source = $source::visibleIn($context)->whereKey($source->id)->lockForUpdate()->firstOrFail();
+            $type = $source instanceof Sale ? 'sale' : 'purchase';
+            $accountId = $guard->paymentAccount($data, $context);
+            if (!empty($data['idempotency_key'])) {
+                if (!is_string($data['idempotency_key']) || strlen($data['idempotency_key']) > 100) {
+                    throw new InvalidArgumentException('Payment idempotency key must contain at most 100 characters.');
+                }
+                $existingJournal = \App\Models\Accounting\JournalEntry::forCompany($context)
+                    ->where('idempotency_key', 'settlement:'.$data['idempotency_key'])->first();
+                if ($existingJournal) {
+                    $existing = Payment::visibleIn($context)->whereKey($existingJournal->reference_id)->first();
+                    if (!$existing || (int) $existing->{$type.'_id'} !== (int) $source->id
+                        || \App\Support\LedgerAmount::units((float) $existing->amount) !== \App\Support\LedgerAmount::units($amount)
+                        || $existing->paying_method !== ($data['paying_method'] ?? 'Cash')
+                        || (int) $existing->account_id !== $accountId || $existing->payment_at->toDateString() !== $date) {
+                        throw new InvalidArgumentException('Payment key was already used for a different settlement.');
+                    }
+                    return $existing;
+                }
+            }
             if ($source instanceof Purchase && (int) $source->status === 4) {
                 throw new InvalidArgumentException('An unbilled purchase order cannot receive payment here.');
             }
@@ -42,8 +61,6 @@ class PaymentService
             if ($date < $source->created_at->toDateString()) {
                 throw new InvalidArgumentException('Payment date cannot precede the document date.');
             }
-            $accountId = $guard->paymentAccount($data, $context);
-            $type = $source instanceof Sale ? 'sale' : 'purchase';
             $numbers = app(DocumentNumberService::class);
             $reservation = $numbers->reserve($type.'_payment', $context, $date, $actor);
             $payment = (new Payment)->forceFill([
@@ -56,7 +73,7 @@ class PaymentService
             $numbers->assign($reservation, $payment);
             $paidAmount = round((float) $source->paid_amount + $amount, 4);
             $source->update(['paid_amount' => $paidAmount, 'payment_status' => $paidAmount >= (float) $source->grand_total ? 4 : 3]);
-            $this->accountingService->postPaymentJournal($payment, $context, $actor);
+            $this->accountingService->postPaymentJournal($payment, $context, $actor, $data['idempotency_key'] ?? null);
 
             return $payment;
         });

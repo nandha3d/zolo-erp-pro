@@ -10,6 +10,19 @@ class JournalItem extends Model
 {
     use ScopesCompanyQueries;
 
+    protected static function booted(): void
+    {
+        $guard = function (self $item) {
+            $ids = array_filter([$item->journal_entry_id, $item->getOriginal('journal_entry_id')]);
+            if (JournalEntry::whereIn('id', $ids)->where('status', 'posted')->exists()) {
+                throw new \LogicException('Posted journal lines are immutable; post a reversal.');
+            }
+        };
+        static::creating($guard);
+        static::updating($guard);
+        static::deleting($guard);
+    }
+
     protected $table = 'journal_items';
 
     protected $fillable = [

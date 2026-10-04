@@ -14,6 +14,20 @@ class JournalEntry extends Model
 {
     use ScopesCompanyQueries;
 
+    protected static function booted(): void
+    {
+        static::updating(function (self $entry) {
+            if ($entry->getOriginal('status') === 'posted' && $entry->isDirty()) {
+                throw new \LogicException('Posted journals are immutable; post a reversal.');
+            }
+        });
+        static::deleting(function (self $entry) {
+            if ($entry->status === 'posted') {
+                throw new \LogicException('Posted journals cannot be deleted.');
+            }
+        });
+    }
+
     public function scopeWithOwnedItems(Builder $query, CompanyContext $context): Builder
     {
         return $query->forCompany($context)->with([
@@ -42,6 +56,8 @@ class JournalEntry extends Model
         'entry_date' => 'date',
         'total_debit' => 'decimal:4',
         'total_credit' => 'decimal:4',
+        'posted_at' => 'datetime',
+        'cheque_date' => 'date',
     ];
 
     public function items(): HasMany
@@ -59,6 +75,6 @@ class JournalEntry extends Model
      */
     public function isBalanced(): bool
     {
-        return abs((float)$this->total_debit - (float)$this->total_credit) < 0.0001;
+        return \App\Support\LedgerAmount::units($this->total_debit) === \App\Support\LedgerAmount::units($this->total_credit);
     }
 }

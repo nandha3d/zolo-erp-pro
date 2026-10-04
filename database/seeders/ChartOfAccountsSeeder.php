@@ -197,7 +197,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'code' => '4020',
                 'name' => 'Sales Discounts & Rebates',
                 'type' => 'revenue',
-                'sub_type' => 'sales_revenue',
+                'sub_type' => 'sales_discount',
                 'parent_code' => '4000',
                 'is_system' => false,
                 'description' => 'Discounts granted to customers (Contra-revenue)',

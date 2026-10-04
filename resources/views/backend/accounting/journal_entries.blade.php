@@ -122,6 +122,7 @@
             </div>
             <form action="{{ route('accounting.journal-entries.store') }}" method="POST" id="voucherForm">
                 @csrf
+                <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">
                 <div class="modal-body">
                     <div class="form-row mb-3">
                         <div class="col-md-4">

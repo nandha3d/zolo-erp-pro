@@ -105,6 +105,7 @@ class AccountingApiController extends BaseApiController
                 'description' => $request->description,
                 'reference_type' => 'manual',
                 'created_by' => $request->user()?->id,
+                'idempotency_key' => $request->header('Idempotency-Key', $request->input('idempotency_key')),
             ], $request->items, $this->companyContext($request));
 
             return $this->sendResponse($entry->load('items.account'), 'Journal Entry posted successfully', 201);

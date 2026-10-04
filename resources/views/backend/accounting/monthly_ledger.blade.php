@@ -1,0 +1,4 @@
+@extends('backend.layout.main')
+@section('content')
+<section class="forms"><div class="container-fluid"><h1 class="h3">Monthly Ledger: {{ $report['account']->name }}</h1><a href="{{ route('accounting.vouchers') }}">Voucher Hub</a><p>Months follow the selected financial year's existing dates.</p><div class="card neo-card"><div class="table-responsive"><table class="table"><thead><tr><th scope="col">Month</th><th scope="col">Debit</th><th scope="col">Credit</th><th scope="col">Details</th></tr></thead><tbody>@foreach($report['months'] as $month)<tr><td>{{ $month['label'] }}</td><td>{{ $month['debit'] }}</td><td>{{ $month['credit'] }}</td><td><a href="{{ route('accounting.general-ledger', ['account_id' => $report['account']->id, 'start_date' => $month['start_date'], 'end_date' => $month['end_date']]) }}">Open ledger</a></td></tr>@endforeach</tbody></table></div></div></div></section>
+@endsection

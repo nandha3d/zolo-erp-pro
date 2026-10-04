@@ -77,6 +77,9 @@ foreach ([['--dry-run' => true], [], ['--dry-run' => true]] as $options) {
     }
 }
 printf("Legacy fixture migration, original seeders and dry-run/write/dry-run: %.3f seconds\n", microtime(true) - $started);
+foreach (App\Models\Company::pluck('id') as $companyId) {
+    app(App\Services\Accounting\SemanticAccountResolver::class)->seedCompany((int) $companyId);
+}
 // Each original test creates its own application using the fixture environment above.
 Illuminate\Support\Facades\DB::purge('mysql');
 Illuminate\Support\Facades\Facade::clearResolvedInstances();

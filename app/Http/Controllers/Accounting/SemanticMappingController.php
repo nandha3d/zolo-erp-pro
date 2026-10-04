@@ -48,6 +48,16 @@ class SemanticMappingController extends Controller
                 if (!$account->is_active) {
                     throw ValidationException::withMessages(['mappings' => 'Mapping account must be active.']);
                 }
+                $resolver = app(\App\Services\Accounting\SemanticAccountResolver::class);
+                try {
+                    $resolver->validate($role, $account);
+                } catch (\InvalidArgumentException $error) {
+                    throw ValidationException::withMessages(['mappings' => $error->getMessage()]);
+                }
+                $control = $resolver->role($role);
+                if (in_array($control, ['ar', 'ap', 'cash', 'bank'], true)) {
+                    $account->forceFill(['control_type' => $control, 'allow_manual_posting' => !in_array($control, ['ar', 'ap'], true)])->save();
+                }
                 DB::table('semantic_account_mappings')->where('id', $mapping->id)->where('company_id', $context->companyId)->update([
                     'account_id' => $account->id, 'account_code' => $account->code, 'account_name' => $account->name,
                     'updated_at' => now(),
@@ -55,6 +65,6 @@ class SemanticMappingController extends Controller
             }
         });
 
-        return redirect()->back()->with('message', 'Company account mapping metadata saved. Automatic postings continue to use the configured system account codes and subtypes.');
+        return redirect()->back()->with('message', 'Company account mappings saved. New automatic postings use these mappings.');
     }
 }
