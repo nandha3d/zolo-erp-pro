@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
+    protected $casts = ['attributes_json' => 'array', 'posted_at' => 'datetime', 'reversed_at' => 'datetime'];
     use ScopesCompanyQueries;
+    use \App\Models\Concerns\ProtectsPostedCommercialHistory;
 
     use SoftDeletes;
     

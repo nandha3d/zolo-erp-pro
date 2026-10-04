@@ -97,6 +97,7 @@ class SaleController extends Controller
 
     public function __construct(ISmsModel $smsModel)
     {
+        $this->middleware(\App\Http\Middleware\CommercialRouteAdapter::class);
         $this->_smsModel = $smsModel;
     }
 

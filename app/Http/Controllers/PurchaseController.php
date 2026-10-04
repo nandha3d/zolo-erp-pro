@@ -43,6 +43,11 @@ class PurchaseController extends Controller
 {
     use TenantInfo, StaffAccess;
 
+    public function __construct()
+    {
+        $this->middleware(\App\Http\Middleware\CommercialRouteAdapter::class);
+    }
+
     public function index(Request $request)
     {
         $role = Role::find(Auth::user()->role_id);

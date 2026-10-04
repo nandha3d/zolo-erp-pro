@@ -7,7 +7,9 @@ use App\Models\Concerns\ScopesCompanyQueries;
 
 class ProductPurchase extends Model
 {
+    protected $casts = ['stock_details_json' => 'array', 'valuation_amount' => 'decimal:4'];
     use ScopesCompanyQueries;
+    use \App\Models\Concerns\ProtectsCommercialLineHistory;
 
     protected $table = 'product_purchases';
     protected $fillable =[

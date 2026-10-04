@@ -466,6 +466,7 @@
 
             <div class="col-md-7 pos-form">
                 {!! Form::open(['route' => 'sales.store', 'method' => 'post', 'files' => true, 'class' => 'payment-form']) !!}
+                        @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">@endif
 
                 @php
                 if($lims_pos_setting_data)

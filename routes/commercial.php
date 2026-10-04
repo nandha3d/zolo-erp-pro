@@ -1,0 +1,28 @@
+<?php
+
+use App\Http\Controllers\CommercialController;
+use App\Http\Middleware\RequireCapability;
+use App\Http\Middleware\RequireSharedCommercial;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('commercial')->middleware(['auth', 'company.context', RequireSharedCommercial::class])
+    ->where(['kind' => 'sale|purchase', 'resource' => 'parties|products', 'id' => '[0-9]+'])->group(function () {
+        Route::get('sale/entry', [CommercialController::class, 'entry'])->defaults('kind', 'sale')
+            ->middleware(RequireCapability::class.':sales.fast_counter')->name('commercial.sale.entry');
+        Route::get('purchase/entry', [CommercialController::class, 'entry'])->defaults('kind', 'purchase')
+            ->middleware(RequireCapability::class.':purchases.fast_entry')->name('commercial.purchase.entry');
+        Route::post('{kind}', [CommercialController::class, 'store']);
+        Route::post('{kind}/preview', [CommercialController::class, 'preview']);
+        Route::get('{kind}/search/{resource}', [CommercialController::class, 'search']);
+        Route::get('{kind}/party/{id}', [CommercialController::class, 'party']);
+        Route::get('{kind}/previous-rates', [CommercialController::class, 'previousRates']);
+        Route::get('{kind}/clone/{id}', [CommercialController::class, 'cloneDocument']);
+        Route::get('{kind}/drafts', [CommercialController::class, 'drafts']);
+        Route::post('{kind}/drafts', [CommercialController::class, 'draft']);
+        Route::post('{kind}/masters/{resource}', [CommercialController::class, 'inlineMaster']);
+        Route::post('{kind}/{id}/reverse', [CommercialController::class, 'reverse']);
+        Route::get('{kind}/{id}/reverse', [CommercialController::class, 'reversalForm']);
+        Route::put('{kind}/{id}', [CommercialController::class, 'replace']);
+        Route::post('{kind}/{id}/payments', [CommercialController::class, 'payment']);
+        Route::post('purchase/{id}/receipts', [CommercialController::class, 'receive']);
+    });

@@ -207,6 +207,7 @@
             </div>
             <div class="modal-body">
                 {!! Form::open(['route' => 'purchase.add-payment', 'method' => 'post', 'class' => 'payment-form' ]) !!}
+                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
                     <div class="row">
                         <input type="hidden" name="balance">
                         <div class="col-md-6">

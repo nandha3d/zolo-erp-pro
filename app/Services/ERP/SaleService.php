@@ -50,7 +50,7 @@ class SaleService
      * @param int|null $userId
      * @return Sale
      */
-    public function createSale(array $data, ?int $userId = null, ?CompanyContext $context = null): Sale
+    public function createSale(array $data, ?int $userId = null, ?CompanyContext $context = null, bool $deferPosting = false): Sale
     {
         $userId = $userId ?: auth()->id();
         $guard = app(CompanyWriteGuard::class);
@@ -60,7 +60,7 @@ class SaleService
             throw new InvalidArgumentException("Sale must contain at least one product item.");
         }
 
-        return DB::transaction(function () use ($data, $userId, $context, $guard) {
+        return DB::transaction(function () use ($data, $userId, $context, $guard, $deferPosting) {
             $date = $guard->begin($context, $guard->businessDate($data));
             $guard->rejectUnscopedReferences($data);
             $guard->owned(Customer::class, $data['customer_id'] ?? null, $context, 'customer_id');
@@ -178,7 +178,7 @@ class SaleService
             }
 
             // A completed sale issues stock through the ledger; COGS is the cost persisted on the movement.
-            if (($data['sale_status'] ?? 1) == 1) {
+            if (!$deferPosting && ($data['sale_status'] ?? 1) == 1) {
                 $movement = app(InventoryMovementService::class)->issue(new StockMovementCommand(
                     date: $date,
                     lines: array_map(fn ($item) => StockLine::fromArray(['uom_id' => $item['sale_unit_id'] ?? null] + $item), $data['items']),
@@ -216,7 +216,9 @@ class SaleService
             // ATOMIC DOUBLE-ENTRY JOURNAL POSTING
             // Dr. Cash/Bank + Dr. AR + Dr. Discount = Cr. Revenue + Cr. Tax + Cr. Shipping
             // Dr. COGS = Cr. Inventory Asset
-            $this->accountingService->postSaleJournal($sale, $totalCost, $context, $userId);
+            if (!$deferPosting) {
+                $this->accountingService->postSaleJournal($sale, $totalCost, $context, $userId);
+            }
 
             return $sale->load(['customer', 'warehouse', 'productSales']);
         });

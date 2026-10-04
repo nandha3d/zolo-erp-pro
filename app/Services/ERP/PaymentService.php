@@ -51,6 +51,9 @@ class PaymentService
                     return $existing;
                 }
             }
+            if ($source->reversed_at || ($source->branch_id && !$source->posted_at)) {
+                throw new InvalidArgumentException('Only an active posted document can receive payment.');
+            }
             if ($source instanceof Purchase && (int) $source->status === 4) {
                 throw new InvalidArgumentException('An unbilled purchase order cannot receive payment here.');
             }

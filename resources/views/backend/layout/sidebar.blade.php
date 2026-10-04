@@ -82,6 +82,9 @@
                 @endif
                 @if($isAdmin || $canNavigate('purchases-add'))
                     <li id="purchase-create-menu"><a href="{{route('purchases.create')}}">{{__('db.Add Purchase')}}</a></li>
+                    @if(config('commercial.enabled') && in_array('purchases.fast_entry', $enabledCapabilities, true))
+                        <li><a data-commercial-shortcut="F12" href="{{route('commercial.purchase.entry')}}">Fast Purchase · F12</a></li>
+                    @endif
                 @endif
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
@@ -107,6 +110,9 @@
                 @if($isAdmin || $canNavigate('sales-add'))
                     <li><a href="{{route('sale.pos')}}">POS Terminal</a></li>
                     <li id="sale-create-menu"><a href="{{route('sales.create')}}">{{__('db.Add Sale')}}</a></li>
+                    @if(config('commercial.enabled') && in_array('sales.fast_counter', $enabledCapabilities, true))
+                        <li><a data-commercial-shortcut="F2" href="{{route('commercial.sale.entry')}}">Fast Sales · F2</a></li>
+                    @endif
                 @endif
                 @if($isAdmin || $canNavigate('sales-import'))
                     <li id="sale-import-menu"><a href="{{url('sales/sale_by_csv')}}">{{__('db.Import Sale By CSV')}}</a></li>
@@ -658,3 +664,12 @@
         @endif
     @endif
 </ul>
+@if(config('commercial.enabled'))
+<script>
+document.addEventListener('keydown', function (event) {
+    if (event.key !== 'F2' && event.key !== 'F12') return;
+    const link = document.querySelector('[data-commercial-shortcut="' + event.key + '"]');
+    if (link) { event.preventDefault(); window.location.href = link.href; }
+});
+</script>
+@endif

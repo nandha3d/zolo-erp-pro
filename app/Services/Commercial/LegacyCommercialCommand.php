@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Services\Commercial;
+
+use App\Models\Unit;
+use App\Services\Platform\CompanyContext;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+
+/** Translate parallel legacy form arrays without calculating financial or stock effects. */
+class LegacyCommercialCommand
+{
+    public function data(Request $request, bool $purchase, CompanyContext $context): array
+    {
+        $data = $request->all();
+        if (isset($data['items'])) {
+            return $data;
+        }
+        $items = [];
+        foreach ($data['product_id'] ?? [] as $i => $id) {
+            $unitName = $data[$purchase ? 'purchase_unit' : 'sale_unit'][$i] ?? null;
+            $unitId = $unitName ? Unit::where('company_id', $context->companyId)->where('unit_name', $unitName)->value('id') : null;
+            if ($unitName && !$unitId) {
+                throw ValidationException::withMessages(['unit' => 'Select a company-owned unit.']);
+            }
+            $line = ['product_id' => $id, 'qty' => $data['qty'][$i] ?? null,
+                $purchase ? 'net_unit_cost' : 'net_unit_price' => $data[$purchase ? 'net_unit_cost' : 'net_unit_price'][$i] ?? null,
+                $purchase ? 'purchase_unit_id' : 'sale_unit_id' => $unitId];
+            foreach (['discount', 'tax_rate', 'tax', 'imei_number', 'product_batch_id', 'variant_id', 'stock_identity_id'] as $field) {
+                if (isset($data[$field][$i])) {
+                    $line[$field] = $data[$field][$i];
+                }
+            }
+            if (isset($data['subtotal'][$i])) {
+                $line['total'] = $data['subtotal'][$i];
+            }
+            if ($purchase && (int) ($data['status'] ?? 1) === 2) {
+                $line['received_qty'] = $data['recieved'][$i] ?? null;
+            }
+            if ($purchase && !empty($data['batch_no'][$i])) {
+                $line['batch'] = ['batch_no' => $data['batch_no'][$i], 'expired_date' => $data['expired_date'][$i] ?? null];
+            }
+            $items[] = $line;
+        }
+        foreach (['product_id', 'qty', 'sale_unit', 'purchase_unit', 'net_unit_price', 'net_unit_cost', 'discount', 'tax_rate', 'tax',
+            'subtotal', 'recieved', 'imei_number', 'product_batch_id', 'variant_id', 'product_code', 'batch_no', 'expired_date'] as $field) {
+            unset($data[$field]);
+        }
+        foreach (['paid_amount', 'paying_method', 'account_id'] as $field) {
+            if (isset($data[$field]) && is_array($data[$field])) {
+                if (count($data[$field]) !== 1) {
+                    throw ValidationException::withMessages([$field => 'Split tender requires the reviewed settlement workflow.']);
+                }
+                $data[$field] = reset($data[$field]);
+            }
+        }
+        if (!empty($data['paid_amount']) && empty($data['paying_method']) && isset($data['paid_by_id'])) {
+            $method = is_array($data['paid_by_id']) && count($data['paid_by_id']) === 1 ? reset($data['paid_by_id']) : $data['paid_by_id'];
+            $data['paying_method'] = match ((string) (is_scalar($method) ? $method : '')) {
+                '1' => 'Cash', '3' => 'Credit Card', '4' => 'Cheque', 'bank', 'Bank' => 'Bank',
+                default => throw ValidationException::withMessages(['paying_method' => 'This tender requires its reviewed settlement workflow.']),
+            };
+        }
+        if (!empty($data['draft'])) {
+            throw ValidationException::withMessages(['draft' => 'Use Save draft in shared entry.']);
+        }
+        if (isset($data['created_at'])) {
+            $data['business_date'] ??= substr(normalize_to_sql_datetime($data['created_at']), 0, 10);
+            unset($data['created_at']);
+        }
+        $data['items'] = $items;
+        return $data;
+    }
+}

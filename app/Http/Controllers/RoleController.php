@@ -87,7 +87,7 @@ class RoleController extends Controller
         $lims_permissions = Permission::pluck('name')->toArray();
         
         $lims_new_request_permissions = array_diff(
-            array_keys($request->except('_token', 'role_id')),
+            array_keys($request->except('_token', 'role_id', 'credit_override')),
             $lims_permissions
         );
         
@@ -99,7 +99,7 @@ class RoleController extends Controller
         foreach ($lims_permissions as $permission_name) {
             $permission = Permission::firstOrCreate(['name' => $permission_name]);
             
-            if($request->has($permission_name)) {
+            if($permission_name === 'sales.override_credit' ? $request->boolean('credit_override') : $request->has($permission_name)) {
                 if(!$role->hasPermissionTo($permission_name)) {
                     $role->givePermissionTo($permission);
                 }
