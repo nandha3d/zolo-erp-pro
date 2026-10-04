@@ -269,3 +269,12 @@ Retain Blade/Bootstrap/jQuery and extend `public/css/zolo-erp-neo.css`. Preserve
 Canonical phases remain: 0 regression baseline; 1 Company/Branch/FY; 2 capabilities; 3 atomic series; 4 inventory ledger; 5 accounting/open items; 6 shared commercial services; 7 tax; 8 returns/documents; 9 manufacturing/job work; 10 profiles; 11 UI/API/security completion; 12 migration/UAT/deployment.
 
 Every completed work package is validated, committed and pushed before dependent work starts. Package completion does not establish full phase completion. Historical commit-by-commit corrections belong in the audit resolution log.
+
+
+## Phase 6: gated shared commercial package
+
+The [Phase 6 implementation and integration notes](PHASE_6_SHARED_COMMERCIAL.md) describe shared sales/purchase posting, legacy web/POS/API convergence, idempotency, immutable reversal/replacement, landed cost and later receipt, credit controls, server drafts and keyboard fast entry. Work is isolated on `codex/phase6-shared-commercial`. Phase 5 accounting is a separate prerequisite; this entry does not change its status.
+
+`ERP_SHARED_COMMERCIAL_ENABLED` remains false, and optional capability/second-company activation gates remain unchanged. No production migrations or historical-document conversion have run. Combined Phase 5/6 UAT and retained-data reconciliation remain necessary before cutover.
+
+Phase 6 local proof passed: 28-test commercial SQLite suite (147 assertions; opt-in timing skipped), 23-test MySQL behavior suite (137 assertions), 40-test ungated regression suite (325 assertions; one opt-in concurrency fixture skipped), and the 50,000-product/50,000-customer timing fixture. Posting p95 was 812.16 ms; lookup p95 was at most 8.28 ms. Browser proof covers keyboard sales, purchase posting and mobile layout. See the Phase 6 runbook for the dependency snapshot, integration conflicts and remaining production/UAT gates.

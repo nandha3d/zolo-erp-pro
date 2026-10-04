@@ -31,7 +31,7 @@ class PurchaseService
     /**
      * Create an ERP Purchase, update inventory quantities & costs, and post double-entry journal entries.
      */
-    public function createPurchase(array $data, ?int $userId = null, ?CompanyContext $context = null): Purchase
+    public function createPurchase(array $data, ?int $userId = null, ?CompanyContext $context = null, bool $deferPosting = false): Purchase
     {
         $userId = $userId ?: auth()->id();
         $guard = app(CompanyWriteGuard::class);
@@ -65,17 +65,14 @@ class PurchaseService
         }
         unset($item);
 
-        return DB::transaction(function () use ($data, $userId, $context, $guard) {
+        return DB::transaction(function () use ($data, $userId, $context, $guard, $deferPosting) {
             $date = $guard->begin($context, $guard->businessDate($data));
             $guard->rejectUnscopedReferences($data);
             $guard->warehouse($data['warehouse_id'] ?? null, $context, $userId);
             if (!empty($data['supplier_id'])) {
                 $guard->owned(Supplier::class, $data['supplier_id'], $context, 'supplier_id');
             }
-            foreach ($data['items'] as &$line) {
-                $guard->product($line, $context, 'purchase_unit_id');
-            }
-            unset($line);
+            $guard->products($data['items'], $context, 'purchase_unit_id');
             $numbers = app(DocumentNumberService::class);
             $reservation = $numbers->reserve('purchase', $context, $date, $userId);
             $referenceNo = $reservation->formatted_number;
@@ -162,16 +159,17 @@ class PurchaseService
                     'tax_rate' => (float) ($item['tax_rate'] ?? 0),
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitCost)),
-                ])->save();
+                ] + ($deferPosting ? ['stock_details_json' => $item['stock_details_json'] ?? [],
+                    'valuation_amount' => $item['valuation_amount'] ?? null] : []))->save();
 
-                if ($item['received_qty'] > 0) {
+                if (!$deferPosting && $item['received_qty'] > 0) {
                     Product::forCompany($context)->findOrFail($productId)->update(['cost' => $unitCost]);
                 }
             }
 
             // Receive only the validated physical quantity, including partial receipts, through the ledger.
             $received = array_values(array_filter($data['items'], fn ($item) => $item['received_qty'] > 0));
-            if ($received !== []) {
+            if (!$deferPosting && $received !== []) {
                 app(InventoryMovementService::class)->receive(new StockMovementCommand(
                     date: $date,
                     lines: array_map(fn ($item) => StockLine::fromArray([
@@ -211,7 +209,9 @@ class PurchaseService
 
             // Supplier-bill recognition: received inventory + goods-in-transit = payment + AP.
             // Ordered is an unbilled PO; it has no stock or financial posting.
-            $this->accountingService->postPurchaseJournal($purchase, $context, $userId);
+            if (!$deferPosting) {
+                $this->accountingService->postPurchaseJournal($purchase, $context, $userId);
+            }
 
             return $purchase->load(['supplier', 'warehouse', 'productPurchases']);
         });

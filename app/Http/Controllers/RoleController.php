@@ -81,13 +81,14 @@ class RoleController extends Controller
 
     public function setPermission(Request $request)
     {
+        abort_unless(Auth::user()->role_id <= 2, 403);
         if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         
         $lims_permissions = Permission::pluck('name')->toArray();
         
         $lims_new_request_permissions = array_diff(
-            array_keys($request->except('_token', 'role_id')),
+            array_keys($request->except('_token', 'role_id', 'credit_override')),
             $lims_permissions
         );
         
@@ -99,7 +100,7 @@ class RoleController extends Controller
         foreach ($lims_permissions as $permission_name) {
             $permission = Permission::firstOrCreate(['name' => $permission_name]);
             
-            if($request->has($permission_name)) {
+            if($permission_name === 'sales.override_credit' ? $request->boolean('credit_override') : $request->has($permission_name)) {
                 if(!$role->hasPermissionTo($permission_name)) {
                     $role->givePermissionTo($permission);
                 }

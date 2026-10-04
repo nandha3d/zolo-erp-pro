@@ -83,6 +83,10 @@ class PurchaseApiController extends BaseApiController
 
     public function store(Request $request): JsonResponse
     {
+        if (config('commercial.enabled')) {
+            return app(\App\Http\Middleware\RequireSharedCommercial::class)->handle($request,
+                fn ($request) => app(\App\Http\Controllers\CommercialController::class)->store($request, 'purchase'));
+        }
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'required|integer|exists:suppliers,id',
             'warehouse_id' => 'required|integer|exists:warehouses,id',
@@ -110,6 +114,10 @@ class PurchaseApiController extends BaseApiController
 
     public function addPayment(Request $request, int $id): JsonResponse
     {
+        if (config('commercial.enabled')) {
+            return app(\App\Http\Middleware\RequireSharedCommercial::class)->handle($request,
+                fn ($request) => app(\App\Http\Controllers\CommercialController::class)->payment($request, 'purchase', $id));
+        }
         $context = $this->companyContext($request);
         $purchase = Purchase::visibleIn($context)->find($id);
         if (!$purchase) {

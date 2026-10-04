@@ -305,6 +305,7 @@
             </div>
             <div class="modal-body">
                 {!! Form::open(['route' => 'sale.add-payment', 'method' => 'post', 'files' => true, 'class' => 'payment-form','id'=> 'add-payment-form' ]) !!}
+                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
                     <div class="row">
                         <input type="hidden" name="balance">
                         <div class="col-md-4">
@@ -1336,15 +1337,28 @@
                                 sale_id[i-1] = sale[13];
                         }
                     });
-                    if(sale_id.length && confirm("Are you sure want to delete?")) {
+                    if(sale_id.length && confirm(@json(config('commercial.enabled') ? 'Reverse selected documents and preserve their history?' : 'Are you sure want to delete?'))) {
+                        @if(config('commercial.enabled'))
+                        var reversalReason = prompt('Reason for reversal (at least 3 characters):');
+                        if (!reversalReason || reversalReason.trim().length < 3) return;
+                        var reversalDate = prompt('Reversal date (YYYY-MM-DD):', @json(date('Y-m-d')));
+                        if (!reversalDate) return;
+                        @endif
                         $.ajax({
                             type:'POST',
                             url:'sales/deletebyselection',
                             data:{
                                 saleIdArray: sale_id
+                                @if(config('commercial.enabled'))
+                                ,reason: reversalReason, business_date: reversalDate
+                                @endif
                             },
                             success:function(data){
+                                @if(config('commercial.enabled'))
+                                alert('Documents reversed; original history preserved.'); location.reload(); return;
+                                @else
                                 alert(data);
+                                @endif
                                 //dt.rows({ page: 'current', selected: true }).deselect();
                                 dt.rows({ page: 'current', selected: true }).remove().draw(false);
                             }

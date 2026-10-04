@@ -82,6 +82,8 @@ use App\Http\Controllers\SaleAgentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WhatsappController;
 
+require __DIR__.'/commercial.php';
+
 Route::get('webview/auth', function (Request $request) {
     // Get token from Authorization header
     $authHeader = $request->header('Authorization');

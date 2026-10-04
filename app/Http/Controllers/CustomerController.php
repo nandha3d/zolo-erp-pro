@@ -450,6 +450,7 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate(['credit_days' => 'nullable|integer|min:0|max:3650', 'search_alias' => 'nullable|string|max:100']);
         $this->validate($request, [
             'phone_number' => [
                 'max:255',
@@ -667,6 +668,7 @@ class CustomerController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate(['credit_days' => 'nullable|integer|min:0|max:3650', 'search_alias' => 'nullable|string|max:100']);
         $this->validate($request, [
             'phone_number' => [
                 'max:255',

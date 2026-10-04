@@ -19,6 +19,7 @@ final class CapabilityCatalog
         'inventory.serial_tracking' => ['Serial tracking', ['core.inventory']],
         'inventory.dimension_tracking' => ['Dimension tracking', ['core.inventory']],
         'sales.fast_counter' => ['Fast counter', ['core.sales']],
+        'purchases.fast_entry' => ['Fast purchase', ['core.purchases']],
         'sales.route_distribution' => ['Route distribution', ['core.sales', 'core.inventory']],
         'sales.installment_plans' => ['Installment plans', ['core.sales', 'core.accounting']],
         'sales.exchange' => ['Exchange', ['core.sales', 'core.inventory']],

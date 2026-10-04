@@ -32,6 +32,9 @@ class PaymentService
             $date = $guard->begin($context, $guard->businessDate($data));
             $guard->rejectUnscopedReferences($data);
             $source = $source::visibleIn($context)->whereKey($source->id)->lockForUpdate()->firstOrFail();
+            if ($source->reversed_at || ($source->branch_id && !$source->posted_at)) {
+                throw new InvalidArgumentException('Only an active posted document can receive payment.');
+            }
             if ($source instanceof Purchase && (int) $source->status === 4) {
                 throw new InvalidArgumentException('An unbilled purchase order cannot receive payment here.');
             }

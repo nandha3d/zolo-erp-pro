@@ -16,6 +16,12 @@
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                         {!! Form::open(['route' => ['purchases.update', $lims_purchase_data->id], 'method' => 'put', 'files' => true, 'id' => 'purchase-form']) !!}
+                        @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">@endif
+                        @if(config('commercial.enabled'))
+                            <p>Saving creates a replacement supplier bill and preserves the reversed original.</p>
+                            <label for="replacement-date">Replacement date</label><input id="replacement-date" type="date" name="business_date" required value="{{ old('business_date', now()->toDateString()) }}">
+                            <label for="replacement-reason">Reason</label><input id="replacement-reason" name="reason" required minlength="3" maxlength="500" value="{{ old('reason') }}">
+                        @endif
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row">

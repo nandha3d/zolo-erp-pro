@@ -141,6 +141,7 @@
                                 <div class="form-group">
                                     <label>{{__('db.Credit Limit')}} <x-info title="Leave it blank for unlimited credit" type="info" /></label>
                                     <input type="number" name="credit_limit" class="form-control" value="0" step="any" min="0">
+                                    @if(config('commercial.enabled'))<label for="credit-days">Credit days</label><input id="credit-days" type="number" name="credit_days" class="form-control" min="0" max="3650" value="0"><label for="search-alias">Search alias</label><input id="search-alias" name="search_alias" class="form-control" maxlength="100">@endif
                                 </div>
                             </div>
                         </div>

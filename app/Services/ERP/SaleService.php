@@ -50,7 +50,7 @@ class SaleService
      * @param int|null $userId
      * @return Sale
      */
-    public function createSale(array $data, ?int $userId = null, ?CompanyContext $context = null): Sale
+    public function createSale(array $data, ?int $userId = null, ?CompanyContext $context = null, bool $deferPosting = false): Sale
     {
         $userId = $userId ?: auth()->id();
         $guard = app(CompanyWriteGuard::class);
@@ -60,7 +60,7 @@ class SaleService
             throw new InvalidArgumentException("Sale must contain at least one product item.");
         }
 
-        return DB::transaction(function () use ($data, $userId, $context, $guard) {
+        return DB::transaction(function () use ($data, $userId, $context, $guard, $deferPosting) {
             $date = $guard->begin($context, $guard->businessDate($data));
             $guard->rejectUnscopedReferences($data);
             $guard->owned(Customer::class, $data['customer_id'] ?? null, $context, 'customer_id');
@@ -72,9 +72,9 @@ class SaleService
                     || !is_numeric($line['net_unit_price'] ?? null) || !is_finite((float) $line['net_unit_price']) || (float) $line['net_unit_price'] < 0) {
                     throw new InvalidArgumentException('Sale quantity must be positive and unit price must be nonnegative.');
                 }
-                $guard->product($line, $context, 'sale_unit_id');
             }
             unset($line);
+            $guard->products($data['items'], $context, 'sale_unit_id');
             $numbers = app(DocumentNumberService::class);
             $reservation = $numbers->reserve('sale', $context, $date, $userId);
             $referenceNo = $reservation->formatted_number;
@@ -94,9 +94,9 @@ class SaleService
                 $totalTax += (float) ($item['tax'] ?? 0);
                 $totalDiscount += (float) ($item['discount'] ?? 0);
 
-                // Fetch product cost for COGS
-                $product = Product::forCompany($context)->findOrFail($item['product_id']);
-                if ($product) {
+                // Shared posting uses the stock movement's valuation for COGS.
+                if (!$deferPosting) {
+                    $product = Product::forCompany($context)->findOrFail($item['product_id']);
                     $totalCost += (float) ($product->cost ?? 0) * $qty;
                 }
             }
@@ -174,11 +174,11 @@ class SaleService
                     'tax_rate' => (float) ($item['tax_rate'] ?? 0),
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitPrice)),
-                ])->save();
+                ] + ($deferPosting ? ['stock_details_json' => $item['stock_details_json'] ?? []] : []))->save();
             }
 
             // A completed sale issues stock through the ledger; COGS is the cost persisted on the movement.
-            if (($data['sale_status'] ?? 1) == 1) {
+            if (!$deferPosting && ($data['sale_status'] ?? 1) == 1) {
                 $movement = app(InventoryMovementService::class)->issue(new StockMovementCommand(
                     date: $date,
                     lines: array_map(fn ($item) => StockLine::fromArray(['uom_id' => $item['sale_unit_id'] ?? null] + $item), $data['items']),
@@ -216,7 +216,9 @@ class SaleService
             // ATOMIC DOUBLE-ENTRY JOURNAL POSTING
             // Dr. Cash/Bank + Dr. AR + Dr. Discount = Cr. Revenue + Cr. Tax + Cr. Shipping
             // Dr. COGS = Cr. Inventory Asset
-            $this->accountingService->postSaleJournal($sale, $totalCost, $context, $userId);
+            if (!$deferPosting) {
+                $this->accountingService->postSaleJournal($sale, $totalCost, $context, $userId);
+            }
 
             return $sale->load(['customer', 'warehouse', 'productSales']);
         });

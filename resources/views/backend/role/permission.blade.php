@@ -168,7 +168,10 @@
 								</tr>
 
 
-						        <tr>
+						        @if(config('commercial.enabled'))
+                                <tr><td>Sales credit override</td><td colspan="5"><input type="checkbox" id="credit_override" name="credit_override" value="1" @checked(in_array('sales.override_credit', $all_permission))><label for="credit_override">Approve a credit limit or overdue override with an audited reason</label></td></tr>
+                                @endif
+                                <tr>
 						            <td>{{__('db.Sale Payment')}}</td>
 						            <td class="text-center">
 						                <div class="icheckbox_square-blue checked" aria-checked="false" aria-disabled="false">
