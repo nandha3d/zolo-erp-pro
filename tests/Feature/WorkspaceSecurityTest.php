@@ -81,6 +81,18 @@ class WorkspaceSecurityTest extends OperationsTestCase
         $this->get('/backup')->assertStatus(410);
     }
 
+    public function test_browser_updater_is_retired_without_environment_migrations_or_downloads(): void
+    {
+        \Illuminate\Support\Facades\Artisan::shouldReceive('call')->never();
+        $this->get('/new-release')->assertStatus(410);
+        $this->post('/version-upgrade', ['purchasecode' => 'untrusted-input'])->assertStatus(410);
+        $controller = app(\App\Http\Controllers\HomeController::class);
+        $this->assertSame([], $controller->isUpdateAvailable());
+        $this->assertNull($controller->versionUpgradeFileUrl('untrusted-input'));
+        try { $controller->fileTransferProcess('https://example.invalid/untrusted.zip'); $this->fail('Remote code extraction must fail.'); }
+        catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) { $this->assertSame(410, $error->getStatusCode()); }
+    }
+
     public function test_product_resource_is_bounded_and_does_not_expose_new_columns(): void
     {
         $product = $this->material();

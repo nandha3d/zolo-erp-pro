@@ -27,15 +27,10 @@ use Printing;
 use Rawilk\Printing\Contracts\Printer;
 use Spatie\Permission\Models\Role;
 use App\Traits\AutoUpdateTrait;
-use App\Traits\ENVFilePutContent;
-use Illuminate\Support\Facades\Artisan;
-use Exception;
-use ZipArchive;
-use Illuminate\Support\Facades\File;
 
 class HomeController extends Controller
 {
-    use AutoUpdateTrait, ENVFilePutContent;
+    use AutoUpdateTrait;
 
     private $versionUpgradeInfo = [];
 
@@ -476,67 +471,17 @@ class HomeController extends Controller
 
     public function newVersionReleasePage()
     {
-		// Below line is deprecated, this code is needed for the client version 1.5.1 and below
-        $this->dataWriteInENVFile('APP_ENV', 'local');
-		// Below line is deprecated, this code is needed for the client version 1.5.1 and below
-
-        $versionUpgradeData = [];
-        $versionUpgradeData = $this->versionUpgradeInfo;
-        return view('version_upgrade.index', compact('versionUpgradeData'));
+        abort(410, 'Browser upgrades are retired. Deploy a reviewed release through the operator runbook.');
     }
 
-    public function versionUpgrade(Request $request) {
-        $versionUpgradeData = [];
-        $versionUpgradeData = $this->versionUpgradeInfo;
-        $version_upgrade_file_url = $this->versionUpgradeFileUrl($request->purchasecode);
-
-        if (!$version_upgrade_file_url) {
-            return redirect()->back()->with('not_permitted', 'Wrong Purchase Code !');
-        }
-
-        try {
-            //Check file is exist
-            $header_array = @get_headers($version_upgrade_file_url);
-            if(!strpos($header_array[0], '200')) {
-                throw new Exception("Something wrong. Please contact with support team.");
-            }
-
-            $this->fileTransferProcess($version_upgrade_file_url);
-
-            if ($versionUpgradeData['latest_version_db_migrate_enable']==true){
-                Artisan::call('migrate');
-                Artisan::call('db:seed');
-            }
-
-            Artisan::call('optimize:clear');
-
-            $this->dataWriteInENVFile('VERSION', $versionUpgradeData['demo_version']);
-
-            return redirect()->back()->with('message', 'Version Upgraded Successfully !!!');
-        }
-        catch(Exception $e) {
-            return redirect()->back()->withErrors($e->getMessage());
-        }
+    public function versionUpgrade(Request $request)
+    {
+        abort(410, 'Browser upgrades are retired. Deploy a reviewed release through the operator runbook.');
     }
 
     public function fileTransferProcess($version_upgrade_file_url)
     {
-        $remote_file_name = pathinfo($version_upgrade_file_url)['basename'];
-        $local_file = base_path('/'.$remote_file_name);
-        $copy = copy($version_upgrade_file_url, $local_file);
-        if ($copy) {
-            // ****** Unzip ********
-            $zip = new ZipArchive;
-            $file = base_path($remote_file_name);
-            $res = $zip->open($file);
-            if ($res === TRUE) {
-                $zip->extractTo(base_path());
-                $zip->close();
-
-                // ****** Delete Zip File ******
-                File::delete(base_path($remote_file_name));
-            }
-        }
+        abort(410, 'Remote code extraction is retired.');
     }
 
     public function yearlyBestSellingPrice()
