@@ -25,6 +25,7 @@ class SemanticAccountResolver
         'output_tax_cgst' => ['output_tax_cgst', 'liability'], 'output_tax_sgst' => ['output_tax_sgst', 'liability'],
         'output_tax_igst' => ['output_tax_igst', 'liability'], 'input_tax_cgst' => ['input_tax_cgst', 'asset'],
         'input_tax_sgst' => ['input_tax_sgst', 'asset'], 'input_tax_igst' => ['input_tax_igst', 'asset'],
+        'output_tax_cess' => ['output_tax_cess', 'liability'], 'input_tax_cess' => ['input_tax_cess', 'asset'],
     ];
 
     private const ALIASES = [

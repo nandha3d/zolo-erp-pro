@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Returns extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+    use \App\Models\Concerns\ProtectsAdjustmentHistory;
+    protected $casts = ['document_snapshot_json' => 'array', 'attributes_json' => 'array', 'tax_snapshot_json' => 'array', 'posted_at' => 'datetime', 'approved_at' => 'datetime'];
 	protected $table = 'returns';
     protected $fillable =[
         "reference_no", "user_id", "sale_id", "cash_register_id", "customer_id", "warehouse_id", "biller_id", "account_id", "currency_id", "exchange_rate", "item", "total_qty", "total_discount", "total_tax", "total_price","order_tax_rate", "order_tax", "grand_total", "document", "return_note", "staff_note"

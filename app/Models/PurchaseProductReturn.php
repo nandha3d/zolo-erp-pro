@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class PurchaseProductReturn extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+    use \App\Models\Concerns\ProtectsReturnLineHistory;
+    protected $casts = ['stock_details_json' => 'array', 'tax_snapshot_json' => 'array'];
     protected $table = 'purchase_product_return';
 
     protected $fillable =[

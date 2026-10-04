@@ -72,10 +72,7 @@ class PurchaseService
             if (!empty($data['supplier_id'])) {
                 $guard->owned(Supplier::class, $data['supplier_id'], $context, 'supplier_id');
             }
-            foreach ($data['items'] as &$line) {
-                $guard->product($line, $context, 'purchase_unit_id');
-            }
-            unset($line);
+            $guard->products($data['items'], $context, 'purchase_unit_id');
             $numbers = app(DocumentNumberService::class);
             $reservation = $numbers->reserve('purchase', $context, $date, $userId);
             $referenceNo = $reservation->formatted_number;
@@ -162,7 +159,9 @@ class PurchaseService
                     'tax_rate' => (float) ($item['tax_rate'] ?? 0),
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitCost)),
-                ])->save();
+                ] + ($deferPosting ? ['stock_details_json' => $item['stock_details_json'] ?? [],
+                    'valuation_amount' => $item['valuation_amount'] ?? null] : [])
+                    + ($deferPosting && isset($item['_tax_snapshot']) ? ['tax_snapshot_json' => $item['_tax_snapshot']] : []))->save();
 
                 if (!$deferPosting && $item['received_qty'] > 0) {
                     Product::forCompany($context)->findOrFail($productId)->update(['cost' => $unitCost]);

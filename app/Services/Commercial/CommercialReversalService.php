@@ -30,6 +30,11 @@ class CommercialReversalService
             if ($document->reversed_at) {
                 return $document;
             }
+            if (\Illuminate\Support\Facades\Schema::hasColumn($kind === 'sale' ? 'returns' : 'return_purchases', 'posted_at')
+                && DB::table($kind === 'sale' ? 'returns' : 'return_purchases')->where('company_id', $context->companyId)
+                    ->where($kind.'_id', $document->id)->whereNotNull('posted_at')->exists()) {
+                throw ValidationException::withMessages(['document' => 'A source with posted notes cannot be reversed again. Post a reviewed financial adjustment instead.']);
+            }
             if ((int) $document->branch_id !== $context->branchId || !$document->financial_year_id || $date < $document->created_at->toDateString()) {
                 throw ValidationException::withMessages(['document' => 'Legacy documents require reviewed migration before reversal.']);
             }
@@ -52,6 +57,7 @@ class CommercialReversalService
                 app(InventoryMovementService::class)->reverse($movement, $reason, auth()->id(), $date);
             }
             $document->forceFill(['reversed_at' => now(), 'reversal_reason' => $reason])->save();
+            app(\App\Services\Tax\GstProjectionService::class)->reverse($document, $kind, $date, $context);
             app(CommercialApplicationService::class)->audit('reversed', $document, $context, auth()->id(), ['date' => $date, 'reason' => $reason]);
             return $document;
         });

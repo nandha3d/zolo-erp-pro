@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class DamageStock extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+    use \App\Models\Concerns\ProtectsAdjustmentHistory;
+    protected $casts = ['stock_details_json' => 'array', 'posted_at' => 'datetime'];
     protected $fillable = [
         'reference_no',
         'warehouse_id',

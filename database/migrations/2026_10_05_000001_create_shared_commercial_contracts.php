@@ -25,15 +25,15 @@ return new class extends Migration
         foreach ($this->extensions() as $table => $columns) {
             MigrationConstraints::requireColumns($table, ['id', 'company_id']);
         }
-        if (Schema::hasTable('taxes') && !Schema::hasColumn('taxes', 'company_id')) {
-            Schema::table('taxes', fn (Blueprint $t) => $t->unsignedBigInteger('company_id')->nullable()->index());
-        }
         foreach (['idempotency_keys' => ['company_id', 'key', 'request_hash', 'response_type', 'response_ref'],
             'sale_drafts' => ['company_id', 'branch_id', 'financial_year_id', 'user_id', 'kind', 'version', 'payload_json'],
             'commercial_audit_events' => ['company_id', 'branch_id', 'user_id', 'event', 'source_type', 'source_id', 'details_json', 'created_at']] as $table => $columns) {
             if (Schema::hasTable($table)) {
-                MigrationConstraints::requireColumns($table, ['id', ...$columns]);
+                MigrationConstraints::requireColumns($table, ['id', ...$columns, ...($table === 'commercial_audit_events' ? [] : ['created_at', 'updated_at'])]);
             }
+        }
+        if (Schema::hasTable('taxes') && !Schema::hasColumn('taxes', 'company_id')) {
+            Schema::table('taxes', fn (Blueprint $t) => $t->unsignedBigInteger('company_id')->nullable()->index());
         }
         foreach ($this->extensions() as $table => $columns) {
             foreach ($columns as $column) {
@@ -47,6 +47,7 @@ return new class extends Migration
                         'attributes_json', 'stock_details_json' => $t->json($column)->nullable(),
                         'valuation_amount' => $t->decimal($column, 18, 4)->nullable(),
                         'credit_days' => $t->unsignedInteger($column)->nullable(),
+                        'reversal_reason' => $t->string($column, 500)->nullable(),
                         default => $t->string($column)->nullable(),
                     };
                 });

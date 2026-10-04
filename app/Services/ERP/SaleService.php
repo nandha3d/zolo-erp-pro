@@ -72,9 +72,9 @@ class SaleService
                     || !is_numeric($line['net_unit_price'] ?? null) || !is_finite((float) $line['net_unit_price']) || (float) $line['net_unit_price'] < 0) {
                     throw new InvalidArgumentException('Sale quantity must be positive and unit price must be nonnegative.');
                 }
-                $guard->product($line, $context, 'sale_unit_id');
             }
             unset($line);
+            $guard->products($data['items'], $context, 'sale_unit_id');
             $numbers = app(DocumentNumberService::class);
             $reservation = $numbers->reserve('sale', $context, $date, $userId);
             $referenceNo = $reservation->formatted_number;
@@ -94,9 +94,9 @@ class SaleService
                 $totalTax += (float) ($item['tax'] ?? 0);
                 $totalDiscount += (float) ($item['discount'] ?? 0);
 
-                // Fetch product cost for COGS
-                $product = Product::forCompany($context)->findOrFail($item['product_id']);
-                if ($product) {
+                // Shared posting uses the stock movement's valuation for COGS.
+                if (!$deferPosting) {
+                    $product = Product::forCompany($context)->findOrFail($item['product_id']);
                     $totalCost += (float) ($product->cost ?? 0) * $qty;
                 }
             }
@@ -174,7 +174,8 @@ class SaleService
                     'tax_rate' => (float) ($item['tax_rate'] ?? 0),
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitPrice)),
-                ])->save();
+                ] + ($deferPosting ? ['stock_details_json' => $item['stock_details_json'] ?? []] : [])
+                    + ($deferPosting && isset($item['_tax_snapshot']) ? ['tax_snapshot_json' => $item['_tax_snapshot']] : []))->save();
             }
 
             // A completed sale issues stock through the ledger; COGS is the cost persisted on the movement.

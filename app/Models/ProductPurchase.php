@@ -7,7 +7,7 @@ use App\Models\Concerns\ScopesCompanyQueries;
 
 class ProductPurchase extends Model
 {
-    protected $casts = ['stock_details_json' => 'array', 'valuation_amount' => 'decimal:4'];
+    protected $casts = ['tax_snapshot_json' => 'array', 'stock_details_json' => 'array', 'valuation_amount' => 'decimal:4'];
     use ScopesCompanyQueries;
     use \App\Models\Concerns\ProtectsCommercialLineHistory;
 

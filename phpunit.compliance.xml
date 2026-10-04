@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
+  <testsuites><testsuite name="Tax, returns and documents">
+    <file>tests/Feature/SharedCommercialTest.php</file>
+    <file>tests/Feature/CommercialBoundariesTest.php</file>
+    <file>tests/Unit/CommercialPricingTest.php</file>
+    <file>tests/Feature/TaxComplianceTest.php</file>
+    <file>tests/Feature/ReturnsDocumentsTest.php</file>
+    <file>tests/Feature/ComplianceHttpTest.php</file>
+    <file>tests/Feature/ComplianceMigrationTest.php</file>
+    <file>tests/Feature/ComplianceConcurrencyTest.php</file>
+    <file>tests/Feature/ComplianceBrowserFixtureTest.php</file>
+  </testsuite></testsuites>
+  <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/></php>
+</phpunit>

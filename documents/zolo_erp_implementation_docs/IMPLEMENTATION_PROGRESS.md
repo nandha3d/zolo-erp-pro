@@ -264,18 +264,25 @@ Docs [31](31_MODERN_UI_DESIGN_SYSTEM_AND_SCREEN_MIGRATION.md), [32](32_OPTECH_SC
 
 Retain Blade/Bootstrap/jQuery and extend `public/css/zolo-erp-neo.css`. Preserve Optech operator workflows/shortcuts using shared backend services, General Trading terminology, capability/profile extensions, and common components. Migrate UI incrementally with responsive, keyboard, accessibility, state and visual proof. UI planning does not bypass company/engine gates.
 
-## Phase 5: accounting hardening and open items
-
-The [Phase 5 implementation package and setup runbook](PHASE_5_ACCOUNTING_HARDENING.md) refactors the existing accounting facade into one posting service, company semantic mappings, exact journal arithmetic, signed AR/AP open items and immutable allocations/reversals. It adds Voucher Hub and shortcuts, bill allocation, settlement-account links, FY/branch reports and ageing, audited period controls and ledger/cache reconciliation. Existing atomic numbering and company/branch/FY authorization are reused.
-
-Validation on 2026-10-04: final full SQLite company suite **280 tests, 2,473 assertions, 18 MySQL-only skips**; focused MySQL 8.4.11 accounting, accounting web and migration suite **35 tests, 272 assertions, none skipped**; seeded original-schema MySQL smoke **28 tests, 204 assertions**. The broader MySQL accounting/writer/numbering/report run passed its functional tests; a required subtype in the new migration fixture was corrected and separately verified (**1 test, 10 assertions**) before the final 35-test MySQL run. Additional command-safety proof: **4 tests, 17 assertions**. The final suite also proves manual API idempotency across numeric/string account IDs, and the existing manual journal form now supplies a retry key. PHP/JavaScript syntax and whitespace checks pass. Concurrency proves one journal for duplicate requests and no double allocation of a bill.
-
-Authenticated browser proof uses a separate disposable MySQL database: Contra, Payment, Receipt and Journal; F4–F7/Ctrl+Enter; exact balance and bill selection; a 10.0000 bill partially settled by 3.0000 leaving 7.0000; cheque fields and ageing; desktop/mobile layout; no console errors. Screenshots: [Voucher Hub desktop](evidence/phase5/voucher-hub-desktop.png), [mobile](evidence/phase5/voucher-hub-mobile.png), [ageing](evidence/phase5/ageing-desktop.png).
-
-Core Phase 5 implementation is delivered. Production migration, reviewed opening items/history, retained-data control reconciliation and UAT remain unsigned. This does not declare the preceding isolation/commercial cutover gates complete or activate optional routes. Legacy commercial/POS and purchase-payment adapter convergence remains Phase 6; unowned optional journal callers remain gated pending their operational conversion. Dated inventory-close posting remains blocked. The runbook records changed responsibilities, migration/rollback behavior and these limits.
-
 ## Delivery order
 
 Canonical phases remain: 0 regression baseline; 1 Company/Branch/FY; 2 capabilities; 3 atomic series; 4 inventory ledger; 5 accounting/open items; 6 shared commercial services; 7 tax; 8 returns/documents; 9 manufacturing/job work; 10 profiles; 11 UI/API/security completion; 12 migration/UAT/deployment.
 
 Every completed work package is validated, committed and pushed before dependent work starts. Package completion does not establish full phase completion. Historical commit-by-commit corrections belong in the audit resolution log.
+
+
+## Phase 6: gated shared commercial package
+
+The [Phase 6 implementation and integration notes](PHASE_6_SHARED_COMMERCIAL.md) describe shared sales/purchase posting, legacy web/POS/API convergence, idempotency, immutable reversal/replacement, landed cost and later receipt, credit controls, server drafts and keyboard fast entry. Work is isolated on `codex/phase6-shared-commercial`. Phase 5 accounting is a separate prerequisite; this entry does not change its status.
+
+`ERP_SHARED_COMMERCIAL_ENABLED` remains false, and optional capability/second-company activation gates remain unchanged. No production migrations or historical-document conversion have run. Combined Phase 5/6 UAT and retained-data reconciliation remain necessary before cutover.
+
+Phase 6 local proof passed: 28-test commercial SQLite suite (147 assertions; opt-in timing skipped), 23-test MySQL behavior suite (137 assertions), 40-test ungated regression suite (325 assertions; one opt-in concurrency fixture skipped), and the 50,000-product/50,000-customer timing fixture. Posting p95 was 812.16 ms; lookup p95 was at most 8.28 ms. Browser proof covers keyboard sales, purchase posting and mobile layout. See the Phase 6 runbook for the dependency snapshot, integration conflicts and remaining production/UAT gates.
+
+## Phase 7–8: gated tax, returns and documents package
+
+The [Phase 7–8 implementation and UAT notes](PHASE_7_8_TAX_RETURNS_AND_DOCUMENTS.md) describe effective GST setup and frozen determination/projections, quantity returns and financial notes, approval, quarantine/disposal, normal-sale exchanges, document series/rendering and after-commit delivery. Work is isolated on `codex/phase7-8-tax-returns-documents`. It includes the Phase 5 dependency snapshot and reconciles the final Phase 6 package `c00831a`, preserving Phase 5 payment retry behavior and accounting routes. No original checkout or Phase 6 branch changes were made.
+
+Final local SQLite proof passes: compliance suite **62 tests / 348 assertions**, with one MySQL-only approval race skipped; company regression suite **280 tests / 2,517 assertions**, with 18 opt-in skips. Disposable official MySQL **8.4.0** passes **28 tax/return/migration/concurrency tests / 161 assertions**, plus the latest four focused export/PDF/note checks (**43 assertions**). The original full migration chain also passes **1 test / 5 assertions**. Browser proof covers submitted/approved returns, A4/thermal saved totals, failed-delivery retry, mobile return layout and an interstate GST fast-entry sale/print. PHP/JavaScript syntax and diff whitespace checks are part of final validation.
+
+`ERP_SHARED_COMMERCIAL_ENABLED` and `ERP_COMPLIANCE_ENABLED` remain false by default. The export is explicitly review-only (`filing_ready=false`); a currently verified statutory filing adapter, accountant review, real GST-provider/messaging UAT and printer hardware fixtures remain outstanding. Historical conversion/reconciliation and existing foundation, optional-capability and production sign-offs are unchanged. This is software package delivery, not a signed phase exit.

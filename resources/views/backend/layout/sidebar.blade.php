@@ -105,6 +105,11 @@
             </a>
             <ul id="sale" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('sales-index'))
+                    @if(config('commercial.enabled') && config('compliance.enabled'))
+                        @if($isAdmin || $canNavigate('returns-index'))<li><a href="{{ url('/compliance/returns') }}">Returns & notes</a></li>@endif
+                        @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li>@endif
+                        @if($isAdmin)<li><a href="{{ url('/compliance/setup') }}">Tax & document settings</a></li>@endif
+                    @endif
                     <li id="sale-list-menu"><a href="{{route('sales.index')}}">{{__('db.Sale List')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('sales-add'))
@@ -212,10 +217,6 @@
             <ul id="account" class="collapse list-unstyled">
                 <li id="coa-menu"><a href="{{route('accounting.coa')}}">Chart of Accounts</a></li>
                 <li id="journal-menu"><a href="{{route('accounting.journal-entries')}}">Journal Entries</a></li>
-                <li id="voucher-menu"><a href="{{route('accounting.vouchers')}}">Voucher Hub</a></li>
-                <li id="day-book-menu"><a href="{{route('accounting.day-book')}}">Day Book</a></li>
-                <li id="cash-book-menu"><a href="{{route('accounting.cash-book')}}">Cash Book</a></li>
-                <li id="ageing-menu"><a href="{{route('accounting.ageing')}}">Receivables / Payables</a></li>
                 <li id="general-ledger-menu"><a href="{{route('accounting.general-ledger')}}">General Ledger</a></li>
                 <li id="trial-balance-menu"><a href="{{route('accounting.trial-balance')}}">Trial Balance</a></li>
                 <li id="profit-loss-menu"><a href="{{route('accounting.profit-loss')}}">Profit &amp; Loss</a></li>

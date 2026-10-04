@@ -168,6 +168,9 @@ class AccountingPostingService
             'sale' => \App\Models\Sale::class, 'purchase' => \App\Models\Purchase::class,
             'payment' => \App\Models\Payment::class, 'expense' => \App\Models\Expense::class,
             'reversal' => JournalEntry::class,
+            'sale_credit_note', 'sale_debit_note' => \App\Models\Returns::class,
+            'purchase_credit_note', 'purchase_debit_note' => \App\Models\ReturnPurchase::class,
+            'damage' => \App\Models\DamageStock::class,
             default => throw new InvalidArgumentException('This source requires its company-owned accounting path.'),
         };
         if (empty($header['reference_id'])) {
@@ -177,7 +180,7 @@ class AccountingPostingService
             $model::visibleIn($context)->whereKey($header['reference_id'])->lockForUpdate()->firstOrFail();
         } else {
             $source = $guard->owned($model, $header['reference_id'], $context, 'reference_id');
-            if (in_array($type, ['production', 'job_work_receipt', 'stock_loss'], true)
+            if (in_array($type, ['production', 'job_work_receipt', 'stock_loss', 'sale_credit_note', 'sale_debit_note', 'purchase_credit_note', 'purchase_debit_note', 'damage'], true)
                 && ((int) $source->branch_id !== $context->branchId || (int) $source->financial_year_id !== $context->financialYearId)) {
                 throw new InvalidArgumentException('Operational accounting source is outside the selected branch or financial year.');
             }

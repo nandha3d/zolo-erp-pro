@@ -34,6 +34,14 @@ class CommercialController extends Controller
         return $request->attributes->get(CompanyContext::class);
     }
 
+    private function idempotencyKey(Request $request, int $max = 150): string
+    {
+        $key = $request->hasHeader('Idempotency-Key') ? $request->header('Idempotency-Key') : $request->input('idempotency_key', '');
+        abort_unless(is_string($key) && trim($key) !== '' && strlen($key) <= $max,
+            422, 'An idempotency key of at most '.$max.' characters is required.');
+        return $key;
+    }
+
     public function entry(Request $request, string $kind)
     {
         $context = $this->context($request);
@@ -46,13 +54,21 @@ class CommercialController extends Controller
             app(\App\Services\Operations\OperationPosting::class)->authorize('operations.projects', 'projects.manage', $context, $request->user()->id);
             $project = \App\Models\Operations\Project::visibleIn($context)->findOrFail($request->project_id);
         }
+        $exchangeReturn = null;
+        if ($kind === 'sale' && $request->filled('exchange_return_id')) {
+            abort_unless(config('compliance.enabled'), 503);
+            $exchangeReturn = \App\Models\Returns::forCompany($context)->where('branch_id', $context->branchId)->whereNotNull('posted_at')
+                ->where('note_type', 'credit')->where('adjustment_type', 'quantity')->findOrFail($request->integer('exchange_return_id'));
+        }
         return view('backend.commercial.entry', [
-            'kind' => $kind, 'context' => $context,
+            'kind' => $kind, 'context' => $context, 'exchangeReturn' => $exchangeReturn,
             'industry' => $industry, 'project' => $project,
             'dimensionsEnabled' => config('operations.enabled') && app(\App\Services\Platform\CapabilityService::class)->enabled('inventory.dimension_tracking', $context),
             'schemes' => $kind === 'sale' && $industry['profile'] === 'fmcg'
                 ? DB::table('sales_quantity_schemes')->where('company_id', $context->companyId)->where('is_active', true)->get() : collect(),
-            'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->get(['id', 'name']),
+            'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)
+                ->when(config('compliance.enabled'), fn ($q) => $q->where('is_quarantine', false))
+                ->when(config('operations.enabled'), fn ($q) => $q->whereNull('external_job_order_id'))->get(['id', 'name']),
             'units' => DB::table('units')->where('company_id', $context->companyId)->get(['id', 'unit_name']),
             'categories' => DB::table('categories')->where('company_id', $context->companyId)->get(['id', 'name']),
             'groups' => $kind === 'sale' ? DB::table('customer_groups')->where('company_id', $context->companyId)->get(['id', 'name']) : collect(),
@@ -65,7 +81,7 @@ class CommercialController extends Controller
     {
         $context = $this->context($request);
         $data = $legacy ? app(LegacyCommercialCommand::class)->data($request, $kind === 'purchase', $context) : $request->all();
-        $key = $request->header('Idempotency-Key', $request->input('idempotency_key', ''));
+        $key = $this->idempotencyKey($request);
         $document = DB::transaction(function () use ($request, $kind, $data, $key, $context) {
             $document = $kind === 'sale'
                 ? app(SaleApplicationService::class)->create(new SaleCommand($data, $key, $request->user()->id, $context))
@@ -129,7 +145,7 @@ class CommercialController extends Controller
         $data = app(LegacyCommercialCommand::class)->data($request, $kind === 'purchase', $context);
         $document = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)->findOrFail($id);
         $replacement = app(CommercialReversalService::class)->replace($document, $data,
-            $request->header('Idempotency-Key', $request->input('idempotency_key', '')), $request->business_date, $request->reason, $context);
+            $this->idempotencyKey($request), $request->business_date, $request->reason, $context);
         return $request->expectsJson() ? response()->json(['success' => true, 'data' => $replacement], 201)
             : redirect($kind === 'sale' ? '/sales' : '/purchases')->with('message', 'Replacement document posted successfully.');
     }
@@ -151,9 +167,14 @@ class CommercialController extends Controller
         $type = $kind === 'sale' ? 'customer' : 'supplier';
         $credit = $kind === 'sale' ? app(CreditControlService::class)->summary($party, $context,
             \Carbon\CarbonImmutable::now(\App\Models\Company::findOrFail($context->companyId)->timezone)->toDateString()) : [];
+        $request->validate(['page' => 'nullable|integer|min:1|max:1000000', 'pending' => 'nullable|boolean']);
+        $page = (int) $request->input('page', 1);
         $items = DB::table('account_open_items')->where('company_id', $context->companyId)
-            ->where('party_type', $type)->where('party_id', $id)->orderByDesc('document_date')->limit(100)->get();
-        return response()->json(['data' => ['party' => $party, 'items' => $items, 'credit' => $credit, 'outstanding' => round((float) DB::table('account_open_items')
+            ->where('party_type', $type)->where('party_id', $id)
+            ->when($request->boolean('pending'), fn ($query) => $query->where('open_amount', '!=', 0))
+            ->orderByDesc('document_date')->orderByDesc('id')->offset(($page - 1) * 100)->limit(101)->get();
+        return response()->json(['data' => ['party' => $party, 'items' => $items->take(100)->values(),
+            'next_page' => $items->count() > 100 ? $page + 1 : null, 'credit' => $credit, 'outstanding' => round((float) DB::table('account_open_items')
             ->where('company_id', $context->companyId)->where('party_type', $type)->where('party_id', $id)->sum('open_amount'), 4)]]);
     }
 
@@ -208,10 +229,16 @@ class CommercialController extends Controller
         $document = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)->findOrFail($id);
         abort_if($document->reversed_at || !$document->posted_at, 409, 'Only an active posted document can receive payment.');
         $data = $request->all();
-        $data['idempotency_key'] = $request->header('Idempotency-Key', $request->input('idempotency_key', ''));
-        $request->validate(['amount' => 'required|numeric|gt:0']);
-        abort_if(trim($data['idempotency_key']) === '', 422, 'A payment idempotency key is required.');
-        return response()->json(['success' => true, 'data' => app(PaymentService::class)->addPayment($document, $data, $request->user()->id, $context)], 201);
+        $data['idempotency_key'] = $this->idempotencyKey($request, 100);
+        $request->validate(['amount' => 'required|numeric|gt:0|max:1000000000',
+            'paying_method' => 'required|in:Cash,Bank,Cheque,Credit Card']);
+        try {
+            $payment = app(PaymentService::class)->addPayment($document, $data, $request->user()->id, $context);
+        } catch (\InvalidArgumentException $error) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['payment' => $error->getMessage()]);
+        }
+        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $payment], 201)
+            : redirect($kind === 'sale' ? '/sales' : '/purchases')->with('message', 'Payment recorded successfully.');
     }
 
     public function receive(Request $request, int $id)
@@ -220,7 +247,7 @@ class CommercialController extends Controller
         $purchase = Purchase::visibleIn($context)->findOrFail($id);
         $data = $request->except(['_token', 'idempotency_key']);
         return response()->json(['data' => app(\App\Services\Commercial\PurchaseReceiptService::class)->receive($purchase, $data,
-            $request->header('Idempotency-Key', $request->input('idempotency_key', '')), $context)]);
+            $this->idempotencyKey($request), $context)]);
     }
 
     public function inlineMaster(Request $request, string $kind, string $resource)
@@ -231,8 +258,7 @@ class CommercialController extends Controller
             'phone_number' => 'nullable|string|max:50', 'address' => 'nullable|string|max:255', 'search_alias' => 'nullable|string|max:100',
             'credit_days' => 'nullable|integer|min:0|max:3650', 'credit_limit' => 'nullable|numeric|min:0|max:1000000000']);
         app(CommercialPermission::class)->assert($resource === 'products' ? 'products-add' : ($kind === 'sale' ? 'customers-add' : 'suppliers-add'), $context, $actor);
-        $key = $request->header('Idempotency-Key', $request->input('idempotency_key', ''));
-        abort_unless(is_string($key) && trim($key) !== '' && strlen($key) <= 150, 422, 'A master idempotency key is required.');
+        $key = $this->idempotencyKey($request);
         $type = $resource === 'products' ? 'product' : ($kind === 'sale' ? 'customer' : 'supplier');
         $model = match ($type) { 'product' => Product::class, 'customer' => Customer::class, default => Supplier::class };
         $values = $request->except(['_token', 'idempotency_key', 'company_id']); ksort($values);

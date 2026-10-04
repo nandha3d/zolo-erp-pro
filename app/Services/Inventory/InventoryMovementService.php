@@ -204,7 +204,12 @@ class InventoryMovementService
                 'projection_mode' => $command->shadow ? 'shadow' : 'applied',
             ]);
             $run = new PostingRun($movement, $companyId, $type !== 'opening' && !$command->shadow,
-                $type === 'issue' ? StockIdentity::ISSUED : 'removed', $command->shadow);
+                $type === 'issue' ? StockIdentity::ISSUED : 'removed', $command->shadow, $command->purpose);
+            if (!$command->shadow && in_array($type, ['issue', 'transfer'], true) && $this->hasColumn('warehouses', 'is_quarantine')
+                && DB::table('warehouses')->whereIn('id', $warehouseIds)->where('is_quarantine', true)->exists()
+                && !in_array($command->purpose, ['disposal', 'purchase_return'], true)) {
+                throw new StockPolicyException('Quarantined stock cannot be sold or transferred through ordinary stock operations.');
+            }
 
             foreach ($command->lines as $line) {
                 $product = $products[$line->productId];
@@ -461,7 +466,7 @@ class InventoryMovementService
             throw new InvalidArgumentException("Batch {$line->batchId} does not belong to product {$product->id}.");
         }
         $date = $run->movement->movement_date->toDateString();
-        if ($type === 'issue' && $run->movement->movement_type !== 'expiry_writeoff' && $batch->expired_date !== null && substr((string) $batch->expired_date, 0, 10) < $date) {
+        if ($type === 'issue' && $run->movement->movement_type !== 'expiry_writeoff' && !in_array($run->purpose, ['disposal', 'purchase_return'], true) && $batch->expired_date !== null && substr((string) $batch->expired_date, 0, 10) < $date) {
             $message = "Batch {$batch->batch_no} of product {$product->id} expired on ".substr((string) $batch->expired_date, 0, 10).'.';
             match ($run->shadow ? 'warn' : $this->policy->expiredBatch($run->companyId)) {
                 'block' => throw new StockPolicyException($message),
@@ -620,6 +625,10 @@ class InventoryMovementService
             }
             $identity->status = StockIdentity::IN_STOCK;
             $identity->warehouse_id = $warehouseId;
+            if ($run->purpose === 'customer_return' && $this->hasColumn('stock_identities', 'warranty_state')) {
+                $identity->warranty_state = 'returned';
+                $identity->return_inspected_at = now();
+            }
         }
         $identity->last_movement_id = $run->movement->id;
         $identity->save();

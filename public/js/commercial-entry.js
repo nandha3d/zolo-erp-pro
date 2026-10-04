@@ -11,7 +11,7 @@
     const text = (node, value) => { node.textContent = value; };
     const message = (value, error = false) => { text($('status'), value); $('status').classList.toggle('error', error); };
     async function api(path, data) {
-        const response = await fetch(base + path, {method: data ? 'POST' : 'GET', credentials: 'same-origin',
+        const response = await fetch(path === '' && document.body.dataset.postUrl ? document.body.dataset.postUrl : base + path, {method: data ? 'POST' : 'GET', credentials: 'same-origin',
             headers: {'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content},
             ...(data ? {body: JSON.stringify(data)} : {})});
         const result = await response.json().catch(() => ({}));
@@ -30,6 +30,10 @@
         if (document.body.dataset.projectId) data.project_id = Number(document.body.dataset.projectId);
         for (const [id, field] of [['lr-date','lr_date'],['bale-count','bale_count'],['bundle-count','bundle_count']]) {
             if ($(id)?.value) data[field] = $(id).value;
+        }
+        if (document.body.dataset.compliance === '1' && ($('reverse-charge').checked || $('place-of-supply').value)) {
+            data.gst = {reverse_charge: $('reverse-charge').checked};
+            if ($('place-of-supply').value) data.gst.place_of_supply = $('place-of-supply').value;
         }
         if (kind === 'purchase') {
             data.status = Number($('receipt-status').value);
@@ -63,9 +67,9 @@
         records.forEach(record => { const row = document.createElement('tr'); columns.forEach(([, value]) => { const cell = document.createElement('td'); text(cell, value(record)); row.append(cell); }); body.append(row); });
         table.append(head, body); const scroll = document.createElement('div'); scroll.className = 'table-scroll'; scroll.append(table); $('info-content').replaceChildren(scroll);
         if (!records.length) { const empty = document.createElement('p'); text(empty, 'No records found.'); $('info-content').append(empty); }
-        showDialog($('info-dialog'));
+        if (!$('info-dialog').open) showDialog($('info-dialog'));
     }
-    const statementColumns = [['Bill', row => row.reference_no || `${row.source_type} ${row.source_id}`], ['Date', row => String(row.document_date).slice(0, 10)],
+    const statementColumns = [['Bill', row => row.document_no || row.reference_no || `${row.source_type} ${row.source_id}`], ['Date', row => String(row.document_date).slice(0, 10)],
         ['Due', row => String(row.due_date).slice(0, 10)], ['Open amount', row => Number(row.open_amount).toFixed(4)]];
     async function selectParty(record) {
         party = record; $('party-search').value = [record.city, record.name].filter(Boolean).join(' · '); $('party-results').replaceChildren();
@@ -73,13 +77,14 @@
             if (kind === 'sale') text($('credit-summary'), `Overdue: ${Number(summary.credit.overdue).toFixed(4)} · Credit limit: ${summary.credit.credit_limit > 0 ? Number(summary.credit.credit_limit).toFixed(4) : 'Unlimited'} · Available credit: ${summary.credit.available_credit === null ? 'Unlimited' : Number(summary.credit.available_credit).toFixed(4)}`);
         }
         catch (error) { message(error.message, true); }
-        changed(); $('product-search').focus();
+        changed();
     }
+    function focusControl(control) { control.focus(); control.scrollIntoView({block: 'center'}); }
     function addProduct(product) {
         items.push({product_id: product.id, name: product.name, code: product.code, qty: 1,
-            [priceField]: Number(kind === 'sale' ? product.price : product.cost), [unitField]: Number(product.unit_id), ...(kind === 'purchase' ? {received_qty: 1} : {})});
+            [priceField]: Number(kind === 'sale' ? product.price : product.cost), ...(product.unit_id ? {[unitField]: Number(product.unit_id)} : {}), ...(kind === 'purchase' ? {received_qty: 1} : {})});
         $('product-search').value = ''; $('product-results').replaceChildren(); render(); changed();
-        $('item-lines').lastElementChild.querySelector('input').focus();
+        focusControl($('item-lines').lastElementChild.querySelector('input'));
     }
     function render() {
         $('item-lines').replaceChildren(); $('empty-lines').hidden = items.length > 0;
@@ -92,7 +97,7 @@
                 input.type = 'number'; input.min = field === 'qty' ? quantityStep : '0'; input.step = ['qty','received_qty'].includes(field) ? quantityStep : '0.0001'; input.value = item[field] ?? 0;
                 input.setAttribute('aria-label', `${field === 'qty' ? 'Quantity' : field === 'received_qty' ? 'Received quantity' : 'Net rate'} for ${item.name}`);
                 input.addEventListener('input', () => { item[field] = Number(input.value); changed(); });
-                input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.ctrlKey) { event.preventDefault(); const next = input.closest('td').nextElementSibling?.querySelector('input'); (next || $('product-search')).focus(); } });
+                input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.ctrlKey) { event.preventDefault(); const next = input.closest('td').nextElementSibling?.querySelector('input'); focusControl(next || $('product-search')); } });
                 cell.append(input); row.append(cell);
             });
             const tracking = document.createElement('td'), button = document.createElement('button'); button.type = 'button'; text(button, 'Tracking');
@@ -103,14 +108,35 @@
     }
     function wireSearch(resource, inputId, resultId, select) {
         let timer;
-        $(inputId).addEventListener('input', () => { clearTimeout(timer); const sequence = ++searchSequence[resource]; timer = setTimeout(async () => {
-            try { const results = await api('/search/' + resource + '?q=' + encodeURIComponent($(inputId).value)); if (sequence !== searchSequence[resource]) return;
-                $(resultId).replaceChildren(); results.forEach(record => { const button = document.createElement('button'); button.type = 'button';
-                    text(button, [record.code || record.city, record.name].filter(Boolean).join(' · ')); button.addEventListener('click', () => select(record)); $(resultId).append(button); });
+        async function search() {
+            const sequence = ++searchSequence[resource];
+            try {
+                const results = await api('/search/' + resource + '?q=' + encodeURIComponent($(inputId).value));
+                if (sequence !== searchSequence[resource]) return;
+                $(resultId).replaceChildren();
+                results.forEach(record => {
+                    const button = document.createElement('button'); button.type = 'button';
+                    text(button, [record.code || record.city, record.name].filter(Boolean).join(' � '));
+                    button.addEventListener('click', () => { clearTimeout(timer); ++searchSequence[resource]; select(record); });
+                    $(resultId).append(button);
+                });
             } catch (error) { message(error.message, true); }
-        }, 150); });
-        $(inputId).addEventListener('keydown', event => { if ((event.key === 'Enter' && !event.ctrlKey) || event.key === 'ArrowDown') { event.preventDefault(); const first = $(resultId).querySelector('button'); if (first) { event.key === 'Enter' ? first.click() : first.focus(); } } });
-        $(resultId).addEventListener('keydown', event => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); (event.key === 'ArrowDown' ? event.target.nextElementSibling : event.target.previousElementSibling)?.focus(); } });
+        }
+        $(inputId).addEventListener('input', () => {
+            clearTimeout(timer); ++searchSequence[resource]; $(resultId).replaceChildren(); timer = setTimeout(search, 150);
+        });
+        $(inputId).addEventListener('keydown', async event => {
+            if ((event.key === 'Enter' && !event.ctrlKey) || event.key === 'ArrowDown') {
+                event.preventDefault(); clearTimeout(timer); await search();
+                const first = $(resultId).querySelector('button');
+                if (first) { event.key === 'Enter' ? first.click() : first.focus(); }
+            }
+        });
+        $(resultId).addEventListener('keydown', event => {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault(); (event.key === 'ArrowDown' ? event.target.nextElementSibling : event.target.previousElementSibling)?.focus();
+            }
+        });
     }
     wireSearch('parties', 'party-search', 'party-results', selectParty); wireSearch('products', 'product-search', 'product-results', addProduct);
     $('party-search').addEventListener('input', () => { party = null; text($('previous'), '—'); text($('combined'), '—'); changed(); });
@@ -134,14 +160,31 @@
         if (!party && data[kind === 'sale' ? 'customer_id' : 'supplier_id']) { const result = await api('/party/' + data[kind === 'sale' ? 'customer_id' : 'supplier_id']); party = result.party; }
         if (party) await selectParty(party); else { $('party-search').value = ''; text($('previous'), '—'); text($('combined'), '—'); } render(); changed();
     }
-    $('restore-draft').addEventListener('click', async () => { try { const drafts = await api('/drafts'); text($('info-title'), 'Saved drafts'); $('info-content').replaceChildren(); drafts.forEach(saved => { const button = document.createElement('button'); button.type='button'; text(button, `Draft ${saved.id} · ${saved.updated_at}`); button.addEventListener('click', async () => { draft = saved; await loadPayload(JSON.parse(saved.payload_json)); $('info-dialog').close(); }); $('info-content').append(button); }); showDialog($('info-dialog')); } catch(error) { message(error.message,true); } });
-    $('clone').addEventListener('click', () => { text($('info-title'), 'Clone prior bill'); const input = document.createElement('input'); input.type='number'; input.min='1'; input.setAttribute('aria-label','Prior bill ID'); const button=document.createElement('button'); text(button,'Load bill'); button.addEventListener('click',async()=>{try { await loadPayload(await api('/clone/'+input.value)); key=crypto.randomUUID(); draft=null; $('info-dialog').close(); } catch(error){message(error.message,true);} }); $('info-content').replaceChildren(input,button); showDialog($('info-dialog')); });
-    $('pending').addEventListener('click', async () => { if (!party) return message('Select a party first.', true); try { const result = await api('/party/' + party.id); info('Pending bills', result.items.filter(item => Number(item.open_amount) !== 0), statementColumns); } catch (error) { message(error.message,true); } });
-    async function statement() { if (!party) return message('Select a party first.',true); try { info('Party statement', (await api('/party/'+party.id)).items, statementColumns); } catch(error){message(error.message,true);} }
+    $('restore-draft').addEventListener('click', async () => { try { const drafts = await api('/drafts'); text($('info-title'), 'Saved drafts'); $('info-content').replaceChildren(); drafts.forEach(saved => { const button = document.createElement('button'); button.type='button'; text(button, `Draft ${saved.id} · ${saved.updated_at}`); button.addEventListener('click', async () => { draft = saved; await loadPayload(JSON.parse(saved.payload_json)); lastFocus=$('product-search'); $('info-dialog').close(); }); $('info-content').append(button); }); showDialog($('info-dialog')); } catch(error) { message(error.message,true); } });
+    $('clone').addEventListener('click', () => { text($('info-title'), 'Clone prior bill'); const input = document.createElement('input'); input.type='number'; input.min='1'; input.setAttribute('aria-label','Prior bill ID'); const button=document.createElement('button'); text(button,'Load bill'); button.addEventListener('click',async()=>{try { await loadPayload(await api('/clone/'+input.value)); key=crypto.randomUUID(); draft=null; lastFocus=$('product-search'); $('info-dialog').close(); } catch(error){message(error.message,true);} }); $('info-content').replaceChildren(input,button); showDialog($('info-dialog')); });
+    async function partyDetails(title, pendingOnly = false) {
+        if (!party) return message('Select a party first.', true);
+        const partyId = party.id;
+        let records = [];
+        async function load(page) {
+            try {
+                const result = await api('/party/' + partyId + '?page=' + page + '&pending=' + (pendingOnly ? '1' : '0'));
+                records = records.concat(result.items); info(title, records, statementColumns);
+                if (result.next_page) {
+                    const more = document.createElement('button'); more.type = 'button'; text(more, 'Load more');
+                    more.addEventListener('click', async () => { more.disabled = true; await load(result.next_page); });
+                    $('info-content').append(more);
+                }
+            } catch (error) { message(error.message, true); }
+        }
+        await load(1);
+    }
+    $('pending').addEventListener('click', () => partyDetails('Pending bills', true));
+    async function statement() { await partyDetails('Party statement'); }
     async function rates() { if (!party || !items.length) return message('Select a party and item first.',true); try { info('Previous rates',await api('/previous-rates?party_id='+party.id+'&product_id='+items[items.length-1].product_id), [['Bill', row => row[kind+'_id']], ['Quantity', row => row.qty], ['Net rate', row => Number(row[priceField]).toFixed(4)]]); } catch(error){message(error.message,true);} }
     function openInline(resource) { inlineResource=resource; inlineKey=crypto.randomUUID(); $('inline-form').reset(); $('master-code').required=resource==='products'; text($('inline-title'),resource==='products'?'New item':'New party'); $('party-fields').hidden=resource==='products'; $('product-fields').hidden=resource!=='products'; text($('inline-error'),''); showDialog($('inline-dialog')); $('master-name').focus(); }
     document.querySelectorAll('[data-inline]').forEach(button=>button.addEventListener('click',()=>openInline(button.dataset.inline)));
-    $('inline-form').addEventListener('submit',async event=>{event.preventDefault();if(inlineBusy)return;inlineBusy=true;const data={...Object.fromEntries(new FormData(event.target)),idempotency_key:inlineKey};try {const record=await api('/masters/'+inlineResource,data);$('inline-dialog').close();inlineResource==='products'?addProduct(record):selectParty(record);}catch(error){text($('inline-error'),error.message);}finally{inlineBusy=false;} });
+    $('inline-form').addEventListener('submit',async event=>{event.preventDefault();if(inlineBusy)return;inlineBusy=true;const data={...Object.fromEntries(new FormData(event.target)),idempotency_key:inlineKey};try {const record=await api('/masters/'+inlineResource,data);$('inline-dialog').close();if(inlineResource==='products'){addProduct(record);lastFocus=document.activeElement;}else{selectParty(record);lastFocus=$('product-search');}}catch(error){text($('inline-error'),error.message);}finally{inlineBusy=false;} });
     function openTracking(index) {
         trackingIndex = index; const item = items[index];
         $('serials').value = (item.serials || []).join(','); $('batch-id').value = item.product_batch_id || '';
@@ -206,7 +249,7 @@
     $('piece-select')?.addEventListener('change', () => { $('identity').value = $('piece-select').value; });
     $('entry-form').addEventListener('change', changed);
     $('entry-form').addEventListener('submit',async event=>{event.preventDefault();if(busy)return;if(!party||!items.length)return message('Select a party and add at least one item.',true);busy=true;$('post').disabled=true;$('entry-form').inert=true;
-        try {const data=payload();if(draft)data.draft_id=draft.id;const result=await api('',data);dirty=false;draft=null;message('Saved '+result.reference_no); const button=document.createElement('button');text(button,'Print invoice');button.addEventListener('click',()=>window.open(kind==='sale'?'/sales/gen_invoice/'+result.id:'/purchases/'+result.id,'_blank','noopener'));text($('info-title'),result.posted_at?'Invoice posted':'Document saved without posting');$('info-content').replaceChildren(button);showDialog($('info-dialog'));items=[];key=crypto.randomUUID();render();$('paid').value='0';text($('draft-status'),'Draft cleared');const summary=await api('/party/'+party.id);party.outstanding=summary.outstanding;text($('previous'),Number(summary.outstanding).toFixed(4));await preview();}catch(error){message(error.message,true);}finally{busy=false;$('post').disabled=false;$('entry-form').inert=false;} });
+        try {const data=payload();if(draft)data.draft_id=draft.id;const result=await api('',data);dirty=false;draft=null;message('Saved '+result.reference_no); const button=document.createElement('button');text(button,'Print invoice');button.addEventListener('click',()=>window.open(document.body.dataset.compliance === '1' ? '/compliance/documents/'+kind+'/'+(result.replacement_sale_id || result.id) : (kind==='sale'?'/sales/gen_invoice/'+result.id:'/purchases/'+result.id),'_blank','noopener'));text($('info-title'),result.posted_at?'Invoice posted':'Document saved without posting');$('info-content').replaceChildren(button);showDialog($('info-dialog'));items=[];key=crypto.randomUUID();render();$('paid').value='0';text($('draft-status'),'Draft cleared');const summary=await api('/party/'+party.id);party.outstanding=summary.outstanding;text($('previous'),Number(summary.outstanding).toFixed(4));await preview();}catch(error){message(error.message,true);}finally{busy=false;$('post').disabled=false;$('entry-form').inert=false;} });
     document.addEventListener('keydown',event=>{const input=/INPUT|TEXTAREA|SELECT/.test(event.target.tagName);if(document.querySelector('dialog[open]'))return;
         if(event.key==='F2'||event.key==='F12'){event.preventDefault();location.href=event.key==='F2'?'/commercial/sale/entry':'/commercial/purchase/entry';}
         else if(event.key==='F6'){event.preventDefault();openInline('products');}

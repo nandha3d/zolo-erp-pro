@@ -21,6 +21,7 @@ final class PostingRun
         public readonly bool $updateProjections,
         public readonly string $outStatus,
         public readonly bool $shadow = false,
+        public readonly string $purpose = 'ordinary',
     ) {
     }
 }

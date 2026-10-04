@@ -32,13 +32,20 @@ class SalePostingService
             }
             $date = $guard->begin($context, $sale->created_at->toDateString());
             $stock = [];
+            // Lock all referenced products once, preserving company ownership checks for every line.
+            $products = \App\Models\Product::forCompany($context)
+                ->whereIn('id', $sale->productSales->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             foreach ($sale->productSales as $line) {
                 if ((int) $line->company_id !== $context->companyId) {
                     throw new \LogicException('A document line belongs to another company.');
                 }
-                $product = $guard->owned(\App\Models\Product::class, $line->product_id, $context, 'product_id');
+                $product = $products->get($line->product_id);
+                if (!$product) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['product_id' => 'Select a company-owned record.']);
+                }
                 if (!in_array($product->type, ['service', 'digital'], true)) {
-                    $stock[] = StockLine::fromArray(['uom_id' => $line->sale_unit_id] + ($line->stock_details_json ?? []) + $line->toArray());
+                    $stock[] = StockLine::fromArray(['uom_id' => $line->sale_unit_id,
+                        'attributes' => ['commercial_line_id' => $line->id] + ($line->stock_details_json['attributes'] ?? [])] + ($line->stock_details_json ?? []) + $line->toArray());
                 }
             }
             $cost = 0;
@@ -52,21 +59,28 @@ class SalePostingService
             }
             $accounts = app(PostingAccounts::class);
             $lines = [];
-            $add = function (string|int $role, float $debit, float $credit, bool $party = false) use (&$lines, $accounts, $context, $sale) {
+            $add = function (string|int $role, float $debit, float $credit, bool $party = false) use (&$lines, $accounts, $context, $sale, $actor) {
                 if (round($debit + $credit, 4) == 0) {
                     return;
                 }
-                $lines[] = ['chart_of_account_id' => is_int($role) ? $role : $accounts->account($role, $context),
+                $lines[] = ['chart_of_account_id' => is_int($role) ? $role : $accounts->account($role, $context, $actor),
                     'debit' => round($debit, 4), 'credit' => round($credit, 4),
                     'partner_type' => $party ? 'customer' : null, 'partner_id' => $party ? $sale->customer_id : null];
             };
             foreach ($sale->payments()->forCompany($context)->get() as $payment) {
-                $add($accounts->settlement($payment, $context), (float) $payment->amount, 0);
+                $add($accounts->settlement($payment, $context, $actor), (float) $payment->amount, 0);
             }
             $add('accounts_receivable', (float) $sale->grand_total - (float) $sale->paid_amount, 0, true);
             $add('sales_discount', (float) $sale->order_discount, 0);
             $add('sales_revenue', 0, (float) $sale->total_price - (float) $sale->total_tax);
-            $add('tax_payable', 0, (float) $sale->total_tax + (float) $sale->order_tax);
+            if ($sale->tax_snapshot_json) {
+                foreach (['cgst', 'sgst', 'igst', 'cess'] as $component) {
+                    $amount = $sale->tax_snapshot_json['reverse_charge'] ? 0 : $sale->productSales->sum(fn ($line) => $line->tax_snapshot_json[$component] ?? 0);
+                    $add('output_tax_'.$component, 0, (float) $amount);
+                }
+            } else {
+                $add('tax_payable', 0, (float) $sale->total_tax + (float) $sale->order_tax);
+            }
             $add('shipping_income', 0, (float) $sale->shipping_cost);
             $add('cogs', $cost, 0);
             $add('inventory', 0, $cost);
@@ -78,7 +92,11 @@ class SalePostingService
                     'description' => 'Sale '.$sale->reference_no,
                 ], $lines, $context);
             }
+            if (config('compliance.enabled') && \Illuminate\Support\Facades\Schema::hasColumn('sales', 'document_snapshot_json')) {
+                $sale->forceFill(['document_snapshot_json' => app(\App\Services\Documents\DocumentRenderingService::class)->capture($sale, 'sale', $context)]);
+            }
             $sale->forceFill(['posted_at' => now()])->save();
+            app(\App\Services\Tax\GstProjectionService::class)->record($sale, 'sale', $sale->productSales->pluck('tax_snapshot_json')->all(), $context);
             return $sale;
         });
     }

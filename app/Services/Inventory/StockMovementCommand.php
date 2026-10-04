@@ -26,7 +26,11 @@ final readonly class StockMovementCommand
         public ?CompanyContext $context = null,
         // Shadow: describe quantities a legacy writer already changed; projections are untouched and policy only warns.
         public bool $shadow = false,
+        public string $purpose = 'ordinary',
     ) {
+        if (!in_array($purpose, ['ordinary', 'customer_return', 'purchase_return', 'disposal'], true)) {
+            throw new InvalidArgumentException('Unsupported stock movement purpose.');
+        }
         if ($lines === [] || array_filter($lines, fn ($line) => !$line instanceof StockLine) !== []) {
             throw new InvalidArgumentException('A stock movement needs at least one stock line.');
         }

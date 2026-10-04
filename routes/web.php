@@ -84,6 +84,7 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WhatsappController;
 
 require __DIR__.'/commercial.php';
+require __DIR__.'/compliance.php';
 
 Route::get('webview/auth', function (Request $request) {
     // Get token from Authorization header

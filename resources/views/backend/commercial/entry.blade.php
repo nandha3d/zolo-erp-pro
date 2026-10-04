@@ -9,17 +9,19 @@
     <link rel="stylesheet" href="{{ asset('css/commercial-entry.css') }}">
     <script defer src="{{ asset('js/commercial-entry.js') }}"></script>
 </head>
-<body data-kind="{{ $kind }}" data-base="{{ url('/commercial/'.$kind) }}" data-quantity-scale="{{ $industry['settings']['quantity_scale'] }}" @if($project) data-project-id="{{ $project->id }}" data-project-customer="{{ $project->client_id }}" @endif>
+<body data-kind="{{ $kind }}" data-base="{{ url('/commercial/'.$kind) }}" data-quantity-scale="{{ $industry['settings']['quantity_scale'] }}" @if($project) data-project-id="{{ $project->id }}" data-project-customer="{{ $project->client_id }}" @endif data-compliance="{{ config('compliance.enabled') ? '1' : '0' }}" data-post-url="{{ isset($exchangeReturn) ? url('/compliance/exchange/'.$exchangeReturn->id) : '' }}">
 <header class="topbar"><a href="{{ url('/dashboard') }}">zoloERP</a><span>Company {{ $context->companyId }} / Branch {{ $context->branchId }}</span><nav aria-label="Entry modes"><a href="{{ url('/commercial/sale/entry') }}">F2 Sales</a><a href="{{ url('/commercial/purchase/entry') }}">F12 Purchase</a></nav></header>
 <main>
     <div class="heading"><div><p class="eyebrow">COUNTER ENTRY</p><h1>{{ $kind === 'sale' ? 'Fast Sales' : 'Fast Purchase' }}</h1></div><button type="button" id="restore-draft">Restore draft</button></div>
     <p id="status" role="status" aria-live="polite">Ready. Search a party, then add items.</p>
+    @isset($exchangeReturn)<p class="panel">Exchange against return {{ $exchangeReturn->reference_no }}. Select the same customer and enter replacement items.</p>@endisset
     <form id="entry-form">
         <section class="panel fields" aria-label="Document details">
             <div class="search"><label for="party-search">{{ $kind === 'sale' ? 'Customer' : 'Supplier' }}</label><input id="party-search" autocomplete="off" placeholder="Name, city, alias or phone" aria-controls="party-results"><div id="party-results" class="results" aria-label="Party search results"></div><button type="button" data-inline="parties">New party · Alt+C</button></div>
             <label for="warehouse">Warehouse<select id="warehouse" required>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected($project && $warehouse->id === $project->site_warehouse_id)>{{ $warehouse->name }}</option>@endforeach</select></label>
             <label for="business-date">Document date<input id="business-date" type="date" value="{{ $businessDate }}" required></label>
             @if($kind === 'purchase')<label for="receipt-status">Receipt status<select id="receipt-status"><option value="1">Received</option><option value="2">Partial</option><option value="3">Pending</option><option value="4">Unbilled order</option></select></label>@endif
+            @if(config('compliance.enabled'))<label for="place-of-supply">Place of supply state code (optional)<input id="place-of-supply" maxlength="2" pattern="[0-9]{2}" placeholder="Party state"></label><label for="reverse-charge"><input id="reverse-charge" type="checkbox"> Reverse charge</label>@endif
         </section>
         @if($project)<p>Project: {{ $project->title }} · {{ $project->site_json['site_address'] }}</p>@endif
         @if($industry['profile']==='fmcg')<p>Batch items use earliest unexpired stock when no batch is chosen. Scheme free quantities appear as separate zero-price stock lines on save.</p>@endif

@@ -12,7 +12,7 @@ class LandedCostService
     {
         $pricing = app(CommercialPricing::class);
         $lines = $data['items'];
-        $values = array_map(fn ($line) => $pricing->units((float) $line['total']), $lines);
+        $values = array_map(fn ($line) => $pricing->units((float) $line['total'] - (float) ($line['recoverable_tax'] ?? 0)), $lines);
         $basis = array_sum($values) > 0 ? $values : array_column($lines, 'qty');
         $adjustments = $this->spread($pricing->units((float) $data['order_tax'] - (float) ($data['order_discount'] ?? 0)), $basis);
         $method = $data['landed_cost_method'] ?? 'value';

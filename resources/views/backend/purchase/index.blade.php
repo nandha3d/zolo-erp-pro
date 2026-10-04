@@ -772,14 +772,26 @@
                                 purchase_id[i-1] = purchase[3];
                         }
                     });
-                    if(purchase_id.length && confirm("Are you sure want to delete?")) {
+                    if(purchase_id.length && confirm(@json(config('commercial.enabled') ? 'Reverse selected documents and preserve their history?' : 'Are you sure want to delete?'))) {
+                        @if(config('commercial.enabled'))
+                        var reversalReason = prompt('Reason for reversal (at least 3 characters):');
+                        if (!reversalReason || reversalReason.trim().length < 3) return;
+                        var reversalDate = prompt('Reversal date (YYYY-MM-DD):', @json(date('Y-m-d')));
+                        if (!reversalDate) return;
+                        @endif
                         $.ajax({
                             type:'POST',
                             url:'purchases/deletebyselection',
                             data:{
                                 purchaseIdArray: purchase_id
+                                @if(config('commercial.enabled'))
+                                ,reason: reversalReason, business_date: reversalDate
+                                @endif
                             },
                             success:function(res) {
+                                @if(config('commercial.enabled'))
+                                alert('Documents reversed; original history preserved.'); location.reload(); return;
+                                @endif
                                 if (!res || !Array.isArray(res.deleted)) {
                                     alert(res.message || 'Unexpected server response');
                                     return;
