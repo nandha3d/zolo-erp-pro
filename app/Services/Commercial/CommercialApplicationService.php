@@ -55,24 +55,26 @@ class CommercialApplicationService
             if (empty($data['items']) || !is_array($data['items']) || !array_is_list($data['items']) || count($data['items']) > 500) {
                 throw ValidationException::withMessages(['items' => 'Use between one and 500 lines.']);
             }
-            foreach ($data['items'] as &$line) {
+            foreach ($data['items'] as $line) {
                 if (!is_array($line)) {
                     throw ValidationException::withMessages(['items' => 'Each line must be an object.']);
                 }
+            }
+            $products = $guard->products($data['items'], $context, $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id')->all();
+            foreach ($data['items'] as &$line) {
                 validator($line, ['attributes' => 'nullable|array', 'serials' => 'nullable|array', 'serials.*' => 'string|max:255',
                     'batch' => 'nullable|array', 'batch.batch_no' => 'required_with:batch|string|max:255',
                     'batch.expired_date' => 'nullable|date_format:Y-m-d', 'dimensions' => 'nullable|array',
                     'dimensions.identity_no' => 'nullable|string|max:255', 'dimensions.length' => 'nullable|numeric|gt:0',
                     'dimensions.width' => 'nullable|numeric|gt:0', 'dimensions.thickness' => 'nullable|numeric|gt:0',
                     'dimensions.pieces' => 'nullable|integer|min:1', 'stock_identity_id' => 'nullable|integer|min:1'])->validate();
-                $product = $guard->product($line, $context, $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id');
+                $product = $products[$line['product_id']];
                 if ((isset($product->is_active) && !$product->is_active) || !in_array($product->type, ['standard', 'service', 'digital'], true)) {
                     throw ValidationException::withMessages(['items' => 'This product needs its reviewed posting path.']);
                 }
-                $products[$product->id] = $product;
                 $rate = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
                     ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0;
-                if (isset($line['tax_rate']) && (float) $line['tax_rate'] !== $rate) {
+                if (!$product->tax_category_id && isset($line['tax_rate']) && (float) $line['tax_rate'] !== $rate) {
                     throw ValidationException::withMessages(['items.tax_rate' => 'Tax rate differs from the configured product rate.']);
                 }
                 $line['tax_rate'] = $rate;
@@ -81,6 +83,7 @@ class CommercialApplicationService
             if (!empty($data['order_tax_rate'])) {
                 throw ValidationException::withMessages(['order_tax_rate' => 'Document tax determination requires the Phase 7 tax service.']);
             }
+            $data = app(\App\Services\Tax\TaxDeterminationService::class)->prepare($data, $kind, $products, $party, $context, $date);
             $data = app(CommercialPricing::class)->calculate($data, $kind === 'purchase');
             if ($kind === 'purchase' && !empty($data['purchase_order_id'])) {
                 $order = Purchase::visibleIn($context)->whereKey($data['purchase_order_id'])->lockForUpdate()->firstOrFail();
@@ -99,6 +102,12 @@ class CommercialApplicationService
             if ($kind === 'purchase') {
                 $data['items'] = app(LandedCostService::class)->allocate($data, $products);
             }
+            foreach ($data['items'] as &$line) {
+                $line['stock_details_json'] = array_intersect_key($line, array_flip([
+                    'serials', 'imei_number', 'batch', 'product_batch_id', 'variant_id', 'stock_identity_id', 'dimensions', 'attributes',
+                ]));
+            }
+            unset($line);
             $data['business_date'] = $date;
             $document = $kind === 'sale'
                 ? app(SaleService::class)->createSale($data, $actor, $context, deferPosting: true)
@@ -111,15 +120,8 @@ class CommercialApplicationService
                 throw ValidationException::withMessages(['due_date' => 'Due date must be on or after document date.']);
             }
             $document->forceFill(['branch_id' => $context->branchId, 'financial_year_id' => $context->financialYearId,
-                'attributes_json' => $attributes, 'replaces_id' => $replacesId])->save();
-            $lines = ($kind === 'sale' ? $document->productSales() : $document->productPurchases())->orderBy('id')->get();
-            foreach ($lines as $i => $line) {
-                $details = array_intersect_key($data['items'][$i], array_flip([
-                    'serials', 'imei_number', 'batch', 'product_batch_id', 'variant_id', 'stock_identity_id', 'dimensions', 'attributes',
-                ]));
-                $line->forceFill(['stock_details_json' => $details] + ($kind === 'purchase'
-                    ? ['valuation_amount' => $data['items'][$i]['valuation_amount']] : []))->save();
-            }
+                'attributes_json' => $attributes, 'replaces_id' => $replacesId] + (isset($data['_tax_snapshot'])
+                    ? ['tax_snapshot_json' => $data['_tax_snapshot']] : []))->save();
             if ($kind === 'purchase' && (!empty($data['update_item_cost']) || !empty($data['update_item_hsn']))) {
                 app(CommercialPermission::class)->assert('products-edit', $context, $actor);
                 foreach ($data['items'] as $line) {

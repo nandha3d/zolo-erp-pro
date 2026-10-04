@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Exchange extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+    use \App\Models\Concerns\ProtectsAdjustmentHistory;
     protected $fillable = [
         'reference_no',
         'original_sale_id',

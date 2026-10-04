@@ -54,23 +54,53 @@ class CompanyWriteGuard
 
     public function product(array &$line, CompanyContext $context, string $unitField): Product
     {
-        $product = $this->owned(Product::class, $line['product_id'] ?? null, $context, 'items.product_id');
-        $line[$unitField] ??= $product->unit_id ?: Unit::where('company_id', $context->companyId)->orderBy('id')->value('id');
-        $this->owned(Unit::class, $line[$unitField], $context, 'items.'.$unitField);
-        foreach (['product_batch_id', 'variant_id'] as $field) {
-            if (empty($line[$field])) {
-                $line[$field] = null;
-                continue;
-            }
-            $query = $field === 'product_batch_id'
-                ? DB::table('product_batches')->where('id', $line[$field])->where('product_id', $product->id)
-                : DB::table('product_variants')->where('variant_id', $line[$field])->where('product_id', $product->id);
-            if (!$query->lockForUpdate()->exists()) {
-                throw ValidationException::withMessages(['items.'.$field => 'The reference must belong to the selected product.']);
+        $lines = [$line];
+        $products = $this->products($lines, $context, $unitField);
+        $line = $lines[0];
+        return $products->get($line['product_id']);
+    }
+
+    /** Validate a document's product/unit references with ordered locks and no cross-request cache. */
+    public function products(array &$lines, CompanyContext $context, string $unitField): \Illuminate\Database\Eloquent\Collection
+    {
+        foreach ($lines as $line) {
+            if (filter_var($line['product_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw ValidationException::withMessages(['items.product_id' => 'Select a company-owned record.']);
             }
         }
+        $products = Product::where('company_id', $context->companyId)->whereIn('id', array_column($lines, 'product_id'))
+            ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+        $fallbackUnit = null;
+        foreach ($lines as &$line) {
+            $product = $products->get($line['product_id']);
+            if (!$product) {
+                throw ValidationException::withMessages(['items.product_id' => 'Select a company-owned record.']);
+            }
+            $line[$unitField] ??= $product->unit_id ?: ($fallbackUnit ??= Unit::where('company_id', $context->companyId)->orderBy('id')->value('id'));
+            if (filter_var($line[$unitField], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw ValidationException::withMessages(['items.'.$unitField => 'Select a company-owned record.']);
+            }
+            foreach (['product_batch_id', 'variant_id'] as $field) {
+                if (empty($line[$field])) {
+                    $line[$field] = null;
+                    continue;
+                }
+                $query = $field === 'product_batch_id'
+                    ? DB::table('product_batches')->where('id', $line[$field])->where('product_id', $product->id)
+                    : DB::table('product_variants')->where('variant_id', $line[$field])->where('product_id', $product->id);
+                if (!$query->lockForUpdate()->exists()) {
+                    throw ValidationException::withMessages(['items.'.$field => 'The reference must belong to the selected product.']);
+                }
+            }
+        }
+        unset($line);
+        $unitIds = array_unique(array_column($lines, $unitField));
+        $units = Unit::where('company_id', $context->companyId)->whereIn('id', $unitIds)->orderBy('id')->lockForUpdate()->get();
+        if ($units->count() !== count($unitIds)) {
+            throw ValidationException::withMessages(['items.'.$unitField => 'Select a company-owned record.']);
+        }
         // Serials, batches and projection ownership are validated by InventoryMovementService.
-        return $product;
+        return $products;
     }
 
     public function businessDate(array $data): ?string

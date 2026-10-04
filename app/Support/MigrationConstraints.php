@@ -45,18 +45,18 @@ final class MigrationConstraints
         }
     }
 
-    public static function foreign(string $table, string $name, array $columns, string $parent): void
+    public static function foreign(string $table, string $name, array $columns, string $parent, array $references = ['id']): void
     {
         $existing = collect(Schema::getForeignKeys($table))->first(fn ($key) => ($key['name'] ?? null) === $name
             || (($key['name'] ?? null) === null && $key['columns'] === $columns && $key['foreign_table'] === $parent));
         if ($existing) {
             if ($existing['columns'] !== $columns || $existing['foreign_table'] !== $parent
-                || $existing['foreign_columns'] !== ['id'] || $existing['on_delete'] !== 'restrict') {
+                || $existing['foreign_columns'] !== $references || $existing['on_delete'] !== 'restrict') {
                 throw new RuntimeException('Unexpected existing foreign key '.$table.'.'.$name.'.');
             }
             return;
         }
         Schema::table($table, fn (Blueprint $blueprint) => $blueprint->foreign($columns, $name)
-            ->references('id')->on($parent)->restrictOnDelete());
+            ->references($references)->on($parent)->restrictOnDelete());
     }
 }

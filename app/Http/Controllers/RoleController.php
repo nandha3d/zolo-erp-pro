@@ -81,6 +81,7 @@ class RoleController extends Controller
 
     public function setPermission(Request $request)
     {
+        abort_unless(Auth::user()->role_id <= 2, 403);
         if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         

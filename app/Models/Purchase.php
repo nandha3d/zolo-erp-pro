@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
-    protected $casts = ['attributes_json' => 'array', 'posted_at' => 'datetime', 'reversed_at' => 'datetime'];
+    protected $casts = ['document_snapshot_json' => 'array', 'tax_snapshot_json' => 'array', 'attributes_json' => 'array', 'posted_at' => 'datetime', 'reversed_at' => 'datetime'];
     use ScopesCompanyQueries;
     use \App\Models\Concerns\ProtectsPostedCommercialHistory;
 

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.2/phpunit.xsd" bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
+  <testsuites><testsuite name="Shared commercial">
+    <file>tests/Unit/CommercialPricingTest.php</file>
+    <file>tests/Feature/SharedCommercialTest.php</file>
+    <file>tests/Feature/CommercialBoundariesTest.php</file>
+    <file>tests/Feature/CommercialBrowserFixtureTest.php</file>
+    <file>tests/Feature/CommercialPerformanceTest.php</file>
+  </testsuite></testsuites>
+  <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/></php>
+</phpunit>

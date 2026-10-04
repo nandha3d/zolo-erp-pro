@@ -61,6 +61,16 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
         $this->app->bind(\App\ViewModels\ISmsModel::class, \App\ViewModels\SmsModel::class);
+        $this->app->booted(function () {
+            foreach ($this->app['router']->getRoutes() as $route) {
+                [$controller, $method] = array_pad(explode('@', $route->getActionName()), 2, null);
+                if (in_array($controller, [\App\Http\Controllers\ReturnController::class, \App\Http\Controllers\ReturnPurchaseController::class,
+                    \App\Http\Controllers\DamageStockController::class, \App\Http\Controllers\ExchangeController::class], true)
+                    || ($controller === \App\Http\Controllers\SaleController::class && $method === 'genInvoice')) {
+                    $route->middleware(\App\Http\Middleware\ComplianceRouteAdapter::class);
+                }
+            }
+        });
         $this->bootLegacyStockShadow();
 
         if (app()->runningInConsole()) {

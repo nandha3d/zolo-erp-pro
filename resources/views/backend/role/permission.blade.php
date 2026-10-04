@@ -38,6 +38,9 @@
 						        </tr>
 						        </thead>
 						        <tbody>
+                                @foreach(['gst-index' => 'GST review', 'returns-approve' => 'Approve returns and notes', 'documents-dispatch' => 'Dispatch posted documents', 'damage-stock-add' => 'Post stock loss', 'exchanges-add' => 'Post exchanges'] as $permission => $label)
+                                <tr><th scope="row">{{ $label }}</th><td colspan="5"><input type="checkbox" id="{{ $permission }}" name="{{ $permission }}" value="1" @checked(in_array($permission, $all_permission))><label for="{{ $permission }}">Allow</label></td></tr>
+                                @endforeach
 						        @php
 									$permissions = ['index', 'add', 'edit', 'delete', 'import'];
 									@endphp

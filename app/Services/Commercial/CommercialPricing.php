@@ -15,17 +15,28 @@ class CommercialPricing
         if (!is_array($data['items']) || !array_is_list($data['items'])) {
             $this->invalid('items', 'Lines must be a list.');
         }
+        $products = [];
         foreach ($data['items'] as &$line) {
             if (!is_array($line) || count($data['items']) > 500) {
                 $this->invalid('items', 'Use at most 500 object lines.');
             }
             $product = app(\App\Services\ERP\CompanyWriteGuard::class)->product($line, $context, $purchase ? 'purchase_unit_id' : 'sale_unit_id');
+            $products[$product->id] = $product;
             $line['tax_rate'] = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
                 ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0;
-            unset($line['tax'], $line['total']);
+            unset($line['tax'], $line['total'], $line['_tax_snapshot'], $line['recoverable_tax']);
         }
         unset($line, $data['grand_total'], $data['order_tax']);
         $data['order_tax_rate'] = 0;
+        $partyId = $data[$purchase ? 'supplier_id' : 'customer_id'] ?? null;
+        if ($partyId) {
+            $party = app(\App\Services\ERP\CompanyWriteGuard::class)->owned($purchase ? \App\Models\Supplier::class : \App\Models\Customer::class, $partyId, $context, 'party');
+            $data = app(\App\Services\Tax\TaxDeterminationService::class)->prepare($data, $purchase ? 'purchase' : 'sale', $products, $party, $context,
+                app(\App\Services\ERP\CompanyWriteGuard::class)->businessDate($data));
+        }
+        elseif (config('compliance.enabled') && collect($products)->contains(fn ($p) => $p->tax_category_id)) {
+            $this->invalid('party', 'Select a party before GST preview.');
+        }
         $data = $this->calculate($data, $purchase);
         return ['grand_total' => $data['grand_total'], 'total_tax' => array_sum(array_column($data['items'], 'tax')),
             'total_price' => array_sum(array_column($data['items'], 'total')), 'items' => $data['items']];
@@ -55,6 +66,12 @@ class CommercialPricing
                 $this->invalid('items.'.$i.'.tax_rate', 'Tax rate cannot exceed 100.');
             }
             $lineTax = $this->units($net / 10000 * $rate / 100);
+            if (isset($line['_tax_snapshot'])) {
+                $snapshot = $line['_tax_snapshot'];
+                $determined = $this->units(array_sum(array_intersect_key($snapshot, array_flip(['cgst', 'sgst', 'igst', 'cess']))));
+                $lineTax = $snapshot['reverse_charge'] ? 0 : $determined;
+                $line['recoverable_tax'] = $purchase && $snapshot['input_credit_allowed'] && !$snapshot['reverse_charge'] ? $lineTax / 10000 : 0;
+            }
             $lineTotal = $net + $lineTax;
             $this->check($line, 'tax', $lineTax);
             $this->check($line, 'total', $lineTotal);

@@ -31,6 +31,8 @@ abstract class CommercialTestCase extends CompanyErpServiceTestCase
             $t->boolean('is_active')->default(true);
             $t->unsignedInteger('unit_id')->nullable();
             $t->unsignedInteger('tax_id')->nullable();
+            foreach (['category_id', 'sale_unit_id', 'purchase_unit_id'] as $column) $t->unsignedInteger($column)->nullable();
+            $t->string('barcode_symbology')->nullable();
             foreach (['is_batch', 'is_imei', 'is_variant'] as $flag) {
                 $t->boolean($flag)->default(false);
             }

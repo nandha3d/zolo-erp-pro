@@ -64,7 +64,8 @@ class PurchaseReceiptService
                 $receivedValue = $after - $before;
                 $value += $receivedValue;
                 $stock[] = StockLine::fromArray(['product_id' => $line->product_id, 'qty' => $qty,
-                    'unit_cost' => $receivedValue / 10000 / $qty, 'uom_id' => $line->purchase_unit_id] + $item);
+                    'unit_cost' => $receivedValue / 10000 / $qty, 'uom_id' => $line->purchase_unit_id,
+                    'attributes' => ['commercial_line_id' => $line->id] + ($item['attributes'] ?? [])] + $item);
                 $line->forceFill(['recieved' => round((float) $line->recieved + $qty, 4)])->save();
             }
             $movement = app(InventoryMovementService::class)->receive(new StockMovementCommand(

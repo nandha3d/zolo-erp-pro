@@ -11,10 +11,13 @@ class PartyQueryService
     public function search(string $kind, string $term, CompanyContext $context): array
     {
         $model = $kind === 'sale' ? Customer::class : Supplier::class;
-        $term = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], trim($term));
-        return $model::forCompany($context)->where('is_active', true)->where(function ($q) use ($term) {
-            $q->where('name', 'like', $term.'%')->orWhere('search_alias', 'like', $term.'%')
-                ->orWhere('city', 'like', $term.'%')->orWhere('phone_number', 'like', $term.'%');
-        })->orderBy('name')->limit(20)->get(['id', 'name', 'city', 'phone_number'])->toArray();
+        $term = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], trim($term));
+        $base = $model::forCompany($context)->where('is_active', true)->select(['id', 'name', 'city', 'phone_number']);
+        if ($term === '') return $base->orderBy('name')->limit(20)->get()->toArray();
+        $query = (clone $base)->whereRaw("name LIKE ? ESCAPE '!'", [$term.'%']);
+        foreach (['search_alias', 'city', 'phone_number'] as $column) {
+            $query->union((clone $base)->whereRaw($column." LIKE ? ESCAPE '!'", [$term.'%']));
+        }
+        return $query->orderBy('name')->limit(20)->get()->toArray();
     }
 }

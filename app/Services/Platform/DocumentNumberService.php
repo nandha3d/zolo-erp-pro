@@ -23,6 +23,12 @@ class DocumentNumberService
         'sale_payment' => [Payment::class, 'payment_reference', 'REC'],
         'purchase_payment' => [Payment::class, 'payment_reference', 'PAY'],
         'journal' => [\App\Models\Accounting\JournalEntry::class, 'entry_number', 'JE'],
+        'sale_credit_note' => [\App\Models\Returns::class, 'reference_no', 'SCN'],
+        'sale_debit_note' => [\App\Models\Returns::class, 'reference_no', 'SDN'],
+        'purchase_debit_note' => [\App\Models\ReturnPurchase::class, 'reference_no', 'PDN'],
+        'purchase_credit_note' => [\App\Models\ReturnPurchase::class, 'reference_no', 'PCN'],
+        'damage' => [\App\Models\DamageStock::class, 'reference_no', 'LOSS'],
+        'exchange' => [\App\Models\Exchange::class, 'reference_no', 'EXC'],
     ];
 
     /** Call inside the document transaction. A failed posting rolls back reservation and increment. */
@@ -36,6 +42,12 @@ class DocumentNumberService
         $context = $resolver->forActor($context, $actor);
         // Consistent company/FY/series lock order also serializes first-series creation.
         $company = \App\Models\Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
+        $gstNumber = config('compliance.enabled') && $company->country_code === 'IN'
+            && in_array($type, ['sale', 'sale_credit_note', 'sale_debit_note'], true)
+            && \Illuminate\Support\Facades\Schema::hasTable('tax_registrations')
+            && DB::table('tax_registrations')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                ->where('status', 'active')->where('effective_from', '<=', $businessDate)
+                ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $businessDate))->exists();
         $resolver->assertPostingDate($context, $businessDate);
         $scope = [
             'company_id' => $context->companyId, 'branch_id' => $context->branchId,
@@ -52,6 +64,7 @@ class DocumentNumberService
             }
             $branch = \App\Models\CompanyBranch::whereKey($context->branchId)->firstOrFail();
             $prefix = 'ERP-'.self::TYPES[$type][2].'-'.$company->id.'-'.$branch->id.'-'.$context->financialYearId.'-';
+            if ($gstNumber) $prefix = ($type === 'sale' ? 'S' : self::TYPES[$type][2]).$branch->id.'-'.$context->financialYearId.'-';
             $id = DB::table('document_series')->insertGetId($scope + [
                 'code' => 'MAIN', 'prefix' => $prefix, 'suffix' => '', 'next_number' => 1,
                 'padding' => 6, 'reset_policy' => 'financial_year', 'is_default' => true,
@@ -64,6 +77,9 @@ class DocumentNumberService
             throw ValidationException::withMessages(['series' => 'Series configuration or number range is invalid.']);
         }
         $number = $series->prefix.str_pad((string) $series->next_number, $series->padding, '0', STR_PAD_LEFT).$series->suffix;
+        if ($gstNumber && !preg_match('/^[A-Za-z0-9\/-]{1,16}$/D', $number)) {
+            throw ValidationException::withMessages(['series' => 'GST invoices and notes require at most 16 letters, digits, slashes or hyphens. Review the existing series; retained numbers are never rewritten.']);
+        }
         if (strlen($number) > ($type === 'journal' ? 50 : 100)) {
             throw ValidationException::withMessages(['series' => 'Formatted document number exceeds the source or linked journal reference width.']);
         }
