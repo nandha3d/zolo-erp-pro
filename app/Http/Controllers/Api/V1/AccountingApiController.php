@@ -22,9 +22,10 @@ class AccountingApiController extends BaseApiController
     /**
      * Get Chart of Accounts hierarchy with current balances.
      */
-    public function chartOfAccounts(): JsonResponse
+    public function chartOfAccounts(Request $request): JsonResponse
     {
-        $accounts = ChartOfAccount::with('children')->whereNull('parent_id')->orderBy('code')->get();
+        $context = $this->companyContext($request);
+        $accounts = ChartOfAccount::forCompany($context)->with(['children' => fn ($q) => $q->forCompany($context)])->whereNull('parent_id')->orderBy('code')->get();
         return $this->sendResponse($accounts, 'Chart of Accounts retrieved successfully');
     }
 
@@ -36,7 +37,7 @@ class AccountingApiController extends BaseApiController
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $trialBalance = $this->accountingService->getTrialBalance($startDate, $endDate);
+        $trialBalance = $this->accountingService->getTrialBalance($startDate, $endDate, $this->companyContext($request));
         return $this->sendResponse($trialBalance, 'Trial Balance statement generated');
     }
 
@@ -48,7 +49,7 @@ class AccountingApiController extends BaseApiController
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $pnl = $this->accountingService->getProfitAndLoss($startDate, $endDate);
+        $pnl = $this->accountingService->getProfitAndLoss($startDate, $endDate, $this->companyContext($request));
         return $this->sendResponse($pnl, 'Profit and Loss statement generated');
     }
 
@@ -59,7 +60,7 @@ class AccountingApiController extends BaseApiController
     {
         $asOfDate = $request->input('as_of_date');
 
-        $balanceSheet = $this->accountingService->getBalanceSheet($asOfDate);
+        $balanceSheet = $this->accountingService->getBalanceSheet($asOfDate, $this->companyContext($request));
         return $this->sendResponse($balanceSheet, 'Balance Sheet statement generated');
     }
 
@@ -72,9 +73,9 @@ class AccountingApiController extends BaseApiController
         $endDate = $request->input('end_date');
 
         try {
-            $ledger = $this->accountingService->getGeneralLedger($id, $startDate, $endDate);
+            $ledger = $this->accountingService->getGeneralLedger($id, $startDate, $endDate, $this->companyContext($request));
             return $this->sendResponse($ledger, 'General Ledger retrieved');
-        } catch (Exception $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->sendError('Account not found', [], 404);
         }
     }
@@ -104,9 +105,11 @@ class AccountingApiController extends BaseApiController
                 'description' => $request->description,
                 'reference_type' => 'manual',
                 'created_by' => $request->user()?->id,
-            ], $request->items);
+            ], $request->items, $this->companyContext($request));
 
             return $this->sendResponse($entry->load('items.account'), 'Journal Entry posted successfully', 201);
+        } catch (\Illuminate\Validation\ValidationException | \Illuminate\Auth\Access\AuthorizationException | \Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw $e;
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }

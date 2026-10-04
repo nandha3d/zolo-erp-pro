@@ -3,6 +3,11 @@
 namespace App\Services\Accounting;
 
 use App\Models\Accounting\ChartOfAccount;
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\Customer;
+use App\Models\Supplier;
+use App\Services\ERP\CompanyWriteGuard;
+use App\Services\Platform\CompanyContext;
 use App\Models\Accounting\JournalEntry;
 use App\Models\Accounting\JournalItem;
 use App\Models\Sale;
@@ -26,8 +31,11 @@ class AccountingService
      * @return JournalEntry
      * @throws InvalidArgumentException
      */
-    public function postJournalEntry(array $header, array $items): JournalEntry
+    public function postJournalEntry(array $header, array $items, ?CompanyContext $context = null): JournalEntry
     {
+        $guard = app(CompanyWriteGuard::class);
+        $actor = auth()->id() ?: ($header['created_by'] ?? null);
+        $context = $guard->context($context, $actor);
         $totalDebit = 0.0;
         $totalCredit = 0.0;
 
@@ -35,6 +43,10 @@ class AccountingService
         foreach ($items as $item) {
             $debit = round((float) ($item['debit'] ?? 0), 4);
             $credit = round((float) ($item['credit'] ?? 0), 4);
+
+            if (!is_finite($debit) || !is_finite($credit) || $debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) {
+                throw new InvalidArgumentException('Journal amounts must be finite, nonnegative and on one side per line.');
+            }
 
             // Ignore line if both debit and credit are 0
             if ($debit == 0 && $credit == 0) {
@@ -65,14 +77,33 @@ class AccountingService
             throw new InvalidArgumentException("A valid journal entry requires at least two lines (one debit and one credit).");
         }
 
-        return DB::transaction(function () use ($header, $sanitizedItems, $totalDebit, $totalCredit) {
-            // Generate sequential entry number
-            $date = $header['entry_date'] ?? Carbon::now()->toDateString();
-            $datePrefix = Carbon::parse($date)->format('Ymd');
-            $countToday = JournalEntry::whereDate('entry_date', $date)->count() + 1;
-            $entryNumber = sprintf("JE-%s-%04d", $datePrefix, $countToday);
+        return DB::transaction(function () use ($header, $sanitizedItems, $totalDebit, $totalCredit, $context, $guard, $actor) {
+            $date = $guard->begin($context, $header['entry_date'] ?? null);
+            $this->validateReference($header, $context, $guard);
+            $accounts = [];
+            foreach ($sanitizedItems as $line) {
+                $account = $guard->owned(ChartOfAccount::class, $line['chart_of_account_id'], $context, 'items.chart_of_account_id');
+                if (!$account->is_active) {
+                    throw new InvalidArgumentException('Journal accounts must be active.');
+                }
+                $accounts[$account->id] = $account;
+                if (!empty($line['partner_id'])) {
+                    $model = match ($line['partner_type']) {
+                        'customer' => Customer::class,
+                        'supplier' => Supplier::class,
+                        default => throw new InvalidArgumentException('Partner type requires a company-owned posting path.'),
+                    };
+                    $guard->owned($model, $line['partner_id'], $context, 'items.partner_id');
+                } elseif (!empty($line['partner_type'])) {
+                    throw new InvalidArgumentException('Journal partner type and ID must be supplied together.');
+                }
+            }
+            $numbers = app(\App\Services\Platform\DocumentNumberService::class);
+            $reservation = $numbers->reserve('journal', $context, $date, $actor);
+            $entryNumber = $reservation->formatted_number;
 
-            $entry = JournalEntry::create([
+            $entry = (new JournalEntry)->forceFill([
+                'company_id' => $context->companyId,
                 'entry_number' => $entryNumber,
                 'entry_date' => $date,
                 'reference_type' => $header['reference_type'] ?? 'manual',
@@ -82,15 +113,17 @@ class AccountingService
                 'status' => 'posted',
                 'total_debit' => $totalDebit,
                 'total_credit' => $totalCredit,
-                'created_by' => $header['created_by'] ?? auth()->id() ?? 1,
+                'created_by' => $actor,
             ]);
+            $entry->save();
+            $numbers->assign($reservation, $entry);
 
             foreach ($sanitizedItems as $line) {
                 $line['journal_entry_id'] = $entry->id;
-                JournalItem::create($line);
+                (new JournalItem)->forceFill($line + ['company_id' => $context->companyId])->save();
 
                 // Update account balance
-                $account = ChartOfAccount::find($line['chart_of_account_id']);
+                $account = $accounts[$line['chart_of_account_id']];
                 if ($account) {
                     $change = $account->isDebitNormal()
                         ? ($line['debit'] - $line['credit'])
@@ -106,11 +139,45 @@ class AccountingService
     /**
      * Find standard account by system code or sub_type
      */
-    public function getAccount(string $codeOrSubType): ?ChartOfAccount
+    public function getAccount(string $codeOrSubType, ?CompanyContext $context = null, ?int $actor = null): ?ChartOfAccount
     {
-        return ChartOfAccount::where('code', $codeOrSubType)
-            ->orWhere('sub_type', $codeOrSubType)
-            ->first();
+        $context = app(CompanyWriteGuard::class)->context($context, $actor ?? auth()->id());
+        $accounts = ChartOfAccount::forCompany($context)->where('is_active', true);
+        $exact = (clone $accounts)->where('code', $codeOrSubType)->first();
+        if ($exact) {
+            return $exact;
+        }
+        $subType = [
+            '1010' => 'cash', '1020' => 'bank', '1100' => 'accounts_receivable',
+            '1200' => 'inventory', '2010' => 'accounts_payable', '2020' => 'tax_payable',
+            '4010' => 'sales_revenue', '4020' => 'sales_discount', '4030' => 'shipping_income',
+            '5010' => 'cogs', '6090' => 'operating_expense',
+        ][$codeOrSubType] ?? $codeOrSubType;
+        $matches = $accounts->where('sub_type', $subType)->get();
+        if ($matches->count() > 1) {
+            throw new InvalidArgumentException('Accounting role is ambiguous; configure its company mapping.');
+        }
+        return $matches->first();
+    }
+
+    private function validateReference(array $header, CompanyContext $context, CompanyWriteGuard $guard): void
+    {
+        if (empty($header['reference_id'])) {
+            return;
+        }
+        $model = match ($header['reference_type'] ?? 'manual') {
+            'sale' => Sale::class, 'purchase' => Purchase::class, 'payment' => Payment::class,
+            'expense' => Expense::class,
+            default => throw new InvalidArgumentException('This source requires its company-owned accounting path.'),
+        };
+        if ($model === Expense::class) {
+            $source = $guard->owned($model, $header['reference_id'], $context, 'reference_id');
+            if ($source->warehouse_id) {
+                $guard->warehouse($source->warehouse_id, $context, (int) auth()->id());
+            }
+        } else {
+            $model::visibleIn($context)->whereKey($header['reference_id'])->lockForUpdate()->firstOrFail();
+        }
     }
 
     /**
@@ -128,20 +195,21 @@ class AccountingService
      * Dr. Cost of Goods Sold (COGS)
      * Cr. Inventory Asset
      */
-    public function postSaleJournal(Sale $sale, ?float $cogsCost = null): ?JournalEntry
+    public function postSaleJournal(Sale $sale, ?float $cogsCost = null, ?CompanyContext $context = null, ?int $actor = null): ?JournalEntry
     {
-        $cashAccount = $this->getAccount('1010'); // Cash on Hand
-        $bankAccount = $this->getAccount('1020'); // Bank
-        $arAccount   = $this->getAccount('1100'); // Accounts Receivable
-        $revAccount  = $this->getAccount('4010'); // Sales Revenue
-        $taxAccount  = $this->getAccount('2020'); // Tax Payable
-        $discAccount = $this->getAccount('4020'); // Sales Discounts
-        $shipAccount = $this->getAccount('4030'); // Shipping Income
-        $cogsAccount = $this->getAccount('5010'); // COGS
-        $invAccount  = $this->getAccount('1200'); // Inventory Asset
+        $context = app(CompanyWriteGuard::class)->context($context, $actor ?? auth()->id());
+        $cashAccount = $this->getAccount('1010', $context, $actor); // Cash on Hand
+        $bankAccount = $this->getAccount('1020', $context, $actor); // Bank
+        $arAccount   = $this->getAccount('1100', $context, $actor); // Accounts Receivable
+        $revAccount  = $this->getAccount('4010', $context, $actor); // Sales Revenue
+        $taxAccount  = $this->getAccount('2020', $context, $actor); // Tax Payable
+        $discAccount = $this->getAccount('4020', $context, $actor); // Sales Discounts
+        $shipAccount = $this->getAccount('4030', $context, $actor); // Shipping Income
+        $cogsAccount = $this->getAccount('5010', $context, $actor); // COGS
+        $invAccount  = $this->getAccount('1200', $context, $actor); // Inventory Asset
 
         if (!$revAccount || !$arAccount) {
-            return null;
+            throw new InvalidArgumentException('Sale revenue and receivable accounts must be configured before posting.');
         }
 
         $grandTotal = (float) $sale->grand_total;
@@ -158,9 +226,11 @@ class AccountingService
 
         // 1. Debit Payment received (Cash or Bank)
         if ($paidAmount > 0) {
-            $depositAccount = ($sale->paying_method == 'Deposit' || $sale->paying_method == 'Bank' || $sale->paying_method == 'Cheque')
-                ? ($bankAccount ?? $cashAccount)
-                : ($cashAccount ?? $bankAccount);
+            $method = $sale->payments()->where('company_id', $context->companyId)->first()?->paying_method ?? 'Cash';
+            $depositAccount = in_array($method, ['Bank', 'Deposit', 'Cheque', 'Credit Card'], true) ? $bankAccount : $cashAccount;
+            if (!$depositAccount) {
+                throw new InvalidArgumentException('Sale payment account must be configured before posting.');
+            }
 
             $items[] = [
                 'chart_of_account_id' => $depositAccount->id,
@@ -229,6 +299,9 @@ class AccountingService
         }
 
         // 7. COGS & Inventory Asset entry
+        if ($cogsCost !== null && $cogsCost > 0 && (!$cogsAccount || !$invAccount)) {
+            throw new InvalidArgumentException('Sale COGS and inventory accounts must be configured before posting.');
+        }
         if ($cogsCost !== null && $cogsCost > 0 && $cogsAccount && $invAccount) {
             $items[] = [
                 'chart_of_account_id' => $cogsAccount->id,
@@ -250,10 +323,10 @@ class AccountingService
             'reference_id' => $sale->id,
             'reference_no' => $sale->reference_no,
             'description' => "Double-entry posting for Invoice #{$sale->reference_no}",
-            'created_by' => $sale->user_id ?? auth()->id() ?? 1,
+            'created_by' => $actor ?? auth()->id() ?? $sale->user_id,
         ];
 
-        return $this->postJournalEntry($header, $items);
+        return $this->postJournalEntry($header, $items, $context);
     }
 
     /**
@@ -264,15 +337,16 @@ class AccountingService
      * Cr. Bank / Cash (Paid Amount)
      * Cr. Accounts Payable (Due Amount)
      */
-    public function postPurchaseJournal(Purchase $purchase): ?JournalEntry
+    public function postPurchaseJournal(Purchase $purchase, ?CompanyContext $context = null, ?int $actor = null): ?JournalEntry
     {
+        $context = app(CompanyWriteGuard::class)->context($context, $actor ?? auth()->id());
         if ((int) $purchase->status === 4) {
             return null; // An ordered purchase is not a supplier bill.
         }
-        $cashAccount = $this->getAccount('1010');
-        $bankAccount = $this->getAccount('1020');
-        $invAccount  = $this->getAccount('1200'); // Merchandise Inventory
-        $apAccount   = $this->getAccount('2010'); // Accounts Payable
+        $cashAccount = $this->getAccount('1010', $context, $actor);
+        $bankAccount = $this->getAccount('1020', $context, $actor);
+        $invAccount  = $this->getAccount('1200', $context, $actor); // Merchandise Inventory
+        $apAccount   = $this->getAccount('2010', $context, $actor); // Accounts Payable
 
         if (!$invAccount || !$apAccount) {
             throw new InvalidArgumentException('Purchase inventory and payable accounts must be configured before posting.');
@@ -285,7 +359,7 @@ class AccountingService
             return null; // Free goods have a quantity effect but no monetary journal.
         }
 
-        $lines = $purchase->productPurchases;
+        $lines = $purchase->productPurchases()->forCompany($context)->get();
         $orderedValue = 0.0;
         $receivedValue = 0.0;
         $orderedQty = 0.0;
@@ -308,7 +382,7 @@ class AccountingService
         $receivedRatio = $orderedValue > 0 ? $receivedValue / $orderedValue : $receivedQty / $orderedQty;
         $inventoryValue = round($grandTotal * $receivedRatio, 4);
         $transitValue = round($grandTotal - $inventoryValue, 4);
-        $transitAccount = $transitValue > 0 ? $this->getAccount('goods_in_transit') : null;
+        $transitAccount = $transitValue > 0 ? $this->getAccount('goods_in_transit', $context, $actor) : null;
         if ($transitValue > 0 && (!$transitAccount || !$transitAccount->is_active || $transitAccount->type !== 'asset')) {
             throw new InvalidArgumentException('Configure an active asset account with sub_type goods_in_transit before posting an unreceived bill.');
         }
@@ -321,7 +395,7 @@ class AccountingService
             'debit' => $inventoryValue,
             'credit' => 0,
             'memo' => "Inventory received from Purchase PO {$purchase->reference_no}",
-            'partner_type' => 'supplier',
+            'partner_type' => $purchase->supplier_id ? 'supplier' : null,
             'partner_id' => $purchase->supplier_id,
         ];
         if ($transitValue > 0) {
@@ -329,13 +403,13 @@ class AccountingService
                 'chart_of_account_id' => $transitAccount->id,
                 'debit' => $transitValue, 'credit' => 0,
                 'memo' => "Supplier-billed goods awaiting receipt {$purchase->reference_no}",
-                'partner_type' => 'supplier', 'partner_id' => $purchase->supplier_id,
+                'partner_type' => $purchase->supplier_id ? 'supplier' : null, 'partner_id' => $purchase->supplier_id,
             ];
         }
 
         // 2. Credit Paid amount (Cash/Bank)
         if ($paidAmount > 0) {
-            $method = $purchase->payments->first()?->paying_method ?? 'Cash';
+            $method = $purchase->payments()->where('company_id', $context->companyId)->first()?->paying_method ?? 'Cash';
             $paymentAccount = in_array($method, ['Bank', 'Cheque', 'Credit Card'], true)
                 ? $bankAccount : $cashAccount;
             if (!$paymentAccount) {
@@ -346,7 +420,7 @@ class AccountingService
                 'debit' => 0,
                 'credit' => $paidAmount,
                 'memo' => "Payment for Purchase PO {$purchase->reference_no}",
-                'partner_type' => 'supplier',
+                'partner_type' => $purchase->supplier_id ? 'supplier' : null,
                 'partner_id' => $purchase->supplier_id,
             ];
         }
@@ -358,7 +432,7 @@ class AccountingService
                 'debit' => 0,
                 'credit' => $dueAmount,
                 'memo' => "Payable to Supplier for Purchase PO {$purchase->reference_no}",
-                'partner_type' => 'supplier',
+                'partner_type' => $purchase->supplier_id ? 'supplier' : null,
                 'partner_id' => $purchase->supplier_id,
             ];
         }
@@ -369,21 +443,22 @@ class AccountingService
             'reference_id' => $purchase->id,
             'reference_no' => $purchase->reference_no,
             'description' => "Double-entry posting for Purchase PO #{$purchase->reference_no}",
-            'created_by' => $purchase->user_id ?? auth()->id() ?? 1,
+            'created_by' => $actor ?? auth()->id() ?? $purchase->user_id,
         ];
 
-        return $this->postJournalEntry($header, $items);
+        return $this->postJournalEntry($header, $items, $context);
     }
 
     /**
      * Automatically post double-entry journal for Payments (Customer payments or Supplier payments).
      */
-    public function postPaymentJournal(Payment $payment): ?JournalEntry
+    public function postPaymentJournal(Payment $payment, ?CompanyContext $context = null, ?int $actor = null): ?JournalEntry
     {
-        $cashAccount = $this->getAccount('1010');
-        $bankAccount = $this->getAccount('1020');
-        $arAccount   = $this->getAccount('1100'); // Accounts Receivable
-        $apAccount   = $this->getAccount('2010'); // Accounts Payable
+        $context = app(CompanyWriteGuard::class)->context($context, $actor ?? auth()->id());
+        $cashAccount = $this->getAccount('1010', $context, $actor);
+        $bankAccount = $this->getAccount('1020', $context, $actor);
+        $arAccount   = $this->getAccount('1100', $context, $actor); // Accounts Receivable
+        $apAccount   = $this->getAccount('2010', $context, $actor); // Accounts Payable
 
         $amount = (float) $payment->amount;
         if ($amount <= 0) {
@@ -391,9 +466,12 @@ class AccountingService
         }
 
         $payingAccount = ($payment->paying_method == 'Bank' || $payment->paying_method == 'Cheque' || $payment->paying_method == 'Credit Card')
-            ? ($bankAccount ?? $cashAccount)
-            : ($cashAccount ?? $bankAccount);
+            ? $bankAccount
+            : $cashAccount;
 
+        if (!$payingAccount || (!empty($payment->sale_id) && !$arAccount) || (!empty($payment->purchase_id) && !$apAccount)) {
+            throw new InvalidArgumentException('Payment settlement accounts must be configured before posting.');
+        }
         $items = [];
 
         if (!empty($payment->sale_id)) {
@@ -433,25 +511,26 @@ class AccountingService
         }
 
         $header = [
-            'entry_date' => $payment->created_at ? $payment->created_at->toDateString() : Carbon::now()->toDateString(),
+            'entry_date' => $payment->payment_at?->toDateString() ?? $payment->created_at?->toDateString(),
             'reference_type' => 'payment',
             'reference_id' => $payment->id,
             'reference_no' => $payment->payment_reference,
             'description' => "Double-entry payment settlement #{$payment->payment_reference}",
-            'created_by' => $payment->user_id ?? auth()->id() ?? 1,
+            'created_by' => $actor ?? auth()->id() ?? $payment->user_id,
         ];
 
-        return $this->postJournalEntry($header, $items);
+        return $this->postJournalEntry($header, $items, $context);
     }
 
     /**
      * Automatically post double-entry journal for Expenses.
      */
-    public function postExpenseJournal(Expense $expense): ?JournalEntry
+    public function postExpenseJournal(Expense $expense, ?CompanyContext $context = null): ?JournalEntry
     {
-        $cashAccount = $this->getAccount('1010');
-        $bankAccount = $this->getAccount('1020');
-        $generalExp  = $this->getAccount('6090') ?? $this->getAccount('operating_expense');
+        $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
+        $cashAccount = $this->getAccount('1010', $context);
+        $bankAccount = $this->getAccount('1020', $context);
+        $generalExp  = $this->getAccount('6090', $context) ?? $this->getAccount('operating_expense', $context);
 
         $amount = (float) $expense->amount;
         if ($amount <= 0 || !$generalExp) {
@@ -481,10 +560,36 @@ class AccountingService
             'reference_id' => $expense->id,
             'reference_no' => $expense->reference_no,
             'description' => "Operating expense #{$expense->reference_no}",
-            'created_by' => $expense->user_id ?? auth()->id() ?? 1,
+            'created_by' => auth()->id(),
         ];
 
-        return $this->postJournalEntry($header, $items);
+        return $this->postJournalEntry($header, $items, $context);
+    }
+
+    /** Historical opening-balance semantics remain unchanged; every activity row and header is owned. */
+    private function accountActivity(CompanyContext $context, ?string $startDate, ?string $endDate): Builder
+    {
+        return ChartOfAccount::forCompany($context)->with([
+            'journalItems' => fn ($q) => $q->forCompany($context)
+                ->whereHas('journalEntry', function ($q) use ($context, $startDate, $endDate) {
+                    $q->forCompany($context)->where('status', 'posted');
+                    if ($startDate) {
+                        $q->whereDate('entry_date', '>=', $startDate);
+                    }
+                    if ($endDate) {
+                        $q->whereDate('entry_date', '<=', $endDate);
+                    }
+                }),
+        ]);
+    }
+
+    private function reportDates(?string $startDate, ?string $endDate): void
+    {
+        \Illuminate\Support\Facades\Validator::make(
+            ['start_date' => $startDate, 'end_date' => $endDate],
+            ['start_date' => 'nullable|date_format:Y-m-d|after_or_equal:1000-01-01',
+                'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:1000-01-01'.($startDate ? '|after_or_equal:start_date' : '')],
+        )->validate();
     }
 
     // ==========================================
@@ -495,282 +600,273 @@ class AccountingService
      * Generate Trial Balance.
      * Checks mathematical equality: Sum(Debit) == Sum(Credit).
      */
-    public function getTrialBalance(?string $startDate = null, ?string $endDate = null): array
+    public function getTrialBalance(?string $startDate = null, ?string $endDate = null, ?CompanyContext $context = null): array
     {
-        $accounts = ChartOfAccount::with(['journalItems' => function ($q) use ($startDate, $endDate) {
-            $q->whereHas('journalEntry', function ($query) use ($startDate, $endDate) {
-                $query->where('status', 'posted');
-                if ($startDate) {
-                    $query->where('entry_date', '>=', $startDate);
+        $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
+        $this->reportDates($startDate, $endDate);
+        return DB::transaction(function () use ($startDate, $endDate, $context) {
+            $accounts = $this->accountActivity($context, $startDate, $endDate)->where('is_active', true)->orderBy('code')->get();
+
+            $rows = [];
+            $totalDebit = 0.0;
+            $totalCredit = 0.0;
+
+            foreach ($accounts as $account) {
+                $debit = (float) $account->journalItems->sum('debit');
+                $credit = (float) $account->journalItems->sum('credit');
+
+                // Skip zero activity accounts if both debit & credit are zero and opening is zero
+                if ($debit == 0 && $credit == 0 && (float)$account->opening_balance == 0) {
+                    continue;
                 }
-                if ($endDate) {
-                    $query->where('entry_date', '<=', $endDate);
+
+                $netDebit = 0.0;
+                $netCredit = 0.0;
+
+                if ($account->isDebitNormal()) {
+                    $netBalance = (float) $account->opening_balance + ($debit - $credit);
+                    if ($netBalance >= 0) {
+                        $netDebit = $netBalance;
+                    } else {
+                        $netCredit = abs($netBalance);
+                    }
+                } else {
+                    $netBalance = (float) $account->opening_balance + ($credit - $debit);
+                    if ($netBalance >= 0) {
+                        $netCredit = $netBalance;
+                    } else {
+                        $netDebit = abs($netBalance);
+                    }
                 }
-            });
-        }])->where('is_active', true)->orderBy('code')->get();
 
-        $rows = [];
-        $totalDebit = 0.0;
-        $totalCredit = 0.0;
+                $totalDebit += $netDebit;
+                $totalCredit += $netCredit;
 
-        foreach ($accounts as $account) {
-            $debit = (float) $account->journalItems->sum('debit');
-            $credit = (float) $account->journalItems->sum('credit');
-
-            // Skip zero activity accounts if both debit & credit are zero and opening is zero
-            if ($debit == 0 && $credit == 0 && (float)$account->opening_balance == 0) {
-                continue;
+                $rows[] = [
+                    'id' => $account->id,
+                    'code' => $account->code,
+                    'name' => $account->name,
+                    'type' => $account->type,
+                    'sub_type' => $account->sub_type,
+                    'debit' => $netDebit,
+                    'credit' => $netCredit,
+                ];
             }
 
-            $netDebit = 0.0;
-            $netCredit = 0.0;
-
-            if ($account->isDebitNormal()) {
-                $netBalance = (float) $account->opening_balance + ($debit - $credit);
-                if ($netBalance >= 0) {
-                    $netDebit = $netBalance;
-                } else {
-                    $netCredit = abs($netBalance);
-                }
-            } else {
-                $netBalance = (float) $account->opening_balance + ($credit - $debit);
-                if ($netBalance >= 0) {
-                    $netCredit = $netBalance;
-                } else {
-                    $netDebit = abs($netBalance);
-                }
-            }
-
-            $totalDebit += $netDebit;
-            $totalCredit += $netCredit;
-
-            $rows[] = [
-                'id' => $account->id,
-                'code' => $account->code,
-                'name' => $account->name,
-                'type' => $account->type,
-                'sub_type' => $account->sub_type,
-                'debit' => $netDebit,
-                'credit' => $netCredit,
+            return [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'accounts' => $rows,
+                'total_debit' => round($totalDebit, 2),
+                'total_credit' => round($totalCredit, 2),
+                'is_balanced' => abs($totalDebit - $totalCredit) < 0.01,
+                'difference' => round(abs($totalDebit - $totalCredit), 2),
             ];
-        }
-
-        return [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'accounts' => $rows,
-            'total_debit' => round($totalDebit, 2),
-            'total_credit' => round($totalCredit, 2),
-            'is_balanced' => abs($totalDebit - $totalCredit) < 0.01,
-            'difference' => round(abs($totalDebit - $totalCredit), 2),
-        ];
+        });
     }
 
     /**
      * Generate Profit and Loss (Income Statement).
      * Net Income = Revenue - COGS - Operating Expenses
      */
-    public function getProfitAndLoss(?string $startDate = null, ?string $endDate = null): array
+    public function getProfitAndLoss(?string $startDate = null, ?string $endDate = null, ?CompanyContext $context = null): array
     {
-        $accounts = ChartOfAccount::with(['journalItems' => function ($q) use ($startDate, $endDate) {
-            $q->whereHas('journalEntry', function ($query) use ($startDate, $endDate) {
-                $query->where('status', 'posted');
-                if ($startDate) {
-                    $query->where('entry_date', '>=', $startDate);
-                }
-                if ($endDate) {
-                    $query->where('entry_date', '<=', $endDate);
-                }
-            });
-        }])->whereIn('type', ['revenue', 'expense'])->where('is_active', true)->orderBy('code')->get();
+        $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
+        $this->reportDates($startDate, $endDate);
+        return DB::transaction(function () use ($startDate, $endDate, $context) {
+            $accounts = $this->accountActivity($context, $startDate, $endDate)->whereIn('type', ['revenue', 'expense'])->where('is_active', true)->orderBy('code')->get();
 
-        $revenues = [];
-        $cogs = [];
-        $expenses = [];
+            $revenues = [];
+            $cogs = [];
+            $expenses = [];
 
-        $totalRevenue = 0.0;
-        $totalCogs = 0.0;
-        $totalOperatingExpense = 0.0;
+            $totalRevenue = 0.0;
+            $totalCogs = 0.0;
+            $totalOperatingExpense = 0.0;
 
-        foreach ($accounts as $acc) {
-            $debits = (float) $acc->journalItems->sum('debit');
-            $credits = (float) $acc->journalItems->sum('credit');
+            foreach ($accounts as $acc) {
+                $debits = (float) $acc->journalItems->sum('debit');
+                $credits = (float) $acc->journalItems->sum('credit');
 
-            if ($acc->type === 'revenue') {
-                // Credit normal
-                $amount = ($credits - $debits);
-                if ($amount != 0) {
-                    $revenues[] = ['code' => $acc->code, 'name' => $acc->name, 'amount' => round($amount, 2)];
-                    $totalRevenue += $amount;
-                }
-            } elseif ($acc->sub_type === 'cogs') {
-                // Debit normal
-                $amount = ($debits - $credits);
-                if ($amount != 0) {
-                    $cogs[] = ['code' => $acc->code, 'name' => $acc->name, 'amount' => round($amount, 2)];
-                    $totalCogs += $amount;
-                }
-            } else {
-                // Operating expense
-                $amount = ($debits - $credits);
-                if ($amount != 0) {
-                    $expenses[] = ['code' => $acc->code, 'name' => $acc->name, 'amount' => round($amount, 2)];
-                    $totalOperatingExpense += $amount;
+                if ($acc->type === 'revenue') {
+                    // Credit normal
+                    $amount = ($credits - $debits);
+                    if ($amount != 0) {
+                        $revenues[] = ['code' => $acc->code, 'name' => $acc->name, 'amount' => round($amount, 2)];
+                        $totalRevenue += $amount;
+                    }
+                } elseif ($acc->sub_type === 'cogs') {
+                    // Debit normal
+                    $amount = ($debits - $credits);
+                    if ($amount != 0) {
+                        $cogs[] = ['code' => $acc->code, 'name' => $acc->name, 'amount' => round($amount, 2)];
+                        $totalCogs += $amount;
+                    }
+                } else {
+                    // Operating expense
+                    $amount = ($debits - $credits);
+                    if ($amount != 0) {
+                        $expenses[] = ['code' => $acc->code, 'name' => $acc->name, 'amount' => round($amount, 2)];
+                        $totalOperatingExpense += $amount;
+                    }
                 }
             }
-        }
 
-        $grossProfit = $totalRevenue - $totalCogs;
-        $netIncome = $grossProfit - $totalOperatingExpense;
+            $grossProfit = $totalRevenue - $totalCogs;
+            $netIncome = $grossProfit - $totalOperatingExpense;
 
-        return [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'revenues' => $revenues,
-            'total_revenue' => round($totalRevenue, 2),
-            'cogs' => $cogs,
-            'total_cogs' => round($totalCogs, 2),
-            'gross_profit' => round($grossProfit, 2),
-            'operating_expenses' => $expenses,
-            'total_operating_expenses' => round($totalOperatingExpense, 2),
-            'net_income' => round($netIncome, 2),
-        ];
+            return [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'revenues' => $revenues,
+                'total_revenue' => round($totalRevenue, 2),
+                'cogs' => $cogs,
+                'total_cogs' => round($totalCogs, 2),
+                'gross_profit' => round($grossProfit, 2),
+                'operating_expenses' => $expenses,
+                'total_operating_expenses' => round($totalOperatingExpense, 2),
+                'net_income' => round($netIncome, 2),
+            ];
+        });
     }
 
     /**
      * Generate Balance Sheet.
      * Accounting equation: Assets = Liabilities + Equity (including current period Net Income)
      */
-    public function getBalanceSheet(?string $asOfDate = null): array
+    public function getBalanceSheet(?string $asOfDate = null, ?CompanyContext $context = null): array
     {
-        $asOfDate = $asOfDate ?: Carbon::now()->toDateString();
+        $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
+        $this->reportDates(null, $asOfDate);
+        return DB::transaction(function () use ($asOfDate, $context) {
+            $asOfDate = $asOfDate ?: \Carbon\CarbonImmutable::now(\App\Models\Company::findOrFail($context->companyId)->timezone)->toDateString();
 
-        $accounts = ChartOfAccount::with(['journalItems' => function ($q) use ($asOfDate) {
-            $q->whereHas('journalEntry', function ($query) use ($asOfDate) {
-                $query->where('status', 'posted')
-                      ->where('entry_date', '<=', $asOfDate);
-            });
-        }])->whereIn('type', ['asset', 'liability', 'equity'])->where('is_active', true)->orderBy('code')->get();
+            $accounts = $this->accountActivity($context, null, $asOfDate)->whereIn('type', ['asset', 'liability', 'equity'])->where('is_active', true)->orderBy('code')->get();
 
-        $assets = [];
-        $liabilities = [];
-        $equities = [];
+            $assets = [];
+            $liabilities = [];
+            $equities = [];
 
-        $totalAssets = 0.0;
-        $totalLiabilities = 0.0;
-        $totalEquity = 0.0;
+            $totalAssets = 0.0;
+            $totalLiabilities = 0.0;
+            $totalEquity = 0.0;
 
-        foreach ($accounts as $acc) {
-            $debits = (float) $acc->journalItems->sum('debit');
-            $credits = (float) $acc->journalItems->sum('credit');
+            foreach ($accounts as $acc) {
+                $debits = (float) $acc->journalItems->sum('debit');
+                $credits = (float) $acc->journalItems->sum('credit');
 
-            if ($acc->type === 'asset') {
-                $balance = (float) $acc->opening_balance + ($debits - $credits);
-                if ($balance != 0) {
-                    $assets[] = ['code' => $acc->code, 'name' => $acc->name, 'sub_type' => $acc->sub_type, 'balance' => round($balance, 2)];
-                    $totalAssets += $balance;
-                }
-            } elseif ($acc->type === 'liability') {
-                $balance = (float) $acc->opening_balance + ($credits - $debits);
-                if ($balance != 0) {
-                    $liabilities[] = ['code' => $acc->code, 'name' => $acc->name, 'sub_type' => $acc->sub_type, 'balance' => round($balance, 2)];
-                    $totalLiabilities += $balance;
-                }
-            } elseif ($acc->type === 'equity') {
-                $balance = (float) $acc->opening_balance + ($credits - $debits);
-                if ($balance != 0) {
-                    $equities[] = ['code' => $acc->code, 'name' => $acc->name, 'sub_type' => $acc->sub_type, 'balance' => round($balance, 2)];
-                    $totalEquity += $balance;
+                if ($acc->type === 'asset') {
+                    $balance = (float) $acc->opening_balance + ($debits - $credits);
+                    if ($balance != 0) {
+                        $assets[] = ['code' => $acc->code, 'name' => $acc->name, 'sub_type' => $acc->sub_type, 'balance' => round($balance, 2)];
+                        $totalAssets += $balance;
+                    }
+                } elseif ($acc->type === 'liability') {
+                    $balance = (float) $acc->opening_balance + ($credits - $debits);
+                    if ($balance != 0) {
+                        $liabilities[] = ['code' => $acc->code, 'name' => $acc->name, 'sub_type' => $acc->sub_type, 'balance' => round($balance, 2)];
+                        $totalLiabilities += $balance;
+                    }
+                } elseif ($acc->type === 'equity') {
+                    $balance = (float) $acc->opening_balance + ($credits - $debits);
+                    if ($balance != 0) {
+                        $equities[] = ['code' => $acc->code, 'name' => $acc->name, 'sub_type' => $acc->sub_type, 'balance' => round($balance, 2)];
+                        $totalEquity += $balance;
+                    }
                 }
             }
-        }
 
-        // Add current period Net Income to Equity for dynamic balance
-        $pnl = $this->getProfitAndLoss(null, $asOfDate);
-        $currentEarnings = $pnl['net_income'];
+            // Add current period Net Income to Equity for dynamic balance
+            $pnl = $this->getProfitAndLoss(null, $asOfDate, $context);
+            $currentEarnings = $pnl['net_income'];
 
-        $equities[] = [
-            'code' => '9999',
-            'name' => 'Current Year Earnings (Net Income)',
-            'sub_type' => 'equity',
-            'balance' => $currentEarnings,
-        ];
-        $totalEquity += $currentEarnings;
+            $equities[] = [
+                'code' => '9999',
+                'name' => 'Current Year Earnings (Net Income)',
+                'sub_type' => 'equity',
+                'balance' => $currentEarnings,
+            ];
+            $totalEquity += $currentEarnings;
 
-        $totalLiabEquity = $totalLiabilities + $totalEquity;
-        $isBalanced = abs($totalAssets - $totalLiabEquity) < 0.01;
+            $totalLiabEquity = $totalLiabilities + $totalEquity;
+            $isBalanced = abs($totalAssets - $totalLiabEquity) < 0.01;
 
-        return [
-            'as_of_date' => $asOfDate,
-            'assets' => $assets,
-            'total_assets' => round($totalAssets, 2),
-            'liabilities' => $liabilities,
-            'total_liabilities' => round($totalLiabilities, 2),
-            'equity' => $equities,
-            'total_equity' => round($totalEquity, 2),
-            'total_liabilities_and_equity' => round($totalLiabEquity, 2),
-            'is_balanced' => $isBalanced,
-            'difference' => round(abs($totalAssets - $totalLiabEquity), 2),
-        ];
+            return [
+                'as_of_date' => $asOfDate,
+                'assets' => $assets,
+                'total_assets' => round($totalAssets, 2),
+                'liabilities' => $liabilities,
+                'total_liabilities' => round($totalLiabilities, 2),
+                'equity' => $equities,
+                'total_equity' => round($totalEquity, 2),
+                'total_liabilities_and_equity' => round($totalLiabEquity, 2),
+                'is_balanced' => $isBalanced,
+                'difference' => round(abs($totalAssets - $totalLiabEquity), 2),
+            ];
+        });
     }
 
     /**
      * General Ledger Statement for a single Account.
      */
-    public function getGeneralLedger(int $accountId, ?string $startDate = null, ?string $endDate = null): array
+    public function getGeneralLedger(int $accountId, ?string $startDate = null, ?string $endDate = null, ?CompanyContext $context = null): array
     {
-        $account = ChartOfAccount::findOrFail($accountId);
+        $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
+        $this->reportDates($startDate, $endDate);
+        return DB::transaction(function () use ($accountId, $startDate, $endDate, $context) {
+            $account = ChartOfAccount::forCompany($context)->findOrFail($accountId);
 
-        $query = JournalItem::with('journalEntry')
-            ->where('chart_of_account_id', $accountId)
-            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
-                $q->where('status', 'posted');
-                if ($startDate) {
-                    $q->where('entry_date', '>=', $startDate);
+            $query = JournalItem::forCompany($context)->with(['journalEntry' => fn ($q) => $q->forCompany($context)])
+                ->where('chart_of_account_id', $accountId)
+                ->whereHas('journalEntry', function ($q) use ($context, $startDate, $endDate) {
+                    $q->forCompany($context)->where('status', 'posted');
+                    if ($startDate) {
+                        $q->whereDate('entry_date', '>=', $startDate);
+                    }
+                    if ($endDate) {
+                        $q->whereDate('entry_date', '<=', $endDate);
+                    }
+                });
+
+            $items = $query->orderBy(
+                JournalEntry::forCompany($context)->select('entry_date')->whereColumn('journal_entries.id', 'journal_items.journal_entry_id')
+            )->get();
+
+            $runningBalance = (float) $account->opening_balance;
+            $rows = [];
+
+            foreach ($items as $item) {
+                $debit = (float) $item->debit;
+                $credit = (float) $item->credit;
+
+                if ($account->isDebitNormal()) {
+                    $runningBalance += ($debit - $credit);
+                } else {
+                    $runningBalance += ($credit - $debit);
                 }
-                if ($endDate) {
-                    $q->where('entry_date', '<=', $endDate);
-                }
-            });
 
-        $items = $query->orderBy(
-            JournalEntry::select('entry_date')->whereColumn('journal_entries.id', 'journal_items.journal_entry_id')
-        )->get();
-
-        $runningBalance = (float) $account->opening_balance;
-        $rows = [];
-
-        foreach ($items as $item) {
-            $debit = (float) $item->debit;
-            $credit = (float) $item->credit;
-
-            if ($account->isDebitNormal()) {
-                $runningBalance += ($debit - $credit);
-            } else {
-                $runningBalance += ($credit - $debit);
+                $rows[] = [
+                    'date' => $item->journalEntry->entry_date->format('Y-m-d'),
+                    'entry_number' => $item->journalEntry->entry_number,
+                    'reference_type' => $item->journalEntry->reference_type,
+                    'reference_no' => $item->journalEntry->reference_no,
+                    'memo' => $item->memo ?: $item->journalEntry->description,
+                    'debit' => round($debit, 2),
+                    'credit' => round($credit, 2),
+                    'running_balance' => round($runningBalance, 2),
+                ];
             }
 
-            $rows[] = [
-                'date' => $item->journalEntry->entry_date->format('Y-m-d'),
-                'entry_number' => $item->journalEntry->entry_number,
-                'reference_type' => $item->journalEntry->reference_type,
-                'reference_no' => $item->journalEntry->reference_no,
-                'memo' => $item->memo ?: $item->journalEntry->description,
-                'debit' => round($debit, 2),
-                'credit' => round($credit, 2),
-                'running_balance' => round($runningBalance, 2),
+            return [
+                'account' => $account,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'opening_balance' => (float) $account->opening_balance,
+                'closing_balance' => round($runningBalance, 2),
+                'total_debit' => round((float)$items->sum('debit'), 2),
+                'total_credit' => round((float)$items->sum('credit'), 2),
+                'transactions' => $rows,
             ];
-        }
-
-        return [
-            'account' => $account,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'opening_balance' => (float) $account->opening_balance,
-            'closing_balance' => round($runningBalance, 2),
-            'total_debit' => round((float)$items->sum('debit'), 2),
-            'total_credit' => round((float)$items->sum('credit'), 2),
-            'transactions' => $rows,
-        ];
+        });
     }
 }

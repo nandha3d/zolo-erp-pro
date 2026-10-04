@@ -10,6 +10,8 @@ Phase 0's delivered regression package is complete. Phase 1 remains in progress:
 
 Do not activate a second company or Phase 2 capabilities until all Phase 1 acceptance gates pass. Audit F-13 Option B permits inactive additive foundations while the execution plan's D1–D12 stabilization work remains assigned to its owning phases; it does not permit unsafe writer activation.
 
+The [Phase 2/3 implementation package](PHASE_2_3_IMPLEMENTATION.md) adds capability/profile tables, a legacy module adapter, dependency/configuration checks, navigation and route guards, and atomic numbering for the shared commercial/accounting writers. Optional capabilities remain inactive behind the reviewed Phase 1 gate. Document 12 printing and dispatch are not part of this numbering package.
+
 No production migration, backfill or deployment has been performed. Existing posted numbers, fiscal-year dates, opening balances, stock quantities and journal values have not been rewritten.
 
 ## Confirmed business policies

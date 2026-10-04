@@ -17,24 +17,48 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
-use Tests\Support\ErpServiceTestCase;
+use Tests\Support\CompanyContextTestCase;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class ErpServiceRegressionTest extends ErpServiceTestCase
+class ErpServiceRegressionTest extends CompanyContextTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->actingAs(\App\Models\User::findOrFail(1));
+        foreach (['customers', 'suppliers', 'billers'] as $tableName) {
+            DB::table($tableName)->update(['company_id' => $this->company->id]);
+        }
+        DB::table('warehouses')->update(['company_id' => $this->company->id, 'branch_id' => $this->branch->id]);
+        foreach (['units', 'accounts'] as $tableName) {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name');
+                $table->unsignedBigInteger('company_id');
+            });
+            DB::table($tableName)->insert(['id' => 1, 'name' => 'Owned A', 'company_id' => $this->company->id]);
+        }
         foreach ([
             ['1010', 'asset', 'cash'], ['1100', 'asset', 'accounts_receivable'],
             ['1200', 'asset', 'inventory'], ['2010', 'liability', 'accounts_payable'],
             ['4010', 'revenue', 'sales_revenue'], ['5010', 'expense', 'cogs'],
             ['GIT', 'asset', 'goods_in_transit'],
         ] as [$code, $type, $subType]) {
-            ChartOfAccount::create([
+            (new ChartOfAccount)->forceFill([
+                'company_id' => $this->company->id,
                 'code' => $code, 'name' => $subType, 'type' => $type, 'sub_type' => $subType,
-            ]);
+            ])->save();
         }
+    }
+
+    protected function stock(float $qty = 20, float $cost = 5): \App\Models\Product
+    {
+        $product = parent::stock($qty, $cost);
+        $product->forceFill(['company_id' => $this->company->id])->save();
+        Product_Warehouse::where('product_id', $product->id)->update(['company_id' => $this->company->id]);
+        return $product;
     }
 
     public function test_completed_sale_preserves_stock_payment_and_balanced_journal(): void
@@ -191,6 +215,7 @@ class ErpServiceRegressionTest extends ErpServiceTestCase
     public function test_purchase_bank_payment_credits_bank_instead_of_cash(): void
     {
         $bank = ChartOfAccount::create(['code' => '1020', 'name' => 'Bank', 'type' => 'asset', 'sub_type' => 'bank']);
+        $bank->forceFill(['company_id' => $this->company->id])->save();
         $product = $this->stock();
         (new PurchaseService(new AccountingService()))->createPurchase([
             'supplier_id' => 1, 'warehouse_id' => 1, 'paid_amount' => 10, 'paying_method' => 'Bank',

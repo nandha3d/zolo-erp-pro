@@ -53,8 +53,7 @@ class Handler extends ExceptionHandler
         // PENCEGAHAN ERROR DB: Jika terjadi error koneksi database, redirect ke installer
         if (
             $exception instanceof \Illuminate\Database\QueryException ||
-            $exception instanceof \PDOException ||
-            $exception instanceof \Illuminate\Database\Eloquent\ModelNotFoundException
+            $exception instanceof \PDOException
         ) {
 
             // Hindari infinite loop redirect jika user sudah di halaman installer

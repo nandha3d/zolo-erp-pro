@@ -72,6 +72,8 @@ abstract class ErpServiceTestCase extends TestCase
             $table->integer('warehouse_id');
             $table->double('qty')->default(0);
             $table->double('price')->nullable();
+            $table->integer('product_batch_id')->nullable();
+            $table->integer('variant_id')->nullable();
             $table->timestamps();
         });
 
@@ -106,7 +108,7 @@ abstract class ErpServiceTestCase extends TestCase
                 }
             });
         }
-        foreach (['product_sales', 'product_purchases'] as $name) {
+        foreach (['product_sales', 'product_purchases', 'product_transfer'] as $name) {
             Schema::table($name, function (Blueprint $table) {
                 $table->integer('product_batch_id')->nullable();
                 $table->integer('variant_id')->nullable();
@@ -120,6 +122,7 @@ abstract class ErpServiceTestCase extends TestCase
             $table->integer('sale_id')->nullable();
             $table->integer('purchase_id')->nullable();
             $table->integer('account_id');
+            $table->dateTime('payment_at')->nullable();
             $table->string('payment_reference');
             $table->double('amount');
             $table->double('change');

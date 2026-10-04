@@ -3,6 +3,10 @@
 namespace App\Services\ERP;
 
 use App\Models\Sale;
+use App\Models\Customer;
+use App\Models\Biller;
+use App\Services\Platform\CompanyContext;
+use App\Services\Platform\DocumentNumberService;
 use App\Models\Product_Sale;
 use App\Models\Product;
 use App\Models\Product_Warehouse;
@@ -43,17 +47,34 @@ class SaleService
      * @param int|null $userId
      * @return Sale
      */
-    public function createSale(array $data, ?int $userId = null): Sale
+    public function createSale(array $data, ?int $userId = null, ?CompanyContext $context = null): Sale
     {
-        $userId = $userId ?: (auth()->id() ?: 1);
+        $userId = $userId ?: auth()->id();
+        $guard = app(CompanyWriteGuard::class);
+        $context = $guard->context($context, $userId);
 
         if (empty($data['items']) || !is_array($data['items'])) {
             throw new InvalidArgumentException("Sale must contain at least one product item.");
         }
 
-        return DB::transaction(function () use ($data, $userId) {
-            // Generate Reference Number
-            $referenceNo = 'posr-' . date("Ymd") . '-' . date("his");
+        return DB::transaction(function () use ($data, $userId, $context, $guard) {
+            $date = $guard->begin($context, $guard->businessDate($data));
+            $guard->rejectUnscopedReferences($data);
+            $guard->owned(Customer::class, $data['customer_id'] ?? null, $context, 'customer_id');
+            $guard->warehouse($data['warehouse_id'] ?? null, $context, $userId);
+            $data['biller_id'] ??= Biller::forCompany($context)->orderBy('id')->value('id');
+            $guard->owned(Biller::class, $data['biller_id'], $context, 'biller_id');
+            foreach ($data['items'] as &$line) {
+                if (!is_numeric($line['qty'] ?? null) || !is_finite((float) $line['qty']) || (float) $line['qty'] <= 0
+                    || !is_numeric($line['net_unit_price'] ?? null) || !is_finite((float) $line['net_unit_price']) || (float) $line['net_unit_price'] < 0) {
+                    throw new InvalidArgumentException('Sale quantity must be positive and unit price must be nonnegative.');
+                }
+                $guard->product($line, $context, 'sale_unit_id');
+            }
+            unset($line);
+            $numbers = app(DocumentNumberService::class);
+            $reservation = $numbers->reserve('sale', $context, $date, $userId);
+            $referenceNo = $reservation->formatted_number;
 
             $itemQty = 0;
             $totalCost = 0.0;
@@ -71,7 +92,7 @@ class SaleService
                 $totalDiscount += (float) ($item['discount'] ?? 0);
 
                 // Fetch product cost for COGS
-                $product = Product::find($item['product_id']);
+                $product = Product::forCompany($context)->findOrFail($item['product_id']);
                 if ($product) {
                     $totalCost += (float) ($product->cost ?? 0) * $qty;
                 }
@@ -90,7 +111,15 @@ class SaleService
                 $paymentStatus = 3; // Partial
             }
 
-            $sale = Sale::create([
+            if (!is_finite($grandTotal) || $grandTotal < 0 || !is_finite($paidAmount) || $paidAmount < 0 || $paidAmount > $grandTotal) {
+                throw new InvalidArgumentException('Payment must be within the sale total.');
+            }
+            if ($paidAmount > 0) {
+                $data['account_id'] = $guard->paymentAccount($data, $context);
+            }
+            $sale = (new Sale)->forceFill([
+                'company_id' => $context->companyId,
+                'created_at' => $date,
                 'reference_no' => $referenceNo,
                 'user_id' => $userId,
                 'cash_register_id' => $data['cash_register_id'] ?? null,
@@ -119,6 +148,8 @@ class SaleService
                 'sale_note' => $data['sale_note'] ?? null,
                 'staff_note' => $data['staff_note'] ?? null,
             ]);
+            $sale->save();
+            $numbers->assign($reservation, $sale);
 
             // Save line items and decrement warehouse inventory
             foreach ($data['items'] as $item) {
@@ -126,7 +157,8 @@ class SaleService
                 $qty = (float) $item['qty'];
                 $unitPrice = (float) $item['net_unit_price'];
 
-                Product_Sale::create([
+                (new Product_Sale)->forceFill([
+                    'company_id' => $context->companyId,
                     'sale_id' => $sale->id,
                     'product_id' => $productId,
                     'product_batch_id' => $item['product_batch_id'] ?? null,
@@ -139,28 +171,31 @@ class SaleService
                     'tax_rate' => (float) ($item['tax_rate'] ?? 0),
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitPrice)),
-                ]);
+                ])->save();
 
                 // Deduct stock if sale is completed
                 if (($data['sale_status'] ?? 1) == 1) {
-                    $product = Product::find($productId);
+                    $product = Product::forCompany($context)->findOrFail($productId);
                     if ($product) {
                         $product->decrement('qty', $qty);
                     }
 
-                    $pw = Product_Warehouse::where('product_id', $productId)
-                        ->where('warehouse_id', $data['warehouse_id'])
-                        ->first();
-                    if ($pw) {
-                        $pw->decrement('qty', $qty);
+                    $pw = $guard->stock($item, (int) $data['warehouse_id'], $context);
+                    if (!$pw->exists || (float) $pw->qty < $qty) {
+                        throw new InvalidArgumentException('Insufficient stock in the selected warehouse.');
                     }
+                    $pw->decrement('qty', $qty);
                 }
             }
 
             // Create Payment record if paid amount > 0
             if ($paidAmount > 0) {
-                Payment::create([
-                    'payment_reference' => 'spr-' . date("Ymd") . '-' . date("his"),
+                $paymentReservation = $numbers->reserve('sale_payment', $context, $date, $userId);
+                $payment = (new Payment)->forceFill([
+                    'company_id' => $context->companyId,
+                    'created_at' => $date,
+                    'payment_at' => $date,
+                    'payment_reference' => $paymentReservation->formatted_number,
                     'user_id' => $userId,
                     'sale_id' => $sale->id,
                     'account_id' => $data['account_id'] ?? 1,
@@ -169,12 +204,14 @@ class SaleService
                     'paying_method' => $data['paying_method'] ?? 'Cash',
                     'payment_note' => $data['payment_note'] ?? null,
                 ]);
+                $payment->save();
+                $numbers->assign($paymentReservation, $payment);
             }
 
             // ATOMIC DOUBLE-ENTRY JOURNAL POSTING
             // Dr. Cash/Bank + Dr. AR + Dr. Discount = Cr. Revenue + Cr. Tax + Cr. Shipping
             // Dr. COGS = Cr. Inventory Asset
-            $this->accountingService->postSaleJournal($sale, $totalCost);
+            $this->accountingService->postSaleJournal($sale, $totalCost, $context, $userId);
 
             return $sale->load(['customer', 'warehouse', 'productSales']);
         });
@@ -183,18 +220,32 @@ class SaleService
     /**
      * Add a payment against an existing sale.
      */
-    public function addPayment(Sale $sale, array $paymentData, ?int $userId = null): Payment
+    public function addPayment(Sale $sale, array $paymentData, ?int $userId = null, ?CompanyContext $context = null): Payment
     {
-        $userId = $userId ?: (auth()->id() ?: 1);
+        $userId = $userId ?: auth()->id();
+        $guard = app(CompanyWriteGuard::class);
+        $context = $guard->context($context, $userId);
         $amount = (float) $paymentData['amount'];
 
-        if ($amount <= 0) {
+        if (!is_finite($amount) || $amount <= 0) {
             throw new InvalidArgumentException("Payment amount must be greater than zero.");
         }
 
-        return DB::transaction(function () use ($sale, $paymentData, $amount, $userId) {
-            $payment = Payment::create([
-                'payment_reference' => 'spr-' . date("Ymd") . '-' . date("his"),
+        return DB::transaction(function () use ($sale, $paymentData, $amount, $userId, $context, $guard) {
+            $date = $guard->begin($context, $guard->businessDate($paymentData));
+            $guard->rejectUnscopedReferences($paymentData);
+            $sale = Sale::visibleIn($context)->lockForUpdate()->findOrFail($sale->id);
+            if ($amount > (float) $sale->grand_total - (float) $sale->paid_amount) {
+                throw new InvalidArgumentException('Payment exceeds the outstanding sale amount.');
+            }
+            $paymentData['account_id'] = $guard->paymentAccount($paymentData, $context);
+            $numbers = app(DocumentNumberService::class);
+            $reservation = $numbers->reserve('sale_payment', $context, $date, $userId);
+            $payment = (new Payment)->forceFill([
+                'company_id' => $context->companyId,
+                'created_at' => $date,
+                'payment_at' => $date,
+                'payment_reference' => $reservation->formatted_number,
                 'user_id' => $userId,
                 'sale_id' => $sale->id,
                 'account_id' => $paymentData['account_id'] ?? 1,
@@ -203,6 +254,8 @@ class SaleService
                 'paying_method' => $paymentData['paying_method'] ?? 'Cash',
                 'payment_note' => $paymentData['payment_note'] ?? null,
             ]);
+            $payment->save();
+            $numbers->assign($reservation, $payment);
 
             $newPaidAmount = (float)$sale->paid_amount + $amount;
             $paymentStatus = 3; // Partial
@@ -216,7 +269,7 @@ class SaleService
             ]);
 
             // Post double-entry journal (Dr. Cash/Bank, Cr. AR)
-            $this->accountingService->postPaymentJournal($payment);
+            $this->accountingService->postPaymentJournal($payment, $context, $userId);
 
             return $payment;
         });

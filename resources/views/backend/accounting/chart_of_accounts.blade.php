@@ -170,7 +170,8 @@
                     </div>
                     <div class="form-group mb-3">
                         <label class="font-weight-600">Opening Balance</label>
-                        <input type="number" step="0.01" name="opening_balance" class="form-control" placeholder="0.00">
+                        <input type="number" step="0.01" name="opening_balance" readonly aria-describedby="opening-balance-policy" class="form-control" value="0.00">
+                        <small id="opening-balance-policy" class="text-muted">New accounts start at zero. Dated opening balances require the separate opening-balance migration.</small>
                     </div>
                     <div class="form-group mb-0">
                         <label class="font-weight-600">Description</label>

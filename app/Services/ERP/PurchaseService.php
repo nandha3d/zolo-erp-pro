@@ -3,6 +3,9 @@
 namespace App\Services\ERP;
 
 use App\Models\Purchase;
+use App\Models\Supplier;
+use App\Services\Platform\CompanyContext;
+use App\Services\Platform\DocumentNumberService;
 use App\Models\ProductPurchase;
 use App\Models\Product;
 use App\Models\Product_Warehouse;
@@ -25,9 +28,11 @@ class PurchaseService
     /**
      * Create an ERP Purchase, update inventory quantities & costs, and post double-entry journal entries.
      */
-    public function createPurchase(array $data, ?int $userId = null): Purchase
+    public function createPurchase(array $data, ?int $userId = null, ?CompanyContext $context = null): Purchase
     {
-        $userId = $userId ?: (auth()->id() ?: 1);
+        $userId = $userId ?: auth()->id();
+        $guard = app(CompanyWriteGuard::class);
+        $context = $guard->context($context, $userId);
 
         if (empty($data['items']) || !is_array($data['items'])) {
             throw new InvalidArgumentException("Purchase must contain at least one product item.");
@@ -57,8 +62,20 @@ class PurchaseService
         }
         unset($item);
 
-        return DB::transaction(function () use ($data, $userId) {
-            $referenceNo = 'pr-' . date("Ymd") . '-' . date("his");
+        return DB::transaction(function () use ($data, $userId, $context, $guard) {
+            $date = $guard->begin($context, $guard->businessDate($data));
+            $guard->rejectUnscopedReferences($data);
+            $guard->warehouse($data['warehouse_id'] ?? null, $context, $userId);
+            if (!empty($data['supplier_id'])) {
+                $guard->owned(Supplier::class, $data['supplier_id'], $context, 'supplier_id');
+            }
+            foreach ($data['items'] as &$line) {
+                $guard->product($line, $context, 'purchase_unit_id');
+            }
+            unset($line);
+            $numbers = app(DocumentNumberService::class);
+            $reservation = $numbers->reserve('purchase', $context, $date, $userId);
+            $referenceNo = $reservation->formatted_number;
 
             $itemCount = 0;
             $totalQty = 0.0;
@@ -93,11 +110,16 @@ class PurchaseService
                 $paymentStatus = 3; // Partial
             }
 
-            $purchase = Purchase::create([
+            if ($paidAmount > 0) {
+                $data['account_id'] = $guard->paymentAccount($data, $context);
+            }
+            $purchase = (new Purchase)->forceFill([
+                'company_id' => $context->companyId,
+                'created_at' => $date,
                 'reference_no' => $referenceNo,
                 'user_id' => $userId,
                 'warehouse_id' => $data['warehouse_id'],
-                'supplier_id' => $data['supplier_id'],
+                'supplier_id' => $data['supplier_id'] ?? null,
                 'item' => $itemCount,
                 'total_qty' => $totalQty,
                 'total_discount' => $totalDiscount,
@@ -113,6 +135,8 @@ class PurchaseService
                 'payment_status' => $paymentStatus,
                 'note' => $data['note'] ?? null,
             ]);
+            $purchase->save();
+            $numbers->assign($reservation, $purchase);
 
             // Save items & increment warehouse stock
             foreach ($data['items'] as $item) {
@@ -120,7 +144,8 @@ class PurchaseService
                 $qty = (float) $item['qty'];
                 $unitCost = (float) $item['net_unit_cost'];
 
-                ProductPurchase::create([
+                (new ProductPurchase)->forceFill([
+                    'company_id' => $context->companyId,
                     'purchase_id' => $purchase->id,
                     'product_id' => $productId,
                     'product_batch_id' => $item['product_batch_id'] ?? null,
@@ -134,18 +159,15 @@ class PurchaseService
                     'tax_rate' => (float) ($item['tax_rate'] ?? 0),
                     'tax' => (float) ($item['tax'] ?? 0),
                     'total' => (float) ($item['total'] ?? ($qty * $unitCost)),
-                ]);
+                ])->save();
 
                 // Receive only the validated physical quantity, including partial receipts.
-                $product = Product::findOrFail($productId);
+                $product = Product::forCompany($context)->findOrFail($productId);
                 if ($item['received_qty'] > 0) {
                     $product->increment('qty', $item['received_qty']);
                     $product->update(['cost' => $unitCost]);
 
-                    $pw = Product_Warehouse::firstOrNew([
-                        'product_id' => $productId,
-                        'warehouse_id' => $data['warehouse_id'],
-                    ]);
+                    $pw = $guard->stock($item, (int) $data['warehouse_id'], $context);
                     $pw->qty = (float)$pw->qty + $item['received_qty'];
                     $pw->save();
                 }
@@ -153,8 +175,12 @@ class PurchaseService
 
             // Record payment if paid amount > 0
             if ($paidAmount > 0) {
-                Payment::create([
-                    'payment_reference' => 'ppr-' . date("Ymd") . '-' . date("his"),
+                $paymentReservation = $numbers->reserve('purchase_payment', $context, $date, $userId);
+                $payment = (new Payment)->forceFill([
+                    'company_id' => $context->companyId,
+                    'created_at' => $date,
+                    'payment_at' => $date,
+                    'payment_reference' => $paymentReservation->formatted_number,
                     'user_id' => $userId,
                     'purchase_id' => $purchase->id,
                     'account_id' => $data['account_id'] ?? 1,
@@ -163,11 +189,13 @@ class PurchaseService
                     'paying_method' => $data['paying_method'] ?? 'Cash',
                     'payment_note' => $data['payment_note'] ?? null,
                 ]);
+                $payment->save();
+                $numbers->assign($paymentReservation, $payment);
             }
 
             // Supplier-bill recognition: received inventory + goods-in-transit = payment + AP.
             // Ordered is an unbilled PO; it has no stock or financial posting.
-            $this->accountingService->postPurchaseJournal($purchase);
+            $this->accountingService->postPurchaseJournal($purchase, $context, $userId);
 
             return $purchase->load(['supplier', 'warehouse', 'productPurchases']);
         });

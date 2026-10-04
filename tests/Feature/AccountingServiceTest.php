@@ -17,6 +17,7 @@ class AccountingServiceTest extends TestCase
     {
         parent::setUp();
         $this->accountingService = new AccountingService();
+        $this->actingAs(\App\Models\User::firstOrFail());
     }
 
     public function test_trial_balance_is_balanced(): void

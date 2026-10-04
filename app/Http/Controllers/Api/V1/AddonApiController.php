@@ -4,16 +4,21 @@ namespace App\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use App\Services\Platform\CapabilityService;
+use App\Services\Platform\LegacyModuleAdapter;
 
 class AddonApiController extends BaseApiController
 {
     /**
      * Get active addons and enabled features for current tenant / instance
      */
-    public function status(): JsonResponse
+    public function status(Request $request, CapabilityService $capabilities): JsonResponse
     {
-        $general_setting = DB::table('general_settings')->first();
-        $activeModules = array_filter(explode(',', $general_setting->modules ?? ''));
+        $context = $this->companyContext($request);
+        $company = DB::table('companies')->where('id', $context->companyId)->first();
+        $activeModules = array_keys(array_filter(LegacyModuleAdapter::MODULES,
+            fn ($key) => $capabilities->enabled($key, $context)));
 
         $features = [
             'water_logistics' => in_array('water_logistics', $activeModules),
@@ -32,10 +37,11 @@ class AddonApiController extends BaseApiController
 
         return $this->sendResponse([
             'system' => 'zoloERP SaaS Engine',
-            'company_name' => $general_setting->company_name ?? 'zoloERP Enterprise',
-            'currency' => $general_setting->currency ?? 'INR',
+            'company_name' => $company->trade_name ?: $company->legal_name,
+            'currency' => $company->base_currency_id,
             'active_modules' => array_values($activeModules),
             'features' => $features,
+            'capabilities' => $capabilities->forNavigation($context),
         ], 'Active addons and tenant features retrieved successfully');
     }
 }

@@ -743,7 +743,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     Route::resource('accounts', AccountsController::class);
 
     // Double-Entry Accounting & Financial Ledger Routes
-    Route::prefix('accounting')->group(function () {
+    Route::prefix('accounting')->middleware('company.context')->group(function () {
         Route::get('chart-of-accounts', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'index'])->name('accounting.coa');
         Route::post('chart-of-accounts', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'store'])->name('accounting.coa.store');
         Route::put('chart-of-accounts/{id}', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'update'])->name('accounting.coa.update');
@@ -864,14 +864,14 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function () {
     });
 
     // Accounting Extended: Cash Flow, Periodic Inventory Close, Semantic Mappings
-    Route::prefix('accounting')->group(function () {
+    Route::prefix('accounting')->middleware('company.context')->group(function () {
         Route::get('cash-flow-statement', [\App\Http\Controllers\Accounting\FinancialReportController::class, 'cashFlowStatement'])->name('accounting.cash-flow');
         Route::get('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'index'])->name('accounting.inventory-close');
-        Route::post('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'store'])->name('accounting.inventory-close.store');
-        Route::post('inventory-close/post', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'store'])->name('accounting.inventory-close.post');
+        Route::post('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'postClose'])->name('accounting.inventory-close.store');
+        Route::post('inventory-close/post', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'postClose'])->name('accounting.inventory-close.post');
         Route::get('semantic-account-mappings', [\App\Http\Controllers\Accounting\SemanticMappingController::class, 'index'])->name('accounting.semantic-mappings');
-        Route::post('semantic-account-mappings', [\App\Http\Controllers\Accounting\SemanticMappingController::class, 'store'])->name('accounting.semantic-mappings.store');
-        Route::post('semantic-account-mappings/update', [\App\Http\Controllers\Accounting\SemanticMappingController::class, 'store'])->name('accounting.semantic-mappings.update');
+        Route::post('semantic-account-mappings', [\App\Http\Controllers\Accounting\SemanticMappingController::class, 'update'])->name('accounting.semantic-mappings.store');
+        Route::post('semantic-account-mappings/update', [\App\Http\Controllers\Accounting\SemanticMappingController::class, 'update'])->name('accounting.semantic-mappings.update');
     });
 
     // Module: Water Supply & Fleet Logistics

@@ -1,3 +1,6 @@
+@php
+$companyContext = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+@endphp
 <!DOCTYPE html>
 <html dir="@if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl){{'rtl'}}@endif">
 
@@ -212,6 +215,7 @@
         <a id="toggle-btn" href="#" class="menu-btn"><i class="fa fa-bars"> </i></a>
 
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
+          @unless($companyContext)
           <div class="dropdown">
 
             <a class="btn-pos btn-sm" type="button" data-toggle="dropdown" aria-expanded="false">
@@ -298,6 +302,7 @@
               @endif
             </ul>
           </div>
+          @endunless
           <?php
           $empty_database_permission_active = $role_has_permissions_list->where('name', 'empty_database')->first();
 
@@ -320,6 +325,7 @@
           <li class="nav-item d-none d-lg-block"><a id="btnFullscreen" data-toggle="tooltip" title="{{ __('Full Screen') }}"><i class="dripicons-expand"></i></a></li>
           @if(\Auth::user()->role_id <= 2) <li class="nav-item"><a href="{{route('cashRegister.index') }}" data-toggle="tooltip" title="{{ __('Cash Register List') }}"><i class="dripicons-archive"></i></a></li>
             @endif
+            @unless($companyContext)
             @php
             $total_notifications = $alert_product + $dso_alert_product_no + $expire_alert_products + Auth::user()->unreadNotifications->where('data.reminder_date', date('Y-m-d'))->count();
             @endphp
@@ -387,6 +393,7 @@
 
                 </ul>
             </li>
+            @endunless
             <li class="nav-item">
               <a rel="nofollow" title="{{ __('db.language') }}" data-toggle="tooltip" class="nav-link dropdown-item"><i class="dripicons-web"></i></a>
               <ul class="right-sidebar">
@@ -461,6 +468,7 @@
       </div>
     </footer>
 
+    @unless($companyContext)
     <!-- notification modal -->
     <div id="notification-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog">
@@ -1132,6 +1140,7 @@
       </div>
     </div>
     <!-- end supplier modal -->
+    @endunless
   </div>
   @if(!config('database.connections.saleprosaas_landlord'))
   <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.min.js') ?>"></script>

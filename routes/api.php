@@ -50,15 +50,15 @@ Route::prefix('v1')->group(function () {
         // Sales & Invoicing
         Route::prefix('sales')->group(function () {
             Route::get('/', [SaleApiController::class, 'index'])->middleware('company.context')->name('api.v1.sales.index');
-            Route::post('/', [SaleApiController::class, 'store'])->name('api.v1.sales.store');
+            Route::post('/', [SaleApiController::class, 'store'])->middleware('company.context')->name('api.v1.sales.store');
             Route::get('{id}', [SaleApiController::class, 'show'])->middleware('company.context')->name('api.v1.sales.show');
-            Route::post('{id}/payments', [SaleApiController::class, 'addPayment'])->name('api.v1.sales.add-payment');
+            Route::post('{id}/payments', [SaleApiController::class, 'addPayment'])->middleware('company.context')->name('api.v1.sales.add-payment');
         });
 
         // Purchases & Procurement
         Route::prefix('purchases')->group(function () {
             Route::get('/', [PurchaseApiController::class, 'index'])->middleware('company.context')->name('api.v1.purchases.index');
-            Route::post('/', [PurchaseApiController::class, 'store'])->name('api.v1.purchases.store');
+            Route::post('/', [PurchaseApiController::class, 'store'])->middleware('company.context')->name('api.v1.purchases.store');
             Route::get('{id}', [PurchaseApiController::class, 'show'])->middleware('company.context')->name('api.v1.purchases.show');
         });
 
@@ -72,17 +72,17 @@ Route::prefix('v1')->group(function () {
         // Inventory & Warehouse Logistics
         Route::prefix('inventory')->group(function () {
             Route::get('valuation', [InventoryApiController::class, 'valuation'])->middleware('company.context')->name('api.v1.inventory.valuation');
-            Route::post('transfer', [InventoryApiController::class, 'transfer'])->name('api.v1.inventory.transfer');
+            Route::post('transfer', [InventoryApiController::class, 'transfer'])->middleware('company.context')->name('api.v1.inventory.transfer');
         });
 
         // Double-Entry Accounting & Financial Ledger
         Route::prefix('accounting')->group(function () {
-            Route::get('chart-of-accounts', [AccountingApiController::class, 'chartOfAccounts'])->name('api.v1.accounting.coa');
-            Route::get('trial-balance', [AccountingApiController::class, 'trialBalance'])->name('api.v1.accounting.trial-balance');
-            Route::get('profit-and-loss', [AccountingApiController::class, 'profitAndLoss'])->name('api.v1.accounting.pnl');
-            Route::get('balance-sheet', [AccountingApiController::class, 'balanceSheet'])->name('api.v1.accounting.balance-sheet');
-            Route::get('general-ledger/{id}', [AccountingApiController::class, 'generalLedger'])->name('api.v1.accounting.gl');
-            Route::post('journal-entries', [AccountingApiController::class, 'storeJournalEntry'])->name('api.v1.accounting.journal-entry.store');
+            Route::get('chart-of-accounts', [AccountingApiController::class, 'chartOfAccounts'])->middleware('company.context')->name('api.v1.accounting.coa');
+            Route::get('trial-balance', [AccountingApiController::class, 'trialBalance'])->middleware('company.context')->name('api.v1.accounting.trial-balance');
+            Route::get('profit-and-loss', [AccountingApiController::class, 'profitAndLoss'])->middleware('company.context')->name('api.v1.accounting.pnl');
+            Route::get('balance-sheet', [AccountingApiController::class, 'balanceSheet'])->middleware('company.context')->name('api.v1.accounting.balance-sheet');
+            Route::get('general-ledger/{id}', [AccountingApiController::class, 'generalLedger'])->middleware('company.context')->name('api.v1.accounting.gl');
+            Route::post('journal-entries', [AccountingApiController::class, 'storeJournalEntry'])->middleware('company.context')->name('api.v1.accounting.journal-entry.store');
         });
 
         // Partners (Customers & Suppliers)

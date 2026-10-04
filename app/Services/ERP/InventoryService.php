@@ -87,9 +87,11 @@ class InventoryService
     /**
      * Transfer stock between warehouses.
      */
-    public function transferStock(array $data, ?int $userId = null): Transfer
+    public function transferStock(array $data, ?int $userId = null, ?CompanyContext $context = null): Transfer
     {
-        $userId = $userId ?: (auth()->id() ?: 1);
+        $userId = $userId ?: auth()->id();
+        $guard = app(CompanyWriteGuard::class);
+        $context = $guard->context($context, $userId);
 
         $fromId = (int) $data['from_warehouse_id'];
         $toId = (int) $data['to_warehouse_id'];
@@ -102,8 +104,22 @@ class InventoryService
             throw new InvalidArgumentException("Transfer must include at least one product item.");
         }
 
-        return DB::transaction(function () use ($data, $fromId, $toId, $userId) {
-            $referenceNo = 'tr-' . date("Ymd") . '-' . date("his");
+        return DB::transaction(function () use ($data, $fromId, $toId, $userId, $context, $guard) {
+            $date = $guard->begin($context, $guard->businessDate($data));
+            $guard->rejectUnscopedReferences($data);
+            $guard->warehouse($fromId, $context, $userId);
+            $guard->warehouse($toId, $context, $userId, false);
+            foreach ($data['items'] as &$line) {
+                if (!is_numeric($line['qty'] ?? null) || !is_finite((float) $line['qty']) || (float) $line['qty'] <= 0
+                    || !is_numeric($line['net_unit_cost'] ?? null) || !is_finite((float) $line['net_unit_cost']) || (float) $line['net_unit_cost'] < 0) {
+                    throw new InvalidArgumentException('Transfer quantity must be positive and unit cost must be nonnegative.');
+                }
+                $guard->product($line, $context, 'purchase_unit_id');
+            }
+            unset($line);
+            $numbers = app(\App\Services\Platform\DocumentNumberService::class);
+            $reservation = $numbers->reserve('transfer', $context, $date, $userId);
+            $referenceNo = $reservation->formatted_number;
 
             $itemCount = 0;
             $totalQty = 0.0;
@@ -117,7 +133,9 @@ class InventoryService
                 $totalCost += ($qty * $unitCost);
             }
 
-            $transfer = Transfer::create([
+            $transfer = (new Transfer)->forceFill([
+                'company_id' => $context->companyId,
+                'created_at' => $date,
                 'reference_no' => $referenceNo,
                 'user_id' => $userId,
                 'status' => $data['status'] ?? 1, // 1 = Completed
@@ -131,12 +149,17 @@ class InventoryService
                 'grand_total' => $totalCost + (float) ($data['shipping_cost'] ?? 0),
                 'note' => $data['note'] ?? null,
             ]);
+            $transfer->save();
+            $numbers->assign($reservation, $transfer);
 
             foreach ($data['items'] as $item) {
                 $productId = (int) $item['product_id'];
                 $qty = (float) $item['qty'];
 
-                ProductTransfer::create([
+                (new ProductTransfer)->forceFill([
+                    'company_id' => $context->companyId,
+                    'product_batch_id' => $item['product_batch_id'],
+                    'variant_id' => $item['variant_id'],
                     'transfer_id' => $transfer->id,
                     'product_id' => $productId,
                     'qty' => $qty,
@@ -145,17 +168,20 @@ class InventoryService
                     'tax_rate' => 0,
                     'tax' => 0,
                     'total' => $qty * (float) $item['net_unit_cost'],
-                ]);
+                ])->save();
 
                 if (($data['status'] ?? 1) == 1) {
                     // Decrement from source
-                    $sourcePw = Product_Warehouse::where('product_id', $productId)->where('warehouse_id', $fromId)->first();
+                    $sourcePw = $guard->stock($item, $fromId, $context);
+                    if (!$sourcePw->exists || (float) $sourcePw->qty < $qty) {
+                        throw new InvalidArgumentException('Insufficient source stock.');
+                    }
                     if ($sourcePw) {
                         $sourcePw->decrement('qty', $qty);
                     }
 
                     // Increment at destination
-                    $destPw = Product_Warehouse::firstOrNew(['product_id' => $productId, 'warehouse_id' => $toId]);
+                    $destPw = $guard->stock($item, $toId, $context);
                     $destPw->qty = (float)$destPw->qty + $qty;
                     $destPw->save();
                 }

@@ -4,6 +4,8 @@ namespace App\Models\Accounting;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\ScopesCompanyQueries;
+use App\Services\Platform\CompanyContext;
+use App\Services\Platform\CompanyContextResolver;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -73,18 +75,23 @@ class ChartOfAccount extends Model
     /**
      * Calculate running balance up to a date or for all time.
      */
-    public function calculateBalance(?string $asOfDate = null): float
+    public function calculateBalance(?string $asOfDate = null, ?CompanyContext $context = null): float
     {
-        $query = $this->journalItems()
-            ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                $q->where('status', 'posted');
+        $context = app(CompanyContextResolver::class)->forActor($context);
+        if ((int) $this->company_id !== $context->companyId) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('Account access denied.');
+        }
+        $query = $this->journalItems()->forCompany($context)
+            ->whereHas('journalEntry', function ($q) use ($asOfDate, $context) {
+                $q->forCompany($context)->where('status', 'posted');
                 if ($asOfDate) {
-                    $q->where('entry_date', '<=', $asOfDate);
+                    $q->whereDate('entry_date', '<=', $asOfDate);
                 }
             });
 
-        $totalDebit = (float) $query->sum('debit');
-        $totalCredit = (float) $query->sum('credit');
+        $totals = $query->selectRaw('COALESCE(SUM(debit), 0) AS total_debit, COALESCE(SUM(credit), 0) AS total_credit')->first();
+        $totalDebit = (float) $totals->total_debit;
+        $totalCredit = (float) $totals->total_credit;
 
         if ($this->isDebitNormal()) {
             return (float) $this->opening_balance + ($totalDebit - $totalCredit);

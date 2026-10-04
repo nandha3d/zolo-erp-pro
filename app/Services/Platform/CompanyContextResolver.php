@@ -57,6 +57,25 @@ class CompanyContextResolver
         return new CompanyContext($companyId, $branchId, $year->id);
     }
 
+    /** Revalidate explicit or request context for every service caller, including non-HTTP jobs. */
+    public function forActor(?CompanyContext $context = null, ?int $userId = null): CompanyContext
+    {
+        $authenticatedId = auth()->id();
+        if ($authenticatedId && $userId && (int) $authenticatedId !== $userId) {
+            throw new AuthorizationException('Posting actor must match the authenticated user.');
+        }
+        $userId = $userId ?: $authenticatedId;
+        if (!$userId) {
+            throw new AuthorizationException('An authorized posting actor is required.');
+        }
+        $context ??= request()->attributes->get(CompanyContext::class);
+        if (!$context && (request()->hasHeader('X-Company-ID') || request()->hasHeader('X-Branch-ID')
+            || request()->hasHeader('X-Financial-Year-ID'))) {
+            throw new AuthorizationException('Request context must be authorized by company middleware.');
+        }
+        return $this->resolve($userId, $context?->companyId, $context?->branchId, $context?->financialYearId);
+    }
+
     /** Company authorization is also available before a branch/FY is configured. */
     public function authorizedCompany(int $userId, ?int $companyId = null): Company
     {
@@ -101,7 +120,7 @@ class CompanyContextResolver
 
     public function assertPostingDate(CompanyContext $context, string $businessDate): void
     {
-        $year = FiscalYear::where('company_id', $context->companyId)->whereKey($context->financialYearId)->first();
+        $year = FiscalYear::where('company_id', $context->companyId)->whereKey($context->financialYearId)->lockForUpdate()->first();
         if (!$year) {
             throw new AuthorizationException('Financial year access denied.');
         }
@@ -115,6 +134,7 @@ class CompanyContextResolver
     private function date(string $value): string
     {
         if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $value, $parts)
+            || (int) $parts[1] < 1000
             || !checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1])) {
             throw ValidationException::withMessages(['business_date' => 'Business date must be a valid YYYY-MM-DD date.']);
         }

@@ -99,8 +99,10 @@ class PurchaseApiController extends BaseApiController
         }
 
         try {
-            $purchase = $this->purchaseService->createPurchase($request->all(), $request->user()?->id);
+            $purchase = $this->purchaseService->createPurchase($request->all(), $request->user()?->id, $this->companyContext($request));
             return $this->sendResponse($purchase, 'Purchase created successfully', 201);
+        } catch (\Illuminate\Validation\ValidationException | \Illuminate\Auth\Access\AuthorizationException | \Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw $e;
         } catch (Exception $e) {
             return $this->sendError($e->getMessage(), [], 400);
         }
