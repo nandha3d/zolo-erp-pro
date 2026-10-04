@@ -24,7 +24,7 @@ class Handler extends ExceptionHandler
     protected $dontFlash = [
         'password',
         'password_confirmation',
-        'auth_token',
+        'auth_token', 'token', 'api_key', 'provider_secret', 'authorization',
     ];
 
     /**
@@ -37,6 +37,10 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
+        if ($exception instanceof \Illuminate\Database\QueryException || $exception instanceof \PDOException) {
+            \Illuminate\Support\Facades\Log::error('erp.database_failure', ['request_id' => request()->attributes->get('erp.request_id'), 'category' => class_basename($exception)]);
+            return;
+        }
         parent::report($exception);
     }
 
@@ -51,18 +55,14 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // PENCEGAHAN ERROR DB: Jika terjadi error koneksi database, redirect ke installer
-        if (
-            $exception instanceof \Illuminate\Database\QueryException ||
-            $exception instanceof \PDOException
-        ) {
-
-            // Hindari infinite loop redirect jika user sudah di halaman installer
-            if (!$request->is('install/*')) {
-                return redirect('install/step-1');
-            }
+        if ($exception instanceof \Illuminate\Database\QueryException || $exception instanceof \PDOException) {
+            $response = $request->expectsJson() ? response()->json(['message' => 'Database temporarily unavailable. Contact your administrator with the request ID.'], 503)
+                : response('Database temporarily unavailable. Contact your administrator with the request ID.', 503);
+        } else {
+            $response = parent::render($request, $exception);
         }
-
-        return parent::render($request, $exception);
+        if ($id = $request->attributes->get('erp.request_id')) $response->headers->set('X-Request-ID', $id);
+        $response->headers->set('Cache-Control', 'private, no-store');
+        return $response;
     }
 }

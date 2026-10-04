@@ -47,6 +47,8 @@ class ResolveCompanyContext
             ], 409);
         }
         $request->attributes->set(CompanyContext::class, $context);
+        $request->attributes->set('erp.company_id', $context->companyId);
+        $request->attributes->set('erp.branch_id', $context->branchId);
         try {
             return $next($request);
         } finally {

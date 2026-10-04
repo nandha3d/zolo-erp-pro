@@ -17,6 +17,7 @@
 @endphp
 
 <ul id="side-main-menu" class="side-menu list-unstyled d-print-none">
+    @if($navigationContext)<li><a href="/workspace"><i class="dripicons-home"></i><span>Workspaces</span></a></li>@endif
     <!-- SECTION: CORE -->
     <li class="sidebar-heading"><span>Core</span></li>
     <li id="dashboard-menu">

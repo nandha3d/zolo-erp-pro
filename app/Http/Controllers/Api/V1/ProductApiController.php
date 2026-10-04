@@ -10,6 +10,7 @@ class ProductApiController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'search' => 'nullable|string|max:100']);
         $query = Product::catalogFor($this->companyContext($request));
 
         if ($request->filled('category_id')) {
@@ -29,7 +30,7 @@ class ProductApiController extends BaseApiController
         $perPage = (int) $request->input('per_page', 20);
         $products = $query->where('is_active', true)->paginate($perPage);
 
-        return $this->sendResponse($products->items(), 'Products retrieved successfully', 200, [
+        return $this->sendResponse(\App\Http\Resources\ProductResource::collection($products->getCollection())->resolve($request), 'Products retrieved successfully', 200, [
             'pagination' => [
                 'total' => $products->total(),
                 'per_page' => $products->perPage(),
@@ -52,11 +53,12 @@ class ProductApiController extends BaseApiController
             return $this->sendError('Product not found', [], 404);
         }
 
-        return $this->sendResponse($product, 'Product retrieved successfully');
+        return $this->sendResponse((new \App\Http\Resources\ProductResource($product))->resolve($request), 'Product retrieved successfully');
     }
 
     public function search(Request $request, string $term): JsonResponse
     {
+        validator(['term' => $term], ['term' => 'required|string|max:100'])->validate();
         $products = Product::catalogFor($this->companyContext($request), ['products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.image'])
             ->where('is_active', true)
             ->where(function ($q) use ($term) {
@@ -66,6 +68,6 @@ class ProductApiController extends BaseApiController
             ->limit(20)
             ->get();
 
-        return $this->sendResponse($products, 'Search results');
+        return $this->sendResponse(\App\Http\Resources\ProductResource::collection($products)->resolve($request), 'Search results');
     }
 }

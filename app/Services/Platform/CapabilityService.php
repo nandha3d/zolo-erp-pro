@@ -170,6 +170,11 @@ class CapabilityService
             if ($profileKey && \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')) {
                 app(\App\Services\Industry\IndustryProfileService::class)->installDefaults($profileKey, $context, $actor);
             }
+            if ($previousStates !== $states && \Illuminate\Support\Facades\Schema::hasTable('company_setup_audits')) {
+                DB::table('company_setup_audits')->insert(['company_id' => $context->companyId, 'actor_id' => $actor,
+                    'action' => 'capabilities_changed', 'before_json' => json_encode($previousStates, JSON_THROW_ON_ERROR),
+                    'after_json' => json_encode($states, JSON_THROW_ON_ERROR), 'created_at' => now()]);
+            }
             DB::afterCommit(fn () => Cache::forget($this->cacheKey($context->companyId)));
         }, 3);
     }

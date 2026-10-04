@@ -34,6 +34,7 @@ class SaleApiController extends BaseApiController
     /** Get paginated sales with optional filters within the authorized context. */
     public function index(Request $request): JsonResponse
     {
+        $request->validate(['per_page' => 'sometimes|integer|min:1|max:100']);
         $query = $this->queryFor($this->companyContext($request));
 
         if ($request->filled('warehouse_id')) {
@@ -52,7 +53,7 @@ class SaleApiController extends BaseApiController
         $perPage = (int) $request->input('per_page', 15);
         $sales = $query->orderBy('id', 'desc')->paginate($perPage);
 
-        return $this->sendResponse($sales->items(), 'Sales retrieved successfully', 200, [
+        return $this->sendResponse(\App\Http\Resources\CommercialDocumentResource::collection($sales->getCollection())->resolve($request), 'Sales retrieved successfully', 200, [
             'pagination' => [
                 'total' => $sales->total(),
                 'per_page' => $sales->perPage(),
@@ -84,7 +85,7 @@ class SaleApiController extends BaseApiController
             ->where('reference_id', $sale->id)
             ->first();
 
-        $data = $sale->toArray();
+        $data = (new \App\Http\Resources\CommercialDocumentResource($sale))->resolve($request);
         $data['journal_entry'] = $journalEntry;
 
         return $this->sendResponse($data, 'Sale retrieved successfully');

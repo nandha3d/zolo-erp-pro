@@ -32,6 +32,7 @@ class PurchaseApiController extends BaseApiController
 
     public function index(Request $request): JsonResponse
     {
+        $request->validate(['per_page' => 'sometimes|integer|min:1|max:100']);
         $query = $this->queryFor($this->companyContext($request));
 
         if ($request->filled('warehouse_id')) {
@@ -47,7 +48,7 @@ class PurchaseApiController extends BaseApiController
         $perPage = (int) $request->input('per_page', 15);
         $purchases = $query->orderBy('id', 'desc')->paginate($perPage);
 
-        return $this->sendResponse($purchases->items(), 'Purchases retrieved successfully', 200, [
+        return $this->sendResponse(\App\Http\Resources\CommercialDocumentResource::collection($purchases->getCollection())->resolve($request), 'Purchases retrieved successfully', 200, [
             'pagination' => [
                 'total' => $purchases->total(),
                 'per_page' => $purchases->perPage(),
@@ -75,7 +76,7 @@ class PurchaseApiController extends BaseApiController
             ->where('reference_id', $purchase->id)
             ->first();
 
-        $data = $purchase->toArray();
+        $data = (new \App\Http\Resources\CommercialDocumentResource($purchase))->resolve($request);
         $data['journal_entry'] = $journalEntry;
 
         return $this->sendResponse($data, 'Purchase retrieved successfully');

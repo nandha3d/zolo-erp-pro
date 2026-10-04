@@ -30,7 +30,7 @@ Route::prefix('v1')->group(function () {
 
     // Public Authentication Endpoints
     Route::prefix('auth')->group(function () {
-        Route::post('login', [AuthController::class, 'login'])->name('api.v1.auth.login');
+        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:api-login')->name('api.v1.auth.login');
     });
 
     // Public Tenant Addons Status
