@@ -10,7 +10,7 @@ return new class extends Migration
 {
     // Only audited company-owned masters and children. Users and shared platform references remain global.
     private const REFERENCES = [
-        'variants' => [], 'discounts' => [], 'discount_plans' => [],
+        'variants' => [], 'discounts' => [], 'discount_plans' => [], 'taxes' => [],
         'departments' => [], 'designations' => [], 'shifts' => [], 'leave_types' => [],
         'employees' => ['department_id' => 'departments', 'designation_id' => 'designations', 'shift_id' => 'shifts',
             'warehouse_id' => 'warehouses', 'biller_id' => 'billers'],

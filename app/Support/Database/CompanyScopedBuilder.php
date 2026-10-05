@@ -23,7 +23,7 @@ class CompanyScopedBuilder extends Builder
         'transfers', 'product_transfer', 'returns', 'product_returns', 'return_purchases', 'purchase_product_return',
         'adjustments', 'product_adjustments', 'stock_counts', 'expenses', 'accounts', 'quotations', 'incomes',
         'money_transfers', 'payrolls', 'deliveries', 'damage_stocks', 'exchanges',
-        'variants', 'product_variants', 'discounts', 'discount_plans', 'discount_plan_customers',
+        'variants', 'product_variants', 'discounts', 'discount_plans', 'discount_plan_customers', 'taxes',
         'discount_plan_discounts', 'departments', 'designations', 'shifts', 'leave_types', 'employees',
         'attendances', 'overtimes', 'leaves', 'employee_transactions', 'bom_lines', 'production_outputs',
         'job_work_dispatch_lines', 'job_work_receipt_lines',

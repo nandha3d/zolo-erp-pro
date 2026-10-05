@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tax extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     protected $fillable =[
         "name", "rate", "is_active", "woocommerce_tax_id"
     ];
