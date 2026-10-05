@@ -404,7 +404,8 @@ class InventoryMovementService
 
     private function warehouseRow(?int $companyId, int $productId, int $warehouseId, ?int $variantId, ?int $batchId): Product_Warehouse
     {
-        $query = Product_Warehouse::where('product_id', $productId)->where('warehouse_id', $warehouseId);
+        // Foreign or duplicate rows must stay visible here: they are exactly what this check refuses to touch.
+        $query = Product_Warehouse::withoutGlobalScope('request_company')->where('product_id', $productId)->where('warehouse_id', $warehouseId);
         foreach (['variant_id' => $variantId, 'product_batch_id' => $batchId] as $column => $value) {
             $value === null
                 ? $query->where(fn ($q) => $q->whereNull($column)->orWhere($column, 0))

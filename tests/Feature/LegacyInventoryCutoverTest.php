@@ -73,6 +73,8 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
             (new $class)->up();
         }
         Schema::table('packing_slips', fn (Blueprint $table) => $table->integer('delivery_id')->nullable());
+        // Company-owned models are scoped by request context, which needs the ownership column.
+        Schema::table('adjustments', fn (Blueprint $table) => $table->unsignedBigInteger('company_id')->nullable());
         foreach ([
             '2024_09_01_120515_create_productions_table.php' => 'CreateProductionsTable',
             '2024_09_01_120536_create_product_productions_table.php' => 'CreateProductProductionsTable',
@@ -496,13 +498,15 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
         $controller->store($this->request($this->adjustmentPayload($product, 2)));
         $request = $this->request([]);
         $request->attributes->set(CompanyContext::class, new CompanyContext($companyId + 1, 1, 1));
+        $adjustmentId = Adjustment::withoutGlobalScopes()->sole()->id;
         try {
-            $controller->destroy(Adjustment::sole()->id);
+            $controller->destroy($adjustmentId);
             $this->fail('A foreign document must not be reversed.');
-        } catch (StockPolicyException) {
+        } catch (StockPolicyException|\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            // The request-company scope hides the document, or the ledger refuses the foreign movement.
         }
         $this->assertEquals(12, $product->fresh()->qty);
-        $this->assertSame(1, Adjustment::count());
+        $this->assertSame(1, Adjustment::withoutGlobalScopes()->count());
         $this->assertReconciled();
     }
 
