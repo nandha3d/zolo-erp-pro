@@ -208,6 +208,6 @@ class CapabilityService
 
     protected function optionalActivationReady(): bool
     {
-        return CapabilityCatalog::OPTIONAL_ACTIVATION_READY;
+        return (bool) env('ERP_OPTIONAL_ACTIVATION_READY', CapabilityCatalog::OPTIONAL_ACTIVATION_READY);
     }
 }

@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Route;
 
 $api = $operationsApi ?? false;
 Route::prefix($api ? 'v1/operations' : 'operations')->name($api ? 'api.operations.' : 'operations.')
-    ->middleware([$api ? 'auth:sanctum' : 'auth', 'company.context', RequireOperations::class])->group(function () {
+    ->middleware([$api ? 'auth:sanctum' : 'auth', 'company.context', RequireOperations::class])->group(function () use ($api) {
+        Route::get('/', fn() => redirect()->route($api ? 'api.operations.hub' : 'operations.hub', ['area' => 'job-work']))->name('index');
         Route::get('{area}', [OperationsController::class, 'hub'])->where('area', 'manufacturing|job-work|profiles|projects|stock')->name('hub');
         Route::get('{kind}/{id}', [OperationsController::class, 'detail'])->where('kind', 'production|job-work|project')->whereNumber('id')->name('detail');
         Route::post('{action}', [OperationsController::class, 'action'])->where('action', 'bom|production-plan|job-order|project|expiry-writeoff');
