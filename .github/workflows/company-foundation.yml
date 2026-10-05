@@ -2,7 +2,7 @@ name: ERP completion acceptance
 
 on:
   push:
-    branches: [main, codex/phase1-12-final-closure]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

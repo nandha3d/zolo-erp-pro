@@ -173,8 +173,13 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
             $this->get($uri)->assertOk()->assertDontSee('Secret B ledger');
         }
         DB::table('company_user')->where('company_id', $this->company->id)->where('user_id', 1)->update(['role_id_override' => 4]);
+        $this->get('/accounting/vouchers')->assertForbidden();
+        $this->getJson('/api/v1/accounting/day-book')->assertForbidden();
+        $reportPermissionId = DB::table('permissions')->insertGetId(['name' => 'accounting.reports.view']);
+        DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => $reportPermissionId]);
         $this->get('/accounting/vouchers')->assertOk()->assertDontSee('accounting-voucher-form')
             ->assertSee('Ask a company administrator')->assertDontSee('Period controls');
+        $this->getJson('/api/v1/accounting/day-book')->assertOk();
         DB::table('permissions')->insert(['id' => 5, 'name' => 'accounting.voucher.post']);
         DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => 5]);
         $this->get('/accounting/vouchers')->assertOk()->assertSee('accounting-voucher-form')->assertDontSee('Period controls');

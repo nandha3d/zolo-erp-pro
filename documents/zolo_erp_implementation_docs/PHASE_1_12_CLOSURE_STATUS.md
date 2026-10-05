@@ -21,7 +21,9 @@ The full migration chain creates new permission records before the legacy tenant
 
 The old commercial browser fixture constructed the Phase 6 view directly without the newer industry/profile variables. It now renders both fast-entry modes through the actual controller and authorized HTTP context. The capability bypass remains explicitly confined to the fixture.
 
-CI now runs all six required configurations against separate disposable MySQL services: company, commercial, compliance, operations, delivery and legacy-mysql. Delivery alone creates a restricted restore target. The closure branch and pull requests both trigger the matrix.
+The old accounting web fixture expected an operator without `accounting.reports.view` to read Voucher Hub. It now asserts that web/API reads fail until that named permission is granted, then checks that posting controls remain hidden until the separate posting grant exists. Production authorization is preserved.
+
+CI now runs all six required configurations against separate disposable MySQL services: company, commercial, compliance, operations, delivery and legacy-mysql. Delivery alone creates a restricted restore target. Pull requests trigger the matrix on each head update; main pushes and manual dispatch also run it. The initial closure push was additionally verified, but that branch trigger was removed after PR creation to avoid duplicate push/PR matrices.
 
 ## Sample rehearsal created at the user's request
 
@@ -51,6 +53,8 @@ The sample source hash before opening stock is `a3264240443ae14683c30cf8f925a944
 
 Accounting journals/open items in this sample reconcile at zero. That does not establish historical AR/AP acceptance or prove inventory GL agrees with opening stock valuation.
 
+The existing `erp:health` command returns failure for this sample: missing COGS mapping, missing default sale/purchase/journal/payment series, stock quantity differences and inventory accounting value differing from the stock ledger. Its private report is `scratch/completion-rehearsal/health.json`. These are review/setup blockers, not approvals.
+
 The requested closure plan explicitly says to stop on unexplained stock/accounting differences and missing historical stock attribution. Functional cutover and final main merge therefore remain blocked. Sample generation cannot invent the missing business history or reviewer decisions.
 
 ## Remaining closure work and acceptance
@@ -64,4 +68,4 @@ The requested closure plan explicitly says to stop on unexplained stock/accounti
 
 ## Validation record
 
-PHP syntax for cumulative changed files, JavaScript syntax for cumulative changed files, and diff whitespace pass. The permission-seeding regression passes on MySQL: 1 test, 11 assertions. The corrected commercial HTTP fixture passes on SQLite and MySQL: 1 test, 8 assertions each. Compliance MySQL passes: 62 tests, 361 assertions. Operations MySQL passes: 28 tests, 227 assertions. Delivery MySQL passes: 29 tests, 147 assertions, with the SQLite-only archive test skipped; the separate MySQL restore case runs. Legacy seeded MySQL passes: 28 tests, 204 assertions. The initial commercial suite exposed the obsolete browser fixture (28 tests, 141 assertions, one error, one optional performance skip); its correction is verified above. Remaining full suite and exact-head GitHub results are recorded after completion, without replacing historical proof.
+PHP syntax for cumulative changed files, JavaScript syntax for cumulative changed files, and diff whitespace pass. The permission-seeding regression passes on MySQL: 1 test, 11 assertions. The corrected commercial HTTP fixture passes on SQLite and MySQL: 1 test, 8 assertions each. The corrected accounting permission case passes on SQLite: 1 test, 24 assertions. Compliance MySQL passes: 62 tests, 361 assertions. Operations MySQL passes: 28 tests, 227 assertions. Delivery MySQL passes: 29 tests, 147 assertions, with the SQLite-only archive test skipped; the separate MySQL restore case runs. Legacy seeded MySQL passes: 28 tests, 204 assertions. The initial commercial suite exposed the obsolete browser fixture (28 tests, 141 assertions, one error, one optional performance skip); the initial company suite exposed the obsolete accounting permission expectation (280 tests, 2,861 assertions, one failure). Their focused corrections are verified above. The sample preparation guard also refuses a non-fixture database before application bootstrap. Full acceptance for the corrected head is reported in [PR #3](https://github.com/vigneshsinna/zolo-erp-pro/pull/3), without replacing these historical results.
