@@ -150,7 +150,7 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
         DB::table('company_user_branches')->insert(['company_id' => $company->id, 'user_id' => 1, 'branch_id' => $branch->id]);
         \App\Models\Accounting\FiscalYear::create(['company_id' => $company->id, 'name' => 'Cutover FY', 'start_date' => now()->startOfYear()->toDateString(),
             'end_date' => now()->endOfYear()->toDateString(), 'status' => 'open']);
-        foreach (['damage_stocks', 'exchanges'] as $table) {
+        foreach (['damage_stocks', 'exchanges', 'deliveries'] as $table) {
             if (!Schema::hasColumn($table, 'company_id')) {
                 Schema::table($table, fn (Blueprint $blueprint) => $blueprint->unsignedBigInteger('company_id')->nullable());
             }
