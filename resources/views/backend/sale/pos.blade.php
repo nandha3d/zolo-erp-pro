@@ -3390,7 +3390,7 @@
         if(sale[33])
             htmltext += '<strong>{{__("db.Table")}}: </strong>'+sale[33]+'<br>';
         if(sale[30])
-            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/sale/'+sale[30]+'">Download</a><br>';
+            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="{{ url('secure-documents/sale') }}/'+sale[30]+'">Download</a><br>';
 
         htmltext += '<br><div class="row"><div class="col-md-6"><strong>{{__("db.From")}}:</strong><br>'+sale[3]+'<br>'+sale[4]+'<br>'+sale[5]+'<br>'+sale[6]+'<br>'+sale[7]+'<br>'+sale[8]+
         '</div><div class="col-md-6"><div class="float-right"><strong>{{__("db.To")}}:</strong><br>'+sale[9]+'<br>'+sale[10]+'<br>'+sale[11]+'<br>'+sale[12]+'</div></div></div>';

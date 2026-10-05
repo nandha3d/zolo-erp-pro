@@ -278,7 +278,7 @@
         `;
 
         if (purchase.document) {
-            htmltext += '{{__("db.Attach Document")}}: <a href="documents/purchase/' + purchase.document + '" target="_blank">Download</a><br>';
+            htmltext += '{{__("db.Attach Document")}}: <a href="{{ url('secure-documents/purchase') }}/' + purchase.document + '" target="_blank">Download</a><br>';
         }
 
         htmltext += `

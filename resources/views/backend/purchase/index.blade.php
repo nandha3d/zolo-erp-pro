@@ -964,7 +964,7 @@
         else
             htmltext += '<br>{{__("db.Exchange Rate")}}: N/A<br>';
         if(purchase[25])
-            htmltext += '{{__("db.Attach Document")}}: <a href="documents/purchase/'+purchase[25]+'">Download</a><br>';
+            htmltext += '{{__("db.Attach Document")}}: <a href="{{ url('secure-documents/purchase') }}/'+purchase[25]+'">Download</a><br>';
         htmltext += '<br><div class="row"><div class="col-md-6">{{__("db.From")}}:<br>'+purchase[7]+'<br>'+purchase[8]+'<br>'+purchase[9]+'<br>'+purchase[10]+'<br>'+purchase[11]+'<br>'+purchase[12]+'</div><div class="col-md-6"><div class="float-right">{{__("db.To")}}:<br>'+purchase[4]+'<br>'+purchase[5]+'<br>'+purchase[6]+'</div></div></div>';
         $(".product-purchase-list tbody").remove();
         $.get('purchases/product_purchase/' + purchase[3], function(data) {

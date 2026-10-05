@@ -87,6 +87,40 @@ class LegacyCompanyIsolationWebTest extends TestCase
         $this->assertSame('Foreign customer', DB::table('customers')->where('id', $this->otherCustomer)->value('name'));
     }
 
+    public function test_attachments_are_served_only_to_the_owning_company(): void
+    {
+        $directory = public_path('documents/sale');
+        if (!is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+        $own = DB::table('sales')->insertGetId($this->saleRow('OWN-DOC', 1) + ['document' => 'own-attachment.txt']);
+        DB::table('sales')->where('id', $this->otherSale)->update(['document' => 'foreign-attachment.txt']);
+        file_put_contents($directory.'/own-attachment.txt', 'mine');
+        file_put_contents($directory.'/foreign-attachment.txt', 'theirs');
+        try {
+            $this->get(route('documents.file', ['sale', 'own-attachment.txt']))->assertRedirect(); // guests are sent to login
+            $this->actingAs($this->admin);
+            $served = $this->get(route('documents.file', ['sale', 'own-attachment.txt']));
+            $served->assertOk();
+            $this->assertSame('mine', file_get_contents($served->baseResponse->getFile()->getPathname()));
+            $this->get(route('documents.file', ['sale', 'foreign-attachment.txt']))->assertNotFound();
+            $this->get(route('documents.file', ['sale', 'not-referenced.txt']))->assertNotFound();
+            $this->get(route('documents.file', ['nonsense', 'own-attachment.txt']))->assertNotFound();
+        } finally {
+            @unlink($directory.'/own-attachment.txt');
+            @unlink($directory.'/foreign-attachment.txt');
+        }
+    }
+
+    private function saleRow(string $reference, int $company): array
+    {
+        return [
+            'reference_no' => $reference, 'company_id' => $company, 'customer_id' => 1, 'user_id' => 1, 'warehouse_id' => 1, 'biller_id' => 1,
+            'item' => 0, 'total_qty' => 0, 'total_discount' => 0, 'total_tax' => 0, 'total_price' => 0, 'grand_total' => 0,
+            'sale_status' => 1, 'payment_status' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ];
+    }
+
     public function test_business_pages_reject_a_company_the_user_does_not_belong_to(): void
     {
         $this->actingAs($this->admin)->get(route('sales.index'), ['X-Company-ID' => (string) $this->otherCompany])->assertForbidden();

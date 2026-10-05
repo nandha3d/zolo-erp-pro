@@ -380,7 +380,7 @@
         $('input[name="quotation_id"]').val(quotation[13]);
         var htmltext = '<strong>{{__("db.date")}}: </strong>'+quotation[0]+'<br><strong>{{__("db.reference")}}: </strong>'+quotation[1]+'<br><strong>{{__("db.status")}}: </strong>'+quotation[2]+'<br>';
         if(quotation[25])
-            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/quotation/'+quotation[25]+'">Download</a><br>';
+            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="{{ url('secure-documents/quotation') }}/'+quotation[25]+'">Download</a><br>';
         htmltext += '<br><div class="row"><div class="col-md-6"><strong>{{__("db.From")}}:</strong><br>'+quotation[3]+'<br>'+quotation[4]+'<br>'+quotation[5]+'<br>'+quotation[6]+'<br>'+quotation[7]+'<br>'+quotation[8]+'</div><div class="col-md-6"><div class="float-right"><strong>{{__("db.To")}}:</strong><br>'+quotation[9]+'<br>'+quotation[10]+'<br>'+quotation[11]+'<br>'+quotation[12]+'</div></div></div>';
         $.get('quotations/product_quotation/' + quotation[13], function(data){
             $(".product-quotation-list tbody").remove();

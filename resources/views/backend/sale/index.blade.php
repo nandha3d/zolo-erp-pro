@@ -984,7 +984,7 @@
                 if(paying_method[index] == 'QR Code' && all_permission.indexOf("sale-payment-edit") != -1)
                     cols += '<li><a href="{{url("frontend/images/payment-proof")}}/'+payment_proof+'" target="_blank"><button type="button" class="btn btn-link"><i class="fa fa-eye"></i> {{__("db.Payment Proof")}}</button></a></li> ';
                 if(payment_document[index])
-                    cols += '<li><a href="{{url("documents/add-payment")}}/'+payment_document[index]+'" target="_blank"><button type="button" class="btn btn-link"><i class="fa fa-file"></i> {{__("db.View Document")}}</button></a></li> ';
+                    cols += '<li><a href="{{url("secure-documents/add-payment")}}/'+payment_document[index]+'" target="_blank"><button type="button" class="btn btn-link"><i class="fa fa-file"></i> {{__("db.View Document")}}</button></a></li> ';
                 if(paying_method[index] != 'Paypal' && all_permission.indexOf("sale-payment-edit") != -1)
                     cols += '<li><button type="button" class="btn btn-link edit-btn" data-id="' + payment_id[index] +'" data-installment_id="' + installment_id[index] + '" data-clicked=false data-toggle="modal" data-target="#edit-payment"><i class="dripicons-document-edit"></i> {{__("db.edit")}}</button></li> ';
                 if(all_permission.indexOf("sale-payment-delete") != -1)
@@ -1546,7 +1546,7 @@
         if(sale[33])
             htmltext += '{{__("db.Table")}}: '+sale[33]+'<br>';
         if(sale[30])
-            htmltext += '{{__("db.Attach Document")}}: <a href="documents/sale/'+sale[30]+'">Download</a><br>';
+            htmltext += '{{__("db.Attach Document")}}: <a href="{{ url('secure-documents/sale') }}/'+sale[30]+'">Download</a><br>';
 
         htmltext += '<br><div class="row"><div class="col-md-6">{{__("db.From")}}:<br>'+sale[3]+'<br>'+sale[4]+'<br>'+sale[5]+'<br>'+sale[6]+'<br>'+sale[7]+'<br>'+sale[8]+
         '</div><div class="col-md-6"><div class="float-right">{{__("db.To")}}:<br>'+sale[9]+'<br>'+sale[10]+'<br>'+sale[11]+'<br>'+sale[12]+'</div></div></div>';

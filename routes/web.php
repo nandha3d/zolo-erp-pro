@@ -193,6 +193,10 @@ Route::group(['middleware' => 'auth'], function () {
 
 Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], function () {
 
+    // Company document attachments are delivered only to members of the owning company.
+    Route::get('secure-documents/{folder}/{file}', [\App\Http\Controllers\DocumentFileController::class, 'show'])
+        ->where(['folder' => '[a-z_-]+', 'file' => '[^/]+'])->name('documents.file');
+
     Route::get('/languages', [LanguageController::class, 'index'])->name('languages');
     Route::post('/languages/create', [LanguageController::class, 'store']);
     Route::post('/languages/{id}/set-default', [LanguageController::class, 'setDefault']);

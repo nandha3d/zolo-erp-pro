@@ -372,7 +372,7 @@
         else
             htmltext += '<br><strong>{{__("db.Exchange Rate")}}: </strong>N/A<br>';
         if(returns[23])
-            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/purchase_return/'+returns[23]+'">Download</a><br>';
+            htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="{{ url('secure-documents/purchase_return') }}/'+returns[23]+'">Download</a><br>';
         htmltext += '<br><div class="row"><div class="col-md-6"><strong>{{__("db.From")}}:</strong><br>'+returns[2]+'<br>'+returns[3]+'<br>'+returns[4]+'</div><div class="col-md-6"><div class="float-right"><strong>{{__("db.To")}}:</strong><br>'+returns[5]+'<br>'+returns[6]+'<br>'+returns[7]+'<br>'+returns[8]+'<br>'+returns[9]+', '+returns[10]+'</div></div></div>';
         $.get('return-purchase/product_return/' + returns[11], function(data){
             $(".product-return-list tbody").remove();
