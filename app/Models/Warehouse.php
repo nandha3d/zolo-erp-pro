@@ -9,6 +9,17 @@ class Warehouse extends Model
 {
     use ScopesCompanyQueries;
 
+    /** Within a request, a user only sees warehouses of the branches they are authorized for. */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('authorized_branches', function ($query) {
+            if (static::requestCompanyContext() && auth()->id()) {
+                $query->whereIn($query->getModel()->qualifyColumn('branch_id'), \Illuminate\Support\Facades\DB::table('company_user_branches')
+                    ->where('company_id', static::requestCompanyContext()->companyId)->where('user_id', auth()->id())->select('branch_id'));
+            }
+        });
+    }
+
     protected $fillable =[
 
         "name", "phone", "email", "address", "is_active"

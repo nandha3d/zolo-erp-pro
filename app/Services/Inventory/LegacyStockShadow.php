@@ -20,16 +20,12 @@ use Throwable;
 class LegacyStockShadow
 {
     /**
-     * Routed legacy stock writers (LEGACY_STOCK_SHADOW_AUDIT.md) => document model whose first created
-     * instance identifies the movement source. Move a method out of this map at its authoritative cutover.
+     * Routed legacy stock writers => document model whose first created instance identifies the movement source.
+     * Every audited writer, including Sale, Purchase, Return and ReturnPurchase, now posts authoritative movements
+     * through InventoryMovementService, so the map is empty. The mechanism stays for reconciling retained history
+     * and for any future writer that must be observed before it is converted.
      */
-    public const WRITERS = [
-        'App\Http\Controllers\SaleController' => ['Sale', ['store', 'update', 'importSale', 'deleteBySelection', 'destroy']],
-        'App\Http\Controllers\PurchaseController' => ['Purchase', ['store', 'update', 'importPurchase', 'deleteBySelection', 'destroy']],
-        'App\Http\Controllers\ReturnController' => ['Returns', ['store', 'update', 'deleteBySelection', 'destroy']],
-        'App\Http\Controllers\ReturnPurchaseController' => ['ReturnPurchase', ['store', 'update', 'deleteBySelection', 'destroy']],
-    ];
-
+    public const WRITERS = [];
     private int $paused = 0;
 
     /** @var array{source: string, source_id: ?int, document: ?string, model: ?Model, entries: list<array>}|null */

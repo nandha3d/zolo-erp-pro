@@ -572,7 +572,9 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
     {
         foreach ([AdjustmentController::class, TransferController::class, PackingSlipController::class,
             DamageStockController::class, ExchangeController::class, CafeOperationsController::class,
-            ProductController::class, ProductionController::class] as $controller) {
+            ProductController::class, ProductionController::class, \App\Http\Controllers\SaleController::class,
+            \App\Http\Controllers\PurchaseController::class, \App\Http\Controllers\ReturnController::class,
+            \App\Http\Controllers\ReturnPurchaseController::class] as $controller) {
             $this->assertArrayNotHasKey($controller, LegacyStockShadow::WRITERS);
         }
     }

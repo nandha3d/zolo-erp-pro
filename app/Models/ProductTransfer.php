@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductTransfer extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     protected $table = 'product_transfer';
     protected $fillable =[
 

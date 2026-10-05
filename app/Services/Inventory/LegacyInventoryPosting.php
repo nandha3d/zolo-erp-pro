@@ -65,6 +65,70 @@ class LegacyInventoryPosting
         }
     }
 
+    /**
+     * Stock lines for received purchase lines. Quantity is what was physically received, in the purchase unit;
+     * cost is the entered net unit cost. Lines received at zero (ordered/pending) have no stock effect.
+     *
+     * @param iterable<Model> $lines ProductPurchase rows
+     * @return list<StockLine>
+     */
+    public function purchaseLines(iterable $lines): array
+    {
+        $stock = [];
+        foreach ($lines as $line) {
+            if ((float) $line->recieved <= 0) {
+                continue;
+            }
+            $stock[] = StockLine::fromArray([
+                'product_id' => $line->product_id, 'qty' => $line->recieved, 'variant_id' => $line->variant_id,
+                'product_batch_id' => $line->product_batch_id, 'imei_number' => $line->imei_number,
+                'uom_id' => $line->purchase_unit_id, 'unit_cost' => $line->net_unit_cost,
+            ]);
+        }
+
+        return $stock;
+    }
+
+    /**
+     * Stock lines for sale-like rows (sales, sale returns): combos expand to components, services and
+     * digital goods have no stock.
+     *
+     * @param iterable<Model> $lines Product_Sale or ProductReturn rows
+     * @return list<StockLine>
+     */
+    public function documentSaleLines(iterable $lines): array
+    {
+        $stock = [];
+        foreach ($lines as $line) {
+            array_push($stock, ...$this->saleLines($line));
+        }
+
+        return $stock;
+    }
+
+    /**
+     * Stock lines for purchase return rows, in the purchase unit.
+     *
+     * @param iterable<Model> $lines PurchaseProductReturn rows
+     * @return list<StockLine>
+     */
+    public function purchaseReturnLines(iterable $lines): array
+    {
+        $stock = [];
+        foreach ($lines as $line) {
+            if ((int) $line->purchase_unit_id === 0) {
+                continue; // 'n/a' unit: a service line without stock
+            }
+            $stock[] = StockLine::fromArray([
+                'product_id' => $line->product_id, 'qty' => $line->qty, 'variant_id' => $line->variant_id,
+                'product_batch_id' => $line->product_batch_id, 'imei_number' => $line->imei_number,
+                'uom_id' => $line->purchase_unit_id,
+            ]);
+        }
+
+        return $stock;
+    }
+
     /** Expand a combo at packing time. Subsequent reversals use the recorded components. */
     public function saleLines(Model $line): array
     {

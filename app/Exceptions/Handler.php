@@ -27,6 +27,18 @@ class Handler extends ExceptionHandler
         'auth_token', 'token', 'api_key', 'provider_secret', 'authorization',
     ];
 
+    public function register(): void
+    {
+        // A rejected stock posting wrote nothing; tell the operator why instead of failing with a server error.
+        $this->renderable(function (\App\Services\Inventory\StockPolicyException $error, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $error->getMessage()], 422);
+            }
+
+            return redirect()->back()->withInput()->with('not_permitted', $error->getMessage());
+        });
+    }
+
     /**
      * Report or log an exception.
      *

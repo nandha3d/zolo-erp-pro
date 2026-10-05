@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Adjustment extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     protected $fillable =[
         "reference_no", 
         "warehouse_id", 

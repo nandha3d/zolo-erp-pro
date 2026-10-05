@@ -12,9 +12,10 @@ use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
- * Seeded MySQL proof through the full middleware stack. Commercial writers still use shadow history;
- * Phase 4c writers use applied movements. Replaying with shadow off proves that the remaining shadow
- * does not change projections and that applied postings are independent of the shadow switch.
+ * Seeded MySQL proof through the full middleware stack. Every legacy stock writer posts authoritative movements
+ * (Sale, Purchase, Return and ReturnPurchase joined the Phase 4c writers): one applied movement per request,
+ * projections that agree with the ledger, atomic numbers from the company series, and no leaked transaction level.
+ * The class name is historical; the shadow map is empty.
  */
 class LegacyStockShadowWebTest extends TestCase
 {
@@ -37,75 +38,189 @@ class LegacyStockShadowWebTest extends TestCase
         $this->admin = User::findOrFail(1);
         $this->main = 1;
         $this->branchStore = DB::table('warehouses')->insertGetId(
-            ['name' => 'Shadow second store', 'is_active' => 1, 'company_id' => 1, 'branch_id' => 1, 'created_at' => now(), 'updated_at' => now()]
+            ['name' => 'Cutover second store', 'is_active' => 1, 'company_id' => 1, 'branch_id' => 1, 'created_at' => now(), 'updated_at' => now()]
             + array_intersect_key((array) DB::table('warehouses')->find(1), array_flip(['phone', 'email', 'address'])),
         );
-        $this->items['a'] = $this->item('SHADOW-A', [$this->main => 20]);
-        $this->items['b'] = $this->item('SHADOW-B', [$this->main => 5, $this->branchStore => 3]);
-        // Known-gap fixtures: stock only in the second store, and a batch-tracked item.
-        $this->items['c'] = $this->item('SHADOW-C', [$this->branchStore => 3]);
-        $this->items['d'] = $this->item('SHADOW-D', [$this->main => 10], 'BATCH-D');
+        $this->items['a'] = $this->item('CUT-A', [$this->main => 20]);
+        $this->items['b'] = $this->item('CUT-B', [$this->main => 5, $this->branchStore => 3]);
+        $this->items['c'] = $this->item('CUT-C', [$this->branchStore => 3]);
+        $this->items['d'] = $this->item('CUT-D', [$this->main => 10], 'BATCH-D');
         $this->artisan('erp:stock-opening', ['--date' => now()->toDateString()])->assertSuccessful();
-        // The original seed export already disagrees with itself (e.g. product 1 total vs warehouse rows).
         $this->baseline = $this->differences();
+        // Numbering needs a financial year that covers today.
+        $today = now()->toDateString();
+        if (!DB::table('fiscal_years')->where('company_id', 1)->where('start_date', '<=', $today)->where('end_date', '>=', $today)->exists()) {
+            DB::table('fiscal_years')->insert([
+                'company_id' => 1, 'name' => 'Cutover fixture FY', 'start_date' => now()->startOfYear()->toDateString(),
+                'end_date' => now()->endOfYear()->toDateString(), 'is_closed' => 0, 'status' => 'open',
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+        config(['without_stock' => 'no']);
+        DB::table('general_settings')->update(['without_stock' => 'no']);
     }
 
-    /**
-     * Non-AJAX completed sales end in SaleController::genInvoice, which opens a transaction and returns a view
-     * before its commit. Legacy keeps the sale (its per-line work is already committed); the shadow must too.
-     */
-    public function test_web_sale_store_keeps_the_sale_and_records_one_shadow_issue(): void
+    public function test_web_sale_store_issues_stock_once_and_numbers_the_sale_from_the_company_series(): void
     {
         $a = $this->items['a'];
+        $level = DB::transactionLevel();
         [$response, $movement] = $this->stockRequest('sales.store', fn () => $this->post(route('sales.store'), $this->salePayload($a, 2)));
 
         $response->assertOk();
+        $this->assertSame($level, DB::transactionLevel(), 'the request must not leak a transaction level');
         $sale = DB::table('sales')->orderByDesc('id')->first();
-        $this->assertMovement($movement, 'issue', 'legacy:sales.store', $sale->id, [[$a['id'], $this->main, -2]]);
+        $this->assertMovement($movement, 'issue', 'legacy:sales', $sale->id, [[$a['id'], $this->main, -2]]);
         $this->assertSame(18.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertStringStartsWith('ERP-SAL-', $sale->reference_no);
+        $this->assertSame(1, $sale->company_id);
+        $this->assertSame(1, DB::table('document_number_reservations')->where('formatted_number', $sale->reference_no)
+            ->where('status', 'assigned')->where('source_id', $sale->id)->count());
     }
 
-    public function test_pos_ajax_sale_store_and_destroy_record_one_shadow_movement_each(): void
+    public function test_two_sales_get_distinct_consecutive_numbers(): void
+    {
+        $a = $this->items['a'];
+        $first = DB::table('sales')->find($this->ajaxSale($a, 1)->json());
+        $second = DB::table('sales')->find($this->ajaxSale($a, 1)->json());
+
+        $this->assertNotSame($first->reference_no, $second->reference_no);
+        $series = DB::table('document_series')->where('company_id', 1)->where('document_type', 'sale')->where('is_default', 1)->first();
+        $this->assertGreaterThanOrEqual(3, $series->next_number);
+    }
+
+    public function test_pos_ajax_sale_store_and_destroy_post_one_issue_and_one_reversal(): void
     {
         $a = $this->items['a'];
         [$response, $issue] = $this->stockRequest('sales.store (ajax)', fn () => $this->ajaxSale($a, 3));
         $saleId = (int) $response->json();
-        $this->assertMovement($issue, 'issue', 'legacy:sales.store', $saleId, [[$a['id'], $this->main, -3]]);
+        $this->assertMovement($issue, 'issue', 'legacy:sales', $saleId, [[$a['id'], $this->main, -3]]);
 
-        [$deleted, $receipt] = $this->stockRequest('sales.destroy', fn () => $this->delete(route('sales.destroy', $saleId)));
+        [$deleted, $reversal] = $this->stockRequest('sales.destroy', fn () => $this->delete(route('sales.destroy', $saleId)));
         $deleted->assertRedirect();
-        $this->assertMovement($receipt, 'receipt', 'legacy:sales.destroy', $saleId, [[$a['id'], $this->main, 3]]);
+        $this->assertMovement($reversal, 'reversal', 'legacy:sales', $saleId, [[$a['id'], $this->main, 3]]);
         $this->assertSame(20.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertSame('reversed', StockMovement::find($issue->id)->status);
     }
 
-    public function test_purchase_store_records_one_shadow_receipt(): void
+    public function test_sale_update_reverses_the_old_issue_and_issues_the_new_lines(): void
+    {
+        $a = $this->items['a'];
+        $saleId = (int) $this->ajaxSale($a, 3)->json();
+        $this->assertSame(17.0, $this->warehouseQty($a['id'], $this->main));
+        $last = StockMovement::max('id');
+
+        $payload = $this->salePayload($a, 5) + ['pos' => 0, 'created_at' => now()->format('Y-m-d H:i:s')];
+        $this->actingAs($this->admin)->put(route('sales.update', $saleId), $payload)->assertRedirect(url('sales'));
+
+        $this->assertSame(15.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertSame(['reversal', 'issue'], StockMovement::where('id', '>', $last)->orderBy('id')->pluck('movement_type')->all());
+        $this->assertSame([], $this->newDifferences());
+    }
+
+    public function test_sale_over_available_stock_is_blocked_and_leaves_no_sale_or_number(): void
+    {
+        $a = $this->items['a'];
+        $sales = DB::table('sales')->count();
+        $reservations = DB::table('document_number_reservations')->count();
+        $before = $this->snapshot();
+
+        $response = $this->actingAs($this->admin)->post(route('sales.store'), $this->salePayload($a, 99) + ['pos' => 1],
+            ['X-Requested-With' => 'XMLHttpRequest']);
+        $response->assertRedirect();
+        $this->assertStringContainsString('Insufficient stock', (string) session('not_permitted'));
+
+        $this->assertSame($sales, DB::table('sales')->count());
+        $this->assertSame($reservations, DB::table('document_number_reservations')->count());
+        $this->assertSame($before, $this->snapshot());
+    }
+
+    public function test_pre_cutover_sale_is_deleted_by_restoring_its_persisted_lines(): void
+    {
+        $a = $this->items['a'];
+        $saleId = (int) $this->ajaxSale($a, 4)->json();
+        // Make it look like a sale from before the cutover: its stock history is only a shadow record.
+        StockMovement::where('source_type', 'legacy:sales')->where('source_id', $saleId)
+            ->update(['projection_mode' => 'shadow', 'source_type' => 'legacy:sales.store']);
+        $this->assertSame(16.0, $this->warehouseQty($a['id'], $this->main));
+
+        $this->actingAs($this->admin)->delete(route('sales.destroy', $saleId))->assertRedirect();
+
+        $this->assertSame(20.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertTrue(StockMovement::where('source_type', 'legacy:sales:historical-reversal')->where('source_id', $saleId)->exists());
+    }
+
+    public function test_batch_sale_destroy_restores_the_batch_projection(): void
+    {
+        $d = $this->items['d'];
+        $saleId = (int) $this->ajaxSale($d, 2, $d['batch_id'])->json();
+        $this->assertSame(8.0, (float) DB::table('product_batches')->where('id', $d['batch_id'])->value('qty'));
+
+        $this->actingAs($this->admin)->delete(route('sales.destroy', $saleId))->assertRedirect();
+
+        $this->assertSame(10.0, $this->warehouseQty($d['id'], $this->main));
+        $this->assertSame(10.0, (float) DB::table('product_batches')->where('id', $d['batch_id'])->value('qty'));
+        $this->assertSame([], $this->newDifferences());
+    }
+
+    public function test_sale_from_a_warehouse_without_a_stock_row_is_blocked_by_policy(): void
+    {
+        $c = $this->items['c'];
+        $before = $this->snapshot();
+
+        $response = $this->actingAs($this->admin)->post(route('sales.store'), $this->salePayload($c, 2) + ['pos' => 1],
+            ['X-Requested-With' => 'XMLHttpRequest']);
+        $response->assertRedirect();
+        $this->assertStringContainsString('Insufficient stock', (string) session('not_permitted'));
+
+        $this->assertSame($before, $this->snapshot());
+        $this->assertSame([], $this->newDifferences());
+    }
+
+    public function test_purchase_store_posts_one_receipt_and_numbers_it(): void
     {
         $b = $this->items['b'];
         [$response, $movement] = $this->stockRequest('purchases.store', fn () => $this->post(route('purchases.store'), $this->purchasePayload([[$b, 4, 'piece']])));
 
         $response->assertRedirect(url('purchases'));
         $purchase = DB::table('purchases')->orderByDesc('id')->first();
-        $this->assertMovement($movement, 'receipt', 'legacy:purchases.store', $purchase->id, [[$b['id'], $this->main, 4]]);
+        $this->assertMovement($movement, 'receipt', 'legacy:purchases', $purchase->id, [[$b['id'], $this->main, 4]]);
         $this->assertSame(9.0, $this->warehouseQty($b['id'], $this->main));
+        $this->assertStringStartsWith('ERP-PUR-', $purchase->reference_no);
+        $this->assertSame(1, $purchase->company_id);
     }
 
-    /** PurchaseController::store rolls back its own transaction on a bad line and redirects: nothing is recorded. */
-    public function test_purchase_store_that_rolls_back_and_redirects_records_nothing(): void
+    public function test_purchase_that_rolls_back_posts_nothing_and_consumes_no_number(): void
     {
         $a = $this->items['a'];
         $b = $this->items['b'];
         $before = $this->snapshot();
         $last = StockMovement::max('id');
+        $reservations = DB::table('document_number_reservations')->count();
         $this->actingAs($this->admin)
             ->post(route('purchases.store'), $this->purchasePayload([[$a, 2, 'piece'], [$b, 1, 'no such unit']]))
             ->assertRedirect(url('purchases/create'));
 
         $this->assertSame($before, $this->snapshot());
         $this->assertSame($last, StockMovement::max('id'));
+        $this->assertSame($reservations, DB::table('document_number_reservations')->count());
         $this->assertSame($this->baseline, $this->differences());
     }
 
-    public function test_sale_return_store_records_one_shadow_receipt(): void
+    public function test_purchase_destroy_takes_back_what_it_received(): void
+    {
+        $b = $this->items['b'];
+        $this->actingAs($this->admin)->post(route('purchases.store'), $this->purchasePayload([[$b, 4, 'piece']]))->assertRedirect(url('purchases'));
+        $purchase = DB::table('purchases')->orderByDesc('id')->first();
+        $this->assertSame(9.0, $this->warehouseQty($b['id'], $this->main));
+
+        [$response, $reversal] = $this->stockRequest('purchases.destroy', fn () => $this->delete(route('purchases.destroy', $purchase->id)));
+
+        $response->assertRedirect();
+        $this->assertMovement($reversal, 'reversal', 'legacy:purchases', $purchase->id, [[$b['id'], $this->main, -4]]);
+        $this->assertSame(5.0, $this->warehouseQty($b['id'], $this->main));
+    }
+
+    public function test_sale_return_store_posts_one_receipt_and_destroy_reverses_it(): void
     {
         $a = $this->items['a'];
         $saleId = (int) $this->ajaxSale($a, 3)->json();
@@ -113,7 +228,7 @@ class LegacyStockShadowWebTest extends TestCase
         [$response, $movement] = $this->stockRequest('return-sale.store', fn () => $this->post(route('return-sale.store'), [
             'sale_id' => $saleId, 'customer_id' => 1, 'warehouse_id' => $this->main, 'biller_id' => 1, 'account_id' => 1,
             'currency_id' => 1, 'exchange_rate' => 1, 'item' => 1, 'total_qty' => 1, 'total_sale_discount' => 0, 'change_sale_status' => 0, 'total_tax' => 0,
-            'total_price' => 10, 'order_tax_rate' => 0, 'order_tax' => 0, 'grand_total' => 10, 'return_note' => 'shadow proof',
+            'total_price' => 10, 'order_tax_rate' => 0, 'order_tax' => 0, 'grand_total' => 10, 'return_note' => 'cutover proof',
             'is_return' => [$line->id], 'product_sale_id' => [$line->id], 'product_id' => [$a['id']], 'product_code' => [$a['code']],
             'qty' => [1], 'sale_unit' => ['piece'], 'net_unit_price' => [10], 'discount' => [0], 'tax_rate' => [0], 'tax' => [0],
             'subtotal' => [10], 'imei_number' => [''], 'product_batch_id' => [''], 'product_price' => [10],
@@ -121,11 +236,17 @@ class LegacyStockShadowWebTest extends TestCase
 
         $response->assertRedirect();
         $return = DB::table('returns')->orderByDesc('id')->first();
-        $this->assertMovement($movement, 'receipt', 'legacy:return-sale.store', $return->id, [[$a['id'], $this->main, 1]]);
+        $this->assertMovement($movement, 'receipt', 'legacy:returns', $return->id, [[$a['id'], $this->main, 1]]);
         $this->assertSame(18.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertStringStartsWith('ERP-SCN-', $return->reference_no);
+
+        [$deleted, $reversal] = $this->stockRequest('return-sale.destroy', fn () => $this->delete(route('return-sale.destroy', $return->id)));
+        $deleted->assertRedirect();
+        $this->assertMovement($reversal, 'reversal', 'legacy:returns', $return->id, [[$a['id'], $this->main, -1]]);
+        $this->assertSame(17.0, $this->warehouseQty($a['id'], $this->main));
     }
 
-    public function test_purchase_return_store_records_one_shadow_issue(): void
+    public function test_purchase_return_store_posts_one_issue_and_destroy_puts_it_back(): void
     {
         $b = $this->items['b'];
         $this->actingAs($this->admin)->post(route('purchases.store'), $this->purchasePayload([[$b, 4, 'piece']]))->assertRedirect(url('purchases'));
@@ -134,7 +255,7 @@ class LegacyStockShadowWebTest extends TestCase
         [$response, $movement] = $this->stockRequest('return-purchase.store', fn () => $this->post(route('return-purchase.store'), [
             'purchase_id' => $purchase->id, 'supplier_id' => 1, 'warehouse_id' => $this->main, 'account_id' => 1,
             'currency_id' => 1, 'exchange_rate' => 1, 'item' => 1, 'total_qty' => 2, 'total_discount' => 0, 'total_tax' => 0,
-            'total_cost' => 8, 'order_tax_rate' => 0, 'order_tax' => 0, 'grand_total' => 8, 'return_note' => 'shadow proof',
+            'total_cost' => 8, 'order_tax_rate' => 0, 'order_tax' => 0, 'grand_total' => 8, 'return_note' => 'cutover proof',
             'is_return' => [$line->id], 'product_purchase_id' => [$line->id], 'product_id' => [$b['id']], 'product_code' => [$b['code']],
             'qty' => [2], 'purchase_unit' => ['piece'], 'net_unit_cost' => [4], 'discount' => [0], 'tax_rate' => [0], 'tax' => [0],
             'subtotal' => [8], 'imei_number' => [''], 'product_batch_id' => [''],
@@ -142,19 +263,84 @@ class LegacyStockShadowWebTest extends TestCase
 
         $response->assertRedirect();
         $return = DB::table('return_purchases')->orderByDesc('id')->first();
-        $this->assertMovement($movement, 'issue', 'legacy:return-purchase.store', $return->id, [[$b['id'], $this->main, -2]]);
+        $this->assertMovement($movement, 'issue', 'legacy:return_purchases', $return->id, [[$b['id'], $this->main, -2]]);
         $this->assertSame(7.0, $this->warehouseQty($b['id'], $this->main));
+        $this->assertStringStartsWith('ERP-PDN-', $return->reference_no);
+
+        [$deleted, $reversal] = $this->stockRequest('return-purchase.destroy', fn () => $this->delete(route('return-purchase.destroy', $return->id)));
+        $deleted->assertRedirect();
+        $this->assertMovement($reversal, 'reversal', 'legacy:return_purchases', $return->id, [[$b['id'], $this->main, 2]]);
+        $this->assertSame(9.0, $this->warehouseQty($b['id'], $this->main));
+    }
+
+    public function test_purchase_update_replaces_the_receipt_and_selection_delete_takes_it_back(): void
+    {
+        $b = $this->items['b'];
+        $this->actingAs($this->admin)->post(route('purchases.store'), $this->purchasePayload([[$b, 4, 'piece']]))->assertRedirect(url('purchases'));
+        $purchase = DB::table('purchases')->orderByDesc('id')->first();
+        $last = StockMovement::max('id');
+
+        $payload = $this->purchasePayload([[$b, 6, 'piece']]) + ['created_at' => now()->format('d-m-Y'), 'product_variant_id' => []];
+        $this->actingAs($this->admin)->put(route('purchases.update', $purchase->id), $payload)->assertRedirect(url('purchases'));
+
+        $this->assertSame(11.0, $this->warehouseQty($b['id'], $this->main));
+        $this->assertSame(['reversal', 'receipt'], StockMovement::where('id', '>', $last)->orderBy('id')->pluck('movement_type')->all());
+        $this->assertSame([], $this->newDifferences());
+
+        $this->actingAs($this->admin)->post(url('purchases/deletebyselection'), ['purchaseIdArray' => [$purchase->id]])->assertOk();
+        $this->assertSame(5.0, $this->warehouseQty($b['id'], $this->main));
+        $this->assertSame([], $this->newDifferences());
+    }
+
+    public function test_sale_selection_delete_restores_each_sale(): void
+    {
+        $a = $this->items['a'];
+        $one = (int) $this->ajaxSale($a, 2)->json();
+        $two = (int) $this->ajaxSale($a, 3)->json();
+        $this->assertSame(15.0, $this->warehouseQty($a['id'], $this->main));
+
+        $this->actingAs($this->admin)->post(url('sales/deletebyselection'), ['saleIdArray' => [$one, $two]])->assertOk();
+
+        $this->assertSame(20.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertSame([], $this->newDifferences());
+    }
+
+    public function test_csv_imports_post_stock_and_use_company_numbers(): void
+    {
+        $a = $this->items['a'];
+        $unit = DB::table('units')->where('unit_name', 'piece')->value('unit_code');
+        $csv = fn () => \Illuminate\Http\UploadedFile::fake()->createWithContent('lines.csv',
+            "code,qty,unit,price,discount,tax\n{$a['code']},2,{$unit},10,0,No Tax\n");
+
+        $sale = $this->actingAs($this->admin)->post(route('sale.import'), [
+            'file' => $csv(), 'customer_id' => 1, 'warehouse_id' => $this->main, 'biller_id' => 1, 'sale_status' => 1, 'payment_status' => 1,
+            'order_tax_rate' => 0, 'order_discount' => 0, 'shipping_cost' => 0, 'currency_id' => 1, 'exchange_rate' => 1,
+            'total_qty' => 0, 'total_discount' => 0, 'total_tax' => 0, 'total_price' => 0, 'order_tax' => 0, 'grand_total' => 0, 'item' => 0, 'paid_amount' => 0,
+        ]);
+        $sale->assertRedirect(url('sales'));
+        $this->assertSame(18.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertStringStartsWith('ERP-SAL-', DB::table('sales')->orderByDesc('id')->value('reference_no'));
+
+        $purchase = $this->actingAs($this->admin)->post(route('purchase.import'), [
+            'file' => $csv(), 'supplier_id' => 1, 'warehouse_id' => $this->main, 'status' => 1, 'payment_status' => 1,
+            'order_tax_rate' => 0, 'order_discount' => 0, 'shipping_cost' => 0, 'currency_id' => 1, 'exchange_rate' => 1,
+            'item' => 0, 'total_qty' => 0, 'total_discount' => 0, 'total_tax' => 0, 'total_cost' => 0, 'order_tax' => 0, 'grand_total' => 0, 'paid_amount' => 0,
+        ]);
+        $this->assertSame(url('purchases'), $purchase->headers->get('Location'), $this->describe($purchase));
+        $this->assertSame(20.0, $this->warehouseQty($a['id'], $this->main));
+        $this->assertStringStartsWith('ERP-PUR-', DB::table('purchases')->orderByDesc('id')->value('reference_no'));
+        $this->assertSame([], $this->newDifferences());
     }
 
     public function test_completed_transfer_store_records_one_applied_transfer(): void
     {
         $b = $this->items['b'];
-        [$response, $movement] = $this->stockRequest('transfers.store', fn () => $this->post(route('transfers.store'), $this->transferPayload($b, 2, 1)), true);
+        [$response, $movement] = $this->stockRequest('transfers.store', fn () => $this->post(route('transfers.store'), $this->transferPayload($b, 2, 1)));
 
         $response->assertRedirect();
         $transfer = DB::table('transfers')->orderByDesc('id')->first();
         $this->assertMovement($movement, 'transfer', 'legacy:transfers', $transfer->id,
-            [[$b['id'], $this->main, -2], [$b['id'], $this->branchStore, 2]], 'applied');
+            [[$b['id'], $this->main, -2], [$b['id'], $this->branchStore, 2]]);
         $this->assertSame(3.0, $this->warehouseQty($b['id'], $this->main));
         $this->assertSame(5.0, $this->warehouseQty($b['id'], $this->branchStore));
     }
@@ -169,7 +355,7 @@ class LegacyStockShadowWebTest extends TestCase
         $last = StockMovement::max('id');
 
         [$response, $movement] = $this->stockRequest('transfers.changeStatus',
-            fn () => $this->put(route('transfers.changeStatus', $transfer->id), ['status' => 1]), true);
+            fn () => $this->put(route('transfers.changeStatus', $transfer->id), ['status' => 1]));
 
         $response->assertRedirect();
         $this->assertGreaterThan($last, $movement->id);
@@ -185,53 +371,17 @@ class LegacyStockShadowWebTest extends TestCase
         $a = $this->items['a'];
         $b = $this->items['b'];
         [$response, $movement] = $this->stockRequest('qty_adjustment.store', fn () => $this->post(route('qty_adjustment.store'), [
-            'warehouse_id' => $this->main, 'item' => 2, 'total_qty' => 3, 'note' => 'shadow proof',
+            'warehouse_id' => $this->main, 'item' => 2, 'total_qty' => 3, 'note' => 'cutover proof',
             'product_id' => [$a['id'], $b['id']], 'product_code' => [$a['code'], $b['code']], 'qty' => [2, 1],
             'action' => ['-', '+'], 'unit_cost' => [4, 4],
-        ]), true);
+        ]));
 
         $response->assertRedirect();
         $adjustment = DB::table('adjustments')->orderByDesc('id')->first();
         $this->assertMovement($movement, 'adjustment', 'legacy:adjustments', $adjustment->id,
-            [[$a['id'], $this->main, -2], [$b['id'], $this->main, 1]], 'applied');
+            [[$a['id'], $this->main, -2], [$b['id'], $this->main, 1]]);
     }
 
-    /** Known gap #5: the warehouse-row guard has no else, so only products.qty moves and the shadow sees nothing. */
-    public function test_known_gap_sale_without_a_warehouse_row_is_a_product_level_difference(): void
-    {
-        $c = $this->items['c'];
-        $last = StockMovement::max('id');
-
-        $this->ajaxSale($c, 2);
-
-        $this->assertSame($last, StockMovement::max('id'), 'no warehouse row changed, so nothing is recorded');
-        $this->assertSame(1.0, (float) DB::table('products')->where('id', $c['id'])->value('qty'));
-        $this->assertSame([[
-            'level' => 'product', 'product_id' => $c['id'], 'warehouse_id' => null, 'variant_id' => null, 'batch_id' => null,
-            'ledger_qty' => 3.0, 'projection_qty' => 1.0, 'difference' => 2.0, 'has_ledger' => true,
-        ]], $this->newDifferences());
-    }
-
-    /** Known gap #7: SaleController::destroy decrements the batch it should restore; the shadow records the row's +qty. */
-    public function test_known_gap_sale_destroy_batch_sign_bug_is_a_batch_level_difference(): void
-    {
-        $d = $this->items['d'];
-        $saleId = (int) $this->ajaxSale($d, 2, $d['batch_id'])->json();
-        $this->assertSame([], $this->newDifferences(), 'the batch sale itself reconciles');
-
-        $this->actingAs($this->admin)->delete(route('sales.destroy', $saleId))->assertRedirect();
-
-        $receipt = StockMovement::where('source_type', 'legacy:sales.destroy')->where('source_id', $saleId)->sole();
-        $this->assertSame($d['batch_id'], (int) $receipt->lines()->sole()->batch_id);
-        $this->assertSame(10.0, $this->warehouseQty($d['id'], $this->main));
-        $this->assertSame(6.0, (float) DB::table('product_batches')->where('id', $d['batch_id'])->value('qty'));
-        $this->assertSame([[
-            'level' => 'batch', 'product_id' => $d['id'], 'warehouse_id' => null, 'variant_id' => null, 'batch_id' => $d['batch_id'],
-            'ledger_qty' => 10.0, 'projection_qty' => 6.0, 'difference' => 4.0, 'has_ledger' => true,
-        ]], $this->newDifferences());
-    }
-
-    /** Cutover closes known gap #3: consumption now changes every stock projection. */
     public function test_cafe_raw_material_consumption_posts_applied_issue_without_new_reconciliation_differences(): void
     {
         $a = $this->items['a'];
@@ -244,7 +394,7 @@ class LegacyStockShadowWebTest extends TestCase
         $log = DB::table('cafe_raw_materials')->where('product_id', $a['id'])->sole();
         $movement = StockMovement::where('id', '>', $last)->sole();
         $this->assertMovement($movement, 'issue', 'legacy:cafe_raw_materials', $log->id,
-            [[$a['id'], $this->main, -1.5]], 'applied');
+            [[$a['id'], $this->main, -1.5]]);
         $this->assertSame(18.5, $this->warehouseQty($a['id'], $this->main));
         $this->assertSame([], $this->newDifferences());
     }
@@ -252,8 +402,7 @@ class LegacyStockShadowWebTest extends TestCase
     /**
      * Fixture-only activation. Optional capabilities are hard-gated off until Phase 1 acceptance
      * (CapabilityCatalog::OPTIONAL_ACTIVATION_READY), so this route is unreachable in production today; the test
-     * opens that gate through CapabilityService's protected seam, writes the capability rows directly and adds
-     * a fiscal year covering today for context resolution.
+     * opens that gate through CapabilityService's protected seam and writes the capability rows directly.
      */
     private function enableCafeForFixtureCompany(): void
     {
@@ -268,14 +417,6 @@ class LegacyStockShadowWebTest extends TestCase
         foreach ($capabilities as $id) {
             DB::table('company_capabilities')->updateOrInsert(['company_id' => 1, 'capability_id' => $id],
                 ['enabled' => 1, 'config_json' => '[]', 'enabled_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
-        }
-        $today = now()->toDateString();
-        if (!DB::table('fiscal_years')->where('company_id', 1)->where('start_date', '<=', $today)->where('end_date', '>=', $today)->exists()) {
-            DB::table('fiscal_years')->insert([
-                'company_id' => 1, 'name' => 'Shadow fixture FY', 'start_date' => now()->startOfYear()->toDateString(),
-                'end_date' => now()->endOfYear()->toDateString(), 'is_closed' => 0, 'status' => 'open',
-                'created_at' => now(), 'updated_at' => now(),
-            ]);
         }
         cache()->flush();
     }
@@ -299,7 +440,7 @@ class LegacyStockShadowWebTest extends TestCase
             'warehouse_id' => $this->main, 'supplier_id' => 1, 'status' => 1, 'currency_id' => 1, 'exchange_rate' => 1,
             'item' => count($lines), 'total_qty' => array_sum($column(fn ($l) => $l[1])), 'total_discount' => 0, 'total_tax' => 0,
             'total_cost' => $total, 'order_tax_rate' => 0, 'order_tax' => 0, 'order_discount' => 0, 'shipping_cost' => 0,
-            'grand_total' => $total, 'paid_amount' => 0, 'payment_status' => 1, 'note' => 'shadow proof',
+            'grand_total' => $total, 'paid_amount' => 0, 'payment_status' => 1, 'note' => 'cutover proof',
             'product_id' => $column(fn ($l) => $l[0]['id']), 'product_code' => $column(fn ($l) => $l[0]['code']),
             'qty' => $column(fn ($l) => $l[1]), 'recieved' => $column(fn ($l) => $l[1]), 'purchase_unit' => $column(fn ($l) => $l[2]),
             'unit_cost' => $column(fn () => 4), 'net_unit_cost' => $column(fn () => 4), 'net_unit_margin' => $column(fn () => 0),
@@ -315,7 +456,7 @@ class LegacyStockShadowWebTest extends TestCase
         return [
             'from_warehouse_id' => $this->main, 'to_warehouse_id' => $this->branchStore, 'status' => $status,
             'item' => 1, 'total_qty' => $qty, 'total_tax' => 0, 'total_cost' => $qty * 4, 'shipping_cost' => 0,
-            'grand_total' => $qty * 4, 'note' => 'shadow proof',
+            'grand_total' => $qty * 4, 'note' => 'cutover proof',
             'product_id' => [$item['id']], 'product_code' => [$item['code']], 'qty' => [$qty], 'purchase_unit' => ['piece'],
             'net_unit_cost' => [4], 'tax_rate' => [0], 'tax' => [0], 'subtotal' => [$qty * 4], 'imei_number' => [''],
             'product_batch_id' => [''],
@@ -332,7 +473,7 @@ class LegacyStockShadowWebTest extends TestCase
             'order_tax_rate' => 0, 'order_tax' => 0, 'order_discount' => 0, 'order_discount_type' => 'Flat',
             'order_discount_value' => 0, 'shipping_cost' => 0, 'grand_total' => $total,
             'sale_status' => 1, 'payment_status' => 1, 'paid_amount' => 0, 'paying_amount' => 0, 'paid_by_id' => ['1'],
-            'coupon_active' => 0, 'draft' => 0, 'sale_note' => 'shadow proof', 'staff_note' => null,
+            'coupon_active' => 0, 'draft' => 0, 'sale_note' => 'cutover proof', 'staff_note' => null,
             'product_id' => [$item['id']], 'product_code' => [$item['code']], 'qty' => [$qty],
             'sale_unit' => ['piece'], 'net_unit_price' => [$price], 'discount' => [0], 'tax_rate' => [0],
             'tax' => [0], 'subtotal' => [$total], 'imei_number' => [''], 'product_batch_id' => [''],
@@ -340,40 +481,28 @@ class LegacyStockShadowWebTest extends TestCase
     }
 
     /**
-     * Runs the request with the shadow off (rolled back afterwards), then for real with the shadow on.
-     * Asserts identical projections and exactly one new stock movement, which is returned.
+     * Runs the request and asserts exactly one new stock movement, projections that agree with the ledger,
+     * and no reconciliation difference beyond the seed baseline. Returns the response and the movement.
      *
      * @return array{0: TestResponse, 1: StockMovement}
      */
-    private function stockRequest(string $label, callable $request, bool $applied = false): array
+    private function stockRequest(string $label, callable $request): array
     {
         $before = StockMovement::max('id') ?? 0;
-        $level = DB::transactionLevel();
-        DB::beginTransaction();
-        config(['inventory.legacy_ledger_mode' => 'off']);
-        $this->actingAs($this->admin);
-        $legacy = $request();
-        $legacyOnly = $this->snapshot();
-        $this->assertSame($applied ? 1 : 0, StockMovement::where('id', '>', $before)->count(), "$label recorded an unexpected movement count");
-        // Also discards any transaction the legacy writer leaked (e.g. SaleController::genInvoice).
-        DB::rollBack($level);
-        config(['inventory.legacy_ledger_mode' => 'shadow']);
-
         $this->actingAs($this->admin);
         $response = $request();
         $context = $label.' '.$this->describe($response);
-        $this->assertSame($legacy->getStatusCode(), $response->getStatusCode(), "$context: status differs from the legacy-only run");
-        $this->assertEquals($legacyOnly, $this->snapshot(), "$context: projections differ from the legacy-only run");
         $movements = StockMovement::where('id', '>', $before)->get();
         $this->assertCount(1, $movements, "$context: must record exactly one movement");
-        $this->assertSame($this->baseline, $this->differences(), "$label introduced reconciliation differences");
+        $this->assertSame('applied', $movements->first()->projection_mode, "$context: stock must be applied, not shadowed");
+        $this->assertSame([], $this->newDifferences(), "$context introduced reconciliation differences");
 
         return [$response, $movements->first()->load('lines')];
     }
 
-    private function assertMovement(StockMovement $movement, string $type, string $source, int $sourceId, array $lines, string $mode = 'shadow'): void
+    private function assertMovement(StockMovement $movement, string $type, string $source, int $sourceId, array $lines): void
     {
-        $this->assertSame($mode, $movement->projection_mode);
+        $this->assertSame('applied', $movement->projection_mode);
         $this->assertSame($type, $movement->movement_type);
         $this->assertSame($source, $movement->source_type);
         $this->assertSame($sourceId, (int) $movement->source_id);
@@ -383,17 +512,15 @@ class LegacyStockShadowWebTest extends TestCase
         $this->assertSame($expected, $actual);
     }
 
-    /** Response status plus flashed errors and shadow warnings, for failure messages. */
+    /** Response status plus flashed errors, for failure messages. */
     private function describe(TestResponse $response): string
     {
         $flash = array_filter([
             'not_permitted' => session('not_permitted'), 'error' => session('error'),
             'errors' => session('errors')?->getBag('default')->all(),
         ]);
-        $log = storage_path('logs/laravel.log');
-        $warnings = is_file($log) ? array_slice(preg_grep('/Legacy stock|testing\.ERROR/', file($log)), -2) : [];
 
-        return "[HTTP {$response->getStatusCode()} ".json_encode($flash).' '.trim(implode(' ', array_map(fn ($l) => substr($l, 0, 240), $warnings))).']';
+        return "[HTTP {$response->getStatusCode()} ".json_encode($flash).']';
     }
 
     /** A consistent legacy item; with $batchNo every warehouse row belongs to one unexpired batch. */
@@ -402,7 +529,7 @@ class LegacyStockShadowWebTest extends TestCase
         $row = (array) DB::table('products')->find(5);
         unset($row['id']);
         $id = DB::table('products')->insertGetId(array_merge($row, [
-            'name' => 'Shadow proof '.$code, 'code' => $code, 'qty' => array_sum($stock), 'cost' => 4,
+            'name' => 'Cutover proof '.$code, 'code' => $code, 'qty' => array_sum($stock), 'cost' => 4,
             'type' => 'standard', 'is_variant' => null, 'is_batch' => $batchNo ? 1 : null, 'is_imei' => null, 'is_active' => 1,
         ]));
         $batchId = $batchNo === null ? null : DB::table('product_batches')->insertGetId([
