@@ -1,5 +1,7 @@
 # zoloERP Pro — Final Remaining Closure Plan
 
+Closure checkpoint, 2026-10-05: **PHASES 1–12 SOFTWARE IMPLEMENTATION: ENGINEERING COMPLETE. EXTERNAL ACCEPTANCE / PRODUCTION CUTOVER: PENDING.** The single `main` worktree contains the fixes. [Final verification](ZOLO_ERP_FINAL_CLOSURE_VERIFICATION.md) records 112 browser/device checks and the passing six-suite MySQL matrix for software revision `bf59c02ea98b89c070ad590aaa322f681ac84acd`. The audit baseline and original instructions below are retained for traceability.
+
 > **Repository:** `vigneshsinna/zolo-erp-pro`
 > **Branch to fix:** `main`
 > **Latest audited main HEAD:** `1a8c980f5bf7bcf6d8f634349af1090540c8729e`
@@ -535,17 +537,17 @@ No final software-closure commit is accepted if any required CI job fails.
 Do not claim **ENGINEERING COMPLETE** until all are checked:
 
 ```text
-[ ] Branch-level warehouse/cash-register/list isolation audited and tested.
-[ ] `/clear` uses POST only.
-[ ] `/clear` has auth/admin/CSRF/audit.
-[ ] `webview/auth` accepts internal redirect paths only.
-[ ] Remaining high-value same-company FKs/uniqueness reviewed and implemented.
-[ ] Company-sensitive raw SQL subqueries are explicitly scoped.
-[ ] Private notification/production/business files are protected.
-[ ] Nginx/private-file deployment instructions exist.
-[ ] Phase 12 stale synthetic-rehearsal wording is corrected.
-[ ] Full browser/device operator acceptance is completed for the cumulative build.
-[ ] Full six-suite MySQL CI remains green.
+[x] Branch-level warehouse/cash-register/list isolation audited and tested.
+[x] `/clear` uses POST only.
+[x] `/clear` has auth/admin/CSRF/audit.
+[x] `webview/auth` accepts internal redirect paths only.
+[x] Remaining high-value same-company FKs/uniqueness reviewed and implemented.
+[x] Company-sensitive raw SQL subqueries are explicitly scoped.
+[x] Private notification/production/business files are protected.
+[x] Nginx/private-file deployment instructions exist.
+[x] Phase 12 stale synthetic-rehearsal wording is corrected.
+[x] Full browser/device operator acceptance is completed for the cumulative build.
+[x] Full six-suite MySQL CI remains green.
 ```
 
 Once this checklist is fully green, the software can be labelled:

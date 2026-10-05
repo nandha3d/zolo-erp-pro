@@ -1,0 +1,1816 @@
+[
+  {
+    "screen": "dashboard",
+    "path": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 2,
+    "headings": [
+      "Welcome back, Sample users 1 👋"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "products",
+    "path": "/products",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "customer",
+    "path": "/customer",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "supplier",
+    "path": "/supplier",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 11,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-list",
+    "path": "/purchases",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-create",
+    "path": "/purchases/create",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 15,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "transfer",
+    "path": "/transfers",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 11,
+    "headings": [
+      "Transfer List"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "adjustment",
+    "path": "/qty_adjustment",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "gst",
+    "path": "/compliance/gst/report",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 3,
+    "headings": [
+      "GST review"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "returns",
+    "path": "/compliance/returns",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 0,
+    "headings": [
+      "Returns & financial notes",
+      "Sale notes",
+      "Purchase notes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "reports",
+    "path": "/report/warehouse_stock",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 1,
+    "headings": [
+      "Stock Chart",
+      "1.00",
+      "10.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "roles",
+    "path": "/role",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 10,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "fast-sale",
+    "path": "/commercial/sale/entry",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 18,
+    "headings": [
+      "Fast Sales"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "fast-purchase",
+    "path": "/commercial/purchase/entry",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 21,
+    "headings": [
+      "Fast Purchase"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "inventory",
+    "path": "/operations/stock",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 0,
+    "headings": [
+      "Stock Tools",
+      "Stock tools"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "vouchers",
+    "path": "/accounting/vouchers",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 26,
+    "headings": [
+      "Voucher Hub F9",
+      "Posted journal history",
+      "Settlement account links"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "manufacturing",
+    "path": "/operations/manufacturing",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 10,
+    "headings": [
+      "BOM & Production",
+      "Recent production orders",
+      "Published BOM versions",
+      "Create BOM version"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "job-work",
+    "path": "/operations/job-work",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 8,
+    "headings": [
+      "Job Work",
+      "Recent orders",
+      "Material outside",
+      "Create Job Work order",
+      "Job Work shrinkage"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "company-setup",
+    "path": "/workspace/setup?company_id=1",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 11,
+    "headings": [
+      "Company setup",
+      "Business details",
+      "Financial years",
+      "Branches",
+      "Warehouses",
+      "Business profile and capabilities"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profiles",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "dashboard",
+    "path": "/dashboard",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 2,
+    "headings": [
+      "Welcome back, Sample users 1 👋"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "products",
+    "path": "/products",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "customer",
+    "path": "/customer",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "supplier",
+    "path": "/supplier",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 11,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "sale-list",
+    "path": "/sales",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "sale-create",
+    "path": "/sales/create",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 19,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-list",
+    "path": "/purchases",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-create",
+    "path": "/purchases/create",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 15,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "transfer",
+    "path": "/transfers",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 11,
+    "headings": [
+      "Transfer List"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "adjustment",
+    "path": "/qty_adjustment",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "gst",
+    "path": "/compliance/gst/report",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 3,
+    "headings": [
+      "GST review"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "returns",
+    "path": "/compliance/returns",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 0,
+    "headings": [
+      "Returns & financial notes",
+      "Sale notes",
+      "Purchase notes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "reports",
+    "path": "/report/warehouse_stock",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 1,
+    "headings": [
+      "Stock Chart",
+      "2.00",
+      "11.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "roles",
+    "path": "/role",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 10,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "settings",
+    "path": "/setting/general_setting",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 31,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "fast-sale",
+    "path": "/commercial/sale/entry",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 18,
+    "headings": [
+      "Fast Sales"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "fast-purchase",
+    "path": "/commercial/purchase/entry",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 21,
+    "headings": [
+      "Fast Purchase"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "inventory",
+    "path": "/operations/stock",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1024,
+    "controls": 0,
+    "headings": [
+      "Stock Tools",
+      "Stock tools"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "vouchers",
+    "path": "/accounting/vouchers",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 26,
+    "headings": [
+      "Voucher Hub F9",
+      "Posted journal history",
+      "Settlement account links"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "manufacturing",
+    "path": "/operations/manufacturing",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 10,
+    "headings": [
+      "BOM & Production",
+      "Recent production orders",
+      "Published BOM versions",
+      "Create BOM version"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "job-work",
+    "path": "/operations/job-work",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 8,
+    "headings": [
+      "Job Work",
+      "Recent orders",
+      "Material outside",
+      "Create Job Work order",
+      "Job Work shrinkage"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "company-setup",
+    "path": "/workspace/setup?company_id=1",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 11,
+    "headings": [
+      "Company setup",
+      "Business details",
+      "Financial years",
+      "Branches",
+      "Warehouses",
+      "Business profile and capabilities"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profiles",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "dashboard",
+    "path": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 2,
+    "headings": [
+      "Welcome back, Sample users 1 👋"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "products",
+    "path": "/products",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "customer",
+    "path": "/customer",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "supplier",
+    "path": "/supplier",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 11,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "sale-list",
+    "path": "/sales",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "sale-create",
+    "path": "/sales/create",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 19,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "pos",
+    "path": "/pos",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 16,
+    "headings": [
+      "Grand Total 0.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "purchase-list",
+    "path": "/purchases",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-create",
+    "path": "/purchases/create",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 15,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "transfer",
+    "path": "/transfers",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 11,
+    "headings": [
+      "Transfer List"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "adjustment",
+    "path": "/qty_adjustment",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "gst",
+    "path": "/compliance/gst/report",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 3,
+    "headings": [
+      "GST review"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "returns",
+    "path": "/compliance/returns",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 0,
+    "headings": [
+      "Returns & financial notes",
+      "Sale notes",
+      "Purchase notes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "reports",
+    "path": "/report/warehouse_stock",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 1,
+    "headings": [
+      "Stock Chart",
+      "2.00",
+      "11.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "roles",
+    "path": "/role",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 10,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "settings",
+    "path": "/setting/general_setting",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 31,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "fast-sale",
+    "path": "/commercial/sale/entry",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 18,
+    "headings": [
+      "Fast Sales"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "fast-purchase",
+    "path": "/commercial/purchase/entry",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 21,
+    "headings": [
+      "Fast Purchase"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "inventory",
+    "path": "/operations/stock",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 768,
+    "controls": 0,
+    "headings": [
+      "Stock Tools",
+      "Stock tools"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "vouchers",
+    "path": "/accounting/vouchers",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 26,
+    "headings": [
+      "Voucher Hub F9",
+      "Posted journal history",
+      "Settlement account links"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "job-work",
+    "path": "/operations/job-work",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 8,
+    "headings": [
+      "Job Work",
+      "Recent orders",
+      "Material outside",
+      "Create Job Work order",
+      "Job Work shrinkage"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "company-setup",
+    "path": "/workspace/setup?company_id=1",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 11,
+    "headings": [
+      "Company setup",
+      "Business details",
+      "Financial years",
+      "Branches",
+      "Warehouses",
+      "Business profile and capabilities"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profiles",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "dashboard",
+    "path": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 2,
+    "headings": [
+      "Welcome back, Sample users 1 👋"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "products",
+    "path": "/products",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "customer",
+    "path": "/customer",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 8,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "supplier",
+    "path": "/supplier",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 11,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "transfer",
+    "path": "/transfers",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 11,
+    "headings": [
+      "Transfer List"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "adjustment",
+    "path": "/qty_adjustment",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "gst",
+    "path": "/compliance/gst/report",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 3,
+    "headings": [
+      "GST review"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "returns",
+    "path": "/compliance/returns",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 0,
+    "headings": [
+      "Returns & financial notes",
+      "Sale notes",
+      "Purchase notes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "reports",
+    "path": "/report/warehouse_stock",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 1,
+    "headings": [
+      "Stock Chart",
+      "2.00",
+      "11.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "roles",
+    "path": "/role",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 10,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "settings",
+    "path": "/setting/general_setting",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 31,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "fast-sale",
+    "path": "/commercial/sale/entry",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 18,
+    "headings": [
+      "Fast Sales"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "fast-purchase",
+    "path": "/commercial/purchase/entry",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 21,
+    "headings": [
+      "Fast Purchase"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "inventory",
+    "path": "/operations/stock",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 0,
+    "headings": [
+      "Stock Tools",
+      "Stock tools"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "vouchers",
+    "path": "/accounting/vouchers",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 26,
+    "headings": [
+      "Voucher Hub F9",
+      "Posted journal history",
+      "Settlement account links"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "job-work",
+    "path": "/operations/job-work",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 8,
+    "headings": [
+      "Job Work",
+      "Recent orders",
+      "Material outside",
+      "Create Job Work order",
+      "Job Work shrinkage"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "company-setup",
+    "path": "/workspace/setup?company_id=1",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 11,
+    "headings": [
+      "Company setup",
+      "Business details",
+      "Financial years",
+      "Branches",
+      "Warehouses",
+      "Business profile and capabilities"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profiles",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "manufacturing",
+    "path": "/operations/manufacturing",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 10,
+    "headings": [
+      "BOM & Production",
+      "Recent production orders",
+      "Published BOM versions",
+      "Create BOM version"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "manufacturing",
+    "path": "/operations/manufacturing",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 10,
+    "headings": [
+      "BOM & Production",
+      "Recent production orders",
+      "Published BOM versions",
+      "Create BOM version"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "sale-create",
+    "path": "/sales/create",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 19,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "sale-list",
+    "path": "/sales",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1366,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "settings",
+    "path": "/setting/general_setting",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 31,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "profile-fmcg",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-fmcg",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-fmcg",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-fmcg",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-textile",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-textile",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-textile",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-textile",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-timber",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-timber",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-timber",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-timber",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-solar",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-solar",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-solar",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "width": 768,
+    "rootWidth": 753,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "profile-solar",
+    "path": "/operations/profiles",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 6,
+    "headings": [
+      "Business Profile",
+      "Choose business profile",
+      "General Trading",
+      "FMCG",
+      "Textile",
+      "Timber",
+      "Solar",
+      "Product attributes"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "pos",
+    "path": "/pos",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "width": 1366,
+    "rootWidth": 1351,
+    "controls": 26,
+    "headings": [
+      "Grand Total 0.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "pos",
+    "path": "/pos",
+    "viewport": {
+      "width": 1024,
+      "height": 768
+    },
+    "width": 1024,
+    "rootWidth": 1009,
+    "controls": 23,
+    "headings": [
+      "Grand Total 0.00"
+    ],
+    "errors": []
+  },
+  {
+    "screen": "sale-create",
+    "path": "/sales/create",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 19,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-create",
+    "path": "/purchases/create",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 375,
+    "controls": 15,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "sale-list",
+    "path": "/sales",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "purchase-list",
+    "path": "/purchases",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 9,
+    "headings": [],
+    "errors": []
+  },
+  {
+    "screen": "pos",
+    "path": "/pos",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "width": 390,
+    "rootWidth": 390,
+    "controls": 16,
+    "headings": [],
+    "errors": []
+  }
+]

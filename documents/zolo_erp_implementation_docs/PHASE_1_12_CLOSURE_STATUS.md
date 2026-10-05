@@ -1,18 +1,18 @@
 # Phase 1–12 integration and completion rehearsal
 
-Status: **CONSOLIDATED ON `main` — FINAL SOFTWARE VERIFICATION RUNNING; EXTERNAL ACCEPTANCE PENDING**. This record does not declare engineering closure or authorize production activation.
+Status: **PHASES 1–12 SOFTWARE IMPLEMENTATION: ENGINEERING COMPLETE. EXTERNAL ACCEPTANCE / PRODUCTION CUTOVER: PENDING.** This record does not authorize production activation.
 
 ## Current closure checkpoint, 2026-10-05
 
 - The phase histories and worktrees are consolidated into the single `main` checkout. Recoverable worktree files and Git snapshots are backed up at `V:/pers/Freelance/zolo-erp-pro-worktree-backup-20261005-152501`.
 - The first synthetic repository-seed rehearsal produced **21 stock differences**. The discrepancy came from inconsistent seed product totals; correcting the seed at its source produced the later recorded **zero-difference** rehearsal with passing `erp:health`. This is engineering fixture evidence, not customer retained-data reconciliation or customer acceptance.
-- Remaining branch isolation, endpoint security, same-company relation constraints, raw-subquery scoping and private-file controls are implemented for current validation. The [private-file deployment guide](PRIVATE_FILE_DEPLOYMENT.md) classifies public assets and private records and supplies Apache/Nginx configuration.
-- **Cumulative browser/device verification: RUNNING; acceptance pending.** Historical screenshots below describe their original builds and do not establish acceptance of these changes.
-- **Full six-suite MySQL matrix: RUNNING; acceptance pending.** All six configurations must pass for the final changed head: company, commercial, compliance, operations, delivery and legacy-mysql. Previous green runs are not proof for this head.
+- Remaining branch isolation, endpoint security, same-company relation constraints, raw-subquery scoping and private-file controls are implemented and verified. The [private-file deployment guide](PRIVATE_FILE_DEPLOYMENT.md) classifies public assets and private records and supplies Apache/Nginx configuration.
+- **Cumulative browser/device verification: PASS.** The [final verification record](../auditing/ZOLO_ERP_FINAL_CLOSURE_VERIFICATION.md) records 112 checks across all four required viewports, keyboard/mouse posting, profiles, dropdowns, modal focus and supported dark mode. Historical screenshots below describe their original builds.
+- **Full six-suite MySQL matrix: PASS.** [Run 37314050856](https://github.com/vigneshsinna/zolo-erp-pro/actions/runs/37314050856) verifies software revision `bf59c02ea98b89c070ad590aaa322f681ac84acd`: 546 tests, 4402 assertions and 2 explicitly optional/backend-specific skips, with no failures.
 - **Deployment private-file deny checks: PENDING.** Framework authorization tests and checked-in rules do not prove that the actual Apache/Nginx virtual host denies direct private URLs.
 - Customer retained-data reconciliation, accountant/provider/printer acceptance, private off-site backup/recovery rehearsal and signed production cutover remain **PENDING**. Capability activation defaults remain unchanged.
 
-The historical checkpoints below preserve how the implementation reached this state. Their former blockers and worktree references are superseded by this checkpoint where they differ. Do not label the software **ENGINEERING COMPLETE** until the current software gates are verified.
+The historical checkpoints below preserve how the implementation reached this state. Their former software blockers and worktree references are superseded by this verified checkpoint where they differ. Engineering completion does not establish external acceptance or open production activation gates.
 
 ## Historical integration baseline, 2026-10-05
 
