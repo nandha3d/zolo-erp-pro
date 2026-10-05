@@ -113,14 +113,15 @@ class TenantDatabaseSeeder extends Seeder
 
         ///permissions table data insert start///
         $existing_permissions = DB::table('permissions')
-        ->select('name', 'guard_name')
+        ->select('id', 'name', 'guard_name')
         ->get();
 
         $existingMap = [];
 
         foreach ($existing_permissions as $item) {
-            $existingMap[$item->name . '|' . $item->guard_name] = true;
+            $existingMap[$item->name . '|' . $item->guard_name] = $item->id;
         }
+        $usedPermissionIds = $existing_permissions->pluck('id')->flip()->all();
 
         $permission_data = [
                 [
@@ -995,22 +996,19 @@ class TenantDatabaseSeeder extends Seeder
                 ],
         ];
 
-        $insertData = [];
-
+        $permissionIds = [];
         foreach ($permission_data as $row) {
             $lookupKey = $row['name'] . '|' . $row['guard_name'];
-
             if (!isset($existingMap[$lookupKey])) {
-                $insertData[] = [
-                    'id' => $row['id'],
-                    'name' => $row['name'],
-                    'guard_name' => $row['guard_name']
-                ];
+                // Additive migrations may already occupy a legacy preset ID. Never replace that permission or its grants.
+                $values = ['name' => $row['name'], 'guard_name' => $row['guard_name']];
+                if (!isset($usedPermissionIds[$row['id']])) {
+                    $values['id'] = $row['id'];
+                }
+                $existingMap[$lookupKey] = DB::table('permissions')->insertGetId($values);
+                $usedPermissionIds[$existingMap[$lookupKey]] = true;
             }
-        }
-
-        if (!empty($insertData)) {
-            DB::table('permissions')->insert($insertData);
+            $permissionIds[$row['id']] = $existingMap[$lookupKey];
         }
         ///permissions table data insert end///
 
@@ -1393,6 +1391,8 @@ class TenantDatabaseSeeder extends Seeder
         $insertData = [];
 
         foreach ($merged_permissions_role as $row) {
+            // Preset/package IDs describe the legacy permission list, not the target database's generated IDs.
+            $row['permission_id'] = $permissionIds[$row['permission_id']] ?? $row['permission_id'];
             $lookupKey = $row['permission_id'] . '|' . $row['role_id'];
 
             if (!isset($existingMap[$lookupKey])) {
@@ -1400,6 +1400,7 @@ class TenantDatabaseSeeder extends Seeder
                     'permission_id' => $row['permission_id'],
                     'role_id' => $row['role_id'],
                 ];
+                $existingMap[$lookupKey] = true;
             }
         }
 

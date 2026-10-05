@@ -38,6 +38,29 @@ class MysqlCompanyMigrationTest extends TestCase
         $this->assertSame(0, Artisan::call('migrate', ['--database' => 'erp_regression', '--force' => true]));
     }
 
+    public function test_tenant_seeding_preserves_migration_permissions_and_maps_legacy_grants_by_name(): void
+    {
+        $this->assertSame(0, Artisan::call('migrate', ['--database' => 'erp_regression', '--force' => true]));
+        $migrationPermission = DB::table('permissions')->where('id', 4)->first();
+        $this->assertNotNull($migrationPermission);
+        $this->assertNotSame('products-edit', $migrationPermission->name);
+        $seed = fn () => Artisan::call('db:seed', [
+            '--class' => \Database\Seeders\Tenant\TenantDatabaseSeeder::class, '--force' => true,
+        ]);
+        $this->assertSame(0, $seed());
+        $this->assertEquals($migrationPermission, DB::table('permissions')->where('id', 4)->first());
+        $productPermissionId = DB::table('permissions')->where('name', 'products-edit')->where('guard_name', 'web')->value('id');
+        $this->assertNotSame(4, (int) $productPermissionId);
+        $this->assertTrue(DB::table('role_has_permissions')->where('role_id', 1)->where('permission_id', $productPermissionId)->exists());
+        DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => $migrationPermission->id]);
+        $permissionCount = DB::table('permissions')->count();
+        $grantCount = DB::table('role_has_permissions')->count();
+        $this->assertSame(0, $seed());
+        $this->assertSame($permissionCount, DB::table('permissions')->count());
+        $this->assertSame($grantCount, DB::table('role_has_permissions')->count());
+        $this->assertSame([(int) $migrationPermission->id], DB::table('role_has_permissions')->where('role_id', 4)->pluck('permission_id')->map(fn ($id) => (int) $id)->all());
+    }
+
     public function test_committed_partial_ddl_can_resume_after_failure_without_losing_rows(): void
     {
         foreach (['products', 'customers', 'warehouses'] as $name) {
