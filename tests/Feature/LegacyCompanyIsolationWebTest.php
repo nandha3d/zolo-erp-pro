@@ -65,6 +65,28 @@ class LegacyCompanyIsolationWebTest extends TestCase
         }
     }
 
+    public function test_raw_table_queries_follow_the_request_company_too(): void
+    {
+        $context = new CompanyContext(1, (int) DB::table('company_branches')->where('company_id', 1)->value('id'), (int) DB::table('fiscal_years')->where('company_id', 1)->value('id'));
+        $this->assertNotNull(DB::table('customers')->where('id', $this->otherCustomer)->first(), 'no context, no scope');
+
+        request()->attributes->set(CompanyContext::class, $context);
+        try {
+            $this->assertNull(DB::table('customers')->where('id', $this->otherCustomer)->first());
+            $this->assertFalse(DB::table('customers')->where('id', $this->otherCustomer)->exists());
+            $this->assertSame(0, DB::table('sales')->where('id', $this->otherSale)->count());
+            // Joined tables are limited inside their ON clause, so the left side survives but the foreign side vanishes.
+            $joined = DB::table('sales as s')->leftJoin('customers as c', 'c.id', '=', 's.customer_id')->count();
+            $this->assertSame(DB::table('sales')->count(), $joined);
+            $this->assertNull(DB::table('customers as c')->join('sales as s', 's.customer_id', '=', 'c.id')->where('s.id', $this->otherSale)->first());
+            $this->assertSame(0, DB::table('customers')->where('id', $this->otherCustomer)->update(['name' => 'hijacked']));
+            $this->assertSame(0, DB::table('customers')->where('id', $this->otherCustomer)->delete());
+        } finally {
+            request()->attributes->remove(CompanyContext::class);
+        }
+        $this->assertSame('Foreign customer', DB::table('customers')->where('id', $this->otherCustomer)->value('name'));
+    }
+
     public function test_business_pages_reject_a_company_the_user_does_not_belong_to(): void
     {
         $this->actingAs($this->admin)->get(route('sales.index'), ['X-Company-ID' => (string) $this->otherCompany])->assertForbidden();
