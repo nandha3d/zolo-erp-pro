@@ -1,6 +1,6 @@
 @extends('backend.operations.layout')
 @section('title', $record->reference_no ?? $record->title)
-@section('content')
+@section('operations_content')
 <div class="ops-heading"><div><p class="ops-eyebrow">{{ strtoupper(str_replace('-',' ',$kind)) }}</p><h1>{{ $record->reference_no ?? $record->title }}</h1></div><span class="ops-badge">{{ $record->status }}</span></div>
 @if($kind === 'production')
 <section class="ops-panel"><div class="ops-metrics"><div><span>BOM version</span><strong>{{ $bom->code }} · v{{ $bom->version }}</strong></div><div><span>Planned / completed</span><strong>{{ $record->planned_qty }} / {{ $record->completed_qty }}</strong></div><div><span>Total output cost</span><strong>{{ $record->total_cost }}</strong></div></div></section>

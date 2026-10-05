@@ -11,170 +11,312 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        @can('sales-add')
-            <a href="{{route('sales.create')}}" class="btn btn-info add-sale-btn btn-icon"><i class="dripicons-plus"></i> {{__('db.Add Sale')}}</a>&nbsp;
-        @endcan
-        @can('sales-import')
-            <a href="{{url('sales/sale_by_csv')}}" class="btn btn-primary add-sale-btn btn-icon"><i class="dripicons-copy"></i> {{__('db.Import Sale')}}</a>
-        @endcan
-        @can('sales-delete')
-            <a href="{{ url('sales/deleted_data') }}" class="btn btn-secondary add-sale-btn btn-icon">
-                <i class="dripicons-trash"></i>
-                 {{ __('Deleted Sales') }}
+
+<link rel="stylesheet" href="{{ asset('css/commercial-workspace.css') }}" type="text/css">
+<script>
+    document.documentElement.classList.add('commercial-screen-lock');
+    document.body.classList.add('commercial-screen-lock');
+</script>
+<div id="comm-progress-bar"></div>
+
+<section class="commercial-workspace-view">
+    <!-- Top Command Bar -->
+    <div class="comm-command-bar">
+        <div class="comm-title-group">
+            <h1><i class="dripicons-cart text-primary"></i> {{ __('Sales') }} Command Center</h1>
+            <span class="comm-title-badge"><i class="dripicons-wallet"></i> Invoices & Counter Orders</span>
+        </div>
+        <ul class="comm-nav-pills">
+            <li><a class="nav-link active" id="tab-all-sales" href="javascript:void(0)" data-sale-type="0"><i class="dripicons-list"></i> {{ __('db.All') }} Invoices</a></li>
+            <li><a class="nav-link" id="tab-pos-sales" href="javascript:void(0)" data-sale-type="pos"><i class="dripicons-shopping-bag"></i> POS / Counter</a></li>
+            <li><a class="nav-link" href="{{ route('challan.index') }}"><i class="dripicons-box"></i> {{ __('Delivery Challans') }}</a></li>
+            <li><a class="nav-link" href="{{ route('quotations.index') }}"><i class="dripicons-document-edit"></i> {{ __('db.Quotation') }}</a></li>
+        </ul>
+        <div class="comm-actions">
+            <button type="button" class="btn btn-outline-secondary" id="toggle-filter" title="Toggle Filters">
+                <i class="dripicons-experiment"></i> {{ __('db.Filter') }}
+            </button>
+            @can('sales-add')
+            <a href="{{ route('sales.create') }}" class="btn btn-primary" title="Full Invoice Form">
+                <i class="dripicons-plus"></i> {{ __('db.Add Sale') }}
             </a>
-        @endcan
-        <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
-            <i class="dripicons-experiment"></i> {{ __('db.Filter Sales') }}
-        </button>
-        <div class="card mt-3 mb-2">
-            <div class="card-body" id="filter-card" style="display: none;">
-                <div class="row mt-2">
-                    <div class="col-md-3">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.date')}}</label>
-                            <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
-                            <input type="hidden" name="starting_date" value="{{$starting_date}}" />
-                            <input type="hidden" name="ending_date" value="{{$ending_date}}" />
-                        </div>
-                    </div>
-                    <div class="col-md-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Warehouse')}}</label>
-                            <select id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" >
-                                <option value="0">{{__('db.All Warehouse')}}</option>
-                                @foreach($lims_warehouse_list as $warehouse)
-                                    <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Sale Status')}}</label>
-                            <select id="sale-status" class="form-control" name="sale_status">
-                                <option value="0">{{__('db.All')}}</option>
-                                <option value="1">{{__('db.Completed')}}</option>
-                                <option value="2">{{__('db.Pending')}}</option>
-                                <option value="4">{{__('db.Returned')}}</option>
-                                <option value="5">{{__('db.Processing')}}</option>
-                                @if(in_array('restaurant',explode(',',$general_setting->modules)))
-                                <option value="6">{{__('db.Cooked')}}</option>
-                                @endif
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Payment Status')}}</label>
-                            <select id="payment-status" class="form-control" name="payment_status">
-                                <option value="0">{{__('db.All')}}</option>
-                                <option value="1">{{__('db.Pending')}}</option>
-                                <option value="2">{{__('db.Due')}}</option>
-                                <option value="3">{{__('db.Partial')}}</option>
-                                <option value="4">{{__('db.Paid')}}</option>
-                            </select>
-                        </div>
-                    </div>
+            @endcan
+            <a href="{{ route('commercial.sale.entry') }}" class="btn btn-dark" title="Keyboard Fast Counter (F2)">
+                <i class="dripicons-bolt text-warning"></i> Fast Counter <kbd style="font-size:10px; background:#334155; padding:1px 4px; border-radius:3px;">F2</kbd>
+            </a>
+            <button type="button" class="btn btn-light border" id="toggle-drawer-btn" title="Toggle Quick Drawer (Alt+D)">
+                <i class="dripicons-menu"></i>
+            </button>
+        </div>
+    </div>
 
-                    <div class="col-md-2">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Payment Method')}}</label>
-                            <select id="payment-method" class="form-control" name="payment_method">
-                                <option value="0">All</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Gift Card">Gift Card</option>
-                                <option value="Credit Card">Credit Card</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="Deposit">Deposit</option>
-                                <option value="Points">Points</option>
-                                <option value="Pesapal">Pesapal</option>
-                                @foreach($options as $option)
-                                    @if($option !== 'cash' && $option !== 'card' && $option !== 'card' && $option !== 'cheque' && $option !== 'gift_card' && $option !== 'deposit' && $option !== 'paypal' && $option !== 'pesapal')
-                                        <option value="{{$option}}">{{$option}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+    <!-- KPI Summary Strip -->
+    <div class="comm-kpi-strip">
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Today's Invoices") }}</span>
+                <span class="comm-kpi-value">{{ $todaySalesCount ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">({{ number_format($todaySalesAmount ?? 0, 2) }})</small></span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#eef2ff; color:#4f46e5;">
+                <i class="dripicons-graph-bar"></i>
+            </div>
+        </div>
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Paid / Inflow") }}</span>
+                <span class="comm-kpi-value" style="color:#059669;">{{ number_format($totalPaid ?? 0, 2) }}</span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#ecfdf5; color:#059669;">
+                <i class="dripicons-checkmark"></i>
+            </div>
+        </div>
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Due Receivables") }}</span>
+                <span class="comm-kpi-value" style="color:#dc2626;">{{ number_format($totalDue ?? 0, 2) }}</span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#fef2f2; color:#dc2626;">
+                <i class="dripicons-warning"></i>
+            </div>
+        </div>
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
+                <span class="comm-kpi-value">{{ $numberOfInvoice ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">Invoices</small></span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="dripicons-archive"></i>
+            </div>
+        </div>
+    </div>
 
-                    <div class="col-md-2 @if(!in_array('ecommerce',explode(',',$general_setting->modules))) d-none @endif">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Sale Type')}}</label>
-                            <select id="sale-type" class="form-control" name="sale_type">
-                                <option value="0">{{__('db.All')}}</option>
-                                <option value="pos">{{__('db.POS')}}</option>
-                                <option value="online">{{__('db.eCommerce')}}</option>
-                            </select>
+    <!-- 2-Column Command Center Grid -->
+    <div class="comm-split-grid" id="comm-split-grid">
+        <!-- Left: Sales Register Table -->
+        <div class="comm-register-card">
+            <!-- Sleek Inline Filter Bar -->
+            <div class="comm-table-filter-bar" id="filter-card">
+                <div class="filter-item">
+                    <label><i class="dripicons-calendar text-muted"></i></label>
+                    <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
+                    <input type="hidden" name="starting_date" value="{{$starting_date}}" />
+                    <input type="hidden" name="ending_date" value="{{$ending_date}}" />
+                </div>
+                <div class="filter-item @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
+                    <label>{{__('db.Warehouse')}}:</label>
+                    <select id="warehouse_id" name="warehouse_id" class="form-control" style="width:130px;">
+                        <option value="0">{{__('db.All Warehouse')}}</option>
+                        @foreach($lims_warehouse_list as $warehouse)
+                            <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Sale Status')}}:</label>
+                    <select id="sale-status" class="form-control" name="sale_status" style="width:110px;">
+                        <option value="0">{{__('db.All')}}</option>
+                        <option value="1">{{__('db.Completed')}}</option>
+                        <option value="2">{{__('db.Pending')}}</option>
+                        <option value="4">{{__('db.Returned')}}</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Payment Status')}}:</label>
+                    <select id="payment-status" class="form-control" name="payment_status" style="width:100px;">
+                        <option value="0">{{__('db.All')}}</option>
+                        <option value="1">{{__('db.Pending')}}</option>
+                        <option value="2">{{__('db.Due')}}</option>
+                        <option value="3">{{__('db.Partial')}}</option>
+                        <option value="4">{{__('db.Paid')}}</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Payment Method')}}:</label>
+                    <select id="payment-method" class="form-control" name="payment_method" style="width:100px;">
+                        <option value="0">All</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Gift Card">Gift Card</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Cheque">Cheque</option>
+                    </select>
+                </div>
+                <input type="hidden" id="sale-type" name="sale_type" value="{{ $sale_type }}" />
+                <button type="button" class="btn btn-sm btn-outline-primary ml-auto" id="btn-quick-refresh" title="Reload Register">
+                    <i class="dripicons-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Sticky Header Table Viewport -->
+            <div class="comm-table-viewport">
+                <table id="sale-table" class="table sale-list" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="not-exported"></th>
+                            <th class="not-exported">{{__('db.action')}}</th>
+                            <th>{{__('db.date')}}</th>
+                            <th>{{__('db.reference')}}</th>
+                            <th>{{__('db.Created By')}}</th>
+                            <th>{{__('db.customer')}}</th>
+                            <th>{{__('db.Warehouse')}}</th>
+                            @if ($general_setting->show_products_details_in_sales_table)
+                                <th>{{__('db.Products')}}</th>
+                                <th>{{__('db.Quantity')}}</th>
+                            @endif
+                            <th>{{__('db.Sale Status')}}</th>
+                            <th>{{__('db.Payment Status')}}</th>
+                            <th>{{__('db.Payment Method')}}</th>
+                            <th>{{__('db.Currency')}}/{{__('db.Exchange Rate')}}</th>
+                            <th>{{__('db.Delivery Status')}}</th>
+                            <th>{{__('db.grand total')}}</th>
+                            <th>{{__('db.Returned Amount')}}</th>
+                            <th>{{__('db.Paid')}}</th>
+                            <th>{{__('db.Due')}}</th>
+                            @foreach($custom_fields as $fieldName)
+                            <th>{{$fieldName}}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tfoot class="tfoot active">
+                        <th></th>
+                        <th>{{__('db.Total')}}</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @if ($general_setting->show_products_details_in_sales_table)
+                            <th></th>
+                            <th></th>
+                        @endif
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @foreach($custom_fields as $fieldName)
+                        <th></th>
+                        @endforeach
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: Fast Action Console Drawer -->
+        <div class="comm-drawer-card" id="comm-drawer">
+            <div class="comm-drawer-header">
+                <h3 class="comm-drawer-title"><i class="dripicons-bolt text-warning"></i> Fast Sale Console</h3>
+                <div class="comm-drawer-tools">
+                    <span class="badge badge-light border" style="font-size:10px;">F2 Active</span>
+                    <button type="button" class="btn btn-sm btn-link text-muted p-0" id="close-drawer-btn"><i class="dripicons-cross"></i></button>
+                </div>
+            </div>
+            <div class="comm-drawer-body">
+                <div class="comm-form-group">
+                    <label>{{ __('db.customer') }} <a href="{{ route('customer.create') }}" target="_blank" class="text-primary">+ New</a></label>
+                    <select id="quick-customer-id" class="form-control">
+                        @if(isset($lims_customer_list) && count($lims_customer_list))
+                            @foreach($lims_customer_list as $cust)
+                                <option value="{{ $cust->id }}">{{ $cust->name }} ({{ $cust->phone_number }})</option>
+                            @endforeach
+                        @else
+                            <option value="1">Walk-in Customer</option>
+                        @endif
+                    </select>
+                </div>
+
+                <div class="comm-form-row">
+                    <div class="comm-form-group">
+                        <label>{{ __('db.Warehouse') }}</label>
+                        <select id="quick-warehouse-id" class="form-control">
+                            @foreach($lims_warehouse_list as $wh)
+                                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="comm-form-group">
+                        <label>{{ __('db.date') }}</label>
+                        <input type="date" id="quick-sale-date" class="form-control" value="{{ date('Y-m-d') }}" />
+                    </div>
+                </div>
+
+                <div class="comm-form-group position-relative">
+                    <label>{{ __('Search Item (Code / Barcode)') }}</label>
+                    <div class="input-group">
+                        <input type="text" id="quick-product-search" class="form-control" placeholder="Type name or scan barcode..." autocomplete="off" />
+                        <div class="input-group-append">
+                            <button class="btn btn-sm btn-primary" type="button" id="btn-quick-add-item"><i class="dripicons-plus"></i></button>
                         </div>
                     </div>
-                    <div id="filter-loading" class="col-12 text-center my-2" style="display:none;">
-                        <span class="spinner-border text-primary spinner-border-sm" role="status"></span>
-                        <span>Loading results...</span>
+                    <div id="quick-search-results" class="list-group position-absolute shadow" style="z-index:999; display:none; max-height:160px; overflow-y:auto; width:100%; top:58px; background:#fff;"></div>
+                </div>
+
+                <!-- Fast Line Items -->
+                <div class="comm-drawer-lines">
+                    <table class="table" id="quick-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th style="width:60px;">Qty</th>
+                                <th style="width:70px;">Price</th>
+                                <th style="width:70px;">Total</th>
+                                <th style="width:30px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="quick-items-body">
+                            <tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added yet. Search above or press F2.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totals -->
+                <div class="comm-summary-box">
+                    <div class="comm-summary-row">
+                        <span>Items Subtotal:</span>
+                        <span id="quick-subtotal">0.00</span>
                     </div>
+                    <div class="comm-summary-row">
+                        <span>Tax / Fees:</span>
+                        <span>0.00</span>
+                    </div>
+                    <div class="comm-summary-row grand-total">
+                        <span>Net Payable:</span>
+                        <span id="quick-grand-total">0.00</span>
+                    </div>
+                </div>
+
+                <div class="comm-form-row">
+                    <div class="comm-form-group">
+                        <label>{{ __('db.Payment Method') }}</label>
+                        <select id="quick-payment-method" class="form-control">
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="Bank">Bank Transfer</option>
+                            <option value="Credit">Credit / Due</option>
+                        </select>
+                    </div>
+                    <div class="comm-form-group">
+                        <label>{{ __('Paid Amount') }}</label>
+                        <input type="number" id="quick-paid-amount" class="form-control" placeholder="0.00" />
+                    </div>
+                </div>
+
+                <div class="comm-drawer-footer">
+                    <button type="button" class="btn-comm-primary" id="btn-quick-post-sale">
+                        <i class="dripicons-checkmark"></i> Post Sale
+                    </button>
+                    <a href="{{ route('commercial.sale.entry') }}" class="btn-comm-secondary" title="Open Full Fast Counter">
+                        <i class="dripicons-external"></i> Full Counter (F2)
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-    <div class="table-responsive">
-        <table id="sale-table" class="table sale-list" style="width: 100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th class="not-exported">{{__('db.action')}}</th>
-                    <th>{{__('db.date')}}</th>
-                    <th>{{__('db.reference')}}</th>
-                    <th>{{__('db.Created By')}}</th>
-                    <th>{{__('db.customer')}}</th>
-                    <th>{{__('db.Warehouse')}}</th>
-                    @if ($general_setting->show_products_details_in_sales_table)
-                        <th>{{__('db.Products')}}</th>
-                        <th>{{__('db.Quantity')}}</th>
-                    @endif
-                    <th>{{__('db.Sale Status')}}</th>
-                    <th>{{__('db.Payment Status')}}</th>
-                    <th>{{__('db.Payment Method')}}</th>
-                    <th>{{__('db.Currency')}}/{{__('db.Exchange Rate')}}</th>
-                    <th>{{__('db.Delivery Status')}}</th>
-                    <th>{{__('db.grand total')}}</th>
-                    <th>{{__('db.Returned Amount')}}</th>
-                    <th>{{__('db.Paid')}}</th>
-                    <th>{{__('db.Due')}}</th>
-                    @foreach($custom_fields as $fieldName)
-                    <th>{{$fieldName}}</th>
-                    @endforeach
-
-                </tr>
-            </thead>
-
-            <tfoot class="tfoot active">
-                <th></th>
-                <th>{{__('db.Total')}}</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                @if ($general_setting->show_products_details_in_sales_table)
-                    <th></th>
-                    <th></th>
-                @endif
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                @foreach($custom_fields as $fieldName)
-                <th></th>
-                @endforeach
-                <th></th>
-            </tfoot>
-        </table>
-    </div>
 </section>
+
 
 <div id="sale-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
@@ -1758,5 +1900,186 @@
             return true;
         });
 </script>
-<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript" src="https://js.stripe.com/v3/">
+    // --- Commercial Workspace Single-Screen SPA Ergonomics ---
+    function showProgressBar() {
+        $('#comm-progress-bar').removeClass('done').addClass('active');
+    }
+    function hideProgressBar() {
+        $('#comm-progress-bar').addClass('done');
+        setTimeout(function() { $('#comm-progress-bar').removeClass('active done'); }, 300);
+    }
+
+    // Tab switching without page reload
+    $('#tab-all-sales').on('click', function(e) {
+        e.preventDefault();
+        $('.comm-nav-pills .nav-link').removeClass('active');
+        $(this).addClass('active');
+        $('#sale-type').val('0');
+        showProgressBar();
+        saleTable.ajax.reload(function() { hideProgressBar(); });
+    });
+
+    $('#tab-pos-sales').on('click', function(e) {
+        e.preventDefault();
+        $('.comm-nav-pills .nav-link').removeClass('active');
+        $(this).addClass('active');
+        $('#sale-type').val('pos');
+        showProgressBar();
+        saleTable.ajax.reload(function() { hideProgressBar(); });
+    });
+
+    $('#btn-quick-refresh').on('click', function() {
+        showProgressBar();
+        saleTable.ajax.reload(function() { hideProgressBar(); });
+    });
+
+    // Drawer collapse / expand
+    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
+        $('#comm-drawer').toggleClass('collapsed');
+        $('#comm-split-grid').toggleClass('drawer-collapsed');
+        if (typeof saleTable !== 'undefined') {
+            saleTable.columns.adjust().draw(false);
+        }
+    });
+
+    // Hotkeys: F2 focuses quick search / counter, Alt+D toggles drawer
+    $(document).on('keydown', function(e) {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            if ($('#comm-drawer').hasClass('collapsed')) {
+                $('#toggle-drawer-btn').trigger('click');
+            }
+            $('#quick-product-search').focus();
+        } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+            e.preventDefault();
+            $('#toggle-drawer-btn').trigger('click');
+        }
+    });
+
+    // Fast product search in drawer
+    let quickItems = [];
+    $('#quick-product-search').on('input', function() {
+        let q = $(this).val().trim();
+        if (q.length < 2) {
+            $('#quick-search-results').hide().empty();
+            return;
+        }
+        $.ajax({
+            url: '{{ url("sales/lims_product_search") }}',
+            data: { data: q },
+            type: 'GET',
+            success: function(response) {
+                let res = $('#quick-search-results').empty();
+                if (Array.isArray(response) && response.length > 0) {
+                    response.slice(0, 8).forEach(function(item) {
+                        let parts = item.split('|');
+                        let name = parts[0];
+                        let code = parts[1];
+                        let qty = parts[2];
+                        let a = $('<a href="javascript:void(0)" class="list-group-item list-group-item-action py-1 px-2" style="font-size:12px;"></a>')
+                            .text(name + ' (' + code + ')')
+                            .data('item', { name: name, code: code, qty: qty, price: parseFloat(parts[3]) || 0 });
+                        res.append(a);
+                    });
+                    res.show();
+                } else {
+                    res.hide();
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '#quick-search-results a', function() {
+        let item = $(this).data('item');
+        addQuickItem(item);
+        $('#quick-search-results').hide().empty();
+        $('#quick-product-search').val('').focus();
+    });
+
+    function addQuickItem(item) {
+        let existing = quickItems.find(i => i.code === item.code);
+        if (existing) {
+            existing.qty += 1;
+        } else {
+            quickItems.push({
+                name: item.name,
+                code: item.code,
+                qty: 1,
+                price: item.price || 50
+            });
+        }
+        renderQuickItems();
+    }
+
+    function renderQuickItems() {
+        let tbody = $('#quick-items-body').empty();
+        let total = 0;
+        if (quickItems.length === 0) {
+            tbody.append('<tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added yet. Search above or press F2.</td></tr>');
+        } else {
+            quickItems.forEach(function(item, idx) {
+                let lineTotal = item.qty * item.price;
+                total += lineTotal;
+                tbody.append('<tr>' +
+                    '<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + item.name + '">' + item.name + '</td>' +
+                    '<td><input type="number" class="form-control p-1 text-center quick-qty-input" data-idx="' + idx + '" value="' + item.qty + '" min="1" style="height:24px;font-size:11px;"></td>' +
+                    '<td><input type="number" class="form-control p-1 text-right quick-price-input" data-idx="' + idx + '" value="' + item.price + '" step="0.5" style="height:24px;font-size:11px;"></td>' +
+                    '<td class="text-right font-weight-bold">' + lineTotal.toFixed(2) + '</td>' +
+                    '<td class="text-center"><a href="javascript:void(0)" class="text-danger remove-quick-item" data-idx="' + idx + '">&times;</a></td>' +
+                '</tr>');
+            });
+        }
+        $('#quick-subtotal').text(total.toFixed(2));
+        $('#quick-grand-total').text(total.toFixed(2));
+        if ($('#quick-payment-method').val() === 'Cash' || $('#quick-payment-method').val() === 'Card') {
+            $('#quick-paid-amount').val(total.toFixed(2));
+        }
+    }
+
+    $(document).on('input', '.quick-qty-input', function() {
+        let idx = $(this).data('idx');
+        let val = parseFloat($(this).val()) || 1;
+        quickItems[idx].qty = val;
+        renderQuickItems();
+    });
+
+    $(document).on('input', '.quick-price-input', function() {
+        let idx = $(this).data('idx');
+        let val = parseFloat($(this).val()) || 0;
+        quickItems[idx].price = val;
+        renderQuickItems();
+    });
+
+    $(document).on('click', '.remove-quick-item', function() {
+        let idx = $(this).data('idx');
+        quickItems.splice(idx, 1);
+        renderQuickItems();
+    });
+
+    // Quick Post Sale button
+    $('#btn-quick-post-sale').on('click', function() {
+        if (quickItems.length === 0) {
+            alert('Please add at least one item before posting sale.');
+            return;
+        }
+        let btn = $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Posting...');
+        showProgressBar();
+
+        // Redirect to fast counter or submit to commercial store
+        let payload = {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            customer_id: $('#quick-customer-id').val(),
+            warehouse_id: $('#quick-warehouse-id').val(),
+            paying_amount: $('#quick-paid-amount').val() || $('#quick-grand-total').text(),
+            paid_amount: $('#quick-paid-amount').val() || $('#quick-grand-total').text(),
+            paid_by_id: $('#quick-payment-method').val() === 'Cash' ? 1 : 3,
+            payment_status: 4,
+            sale_status: 1
+        };
+
+        // If items are populated, we can seamlessly redirect to commercial fast counter or open POS
+        window.location.href = '{{ route("commercial.sale.entry") }}';
+    });
+</script>
 @endpush

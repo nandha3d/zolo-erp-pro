@@ -94,7 +94,12 @@ class PurchaseController extends Controller
                 $field_name[] = str_replace(" ", "_", strtolower($fieldName));
             }
             $currency_list = Currency::where('is_active', true)->get();
-            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list'));
+            $todayPurchasesAmount = Purchase::whereDate('created_at', date('Y-m-d'))->sum('grand_total');
+            $todayPurchasesCount = Purchase::whereDate('created_at', date('Y-m-d'))->count();
+            $totalPaid = Purchase::sum('paid_amount');
+            $totalDue = Purchase::selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
+            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number')->limit(100)->get();
+            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

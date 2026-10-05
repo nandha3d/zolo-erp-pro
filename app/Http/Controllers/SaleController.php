@@ -169,7 +169,12 @@ class SaleController extends Controller
             }
             $smsTemplates = SmsTemplate::all();
             $currency_list = Currency::where('is_active', true)->get();
-            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list'));
+            $todaySalesAmount = Sale::whereNull('deleted_at')->whereDate('created_at', date('Y-m-d'))->sum('grand_total');
+            $todaySalesCount = Sale::whereNull('deleted_at')->whereDate('created_at', date('Y-m-d'))->count();
+            $totalPaid = Sale::whereNull('deleted_at')->sum('paid_amount');
+            $totalDue = Sale::whereNull('deleted_at')->selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
+            $lims_customer_list = Customer::where('is_active', true)->select('id', 'name', 'phone_number')->limit(100)->get();
+            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

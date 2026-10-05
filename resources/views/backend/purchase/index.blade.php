@@ -12,122 +12,290 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        @can('purchases-add')
-            <a href="{{route('purchases.create')}}" class="btn btn-info btn-icon"><i class="dripicons-plus"></i> {{__('db.Add Purchase')}}</a>&nbsp;
-        @endcan
-        @can('purchases-import')
-            <a href="{{url('purchases/purchase_by_csv')}}" class="btn btn-primary btn-icon"><i class="dripicons-copy"></i> {{__('db.Import Purchase')}}</a>
-        @endcan
-        @if (auth()->user()->role_id <= 2)
-            <a href="{{url('purchases/deleted_data')}}" class="btn btn-secondary btn-icon"><i class="dripicons-trash"></i> {{__('Deleted Purchases')}}</a>
-        @endif
-        <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
-            <i class="dripicons-experiment"></i> {{ __('db.Filter Purchases') }}
-        </button>
-        <div class="card mt-3 mb-2">
-            <div class="card-body" id="filter-card" style="display: none;">
-                <div class="row mt-2">
-                    <div class="col-md-3">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.date')}}</label>
-                            <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
-                            <input type="hidden" name="starting_date" value="{{$starting_date}}" />
-                            <input type="hidden" name="ending_date" value="{{$ending_date}}" />
+
+<link rel="stylesheet" href="{{ asset('css/commercial-workspace.css') }}" type="text/css">
+<script>
+    document.documentElement.classList.add('commercial-screen-lock');
+    document.body.classList.add('commercial-screen-lock');
+</script>
+<div id="comm-progress-bar"></div>
+
+<section class="commercial-workspace-view">
+    <!-- Top Command Bar -->
+    <div class="comm-command-bar">
+        <div class="comm-title-group">
+            <h1><i class="dripicons-download text-success"></i> {{ __('db.Purchase') }} Command Center</h1>
+            <span class="comm-title-badge"><i class="dripicons-box"></i> Procurement & Inward GRN</span>
+        </div>
+        <ul class="comm-nav-pills">
+            <li><a class="nav-link active" id="tab-all-purchases" href="javascript:void(0)" data-status="0"><i class="dripicons-list"></i> {{ __('db.All') }} Purchases</a></li>
+            <li><a class="nav-link" id="tab-pending-purchases" href="javascript:void(0)" data-status="3"><i class="dripicons-hourglass"></i> Pending Receipts</a></li>
+            <li><a class="nav-link" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Stock Transfers</a></li>
+            <li><a class="nav-link" href="{{ route('return-purchase.index') }}"><i class="dripicons-return"></i> {{ __('Purchase Returns') }}</a></li>
+        </ul>
+        <div class="comm-actions">
+            <button type="button" class="btn btn-outline-secondary" id="toggle-filter" title="Toggle Filters">
+                <i class="dripicons-experiment"></i> {{ __('db.Filter') }}
+            </button>
+            @can('purchases-add')
+            <a href="{{ route('purchases.create') }}" class="btn btn-success" title="Full Purchase Form">
+                <i class="dripicons-plus"></i> {{ __('db.Add Purchase') }}
+            </a>
+            @endcan
+            <a href="{{ route('commercial.purchase.entry') }}" class="btn btn-dark" title="Keyboard Fast Purchase (F12)">
+                <i class="dripicons-bolt text-warning"></i> Fast Entry <kbd style="font-size:10px; background:#334155; padding:1px 4px; border-radius:3px;">F12</kbd>
+            </a>
+            <button type="button" class="btn btn-light border" id="toggle-drawer-btn" title="Toggle Quick Drawer (Alt+D)">
+                <i class="dripicons-menu"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Summary Strip -->
+    <div class="comm-kpi-strip">
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Today's Purchases") }}</span>
+                <span class="comm-kpi-value">{{ $todayPurchasesCount ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">({{ number_format($todayPurchasesAmount ?? 0, 2) }})</small></span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="dripicons-cart"></i>
+            </div>
+        </div>
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Paid Outflow") }}</span>
+                <span class="comm-kpi-value" style="color:#0284c7;">{{ number_format($totalPaid ?? 0, 2) }}</span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#f0f9ff; color:#0284c7;">
+                <i class="dripicons-checkmark"></i>
+            </div>
+        </div>
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Due Payables") }}</span>
+                <span class="comm-kpi-value" style="color:#ea580c;">{{ number_format($totalDue ?? 0, 2) }}</span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#fff7ed; color:#ea580c;">
+                <i class="dripicons-warning"></i>
+            </div>
+        </div>
+        <div class="comm-kpi-box">
+            <div class="comm-kpi-info">
+                <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
+                <span class="comm-kpi-value">{{ number_format(($totalPaid ?? 0) + ($totalDue ?? 0), 2) }}</span>
+            </div>
+            <div class="comm-kpi-icon" style="background:#eef2ff; color:#4f46e5;">
+                <i class="dripicons-archive"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2-Column Command Center Grid -->
+    <div class="comm-split-grid" id="comm-split-grid">
+        <!-- Left: Purchase Register Table -->
+        <div class="comm-register-card">
+            <!-- Sleek Inline Filter Bar -->
+            <div class="comm-table-filter-bar" id="filter-card">
+                <div class="filter-item">
+                    <label><i class="dripicons-calendar text-muted"></i></label>
+                    <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
+                    <input type="hidden" name="starting_date" value="{{$starting_date}}" />
+                    <input type="hidden" name="ending_date" value="{{$ending_date}}" />
+                </div>
+                <div class="filter-item @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
+                    <label>{{__('db.Warehouse')}}:</label>
+                    <select id="warehouse_id" name="warehouse_id" class="form-control" style="width:130px;">
+                        <option value="0">{{__('db.All Warehouse')}}</option>
+                        @foreach($lims_warehouse_list as $warehouse)
+                            <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Purchase Status')}}:</label>
+                    <select id="purchase-status" class="form-control" name="purchase_status" style="width:110px;">
+                        <option value="0">{{__('db.All')}}</option>
+                        <option value="1">{{__('db.Recieved')}}</option>
+                        <option value="2">{{__('db.Partial')}}</option>
+                        <option value="3">{{__('db.Pending')}}</option>
+                        <option value="4">{{__('db.Ordered')}}</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Payment Status')}}:</label>
+                    <select id="payment-status" class="form-control" name="payment_status" style="width:100px;">
+                        <option value="0">{{__('db.All')}}</option>
+                        <option value="1">{{__('db.Due')}}</option>
+                        <option value="2">{{__('db.Paid')}}</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-success ml-auto" id="btn-quick-refresh" title="Reload Register">
+                    <i class="dripicons-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Sticky Header Table Viewport -->
+            <div class="comm-table-viewport">
+                <table id="purchase-table" class="table purchase-list mt-0" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="not-exported"></th>
+                            <th>{{__('db.date')}}</th>
+                            <th>{{__('db.reference')}}</th>
+                            <th>{{__('db.Created By')}}</th>
+                            <th>{{__('db.Supplier')}}</th>
+                            @if ($general_setting->show_products_details_in_purchase_table)
+                                <th>{{ __('db.Products') }}</th>
+                                <th>{{ __('db.Quantity') }}</th>
+                            @endif
+                            <th>{{__('db.Purchase Status')}}</th>
+                            <th>{{__('db.grand total')}}</th>
+                            <th>{{__('db.Returned Amount')}}</th>
+                            <th>{{__('db.Paid')}}</th>
+                            <th>{{__('db.Due')}}</th>
+                            <th>{{__('db.Payment Status')}}</th>
+                            @foreach($custom_fields as $fieldName)
+                            <th>{{$fieldName}}</th>
+                            @endforeach
+                            <th class="not-exported">{{__('db.action')}}</th>
+                        </tr>
+                    </thead>
+                    <tfoot class="tfoot active">
+                        <th></th>
+                        <th>{{__('db.Total')}}</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @if ($general_setting->show_products_details_in_purchase_table)
+                            <th></th>
+                            <th></th>
+                        @endif
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @foreach($custom_fields as $fieldName)
+                        <th></th>
+                        @endforeach
+                        <th></th>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: Fast Purchase Console Drawer -->
+        <div class="comm-drawer-card" id="comm-drawer">
+            <div class="comm-drawer-header">
+                <h3 class="comm-drawer-title"><i class="dripicons-bolt text-success"></i> Fast Purchase Console</h3>
+                <div class="comm-drawer-tools">
+                    <span class="badge badge-light border" style="font-size:10px;">F12 Active</span>
+                    <button type="button" class="btn btn-sm btn-link text-muted p-0" id="close-drawer-btn"><i class="dripicons-cross"></i></button>
+                </div>
+            </div>
+            <div class="comm-drawer-body">
+                <div class="comm-form-group">
+                    <label>{{ __('db.Supplier') }} <a href="{{ route('supplier.create') }}" target="_blank" class="text-success">+ New</a></label>
+                    <select id="quick-supplier-id" class="form-control">
+                        @if(isset($lims_supplier_list) && count($lims_supplier_list))
+                            @foreach($lims_supplier_list as $sup)
+                                <option value="{{ $sup->id }}">{{ $sup->name }} @if($sup->company_name)({{ $sup->company_name }})@endif</option>
+                            @endforeach
+                        @else
+                            <option value="1">Default Vendor</option>
+                        @endif
+                    </select>
+                </div>
+
+                <div class="comm-form-row">
+                    <div class="comm-form-group">
+                        <label>{{ __('db.Warehouse') }}</label>
+                        <select id="quick-purchase-warehouse-id" class="form-control">
+                            @foreach($lims_warehouse_list as $wh)
+                                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="comm-form-group">
+                        <label>{{ __('db.date') }}</label>
+                        <input type="date" id="quick-purchase-date" class="form-control" value="{{ date('Y-m-d') }}" />
+                    </div>
+                </div>
+
+                <div class="comm-form-group position-relative">
+                    <label>{{ __('Search Item (Code / Barcode)') }}</label>
+                    <div class="input-group">
+                        <input type="text" id="quick-purchase-product-search" class="form-control" placeholder="Type product name or scan..." autocomplete="off" />
+                        <div class="input-group-append">
+                            <button class="btn btn-sm btn-success" type="button" id="btn-quick-purchase-add-item"><i class="dripicons-plus"></i></button>
                         </div>
                     </div>
-                    <div class="col-md-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Warehouse')}}</label>
-                            <select id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" >
-                                <option value="0">{{__('db.All Warehouse')}}</option>
-                                @foreach($lims_warehouse_list as $warehouse)
-                                    <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div id="quick-purchase-search-results" class="list-group position-absolute shadow" style="z-index:999; display:none; max-height:160px; overflow-y:auto; width:100%; top:58px; background:#fff;"></div>
+                </div>
+
+                <!-- Fast Line Items -->
+                <div class="comm-drawer-lines">
+                    <table class="table" id="quick-purchase-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th style="width:60px;">Qty</th>
+                                <th style="width:70px;">Cost</th>
+                                <th style="width:70px;">Total</th>
+                                <th style="width:30px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="quick-purchase-items-body">
+                            <tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added. Search above or press F12.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totals -->
+                <div class="comm-summary-box">
+                    <div class="comm-summary-row">
+                        <span>Items Subtotal:</span>
+                        <span id="quick-purchase-subtotal">0.00</span>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Purchase Status')}}</label>
-                            <select id="purchase-status" class="form-control" name="purchase_status">
-                                <option value="0">{{__('db.All')}}</option>
-                                <option value="1">{{__('db.Recieved')}}</option>
-                                <option value="2">{{__('db.Partial')}}</option>
-                                <option value="3">{{__('db.Pending')}}</option>
-                                <option value="4">{{__('db.Ordered')}}</option>
-                            </select>
-                        </div>
+                    <div class="comm-summary-row">
+                        <span>Status:</span>
+                        <span class="badge badge-success">Received</span>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-group top-fields">
-                            <label>{{__('db.Payment Status')}}</label>
-                            <select id="payment-status" class="form-control" name="payment_status">
-                                <option value="0">{{__('db.All')}}</option>
-                                <option value="1">{{__('db.Due')}}</option>
-                                <option value="2">{{__('db.Paid')}}</option>
-                            </select>
-                        </div>
+                    <div class="comm-summary-row grand-total">
+                        <span>Total Payable:</span>
+                        <span id="quick-purchase-grand-total">0.00</span>
                     </div>
-                    <div id="filter-loading" class="col-12 text-center my-2" style="display:none;">
-                        <span class="spinner-border text-primary spinner-border-sm" role="status"></span>
-                        <span>Loading results...</span>
+                </div>
+
+                <div class="comm-form-row">
+                    <div class="comm-form-group">
+                        <label>{{ __('db.Payment Status') }}</label>
+                        <select id="quick-purchase-payment-status" class="form-control">
+                            <option value="Paid">Paid</option>
+                            <option value="Due">Due</option>
+                        </select>
                     </div>
+                    <div class="comm-form-group">
+                        <label>{{ __('Paid Amount') }}</label>
+                        <input type="number" id="quick-purchase-paid-amount" class="form-control" placeholder="0.00" />
+                    </div>
+                </div>
+
+                <div class="comm-drawer-footer">
+                    <button type="button" class="btn-comm-primary" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);" id="btn-quick-post-purchase">
+                        <i class="dripicons-checkmark"></i> Post Purchase
+                    </button>
+                    <a href="{{ route('commercial.purchase.entry') }}" class="btn-comm-secondary" title="Open Full Fast Purchase">
+                        <i class="dripicons-external"></i> Full Entry (F12)
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-    <div class="table-responsive">
-        <table id="purchase-table" class="table purchase-list mt-0" style="width: 100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th>{{__('db.date')}}</th>
-                    <th>{{__('db.reference')}}</th>
-                    <th>{{__('db.Created By')}}</th>
-                    <th>{{__('db.Supplier')}}</th>
-                    @if ($general_setting->show_products_details_in_purchase_table)
-                        <th>{{ __('db.Products') }}</th>
-                        <th>{{ __('db.Quantity') }}</th>
-                    @endif
-                    <th>{{__('db.Purchase Status')}}</th>
-                    <th>{{__('db.grand total')}}</th>
-                    <th>{{__('db.Returned Amount')}}</th>
-                    <th>{{__('db.Paid')}}</th>
-                    <th>{{__('db.Due')}}</th>
-                    <th>{{__('db.Payment Status')}}</th>
-                    @foreach($custom_fields as $fieldName)
-                    <th>{{$fieldName}}</th>
-                    @endforeach
-                    <th class="not-exported">{{__('db.action')}}</th>
-                </tr>
-            </thead>
-
-            <tfoot class="tfoot active">
-                <th></th>
-                <th>{{__('db.Total')}}</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                @if ($general_setting->show_products_details_in_purchase_table)
-                    <th></th>
-                    <th></th>
-                @endif
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                @foreach($custom_fields as $fieldName)
-                <th></th>
-                @endforeach
-                <th></th>
-            </tfoot>
-        </table>
-    </div>
 </section>
+
 
 <div id="purchase-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
@@ -1089,5 +1257,172 @@
 
 
 </script>
-<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript" src="https://js.stripe.com/v3/">
+    // --- Commercial Workspace Single-Screen SPA Ergonomics (Purchases) ---
+    function showProgressBar() {
+        $('#comm-progress-bar').removeClass('done').addClass('active');
+    }
+    function hideProgressBar() {
+        $('#comm-progress-bar').addClass('done');
+        setTimeout(function() { $('#comm-progress-bar').removeClass('active done'); }, 300);
+    }
+
+    // Tab switching without page reload
+    $('#tab-all-purchases').on('click', function(e) {
+        e.preventDefault();
+        $('.comm-nav-pills .nav-link').removeClass('active');
+        $(this).addClass('active');
+        $('#purchase-status').val('0');
+        showProgressBar();
+        $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
+    });
+
+    $('#tab-pending-purchases').on('click', function(e) {
+        e.preventDefault();
+        $('.comm-nav-pills .nav-link').removeClass('active');
+        $(this).addClass('active');
+        $('#purchase-status').val('3');
+        showProgressBar();
+        $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
+    });
+
+    $('#btn-quick-refresh').on('click', function() {
+        showProgressBar();
+        $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
+    });
+
+    // Drawer collapse / expand
+    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
+        $('#comm-drawer').toggleClass('collapsed');
+        $('#comm-split-grid').toggleClass('drawer-collapsed');
+        if ($.fn.DataTable.isDataTable('#purchase-table')) {
+            $('#purchase-table').DataTable().columns.adjust().draw(false);
+        }
+    });
+
+    // Hotkeys: F12 focuses quick purchase / fast entry, Alt+D toggles drawer
+    $(document).on('keydown', function(e) {
+        if (e.key === 'F12') {
+            e.preventDefault();
+            if ($('#comm-drawer').hasClass('collapsed')) {
+                $('#toggle-drawer-btn').trigger('click');
+            }
+            $('#quick-purchase-product-search').focus();
+        } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+            e.preventDefault();
+            $('#toggle-drawer-btn').trigger('click');
+        }
+    });
+
+    // Fast product search in drawer
+    let quickPurchaseItems = [];
+    $('#quick-purchase-product-search').on('input', function() {
+        let q = $(this).val().trim();
+        if (q.length < 2) {
+            $('#quick-purchase-search-results').hide().empty();
+            return;
+        }
+        $.ajax({
+            url: '{{ url("purchases/lims_product_search") }}',
+            data: { data: q },
+            type: 'GET',
+            success: function(response) {
+                let res = $('#quick-purchase-search-results').empty();
+                if (Array.isArray(response) && response.length > 0) {
+                    response.slice(0, 8).forEach(function(item) {
+                        let parts = item.split('|');
+                        let name = parts[0];
+                        let code = parts[1];
+                        let qty = parts[2];
+                        let cost = parseFloat(parts[3]) || 50;
+                        let a = $('<a href="javascript:void(0)" class="list-group-item list-group-item-action py-1 px-2" style="font-size:12px;"></a>')
+                            .text(name + ' (' + code + ')')
+                            .data('item', { name: name, code: code, qty: qty, cost: cost });
+                        res.append(a);
+                    });
+                    res.show();
+                } else {
+                    res.hide();
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '#quick-purchase-search-results a', function() {
+        let item = $(this).data('item');
+        addQuickPurchaseItem(item);
+        $('#quick-purchase-search-results').hide().empty();
+        $('#quick-purchase-product-search').val('').focus();
+    });
+
+    function addQuickPurchaseItem(item) {
+        let existing = quickPurchaseItems.find(i => i.code === item.code);
+        if (existing) {
+            existing.qty += 1;
+        } else {
+            quickPurchaseItems.push({
+                name: item.name,
+                code: item.code,
+                qty: 1,
+                cost: item.cost || 50
+            });
+        }
+        renderQuickPurchaseItems();
+    }
+
+    function renderQuickPurchaseItems() {
+        let tbody = $('#quick-purchase-items-body').empty();
+        let total = 0;
+        if (quickPurchaseItems.length === 0) {
+            tbody.append('<tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added. Search above or press F12.</td></tr>');
+        } else {
+            quickPurchaseItems.forEach(function(item, idx) {
+                let lineTotal = item.qty * item.cost;
+                total += lineTotal;
+                tbody.append('<tr>' +
+                    '<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + item.name + '">' + item.name + '</td>' +
+                    '<td><input type="number" class="form-control p-1 text-center quick-p-qty-input" data-idx="' + idx + '" value="' + item.qty + '" min="1" style="height:24px;font-size:11px;"></td>' +
+                    '<td><input type="number" class="form-control p-1 text-right quick-p-cost-input" data-idx="' + idx + '" value="' + item.cost + '" step="0.5" style="height:24px;font-size:11px;"></td>' +
+                    '<td class="text-right font-weight-bold">' + lineTotal.toFixed(2) + '</td>' +
+                    '<td class="text-center"><a href="javascript:void(0)" class="text-danger remove-quick-p-item" data-idx="' + idx + '">&times;</a></td>' +
+                '</tr>');
+            });
+        }
+        $('#quick-purchase-subtotal').text(total.toFixed(2));
+        $('#quick-purchase-grand-total').text(total.toFixed(2));
+        if ($('#quick-purchase-payment-status').val() === 'Paid') {
+            $('#quick-purchase-paid-amount').val(total.toFixed(2));
+        }
+    }
+
+    $(document).on('input', '.quick-p-qty-input', function() {
+        let idx = $(this).data('idx');
+        let val = parseFloat($(this).val()) || 1;
+        quickPurchaseItems[idx].qty = val;
+        renderQuickPurchaseItems();
+    });
+
+    $(document).on('input', '.quick-p-cost-input', function() {
+        let idx = $(this).data('idx');
+        let val = parseFloat($(this).val()) || 0;
+        quickPurchaseItems[idx].cost = val;
+        renderQuickPurchaseItems();
+    });
+
+    $(document).on('click', '.remove-quick-p-item', function() {
+        let idx = $(this).data('idx');
+        quickPurchaseItems.splice(idx, 1);
+        renderQuickPurchaseItems();
+    });
+
+    // Quick Post Purchase button
+    $('#btn-quick-post-purchase').on('click', function() {
+        if (quickPurchaseItems.length === 0) {
+            alert('Please add at least one item before posting purchase.');
+            return;
+        }
+        showProgressBar();
+        window.location.href = '{{ route("commercial.purchase.entry") }}';
+    });
+</script>
 @endpush
