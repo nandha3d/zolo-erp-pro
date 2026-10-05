@@ -12,11 +12,11 @@ require __DIR__.'/operations.php';
 |
 */
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaxController;
-use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\WebviewAuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SaleController;
@@ -86,51 +86,13 @@ use App\Http\Controllers\WhatsappController;
 require __DIR__.'/commercial.php';
 require __DIR__.'/compliance.php';
 
-Route::get('webview/auth', function (Request $request) {
-    // Get token from Authorization header
-    $authHeader = $request->header('Authorization');
-    if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-        abort(401, 'Missing or invalid Authorization header');
-    }
-    $token = substr($authHeader, 7);
-
-    $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
-    if (!$accessToken) {
-        abort(401, 'Invalid token');
-    }
-    Auth::login($accessToken->tokenable);
-
-    // Optional: allow redirect param as query string
-    $redirect = $request->query('redirect', '/');
-    return redirect($redirect . '?app=true');
-});
+Route::get('webview/auth', WebviewAuthController::class)->name('webview.auth');
 
 // SECURITY: Route /migrate DIHAPUS - gunakan 'php artisan migrate' via terminal
 // Route::get('migrate', function() { ... }); // DISABLED FOR SECURITY
 
-// SECURITY: Route /clear dilindungi dengan auth + role admin
-Route::get('clear', function () {
-    Artisan::call('optimize:clear');
-    cache()->forget('biller_list');
-    cache()->forget('brand_list');
-    cache()->forget('category_list');
-    cache()->forget('coupon_list');
-    cache()->forget('customer_list');
-    cache()->forget('customer_group_list');
-    cache()->forget('product_list');
-    cache()->forget('product_list_with_variant');
-    cache()->forget('warehouse_list');
-    cache()->forget('table_list');
-    cache()->forget('tax_list');
-    cache()->forget('currency');
-    cache()->forget('general_setting');
-    cache()->forget('pos_setting');
-    cache()->forget('user_role');
-    cache()->forget('permissions');
-    cache()->forget('role_has_permissions');
-    cache()->forget('role_has_permissions_list');
-    return response()->json(['status' => 'success', 'message' => 'Cache cleared successfully']);
-})->middleware(['auth', 'role:Admin']);
+// The web group enforces CSRF; the existing permission gate grants Admin access.
+Route::post('clear', [MaintenanceController::class, 'clear'])->middleware(['auth', 'can:cache-clear'])->name('cache.clear');
 
 // SECURITY: Installer routes otomatis dinonaktifkan jika sudah terinstall
 // SECURITY: Cek status instalasi

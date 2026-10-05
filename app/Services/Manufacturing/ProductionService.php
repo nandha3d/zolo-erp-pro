@@ -112,7 +112,7 @@ class ProductionService
                     throw ValidationException::withMessages(['outputs' => 'Allocated costs exceed stock precision; adjust output allocation.']);
                 }
                 $yield = $this->yieldSnapshot($movement, $outputMovement, $scrapMovement, $data);
-                DB::table('production_outputs')->insert($saved);
+                DB::table('production_outputs')->insert(app(OperationPosting::class)->lines('production_outputs', $saved, $context));
                 $journal = null;
                 $perpetual = Company::findOrFail($context->companyId)->settings_json['inventory']['perpetual'] ?? true;
                 if ($perpetual && $total) {

@@ -2,7 +2,9 @@
 
 Status: **template; no customer acceptance or production deployment signed**.
 
-Sample rehearsal on 2026-10-05: a disposable repository-seed database was created at the user's request. Company 1 / branch 1 / FY 1; opening stock completed, but **21 stock differences remain**. This is sample engineering evidence, not customer retained-data acceptance. Customer, accountant, security and recovery signatures remain pending. See [the closure status](PHASE_1_12_CLOSURE_STATUS.md) for the exact source hash, private evidence paths and merge blockers.
+Synthetic rehearsal history, 2026-10-05: the first disposable repository-seed rehearsal for company 1 / branch 1 / FY 1 completed opening stock but produced **21 stock differences**. Those differences were traced to inconsistent repository seed data. The seed was corrected at the source; the later recorded synthetic rehearsal reports **zero stock differences** and passes `erp:health`. This remains engineering fixture evidence only. It does not represent customer retained-data reconciliation or customer acceptance. Customer, accountant, security and recovery signatures remain pending. See [the closure status](PHASE_1_12_CLOSURE_STATUS.md) for the historical source hash and private evidence paths.
+
+The phase worktrees are consolidated into the single `main` checkout. Their recoverable backup is `V:/pers/Freelance/zolo-erp-pro-worktree-backup-20261005-152501`. Final cumulative browser/device verification and the full six-suite MySQL matrix are **running; results pending**. Apache/Nginx private-file deny rules still require validation on the actual deployment server. Neither current software acceptance nor production cutover is approved by this record.
 
 Record customer/company/branch/FY, operator/accountant, release SHA, prior compatible release, source system, opening-only versus detailed-history scope, source freeze time, source hash, mapping reviewer, rehearsal/final target identifiers, backup checksum, off-site retention policy and matching restore proof. Keep customer data and recovery secrets in private deployment records.
 

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Designation extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     use HasFactory;
 
     protected $fillable = [

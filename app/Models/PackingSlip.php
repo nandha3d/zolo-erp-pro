@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PackingSlip extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\ScopesBranchQueries;
 
     protected $fillable = ["reference_no", "sale_id", "delivery_id", "amount", "status"];
 

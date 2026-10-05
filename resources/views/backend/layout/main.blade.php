@@ -429,7 +429,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
                         @foreach(Auth::user()->unreadNotifications->where('data.reminder_date', date('Y-m-d')) as $notification)
                         <li class="notifications">
                             @if($notification->data['document_name'])
-                            <a target="_blank" href="{{ url('documents/notification', $notification->data['document_name']) }}" class="btn btn-link">
+                            <a target="_blank" href="{{ route('documents.file', ['notification', $notification->data['document_name']]) }}" class="btn btn-link">
                                 {{ $notification->data['message'] }}
                             </a>
                             @else

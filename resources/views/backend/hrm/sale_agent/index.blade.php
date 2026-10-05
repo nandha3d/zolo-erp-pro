@@ -38,7 +38,7 @@
                         <td>{{ $key }}</td>
                         @if ($agent->image)
                             <td>
-                                <img src="{{ url('images/employee', $agent->image) }}" height="80"
+                                <img src="{{ route('documents.file', ['employee', $agent->image]) }}" height="80"
                                     width="80">
                             </td>
                         @else

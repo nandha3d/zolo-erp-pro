@@ -44,7 +44,18 @@ class CompanyWriteGuard
 
     public function warehouse(mixed $id, CompanyContext $context, int $actor, bool $selectedBranch = true): Warehouse
     {
-        $warehouse = $this->owned(Warehouse::class, $id, $context, 'warehouse_id');
+        if (filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            throw ValidationException::withMessages(['warehouse_id' => 'Select a company-owned record.']);
+        }
+        // Resolve branch authorization below, so a denied branch remains an authorization failure.
+        $query = Warehouse::withoutGlobalScope('request_company')->where('company_id', $context->companyId)->whereKey($id);
+        if ($query->getQuery() instanceof \App\Support\Database\CompanyScopedBuilder) {
+            $query->getQuery()->withoutCompanyScope();
+        }
+        $warehouse = $query->lockForUpdate()->first();
+        if (!$warehouse) {
+            throw ValidationException::withMessages(['warehouse_id' => 'Select a company-owned record.']);
+        }
         if ($selectedBranch && (int) $warehouse->branch_id !== $context->branchId) {
             throw ValidationException::withMessages(['warehouse_id' => 'Warehouse is outside the selected branch.']);
         }

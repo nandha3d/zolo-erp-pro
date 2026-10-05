@@ -251,17 +251,7 @@ class ProductionController extends Controller
                 return redirect()->back()->withErrors($v->errors());
             }
 
-            $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
-            $documentName = date("Ymdhis");
-            if(!config('database.connections.zoloerp_landlord')) {
-                $documentName = $documentName . '.' . $ext;
-                $document->move('public/documents/production', $documentName);
-            }
-            else {
-                $documentName = $this->getTenantId() . '_' . $documentName . '.' . $ext;
-                $document->move('public/documents/production', $documentName);
-            }
-            $data['document'] = $documentName;
+            $data['document'] = app(\App\Services\Documents\PrivateFileStorage::class)->store($document, 'production');
         }
         if(isset($data['created_at']))
             $data['created_at'] = date("Y-m-d H:i:s", strtotime($data['created_at']));
@@ -454,7 +444,7 @@ class ProductionController extends Controller
             });
             ProductProduction::where('production_id', $id)->delete();
             $production->delete();
-            DB::afterCommit(fn () => $this->fileDelete(public_path('documents/production/'), $production->document));
+            DB::afterCommit(fn () => app(\App\Services\Documents\PrivateFileStorage::class)->delete('production', $production->document));
             return redirect('manufacturing/productions')->with('not_permitted', __('db.Production deleted successfully'));
         });
     }

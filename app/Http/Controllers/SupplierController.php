@@ -139,10 +139,7 @@ class SupplierController extends Controller
         $lims_supplier_data['is_active'] = true;
         $image = $request->image;
         if ($image) {
-            $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
-            $imageName = preg_replace('/[^a-zA-Z0-9]/', '', $request['company_name']);
-            $imageName = $imageName . '.' . $ext;
-            $image->move(public_path('images/supplier'), $imageName);
+            $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'supplier');
             $lims_supplier_data['image'] = $imageName;
         }
         $create_supplier = Supplier::create($lims_supplier_data);
@@ -305,16 +302,16 @@ class SupplierController extends Controller
         $input = $request->except('image');
         $image = $request->image;
         if ($image) {
-            $this->fileDelete(public_path('images/supplier/'), $lims_supplier_data->image);
+            $oldImage = $lims_supplier_data->image;
 
-            $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
-            $imageName = preg_replace('/[^a-zA-Z0-9]/', '', $request['company_name']);
-            $imageName = $imageName . '.' . $ext;
-            $image->move(public_path('images/supplier'), $imageName);
+            $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'supplier');
             $input['image'] = $imageName;
         }
 
         $lims_supplier_data->update($input);
+        if (isset($oldImage)) {
+            app(\App\Services\Documents\PrivateFileStorage::class)->delete('supplier', $oldImage);
+        }
         return redirect('supplier')->with('message', __('db.Data updated successfully'));
     }
 
@@ -325,7 +322,7 @@ class SupplierController extends Controller
             $lims_supplier_data = Supplier::findOrFail($id);
             $lims_supplier_data->is_active = false;
             $lims_supplier_data->save();
-            $this->fileDelete(public_path('images/supplier/'), $lims_supplier_data->image);
+            app(\App\Services\Documents\PrivateFileStorage::class)->delete('supplier', $lims_supplier_data->image);
         }
         return 'Supplier deleted successfully!';
     }
@@ -335,7 +332,7 @@ class SupplierController extends Controller
         $lims_supplier_data = Supplier::findOrFail($id);
         $lims_supplier_data->is_active = false;
         $lims_supplier_data->save();
-        $this->fileDelete(public_path('images/supplier/'), $lims_supplier_data->image);
+        app(\App\Services\Documents\PrivateFileStorage::class)->delete('supplier', $lims_supplier_data->image);
 
         return redirect('supplier')->with('not_permitted', __('db.Data deleted successfully'));
     }

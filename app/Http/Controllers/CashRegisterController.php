@@ -33,7 +33,7 @@ class CashRegisterController extends Controller
 
 	public function getDetails($id)
 	{
-		$cash_register_data = CashRegister::find($id);
+		$cash_register_data = CashRegister::findOrFail($id);
 
 		$data['cash_in_hand'] = $cash_register_data->cash_in_hand;
 		$data['total_sale_amount'] = Sale::where([
@@ -91,7 +91,7 @@ class CashRegisterController extends Controller
 
 	public function close(Request $request)
 	{
-		$cash_register_data = CashRegister::find($request->cash_register_id);
+		$cash_register_data = CashRegister::findOrFail($request->cash_register_id);
 		$cash_register_data->closing_balance = $request->closing_balance;
 		$cash_register_data->actual_cash = $request->actual_cash;
 		$cash_register_data->status = 0;

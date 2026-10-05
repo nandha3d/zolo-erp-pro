@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Shift extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     use HasFactory;
     protected $table = 'shifts';
     protected $fillable = [

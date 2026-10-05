@@ -293,7 +293,8 @@ class CompanyWriterTest extends CompanyContextTestCase
         $data = $this->payload('inventory/transfer');
         $data['to_warehouse_id'] = 3;
         $before = $this->snapshot();
-        $this->postJson('/api/v1/inventory/transfer', $data)->assertForbidden();
+        // The request's warehouse existence validation hides ungranted branches before posting.
+        $this->postJson('/api/v1/inventory/transfer', $data)->assertUnprocessable();
         $this->assertSame($before, $this->snapshot());
         $northId = DB::table('warehouses')->where('id', 3)->value('branch_id');
         DB::table('company_user_branches')->insert(['company_id' => $this->company->id, 'user_id' => 1, 'branch_id' => $northId]);

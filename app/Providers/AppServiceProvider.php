@@ -36,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
         // Raw DB::table() reads/writes of company-owned tables follow the same request-company scope as Eloquent.
         \Illuminate\Database\Connection::resolverFor('mysql', fn ($pdo, $database, $prefix, $config) =>
             new \App\Support\Database\CompanyScopedConnection($pdo, $database, $prefix, $config));
+        \Illuminate\Database\Connection::resolverFor('sqlite', fn ($pdo, $database, $prefix, $config) =>
+            new \App\Support\Database\CompanyScopedSqliteConnection($pdo, $database, $prefix, $config));
     }
 
     /** Feeds legacy product_warehouse changes and transaction outcomes to the phase 4b stock shadow. */

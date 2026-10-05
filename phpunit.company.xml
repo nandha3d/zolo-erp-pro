@@ -15,6 +15,9 @@
       <file>tests/Feature/CompanyFoundationTest.php</file>
       <file>tests/Feature/CompanyContextTest.php</file>
       <file>tests/Feature/CompanyWriterTest.php</file>
+      <file>tests/Feature/BranchIsolationTest.php</file>
+      <file>tests/Feature/LegacyCatalogIsolationTest.php</file>
+      <file>tests/Feature/RemainingCompanyHardeningTest.php</file>
       <file>tests/Feature/DestructiveRoutesTest.php</file>
       <file>tests/Feature/CompanyAccountingWebTest.php</file>
       <file>tests/Feature/CommandSafetyTest.php</file>

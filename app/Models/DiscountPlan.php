@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DiscountPlan extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     use HasFactory;
 
     protected $fillable = ['name', 'is_active', 'type'];

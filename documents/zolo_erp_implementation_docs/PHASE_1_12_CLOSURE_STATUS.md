@@ -1,15 +1,27 @@
 # Phase 1–12 integration and completion rehearsal
 
-Status: **INTEGRATED ON CLOSURE BRANCH — FINAL ACCEPTANCE BLOCKED**. This record does not declare any phase complete or authorize production activation.
+Status: **CONSOLIDATED ON `main` — FINAL SOFTWARE VERIFICATION RUNNING; EXTERNAL ACCEPTANCE PENDING**. This record does not declare engineering closure or authorize production activation.
 
-## Integration baseline, 2026-10-05
+## Current closure checkpoint, 2026-10-05
+
+- The phase histories and worktrees are consolidated into the single `main` checkout. Recoverable worktree files and Git snapshots are backed up at `V:/pers/Freelance/zolo-erp-pro-worktree-backup-20261005-152501`.
+- The first synthetic repository-seed rehearsal produced **21 stock differences**. The discrepancy came from inconsistent seed product totals; correcting the seed at its source produced the later recorded **zero-difference** rehearsal with passing `erp:health`. This is engineering fixture evidence, not customer retained-data reconciliation or customer acceptance.
+- Remaining branch isolation, endpoint security, same-company relation constraints, raw-subquery scoping and private-file controls are implemented for current validation. The [private-file deployment guide](PRIVATE_FILE_DEPLOYMENT.md) classifies public assets and private records and supplies Apache/Nginx configuration.
+- **Cumulative browser/device verification: RUNNING; acceptance pending.** Historical screenshots below describe their original builds and do not establish acceptance of these changes.
+- **Full six-suite MySQL matrix: RUNNING; acceptance pending.** All six configurations must pass for the final changed head: company, commercial, compliance, operations, delivery and legacy-mysql. Previous green runs are not proof for this head.
+- **Deployment private-file deny checks: PENDING.** Framework authorization tests and checked-in rules do not prove that the actual Apache/Nginx virtual host denies direct private URLs.
+- Customer retained-data reconciliation, accountant/provider/printer acceptance, private off-site backup/recovery rehearsal and signed production cutover remain **PENDING**. Capability activation defaults remain unchanged.
+
+The historical checkpoints below preserve how the implementation reached this state. Their former blockers and worktree references are superseded by this checkpoint where they differ. Do not label the software **ENGINEERING COMPLETE** until the current software gates are verified.
+
+## Historical integration baseline, 2026-10-05
 
 - Closure branch: `codex/phase1-12-final-closure`.
 - Starting cumulative SHA: `0e7b6f2e3d59929964bee4d005211acaf7fb26ac` (`codex/phase9-10-operations-profiles`).
 - Main base SHA: `549d2a9c9b2a023c442e799ea5da2f1b91f999cb`.
 - History integration commit: `d6d0070`. It merges `codex/phase6-shared-commercial` without changing the cumulative application tree.
 - All six local branches, including `main`, are ancestors of the closure branch. Phase 1 accounting and Phase 4c were already included; Phase 7–8 was already merged into the cumulative branch. Duplicate Phase 6 snapshots caused 23 conflicts; newer cumulative accounting, tax, operations, UI and security code was retained. No force push, history rewriting or branch deletion was used.
-- The original checkout's uncommitted Phase 5 accounting files remain untouched. They are not evidence that the entire closure plan is implemented.
+- At this integration checkpoint, the original checkout's uncommitted Phase 5 accounting files were left untouched. They did not establish completion of the entire closure plan; the subsequent worktree consolidation preserves recoverable files in the backup recorded above.
 - Runtime: PHP 8.3.32, Laravel 10.49.1, disposable MySQL 8.4.11.
 - Registered route baseline: 955 routes in the local testing application without an installation `.env`; installer route registration is conditional.
 - Browser baseline: historical Phase 5–12 screenshots remain evidence of their original builds only. The required whole-application device/browser matrix has not been repeated or accepted here.
@@ -47,32 +59,32 @@ php tests/Support/prepare_completion_rehearsal.php
 
 These are disposable fixture credentials. The script creates a different random application password and records it privately. The sample is not a copy of customer production data and cannot establish customer retained-data acceptance.
 
-## Stop condition reached
+## Historical stop condition and later synthetic correction
 
-The sample source hash before opening stock is `a3264240443ae14683c30cf8f925a944cbd4c70f99dfaedd71ac994379e4d0c4`. Opening stock completes, but reconciliation returns **21 stock differences**. For example, product 1 has warehouse/ledger quantity 10.0000 and product projection 624.7000, a difference of -614.7000. Product 2 has projection -152.5000 without attributable ledger history. These pre-existing seed discrepancies are preserved for review; no rebuild or fabricated transaction is used to hide them.
+The first sample source hash before opening stock was `a3264240443ae14683c30cf8f925a944cbd4c70f99dfaedd71ac994379e4d0c4`. Opening stock completed, but reconciliation returned **21 stock differences**. For example, product 1 had warehouse/ledger quantity 10.0000 and product projection 624.7000, a difference of -614.7000. Product 2 had projection -152.5000 without attributable ledger history. These examples preserve the original evidence. The discrepancies were later traced to inconsistent repository seed data and corrected in `TenantDatabaseSeeder`; the later recorded synthetic rehearsal reports **zero stock differences**, without a stock rebuild or fabricated business transaction.
 
 Accounting journals/open items in this sample reconcile at zero. That does not establish historical AR/AP acceptance or prove inventory GL agrees with opening stock valuation.
 
-The existing `erp:health` command returns failure for this sample: missing COGS mapping, missing default sale/purchase/journal/payment series, stock quantity differences and inventory accounting value differing from the stock ledger. Its private report is `scratch/completion-rehearsal/health.json`. These are review/setup blockers, not approvals.
+The first `erp:health` report failed because of missing COGS mapping, missing default sale/purchase/journal/payment series, stock quantity differences and inventory accounting value differing from the stock ledger. Its private report was `scratch/completion-rehearsal/health.json`. The later source-seed correction and explicitly labelled synthetic setup resolve those fixture blockers; the later recorded rehearsal passes `erp:health`. Neither result establishes customer retained-data acceptance.
 
-The requested closure plan explicitly says to stop on unexplained stock/accounting differences and missing historical stock attribution. Functional cutover and final main merge therefore remain blocked. Sample generation cannot invent the missing business history or reviewer decisions.
+The original rehearsal stopped on those unexplained differences, as required by the closure plan. The subsequent seed correction resolves that synthetic stop condition, and integration is now consolidated on `main`. Real cutover still requires customer source data, reviewed stock/accounting reconciliation and reviewer decisions; sample generation cannot supply that evidence.
 
-## Remaining closure work and acceptance
+## Historical remaining closure scope at the first checkpoint
 
 - Workstreams A/Phase 1: whole legacy route/read/write/cache/import/export/file isolation and reviewed ownership/uniqueness/FK/backfill acceptance remain open. Known examples include `SaleController` customer/warehouse queries and the broad legacy business route group.
 - Workstream B/Phase 3: `SaleController::generateInvoiceName` and other active timestamp/random/count generators still require authoritative cutover.
 - Workstream C/Phase 4: Sale, Purchase, Return and ReturnPurchase remain in `LegacyStockShadow::WRITERS`; direct projection writes remain. The gated adapters do not establish cutover while their gates are false.
 - Workstream E/Phase 11: the complete operator screen, permission, keyboard, device and browser matrix remains pending.
 - Workstream F/Phase 12: customer retained-data source, reviewed explanations for discrepancies, real accountant/provider/printer acceptance, private off-site backup/restore and signed cutover remain pending.
-- Do not merge to main, enable optional capabilities, tag an accepted release or declare 12/12 complete until the specified software and external acceptance gates pass.
+- That checkpoint held the final merge and acceptance open. The requested worktree consolidation is now on `main`; optional capability activation, an accepted release and production cutover still require their applicable acceptance gates.
 
-## Validation record
+## Historical validation record
 
 PHP syntax for cumulative changed files, JavaScript syntax for cumulative changed files, and diff whitespace pass. The permission-seeding regression passes on MySQL: 1 test, 11 assertions. The corrected commercial HTTP fixture passes on SQLite and MySQL: 1 test, 8 assertions each. The corrected accounting permission case passes on SQLite: 1 test, 24 assertions. Compliance MySQL passes: 62 tests, 361 assertions. Operations MySQL passes: 28 tests, 227 assertions. Delivery MySQL passes: 29 tests, 147 assertions, with the SQLite-only archive test skipped; the separate MySQL restore case runs. Legacy seeded MySQL passes: 28 tests, 204 assertions. The initial commercial suite exposed the obsolete browser fixture (28 tests, 141 assertions, one error, one optional performance skip); the initial company suite exposed the obsolete accounting permission expectation (280 tests, 2,861 assertions, one failure). Their focused corrections are verified above. The sample preparation guard also refuses a non-fixture database before application bootstrap. Full acceptance for the corrected head is reported in [PR #3](https://github.com/vigneshsinna/zolo-erp-pro/pull/3), without replacing these historical results.
 
 ## Closure fixes after the baseline (software only)
 
-This section supersedes the "Stop condition reached" and "Remaining closure work" paragraphs above where they differ. It records software changes only. No customer data, accountant review, provider/printer hardware or signature is involved, and none is claimed.
+This section records the fixes that followed the first historical checkpoint. The current closure checkpoint above supersedes its remaining-work statements where they differ. It records software changes only. No customer data, accountant review, provider/printer hardware or signature is involved, and none is claimed.
 
 - **21 sample stock differences: resolved at the source.** The upstream demo dump carried `products.qty` totals (some negative) with no warehouse row or ledger history, e.g. product 1 total 624.7 against a warehouse row of 10. `TenantDatabaseSeeder` now sets each seeded product total to the sum of its seeded `product_warehouse` rows. The rehearsal now reports **0 stock differences** and `erp:health` returns `ok`. This is a synthetic seed fix; it proves nothing about retained customer stock, which still needs its own reviewed reconciliation.
 - **Sample setup.** `SemanticAccountResolver::seedCompany` picks the single system account when several leaves share a sub-type (COGS products vs. shrinkage); other ambiguity stays unmapped. `prepare_completion_rehearsal.php` performs explicit, labelled synthetic setup (default series, opening inventory journal against owner capital) so mappings, series, stock and inventory value agree. A real cutover uses reviewed mappings and `erp:import-opening`.
@@ -83,11 +95,11 @@ This section supersedes the "Stop condition reached" and "Remaining closure work
 
 Gates are unchanged: optional capabilities, shared commercial, compliance and operations remain disabled by default, GST export is review-only, and customer retained-data reconciliation, accountant/provider/printer acceptance and signed cutover are still required.
 
-## Second closure pass (software)
+## Second closure pass (historical software checkpoint)
 
 - **Raw queries.** A company-scoped query builder adds `company_id` to `DB::table()` selects, updates and deletes of company-owned tables (and to their joins) while a request carries a company context. Subqueries compiled into a parent are not rewritten. The inventory movement service opts out (`withoutCompanyScope`) only to detect foreign or duplicate stock rows.
 - **Document numbers.** Quotations, deliveries/packing-slip deliveries, income, money transfers and payroll gained company keys (`2026_10_11_000001`) and use the company series. Damage, exchange, inventory-close and journal numbers are unique per company (`2026_10_11_000002`). A processed payroll keeps its number when regenerated, and a delivery number is never taken from the form.
 - **Return cost.** Legacy sale returns restore stock at the original sale's issue cost when the sale has an applied issue.
 - **`purchase:auto`** runs for one authorized company (`--company`, `--actor`) and refuses to run across companies. The installer runs the company backfill (with the app briefly down) after seeding.
-- **Attachments.** Company document attachments are delivered by `secure-documents/{folder}/{file}` only to signed-in members of the owning company, and only when a document of that company references the file. `public/.htaccess` refuses direct `documents/<folder>/` requests. **Nginx or other servers need the equivalent rule**: deny `^/documents/(sale|purchase|sale_return|purchase_return|quotation|expense|delivery|transfer|adjustment|add-payment)/`. Notification and production attachments, and images (`public/images`), remain public.
-- **Still open.** Same-company foreign keys; company-aware uniqueness for tables whose ownership is derived (variants, discounts, HR); subquery scoping; the unscoped notification/production/image folders; all external acceptance. Second-company activation remains OFF (`CapabilityCatalog::OPTIONAL_ACTIVATION_READY=false`) and Phase 12 acceptance remains Pending.
+- **Attachments at that checkpoint.** Company document attachments were delivered by `secure-documents/{folder}/{file}` only to signed-in members of the owning company with a referencing document. `public/.htaccess` denied direct company-document paths. Notification/production attachments and private record images still needed protection then; the current changes extend secure delivery, private storage and server rules to those families. Public branding/product/static assets remain public. See [the deployment guide](PRIVATE_FILE_DEPLOYMENT.md).
+- **Open items at that checkpoint.** Remaining same-company foreign keys, company-aware uniqueness for variants/discounts/HR, subquery scoping and private notification/production/image controls were assigned to the final software pass. Those changes now await the current cumulative validation recorded above. External acceptance remains pending. Second-company activation remains OFF (`CapabilityCatalog::OPTIONAL_ACTIVATION_READY=false`).

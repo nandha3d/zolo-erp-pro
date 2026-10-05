@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
-  <testsuites><testsuite name="Workspace security and deployment"><file>tests/Feature/WorkspaceSecurityTest.php</file><file>tests/Feature/DeploymentReadinessTest.php</file></testsuite></testsuites>
+  <testsuites><testsuite name="Workspace security and deployment"><file>tests/Feature/WorkspaceSecurityTest.php</file><file>tests/Feature/DeploymentReadinessTest.php</file><file>tests/Feature/MaintenanceEndpointSecurityTest.php</file><file>tests/Feature/PrivateFileIsolationTest.php</file></testsuite></testsuites>
   <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/></php>
 </phpunit>

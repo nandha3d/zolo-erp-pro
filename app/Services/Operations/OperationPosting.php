@@ -63,6 +63,13 @@ class OperationPosting
             'financial_year_id' => $context->financialYearId, 'created_by' => $actor];
     }
 
+    /** Stamp parent-derived rows when the additive ownership migration is installed. */
+    public function lines(string $table, array $rows, CompanyContext $context): array
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn($table, 'company_id')) return $rows;
+        return array_map(fn (array $row) => ['company_id' => $context->companyId] + $row, $rows);
+    }
+
     private function canonical(array $data): array
     {
         if (!array_is_list($data)) ksort($data);

@@ -36,11 +36,11 @@ class BomService
                     'output_qty' => $data['output_qty'], 'output_uom_id' => $data['output_uom_id'],
                     'is_default' => $data['is_default'], 'legacy_import' => $data['legacy_import'] ?? false,
                 ]);
-                foreach ($data['lines'] as $i => $line) DB::table('bom_lines')->insert([
+                foreach ($data['lines'] as $i => $line) DB::table('bom_lines')->insert(app(OperationPosting::class)->lines('bom_lines', [[
                     'bom_id' => $bom->id, 'line_no' => $i + 1, 'component_product_id' => $line['component_product_id'],
                     'variant_id' => $line['variant_id'] ?? null, 'qty' => $line['qty'], 'uom_id' => $line['uom_id'],
                     'scrap_percent' => $line['scrap_percent'] ?? 0,
-                ]);
+                ]], $context));
                 $bom->forceFill(['status' => 'published', 'posted_at' => now()])->save();
                 return $bom;
             });

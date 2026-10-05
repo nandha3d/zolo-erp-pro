@@ -1835,6 +1835,9 @@ class SaleController extends Controller
 
     public function posSale($id='')
     {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        // Scoped reads must not consume or populate installation-wide lookup caches.
+        $remember = fn ($key, $ttl, $read) => $context ? $read() : Cache::remember($key, $ttl, $read);
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('sales-add')) {
             $permissions = Role::findByName($role->name)->permissions;
@@ -1843,34 +1846,34 @@ class SaleController extends Controller
             if(empty($all_permission))
                 $all_permission[] = 'dummy text';
 
-            $lims_customer_list = Cache::remember('customer_list', 60*60*24, function () {
+            $lims_customer_list = $remember('customer_list', 60*60*24, function () {
                 return Customer::where('is_active', true)->get();
             });
-            $lims_customer_group_all = Cache::remember('customer_group_list', 60*60*24, function () {
+            $lims_customer_group_all = $remember('customer_group_list', 60*60*24, function () {
                 return CustomerGroup::where('is_active', true)->get();
             });
-            $lims_warehouse_list = Cache::remember('warehouse_list', 60*60*24*365, function () {
+            $lims_warehouse_list = $remember('warehouse_list', 60*60*24*365, function () {
                 return Warehouse::where('is_active', true)->get();
             });
-            $lims_biller_list = Cache::remember('biller_list', 60*60*24*30, function () {
+            $lims_biller_list = $remember('biller_list', 60*60*24*30, function () {
                 return Biller::where('is_active', true)->get();
             });
             $lims_reward_point_setting_data = RewardPointSetting::latest()->first();
-            $lims_tax_list = Cache::remember('tax_list', 60*60*24*30, function () {
+            $lims_tax_list = $remember('tax_list', 60*60*24*30, function () {
                 return Tax::where('is_active', true)->get();
             });
 
-            $lims_pos_setting_data = Cache::remember('pos_setting', 60*60*24*30, function () {
+            $lims_pos_setting_data = $remember('pos_setting', 60*60*24*30, function () {
                 return PosSetting::latest()->first();
             });
             if($lims_pos_setting_data)
                 $options = explode(',', $lims_pos_setting_data->payment_options);
             else
                 $options = [];
-            $lims_brand_list = Cache::remember('brand_list', 60*60*24*30, function () {
+            $lims_brand_list = $remember('brand_list', 60*60*24*30, function () {
                 return Brand::where('is_active',true)->get();
             });
-            $lims_category_list = Cache::remember('category_list', 60*60*24*30, function () {
+            $lims_category_list = $remember('category_list', 60*60*24*30, function () {
                 return Category::where('is_active',true)->get();
             });
 
@@ -1890,12 +1893,12 @@ class SaleController extends Controller
                 $service_list = DB::table('services')->where('is_active',1)->get();
                 $waiter_list = DB::table('users')->where('service_staff',1)->where('is_active',1)->get();
             }else{
-                $lims_table_list = Cache::remember('table_list', 60*60*24*30, function () {
+                $lims_table_list = $remember('table_list', 60*60*24*30, function () {
                     return Table::where('is_active',true)->get();
                 });
             }
 
-            $lims_coupon_list = Cache::remember('coupon_list', 60*60*24*30, function () {
+            $lims_coupon_list = $remember('coupon_list', 60*60*24*30, function () {
                 return Coupon::where('is_active',true)->get();
             });
             $flag = 0;

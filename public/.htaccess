@@ -15,7 +15,8 @@
     RewriteRule ^ %1 [L,R=301]
 
     # Company attachments are served by DocumentFileController after an ownership check, never directly.
-    RewriteRule ^documents/(sale|purchase|sale_return|purchase_return|quotation|expense|delivery|transfer|adjustment|add-payment)/ - [F,L]
+    RewriteRule ^documents/(sale|purchase|sale_return|purchase_return|quotation|expense|delivery|transfer|adjustment|add-payment|notification|production)(/|$) - [F,L,NC]
+    RewriteRule ^images/(employee|sale_agent|supplier)(/|$) - [F,L,NC]
 
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d

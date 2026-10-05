@@ -34,6 +34,8 @@ class DiscountPlanController extends Controller
 
     public function store(Request $request)
     {
+        $this->validateCompanyReferences($request);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
         $data = $request->all();
         if(!isset($data['is_active'])) {
             $data['is_active'] = 0;
@@ -43,11 +45,12 @@ class DiscountPlanController extends Controller
             DiscountPlanCustomer::create(['discount_plan_id' => $lims_discount_plan->id, 'customer_id' => $customer_id]);
         }
         return redirect()->route('discount-plans.index')->with('message', __('db.Discount Plan created successfully'));
+        });
     }
 
     public function edit($id)
     {
-        $lims_discount_plan = DiscountPlan::find($id);
+        $lims_discount_plan = DiscountPlan::findOrFail($id);
 
         $lims_customer_list = Customer::where([
             'is_active' => true,
@@ -68,8 +71,10 @@ class DiscountPlanController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->validateCompanyReferences($request);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $id) {
         $data = $request->all();
-        $lims_discount_plan = DiscountPlan::find($id);
+        $lims_discount_plan = DiscountPlan::findOrFail($id);
         if(!isset($data['is_active'])) {
             $data['is_active'] = 0;
         }
@@ -91,5 +96,17 @@ class DiscountPlanController extends Controller
         }
         $lims_discount_plan->update($data);
         return redirect()->route('discount-plans.index')->with('message', __('db.Discount Plan updated successfully'));
+        });
+    }
+
+    private function validateCompanyReferences(Request $request): void
+    {
+        $request->validate(['customer_id' => 'required|array|min:1', 'customer_id.*' => 'required|integer|min:1|distinct']);
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+        abort_unless($context, 403);
+        $ids = $request->input('customer_id');
+        if (Customer::query()->where('company_id', $context->companyId)->whereIn('id', $ids)->count() !== count($ids)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['customer_id' => 'Every customer must belong to the current company.']);
+        }
     }
 }

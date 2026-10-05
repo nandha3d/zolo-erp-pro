@@ -380,7 +380,7 @@
         function productionDetails(production){
             var htmltext = '<strong>{{__("db.date")}}: </strong>'+production[0]+'<br><strong>{{__("db.reference")}}: </strong>'+production[1]+'<br><strong>{{__("db.status")}}: </strong>'+production[2]+'<br><strong>{{__("db.Warehouse")}}: </strong>'+production[4];
             if(production[12])
-                htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/production/'+production[25]+'">Download</a><br>';
+                htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="{{ url('secure-documents/production') }}/'+encodeURIComponent(production[25])+'">Download</a><br>';
 
             $(".product-production-list tbody").remove();
         $.get('productions/product_production/' + production[3], function(response) {

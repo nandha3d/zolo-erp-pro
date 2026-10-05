@@ -6,10 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Employee extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+    use \App\Models\Concerns\ValidatesCompanyReferences;
+
+    protected function companyReferences(): array
+    {
+        return ['department_id' => 'departments', 'designation_id' => 'designations', 'shift_id' => 'shifts',
+            'warehouse_id' => 'warehouses', 'biller_id' => 'billers'];
+    }
+
     protected $fillable = [
         "name",
         "image",
         "department_id",
+        "warehouse_id",
+        "biller_id",
         "designation_id",
         "shift_id",
         "basic_salary",

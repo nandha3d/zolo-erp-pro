@@ -1,10 +1,20 @@
 # Implementation progress
 
-Current implementation state, reviewed 2026-10-04. This file describes the latest behavior; historical audit snapshots and package evidence are retained in [the audit resolution log](../auditing/COMPANY_FOUNDATION_AUDIT_RESOLUTION.md).
+Implementation record, updated 2026-10-05. The current checkpoint below supersedes older package-level status where it differs; historical audit snapshots and package evidence are retained in [the audit resolution log](../auditing/COMPANY_FOUNDATION_AUDIT_RESOLUTION.md).
+
+## Current cumulative checkpoint, 2026-10-05
+
+The phase worktrees are consolidated into the single `main` checkout. Recoverable worktree files and Git snapshots are backed up at `V:/pers/Freelance/zolo-erp-pro-worktree-backup-20261005-152501`.
+
+The first synthetic repository-seed rehearsal produced **21 stock differences**. Those differences were traced to inconsistent repository seed data and corrected at the source. The later recorded synthetic rehearsal reports **zero stock differences** and passes `erp:health`. This remains engineering fixture evidence only; it does not represent customer retained-data reconciliation or customer acceptance.
+
+Final branch isolation, endpoint security, company relation constraints, raw-subquery scope and private-file changes are implemented for validation. The current cumulative browser/device checks and full six-suite MySQL matrix are **RUNNING; acceptance pending**. Historical suite totals and screenshots below are evidence for their original builds, not a final result for this head. Actual deployment-server Apache/Nginx private-file deny checks remain **PENDING**; see [the deployment guide](PRIVATE_FILE_DEPLOYMENT.md).
+
+Engineering closure is not declared while those software gates remain unverified. Customer retained-data reconciliation, accountant/provider/printer acceptance, private off-site backup/recovery rehearsal and signed production cutover remain **PENDING**. Activation defaults remain unchanged. [The closure status](PHASE_1_12_CLOSURE_STATUS.md) records the current gate state.
 
 Execution follows [document 26](26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md), using one shared ERP core. The implementation pack includes authoritative specifications 00–33; docs 31–33 define the modern UI, Optech workflow mapping and common component contracts.
 
-## Current phase and activation gates
+## Earlier foundation checkpoint and activation gates
 
 Phase 0's delivered regression package is complete. Phase 1 remains in progress: schema/backfill, authorized context/setup, bounded API readers, shared commercial writers and double-entry accounting paths are delivered. Full legal-company isolation is not complete.
 
@@ -268,9 +278,9 @@ Retain Blade/Bootstrap/jQuery and extend `public/css/zolo-erp-neo.css`. Preserve
 
 ### Final closure integration, 2026-10-05
 
-`codex/phase1-12-final-closure` starts at cumulative `0e7b6f2`, contains current main `549d2a9`, and reconciles the separate Phase 6 history in `d6d0070`. All existing local development branches are included without replacing newer cumulative services. Fresh migration/tenant seeding exposed permission ID collisions; the seeder now preserves existing permissions and resolves legacy grants by name. CI covers all six intended MySQL configurations, and the obsolete commercial render fixture uses the current controller.
+The original `codex/phase1-12-final-closure` integration started at cumulative `0e7b6f2`, included the then-current main `549d2a9`, and reconciled the separate Phase 6 history in `d6d0070`. All local development branches were included without replacing newer cumulative services. That history is now consolidated on `main` with the worktree backup recorded above. Fresh migration/tenant seeding exposed permission ID collisions; the seeder preserves existing permissions and resolves legacy grants by name. CI covers all six intended MySQL configurations, and the obsolete commercial render fixture uses the actual controller.
 
-The user requested a sample UAT database; `prepare_completion_rehearsal.php` creates only an opted-in disposable target, records source hash/counts and preserves reconciliation differences. The sample has **21 stock differences**, so the completion plan's stop condition applies. No stock rebuild, activation-gate override, acceptance signature, release tag or final main merge is authorized by this proof. Whole-application isolation, authoritative legacy numbering/commercial cutover and real external acceptance remain open. See [the closure status and sample rehearsal procedure](PHASE_1_12_CLOSURE_STATUS.md) for exact scope and validation.
+The user requested a sample UAT database; `prepare_completion_rehearsal.php` creates only an opted-in disposable target and records source hash/counts and reconciliation evidence. The first sample produced **21 stock differences**, triggering the original stop condition. The discrepancy was traced to inconsistent repository seed data and corrected at the source; the later recorded synthetic rehearsal reports **zero stock differences** and passes `erp:health`. No stock rebuild or fabricated business history hides the original result. This proves fixture consistency only. Final browser/MySQL acceptance for the latest changes and real customer external acceptance remain pending. See [the closure status and sample rehearsal procedure](PHASE_1_12_CLOSURE_STATUS.md) for exact scope and validation.
 
 Canonical phases remain: 0 regression baseline; 1 Company/Branch/FY; 2 capabilities; 3 atomic series; 4 inventory ledger; 5 accounting/open items; 6 shared commercial services; 7 tax; 8 returns/documents; 9 manufacturing/job work; 10 profiles; 11 UI/API/security completion; 12 migration/UAT/deployment.
 
@@ -279,7 +289,7 @@ Every completed work package is validated, committed and pushed before dependent
 
 ## Phase 6: gated shared commercial package
 
-The [Phase 6 implementation and integration notes](PHASE_6_SHARED_COMMERCIAL.md) describe shared sales/purchase posting, legacy web/POS/API convergence, idempotency, immutable reversal/replacement, landed cost and later receipt, credit controls, server drafts and keyboard fast entry. Work is isolated on `codex/phase6-shared-commercial`. Phase 5 accounting is a separate prerequisite; this entry does not change its status.
+The [Phase 6 implementation and integration notes](PHASE_6_SHARED_COMMERCIAL.md) describe shared sales/purchase posting, legacy web/POS/API convergence, idempotency, immutable reversal/replacement, landed cost and later receipt, credit controls, server drafts and keyboard fast entry. The package was developed on `codex/phase6-shared-commercial`; its history is now integrated on `main`. Phase 5 accounting remains its prerequisite.
 
 `ERP_SHARED_COMMERCIAL_ENABLED` remains false, and optional capability/second-company activation gates remain unchanged. No production migrations or historical-document conversion have run. Combined Phase 5/6 UAT and retained-data reconciliation remain necessary before cutover.
 
@@ -287,7 +297,7 @@ Phase 6 local proof passed: 28-test commercial SQLite suite (147 assertions; opt
 
 ## Phase 7–8: gated tax, returns and documents package
 
-The [Phase 7–8 implementation and UAT notes](PHASE_7_8_TAX_RETURNS_AND_DOCUMENTS.md) describe effective GST setup and frozen determination/projections, quantity returns and financial notes, approval, quarantine/disposal, normal-sale exchanges, document series/rendering and after-commit delivery. Work is isolated on `codex/phase7-8-tax-returns-documents`. It includes the Phase 5 dependency snapshot and reconciles the final Phase 6 package `c00831a`, preserving Phase 5 payment retry behavior and accounting routes. No original checkout or Phase 6 branch changes were made.
+The [Phase 7–8 implementation and UAT notes](PHASE_7_8_TAX_RETURNS_AND_DOCUMENTS.md) describe effective GST setup and frozen determination/projections, quantity returns and financial notes, approval, quarantine/disposal, normal-sale exchanges, document series/rendering and after-commit delivery. The package was developed on `codex/phase7-8-tax-returns-documents` and is now integrated on `main`. It includes the Phase 5 dependency snapshot and reconciles the final Phase 6 package `c00831a`, preserving Phase 5 payment retry behavior and accounting routes. The original package work did not change the original checkout or Phase 6 branch.
 
 Final local SQLite proof passes: compliance suite **62 tests / 348 assertions**, with one MySQL-only approval race skipped; company regression suite **280 tests / 2,517 assertions**, with 18 opt-in skips. Disposable official MySQL **8.4.0** passes **28 tax/return/migration/concurrency tests / 161 assertions**, plus the latest four focused export/PDF/note checks (**43 assertions**). The original full migration chain also passes **1 test / 5 assertions**. Browser proof covers submitted/approved returns, A4/thermal saved totals, failed-delivery retry, mobile return layout and an interstate GST fast-entry sale/print. PHP/JavaScript syntax and diff whitespace checks are part of final validation.
 
@@ -296,7 +306,7 @@ Final local SQLite proof passes: compliance suite **62 tests / 348 assertions**,
 
 ## Phases 9–10: gated manufacturing, subcontracting and profiles
 
-The [Phase 9–10 implementation and UAT notes](PHASE_9_10_OPERATIONS_AND_PROFILES.md) describe immutable BOM versions/import, actual production costing and reversals, generic external material dispatch/receipt/conversion/service billing, profile attributes and defaults, FMCG FEFO/free quantity/disposal, timber dimensional stock/invoices and solar project/serial/warranty/margin flows. Work is isolated on `codex/phase9-10-operations-profiles` and integrates the accepted-code Phase 7–8 checkpoint `47f7535` through merge `82c9017`.
+The [Phase 9–10 implementation and UAT notes](PHASE_9_10_OPERATIONS_AND_PROFILES.md) describe immutable BOM versions/import, actual production costing and reversals, generic external material dispatch/receipt/conversion/service billing, profile attributes and defaults, FMCG FEFO/free quantity/disposal, timber dimensional stock/invoices and solar project/serial/warranty/margin flows. The package was developed on `codex/phase9-10-operations-profiles`, integrating the accepted-code Phase 7–8 checkpoint `47f7535` through merge `82c9017`; its history is now integrated on `main`.
 
 Focused SQLite proof passes: operations suite **28 tests / 209 assertions** (three MySQL-only races skipped), integrated compliance suite **62 tests / 348 assertions** (one MySQL-only race skipped), and shared inventory/capability suite **33 tests / 213 assertions**. Disposable MySQL operations proof passes **28 tests / 226 assertions**, including all three concurrency races; the original full migration chain passes **1 test / 5 assertions**. The final malformed retry-key HTTP check passes separately (**1 test / 14 assertions**). The runbook records saved desktop/mobile browser evidence, ownership and reversal constraints, and the guarded migration/import procedure.
 

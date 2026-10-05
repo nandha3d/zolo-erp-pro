@@ -128,12 +128,29 @@ class ProductController extends Controller
         ];
 
         $is_recipe = $request->input('is_recipe');
-        $warehouse_id = $filtered_data['warehouse_id'];
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $request->validate(['warehouse_id' => 'nullable|integer|min:0', 'stock_filter' => 'nullable|in:all,with,without']);
+        $warehouse_id = (int) $filtered_data['warehouse_id'];
+        if ($context && $warehouse_id > 0) {
+            app(\App\Services\Platform\BranchAccess::class)->assertWarehouse($warehouse_id, $context);
+        }
+
+        // One authorized stock query owns filtering, displayed quantity and quantity ordering.
+        $visibleStock = Product_Warehouse::query()
+            ->when($context, fn ($q) => $q->forCompany($context)
+                ->whereHas('product', fn ($product) => $product->forCompany($context))
+                ->whereHas('warehouse', fn ($warehouse) => $warehouse->forCompany($context)))
+            ->when($warehouse_id > 0, fn ($q) => $q->where('product_warehouse.warehouse_id', $warehouse_id))
+            ->whereColumn('product_warehouse.product_id', 'products.id')
+            ->selectRaw('COALESCE(SUM(product_warehouse.qty), 0)');
 
         // DataTables pagination/sorting
         $limit = ($request->input('length') != -1) ? $request->input('length') : null;
         $start = $request->input('start');
         $order = 'products.'.$columns[$request->input('order.0.column')];
+        if ($request->input('order.0.column') == 5) {
+            $order = 'visible_stock_qty';
+        }
         $dir   = $request->input('order.0.dir');
 
         // Custom fields
@@ -147,29 +164,13 @@ class ProductController extends Controller
         }
 
         // Base query with relation
-        if ($request->input('stock_filter') === 'all') {
-            $baseQuery = Product::with('category', 'brand', 'unit')
-                ->where('products.is_active', true);
-        }
+        $baseQuery = Product::with('category', 'brand', 'unit')->select('products.*')
+            ->selectSub(clone $visibleStock, 'visible_stock_qty')->where('products.is_active', true);
         if ($request->input('stock_filter') === 'with') {
-            $baseQuery = Product::with('category', 'brand', 'unit')
-            ->where('products.is_active', true)
-            ->whereIn('products.id', function($query) {
-                $query->select('product_id')
-                    ->from('product_warehouse')
-                    ->groupBy('product_id')
-                    ->havingRaw('SUM(qty) > 0');
-            });
+            $baseQuery->where(clone $visibleStock, '>', 0);
         }
         if ($request->input('stock_filter') === 'without') {
-            $baseQuery = Product::with('category', 'brand', 'unit')
-            ->where('products.is_active', true)
-            ->whereNotIn('products.id', function($query) {
-                $query->select('product_id')
-                    ->from('product_warehouse')
-                    ->groupBy('product_id')
-                    ->havingRaw('SUM(qty) > 0');
-            });
+            $baseQuery->where(clone $visibleStock, '<=', 0);
         }
 
         if ($is_recipe) {
@@ -289,17 +290,7 @@ class ProductController extends Controller
             $nestedData['brand'] = $product->brand->title ?? "N/A";
             $nestedData['category'] = $product->category->name ?? "N/A";
 
-            // Quantity (respecting warehouse)
-            if ($warehouse_id > 0 && $product->type == 'standard') {
-                $nestedData['qty'] = Product_Warehouse::where([
-                                        ['product_id', $product->id],
-                                        ['warehouse_id', $warehouse_id]
-                                    ])->sum('qty');
-            } elseif ($product->type == 'standard') {
-                $nestedData['qty'] = Product_Warehouse::where('product_id', $product->id)->sum('qty');
-            } else {
-                $nestedData['qty'] = $product->qty;
-            }
+            $nestedData['qty'] = $context || $product->type == 'standard' ? $product->visible_stock_qty : $product->qty;
 
             $nestedData['unit'] = $product->unit->unit_name ?? 'N/A';
 

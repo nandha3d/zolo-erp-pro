@@ -96,9 +96,9 @@ class JobWorkService
                 foreach ($movement->lines->where('warehouse_id', $order->external_warehouse_id)->values() as $i => $line) {
                     $details = ['product_id' => $line->product_id, 'variant_id' => $line->variant_id,
                         'product_batch_id' => $line->batch_id, 'stock_identity_id' => $line->stock_identity_id];
-                    DB::table('job_work_dispatch_lines')->insert(['dispatch_id' => $dispatch->id, 'line_no' => $i + 1,
+                    DB::table('job_work_dispatch_lines')->insert(app(OperationPosting::class)->lines('job_work_dispatch_lines', [['dispatch_id' => $dispatch->id, 'line_no' => $i + 1,
                         'product_id' => $line->product_id, 'qty_base' => $line->qty_base, 'value' => $line->value,
-                        'stock_details_json' => json_encode($details, JSON_THROW_ON_ERROR)]);
+                        'stock_details_json' => json_encode($details, JSON_THROW_ON_ERROR)]], $context));
                 }
                 $dispatch->forceFill(['movement_id' => $movement->id, 'posted_at' => now()])->save();
                 app(DocumentNumberService::class)->assign($number, $dispatch);
@@ -199,7 +199,7 @@ class JobWorkService
                         'created_by' => $actor], [['chart_of_account_id' => $accounts->resolve('damage', $context)->id, 'debit' => LedgerAmount::decimal($actualLoss)],
                             ['chart_of_account_id' => $accounts->resolve('inventory', $context)->id, 'credit' => LedgerAmount::decimal($actualLoss)]], $context);
                 }
-                DB::table('job_work_receipt_lines')->insert($saved);
+                DB::table('job_work_receipt_lines')->insert(app(OperationPosting::class)->lines('job_work_receipt_lines', $saved, $context));
                 $receipt->forceFill(['material_movement_id' => $material?->id, 'output_movement_id' => $output?->id,
                     'loss_movement_id' => $lossMovement?->id, 'journal_entry_id' => $journal?->id,
                     'details_json' => ['received_qty' => $received, 'loss_qty' => $lost, 'settled_qty' => $settled,

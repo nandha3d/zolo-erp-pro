@@ -9,21 +9,35 @@ use Auth;
 use Illuminate\Support\Facades\Validator;
 use DB;
 use Spatie\Permission\Models\Role;
+use App\Services\Commercial\CommercialPermission;
+use App\Services\Documents\NotificationFileAccess;
+use App\Services\Documents\PrivateFileStorage;
+use App\Services\Platform\CompanyContextResolver;
+use App\Services\Platform\BranchAccess;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        $role = Role::find(Auth::user()->role_id);
-        if($role->hasPermissionTo('all_notification')) {
-            $lims_notification_all = DB::table('notifications')->get();
-            return view('backend.notification.index', compact('lims_notification_all'));
-        }
-        else
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+        $context = app(CompanyContextResolver::class)->forActor();
+        app(CommercialPermission::class)->assert('all_notification', $context, Auth::id());
+        $lims_notification_all = DB::table('notifications')->get()
+            ->filter(fn ($row) => app(NotificationFileAccess::class)->canRead($row, $context, Auth::id()));
+        return view('backend.notification.index', compact('lims_notification_all'));
     }
     public function store(Request $request)
     {
+        $context = app(CompanyContextResolver::class)->forActor();
+        app(CommercialPermission::class)->assert('send_notification', $context, Auth::id());
+        $request->validate([
+            'receiver_id' => 'required|integer', 'message' => 'required|string',
+            'reminder_date' => 'required|date', 'document' => 'nullable|file|max:10240',
+        ]);
+        $user = User::whereKey($request->receiver_id)->where('is_active', true)->where('is_deleted', false)->firstOrFail();
+        abort_unless(DB::table('company_user')->where('company_id', $context->companyId)->where('user_id', $user->id)->exists(), 403);
+        abort_unless(in_array($context->branchId, app(BranchAccess::class)->authorizedBranchIds($context, $user->id), true), 403);
+        $request->merge(['sender_id' => Auth::id(), 'company_id' => $context->companyId,
+            'branch_id' => $context->branchId, 'document_name' => null]);
         $document = $request->document;
         if($document) {
             $v = Validator::make(
@@ -37,12 +51,14 @@ class NotificationController extends Controller
             if ($v->fails())
                 return redirect()->back()->withErrors($v->errors());
 
-            $documentName = date('Ymdhis').'.'.$document->getClientOriginalExtension();
-            $document->move(public_path('documents/notification'), $documentName);
-            $request->document_name = $documentName;
+            $request->merge(['document_name' => app(PrivateFileStorage::class)->store($document, 'notification')]);
         }
-    	$user = User::find($request->receiver_id);
-    	$user->notify(new SendNotification($request));
+        try {
+            $user->notify(new SendNotification($request));
+        } catch (\Throwable $exception) {
+            app(PrivateFileStorage::class)->delete('notification', $request->document_name);
+            throw $exception;
+        }
     	return redirect()->back()->with('message', __('db.Notification send successfully'));
     }
 

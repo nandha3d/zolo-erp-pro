@@ -6,7 +6,7 @@
 
     @if ($production_details->document)
         <p><strong>{{ __('db.Attach Document') }}:</strong>
-            <a href="{{ asset('documents/production/' . $production_details->document) }}" target="_blank">Download</a>
+            <a href="{{ route('documents.file', ['production', $production_details->document]) }}" target="_blank">Download</a>
         </p>
     @endif
 

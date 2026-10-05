@@ -155,7 +155,7 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
                 Schema::table($table, fn (Blueprint $blueprint) => $blueprint->unsignedBigInteger('company_id')->nullable());
             }
         }
-        DB::table('warehouses')->update(['company_id' => $company->id]);
+        DB::table('warehouses')->update(['company_id' => $company->id, 'branch_id' => $branch->id]);
     }
 
     protected function companyWithInventoryPolicy(array $policy): int

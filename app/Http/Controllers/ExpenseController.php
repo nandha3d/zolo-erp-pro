@@ -156,7 +156,7 @@ class ExpenseController extends Controller
                 if (in_array("expenses-edit", $request['all_permission'])) {
                     if($expense->document){
                         $nestedData['options'] .= '<li>
-                            <a href="'.url('documents/expense/'.$expense->document).'" target="_blank" class="btn btn-link">
+                            <a href="'.route('documents.file', ['expense', $expense->document]).'" target="_blank" class="btn btn-link">
                                 <i class="dripicons-document"></i> '.__('db.View Document').'
                             </a>
                         </li>';

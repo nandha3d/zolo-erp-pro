@@ -95,7 +95,9 @@ class SaleAgentController extends Controller
     }
     public function store(Request $request)
     {
+        app(\App\Services\Platform\EmployeeReferenceValidator::class)->validate($request);
         try {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
             $data = $request->except('image');
             $message = 'Sale Agent created successfully';
 
@@ -127,7 +129,9 @@ class SaleAgentController extends Controller
                 }
 
                 $user = User::create($data);
-                $user = User::latest()->first();
+                $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+                \Illuminate\Support\Facades\DB::table('company_user')->insert(['company_id' => $context->companyId, 'user_id' => $user->id, 'is_default' => true]);
+                \Illuminate\Support\Facades\DB::table('company_user_branches')->insert(['company_id' => $context->companyId, 'user_id' => $user->id, 'branch_id' => $context->branchId]);
                 $data['user_id'] = $user->id;
                 $message = 'Employee created successfully and added to user list';
             }
@@ -145,16 +149,7 @@ class SaleAgentController extends Controller
 
             $image = $request->image;
             if ($image) {
-                $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
-                $imageName = date("Ymdhis");
-
-                if (!config('database.connections.zoloerp_landlord')) {
-                    $imageName = $imageName . '.' . $ext;
-                    $image->move(public_path('images/sale_agent'), $imageName);
-                } else {
-                    $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
-                    $image->move(public_path('images/sale_agent'), $imageName);
-                }
+                $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'employee');
 
                 $data['image'] = $imageName;
             }
@@ -165,9 +160,9 @@ class SaleAgentController extends Controller
             $store = Employee::create($data);
 
             return redirect('sale-agents')->with('message', $message);
+            });
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            dd($e);
             return redirect()->back()
                 ->withErrors($e->validator)
                 ->withInput();
@@ -184,7 +179,8 @@ class SaleAgentController extends Controller
 
     public function update(Request $request, $id)
     {
-        $lims_employee_data = Employee::find($request['employee_id']);
+        $lims_employee_data = Employee::findOrFail($request['employee_id']);
+        app(\App\Services\Platform\EmployeeReferenceValidator::class)->validate($request);
         if($lims_employee_data->user_id){
             $this->validate($request, [
                 'name' => [
@@ -217,21 +213,15 @@ class SaleAgentController extends Controller
         $data = $request->except('image');
         $image = $request->image;
         if ($image) {
-            $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
-            $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
-            $imageName = date("Ymdhis");
-            if(!config('database.connections.zoloerp_landlord')) {
-                $imageName = $imageName . '.' . $ext;
-                $image->move(public_path('images/employee'), $imageName);
-            }
-            else {
-                $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
-                $image->move(public_path('images/employee'), $imageName);
-            }
+            $oldImage = $lims_employee_data->image;
+            $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'employee');
             $data['image'] = $imageName;
         }
         $lims_employee_data->is_sale_agent = 1;
         $lims_employee_data->update($data);
+        if (isset($oldImage)) {
+            app(\App\Services\Documents\PrivateFileStorage::class)->delete('employee', $oldImage);
+        }
         return redirect('sale-agents')->with('message', __('db.Employee updated successfully'));
     }
 
@@ -248,7 +238,7 @@ class SaleAgentController extends Controller
             $lims_employee_data->is_active = false;
             $lims_employee_data->save();
 
-            $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
+            app(\App\Services\Documents\PrivateFileStorage::class)->delete('employee', $lims_employee_data->image);
         }
 
         return 'Employee deleted successfully!';
@@ -264,7 +254,7 @@ class SaleAgentController extends Controller
             $lims_user_data->save();
         }
 
-        $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
+        app(\App\Services\Documents\PrivateFileStorage::class)->delete('employee', $lims_employee_data->image);
 
         // if($lims_employee_data->image && !config('database.connections.zoloerp_landlord')) {
         //     unlink('images/employee/'.$lims_employee_data->image);

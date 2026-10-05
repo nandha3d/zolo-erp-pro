@@ -44,6 +44,8 @@ class DiscountController extends Controller
 
     public function store(Request $request)
     {
+        $this->validateCompanyReferences($request);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
         $data = $request->all();
         $data['valid_from'] = date('Y-m-d', strtotime($data['valid_from']));
         $data['valid_till'] = date('Y-m-d', strtotime($data['valid_till']));
@@ -59,11 +61,12 @@ class DiscountController extends Controller
             ]);
         }
         return redirect()->route('discounts.index')->with('message', __('db.Discount created successfully'));
+        });
     }
 
     public function edit($id)
     {
-        $lims_discount_data = Discount::find($id);
+        $lims_discount_data = Discount::findOrFail($id);
         $discount_plan_ids = DiscountPlanDiscount::where('discount_id', $id)->pluck('discount_plan_id')->toArray();
         $lims_discount_plan_list = DiscountPlan::where('is_active', true)->get();
         return view('backend.discount.edit', compact('lims_discount_data', 'discount_plan_ids', 'lims_discount_plan_list'));
@@ -71,8 +74,10 @@ class DiscountController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->validateCompanyReferences($request);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $id) {
         $data = $request->all();
-        $lims_discount_data = Discount::find($id);
+        $lims_discount_data = Discount::findOrFail($id);
         $data['valid_from'] = date('Y-m-d', strtotime(str_replace("/", "-", $data['valid_from'])));
         $data['valid_till'] = date('Y-m-d', strtotime(str_replace("/", "-", $data['valid_till'])));
         if(!isset($data['is_active']))
@@ -95,11 +100,26 @@ class DiscountController extends Controller
         //inserting new discount plan id
         foreach ($data['discount_plan_id'] as $key => $discount_plan_id) {
             if(!in_array($discount_plan_id, $pre_discount_plan_ids)) {
-                DiscountPlanDiscount::create(['discount_plan_id' => $id, 'discount_id' => $id]);
+                DiscountPlanDiscount::create(['discount_plan_id' => $discount_plan_id, 'discount_id' => $id]);
             }
         }
         $lims_discount_data->update($data);
         return redirect()->route('discounts.index')->with('message', __('db.Discount updated successfully'));
+        });
+    }
+
+    private function validateCompanyReferences(Request $request): void
+    {
+        $request->validate(['discount_plan_id' => 'required|array|min:1', 'discount_plan_id.*' => 'required|integer|min:1|distinct',
+            'product_list' => 'sometimes|array', 'product_list.*' => 'required|integer|min:1|distinct']);
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+        abort_unless($context, 403);
+        foreach (['discount_plan_id' => DiscountPlan::class, 'product_list' => Product::class] as $field => $model) {
+            $ids = $request->input($field, []);
+            if ($model::query()->where('company_id', $context->companyId)->whereIn('id', $ids)->count() !== count($ids)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([$field => 'Every reference must belong to the current company.']);
+            }
+        }
     }
 
     public function destroy($id)

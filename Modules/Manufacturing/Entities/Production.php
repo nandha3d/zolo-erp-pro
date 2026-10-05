@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Production extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\ScopesBranchQueries;
     protected $fillable =[
         "reference_no",
         "user_id",

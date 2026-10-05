@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * While an authorized request carries a CompanyContext (set by the company middleware), every Eloquent read of a
  * company-owned model is limited to that company and every new row is stamped with it; a row that names another
  * company is refused. Without a request context (installer, console, tests building fixtures) nothing changes, so
- * setup, backfill and administrative paths keep their explicit behaviour. Raw DB::table() reads are not covered.
+ * setup, backfill and administrative paths keep their explicit behaviour. CompanyScopedBuilder covers raw reads.
  */
 trait ScopesCompanyQueries
 {
@@ -22,6 +22,7 @@ trait ScopesCompanyQueries
         static::addGlobalScope('request_company', function (Builder $query) {
             if ($context = static::requestCompanyContext()) {
                 $query->where($query->getModel()->qualifyColumn('company_id'), $context->companyId);
+                app(\App\Services\Platform\BranchAccess::class)->scope($query->getQuery(), $query->getModel()->getTable(), $query->getModel()->getTable(), $context);
             }
         });
         static::creating(function (Model $model) {
@@ -32,6 +33,17 @@ trait ScopesCompanyQueries
                 $model->setAttribute('company_id', $context->companyId);
             } elseif ((int) $model->getAttribute('company_id') !== $context->companyId) {
                 throw new AuthorizationException('The record belongs to another company.');
+            }
+            if ($model->getTable() === 'warehouses' && $model->getAttribute('branch_id') === null) {
+                $model->setAttribute('branch_id', $context->branchId);
+            }
+        });
+        static::saving(function (Model $model) {
+            if ($context = static::requestCompanyContext()) {
+                if (($model->exists || $model->getAttribute('company_id') !== null) && (int) $model->getAttribute('company_id') !== $context->companyId) {
+                    throw new AuthorizationException('The record belongs to another company.');
+                }
+                app(\App\Services\Platform\BranchAccess::class)->validateReferences($model->getTable(), $model->getAttributes(), $context);
             }
         });
     }

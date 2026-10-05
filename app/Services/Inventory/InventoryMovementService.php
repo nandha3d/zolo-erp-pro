@@ -412,7 +412,10 @@ class InventoryMovementService
                 : $query->where($column, $value);
         }
         // Ambiguous or foreign projection rows must be reconciled before any posting touches them.
-        $query->getQuery()->withoutCompanyScope();
+        $builder = $query->getQuery();
+        if ($builder instanceof \App\Support\Database\CompanyScopedBuilder) {
+            $builder->withoutCompanyScope();
+        }
         $rows = $query->orderBy('id')->lockForUpdate()->get();
         $foreign = $companyId !== null && $this->hasColumn('product_warehouse', 'company_id')
             && $rows->contains(fn ($row) => (int) $row->company_id !== $companyId);

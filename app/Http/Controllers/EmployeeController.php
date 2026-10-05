@@ -87,6 +87,8 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        app(\App\Services\Platform\EmployeeReferenceValidator::class)->validate($request);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
         $data = $request->except('image');
         $message = 'Employee created successfully';
 
@@ -117,8 +119,10 @@ class EmployeeController extends Controller
             if(isset($data['company']))
                 $data['company_name'] = $data['company'];
 
-            User::create($data);
-            $user = User::latest()->first();
+            $user = User::create($data);
+            $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+            \Illuminate\Support\Facades\DB::table('company_user')->insert(['company_id' => $context->companyId, 'user_id' => $user->id, 'is_default' => true]);
+            \Illuminate\Support\Facades\DB::table('company_user_branches')->insert(['company_id' => $context->companyId, 'user_id' => $user->id, 'branch_id' => $context->branchId]);
             $data['user_id'] = $user->id;
             $message = 'Employee created successfully and added to user list';
         }
@@ -137,16 +141,7 @@ class EmployeeController extends Controller
         // Handle employee image upload
         $image = $request->image;
         if ($image) {
-            $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
-            $imageName = date("Ymdhis");
-            if(!config('database.connections.zoloerp_landlord')) {
-                $imageName = $imageName . '.' . $ext;
-                $image->move(public_path('images/employee'), $imageName);
-            }
-            else {
-                $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
-                $image->move(public_path('images/employee'), $imageName);
-            }
+            $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'employee');
             $data['image'] = $imageName;
         }
 
@@ -179,11 +174,13 @@ class EmployeeController extends Controller
         }
 
         return redirect('employees')->with('message', $message);
+        });
     }
 
     public function update(Request $request, $id)
     {
-        $lims_employee_data = Employee::find($request->employee_id);
+        $lims_employee_data = Employee::findOrFail($request->employee_id);
+        app(\App\Services\Platform\EmployeeReferenceValidator::class)->validate($request);
 
         if($lims_employee_data->user_id){
             $this->validate($request, [
@@ -217,19 +214,11 @@ class EmployeeController extends Controller
 
 
         // Handle image update
+        $request->validate(['image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:100000']);
         $image = $request->image;
         if ($image) {
-            $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
-            $ext = pathinfo($image->getClientOriginalName(), PATHINFO_EXTENSION);
-            $imageName = date("Ymdhis");
-            if(!config('database.connections.zoloerp_landlord')) {
-                $imageName = $imageName . '.' . $ext;
-                $image->move(public_path('images/employee'), $imageName);
-            }
-            else {
-                $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
-                $image->move(public_path('images/employee'), $imageName);
-            }
+            $oldImage = $lims_employee_data->image;
+            $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'employee');
             $data['image'] = $imageName;
         }
 
@@ -252,6 +241,9 @@ class EmployeeController extends Controller
             'image' => $data['image'] ?? $lims_employee_data->image,
         ]);
 
+        if (isset($oldImage)) {
+            app(\App\Services\Documents\PrivateFileStorage::class)->delete('employee', $oldImage);
+        }
         return redirect('employees')->with('message', __('db.Employee updated successfully'));
     }
 
@@ -267,7 +259,7 @@ class EmployeeController extends Controller
             }
             $lims_employee_data->is_active = false;
             $lims_employee_data->save();
-            $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
+            app(\App\Services\Documents\PrivateFileStorage::class)->delete('employee', $lims_employee_data->image);
         }
 
         return 'Employee deleted successfully!';
@@ -282,10 +274,11 @@ class EmployeeController extends Controller
             $lims_user_data->save();
         }
 
-        $this->fileDelete(public_path('images/employee/'), $lims_employee_data->image);
+        app(\App\Services\Documents\PrivateFileStorage::class)->delete('employee', $lims_employee_data->image);
 
         $lims_employee_data->is_active = false;
         $lims_employee_data->save();
         return redirect('employees')->with('not_permitted', __('db.Employee deleted successfully'));
     }
+
 }

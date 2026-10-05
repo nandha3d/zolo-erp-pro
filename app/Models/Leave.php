@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Leave extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+    use \App\Models\Concerns\ValidatesCompanyReferences;
+
+    protected function companyReferences(): array
+    {
+        return ['employee_id' => 'employees', 'leave_types' => 'leave_types'];
+    }
+
+
     protected $table = 'leaves';
     protected $fillable = [
         'employee_id',

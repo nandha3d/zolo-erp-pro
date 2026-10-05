@@ -160,6 +160,18 @@ class BackfillCompanyContext extends Command
             }
         });
 
+        // MySQL commits ownership DDL independently. Finalize only after the reviewed
+        // core backfill has committed, and report a resumable failure explicitly.
+        if (Schema::hasTable('variants') && Schema::hasColumn('variants', 'company_id')) {
+            try {
+                (require database_path('migrations/2026_10_12_000001_harden_remaining_company_relations.php'))->up();
+            } catch (\Throwable $error) {
+                $this->error('Core company backfill committed; remaining relation hardening needs review: '.$error->getMessage());
+                $this->error('Keep maintenance mode enabled. Resolve the reported retained-data issue and rerun this command.');
+                return self::FAILURE;
+            }
+        }
+
         $this->info('Backfill complete for audited core tables. Isolation is not activated; keep other companies inactive until cutover checks pass.');
         return self::SUCCESS;
     }
