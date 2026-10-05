@@ -78,6 +78,36 @@ foreach (collect(Schema::getTables())->pluck('name')->sort()->values() as $table
 $sourceHash = hash_final($hash);
 $openingResult = Artisan::call('erp:stock-opening', ['--date' => $year?->end_date ?? '2026-10-05']);
 $openingOutput = Artisan::output();
+
+// Synthetic setup an administrator would do at go-live: posting-role mappings, a default series per document
+// type, and an opening inventory journal against owner capital so ledger value and accounting agree.
+// Nothing here is derived from customer data; a real cutover needs reviewed mappings and a reviewed opening offset.
+$setup = [];
+if ($context) {
+    app(App\Services\Accounting\SemanticAccountResolver::class)->seedCompany($company->id);
+    foreach (['sale' => 'SAL', 'purchase' => 'PUR', 'journal' => 'JE', 'sale_payment' => 'REC', 'purchase_payment' => 'PAY'] as $type => $prefix) {
+        app(App\Services\Platform\DocumentNumberService::class)->configure($context, [
+            'document_type' => $type, 'code' => 'MAIN', 'prefix' => $prefix.'-'.$year->id.'-', 'padding' => 6,
+        ], 1);
+        $setup['series'][] = $type;
+    }
+    $value = App\Support\LedgerAmount::units(DB::table('stock_movement_lines')->where('company_id', $company->id)->sum('value'));
+    $inventory = app(App\Services\Accounting\SemanticAccountResolver::class)->resolve('inventory', $context);
+    if ($value > 0) {
+        $capital = DB::table('chart_of_accounts')->where('company_id', $company->id)->where('code', '3010')->value('id');
+        // Manual vouchers need manual-posting accounts; a real cutover posts opening values through erp:import-opening.
+        DB::table('chart_of_accounts')->whereIn('id', [$inventory->id, $capital])->update(['allow_manual_posting' => true]);
+        app(App\Services\Accounting\AccountingPostingService::class)->postJournalEntry([
+            'reference_type' => 'manual', 'reference_no' => 'SAMPLE-OPENING-STOCK',
+            'entry_date' => $year->start_date, 'description' => 'Synthetic sample opening inventory', 'created_by' => 1,
+            'posting_key' => 'sample-opening-stock', 'idempotency_key' => 'sample-opening-stock',
+        ], [
+            ['chart_of_account_id' => $inventory->id, 'debit' => App\Support\LedgerAmount::decimal($value)],
+            ['chart_of_account_id' => $capital, 'credit' => App\Support\LedgerAmount::decimal($value)],
+        ], $context);
+        $setup['opening_inventory_value'] = App\Support\LedgerAmount::decimal($value);
+    }
+}
 $stockDifferences = app(InventoryReconciliationService::class)->differences($company->id);
 $accounting = $context ? app(LedgerReconciliationService::class)->reconcile($context, false, 1) : null;
 $record = [
@@ -91,6 +121,7 @@ $record = [
     'financial_year_id' => $year?->id,
     'stock_opening_exit_code' => $openingResult,
     'stock_opening_output' => $openingOutput,
+    'synthetic_setup' => $setup,
     'stock_differences' => $stockDifferences,
     'accounting_reconciliation' => $accounting,
     'customer_acceptance' => 'pending real reviewer',

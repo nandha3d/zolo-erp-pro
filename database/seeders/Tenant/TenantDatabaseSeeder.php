@@ -4066,6 +4066,13 @@ class TenantDatabaseSeeder extends Seeder
                     'is_active' => 1,
                 ]
             ]);
+
+            // The upstream demo dump carries product totals (some negative) from sales/purchases that are not part of
+            // the seed. The only stock the seed actually holds is its product_warehouse rows, so make the product
+            // total agree with them; otherwise a fresh install starts with stock differences that have no history.
+            DB::table('products')->update(['qty' => DB::raw(
+                '(SELECT COALESCE(SUM(product_warehouse.qty), 0) FROM product_warehouse WHERE product_warehouse.product_id = products.id)'
+            )]);
         }
 
         if (!DB::table('purchases')->count()) {

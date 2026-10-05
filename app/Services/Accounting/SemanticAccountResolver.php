@@ -87,7 +87,10 @@ class SemanticAccountResolver
                 } else {
                     $candidates = ChartOfAccount::where('company_id', $companyId)->where('is_active', true)
                         ->whereIn('type', (array) $type)->where('sub_type', $subType)->whereDoesntHave('children')->get();
-                    $account = $candidates->count() === 1 ? $candidates->sole() : null;
+                    // Several leaves may share a sub-type (COGS products vs. shrinkage); the one system account is the
+                    // designated default. Any other ambiguity stays unmapped for an administrator to choose.
+                    $system = $candidates->where('is_system', true);
+                    $account = $candidates->count() === 1 ? $candidates->sole() : ($system->count() === 1 ? $system->sole() : null);
                     (new SemanticAccountMapping)->forceFill([
                         'company_id' => $companyId, 'semantic_role' => $role, 'account_id' => $account?->id,
                         'account_code' => $account?->code, 'account_name' => $account?->name,
