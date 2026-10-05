@@ -30,6 +30,14 @@ class CompanyScopedBuilder extends Builder
 
     private bool $companyScoped = false;
 
+    /** For checks that must see every company's rows, e.g. refusing foreign or duplicate stock projections. */
+    public function withoutCompanyScope(): static
+    {
+        $this->companyScoped = true;
+
+        return $this;
+    }
+
     public function runSelect()
     {
         $this->scopeToRequestCompany();

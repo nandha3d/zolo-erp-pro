@@ -527,17 +527,18 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
         $this->receive($product, 10, 4);
         $controller = app(AdjustmentController::class);
         $controller->store($this->request($this->adjustmentPayload($product, 2)));
+        $adjustmentId = Adjustment::sole()->id;
         $request = $this->request([]);
         $request->attributes->set(CompanyContext::class, new CompanyContext($companyId + 1, 1, 1));
-        $adjustmentId = Adjustment::withoutGlobalScopes()->sole()->id;
         try {
             $controller->destroy($adjustmentId);
             $this->fail('A foreign document must not be reversed.');
         } catch (StockPolicyException|\Illuminate\Database\Eloquent\ModelNotFoundException) {
             // The request-company scope hides the document, or the ledger refuses the foreign movement.
         }
+        $request->attributes->remove(CompanyContext::class);
         $this->assertEquals(12, $product->fresh()->qty);
-        $this->assertSame(1, Adjustment::withoutGlobalScopes()->count());
+        $this->assertSame(1, Adjustment::count());
         $this->assertReconciled();
     }
 
