@@ -23,14 +23,12 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>{{__('db.System Logo')}} * <x-info title="jpg, jpeg, png & gif" type="info" /></label>
-                                        <input type="file" name="site_logo" class="form-control" value="" accept="image/png, image/jpeg, image/gif"/>
+                                        <label for="site_logo">{{__('db.System Logo')}} * <x-info title="jpg, jpeg, png & gif" type="info" /></label>
+                                        <input id="site_logo" type="file" name="site_logo" class="form-control" value="" accept="image/png, image/jpeg, image/gif" aria-describedby="logo_error"/>
                                     </div>
-                                    @if($errors->has('site_logo'))
-                                   <span>
+                                   <span role="status" aria-live="polite">
                                        <strong id="logo_error">{{ $errors->first('site_logo') }}</strong>
                                     </span>
-                                    @endif
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
