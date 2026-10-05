@@ -40,7 +40,10 @@ trait ScopesCompanyQueries
         });
         static::saving(function (Model $model) {
             if ($context = static::requestCompanyContext()) {
-                if (($model->exists || $model->getAttribute('company_id') !== null) && (int) $model->getAttribute('company_id') !== $context->companyId) {
+                // Partial selects can omit ownership; the scoped update still restricts their persisted row.
+                if (array_key_exists('company_id', $model->getAttributes())
+                    && ($model->exists || $model->getAttribute('company_id') !== null)
+                    && (int) $model->getAttribute('company_id') !== $context->companyId) {
                     throw new AuthorizationException('The record belongs to another company.');
                 }
                 app(\App\Services\Platform\BranchAccess::class)->validateReferences($model->getTable(), $model->getAttributes(), $context);

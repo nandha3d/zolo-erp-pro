@@ -4266,7 +4266,7 @@
 
     }
     // Trigger pointCalculation on body click anywhere
-     if(reward_point_setting['is_active']){
+     if(reward_point_setting && reward_point_setting['is_active']){
             $(document).on('click', 'body', function(e) {
                 // Optional: prevent firing when clicking inside modal to avoid recursion
                     if (!$(e.target).closest('#add-payment, input[name="paid_amount[]"], #customer_id, select[name="paid_by_id_select[]"]').length) {

@@ -1,9 +1,9 @@
 # zoloERP Pro — Final Remaining Closure Plan
 
-> **Repository:** `vigneshsinna/zolo-erp-pro`  
-> **Branch to fix:** `main`  
-> **Latest audited main HEAD:** `1a8c980f5bf7bcf6d8f634349af1090540c8729e`  
-> **Current engineering status:** Major Phase 1–12 architecture and implementation are in place. The complete six-suite MySQL acceptance workflow is green on the current `main`.  
+> **Repository:** `vigneshsinna/zolo-erp-pro`
+> **Branch to fix:** `main`
+> **Latest audited main HEAD:** `1a8c980f5bf7bcf6d8f634349af1090540c8729e`
+> **Current engineering status:** Major Phase 1–12 architecture and implementation are in place. The complete six-suite MySQL acceptance workflow is green on the current `main`.
 > **Purpose of this file:** Close the remaining software/security/isolation gaps and clearly separate them from the external UAT/deployment work that cannot be completed by code alone.
 
 ---
@@ -763,11 +763,11 @@ Do not use the second wording before actual UAT/signatures.
 
 # 17. Final instruction to Codex
 
-> Work against the latest `main`.  
-> Do not rebuild the existing Phase 1–12 architecture.  
-> Close only the remaining items identified in this document.  
-> Preserve current company context, stock ledger, accounting, numbering, tax, commercial, operations and profile services.  
-> Add focused tests for every security/isolation fix.  
-> Run the full six-suite MySQL CI matrix after the final software changes.  
-> Do not claim customer UAT, retained-data reconciliation, accountant/provider/printer acceptance, off-site recovery acceptance or production cutover unless actual evidence exists.  
+> Work against the latest `main`.
+> Do not rebuild the existing Phase 1–12 architecture.
+> Close only the remaining items identified in this document.
+> Preserve current company context, stock ledger, accounting, numbering, tax, commercial, operations and profile services.
+> Add focused tests for every security/isolation fix.
+> Run the full six-suite MySQL CI matrix after the final software changes.
+> Do not claim customer UAT, retained-data reconciliation, accountant/provider/printer acceptance, off-site recovery acceptance or production cutover unless actual evidence exists.
 > When all software checklist items pass, mark the software as **ENGINEERING COMPLETE**, while keeping Phase 12 external acceptance explicitly pending.
