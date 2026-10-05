@@ -129,6 +129,40 @@ class LegacyInventoryPosting
         return $stock;
     }
 
+    /**
+     * Price returned goods at what the original sale issued them for. Lines keep their own cost when the sale
+     * has no applied issue for the product (pre-cutover history); the movement service then uses average cost.
+     *
+     * @param list<StockLine> $lines
+     * @return list<StockLine>
+     */
+    public function atOriginalSaleCost(array $lines, ?int $saleId): array
+    {
+        if (!$saleId || $lines === []) {
+            return $lines;
+        }
+        $issued = \Illuminate\Support\Facades\DB::table('stock_movement_lines as line')
+            ->join('stock_movements as movement', 'movement.id', '=', 'line.stock_movement_id')
+            ->where('movement.source_type', 'legacy:sales')->where('movement.source_id', $saleId)
+            ->where('movement.movement_type', 'issue')->where('movement.projection_mode', 'applied')
+            ->groupBy('line.product_id')
+            ->selectRaw('line.product_id, ABS(SUM(line.value)) AS value, ABS(SUM(line.qty_base)) AS qty')
+            ->get()->keyBy('product_id');
+        $uom = app(UomConversionService::class);
+
+        return array_map(function (StockLine $line) use ($issued, $uom) {
+            $original = $issued->get($line->productId);
+            if (!$original || (float) $original->qty <= 0 || $line->unitCost !== null) {
+                return $line;
+            }
+            $base = $uom->toBase(Product::findOrFail($line->productId), abs($line->qty), $line->uomId);
+            $perEntered = ((float) $original->value / (float) $original->qty) * ($base / max(abs($line->qty), 0.0001));
+
+            return new StockLine($line->productId, $line->qty, $line->warehouseId, $line->variantId, $line->batchId,
+                round($perEntered, 6), $line->uomId, $line->serials, $line->batch, $line->identityId, $line->dimensions, $line->attributes);
+        }, $lines);
+    }
+
     /** Expand a combo at packing time. Subsequent reversals use the recorded components. */
     public function saleLines(Model $line): array
     {

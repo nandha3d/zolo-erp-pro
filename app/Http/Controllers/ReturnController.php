@@ -504,7 +504,8 @@ class ReturnController extends Controller
     private function postReturnStock(Returns $return): void
     {
         $posting = app(LegacyInventoryPosting::class);
-        $posting->post($return, 'receive', $posting->documentSaleLines(ProductReturn::where('return_id', $return->id)->get()), (int) $return->warehouse_id);
+        $lines = $posting->atOriginalSaleCost($posting->documentSaleLines(ProductReturn::where('return_id', $return->id)->get()), $return->sale_id ? (int) $return->sale_id : null);
+        $posting->post($return, 'receive', $lines, (int) $return->warehouse_id);
     }
 
     /** Take the returned goods back out: the applied movements, or the persisted lines for pre-cutover history. */

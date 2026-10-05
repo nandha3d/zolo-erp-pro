@@ -246,6 +246,32 @@ class LegacyStockShadowWebTest extends TestCase
         $this->assertSame(17.0, $this->warehouseQty($a['id'], $this->main));
     }
 
+    public function test_sale_return_restores_stock_at_the_original_sale_cost(): void
+    {
+        $a = $this->items['a'];
+        $saleId = (int) $this->ajaxSale($a, 3)->json();
+        $issueCost = (float) StockMovement::where('source_type', 'legacy:sales')->where('source_id', $saleId)->firstOrFail()->lines()->value('unit_cost');
+        // A dearer receipt moves the weighted average, which a plain return would otherwise pick up.
+        $payload = $this->purchasePayload([[$a, 10, 'piece']]);
+        $payload['net_unit_cost'] = [20];
+        $payload['unit_cost'] = [20];
+        $this->actingAs($this->admin)->post(route('purchases.store'), $payload)->assertRedirect(url('purchases'));
+        $line = DB::table('product_sales')->where('sale_id', $saleId)->first();
+
+        $this->actingAs($this->admin)->post(route('return-sale.store'), [
+            'sale_id' => $saleId, 'customer_id' => 1, 'warehouse_id' => $this->main, 'biller_id' => 1, 'account_id' => 1,
+            'currency_id' => 1, 'exchange_rate' => 1, 'item' => 1, 'total_qty' => 1, 'total_sale_discount' => 0, 'change_sale_status' => 0, 'total_tax' => 0,
+            'total_price' => 10, 'order_tax_rate' => 0, 'order_tax' => 0, 'grand_total' => 10, 'return_note' => 'cost proof',
+            'is_return' => [$line->id], 'product_sale_id' => [$line->id], 'product_id' => [$a['id']], 'product_code' => [$a['code']],
+            'qty' => [1], 'sale_unit' => ['piece'], 'net_unit_price' => [10], 'discount' => [0], 'tax_rate' => [0], 'tax' => [0],
+            'subtotal' => [10], 'imei_number' => [''], 'product_batch_id' => [''], 'product_price' => [10],
+        ])->assertRedirect();
+
+        $return = DB::table('returns')->orderByDesc('id')->first();
+        $receipt = StockMovement::where('source_type', 'legacy:returns')->where('source_id', $return->id)->firstOrFail();
+        $this->assertEqualsWithDelta($issueCost, (float) $receipt->lines()->value('unit_cost'), 0.0001);
+    }
+
     public function test_purchase_return_store_posts_one_issue_and_destroy_puts_it_back(): void
     {
         $b = $this->items['b'];

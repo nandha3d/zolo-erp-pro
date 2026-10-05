@@ -541,17 +541,23 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
         $this->assertReconciled();
     }
 
-    public function test_product_opening_purchase_posts_once_and_the_global_scheduled_purchase_is_retired(): void
+    public function test_product_opening_purchase_posts_once_and_scheduled_purchase_runs_only_for_one_authorized_company(): void
     {
         $product = $this->product(['unit_id' => 1, 'cost' => 4, 'alert_quantity' => 8]);
         app(ProductController::class)->autoPurchase($product, 1, 3);
         $this->assertEquals(3, $product->fresh()->qty);
-        // After company foundation the global legacy job refuses to run instead of buying for every company.
+        // After company foundation the job never runs across companies: it needs an explicit, authorized one.
         $this->artisan('purchase:auto')->assertFailed();
+        $this->artisan('purchase:auto', ['--company' => 1, '--actor' => 99])->assertFailed();
         $this->assertEquals(3, $product->fresh()->qty);
-        $this->assertSame(1, DB::table('purchases')->count());
+        DB::table('products')->update(['company_id' => 1]);
+        $this->artisan('purchase:auto', ['--company' => 1, '--actor' => 1])->assertSuccessful();
+        $this->assertEquals(13, $product->fresh()->qty);
+        $this->artisan('purchase:auto', ['--company' => 1, '--actor' => 1])->assertSuccessful();
+        $this->assertEquals(13, $product->fresh()->qty, 'stock above the alert level is not bought again');
+        $this->assertSame(2, DB::table('purchases')->count());
         $this->assertStringStartsWith('ERP-PUR-', DB::table('purchases')->value('reference_no'));
-        $this->assertSame(1, StockMovement::where('source_type', 'legacy:purchases')->count());
+        $this->assertSame(2, StockMovement::where('source_type', 'legacy:purchases')->count());
         $this->assertReconciled();
     }
 

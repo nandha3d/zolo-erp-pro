@@ -12,12 +12,14 @@ use DB;
 
 class AutoPurchase extends Command
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'purchase:auto';
+    protected $signature = 'purchase:auto {--company= : Company ID} {--actor= : Authorized administrator ID}';
 
     /**
      * The console command description.
@@ -43,15 +45,41 @@ class AutoPurchase extends Command
      */
     public function handle()
     {
-        if (\Illuminate\Support\Facades\Schema::hasTable('companies')) {
-            $this->error('This global legacy job is retired after company foundation. Use an authorized company service.');
+        if (!\Illuminate\Support\Facades\Schema::hasTable('companies') || !\App\Models\Company::query()->exists()) {
+            // Before company foundation the installation is a single implicit company.
+            DB::transaction(fn () => $this->purchase(null));
+            return self::SUCCESS;
+        }
+        if (!$this->option('company') || !$this->option('actor')) {
+            $this->error('Supply --company and --actor; the job never runs across companies.');
             return self::FAILURE;
         }
-        DB::transaction(fn () => $this->purchase());
+        $resolver = app(\App\Services\Platform\CompanyContextResolver::class);
+        $actor = (int) $this->option('actor');
+        try {
+            $company = $resolver->authorizedCompany($actor, (int) $this->option('company'));
+            if (!$resolver->canManageFinancialYears($actor, $company->id)) {
+                $this->error('Company administrator required.');
+                return self::FAILURE;
+            }
+            $context = $resolver->resolve($actor, $company->id);
+        } catch (\Throwable $error) {
+            $this->error($error->getMessage());
+            return self::FAILURE;
+        }
+        \Illuminate\Support\Facades\Auth::onceUsingId($actor);
+        // The company scope and numbering read the trusted request context, exactly as a web request would.
+        request()->attributes->set(\App\Services\Platform\CompanyContext::class, $context);
+        try {
+            DB::transaction(fn () => $this->purchase($actor));
+        } finally {
+            request()->attributes->remove(\App\Services\Platform\CompanyContext::class);
+        }
+
         return self::SUCCESS;
     }
 
-    private function purchase(): void
+    private function purchase(?int $actor): void
     {
         $product_data = Product::where('is_active', true)
                         ->whereColumn('alert_quantity', '>', 'qty')
@@ -65,14 +93,17 @@ class AutoPurchase extends Command
                                 ->select('warehouse_id')
                                 ->latest()
                                 ->first();
-            $user_data = DB::table('users')
-                        ->select('id')
-                        ->where([
-                            ['is_active', true],
-                            ['role_id', 1]
-                        ])->first();
-            $data['reference_no'] = 'pr-' . date("Ymd") . '-'. date("his");
-            $data['user_id'] = $user_data->id;
+            $user_id = $actor ?? DB::table('users')->where([['is_active', true], ['role_id', 1]])->value('id');
+            if ($actor !== null) {
+                $numberReservation = $this->reserveNumber('purchase');
+                $data['reference_no'] = $numberReservation->formatted_number;
+                if (!\App\Models\Warehouse::whereKey($pos_setting_data->warehouse_id)->exists()) {
+                    throw new \RuntimeException('The default POS warehouse does not belong to this company.');
+                }
+            } else {
+                $data['reference_no'] = 'pr-' . date('Ymd') . '-'. date('his');
+            }
+            $data['user_id'] = $user_id;
             $data['warehouse_id'] = $pos_setting_data->warehouse_id;
             $data['item'] = count($product_data);
             $data['total_qty'] = 10 * $data['item'];
@@ -119,6 +150,9 @@ class AutoPurchase extends Command
             $data['order_tax'] = 0;
             $data['grand_total'] = $data['total_cost'];
             $purchase_data = Purchase::create($data);
+            if (isset($numberReservation)) {
+                $this->assignNumber($numberReservation, $purchase_data);
+            }
             foreach ($data['product_id'] as $key => $product_id) {
                 ProductPurchase::create([
                     'purchase_id' => $purchase_data->id,
