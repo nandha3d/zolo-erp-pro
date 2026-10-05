@@ -110,6 +110,7 @@
     nav.navbar a {align-items: center;display: flex;}
     .right-sidebar li a svg{margin-right: 10px}
     .nav-menu svg {width: 20px;height: 20px; stroke: #7c5cc4;vertical-align: middle}
+    #pos-layout .nav-menu {flex-wrap: wrap; max-width: 100%; min-width: 0;}
     .btn svg {vertical-align: middle; width: 16px}
     button.close svg {vertical-align: middle; width: 26px}
     .bootstrap-select.btn-group > .dropdown-toggle{height: 37px}
