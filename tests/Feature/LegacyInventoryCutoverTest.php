@@ -73,8 +73,6 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
             (new $class)->up();
         }
         Schema::table('packing_slips', fn (Blueprint $table) => $table->integer('delivery_id')->nullable());
-        // Company-owned models are scoped by request context, which needs the ownership column.
-        Schema::table('adjustments', fn (Blueprint $table) => $table->unsignedBigInteger('company_id')->nullable());
         foreach ([
             '2024_09_01_120515_create_productions_table.php' => 'CreateProductionsTable',
             '2024_09_01_120536_create_product_productions_table.php' => 'CreateProductProductionsTable',
@@ -131,6 +129,39 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
         DB::table('users')->insert(['id' => 1, 'role_id' => 1, 'is_active' => true]);
         DB::table('pos_setting')->insert(['warehouse_id' => 1, 'created_at' => now(), 'updated_at' => now()]);
         DB::table('units')->insert(['id' => 1, 'unit_name' => 'Each', 'unit_code' => 'ea', 'operator' => '*', 'operation_value' => 1, 'is_active' => true]);
+        $this->installCompanyFoundation();
+    }
+
+    /** Business documents take their numbers from the company series, which needs the platform tables and one company. */
+    private function installCompanyFoundation(): void
+    {
+        Schema::create('roles', function (Blueprint $table) {
+            $table->increments('id');
+            $table->boolean('is_active')->default(true);
+        });
+        DB::table('roles')->insert(['id' => 1]);
+        Schema::table('users', fn (Blueprint $table) => $table->boolean('is_deleted')->default(false));
+        foreach (['000001_create_company_context_tables', '000002_add_nullable_company_keys_to_core_tables', '000004_create_capability_tables', '000005_create_document_numbering_tables'] as $migration) {
+            (require database_path('migrations/2026_10_03_'.$migration.'.php'))->up();
+        }
+        $company = \App\Models\Company::create(['code' => 'A', 'legal_name' => 'Cutover Co', 'timezone' => 'UTC']);
+        $company->users()->attach(1, ['is_default' => true]);
+        $branch = $company->branches()->create(['code' => 'MAIN', 'name' => 'Main']);
+        DB::table('company_user_branches')->insert(['company_id' => $company->id, 'user_id' => 1, 'branch_id' => $branch->id]);
+        \App\Models\Accounting\FiscalYear::create(['company_id' => $company->id, 'name' => 'Cutover FY', 'start_date' => now()->startOfYear()->toDateString(),
+            'end_date' => now()->endOfYear()->toDateString(), 'status' => 'open']);
+        foreach (['damage_stocks', 'exchanges'] as $table) {
+            if (!Schema::hasColumn($table, 'company_id')) {
+                Schema::table($table, fn (Blueprint $blueprint) => $blueprint->unsignedBigInteger('company_id')->nullable());
+            }
+        }
+        DB::table('warehouses')->update(['company_id' => $company->id]);
+    }
+
+    protected function companyWithInventoryPolicy(array $policy): int
+    {
+        DB::table('companies')->where('id', 1)->update(['settings_json' => json_encode(['inventory' => $policy])]);
+        return 1;
     }
 
     private function request(array $payload, array $files = []): Request
@@ -510,16 +541,17 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
         $this->assertReconciled();
     }
 
-    public function test_product_opening_purchase_and_scheduled_purchase_post_exactly_once(): void
+    public function test_product_opening_purchase_posts_once_and_the_global_scheduled_purchase_is_retired(): void
     {
         $product = $this->product(['unit_id' => 1, 'cost' => 4, 'alert_quantity' => 8]);
         app(ProductController::class)->autoPurchase($product, 1, 3);
         $this->assertEquals(3, $product->fresh()->qty);
-        $this->artisan('purchase:auto')->assertSuccessful();
-        $this->artisan('purchase:auto')->assertSuccessful();
-        $this->assertEquals(13, $product->fresh()->qty);
-        $this->assertSame(2, DB::table('purchases')->count());
-        $this->assertSame(2, StockMovement::where('source_type', 'legacy:purchases')->count());
+        // After company foundation the global legacy job refuses to run instead of buying for every company.
+        $this->artisan('purchase:auto')->assertFailed();
+        $this->assertEquals(3, $product->fresh()->qty);
+        $this->assertSame(1, DB::table('purchases')->count());
+        $this->assertStringStartsWith('ERP-PUR-', DB::table('purchases')->value('reference_no'));
+        $this->assertSame(1, StockMovement::where('source_type', 'legacy:purchases')->count());
         $this->assertReconciled();
     }
 
