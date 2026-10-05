@@ -58,7 +58,11 @@
     function changed() { dirty = true; revision++; clearTimeout(previewTimer); previewTimer = setTimeout(preview, 120); }
     function showDialog(dialog) { lastFocus = document.activeElement; dialog.showModal(); }
     document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
-    document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close', () => lastFocus?.focus()));
+    document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('close', () => {
+        const target = lastFocus?.isConnected && !lastFocus.disabled && !lastFocus.closest('[inert]')
+            && lastFocus.matches('input, select, textarea, button, a[href], [tabindex]') ? lastFocus : $('product-search');
+        target.focus();
+    }));
     function info(title, records, columns) {
         text($('info-title'), title);
         const table = document.createElement('table'), head = document.createElement('thead'), heading = document.createElement('tr'), body = document.createElement('tbody');
