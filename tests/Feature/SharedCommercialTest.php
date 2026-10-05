@@ -21,6 +21,21 @@ use Tests\Support\CommercialTestCase;
 
 class SharedCommercialTest extends CommercialTestCase
 {
+    public function test_legacy_purchase_payment_filters_use_amounts_for_due_partial_and_paid_documents(): void
+    {
+        $product = $this->stock();
+        $purchases = [];
+        foreach ([0, 4, 10] as $paid) {
+            $purchases[] = app(PurchaseApplicationService::class)->create(new PurchaseCommand(
+                $this->purchaseData($product, ['paid_amount' => $paid]), 'purchase-payment-'.$paid, 1, $this->context()));
+        }
+
+        $this->assertEquals([2, 3, 4], array_map(fn ($purchase) => $purchase->payment_status, $purchases));
+        $this->assertEquals([$purchases[0]->id, $purchases[1]->id],
+            \App\Models\Purchase::withLegacyPaymentStatus(1)->orderBy('id')->pluck('id')->all());
+        $this->assertEquals([$purchases[2]->id], \App\Models\Purchase::withLegacyPaymentStatus(2)->pluck('id')->all());
+    }
+
     private function sale(array $data, string $key = 'test-sale'): Sale
     {
         return app(SaleApplicationService::class)->create(new SaleCommand($data, $key, 1, $this->context()));

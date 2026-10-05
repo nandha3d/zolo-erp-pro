@@ -30,6 +30,16 @@ class Purchase extends Model
 
         "reference_no", "user_id", "warehouse_id", "supplier_id", "currency_id", "exchange_rate", "item", "total_qty", "total_discount", "total_tax", "total_cost", "order_tax_rate", "order_tax", "order_discount", "shipping_cost", "grand_total","paid_amount", "status", "payment_status", "document", "note", "purchase_type", "created_at", "deleted_by",
     ];
+
+    /** Legacy list controls use 1 = due and 2 = paid; shared posting uses different status codes. */
+    public function scopeWithLegacyPaymentStatus(Builder $query, int $status): Builder
+    {
+        if (!in_array($status, [1, 2], true)) {
+            return $query->where('purchases.payment_status', $status);
+        }
+
+        return $query->whereColumn('purchases.paid_amount', $status === 1 ? '<' : '>=', 'purchases.grand_total');
+    }
     
     public function user()
     {

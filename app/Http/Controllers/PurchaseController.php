@@ -606,7 +606,7 @@ class PurchaseController extends Controller
         if($purchase_status)
             $q = $q->where('status', $purchase_status);
         if($payment_status)
-            $q = $q->where('payment_status', $payment_status);
+            $q = $q->withLegacyPaymentStatus((int) $payment_status);
 
         $totalData = $q->count();
         $totalFiltered = $totalData;
@@ -641,7 +641,7 @@ class PurchaseController extends Controller
             if($purchase_status)
                 $q = $q->where('status', $purchase_status);
             if($payment_status)
-                $q = $q->where('payment_status', $payment_status);
+                $q = $q->withLegacyPaymentStatus((int) $payment_status);
             $purchases = $q->get();
         }
         else
@@ -669,7 +669,7 @@ class PurchaseController extends Controller
             }
 
             if ($payment_status) {
-                $q->where('purchases.payment_status', $payment_status);
+                $q->withLegacyPaymentStatus((int) $payment_status);
             }
 
             // ✅ ACCESS CONTROL
@@ -768,7 +768,7 @@ class PurchaseController extends Controller
                     $purchase_status = __('db.Ordered');
                 }
 
-                if($purchase->payment_status == 1)
+                if($purchase->paid_amount < $purchase->grand_total)
                     $nestedData['payment_status'] = '<div class="badge badge-danger">'.__('db.Due').'</div>';
                 else
                     $nestedData['payment_status'] = '<div class="badge badge-success">'.__('db.Paid').'</div>';
