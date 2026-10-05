@@ -24,6 +24,7 @@ use App\Models\Courier;
 class DeliveryController extends Controller
 {
     use \App\Traits\MailInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index()
     {
@@ -186,7 +187,7 @@ class DeliveryController extends Controller
             if(in_array('ecommerce', explode(',',config('addons'))) || in_array('restaurant', explode(',',config('addons')))) {
                 $customer_sale = DB::table('sales')->join('customers', 'sales.customer_id', '=', 'customers.id')->where('sales.id', $id)->whereNull('sales.deleted_at')->select('sales.reference_no','customers.name', 'sales.shipping_address', 'sales.shipping_city', 'sales.shipping_country')->get();
     
-                $delivery_data[] = 'dr-' . date("Ymd") . '-'. date("his");
+                $delivery_data[] = 'Assigned on save';
                 $delivery_data[] = $customer_sale[0]->reference_no;
                 $delivery_data[] = '';
                 $delivery_data[] = '';
@@ -198,7 +199,7 @@ class DeliveryController extends Controller
             
                 $customer_sale = DB::table('sales')->join('customers', 'sales.customer_id', '=', 'customers.id')->where('sales.id', $id)->whereNull('sales.deleted_at')->select('sales.reference_no','customers.name', 'customers.address', 'customers.city', 'customers.country')->get();
     
-                $delivery_data[] = 'dr-' . date("Ymd") . '-'. date("his");
+                $delivery_data[] = 'Assigned on save';
                 $delivery_data[] = $customer_sale[0]->reference_no;
                 $delivery_data[] = '';
                 $delivery_data[] = '';
@@ -214,7 +215,18 @@ class DeliveryController extends Controller
     public function store(Request $request)
     {
         $data = $request->except('file');
-        $delivery = Delivery::firstOrNew(['reference_no' => $data['reference_no'] ]);
+        return \Illuminate\Support\Facades\DB::transaction(fn () => $this->saveDelivery($request, $data));
+    }
+
+    private function saveDelivery(Request $request, array $data)
+    {
+        // The number is never taken from the form: an existing delivery keeps its own, a new one reserves the next.
+        $delivery = Delivery::where('reference_no', $data['reference_no'] ?? '')->first();
+        if (!$delivery) {
+            $numberReservation = $this->reserveNumber('delivery');
+            $delivery = new Delivery(['reference_no' => $numberReservation->formatted_number]);
+        }
+        $data['reference_no'] = $delivery->reference_no;
         $document = $request->file;
         if ($document) {
             $ext = pathinfo($document->getClientOriginalName(), PATHINFO_EXTENSION);
@@ -231,6 +243,9 @@ class DeliveryController extends Controller
         $delivery->status = $data['status'];
         $delivery->note = $data['note'];
         $delivery->save();
+        if (isset($numberReservation)) {
+            $this->assignNumber($numberReservation, $delivery);
+        }
         $lims_sale_data = Sale::find($data['sale_id']);
         $lims_customer_data = Customer::find($lims_sale_data->customer_id);
         $message = 'Delivery created successfully';

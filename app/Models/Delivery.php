@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Delivery extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     protected $fillable =[
         "reference_no", "sale_id", "packing_slip_ids", "user_id", "address", "courier_id", "delivered_by", "recieved_by", "file", "status", "note"
     ];

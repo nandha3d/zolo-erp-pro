@@ -19,6 +19,8 @@ use DB;
 
 class PackingSlipController extends Controller
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
 	public function index()
 	{
 		return view('backend.packing_slip.index');
@@ -187,7 +189,8 @@ class PackingSlipController extends Controller
             if(!$delivery) {
                 //creating a new delivery
                 $delivery = new Delivery();
-                $delivery->reference_no = 'dr-' . date("Ymd") . '-'. date("his");
+                $deliveryReservation = $this->reserveNumber('delivery');
+                $delivery->reference_no = $deliveryReservation->formatted_number;
                 $delivery->sale_id = $sale->id;
                 $delivery->user_id = \Auth::id();
                 if($sale->shipping_address) {
@@ -207,6 +210,7 @@ class PackingSlipController extends Controller
                 $delivery->status = 1;
                 $delivery->packing_slip_ids = $packing_slip->id;
                 $delivery->save();
+                $this->assignNumber($deliveryReservation, $delivery);
             }
             else {
                 $delivery->packing_slip_ids .= ','.$packing_slip->id;

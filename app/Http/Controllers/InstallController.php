@@ -47,6 +47,19 @@ class InstallController extends Controller
                 Artisan::call('migrate', ['--force' => true]);
                 Artisan::call('db:seed', ['--force' => true]);
 
+                // Business screens need a company. The backfill refuses to write unless the app is down, which is
+                // trivially safe during installation; always bring it back up.
+                Artisan::call('down');
+                try {
+                    $backfill = Artisan::call('erp:backfill-company-context');
+                    $backfillOutput = trim(Artisan::output());
+                } finally {
+                    Artisan::call('up');
+                }
+                if ($backfill !== 0) {
+                    throw new Exception('Company setup failed: '.$backfillOutput);
+                }
+
                 self::optimizeClear();
                 return redirect(url('/install/step-4'));
 

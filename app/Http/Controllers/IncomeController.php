@@ -17,6 +17,7 @@ use DB;
 class IncomeController extends Controller
 {
     use StaffAccess;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index(Request $request)
     {
@@ -182,7 +183,6 @@ class IncomeController extends Controller
         } else {
             $data['created_at'] = date('Y-m-d H:i:s');
         }
-        $data['reference_no'] = 'ir-' . date("Ymd") . '-'. date("his");
         $data['user_id'] = Auth::id();
         $cash_register_data = CashRegister::where([
             ['user_id', $data['user_id']],
@@ -191,7 +191,11 @@ class IncomeController extends Controller
         ])->first();
         if($cash_register_data)
             $data['cash_register_id'] = $cash_register_data->id;
-        Income::create($data);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            $numberReservation = $this->reserveNumber('income', $data['created_at']);
+            $income = Income::create($data + ['reference_no' => $numberReservation->formatted_number]);
+            $this->assignNumber($numberReservation, $income);
+        });
         return redirect('incomes')->with('message', __('db.Data inserted successfully'));
     }
 

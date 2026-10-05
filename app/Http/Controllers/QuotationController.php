@@ -36,6 +36,7 @@ use App\Traits\TenantInfo;
 class QuotationController extends Controller
 {
     use TenantInfo, MailInfo, StaffAccess;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index(Request $request)
     {
@@ -406,8 +407,13 @@ class QuotationController extends Controller
             }
             $data['document'] = $documentName;
         }
-        $data['reference_no'] = 'qr-' . date("Ymd") . '-'. date("his");
-        $lims_quotation_data = Quotation::create($data);
+        $lims_quotation_data = \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            $numberReservation = $this->reserveNumber('quotation');
+            $quotation = Quotation::create($data + ['reference_no' => $numberReservation->formatted_number]);
+            $this->assignNumber($numberReservation, $quotation);
+            return $quotation;
+        });
+        $data['reference_no'] = $lims_quotation_data->reference_no;
         if($lims_quotation_data->quotation_status == 2){
             //collecting mail data
             $lims_customer_data = Customer::find($data['customer_id']);

@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
 class PayrollController extends Controller
 {
     use \App\Traits\MailInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index()
     {
@@ -88,9 +89,12 @@ class PayrollController extends Controller
             $data['created_at'] = date("Y-m-d", strtotime(str_replace("/", "-", $data['created_at'])));
         else
             $data['created_at'] = date("Y-m-d");
-        $data['reference_no'] = 'payroll-' . date("Ymd") . '-'. date("his");
         $data['user_id'] = Auth::id();
-        Payroll::create($data);
+        \Illuminate\Support\Facades\DB::transaction(function () use (&$data) {
+            $numberReservation = $this->reserveNumber('payroll', $data['created_at']);
+            $data['reference_no'] = $numberReservation->formatted_number;
+            $this->assignNumber($numberReservation, Payroll::create($data));
+        });
         $message = 'Payroll creared succesfully';
         //collecting mail data
         $lims_employee_data = Employee::find($data['employee_id']);
@@ -251,6 +255,7 @@ class PayrollController extends Controller
             return redirect()->route('payroll.index')->with('error', 'No payroll data found!');
         }
 
+        \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             foreach ($payrolls as $empId => $payrollData) {
 
@@ -258,8 +263,6 @@ class PayrollController extends Controller
                     continue;
                 }
 
-                // Reference No
-                $reference_no = 'payroll-' . date("Ymd") . '-' . date("His") . '-' . $empId;
 
                 // Calculate totals
                 $salary = floatval($payrollData['amount']);
@@ -284,8 +287,8 @@ class PayrollController extends Controller
 
                 if ($existingPayroll) {
                     // Update existing payroll
+                    $reference_no = $existingPayroll->reference_no; // a processed payroll keeps its number
                     $existingPayroll->update([
-                        'reference_no' => $reference_no,
                         'user_id' => Auth::id(),
                         'account_id' => $request->account_id ?? 0,
                         'amount' => $total,
@@ -297,6 +300,8 @@ class PayrollController extends Controller
                     $payroll = $existingPayroll;
                 } else {
                     // Create new payroll
+                    $numberReservation = $this->reserveNumber('payroll');
+                    $reference_no = $numberReservation->formatted_number;
                     $payroll = Payroll::create([
                         'reference_no' => $reference_no,
                         'employee_id' => $payrollData['employee_id'],
@@ -309,6 +314,7 @@ class PayrollController extends Controller
                         'amount_array' => json_encode($amountArray),
                         'month' => $request->month,
                     ]);
+                    $this->assignNumber($numberReservation, $payroll);
                 }
 
                 // Send email
@@ -335,9 +341,11 @@ class PayrollController extends Controller
                 }
             }
 
+            \Illuminate\Support\Facades\DB::commit();
             return redirect()->route('payroll.index')->with('message', 'All payrolls processed successfully!');
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
             \Log::error('Payroll store error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong while generating payrolls.');
         }

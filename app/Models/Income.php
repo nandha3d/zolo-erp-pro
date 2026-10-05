@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Income extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     use HasFactory;
 
     protected $fillable =[

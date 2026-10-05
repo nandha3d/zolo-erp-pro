@@ -35,6 +35,11 @@ class DocumentNumberService
         'exchange' => [\App\Models\Exchange::class, 'reference_no', 'EXC'],
         'adjustment' => [\App\Models\Adjustment::class, 'reference_no', 'ADJ'],
         'expense' => [\App\Models\Expense::class, 'reference_no', 'EXP'],
+        'quotation' => [\App\Models\Quotation::class, 'reference_no', 'QUO'],
+        'delivery' => [\App\Models\Delivery::class, 'reference_no', 'DEL'],
+        'income' => [\App\Models\Income::class, 'reference_no', 'INC'],
+        'money_transfer' => [\App\Models\MoneyTransfer::class, 'reference_no', 'MTR'],
+        'payroll' => [\App\Models\Payroll::class, 'reference_no', 'PAYR'],
     ];
 
     /** Call inside the document transaction. A failed posting rolls back reservation and increment. */

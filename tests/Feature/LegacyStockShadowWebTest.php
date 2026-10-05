@@ -358,6 +358,26 @@ class LegacyStockShadowWebTest extends TestCase
         $this->assertSame([], $this->newDifferences());
     }
 
+    public function test_income_and_money_transfer_use_company_series_and_are_owned(): void
+    {
+        $account = (int) DB::table('accounts')->value('id');
+        $category = DB::table('income_categories')->value('id') ?? DB::table('income_categories')->insertGetId(['name' => 'Cutover income', 'code' => 'CI', 'is_active' => 1]);
+        foreach ([1, 2] as $i) {
+            $this->actingAs($this->admin)->post(route('incomes.store'), [
+                'income_category_id' => $category, 'warehouse_id' => $this->main, 'account_id' => $account, 'amount' => 5 * $i, 'note' => 'series proof',
+            ])->assertRedirect();
+        }
+        $incomes = DB::table('incomes')->orderByDesc('id')->limit(2)->get();
+        $this->assertNotSame($incomes[0]->reference_no, $incomes[1]->reference_no);
+        $this->assertStringStartsWith('ERP-INC-', $incomes[0]->reference_no);
+        $this->assertSame(1, (int) $incomes[0]->company_id);
+
+        $this->actingAs($this->admin)->post(route('money-transfers.store'), ['from_account_id' => $account, 'to_account_id' => $account, 'amount' => 1])->assertRedirect();
+        $transfer = DB::table('money_transfers')->orderByDesc('id')->first();
+        $this->assertStringStartsWith('ERP-MTR-', $transfer->reference_no);
+        $this->assertSame(1, (int) $transfer->company_id);
+    }
+
     public function test_completed_transfer_store_records_one_applied_transfer(): void
     {
         $b = $this->items['b'];

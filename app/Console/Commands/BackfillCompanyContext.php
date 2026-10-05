@@ -23,6 +23,8 @@ class BackfillCompanyContext extends Command
         'adjustments', 'product_adjustments', 'stock_counts', 'expenses', 'accounts',
         'chart_of_accounts', 'fiscal_years', 'journal_entries', 'journal_items',
         'semantic_account_mappings', 'inventory_closes',
+        // Numbered documents that gained ownership keys later; skipped on schemas that predate them.
+        'quotations', 'deliveries', 'incomes', 'money_transfers', 'payrolls', 'damage_stocks', 'exchanges',
     ];
 
     // Only audited references are checked; other operational tables are a later package.

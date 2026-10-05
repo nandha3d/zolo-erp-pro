@@ -11,6 +11,8 @@ use Auth;
 
 class MoneyTransferController extends Controller
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
@@ -31,8 +33,11 @@ class MoneyTransferController extends Controller
     public function store(Request $request)
     {
         $data = $request->all();
-        $data['reference_no'] = 'mtr-' . date("Ymd") . '-'. date("his");
-        MoneyTransfer::create($data);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+            $numberReservation = $this->reserveNumber('money_transfer');
+            $transfer = MoneyTransfer::create($data + ['reference_no' => $numberReservation->formatted_number]);
+            $this->assignNumber($numberReservation, $transfer);
+        });
         return redirect()->back()->with('message', __('db.Money transfered successfully'));
     }
 

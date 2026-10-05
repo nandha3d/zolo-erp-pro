@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class MoneyTransfer extends Model
 {
+    use \App\Models\Concerns\ScopesCompanyQueries;
+
     protected $fillable = ['reference_no', 'from_account_id', 'to_account_id', 'amount', 'created_at'];
 
     public function fromAccount()
