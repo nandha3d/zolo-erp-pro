@@ -21,6 +21,7 @@ class ExpenseController extends Controller
 {
     use StaffAccess;
     use TenantInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index(Request $request)
     {
@@ -233,7 +234,7 @@ class ExpenseController extends Controller
         } else {
             $data['created_at'] = date('Y-m-d H:i:s');
         }
-        $data['reference_no'] = 'er-' . date("Ymd") . '-'. date("his");
+        $data['reference_no'] = 'pending';
         $data['user_id'] = Auth::id();
         $data['employee_id'] = $request->employee_id ?? null;
         $data['type'] = $request->type ?? null;
@@ -243,7 +244,11 @@ class ExpenseController extends Controller
             $data['cash_register_id'] = $data['cash_register'];
         }
 
-        Expense::create($data);
+        DB::transaction(function () use ($data) {
+            $numberReservation = $this->reserveNumber('expense', $data['created_at']);
+            $expense = Expense::create(array_merge($data, ['reference_no' => $numberReservation->formatted_number]));
+            $this->assignNumber($numberReservation, $expense);
+        });
         return redirect('expenses')->with('message', __('db.Data inserted successfully'));
     }
 

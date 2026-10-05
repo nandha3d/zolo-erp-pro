@@ -41,6 +41,16 @@ trait ScopesCompanyQueries
         return app()->bound('request') ? request()->attributes->get(CompanyContext::class) : null;
     }
 
+    /** Mass inserts bypass the creating hook; stamp the request company onto each row. */
+    public static function withRequestCompany(array $rows): array
+    {
+        if (!$context = static::requestCompanyContext()) {
+            return $rows;
+        }
+
+        return array_map(fn (array $row) => $row + ['company_id' => $context->companyId], $rows);
+    }
+
     public function scopeForCompany(Builder $query, CompanyContext $context): Builder
     {
         return $query->where($query->getModel()->qualifyColumn('company_id'), $context->companyId);

@@ -19,6 +19,8 @@ use App\Models\PaymentWithCreditCard;
 
 class PaymentService
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     public function initialize($payment_type)
     {
         switch ($payment_type) {
@@ -42,6 +44,10 @@ class PaymentService
     }
 
     public function payForPurchase(array $data) {
+        return \Illuminate\Support\Facades\DB::transaction(fn () => $this->recordPurchasePayment($data));
+    }
+
+    private function recordPurchasePayment(array $data) {
         $lims_purchase_data = Purchase::find($data['purchase_id']);
         $lims_purchase_data->paid_amount += $data['amount'];
         $balance = $lims_purchase_data->grand_total - $lims_purchase_data->paid_amount;
@@ -66,7 +72,8 @@ class PaymentService
         $lims_payment_data->user_id = Auth::id();
         $lims_payment_data->purchase_id = $lims_purchase_data->id;
         $lims_payment_data->account_id = $data['account_id'];
-        $lims_payment_data->payment_reference = 'ppr-' . date("Ymd") . '-'. date("his");
+        $paymentReservation = $this->reserveNumber('purchase_payment', $data['payment_at'] ?? null);
+        $lims_payment_data->payment_reference = $paymentReservation->formatted_number;
         $lims_payment_data->amount = $data['amount'];
         if (isset($data['currency_id'])) {
             $lims_payment_data->currency_id = $data['currency_id'];
@@ -79,6 +86,7 @@ class PaymentService
         $lims_payment_data->payment_note = $data['payment_note'];
         $lims_payment_data->payment_at = $data['payment_at'];
         $lims_payment_data->save();
+        $this->assignNumber($paymentReservation, $lims_payment_data);
 
         $lims_payment_data = Payment::latest()->first();
         $data['payment_id'] = $lims_payment_data->id;

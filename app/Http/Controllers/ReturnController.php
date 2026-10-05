@@ -435,7 +435,7 @@ class ReturnController extends Controller
 
                 $mail_data['qty'][$key] = $qty[$key];
                 $mail_data['total'][$key] = $total[$key];
-                $store_return = ProductReturn::insert(
+                $store_return = ProductReturn::create(
                     [
                         'return_id' => $lims_return_data->id,
                         'product_id' => $pro_id,

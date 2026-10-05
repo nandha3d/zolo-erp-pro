@@ -39,35 +39,7 @@ foreach ([
         throw new RuntimeException('Legacy fixture preparation failed: '.$command);
     }
 }
-// The original seed export references three absent brands and two absent units.
-// Prove dry-run rejection, then supply fixture-only parent rows. Retained installations need reviewed master data.
-if (Illuminate\Support\Facades\Artisan::call('erp:backfill-company-context', ['--dry-run' => true]) !== 1
-    || !str_contains(Illuminate\Support\Facades\Artisan::output(), 'orphan references')) {
-    throw new RuntimeException('Expected original seed orphan-reference rejection was not observed.');
-}
-foreach ([
-    ['brands', 'brand_id', 'title', [10, 16, 17]],
-    ['units', 'unit_id', 'unit_name', [4, 9]],
-] as [$parentTable, $referenceColumn, $labelColumn, $expectedMissing]) {
-    $missing = Illuminate\Support\Facades\DB::table('products as product')
-        ->leftJoin($parentTable.' as parent', 'product.'.$referenceColumn, '=', 'parent.id')
-        ->whereNotNull('product.'.$referenceColumn)->where('product.'.$referenceColumn, '<>', 0)
-        ->whereNull('parent.id')->distinct()->orderBy('product.'.$referenceColumn)->pluck('product.'.$referenceColumn)
-        ->map(fn ($id) => (int) $id)->all();
-    if ($missing !== $expectedMissing) {
-        throw new RuntimeException('Original seed reference set changed; review fixture repair before backfill.');
-    }
-    $template = (array) Illuminate\Support\Facades\DB::table($parentTable)->where('id', 1)->first();
-    foreach ($missing as $id) {
-        $row = $template;
-        $row['id'] = $id;
-        $row[$labelColumn] = 'Legacy fixture '.$parentTable.' '.$id;
-        if ($parentTable === 'units') {
-            $row['unit_code'] = 'Fixture'.$id;
-        }
-        Illuminate\Support\Facades\DB::table($parentTable)->insert($row);
-    }
-}
+// The repository seed is self-consistent (no dangling brand/unit parents), so the company backfill runs directly.
 $maintenance = Mockery::mock(Illuminate\Contracts\Foundation\MaintenanceMode::class);
 $maintenance->shouldReceive('active')->andReturn(true);
 $app->instance(Illuminate\Contracts\Foundation\MaintenanceMode::class, $maintenance);

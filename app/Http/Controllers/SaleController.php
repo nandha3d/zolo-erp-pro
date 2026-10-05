@@ -1047,7 +1047,8 @@ class SaleController extends Controller
                         $lims_payment_data->user_id = Auth::id();
                         $lims_payment_data->sale_id = $lims_sale_data->id;
 
-                        $lims_payment_data->payment_reference = 'raz-'.date("Ymd").'-'.date("his");
+                        $paymentReservation = $this->reserveNumber('sale_payment');
+                        $lims_payment_data->payment_reference = $paymentReservation->formatted_number;
                         $lims_payment_data->amount = $data['paid_amount'][$key]; // from frontend
                         $lims_payment_data->paying_method = 'Razorpay';
                         $lims_payment_data->payment_note = 'Payment via Razorpay. Payment ID: ' . $data['razorpay_payment_id'];
@@ -1059,6 +1060,7 @@ class SaleController extends Controller
                         }
 
                         $lims_payment_data->save();
+                        $this->assignNumber($paymentReservation, $lims_payment_data);
 
                         // Add payment id back to data if needed
                         $data['payment_id'] = $lims_payment_data->id;
@@ -1118,7 +1120,8 @@ class SaleController extends Controller
                         else
                             $lims_payment_data->account_id = $lims_account_data->id;
                         $lims_payment_data->sale_id = $lims_sale_data->id;
-                        $data['payment_reference'] = 'spr-'.date("Ymd").'-'.date("his");
+                        $paymentReservation = $this->reserveNumber('sale_payment');
+                        $data['payment_reference'] = $paymentReservation->formatted_number;
                         $lims_payment_data->payment_reference = $data['payment_reference'];
                         $lims_payment_data->amount = $data['paid_amount'][$key];
                         $lims_payment_data->change = $data['paying_amount'][$key] - $data['paid_amount'][$key];
@@ -1134,6 +1137,7 @@ class SaleController extends Controller
                         $lims_payment_data->exchange_rate = $lims_sale_data->exchange_rate ?? 1;
 
                         $lims_payment_data->save();
+                        $this->assignNumber($paymentReservation, $lims_payment_data);
 
                         if(isset($data['cash']) && $data['cash'] > 0 &&  isset($data['bank']) && $data['bank'])
 
@@ -3534,6 +3538,11 @@ class SaleController extends Controller
 
     public function addPayment(Request $request)
     {
+        return DB::transaction(fn () => $this->recordSalePayment($request));
+    }
+
+    private function recordSalePayment(Request $request)
+    {
         $data = $request->except('document');
         $data = $request->all();
         $document = $request->document;
@@ -3609,7 +3618,8 @@ class SaleController extends Controller
         if($cash_register_data)
             $lims_payment_data->cash_register_id = $cash_register_data->id;
         $lims_payment_data->account_id = $data['account_id'];
-        $data['payment_reference'] = 'spr-' . date("Ymd") . '-'. date("his");
+        $paymentReservation = $this->reserveNumber('sale_payment', $data['payment_at']);
+        $data['payment_reference'] = $paymentReservation->formatted_number;
         $lims_payment_data->payment_reference = $data['payment_reference'];
         $lims_payment_data->amount = $data['amount'];
         $lims_payment_data->currency_id = $data['currency_id'] ?? 1;
@@ -3624,6 +3634,7 @@ class SaleController extends Controller
         $lims_payment_data->payment_at = $data['payment_at'];
 
         $lims_payment_data->save();
+        $this->assignNumber($paymentReservation, $lims_payment_data);
         $lims_sale_data->save();
 
 

@@ -33,6 +33,8 @@ class DocumentNumberService
         'purchase_credit_note' => [\App\Models\ReturnPurchase::class, 'reference_no', 'PCN'],
         'damage' => [\App\Models\DamageStock::class, 'reference_no', 'LOSS'],
         'exchange' => [\App\Models\Exchange::class, 'reference_no', 'EXC'],
+        'adjustment' => [\App\Models\Adjustment::class, 'reference_no', 'ADJ'],
+        'expense' => [\App\Models\Expense::class, 'reference_no', 'EXP'],
     ];
 
     /** Call inside the document transaction. A failed posting rolls back reservation and increment. */

@@ -24,6 +24,7 @@ use Spatie\Permission\Models\Permission;
 class SupplierController extends Controller
 {
     use \App\Traits\MailInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index()
     {
@@ -42,6 +43,11 @@ class SupplierController extends Controller
     }
 
     public function clearDue(Request $request)
+    {
+        return \Illuminate\Support\Facades\DB::transaction(fn () => $this->settleSupplierDue($request));
+    }
+
+    private function settleSupplierDue(Request $request)
     {
         $lims_due_purchase_data = Purchase::select('id', 'warehouse_id', 'grand_total', 'paid_amount', 'payment_status')
                             ->where([
@@ -67,8 +73,9 @@ class SupplierController extends Controller
                 $paid_amount = $total_paid_amount;
                 $payment_status = 1;
             }
-            Payment::create([
-                'payment_reference' => 'ppr-'.date("Ymd").'-'.date("his"),
+            $paymentReservation = $this->reserveNumber('purchase_payment');
+            $payment = Payment::create([
+                'payment_reference' => $paymentReservation->formatted_number,
                 'purchase_id' => $purchase_data->id,
                 'user_id' => Auth::id(),
                 'cash_register_id' => $cash_register_id,
@@ -78,6 +85,7 @@ class SupplierController extends Controller
                 'paying_method' => 'Cash',
                 'payment_note' => $request->note
             ]);
+            $this->assignNumber($paymentReservation, $payment);
             $purchase_data->paid_amount += $paid_amount;
             $purchase_data->payment_status = $payment_status;
             $purchase_data->save();

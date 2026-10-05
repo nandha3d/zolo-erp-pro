@@ -4073,6 +4073,10 @@ class TenantDatabaseSeeder extends Seeder
             DB::table('products')->update(['qty' => DB::raw(
                 '(SELECT COALESCE(SUM(product_warehouse.qty), 0) FROM product_warehouse WHERE product_warehouse.product_id = products.id)'
             )]);
+
+            // The demo dump references brands that were never exported. A dangling parent blocks the company backfill
+            // on a fresh install, so those products get no brand.
+            DB::table('products')->whereNotNull('brand_id')->whereNotIn('brand_id', DB::table('brands')->select('id'))->update(['brand_id' => null]);
         }
 
         if (!DB::table('purchases')->count()) {
@@ -4147,6 +4151,11 @@ class TenantDatabaseSeeder extends Seeder
                     'is_active' => 1,
                 ]
             ]);
+
+            // Units 4 and 9 were also never exported; products that name them use the piece unit.
+            foreach (['unit_id', 'purchase_unit_id', 'sale_unit_id'] as $column) {
+                DB::table('products')->where($column, '>', 0)->whereNotIn($column, DB::table('units')->select('id'))->update([$column => 1]);
+            }
         }
 
         if (!DB::table('warehouses')->count()) {

@@ -26,8 +26,9 @@ class Common
             : Auth::user()->role_id;
 
         // Installation settings remain shared; company identity comes from trusted context.
-        //get general setting value
-        $general_setting =  $remember('general_setting', 60*60*24*365, function () {
+        //get general setting value: installation-wide, so it stays cached even under a company context; the legacy
+        // reports and dashboard read this key directly. Company identity and currency come from the company below.
+        $general_setting =  Cache::remember('general_setting', 60*60*24*365, function () {
             return DB::table('general_settings')->latest()->first();
         });
 

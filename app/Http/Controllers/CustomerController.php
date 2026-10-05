@@ -43,6 +43,7 @@ class CustomerController extends Controller
 {
     use \App\Traits\CacheForget;
     use \App\Traits\MailInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index()
     {
@@ -280,6 +281,11 @@ class CustomerController extends Controller
 
     public function clearDue(Request $request)
     {
+        return DB::transaction(fn () => $this->settleCustomerDue($request));
+    }
+
+    private function settleCustomerDue(Request $request)
+    {
         $data = $request->all();
         $lims_due_sale_data = Sale::select('id', 'warehouse_id', 'grand_total', 'paid_amount', 'payment_status')
                             ->where([
@@ -330,7 +336,8 @@ class CustomerController extends Controller
             $lims_payment_data->sale_id = $sale_data->id;
             $lims_payment_data->cash_register_id = $lims_cash_register_data->id ?? null;
             $lims_payment_data->account_id = $account_data->id;
-            $data['payment_reference'] = 'spr-' . date("Ymd") . '-'. date("his");
+            $paymentReservation = $this->reserveNumber('sale_payment');
+            $data['payment_reference'] = $paymentReservation->formatted_number;
             $lims_payment_data->payment_reference = $data['payment_reference'];
             $lims_payment_data->amount = $data['amount'];
             $lims_payment_data->change = 0;
@@ -338,6 +345,7 @@ class CustomerController extends Controller
             $lims_payment_data->payment_note = $data['payment_note'];
             $lims_payment_data->payment_receiver = $data['payment_receiver'];
             $lims_payment_data->save();
+            $this->assignNumber($paymentReservation, $lims_payment_data);
 
             $sale_data->paid_amount += $data['amount'];
             $sale_data->payment_status = $payment_status;

@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class DamageStockController extends Controller
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     protected $accountingService;
 
     public function __construct(AccountingService $accountingService)
@@ -43,9 +45,10 @@ class DamageStockController extends Controller
         $product = Product::findOrFail($request->product_id);
         $unitCost = $product->cost ?? 0;
         $totalLoss = $unitCost * $request->qty;
-        $refNo = 'DMG-' . date('Ymd') . '-' . rand(1000, 9999);
 
-        DB::transaction(function () use ($request, $product, $unitCost, $totalLoss, $refNo) {
+        DB::transaction(function () use ($request, $product, $unitCost, $totalLoss) {
+            $numberReservation = $this->reserveNumber('damage');
+            $refNo = $numberReservation->formatted_number;
             $damage = DamageStock::create([
                 'reference_no' => $refNo,
                 'warehouse_id' => $request->warehouse_id,
@@ -59,6 +62,7 @@ class DamageStockController extends Controller
                 'user_id' => Auth::id() ?? 1,
             ]);
 
+            $this->assignNumber($numberReservation, $damage);
             app(LegacyInventoryPosting::class)->post($damage, 'issue', [StockLine::fromArray([
                 'product_id' => $product->id, 'qty' => $request->qty,
                 'variant_id' => $request->variant_id, 'product_batch_id' => $request->product_batch_id,

@@ -31,6 +31,7 @@ use App\Helpers\DateHelper;
 class TransferController extends Controller
 {
     use \App\Traits\MailInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index(Request $request)
     {
@@ -315,13 +316,14 @@ class TransferController extends Controller
             $data = $request->except('document');
 
             $data['user_id'] = Auth::id();
-            $data['reference_no'] = 'tr-' . date("Ymd") . '-'. date("his");
 
             if (isset($data['created_at'])) {
                 $data['created_at'] = normalize_to_sql_datetime($data['created_at']);
             } else {
                 $data['created_at'] = date('Y-m-d H:i:s');
             }
+            $numberReservation = $this->reserveNumber('transfer', $data['created_at']);
+            $data['reference_no'] = $numberReservation->formatted_number;
 
             $document = $request->document;
             if ($document) {
@@ -341,6 +343,7 @@ class TransferController extends Controller
                 $data['document'] = $documentName;
             }
             $lims_transfer_data = Transfer::create($data);
+            $this->assignNumber($numberReservation, $lims_transfer_data);
 
             $product_id = $data['product_id'];
             $imei_number = $data['imei_number'] ?? NULL;
@@ -924,7 +927,8 @@ class TransferController extends Controller
             }
 
             $data = $request->except('file');
-            $data['reference_no'] = 'tr-' . date("Ymd") . '-'. date("his");
+            $numberReservation = $this->reserveNumber('transfer');
+            $data['reference_no'] = $numberReservation->formatted_number;
             $document = $request->document;
             if ($document) {
                 $v = Validator::make(
@@ -947,6 +951,7 @@ class TransferController extends Controller
             $grand_total = $data['shipping_cost'];
             $data['user_id'] = Auth::id();
             $lims_transfer_data = Transfer::create($data);
+            $this->assignNumber($numberReservation, $lims_transfer_data);
 
             foreach ($product_data as $key => $product) {
                 if($product['tax_method'] == 1){

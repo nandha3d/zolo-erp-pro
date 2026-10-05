@@ -46,6 +46,7 @@ class ProductController extends Controller
 {
     use CacheForget;
     use TenantInfo;
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
 
     public function index(Request $request)
     {
@@ -679,7 +680,8 @@ class ProductController extends Controller
     public function autoPurchase($product_data, $warehouse_id, $stock)
     {
         return DB::transaction(function () use ($product_data, $warehouse_id, $stock) {
-            $data['reference_no'] = 'pr-' . date("Ymd") . '-'. date("his");
+            $numberReservation = $this->reserveNumber('purchase');
+            $data['reference_no'] = $numberReservation->formatted_number;
             $data['user_id'] = Auth::id();
             $data['warehouse_id'] = $warehouse_id;
             $data['item'] = 1;
@@ -717,6 +719,7 @@ class ProductController extends Controller
             $data['paid_amount'] = $data['grand_total'] ;
             //insetting data to purchase table
             $purchase_data = Purchase::create($data);
+            $this->assignNumber($numberReservation, $purchase_data);
             //inserting data to product_purchases table
             ProductPurchase::create([
                 'purchase_id' => $purchase_data->id,
@@ -731,8 +734,9 @@ class ProductController extends Controller
                 'total' => $cost
             ]);
             //inserting data to payments table
-            Payment::create([
-                'payment_reference' => 'ppr-' . date("Ymd") . '-'. date("his"),
+            $paymentReservation = $this->reserveNumber('purchase_payment');
+            $payment = Payment::create([
+                'payment_reference' => $paymentReservation->formatted_number,
                 'user_id' => Auth::id(),
                 'purchase_id' => $purchase_data->id,
                 'account_id' => 0,
@@ -740,6 +744,7 @@ class ProductController extends Controller
                 'change' => 0,
                 'paying_method' => 'Cash'
             ]);
+            $this->assignNumber($paymentReservation, $payment);
             app(LegacyInventoryPosting::class)->post($purchase_data, 'receive', [new StockLine(
                 productId: (int) $product_data->id, qty: (float) $stock, unitCost: (float) $net_unit_cost,
             )], (int) $warehouse_id);
@@ -2053,7 +2058,7 @@ class ProductController extends Controller
 
                     ProductVariant::insert($productVariants);
                     if (config('without_stock') === 'yes') {
-                        Product_Warehouse::insert($productWarehouses);
+                        Product_Warehouse::insert(Product_Warehouse::withRequestCompany($productWarehouses));
                     }
                 } elseif (config('without_stock') === 'yes') {
                     $productWarehouses = [];
@@ -2064,7 +2069,7 @@ class ProductController extends Controller
                             'qty' => 0,
                         ];
                     }
-                    Product_Warehouse::insert($productWarehouses);
+                    Product_Warehouse::insert(Product_Warehouse::withRequestCompany($productWarehouses));
                 }
                 $counter++;
             }

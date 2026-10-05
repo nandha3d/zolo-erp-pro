@@ -520,7 +520,7 @@ class LegacyStockShadowWebTest extends TestCase
             'errors' => session('errors')?->getBag('default')->all(),
         ]);
 
-        return "[HTTP {$response->getStatusCode()} ".json_encode($flash).']';
+        return "[HTTP {$response->getStatusCode()} ".json_encode($flash).' '.$response->headers->get('Location').']';
     }
 
     /** A consistent legacy item; with $batchNo every warehouse row belongs to one unexpired batch. */

@@ -516,7 +516,7 @@ class ReturnPurchaseController extends Controller
 
             $mail_data['qty'][$key] = $qty[$key];
             $mail_data['total'][$key] = $total[$key];
-            PurchaseProductReturn::insert(
+            PurchaseProductReturn::create(
                 ['return_id' => $lims_return_data->id, 'product_id' => $pro_id, 'product_batch_id' => $product_batch_id[$key], 'variant_id' => $variant_id, 'imei_number' => $imei_number[$key], 'qty' => $qty[$key], 'purchase_unit_id' => $purchase_unit_id, 'net_unit_cost' => $net_unit_cost[$key], 'discount' => $discount[$key], 'tax_rate' => $tax_rate[$key], 'tax' => $tax[$key], 'total' => $total[$key], 'created_at' => \Carbon\Carbon::now(),  'updated_at' => \Carbon\Carbon::now()]
             );
             $product_purchase_data = ProductPurchase::where([

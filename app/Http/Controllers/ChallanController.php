@@ -20,6 +20,8 @@ use DB;
 
 class ChallanController extends Controller
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     public function index(Request $request)
     {
         if($request->input('status'))
@@ -473,8 +475,9 @@ class ChallanController extends Controller
         else
             $cash_register_id = null;
         $account_data = Account::select('id')->where('is_default', 1)->first();
-        Payment::create([
-            'payment_reference' => 'spr-'.date("Ymd").'-'.date("his"),
+        $paymentReservation = $this->reserveNumber('sale_payment');
+        $payment = Payment::create([
+            'payment_reference' => $paymentReservation->formatted_number,
             'sale_id' => $sale->id,
             'user_id' => Auth::id(),
             'cash_register_id' => $cash_register_id,
@@ -483,6 +486,7 @@ class ChallanController extends Controller
             'change' => 0,
             'paying_method' => $paying_method,
         ]);
+        $this->assignNumber($paymentReservation, $payment);
         $sale->paid_amount += $amount;
         $sale->save();
     }

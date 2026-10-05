@@ -191,7 +191,7 @@ Route::group(['middleware' => 'auth'], function () {
     });
 });
 
-Route::group(['middleware' => ['common', 'auth', 'active']], function () {
+Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], function () {
 
     Route::get('/languages', [LanguageController::class, 'index'])->name('languages');
     Route::post('/languages/create', [LanguageController::class, 'store']);

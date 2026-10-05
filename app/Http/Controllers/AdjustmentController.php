@@ -23,6 +23,8 @@ use Spatie\Permission\Models\Permission;
 
 class AdjustmentController extends Controller
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     public function index()
     {
         $role = Role::find(Auth::user()->role_id);
@@ -256,7 +258,8 @@ class AdjustmentController extends Controller
         $this->validateLines($request);
         return DB::transaction(function () use ($request) {
             $data = $request->except('document');
-            $data['reference_no'] = 'adr-' . date('Ymd-His');
+            $numberReservation = $this->reserveNumber('adjustment');
+            $data['reference_no'] = $numberReservation->formatted_number;
             if ($request->document) {
                 $data['document'] = $request->document->getClientOriginalName();
                 $request->document->move(public_path('documents/adjustment'), $data['document']);
@@ -265,6 +268,7 @@ class AdjustmentController extends Controller
                 StockCount::findOrFail($request->stock_count_id)->update(['is_adjusted' => true]);
             }
             $adjustment = Adjustment::create($data);
+            $this->assignNumber($numberReservation, $adjustment);
             $this->persistLines($adjustment, $request);
             return redirect('qty_adjustment')->with('message', __('db.Data inserted successfully'));
         });

@@ -78,6 +78,7 @@ class Kernel extends HttpKernel
         'hasPermanentDeletePermission' => \App\Http\Middleware\HasPermanentDeletePermission::class,
         'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         'company.context' => \App\Http\Middleware\ResolveCompanyContext::class,
+        'legacy.company' => \App\Http\Middleware\ResolveLegacyCompanyContext::class,
         'legacy.stock' => \App\Http\Middleware\RecordLegacyStockShadow::class,
     ];
 
@@ -95,6 +96,7 @@ class Kernel extends HttpKernel
         \Illuminate\Routing\Middleware\ThrottleRequests::class,
         \Illuminate\Session\Middleware\AuthenticateSession::class,
         \App\Http\Middleware\ResolveCompanyContext::class,
+        \App\Http\Middleware\ResolveLegacyCompanyContext::class,
         \App\Http\Middleware\Common::class,
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
         \Illuminate\Auth\Middleware\Authorize::class,

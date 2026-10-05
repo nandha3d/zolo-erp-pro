@@ -106,6 +106,7 @@ class UserController extends Controller
         $data['password'] = bcrypt($data['password']);
         $data['phone'] = $data['phone_number'];
         $user_data = User::create($data);
+        $this->grantCompanyAccess($user_data);
         if($data['role_id'] == 5) {
             $data['user_id'] = $user_data->id;
             $data['name'] = $data['customer_name'];
@@ -114,6 +115,25 @@ class UserController extends Controller
             Customer::create($data);
         }
         return redirect('user')->with('message1', $message);
+    }
+
+    /** A user created inside a company context joins that company with the creator's branch grants. */
+    private function grantCompanyAccess(User $user): void
+    {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        if (!$context) {
+            return;
+        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $context) {
+            \Illuminate\Support\Facades\DB::table('company_user')->updateOrInsert(
+                ['company_id' => $context->companyId, 'user_id' => $user->id], ['is_default' => true, 'updated_at' => now(), 'created_at' => now()]);
+            $branches = \Illuminate\Support\Facades\DB::table('company_user_branches')->where('company_id', $context->companyId)
+                ->where('user_id', Auth::id())->pluck('branch_id');
+            foreach ($branches as $branchId) {
+                \Illuminate\Support\Facades\DB::table('company_user_branches')->updateOrInsert(
+                    ['company_id' => $context->companyId, 'user_id' => $user->id, 'branch_id' => $branchId], ['updated_at' => now(), 'created_at' => now()]);
+            }
+        });
     }
 
     public function edit($id)

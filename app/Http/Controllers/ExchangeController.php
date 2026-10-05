@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 class ExchangeController extends Controller
 {
+    use \App\Http\Controllers\Concerns\NumbersLegacyDocuments;
+
     protected $accountingService;
 
     public function __construct(AccountingService $accountingService)
@@ -72,7 +74,6 @@ class ExchangeController extends Controller
             'exchanged_products.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $refNo = 'EXC-' . date('Ymd') . '-' . rand(1000, 9999);
         $returnedTotal = 0;
         $exchangedTotal = 0;
 
@@ -114,7 +115,9 @@ class ExchangeController extends Controller
 
         $diff = $exchangedTotal - $returnedTotal;
 
-        DB::transaction(function () use ($request, $refNo, $returnedItems, $returnedTotal, $exchangedItems, $exchangedTotal, $diff) {
+        $refNo = DB::transaction(function () use ($request, $returnedItems, $returnedTotal, $exchangedItems, $exchangedTotal, $diff) {
+            $numberReservation = $this->reserveNumber('exchange');
+            $refNo = $numberReservation->formatted_number;
             // Create exchange
             $exchange = Exchange::create([
                 'reference_no' => $refNo,
@@ -132,6 +135,7 @@ class ExchangeController extends Controller
                 'note' => $request->note,
                 'user_id' => Auth::id() ?? 1,
             ]);
+            $this->assignNumber($numberReservation, $exchange);
 
             $posting = app(LegacyInventoryPosting::class);
             $posting->post($exchange, 'receive', array_map(fn ($item) => StockLine::fromArray($item), $returnedItems), (int) $request->warehouse_id);
@@ -161,6 +165,8 @@ class ExchangeController extends Controller
                     ]);
                 } catch (\Exception $e) {}
             }
+
+            return $refNo;
         });
 
         return redirect()->route('exchange.index')->with('message', "Product Exchange {$refNo} completed successfully.");
