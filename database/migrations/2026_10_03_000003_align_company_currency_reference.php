@@ -17,10 +17,14 @@ return new class extends Migration
         $column = collect(Schema::getColumns('companies'))->firstWhere('name', 'base_currency_id');
         $currency = collect(Schema::getColumns('currencies'))->firstWhere('name', 'id');
         $sqlite = DB::getDriverName() === 'sqlite';
+        $normalizeType = fn (?string $type) => $type ? preg_replace('/\(\d+\)/', '', strtolower($type)) : null;
+        $columnType = $normalizeType($column['type'] ?? null);
+        $currencyType = $normalizeType($currency['type'] ?? null);
         $allowed = $sqlite ? ['integer'] : ['int unsigned', 'bigint unsigned'];
-        if (!$column || !in_array($column['type'], $allowed, true) || !$column['nullable']
-            || $column['default'] !== null || $column['auto_increment']
-            || !$currency || $currency['type'] !== ($sqlite ? 'integer' : 'bigint unsigned')) {
+        $defaultIsNull = in_array($column['default'] ?? null, [null, 'NULL', 'null'], true);
+        if (!$column || !in_array($columnType, $allowed, true) || !$column['nullable']
+            || !$defaultIsNull || $column['auto_increment']
+            || !$currency || $currencyType !== ($sqlite ? 'integer' : 'bigint unsigned')) {
             throw new RuntimeException('Incompatible company/currency ID types; no currency DDL applied.');
         }
         if (DB::table('companies as company')->leftJoin('currencies as currency', 'company.base_currency_id', '=', 'currency.id')
@@ -32,7 +36,7 @@ return new class extends Migration
             || $foreign['foreign_columns'] !== ['id'] || $foreign['on_delete'] !== 'restrict')) {
             throw new RuntimeException('Incompatible company currency foreign key; no currency DDL applied.');
         }
-        if (!$sqlite && $column['type'] === 'int unsigned') {
+        if (!$sqlite && $columnType === 'int unsigned') {
             Schema::table('companies', fn (Blueprint $table) => $table->unsignedBigInteger('base_currency_id')->nullable()->change());
         }
         if (!$foreign) {

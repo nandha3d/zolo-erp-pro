@@ -210,7 +210,9 @@
                 $("input[name='password']").focus().val('admin');
             }
             let form = $('#login-form');
-            form.attr('action', $(this).attr('href'));
+            if ($(this).attr('href')) {
+                form.attr('action', $(this).attr('href'));
+            }
             form.submit();
         }
     });

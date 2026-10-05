@@ -46,7 +46,8 @@ return new class extends Migration
         foreach ($tables as $table => $references) {
             if (Schema::hasColumn($table, 'company_id')) {
                 $column = collect(Schema::getColumns($table))->firstWhere('name', 'company_id');
-                if (!in_array(strtolower($column['type']), ['integer', 'bigint unsigned'], true)) {
+                $colType = preg_replace('/\(\d+\)/', '', strtolower($column['type']));
+                if (!in_array($colType, ['integer', 'bigint unsigned'], true)) {
                     throw new RuntimeException("Incompatible {$table}.company_id; no ownership DDL was applied.");
                 }
             }
@@ -92,8 +93,10 @@ return new class extends Migration
             if (DB::getDriverName() !== 'sqlite') {
                 $column = collect(Schema::getColumns($table))->firstWhere('name', $field);
                 $parentId = collect(Schema::getColumns($parent))->firstWhere('name', 'id');
-                if ($column['type'] !== $parentId['type']) {
-                    $method = str_contains($parentId['type'], 'bigint') ? 'unsignedBigInteger' : 'unsignedInteger';
+                $colType = preg_replace('/\(\d+\)/', '', strtolower($column['type']));
+                $parentType = preg_replace('/\(\d+\)/', '', strtolower($parentId['type']));
+                if ($colType !== $parentType) {
+                    $method = str_contains($parentType, 'bigint') ? 'unsignedBigInteger' : 'unsignedInteger';
                     Schema::table($table, fn (Blueprint $t) => $t->$method($field)->nullable($column['nullable'])->change());
                 }
             }

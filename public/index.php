@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Dotenv\Dotenv;
 
 define('LARAVEL_START', microtime(true));
+set_time_limit(120);
 
 /*
 |--------------------------------------------------------------------------

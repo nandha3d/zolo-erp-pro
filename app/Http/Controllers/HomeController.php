@@ -237,8 +237,6 @@ class HomeController extends Controller
         //     }
         // };
 
-        config()->set('database.connections.mysql.strict', false);
-        DB::reconnect();
 
         if(in_array('restaurant',explode(',',cache()->get('general_setting')->modules))){
             if(Auth::user()->role_id > 2 && isset(Auth::user()->kitchen_id)){
@@ -364,59 +362,109 @@ class HomeController extends Controller
         }
 
         //cash flow of last 6 months
-        $start = strtotime(date('Y-m-01', strtotime('-6 month', strtotime(date('Y-m-d') ))));
-        $end = strtotime(date('Y-m-'.date('t', mktime(0, 0, 0, date("m"), 1, date("Y")))));
+        $start_time = strtotime(date('Y-m-01', strtotime('-6 month', strtotime(date('Y-m-d') ))));
+        $end_time = strtotime(date('Y-m-'.date('t', mktime(0, 0, 0, date("m"), 1, date("Y")))));
+        $range_start = date("Y-m-01", $start_time);
+        $range_end = date("Y-m-t", $end_time);
 
-        while($start < $end)
-        {
-            $start_date = date("Y-m", $start).'-'.'01';
-            $end_date = date("Y-m", $start).'-'.date('t', mktime(0, 0, 0, date("m", $start), 1, date("Y", $start)));
+        $is_staff_own = (Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own');
 
-            if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own') {
-                $recieved_amount = DB::table('payments')->whereNotNull('sale_id')->whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->sum(DB::raw('amount / exchange_rate'));
-                $sent_amount = DB::table('payments')->whereNotNull('purchase_id')->whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->sum(DB::raw('amount / exchange_rate'));
-                $return_amount = Returns::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->sum(DB::raw('grand_total / exchange_rate'));
-                $purchase_return_amount = ReturnPurchase::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->sum(DB::raw('grand_total / exchange_rate'));
-                $expense_amount = Expense::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->sum('amount');
-                $payroll_amount = Payroll::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->sum('amount');
-            }
-            else {
-                $recieved_amount = DB::table('payments')->whereNotNull('sale_id')->whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('amount / exchange_rate'));
-                $sent_amount = DB::table('payments')->whereNotNull('purchase_id')->whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('amount / exchange_rate'));
-                $return_amount = Returns::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('grand_total / exchange_rate'));
-                $purchase_return_amount = ReturnPurchase::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('grand_total / exchange_rate'));
-                $expense_amount = Expense::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum('amount');
-                $payroll_amount = Payroll::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum('amount');
-            }
-            $sent_amount = $sent_amount + $return_amount + $expense_amount + $payroll_amount;
+        $recieved_query = DB::table('payments')->whereNotNull('sale_id')
+            ->whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
+        if ($is_staff_own) {
+            $recieved_query->where('user_id', Auth::id());
+        }
+        $recieved_map = $recieved_query
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount / exchange_rate) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
 
-            $payment_recieved[] = number_format((float)($recieved_amount + $purchase_return_amount), config('decimal'), '.', '');
-            $payment_sent[] = number_format((float)$sent_amount, config('decimal'), '.', '');
+        $sent_query = DB::table('payments')->whereNotNull('purchase_id')
+            ->whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
+        if ($is_staff_own) {
+            $sent_query->where('user_id', Auth::id());
+        }
+        $sent_map = $sent_query
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount / exchange_rate) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $returns_query = Returns::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
+        if ($is_staff_own) {
+            $returns_query->where('user_id', Auth::id());
+        }
+        $returns_map = $returns_query
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $purchase_returns_query = ReturnPurchase::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
+        if ($is_staff_own) {
+            $purchase_returns_query->where('user_id', Auth::id());
+        }
+        $purchase_returns_map = $purchase_returns_query
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $expenses_query = Expense::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
+        if ($is_staff_own) {
+            $expenses_query->where('user_id', Auth::id());
+        }
+        $expenses_map = $expenses_query
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $payroll_query = Payroll::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
+        if ($is_staff_own) {
+            $payroll_query->where('user_id', Auth::id());
+        }
+        $payroll_map = $payroll_query
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $payment_recieved = [];
+        $payment_sent = [];
+        $month = [];
+        $cur = $start_time;
+        while ($cur < $end_time) {
+            $ym = date('Y-m', $cur);
+            $start_date = $ym.'-01';
+            $rec = (float)($recieved_map[$ym] ?? 0);
+            $ret_pur = (float)($purchase_returns_map[$ym] ?? 0);
+            $sent = (float)($sent_map[$ym] ?? 0) + (float)($returns_map[$ym] ?? 0) + (float)($expenses_map[$ym] ?? 0) + (float)($payroll_map[$ym] ?? 0);
+
+            $payment_recieved[] = number_format((float)($rec + $ret_pur), config('decimal', 2), '.', '');
+            $payment_sent[] = number_format((float)$sent, config('decimal', 2), '.', '');
             $month[] = date("F", strtotime($start_date));
-            $start = strtotime("+1 month", $start);
+            $cur = strtotime("+1 month", $cur);
         }
+
         // yearly report
-        $start = strtotime(date("Y") .'-01-01');
-        $end = strtotime(date("Y") .'-12-31');
-        while($start < $end)
-        {
-            $start_date = date("Y").'-'.date('m', $start).'-'.'01';
-            $end_date = date("Y").'-'.date('m', $start).'-'.date('t', mktime(0, 0, 0, date("m", $start), 1, date("Y", $start)));
-            if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own') {
-                $sale_amount = Sale::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->whereNull('deleted_at')->sum(DB::raw('grand_total / exchange_rate'));
-                $purchase_amount = Purchase::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->where('user_id', Auth::id())->whereNull('deleted_at')->sum(DB::raw('grand_total / exchange_rate'));
-            }
-            else{
-                $sale_amount = Sale::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at')->sum(DB::raw('grand_total / exchange_rate'));
-                $purchase_amount = Purchase::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at')->sum(DB::raw('grand_total / exchange_rate'));
-            }
-            $yearly_sale_amount[] = number_format((float)$sale_amount, config('decimal'), '.', '');
-            $yearly_purchase_amount[] = number_format((float)$purchase_amount, config('decimal'), '.', '');
-            $start = strtotime("+1 month", $start);
+        $year_start = date("Y-01-01");
+        $year_end = date("Y-12-31");
+        $sale_query_yearly = Sale::whereDate('created_at', '>=', $year_start)->whereDate('created_at', '<=', $year_end)->whereNull('deleted_at');
+        if ($is_staff_own) {
+            $sale_query_yearly->where('user_id', Auth::id());
         }
-        //making strict mode true for this query
-        config()->set('database.connections.mysql.strict', true);
-        DB::reconnect();
+        $yearly_sale_map = $sale_query_yearly
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $purchase_query_yearly = Purchase::whereDate('created_at', '>=', $year_start)->whereDate('created_at', '<=', $year_end)->whereNull('deleted_at');
+        if ($is_staff_own) {
+            $purchase_query_yearly->where('user_id', Auth::id());
+        }
+        $yearly_purchase_map = $purchase_query_yearly
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
+            ->groupBy('ym')->pluck('total', 'ym')->all();
+
+        $yearly_start = strtotime(date("Y-01-01"));
+        $yearly_end = strtotime(date("Y-12-31"));
+        while ($yearly_start < $yearly_end) {
+            $ym = date('Y-m', $yearly_start);
+            $sale_amt = (float)($yearly_sale_map[$ym] ?? 0);
+            $purchase_amt = (float)($yearly_purchase_map[$ym] ?? 0);
+            $yearly_sale_amount[] = number_format($sale_amt, config('decimal', 2), '.', '');
+            $yearly_purchase_amount[] = number_format($purchase_amt, config('decimal', 2), '.', '');
+            $yearly_start = strtotime("+1 month", $yearly_start);
+        }
         // Additional Business Insights & Liquidity Metrics
         $liquid_balance = Account::where('is_active', true)->sum('total_balance') ?? 0;
         $stock_valuation = DB::table('product_warehouse')
@@ -440,22 +488,25 @@ class HomeController extends Controller
         $currency_model = \App\Models\Currency::find(cache()->get('general_setting')->currency ?? 1);
         $currency_symbol = $currency_model ? ($currency_model->symbol ?: ($currency_model->code == 'INR' ? '₹' : ($currency_model->code ?: '$'))) : '$';
 
-        $addon_stats = [];
-        if (\Illuminate\Support\Facades\Schema::hasTable('water_tankers')) {
-            $addon_stats['water_tankers'] = DB::table('water_tankers')->where('is_active', 1)->count();
-        }
-        if (\Illuminate\Support\Facades\Schema::hasTable('water_tanker_trips')) {
-            $addon_stats['water_trips_today'] = DB::table('water_tanker_trips')->whereDate('trip_date', date('Y-m-d'))->count();
-        }
-        if (\Illuminate\Support\Facades\Schema::hasTable('water_can_deliveries')) {
-            $addon_stats['cans_delivered_today'] = DB::table('water_can_deliveries')->whereDate('delivery_date', date('Y-m-d'))->sum('cans_delivered') ?? 0;
-        }
-        if (\Illuminate\Support\Facades\Schema::hasTable('cafe_cash_drawers')) {
-            $addon_stats['open_drawers'] = DB::table('cafe_cash_drawers')->where('status', 'open')->count();
-        }
-        if (\Illuminate\Support\Facades\Schema::hasTable('repair_services')) {
-            $addon_stats['repair_services_count'] = DB::table('repair_services')->count();
-        }
+        $addon_stats = Cache::remember('dashboard_addon_stats', 60, function () {
+            $stats = [];
+            if (\Illuminate\Support\Facades\Schema::hasTable('water_tankers')) {
+                $stats['water_tankers'] = DB::table('water_tankers')->where('is_active', 1)->count();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('water_tanker_trips')) {
+                $stats['water_trips_today'] = DB::table('water_tanker_trips')->whereDate('trip_date', date('Y-m-d'))->count();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('water_can_deliveries')) {
+                $stats['cans_delivered_today'] = DB::table('water_can_deliveries')->whereDate('delivery_date', date('Y-m-d'))->sum('cans_delivered') ?? 0;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('cafe_cash_drawers')) {
+                $stats['open_drawers'] = DB::table('cafe_cash_drawers')->where('status', 'open')->count();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('repair_services')) {
+                $stats['repair_services_count'] = DB::table('repair_services')->count();
+            }
+            return $stats;
+        });
 
         $versionUpgradeData = (!config('database.connections.zoloerp_landlord') && Auth::user()->role_id <= 2) ? ($this->versionUpgradeInfo ?? []) : [];
 
@@ -486,9 +537,6 @@ class HomeController extends Controller
 
     public function yearlyBestSellingPrice()
     {
-        //making strict mode false for this query
-        config()->set('database.connections.mysql.strict', false);
-        DB::reconnect();
         $yearly_best_selling_price = Product_Sale::join('products', 'products.id', '=', 'product_sales.product_id')
         ->join('sales', 'sales.id', '=', 'product_sales.sale_id')
         ->whereNull('sales.deleted_at')
@@ -504,9 +552,6 @@ class HomeController extends Controller
 
     public function yearlyBestSellingQty()
     {
-        //making strict mode false for this query
-        config()->set('database.connections.mysql.strict', false);
-        DB::reconnect();
         $yearly_best_selling_qty = Product_Sale::join('products', 'products.id', '=', 'product_sales.product_id')
         ->select(DB::raw('products.name as product_name, products.code as product_code, products.image as product_images, sum(product_sales.qty) as sold_qty'))
         ->whereYear('product_sales.created_at', date("Y")) 
@@ -520,9 +565,6 @@ class HomeController extends Controller
 
     public function monthlyBestSellingQty()
     {
-        //making strict mode false for this query
-        config()->set('database.connections.mysql.strict', false);
-        DB::reconnect();
 
         $best_selling_qty = Product_Sale::join('products', 'products.id', '=', 'product_sales.product_id')
         ->select(DB::raw('products.name as product_name, products.code as product_code, products.image as product_images, sum(product_sales.qty) as sold_qty'))
@@ -611,8 +653,6 @@ class HomeController extends Controller
     public function dashboardFilter($start_date, $end_date, $warehouse_id)
     {
         if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own') {
-            config()->set('database.connections.mysql.strict', false);
-            DB::reconnect();
 
             $q = Sale::join('product_sales', 'sales.id','=', 'product_sales.sale_id')
                 ->select(DB::raw('product_sales.product_id, product_sales.product_batch_id, product_sales.sale_unit_id, sum(product_sales.qty) as sold_qty, sum(product_sales.return_qty) as return_qty, sum(product_sales.total) as sold_amount'))
@@ -627,8 +667,6 @@ class HomeController extends Controller
 
             $product_sale_data = $q->groupBy('product_sales.product_id', 'product_sales.product_batch_id')->get();
 
-            config()->set('database.connections.mysql.strict', true);
-            DB::reconnect();
 
             $product_cost = $this->calculateAverageCOGS($product_sale_data);
 
@@ -695,8 +733,6 @@ class HomeController extends Controller
             $profit = $revenue + $purchase_return - $product_cost - $expense;
 
         } else {
-            config()->set('database.connections.mysql.strict', false);
-            DB::reconnect();
 
             $q = Sale::join('product_sales', 'sales.id','=', 'product_sales.sale_id')
                 ->select(DB::raw('product_sales.product_id, product_sales.product_batch_id, product_sales.sale_unit_id, sum(product_sales.qty) as sold_qty, sum(product_sales.return_qty) as return_qty, sum(product_sales.total) as sold_amount'))
@@ -710,8 +746,6 @@ class HomeController extends Controller
 
             $product_sale_data = $q->groupBy('product_sales.product_id', 'product_sales.product_batch_id')->get();
 
-            config()->set('database.connections.mysql.strict', true);
-            DB::reconnect();
 
             $product_cost = $this->calculateAverageCOGS($product_sale_data);
 
