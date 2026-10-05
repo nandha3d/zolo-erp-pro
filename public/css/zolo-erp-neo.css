@@ -1905,6 +1905,16 @@ body > .bs-container {
   max-height: 380px !important;
 }
 
+/* The installed selectpicker uses Bootstrap 3's open state with Bootstrap 4's menu CSS. */
+.bs-container.open > .dropdown-menu,
+.bootstrap-select.open > .dropdown-menu {
+  display: block;
+}
+
+.bootstrap-select .dropdown-menu .dropdown-item {
+  color: var(--neo-text-primary);
+}
+
 /* Table actions escape clipping without releasing the table's horizontal scroll. */
 .table-responsive .dropdown-menu.zolo-table-dropdown {
   position: fixed !important;
