@@ -1881,13 +1881,6 @@ body.dark-mode .zolo-kpi-card:hover {
   margin-bottom: 4px !important;
 }
 
-/* On desktop, release overflow if table doesn't require horizontal scroll */
-@media (min-width: 992px) {
-  .table-responsive.dropdown-active {
-    overflow: visible !important;
-  }
-}
-
 /* Prevent clipping inside cards or sections containing tables */
 .card, .card-body {
   overflow: visible !important;
@@ -1912,14 +1905,23 @@ body > .bs-container {
   max-height: 380px !important;
 }
 
-/* When any dropdown is open inside a table or container, release overflow */
-.table-responsive:has(.dropdown.show),
-.table-responsive:has(.btn-group.show),
-.table-responsive:has(.bootstrap-select.show),
-.table-responsive:has(.dropdown.open:not(.dropdown-menu)),
-.table-responsive:has(.btn-group.open),
-.table-responsive.dropdown-active {
-  overflow: visible !important;
+/* Table actions escape clipping without releasing the table's horizontal scroll. */
+.table-responsive .dropdown-menu.zolo-table-dropdown {
+  position: fixed !important;
+  left: var(--zolo-dropdown-left) !important;
+  top: var(--zolo-dropdown-top) !important;
+  transform: none !important;
+  bottom: auto !important;
+  margin: 0 !important;
+  max-width: calc(100vw - 16px) !important;
+  max-height: calc(100vh - 16px) !important;
+  overflow-y: auto !important;
+}
+
+.dark-mode .table tfoot th,
+.dark-mode .table tfoot td {
+  background: var(--neo-surface-card) !important;
+  color: var(--neo-text-primary) !important;
 }
 
 .dataTables_wrapper,

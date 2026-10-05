@@ -1359,42 +1359,46 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
 
     $("div.alert").delay(4000);
 
-    // =========================================================================
-    // Global Anti-Clipping Dropdown Manager
-    // Ensures action dropdowns in tables and containers are never clipped
-    // =========================================================================
-    $(document).on('show.bs.dropdown', function (e) {
-      var $toggle = $(e.target).find('.dropdown-toggle');
-      var $menu = $(e.target).find('.dropdown-menu');
-      var $group = $(e.target).closest('.btn-group, .dropdown');
-      var $container = $(e.target).closest('.table-responsive, .card-body, .card');
-
-      if ($container.length) {
-        $container.addClass('dropdown-active');
-      }
-
-      if ($toggle.length) {
-        var offset = $toggle.offset();
-        var toggleHeight = $toggle.outerHeight();
-        var menuHeight = $menu.outerHeight() || 180;
-        var windowHeight = $(window).height();
-        var scrollTop = $(window).scrollTop();
-        var spaceBelow = windowHeight - (offset.top - scrollTop + toggleHeight);
-        var spaceAbove = (offset.top - scrollTop);
-
-        // If space below is constrained (< 200px) and there's more room above, flip to dropup
-        if (spaceBelow < 200 && spaceAbove > spaceBelow) {
-          $group.addClass('dropup');
-        } else {
-          $group.removeClass('dropup');
-        }
-      }
+    // Position table actions in the viewport while preserving the table's scroll boundary.
+    function positionTableDropdown(menu) {
+      var group = menu.closest('.btn-group, .dropdown');
+      var toggle = group.querySelector('.dropdown-toggle');
+      if (!toggle) return;
+      var rect = toggle.getBoundingClientRect();
+      var height = menu.getBoundingClientRect().height;
+      var width = menu.getBoundingClientRect().width;
+      var below = window.innerHeight - rect.bottom - 8;
+      var top = below >= height || below >= rect.top - 8 ? rect.bottom : rect.top - height;
+      var left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      menu.style.setProperty('--zolo-dropdown-left', left + 'px');
+      menu.style.setProperty('--zolo-dropdown-top', Math.max(8, Math.min(top, window.innerHeight - height - 8)) + 'px');
+    }
+    $(document).on('shown.bs.dropdown', function (e) {
+      var group = e.target;
+      if (!group.closest('.table-responsive') || group.classList.contains('bootstrap-select')) return;
+      var menu = group.querySelector('.dropdown-menu');
+      if (!menu) return;
+      $(menu).data('table-menu-style', menu.getAttribute('style'));
+      menu.classList.add('zolo-table-dropdown');
+      positionTableDropdown(menu);
     });
-
     $(document).on('hidden.bs.dropdown', function (e) {
-      $('.table-responsive, .card-body, .card').removeClass('dropdown-active');
-      $(e.target).closest('.btn-group, .dropdown').removeClass('dropup');
+      var menu = e.target.querySelector('.zolo-table-dropdown');
+      if (!menu) return;
+      menu.classList.remove('zolo-table-dropdown');
+      var original = $(menu).data('table-menu-style');
+      if (original) menu.setAttribute('style', original);
+      else menu.removeAttribute('style');
+      $(menu).removeData('table-menu-style');
     });
+    window.addEventListener('resize', function () {
+      document.querySelectorAll('.zolo-table-dropdown').forEach(positionTableDropdown);
+    });
+    document.addEventListener('scroll', function (e) {
+      document.querySelectorAll('.zolo-table-dropdown').forEach(function (menu) {
+        if (!menu.contains(e.target)) positionTableDropdown(menu);
+      });
+    }, true);
 
     function confirmDelete() {
       if (confirm("Are you sure want to delete?")) {
