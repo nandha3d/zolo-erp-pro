@@ -124,7 +124,7 @@
                 $(resultId).replaceChildren();
                 results.forEach(record => {
                     const button = document.createElement('button'); button.type = 'button';
-                    text(button, [record.code || record.city, record.name].filter(Boolean).join(' � '));
+                    text(button, [record.code || record.city, record.name].filter(Boolean).join(' · '));
                     button.addEventListener('click', () => { clearTimeout(timer); ++searchSequence[resource]; select(record); });
                     $(resultId).append(button);
                 });
