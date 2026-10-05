@@ -1,16 +1,22 @@
-name: Company foundation
+name: ERP completion acceptance
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/phase1-12-final-closure]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   mysql:
+    name: MySQL / ${{ matrix.suite }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [company, commercial, compliance, operations, delivery, legacy-mysql]
     services:
       mysql:
         image: mysql:8.4
@@ -41,11 +47,8 @@ jobs:
           extensions: pdo_mysql, pdo_sqlite, zip, gd, bcmath
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
-      - name: Migrations, committed-DDL recovery, ERP, backfill, context and reset safety
-        run: php vendor/bin/phpunit -c phpunit.company.xml
-      - name: Gated manufacturing, job work and industry flow invariants
-        run: php vendor/bin/phpunit -c phpunit.operations.xml
       - name: Create an empty restricted backup rehearsal target
+        if: matrix.suite == 'delivery'
         env:
           MYSQL_PWD: fixture-root-only
         run: |
@@ -54,7 +57,7 @@ jobs:
           CREATE USER 'zolo_restore'@'%' IDENTIFIED BY 'fixture-only';
           GRANT ALL PRIVILEGES ON zolo_test_restore_delivery.* TO 'zolo_restore'@'%';
           SQL
-      - name: Workspace security, opening migration and encrypted MySQL restore
+      - name: Acceptance suite against disposable MySQL
         env:
           ERP_DELIVERY_MYSQL_BACKUP: '1'
           ERP_RESTORE_DB_HOST: 127.0.0.1
@@ -62,6 +65,4 @@ jobs:
           ERP_RESTORE_DB_DATABASE: zolo_test_restore_delivery
           ERP_RESTORE_DB_USERNAME: zolo_restore
           ERP_RESTORE_DB_PASSWORD: fixture-only
-        run: php vendor/bin/phpunit -c phpunit.delivery.xml
-      - name: Legacy seeded ERP web, API and accounting smoke
-        run: php vendor/bin/phpunit -c phpunit.legacy-mysql.xml
+        run: php vendor/bin/phpunit -c phpunit.${{ matrix.suite }}.xml

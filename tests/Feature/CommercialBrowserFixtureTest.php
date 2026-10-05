@@ -11,11 +11,10 @@ class CommercialBrowserFixtureTest extends CommercialTestCase
     public function test_render_fast_modes_and_optionally_export_disposable_browser_fixture(): void
     {
         $this->stock(100)->update(['unit_id' => 1]);
+        // Fixture-only gate bypass; the real controller supplies the cumulative profile/printing contract.
+        $this->withoutMiddleware(\App\Http\Middleware\RequireCapability::class);
         foreach (['sale', 'purchase'] as $kind) {
-            $html = view('backend.commercial.entry', ['kind' => $kind, 'context' => $this->context(),
-                'warehouses' => DB::table('warehouses')->get(), 'units' => DB::table('units')->get(),
-                'categories' => DB::table('categories')->get(), 'groups' => DB::table('customer_groups')->get(),
-                'accounts' => DB::table('accounts')->get(), 'businessDate' => '2026-10-03'])->render();
+            $html = $this->get('/commercial/'.$kind.'/entry')->assertOk()->getContent();
             $this->assertStringContainsString('id="entry-form"', $html);
             $this->assertStringContainsString('id="tracking-dialog"', $html);
             $this->assertStringContainsString($kind === 'sale' ? 'Fast Sales' : 'Fast Purchase', $html);
