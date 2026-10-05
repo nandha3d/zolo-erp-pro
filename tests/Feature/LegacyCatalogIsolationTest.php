@@ -21,15 +21,18 @@ class LegacyCatalogIsolationTest extends CompanyContextTestCase
             Schema::table($name, fn (Blueprint $table) => $table->boolean('is_active')->default(true));
         }
         Schema::table('accounts', fn (Blueprint $table) => $table->boolean('is_default')->default(false));
+        Schema::table('units', fn (Blueprint $table) => $table->string('unit_name')->default('piece'));
         Schema::table('products', function (Blueprint $table) {
             $table->integer('tax_id')->nullable();
             $table->integer('tax_method')->default(1);
             $table->decimal('alert_quantity')->default(0);
-            $table->text('product_details')->default('');
+            $table->text('product_details')->nullable();
+            $table->string('combo_unit_id')->nullable();
         });
-        DB::table('products')->update(['image' => '']);
+        DB::table('products')->update(['image' => '', 'product_details' => '']);
         DB::table('products')->insert(['id' => 3, 'name' => 'Restricted stock only', 'code' => 'A-EMPTY',
-            'qty' => 1000, 'company_id' => $this->company->id, 'image' => '', 'category_id' => 1, 'brand_id' => 1, 'unit_id' => 1]);
+            'qty' => 1000, 'company_id' => $this->company->id, 'image' => '', 'product_details' => '',
+            'category_id' => 1, 'brand_id' => 1, 'unit_id' => 1]);
         DB::table('product_warehouse')->insert(['product_id' => '3', 'warehouse_id' => 3,
             'qty' => 1000, 'company_id' => $this->company->id]);
         Schema::create('custom_fields', function (Blueprint $table) {
@@ -71,7 +74,8 @@ class LegacyCatalogIsolationTest extends CompanyContextTestCase
 
     public function test_combo_quantity_does_not_expose_company_aggregate(): void
     {
-        DB::table('products')->where('id', 1)->update(['type' => 'combo']);
+        $this->withoutExceptionHandling();
+        DB::table('products')->where('id', 1)->update(['type' => 'combo', 'combo_unit_id' => '1']);
         $this->postJson('/__test/catalog', $this->filters())->assertOk()->assertJsonPath('data.0.qty', 4);
         $this->assertSame(99.0, (float) DB::table('products')->where('id', 1)->value('qty'));
     }
@@ -88,6 +92,7 @@ class LegacyCatalogIsolationTest extends CompanyContextTestCase
 
     public function test_pos_scoped_lookups_ignore_shared_cache_contents_and_do_not_poison_cache(): void
     {
+        $this->withoutExceptionHandling();
         $this->createPosFixtures();
         $contaminated = collect([(object) ['name' => 'Secret shared cache']]);
         foreach (['warehouse_list', 'customer_list', 'biller_list'] as $key) {
@@ -133,6 +138,7 @@ class LegacyCatalogIsolationTest extends CompanyContextTestCase
                 $table->id(); $table->string('name')->nullable(); $table->boolean('is_active')->default(true); $table->timestamps();
             });
         }
+        Schema::table('taxes', fn (Blueprint $table) => $table->unsignedBigInteger('company_id')->nullable());
         Schema::create('general_settings', function (Blueprint $table) {
             $table->id(); $table->string('modules')->default('');
         });
