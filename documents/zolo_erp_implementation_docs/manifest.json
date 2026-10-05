@@ -1,7 +1,7 @@
 {
   "repository": "vigneshsinna/zolo-erp-pro",
   "generated": "2026-10-05",
-  "markdown_count": 51,
+  "markdown_count": 52,
   "entrypoint": "00_IMPLEMENTATION_MASTER_INDEX.md",
   "codex_entrypoint": "26_CODEX_EXECUTION_SEQUENCE_AND_CHECKLIST.md",
   "files": [
@@ -43,6 +43,7 @@
     "COMPANY_TABLE_OWNERSHIP_MATRIX.md",
     "IMPLEMENTATION_PROGRESS.md",
     "LEGACY_STOCK_SHADOW_AUDIT.md",
+    "PHASE_1_12_CLOSURE_STATUS.md",
     "PHASE_11_12_CHANGED_FILES.md",
     "PHASE_11_UI_API_SECURITY.md",
     "PHASE_12_MIGRATION_UAT_DEPLOYMENT.md",
@@ -101,6 +102,7 @@
       "COMPANY_BACKFILL_RUNBOOK.md"
     ],
     "execution_evidence": [
+      "PHASE_1_12_CLOSURE_STATUS.md",
       "IMPLEMENTATION_PROGRESS.md",
       "STOCK_AND_TRANSACTION_WRITER_AUDIT.md",
       "COMPANY_TABLE_OWNERSHIP_MATRIX.md",

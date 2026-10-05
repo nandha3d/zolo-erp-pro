@@ -69,3 +69,4 @@ Read these with document 20 when migrating a screen. Existing backend/ownership 
 - [Phase 12 migration/deployment](PHASE_12_MIGRATION_UAT_DEPLOYMENT.md): reviewed opening batches, encrypted backups, isolated restore, health and deployment procedure.
 - [Phase 12 UAT/cutover record](PHASE_12_UAT_AND_CUTOVER_RECORD.md): pending customer evidence and signatures.
 - [Phase 11–12 changed files](PHASE_11_12_CHANGED_FILES.md): complete changes against the accepted Phase 9–10 checkpoint.
+- [Phase 1–12 closure status](PHASE_1_12_CLOSURE_STATUS.md): reconciled branch histories, integration fixes, sample UAT preparation and explicit final-merge blockers.

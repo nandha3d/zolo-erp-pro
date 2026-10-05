@@ -266,6 +266,12 @@ Retain Blade/Bootstrap/jQuery and extend `public/css/zolo-erp-neo.css`. Preserve
 
 ## Delivery order
 
+### Final closure integration, 2026-10-05
+
+`codex/phase1-12-final-closure` starts at cumulative `0e7b6f2`, contains current main `549d2a9`, and reconciles the separate Phase 6 history in `d6d0070`. All existing local development branches are included without replacing newer cumulative services. Fresh migration/tenant seeding exposed permission ID collisions; the seeder now preserves existing permissions and resolves legacy grants by name. CI covers all six intended MySQL configurations, and the obsolete commercial render fixture uses the current controller.
+
+The user requested a sample UAT database; `prepare_completion_rehearsal.php` creates only an opted-in disposable target, records source hash/counts and preserves reconciliation differences. The sample has **21 stock differences**, so the completion plan's stop condition applies. No stock rebuild, activation-gate override, acceptance signature, release tag or final main merge is authorized by this proof. Whole-application isolation, authoritative legacy numbering/commercial cutover and real external acceptance remain open. See [the closure status and sample rehearsal procedure](PHASE_1_12_CLOSURE_STATUS.md) for exact scope and validation.
+
 Canonical phases remain: 0 regression baseline; 1 Company/Branch/FY; 2 capabilities; 3 atomic series; 4 inventory ledger; 5 accounting/open items; 6 shared commercial services; 7 tax; 8 returns/documents; 9 manufacturing/job work; 10 profiles; 11 UI/API/security completion; 12 migration/UAT/deployment.
 
 Every completed work package is validated, committed and pushed before dependent work starts. Package completion does not establish full phase completion. Historical commit-by-commit corrections belong in the audit resolution log.

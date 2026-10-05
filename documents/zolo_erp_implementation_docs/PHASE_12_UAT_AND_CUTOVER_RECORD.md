@@ -2,6 +2,8 @@
 
 Status: **template; no customer acceptance or production deployment signed**.
 
+Sample rehearsal on 2026-10-05: a disposable repository-seed database was created at the user's request. Company 1 / branch 1 / FY 1; opening stock completed, but **21 stock differences remain**. This is sample engineering evidence, not customer retained-data acceptance. Customer, accountant, security and recovery signatures remain pending. See [the closure status](PHASE_1_12_CLOSURE_STATUS.md) for the exact source hash, private evidence paths and merge blockers.
+
 Record customer/company/branch/FY, operator/accountant, release SHA, prior compatible release, source system, opening-only versus detailed-history scope, source freeze time, source hash, mapping reviewer, rehearsal/final target identifiers, backup checksum, off-site retention policy and matching restore proof. Keep customer data and recovery secrets in private deployment records.
 
 ## Reconciliation evidence
