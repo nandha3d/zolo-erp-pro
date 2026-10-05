@@ -150,6 +150,7 @@
         </div>
             <div id="purchase-content" class="modal-body"></div>
             <br>
+            <div class="table-responsive document-lines" tabindex="0" role="region" aria-label="{{__('db.Purchase Details')}}">
             <table class="table table-bordered product-purchase-list">
                 <thead>
                     <th>#</th>
@@ -165,6 +166,7 @@
                 <tbody>
                 </tbody>
             </table>
+            </div>
             <div id="purchase-footer" class="modal-body"></div>
       </div>
     </div>

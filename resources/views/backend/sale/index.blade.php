@@ -206,6 +206,7 @@
             <div id="sale-content" class="modal-body">
             </div>
             <br>
+            <div class="table-responsive document-lines" tabindex="0" role="region" aria-label="{{__('db.Sale Details')}}">
             <table class="table table-bordered product-sale-list">
                 <thead>
                     <th>#</th>
@@ -222,6 +223,7 @@
                 <tbody>
                 </tbody>
             </table>
+            </div>
             <div id="sale-footer" class="modal-body"></div>
         </div>
     </div>

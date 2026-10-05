@@ -2067,6 +2067,12 @@ nav.side-navbar {
 
 
 
+@media print {
+  .document-lines {
+    overflow: visible !important;
+  }
+}
+
 /* Keep document totals visible without widening mobile forms. */
 @media (max-width: 767px) {
   table.totals,
