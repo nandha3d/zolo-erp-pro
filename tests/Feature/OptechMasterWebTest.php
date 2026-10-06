@@ -1,0 +1,425 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Agent;
+use App\Models\Area;
+use App\Models\BillSundry;
+use App\Models\SaleType;
+use App\Models\PurchaseType;
+use App\Models\Product;
+use App\Models\StandardRemark;
+use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\TestCase;
+
+class OptechMasterWebTest extends TestCase
+{
+    use DatabaseTransactions;
+
+    protected User $adminUser;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['commercial.enabled' => true]);
+        putenv('ERP_OPTIONAL_ACTIVATION_READY=true');
+        $_ENV['ERP_OPTIONAL_ACTIVATION_READY'] = 'true';
+        \Illuminate\Support\Facades\Cache::flush();
+        $this->adminUser = User::first();
+    }
+
+    public function test_commercial_sale_entry_page_loads_with_database_masters(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get('/commercial/sale/entry');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('saleTypes');
+        $response->assertViewHas('agents');
+        $response->assertViewHas('areas');
+        $response->assertViewHas('billSundries');
+        $response->assertViewHas('remarks');
+        $response->assertSee('Sale Type');
+        $response->assertSee('Agent / Through');
+        $response->assertSee('Bill Sundries');
+    }
+
+    public function test_commercial_purchase_entry_page_loads_with_database_masters(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get('/commercial/purchase/entry');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('purchaseTypes');
+        $response->assertViewHas('agents');
+        $response->assertViewHas('areas');
+        $response->assertViewHas('billSundries');
+        $response->assertSee('Purchase Type');
+        $response->assertSee('Supplier Inv No');
+    }
+
+    public function test_inline_creation_of_all_optech_masters(): void
+    {
+        // 1. Inline Agent
+        $resAgent = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale/masters/agents', [
+                'name' => 'Agent Test Apex',
+                'code' => 'AGT-999',
+                'phone' => '9876543210',
+                'commission_rate' => 2.5,
+                'idempotency_key' => 'key-agent-' . uniqid(),
+            ]);
+        $resAgent->assertStatus(201);
+        $this->assertDatabaseHas('agents', ['name' => 'Agent Test Apex']);
+
+        // 2. Inline Area
+        $resArea = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale/masters/areas', [
+                'name' => 'Area Metro North',
+                'code' => 'AREA-NORTH',
+                'city' => 'Bengaluru',
+                'idempotency_key' => 'key-area-' . uniqid(),
+            ]);
+        $resArea->assertStatus(201);
+        $this->assertDatabaseHas('areas', ['name' => 'Area Metro North']);
+
+        // 3. Inline Bill Sundry
+        $resSundry = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale/masters/bill-sundries', [
+                'name' => 'Special Handling Charge',
+                'nature' => 'sales',
+                'calculation_type' => 'percentage',
+                'default_value' => 3.5,
+                'idempotency_key' => 'key-sundry-' . uniqid(),
+            ]);
+        $resSundry->assertStatus(201);
+        $this->assertDatabaseHas('bill_sundries', ['name' => 'Special Handling Charge']);
+
+        // 4. Inline Sale Type
+        $resSaleType = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale/masters/sale-types', [
+                'name' => 'GST 12% Special Regional',
+                'code' => 'ST-12-REG',
+                'tax_nature' => 'local',
+                'tax_rate' => 12,
+                'idempotency_key' => 'key-saletype-' . uniqid(),
+            ]);
+        $resSaleType->assertStatus(201);
+        $this->assertDatabaseHas('sale_types', ['name' => 'GST 12% Special Regional']);
+
+        // 5. Inline Purchase Type
+        $resPurType = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/purchase/masters/purchase-types', [
+                'name' => 'Interstate Raw Material 18%',
+                'code' => 'PT-18-RAW',
+                'tax_nature' => 'interstate',
+                'tax_rate' => 18,
+                'idempotency_key' => 'key-purtype-' . uniqid(),
+            ]);
+        $resPurType->assertStatus(201);
+        $this->assertDatabaseHas('purchase_types', ['name' => 'Interstate Raw Material 18%']);
+
+        // 6. Inline Remark
+        $resRemark = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale/masters/remarks', [
+                'title' => 'Goods once sold cannot be returned',
+                'remark' => 'Goods once sold will strictly not be taken back without approval.',
+                'idempotency_key' => 'key-remark-' . uniqid(),
+            ]);
+        $resRemark->assertStatus(201);
+        $this->assertDatabaseHas('standard_remarks', ['title' => 'Goods once sold cannot be returned']);
+    }
+
+    public function test_master_management_pages_load(): void
+    {
+        $routes = [
+            '/bill-sundry',
+            '/sale-type',
+            '/purchase-type',
+            '/area',
+            '/agent',
+            '/standard-remark',
+        ];
+
+        foreach ($routes as $route) {
+            $response = $this->actingAs($this->adminUser)->get($route);
+            $response->assertStatus(200);
+        }
+    }
+
+    public function test_sale_posting_persists_optech_sale_type_and_agent(): void
+    {
+        $saleType = SaleType::where('company_id', 1)->first();
+        $agent = Agent::where('company_id', 1)->first();
+
+        $product = Product::forceCreate([
+            'company_id' => 1,
+            'name' => 'Optech Active Sale Item',
+            'code' => 'ITM-SALE-' . uniqid(),
+            'type' => 'standard',
+            'price' => 100,
+            'cost' => 80,
+            'unit_id' => 1,
+            'sale_unit_id' => 1,
+            'purchase_unit_id' => 1,
+            'category_id' => 1,
+            'barcode_symbology' => 'C128',
+            'qty' => 50,
+            'is_active' => true,
+        ]);
+
+        $purType = PurchaseType::where('company_id', 1)->first();
+        $this->actingAs($this->adminUser)
+            ->postJson('/commercial/purchase', [
+                'warehouse_id' => 1,
+                'business_date' => now()->toDateString(),
+                'supplier_id' => 1,
+                'purchase_type_id' => $purType->id,
+                'status' => 1,
+                'items' => [
+                    [
+                        'product_id' => $product->id,
+                        'qty' => 10,
+                        'net_unit_cost' => 80,
+                        'purchase_unit_id' => 1,
+                    ]
+                ],
+                'paid_amount' => 0,
+                'paying_method' => 'Cash',
+                'account_id' => 1,
+                'order_discount' => 0,
+                'shipping_cost' => 0,
+            ], ['Idempotency-Key' => 'test-stock-in-' . uniqid()])->assertCreated();
+
+        $data = [
+            'warehouse_id' => 1,
+            'business_date' => now()->toDateString(),
+            'customer_id' => 1,
+            'sale_type_id' => $saleType->id,
+            'agent_id' => $agent->id,
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'qty' => 1,
+                    'net_unit_price' => 100,
+                    'sale_unit_id' => 1,
+                ]
+            ],
+            'paid_amount' => 0,
+            'paying_method' => 'Cash',
+            'account_id' => 1,
+            'order_discount' => 0,
+            'shipping_cost' => 0,
+        ];
+
+        $res = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale', $data, ['Idempotency-Key' => 'test-sale-' . uniqid()]);
+        $res->assertCreated();
+        $saleId = $res->json('data.id');
+
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'sale_type_id' => $saleType->id,
+            'agent_id' => $agent->id,
+        ]);
+    }
+
+    public function test_purchase_posting_persists_optech_purchase_type_and_agent_and_supplier_invoice(): void
+    {
+        $purType = PurchaseType::where('company_id', 1)->first();
+        $agent = Agent::where('company_id', 1)->first();
+
+        $product = Product::forceCreate([
+            'company_id' => 1,
+            'name' => 'Optech Active Purchase Item',
+            'code' => 'ITM-PUR-' . uniqid(),
+            'type' => 'standard',
+            'price' => 100,
+            'cost' => 80,
+            'unit_id' => 1,
+            'sale_unit_id' => 1,
+            'purchase_unit_id' => 1,
+            'category_id' => 1,
+            'barcode_symbology' => 'C128',
+            'qty' => 50,
+            'is_active' => true,
+        ]);
+
+        $purData = [
+            'warehouse_id' => 1,
+            'business_date' => now()->toDateString(),
+            'supplier_id' => 1,
+            'purchase_type_id' => $purType->id,
+            'agent_id' => $agent->id,
+            'supplier_invoice_no' => 'INV-SUP-9988',
+            'supplier_invoice_date' => '2026-10-01',
+            'status' => 1,
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'qty' => 1,
+                    'net_unit_cost' => 80,
+                    'purchase_unit_id' => 1,
+                ]
+            ],
+            'paid_amount' => 0,
+            'paying_method' => 'Cash',
+            'account_id' => 1,
+            'order_discount' => 0,
+            'shipping_cost' => 0,
+        ];
+
+        $resPur = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/purchase', $purData, ['Idempotency-Key' => 'test-pur-' . uniqid()]);
+        $resPur->assertCreated();
+        $purId = $resPur->json('data.id');
+
+        $this->assertDatabaseHas('purchases', [
+            'id' => $purId,
+            'purchase_type_id' => $purType->id,
+            'agent_id' => $agent->id,
+            'supplier_invoice_no' => 'INV-SUP-9988',
+            'supplier_invoice_date' => '2026-10-01',
+        ]);
+    }
+
+    public function test_document_series_management_page_and_creation(): void
+    {
+        $res = $this->actingAs($this->adminUser)->get('/document-series');
+        $res->assertStatus(200);
+        $res->assertSee('Voucher Series');
+        $res->assertSee('SALES');
+
+        $uniqueCode = 'RETAIL-' . uniqid();
+        $storeRes = $this->actingAs($this->adminUser)->post('/document-series', [
+            'document_type' => 'sale',
+            'code' => $uniqueCode,
+            'prefix' => 'RET-',
+            'suffix' => '',
+            'next_number' => 101,
+            'padding' => 4,
+            'reset_policy' => 'financial_year',
+        ]);
+        $storeRes->assertRedirect(route('document-series.index'));
+        $this->assertDatabaseHas('document_series', [
+            'company_id' => 1,
+            'code' => $uniqueCode,
+            'prefix' => 'RET-',
+        ]);
+    }
+
+    public function test_inline_creation_of_document_series(): void
+    {
+        $uniqueCode = 'SERIES-INLINE-' . uniqid();
+        $res = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale/masters/series', [
+                'code' => $uniqueCode,
+                'prefix' => 'INL-',
+                'next_number' => 1,
+                'idempotency_key' => 'key-series-' . uniqid(),
+            ]);
+        $res->assertStatus(201);
+        $this->assertDatabaseHas('document_series', [
+            'company_id' => 1,
+            'code' => $uniqueCode,
+            'prefix' => 'INL-',
+        ]);
+    }
+
+    public function test_sale_posting_persists_transport_and_addins_and_returns_rate_history(): void
+    {
+        $saleType = SaleType::where('company_id', 1)->first();
+        $agent = Agent::where('company_id', 1)->first();
+
+        $product = Product::forceCreate([
+            'company_id' => 1,
+            'name' => 'Transport Item Test',
+            'code' => 'ITM-TRANS-' . uniqid(),
+            'type' => 'standard',
+            'price' => 150,
+            'cost' => 120,
+            'unit_id' => 1,
+            'sale_unit_id' => 1,
+            'purchase_unit_id' => 1,
+            'category_id' => 1,
+            'barcode_symbology' => 'C128',
+            'qty' => 50,
+            'is_active' => true,
+        ]);
+
+        $purType = PurchaseType::where('company_id', 1)->first();
+        $this->actingAs($this->adminUser)
+            ->postJson('/commercial/purchase', [
+                'warehouse_id' => 1,
+                'business_date' => now()->toDateString(),
+                'supplier_id' => 1,
+                'purchase_type_id' => $purType->id,
+                'status' => 1,
+                'items' => [
+                    [
+                        'product_id' => $product->id,
+                        'qty' => 10,
+                        'net_unit_cost' => 120,
+                        'purchase_unit_id' => 1,
+                    ]
+                ],
+                'paid_amount' => 0,
+                'paying_method' => 'Cash',
+                'account_id' => 1,
+                'order_discount' => 0,
+                'shipping_cost' => 0,
+            ], ['Idempotency-Key' => 'test-stock-in-' . uniqid()])->assertCreated();
+
+        $saleData = [
+            'warehouse_id' => 1,
+            'business_date' => now()->toDateString(),
+            'customer_id' => 1,
+            'sale_type_id' => $saleType->id,
+            'agent_id' => $agent->id,
+            'bale_no' => 'BALE-99',
+            'no_of_bales' => 5,
+            'lr_no' => 'LR-KPN-555',
+            'lr_date' => '2026-10-05',
+            'transport_name' => 'KPN Speed Parcel',
+            'station_to' => 'Coimbatore',
+            'order_no' => 'PO-CUST-101',
+            'credit_days' => 45,
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'qty' => 2,
+                    'net_unit_price' => 150,
+                    'sale_unit_id' => 1,
+                ]
+            ],
+            'paid_amount' => 0,
+            'paying_method' => 'Cash',
+            'account_id' => 1,
+            'order_discount' => 0,
+            'shipping_cost' => 0,
+        ];
+
+        $resSale = $this->actingAs($this->adminUser)
+            ->postJson('/commercial/sale', $saleData, ['Idempotency-Key' => 'test-sale-trans-' . uniqid()]);
+        $resSale->assertCreated();
+        $saleId = $resSale->json('data.id');
+
+        $this->assertDatabaseHas('sales', [
+            'id' => $saleId,
+            'bale_no' => 'BALE-99',
+            'no_of_bales' => 5,
+            'lr_no' => 'LR-KPN-555',
+            'lr_date' => '2026-10-05',
+            'transport_name' => 'KPN Speed Parcel',
+            'station_to' => 'Coimbatore',
+            'order_no' => 'PO-CUST-101',
+            'credit_days' => 45,
+        ]);
+
+        // Check previous-rates endpoint returns the posted rate!
+        $ratesRes = $this->actingAs($this->adminUser)
+            ->getJson('/commercial/sale/previous-rates?customer_id=1&product_id=' . $product->id);
+        $ratesRes->assertStatus(200);
+        $this->assertEquals(150, (float) $ratesRes->json('last_sale.rate'));
+        $this->assertEquals(120, (float) $ratesRes->json('last_purchase.cost'));
+    }
+}

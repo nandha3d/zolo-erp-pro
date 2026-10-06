@@ -911,7 +911,18 @@
         <nav class="navbar">
           <div class="container-fluid">
             <div class="navbar-holder d-flex align-items-center justify-content-between">
-              <a id="toggle-btn" href="#" class="menu-btn"><i class="fa fa-bars"> </i></a>
+              <a id="toggle-btn" href="#" class="menu-btn zolo-sidebar-toggle" title="Collapse to icons (1st tap)" data-state="expanded" aria-label="Toggle sidebar navigation" role="button">
+                <div class="toggle-icon-bars">
+                  <span class="bar bar-1"></span>
+                  <span class="bar bar-2"></span>
+                  <span class="bar bar-3"></span>
+                </div>
+                <div class="toggle-state-indicator">
+                  <span class="dot dot-1"></span>
+                  <span class="dot dot-2"></span>
+                  <span class="dot dot-3"></span>
+                </div>
+              </a>
               <span class="brand-big">
                 @if($general_setting->site_logo)
                 <a href="{{url('/')}}"><img src="{{url('logo', $general_setting->site_logo)}}" width="115"></a>

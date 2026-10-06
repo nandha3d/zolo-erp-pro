@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agent;
+use App\Models\Area;
+use App\Models\BillSundry;
 use App\Models\Customer;
+use App\Models\DocumentSeries;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\PurchaseType;
 use App\Models\Sale;
+use App\Models\SaleType;
+use App\Models\StandardRemark;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\Commercial\CommercialApplicationService;
@@ -73,6 +80,17 @@ class CommercialController extends Controller
             'categories' => DB::table('categories')->where('company_id', $context->companyId)->get(['id', 'name']),
             'groups' => $kind === 'sale' ? DB::table('customer_groups')->where('company_id', $context->companyId)->get(['id', 'name']) : collect(),
             'accounts' => DB::table('accounts')->where('company_id', $context->companyId)->get(['id', 'name']),
+            'saleTypes' => DB::table('sale_types')->where('company_id', $context->companyId)->where('is_active', true)->get(),
+            'purchaseTypes' => DB::table('purchase_types')->where('company_id', $context->companyId)->where('is_active', true)->get(),
+            'billSundries' => DB::table('bill_sundries')->where('company_id', $context->companyId)->where('is_active', true)
+                ->where(fn($q) => $q->where('nature', $kind === 'sale' ? 'sales' : 'purchase')->orWhere('nature', 'both'))->get(),
+            'agents' => DB::table('agents')->where('company_id', $context->companyId)->where('is_active', true)->get(),
+            'areas' => DB::table('areas')->where('company_id', $context->companyId)->where('is_active', true)->get(),
+            'remarks' => DB::table('standard_remarks')->where('company_id', $context->companyId)->where('is_active', true)
+                ->where(fn($q) => $q->where('type', $kind)->orWhere('type', 'all'))->get(),
+            'documentSeries' => DB::table('document_series')->where('company_id', $context->companyId)
+                ->where('branch_id', $context->branchId)->where('financial_year_id', $context->financialYearId)
+                ->where('document_type', $kind)->get(),
             'businessDate' => \Carbon\CarbonImmutable::now(\App\Models\Company::findOrFail($context->companyId)->timezone)->toDateString(),
         ]);
     }
@@ -180,16 +198,43 @@ class CommercialController extends Controller
 
     public function previousRates(Request $request, string $kind)
     {
+        $partyId = (int) ($request->input('party_id') ?: $request->input('customer_id') ?: $request->input('supplier_id'));
+        $productId = (int) $request->input('product_id');
+        $request->merge(['party_id' => $partyId, 'product_id' => $productId]);
         $request->validate(['party_id' => 'required|integer|min:1', 'product_id' => 'required|integer|min:1']);
         $context = $this->context($request);
         app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-index' : 'purchases-index', $context, $request->user()->id);
-        app(CompanyWriteGuard::class)->owned($kind === 'sale' ? Customer::class : Supplier::class, $request->party_id, $context, 'party_id');
-        app(CompanyWriteGuard::class)->owned(Product::class, $request->product_id, $context, 'product_id');
+        app(CompanyWriteGuard::class)->owned($kind === 'sale' ? Customer::class : Supplier::class, $partyId, $context, 'party_id');
+        app(CompanyWriteGuard::class)->owned(Product::class, $productId, $context, 'product_id');
         $documents = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)
-            ->where($kind === 'sale' ? 'customer_id' : 'supplier_id', $request->party_id)->whereNotNull('posted_at')->whereNull('reversed_at')->select('id');
+            ->where($kind === 'sale' ? 'customer_id' : 'supplier_id', $partyId)->whereNotNull('posted_at')->whereNull('reversed_at')->select('id');
         $lines = DB::table($kind === 'sale' ? 'product_sales' : 'product_purchases')->where('company_id', $context->companyId)
-            ->whereIn($kind.'_id', $documents)->where('product_id', $request->product_id)->orderByDesc('id')->limit(10)->get();
-        return response()->json(['data' => $lines]);
+            ->whereIn($kind.'_id', $documents)->where('product_id', $productId)->orderByDesc('id')->limit(10)->get();
+
+        $lastSale = DB::table('product_sales')
+            ->join('sales', 'product_sales.sale_id', '=', 'sales.id')
+            ->where('sales.company_id', $context->companyId)
+            ->where('product_sales.product_id', $productId)
+            ->where('sales.customer_id', $partyId)
+            ->whereNotNull('sales.posted_at')
+            ->orderByDesc('sales.created_at')
+            ->select('sales.reference_no', 'sales.created_at', 'product_sales.net_unit_price as rate', 'product_sales.total as amount', 'product_sales.qty', 'product_sales.tax_rate')
+            ->first();
+
+        $lastPurchase = DB::table('product_purchases')
+            ->join('purchases', 'product_purchases.purchase_id', '=', 'purchases.id')
+            ->where('purchases.company_id', $context->companyId)
+            ->where('product_purchases.product_id', $productId)
+            ->whereNotNull('purchases.posted_at')
+            ->orderByDesc('purchases.created_at')
+            ->select('purchases.reference_no', 'purchases.created_at', 'product_purchases.net_unit_cost as cost', 'product_purchases.total as amount', 'product_purchases.qty', 'product_purchases.tax_rate')
+            ->first();
+
+        return response()->json([
+            'data' => $lines,
+            'last_sale' => $lastSale,
+            'last_purchase' => $lastPurchase,
+        ]);
     }
 
     public function cloneDocument(Request $request, string $kind, int $id)
@@ -254,15 +299,46 @@ class CommercialController extends Controller
     {
         $context = $this->context($request);
         $actor = $request->user()->id;
-        $request->validate(['name' => 'required|string|max:100', 'city' => 'nullable|string|max:100',
-            'phone_number' => 'nullable|string|max:50', 'address' => 'nullable|string|max:255', 'search_alias' => 'nullable|string|max:100',
-            'credit_days' => 'nullable|integer|min:0|max:3650', 'credit_limit' => 'nullable|numeric|min:0|max:1000000000']);
-        app(CommercialPermission::class)->assert($resource === 'products' ? 'products-add' : ($kind === 'sale' ? 'customers-add' : 'suppliers-add'), $context, $actor);
+
+        $permission = match ($resource) {
+            'products' => 'products-add',
+            'parties' => $kind === 'sale' ? 'customers-add' : 'suppliers-add',
+            'sale-types' => 'sales-add',
+            'purchase-types' => 'purchases-add',
+            default => $kind === 'sale' ? 'sales-add' : 'purchases-add',
+        };
+        app(CommercialPermission::class)->assert($permission, $context, $actor);
+
         $key = $this->idempotencyKey($request);
-        $type = $resource === 'products' ? 'product' : ($kind === 'sale' ? 'customer' : 'supplier');
-        $model = match ($type) { 'product' => Product::class, 'customer' => Customer::class, default => Supplier::class };
+        $type = match ($resource) {
+            'products' => 'product',
+            'parties' => $kind === 'sale' ? 'customer' : 'supplier',
+            'agents' => 'agent',
+            'areas' => 'area',
+            'bill-sundries' => 'bill_sundry',
+            'sale-types' => 'sale_type',
+            'purchase-types' => 'purchase_type',
+            'remarks' => 'standard_remark',
+            'series' => 'document_series',
+            default => abort(404, 'Invalid master resource'),
+        };
+
+        $model = match ($type) {
+            'product' => Product::class,
+            'customer' => Customer::class,
+            'supplier' => Supplier::class,
+            'agent' => Agent::class,
+            'area' => Area::class,
+            'bill_sundry' => BillSundry::class,
+            'sale_type' => SaleType::class,
+            'purchase_type' => PurchaseType::class,
+            'standard_remark' => StandardRemark::class,
+            'document_series' => DocumentSeries::class,
+        };
+
         $values = $request->except(['_token', 'idempotency_key', 'company_id']); ksort($values);
         $hash = hash('sha256', json_encode([$type, $values], JSON_THROW_ON_ERROR));
+
         $record = DB::transaction(function () use ($request, $kind, $resource, $context, $actor, $key, $type, $model, $hash) {
             \App\Models\Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
             $retry = DB::table('idempotency_keys')->where('company_id', $context->companyId)->where('key', $key)->first();
@@ -271,9 +347,9 @@ class CommercialController extends Controller
                 return $model::forCompany($context)->findOrFail($retry->response_ref);
             }
             app(CompanyWriteGuard::class)->begin($context, null);
+
             if ($resource === 'products') {
-                app(CommercialPermission::class)->assert('products-add', $context, $actor);
-                $request->validate(['code' => 'required|string|max:100', 'category_id' => 'required|integer|min:1',
+                $request->validate(['name' => 'required|string|max:100', 'code' => 'required|string|max:100', 'category_id' => 'required|integer|min:1',
                     'unit_id' => 'required|integer|min:1', 'price' => 'required|numeric|min:0', 'cost' => 'required|numeric|min:0']);
                 app(CompanyWriteGuard::class)->owned(\App\Models\Category::class, $request->category_id, $context, 'category_id');
                 app(CompanyWriteGuard::class)->owned(\App\Models\Unit::class, $request->unit_id, $context, 'unit_id');
@@ -283,8 +359,12 @@ class CommercialController extends Controller
                     'purchase_unit_id' => $request->unit_id, 'type' => 'standard', 'barcode_symbology' => 'C128',
                     'price' => app(CommercialPricing::class)->number($request->price, 'price'),
                     'cost' => app(CommercialPricing::class)->number($request->cost, 'cost'), 'qty' => 0, 'is_active' => true]);
-            } else {
-                $attributes = $request->only(['name', 'city', 'phone_number', 'address', 'search_alias']);
+            } elseif ($resource === 'parties') {
+                $request->validate(['name' => 'required|string|max:100', 'city' => 'nullable|string|max:100',
+                    'phone_number' => 'nullable|string|max:50', 'address' => 'nullable|string|max:255', 'search_alias' => 'nullable|string|max:100',
+                    'credit_days' => 'nullable|integer|min:0|max:3650', 'credit_limit' => 'nullable|numeric|min:0|max:1000000000',
+                    'area_id' => 'nullable|integer', 'agent_id' => 'nullable|integer']);
+                $attributes = $request->only(['name', 'city', 'phone_number', 'address', 'search_alias', 'area_id', 'agent_id']);
                 $attributes += ['phone_number' => '', 'address' => '', 'city' => '', 'company_name' => '', 'email' => ''];
                 if ($kind === 'sale') {
                     app(CompanyWriteGuard::class)->owned(\App\Models\CustomerGroup::class, $request->customer_group_id, $context, 'customer_group_id');
@@ -292,7 +372,94 @@ class CommercialController extends Controller
                     $attributes += $request->only(['credit_days', 'credit_limit']);
                 }
                 $record = $model::forceCreate($attributes + ['company_id' => $context->companyId, 'is_active' => true]);
+            } elseif ($resource === 'agents') {
+                $request->validate(['name' => 'required|string|max:150', 'code' => 'nullable|string|max:50',
+                    'phone' => 'nullable|string|max:50', 'commission_rate' => 'nullable|numeric|min:0|max:100']);
+                $record = Agent::forceCreate([
+                    'company_id' => $context->companyId,
+                    'name' => $request->name,
+                    'code' => $request->code,
+                    'phone' => $request->phone,
+                    'commission_rate' => $request->input('commission_rate', 0),
+                    'is_active' => true,
+                ]);
+            } elseif ($resource === 'areas') {
+                $request->validate(['name' => 'required|string|max:100', 'code' => 'nullable|string|max:50',
+                    'city' => 'nullable|string|max:100', 'pincode' => 'nullable|string|max:20']);
+                $record = Area::forceCreate([
+                    'company_id' => $context->companyId,
+                    'name' => $request->name,
+                    'code' => $request->code,
+                    'city' => $request->city,
+                    'pincode' => $request->pincode,
+                    'is_active' => true,
+                ]);
+            } elseif ($resource === 'bill-sundries') {
+                $request->validate(['name' => 'required|string|max:150', 'nature' => 'nullable|in:sales,purchase,both',
+                    'calculation_type' => 'nullable|in:percentage,amount', 'default_value' => 'nullable|numeric',
+                    'tax_rate' => 'nullable|numeric|min:0|max:100']);
+                $record = BillSundry::forceCreate([
+                    'company_id' => $context->companyId,
+                    'name' => $request->name,
+                    'nature' => $request->input('nature', $kind === 'sale' ? 'sales' : 'purchase'),
+                    'calculation_type' => $request->input('calculation_type', 'percentage'),
+                    'default_value' => $request->input('default_value', 0),
+                    'tax_rate' => $request->input('tax_rate', 0),
+                    'is_active' => true,
+                ]);
+            } elseif ($resource === 'sale-types') {
+                $request->validate(['name' => 'required|string|max:150', 'code' => 'nullable|string|max:50',
+                    'tax_nature' => 'nullable|in:local,interstate,export,sez,exempted', 'tax_rate' => 'nullable|numeric|min:0|max:100']);
+                $record = SaleType::forceCreate([
+                    'company_id' => $context->companyId,
+                    'name' => $request->name,
+                    'code' => $request->code,
+                    'tax_nature' => $request->input('tax_nature', 'local'),
+                    'tax_rate' => $request->input('tax_rate', 0),
+                    'is_active' => true,
+                ]);
+            } elseif ($resource === 'purchase-types') {
+                $request->validate(['name' => 'required|string|max:150', 'code' => 'nullable|string|max:50',
+                    'tax_nature' => 'nullable|in:local,interstate,import,exempted', 'tax_rate' => 'nullable|numeric|min:0|max:100']);
+                $record = PurchaseType::forceCreate([
+                    'company_id' => $context->companyId,
+                    'name' => $request->name,
+                    'code' => $request->code,
+                    'tax_nature' => $request->input('tax_nature', 'local'),
+                    'tax_rate' => $request->input('tax_rate', 0),
+                    'is_active' => true,
+                ]);
+            } elseif ($resource === 'remarks') {
+                $title = $request->input('title') ?: $request->input('name') ?: 'Remark';
+                $remark = $request->input('remark') ?: $request->input('name') ?: '';
+                $record = StandardRemark::forceCreate([
+                    'company_id' => $context->companyId,
+                    'title' => $title,
+                    'type' => $kind,
+                    'remark' => $remark,
+                    'is_active' => true,
+                ]);
+            } elseif ($resource === 'series') {
+                $code = $request->input('code') ?: $request->input('name') ?: 'SERIES-1';
+                $request->validate(['code' => 'nullable|string|max:50', 'name' => 'nullable|string|max:50']);
+                $branchId = $context->branchId ?: (DB::table('company_branches')->where('company_id', $context->companyId)->value('id') ?? 1);
+                $fyId = $context->financialYearId ?: (DB::table('fiscal_years')->where('company_id', $context->companyId)->value('id') ?? 1);
+                $docType = $kind === 'sale' ? 'sale' : 'purchase';
+                $record = DocumentSeries::forceCreate([
+                    'company_id' => $context->companyId,
+                    'branch_id' => $branchId,
+                    'financial_year_id' => $fyId,
+                    'document_type' => $docType,
+                    'code' => $code,
+                    'prefix' => $request->input('prefix', ''),
+                    'suffix' => $request->input('suffix', ''),
+                    'next_number' => (int) $request->input('next_number', 1),
+                    'padding' => max(1, (int) $request->input('padding', 5)),
+                    'reset_policy' => $request->input('reset_policy') ?: 'financial_year',
+                    'is_default' => false,
+                ]);
             }
+
             DB::table('idempotency_keys')->insert(['company_id' => $context->companyId, 'key' => $key, 'request_hash' => $hash,
                 'response_type' => $type, 'response_ref' => $record->id, 'created_at' => now(), 'updated_at' => now()]);
             return $record;

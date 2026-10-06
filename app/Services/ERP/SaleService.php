@@ -67,6 +67,12 @@ class SaleService
             $guard->warehouse($data['warehouse_id'] ?? null, $context, $userId);
             $data['biller_id'] ??= Biller::forCompany($context)->orderBy('id')->value('id');
             $guard->owned(Biller::class, $data['biller_id'], $context, 'biller_id');
+            if (!empty($data['sale_type_id'])) {
+                $guard->owned(\App\Models\SaleType::class, $data['sale_type_id'], $context, 'sale_type_id');
+            }
+            if (!empty($data['agent_id'])) {
+                $guard->owned(\App\Models\Agent::class, $data['agent_id'], $context, 'agent_id');
+            }
             foreach ($data['items'] as &$line) {
                 if (!is_numeric($line['qty'] ?? null) || !is_finite((float) $line['qty']) || (float) $line['qty'] <= 0
                     || !is_numeric($line['net_unit_price'] ?? null) || !is_finite((float) $line['net_unit_price']) || (float) $line['net_unit_price'] < 0) {
@@ -120,7 +126,7 @@ class SaleService
             if ($paidAmount > 0) {
                 $data['account_id'] = $guard->paymentAccount($data, $context);
             }
-            $sale = (new Sale)->forceFill([
+            $saleFill = [
                 'company_id' => $context->companyId,
                 'created_at' => $date,
                 'reference_no' => $referenceNo,
@@ -145,12 +151,30 @@ class SaleService
                 'grand_total' => $grandTotal,
                 'currency_id' => $data['currency_id'] ?? null,
                 'exchange_rate' => $data['exchange_rate'] ?? 1,
-                'sale_status' => $data['sale_status'] ?? 1,
+                'sale_status' => (int) ($data['sale_status'] ?? 1),
                 'payment_status' => $paymentStatus,
                 'paid_amount' => $paidAmount,
                 'sale_note' => $data['sale_note'] ?? null,
                 'staff_note' => $data['staff_note'] ?? null,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('sales', 'sale_type_id')) {
+                $saleFill = array_merge($saleFill, [
+                    'sale_type_id' => $data['sale_type_id'] ?? null,
+                    'agent_id' => $data['agent_id'] ?? null,
+                    'bale_no' => $data['bale_no'] ?? null,
+                    'no_of_bales' => isset($data['no_of_bales']) ? (int) $data['no_of_bales'] : null,
+                    'lr_no' => $data['lr_no'] ?? null,
+                    'lr_date' => $data['lr_date'] ?? null,
+                    'transport_name' => $data['transport_name'] ?? null,
+                    'station_to' => $data['station_to'] ?? null,
+                    'order_no' => $data['order_no'] ?? null,
+                    'credit_days' => isset($data['credit_days']) ? (int) $data['credit_days'] : null,
+                    'salesman_id' => $data['salesman_id'] ?? null,
+                ]);
+            }
+
+            $sale = (new Sale)->forceFill($saleFill);
             $sale->save();
             $numbers->assign($reservation, $sale);
 

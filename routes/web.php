@@ -23,6 +23,13 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\AreaController;
+use App\Http\Controllers\AgentController;
+use App\Http\Controllers\BillSundryController;
+use App\Http\Controllers\SaleTypeController;
+use App\Http\Controllers\PurchaseTypeController;
+use App\Http\Controllers\StandardRemarkController;
+use App\Http\Controllers\DocumentSeriesController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\BillerController;
 use App\Http\Controllers\CouponController;
@@ -276,6 +283,13 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::resource('printers', PrinterController::class);
 
     Route::resource('tables', TableController::class);
+    Route::resource('area', AreaController::class);
+    Route::resource('agent', AgentController::class);
+    Route::resource('bill-sundry', BillSundryController::class);
+    Route::resource('sale-type', SaleTypeController::class);
+    Route::resource('purchase-type', PurchaseTypeController::class);
+    Route::resource('standard-remark', StandardRemarkController::class);
+    Route::resource('document-series', DocumentSeriesController::class);
 
 
     Route::controller(TaxController::class)->group(function () {
@@ -716,6 +730,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('journal-entries', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'index'])->name('accounting.journal-entries');
         Route::post('journal-entries', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'store'])->name('accounting.journal-entries.store');
         Route::get('journal-entries/{id}', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'show'])->name('accounting.journal-entries.show');
+        Route::get('voucher/entry', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'voucherEntry'])->name('accounting.voucher.entry');
+        Route::post('voucher/inline-account', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'inlineAccount'])->name('accounting.voucher.inline-account');
+        Route::get('voucher/next-number', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'nextVoucherNumber'])->name('accounting.voucher.next-number');
 
         Route::get('trial-balance', [\App\Http\Controllers\Accounting\FinancialReportController::class, 'trialBalance'])->name('accounting.trial-balance');
         Route::get('profit-loss', [\App\Http\Controllers\Accounting\FinancialReportController::class, 'profitLoss'])->name('accounting.profit-loss');

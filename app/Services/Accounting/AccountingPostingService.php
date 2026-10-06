@@ -120,8 +120,8 @@ class AccountingPostingService
                 }
             }
             $numbers = app(DocumentNumberService::class);
-            $reservation = $numbers->reserve('journal', $context, $date, $actor);
-            $entry = (new JournalEntry)->forceFill([
+            $reservation = $numbers->reserve('journal', $context, $date, $actor, $header['series_code'] ?? null);
+            $entryFill = [
                 'company_id' => $context->companyId, 'branch_id' => $context->branchId,
                 'financial_year_id' => $context->financialYearId, 'document_series_id' => $reservation->series_id,
                 'entry_number' => $reservation->formatted_number, 'entry_date' => $date,
@@ -132,7 +132,11 @@ class AccountingPostingService
                 'request_hash' => $hash, 'reversal_of_id' => $header['reversal_of_id'] ?? null,
                 'void_reason' => $header['void_reason'] ?? null, 'voucher_type' => $header['voucher_type'] ?? null,
                 'cheque_no' => $header['cheque_no'] ?? null, 'cheque_date' => $header['cheque_date'] ?? null,
-            ]);
+            ];
+            if (\Illuminate\Support\Facades\Schema::hasColumn('journal_entries', 'gst_nature')) {
+                $entryFill['gst_nature'] = $header['gst_nature'] ?? null;
+            }
+            $entry = (new JournalEntry)->forceFill($entryFill);
             $entry->save();
             $numbers->assign($reservation, $entry);
             foreach ($lines as $line) {

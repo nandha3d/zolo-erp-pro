@@ -70,6 +70,25 @@
         </li>
     @endif
 
+    {{-- Optech Master Registers Menu --}}
+    @if($isAdmin || $canNavigate('sidebar_product'))
+        <li>
+            <a href="#optech_masters" aria-expanded="false" data-toggle="collapse">
+                <i class="dripicons-view-thumb"></i>
+                <span>Master Registers</span>
+            </a>
+            <ul id="optech_masters" class="collapse list-unstyled">
+                <li><a href="{{route('bill-sundry.index')}}">Bill Sundry</a></li>
+                <li><a href="{{route('sale-type.index')}}">Sale Types</a></li>
+                <li><a href="{{route('purchase-type.index')}}">Purchase Types</a></li>
+                <li><a href="{{route('agent.index')}}">Agents &amp; Brokers</a></li>
+                <li><a href="{{route('area.index')}}">Areas</a></li>
+                <li><a href="{{route('standard-remark.index')}}">Standard Remarks</a></li>
+                <li><a href="{{route('document-series.index')}}">Voucher Series (Ctl+F9)</a></li>
+            </ul>
+        </li>
+    @endif
+
     {{-- Purchase Menu --}}
     @if($isAdmin || $canNavigate('sidebar_purchase'))
         <li>
@@ -216,6 +235,7 @@
                 <span>{{__('db.Accounting')}}</span>
             </a>
             <ul id="account" class="collapse list-unstyled">
+                <li id="voucher-entry-menu"><a href="{{route('accounting.voucher.entry')}}" class="font-weight-bold text-primary"><i class="dripicons-pencil mr-1"></i> Voucher Entry · F9</a></li>
                 <li id="coa-menu"><a href="{{route('accounting.coa')}}">Chart of Accounts</a></li>
                 <li id="journal-menu"><a href="{{route('accounting.journal-entries')}}">Journal Entries</a></li>
                 <li id="general-ledger-menu"><a href="{{route('accounting.general-ledger')}}">General Ledger</a></li>

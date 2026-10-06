@@ -146,17 +146,22 @@ class BrandController extends Controller
 
     public function deleteBySelection(Request $request)
     {
-        $brand_id = $request['brandIdArray'];
+        $brand_id = $request['brandIdArray'] ?? [];
+        if (empty($brand_id)) {
+            return response('No brand selected!', 400);
+        }
         foreach ($brand_id as $id) {
-            $lims_brand_data = Brand::findOrFail($id);
-            if($lims_brand_data->image && !config('database.connections.zoloerp_landlord') && file_exists('images/brand/'.$lims_brand_data->image)) {
-                unlink('images/brand/'.$lims_brand_data->image);
+            $lims_brand_data = Brand::find($id);
+            if ($lims_brand_data) {
+                if($lims_brand_data->image && !config('database.connections.zoloerp_landlord') && file_exists('images/brand/'.$lims_brand_data->image)) {
+                    unlink('images/brand/'.$lims_brand_data->image);
+                }
+                elseif($lims_brand_data->image && file_exists('images/brand/'.$lims_brand_data->image)) {
+                    unlink('images/brand/'.$lims_brand_data->image);
+                }
+                $lims_brand_data->is_active = false;
+                $lims_brand_data->save();
             }
-            elseif($lims_brand_data->image && file_exists('images/brand/'.$lims_brand_data->image)) {
-                unlink('images/brand/'.$lims_brand_data->image);
-            }
-            $lims_brand_data->is_active = false;
-            $lims_brand_data->save();
         }
         $this->cacheForget('brand_list');
         return 'Brand deleted successfully!';
@@ -174,7 +179,7 @@ class BrandController extends Controller
         }
         $lims_brand_data->save();
         $this->cacheForget('brand_list');
-        return redirect('brand')->with('not_permitted', __('db.Brand deleted successfully!'));
+        return redirect('brand')->with('message', __('db.Brand deleted successfully!'));
     }
 
     public function exportBrand(Request $request)

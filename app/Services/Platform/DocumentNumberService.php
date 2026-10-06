@@ -37,6 +37,8 @@ class DocumentNumberService
         'expense' => [\App\Models\Expense::class, 'reference_no', 'EXP'],
         'quotation' => [\App\Models\Quotation::class, 'reference_no', 'QUO'],
         'delivery' => [\App\Models\Delivery::class, 'reference_no', 'DEL'],
+        'delivery_challan' => [\App\Models\DeliveryChallan::class, 'challan_no', 'DC'],
+        'grn' => [\App\Models\GoodsReceivedNote::class, 'grn_no', 'GRN'],
         'income' => [\App\Models\Income::class, 'reference_no', 'INC'],
         'money_transfer' => [\App\Models\MoneyTransfer::class, 'reference_no', 'MTR'],
         'payroll' => [\App\Models\Payroll::class, 'reference_no', 'PAYR'],

@@ -111,42 +111,306 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ====================================================================
-   SIDEBAR & NAVIGATION REDESIGN - THEMED SIDE PANEL
+   3-STATE SIDEBAR CONTROLLER: Expanded (256px), Icon-Only (72px), Full-Hide (0px)
    ==================================================================== */
+
+/* Interactive Toggle Button (#toggle-btn) */
+#toggle-btn.zolo-sidebar-toggle,
+nav.navbar a#toggle-btn.menu-btn {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  line-height: normal !important;
+  padding: 0 !important;
+  border-radius: 11px !important;
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  color: var(--neo-text-primary) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  position: relative !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  gap: 3px !important;
+  user-select: none !important;
+}
+
+#toggle-btn.zolo-sidebar-toggle:hover,
+nav.navbar a#toggle-btn.menu-btn:hover {
+  background: var(--neo-bg) !important;
+  border-color: var(--neo-primary) !important;
+  color: var(--neo-primary) !important;
+  box-shadow: 0 4px 14px rgba(124, 92, 196, 0.22) !important;
+  transform: translateY(-1px) !important;
+}
+
+#toggle-btn.zolo-sidebar-toggle:active,
+nav.navbar a#toggle-btn.menu-btn:active {
+  transform: scale(0.92) !important;
+}
+
+/* Three Animated Hamburger Bars */
+#toggle-btn .toggle-icon-bars {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  width: 20px !important;
+  height: 14px !important;
+}
+
+#toggle-btn .toggle-icon-bars .bar {
+  display: block !important;
+  height: 2px !important;
+  background-color: currentColor !important;
+  border-radius: 2px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* State 0: Expanded / Full Visible (3 layered bars) */
+#toggle-btn[data-state="expanded"] .bar-1 { width: 18px !important; }
+#toggle-btn[data-state="expanded"] .bar-2 { width: 12px !important; }
+#toggle-btn[data-state="expanded"] .bar-3 { width: 18px !important; }
+
+/* State 1: Icon Only (Compact 3 small dots/pills) */
+#toggle-btn[data-state="icon-only"] .bar-1 { width: 6px !important; border-radius: 50% !important; }
+#toggle-btn[data-state="icon-only"] .bar-2 { width: 6px !important; border-radius: 50% !important; }
+#toggle-btn[data-state="icon-only"] .bar-3 { width: 6px !important; border-radius: 50% !important; }
+
+/* State 2: Full Hide (Morphs into an arrow/cross) */
+#toggle-btn[data-state="full-hide"] .bar-1 {
+  width: 14px !important;
+  transform: rotate(45deg) translate(3px, 3px) !important;
+}
+#toggle-btn[data-state="full-hide"] .bar-2 {
+  opacity: 0 !important;
+  transform: scaleX(0) !important;
+  width: 0 !important;
+}
+#toggle-btn[data-state="full-hide"] .bar-3 {
+  width: 14px !important;
+  transform: rotate(-45deg) translate(3px, -3px) !important;
+}
+
+/* Interactive 3-State Indicator Dots */
+#toggle-btn .toggle-state-indicator {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3.5px !important;
+  height: 4px !important;
+}
+
+#toggle-btn .toggle-state-indicator .dot {
+  width: 4px !important;
+  height: 4px !important;
+  border-radius: 50% !important;
+  background: var(--neo-text-secondary) !important;
+  opacity: 0.3 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+#toggle-btn[data-state="expanded"] .dot-1,
+#toggle-btn .toggle-state-indicator .dot-1.active {
+  background: var(--neo-primary) !important;
+  opacity: 1 !important;
+  transform: scale(1.3) !important;
+  box-shadow: 0 0 6px var(--neo-primary) !important;
+}
+
+#toggle-btn[data-state="icon-only"] .dot-2,
+#toggle-btn .toggle-state-indicator .dot-2.active {
+  background: var(--neo-primary) !important;
+  opacity: 1 !important;
+  transform: scale(1.3) !important;
+  box-shadow: 0 0 6px var(--neo-primary) !important;
+}
+
+#toggle-btn[data-state="full-hide"] .dot-3,
+#toggle-btn .toggle-state-indicator .dot-3.active {
+  background: var(--neo-primary) !important;
+  opacity: 1 !important;
+  transform: scale(1.3) !important;
+  box-shadow: 0 0 6px var(--neo-primary) !important;
+}
+
+/* Sidebar States */
 .side-navbar {
   background: var(--neo-sidebar-bg) !important;
   background-color: var(--neo-sidebar-bg) !important;
   border-right: 1px solid var(--neo-sidebar-border) !important;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12) !important;
   width: 256px !important;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important;
   z-index: 999;
 }
 
-/* Align main content container perfectly with 256px sidebar to prevent any content clipping */
 .page {
   position: relative;
   margin-left: 256px !important;
   width: calc(100% - 256px) !important;
   min-height: 100vh;
   padding-bottom: 60px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* State 1: Icon-Only (Compact 72px) */
+nav.side-navbar.icon-only {
+  width: 72px !important;
+  min-width: 72px !important;
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  overflow-x: visible !important;
+}
+
+.side-navbar.icon-only .brand-big {
+  padding: 16px 8px !important;
+  justify-content: center !important;
+}
+
+.side-navbar.icon-only .brand-big .zolo-brand-container {
+  justify-content: center !important;
+  gap: 0 !important;
+}
+
+.side-navbar.icon-only .brand-big .zolo-brand-badge {
+  display: none !important;
+}
+
+.side-navbar.icon-only li.sidebar-heading {
+  height: 1px !important;
+  margin: 12px 14px !important;
+  padding: 0 !important;
+  background: var(--neo-sidebar-border, rgba(255, 255, 255, 0.08)) !important;
+  overflow: hidden !important;
+  text-indent: -9999px !important;
+}
+
+.side-navbar.icon-only li a {
+  padding: 12px 0 !important;
+  margin: 2px 8px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  position: relative !important;
+}
+
+.side-navbar.icon-only li a span {
+  display: none !important;
+}
+
+.side-navbar.icon-only li a i {
+  margin: 0 !important;
+  font-size: 19px !important;
+  width: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.side-navbar.icon-only li a[data-toggle="collapse"]::before,
+.side-navbar.icon-only li a[data-toggle="collapse"]::after {
+  display: none !important;
+}
+
+/* Floating Submenus on Hover in Icon-Only Mode */
+.side-navbar.icon-only li {
+  position: relative !important;
+}
+
+.side-navbar.icon-only li > ul.collapse {
+  display: none !important;
+}
+
+.side-navbar.icon-only li:hover > ul.collapse {
+  display: block !important;
+  position: absolute !important;
+  left: 72px !important;
+  top: 0 !important;
+  width: 230px !important;
+  background: var(--neo-sidebar-bg) !important;
+  border: 1px solid var(--neo-sidebar-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28) !important;
+  padding: 8px !important;
+  z-index: 1050 !important;
+}
+
+html[dir="rtl"] .side-navbar.icon-only li:hover > ul.collapse {
+  left: auto !important;
+  right: 72px !important;
+}
+
+.side-navbar.icon-only li:hover > ul.collapse li a {
+  padding: 8px 14px !important;
+  display: block !important;
+  text-align: left !important;
+}
+
+html[dir="rtl"] .side-navbar.icon-only li:hover > ul.collapse li a {
+  text-align: right !important;
+}
+
+.side-navbar.icon-only li:hover > ul.collapse li a span {
+  display: inline !important;
+}
+
+.side-navbar.icon-only .mCustomScrollBox,
+.side-navbar.icon-only .mCSB_container {
+  overflow: visible !important;
+}
+
+.page.sidebar-icon-only,
+.side-navbar.icon-only ~ .page {
+  margin-left: 72px !important;
+  width: calc(100% - 72px) !important;
+}
+
+html[dir="rtl"] .page.sidebar-icon-only,
+html[dir="rtl"] .side-navbar.icon-only ~ .page {
+  margin-left: 0 !important;
+  margin-right: 72px !important;
+  width: calc(100% - 72px) !important;
+}
+
+/* State 2: Full-Hide */
+nav.side-navbar.full-hide,
+nav.side-navbar.shrink {
+  transform: translateX(-100%) !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html[dir="rtl"] nav.side-navbar.full-hide,
+html[dir="rtl"] nav.side-navbar.shrink {
+  transform: translateX(100%) !important;
+}
+
+.page.sidebar-full-hide,
 .page.active,
+.side-navbar.full-hide ~ .page,
 .side-navbar.shrink ~ .page,
 .side-navbar.hide ~ .page {
   margin-left: 0 !important;
+  margin-right: 0 !important;
   width: 100% !important;
 }
 
 @media (max-width: 1199px) {
-  /* Keep the fixed-width themed sidebar off the mobile form when collapsed. */
-  nav.side-navbar.shrink {
+  nav.side-navbar:not(.icon-only):not(.full-visible) {
     transform: translateX(-100%) !important;
-    pointer-events: none;
   }
-  html[dir="rtl"] nav.side-navbar.shrink {
+  html[dir="rtl"] nav.side-navbar:not(.icon-only):not(.full-visible) {
     transform: translateX(100%) !important;
   }
   .page {
@@ -451,34 +715,185 @@ nav.navbar .nav-menu {
   margin-bottom: 0 !important;
 }
 
-nav.navbar .nav-menu > li > a,
-nav.navbar .nav-menu .dropdown > a {
+nav.navbar .nav-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-left: 6px !important;
+}
+
+nav.navbar .nav-item > a:not(.btn-pos),
+nav.navbar .nav-item a.nav-link:not(.btn-pos),
+nav.navbar .nav-menu > li > a:not(.btn-pos),
+nav.navbar .nav-menu .dropdown > a:not(.btn-pos) {
   border-radius: 10px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  color: var(--neo-text-secondary) !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  padding: 7px 10px !important;
   transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  background: transparent !important;
+  border: 1px solid transparent !important;
 }
 
-.btn-pos {
-  background: var(--neo-primary-gradient) !important;
-  border: none !important;
-  border-radius: var(--neo-radius-md) !important;
-  color: #fff !important;
+nav.navbar .nav-item > a:not(.btn-pos):hover,
+nav.navbar .nav-item a.nav-link:not(.btn-pos):hover,
+nav.navbar .nav-menu > li > a:not(.btn-pos):hover {
+  background: var(--neo-primary-light, #eef2ff) !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+}
+
+nav.navbar .nav-item a:not(.btn-pos) i,
+nav.navbar .nav-item > a:not(.btn-pos) i,
+nav.navbar .nav-item li.notifications a i,
+nav.navbar .nav-item a[data-toggle="tooltip"]:not(.btn-pos) i {
+  color: var(--neo-text-secondary, #64748b) !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+  margin-right: 0 !important;
+}
+
+nav.navbar .nav-item > a:not(.btn-pos):hover i,
+nav.navbar .nav-item a.nav-link:not(.btn-pos):hover i {
+  color: var(--neo-primary, #4f46e5) !important;
+}
+
+nav.navbar .nav-item > a span:not(.notification-number),
+nav.navbar .nav-item a.nav-link span:not(.notification-number),
+nav.navbar .nav-item a.dropdown-item span:not(.notification-number) {
+  color: var(--neo-text-primary, #0f172a) !important;
   font-weight: 600 !important;
-  box-shadow: var(--neo-shadow-sm) !important;
-  padding: 6px 14px !important;
-  transition: all 0.2s ease !important;
+  font-size: 13.5px !important;
+  transition: color 0.15s ease !important;
+  margin-left: 4px !important;
 }
 
-.btn-pos:hover {
-  box-shadow: var(--neo-shadow-glow) !important;
-  transform: translateY(-1px);
+nav.navbar .nav-item > a:hover span:not(.notification-number),
+nav.navbar .nav-item a.nav-link:hover span:not(.notification-number) {
+  color: var(--neo-primary, #4f46e5) !important;
 }
 
-.btn-pos i {
-  color: #fff !important;
+/* Specific button: '+' Quick Add Button in Navbar */
+nav.navbar .btn-pos[data-toggle="dropdown"],
+nav.navbar a.btn-pos[data-toggle="dropdown"],
+.btn-pos.dropdown-toggle {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  background-color: #4f46e5 !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28) !important;
+}
+
+nav.navbar .btn-pos[data-toggle="dropdown"] i,
+nav.navbar a.btn-pos[data-toggle="dropdown"] i,
+.btn-pos.dropdown-toggle i {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 16px !important;
+}
+
+/* POS Terminal Button - Ultra-High Specificity Crisp White on Indigo Gradient */
+nav.navbar .nav-item a.btn-pos,
+nav.navbar a.btn-pos,
+.navbar a.btn-pos,
+.navbar .btn-pos,
+.btn-pos,
+a.btn-pos,
+li.nav-item .btn-pos {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  background-color: #4f46e5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: var(--neo-radius-md, 10px) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
+  padding: 7px 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-decoration: none !important;
+  line-height: normal !important;
+  cursor: pointer !important;
+}
+
+nav.navbar .nav-item a.btn-pos:hover,
+nav.navbar a.btn-pos:hover,
+.navbar a.btn-pos:hover,
+.navbar .btn-pos:hover,
+.btn-pos:hover,
+a.btn-pos:hover,
+li.nav-item .btn-pos:hover {
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45) !important;
+  transform: translateY(-1px) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+}
+
+nav.navbar .nav-item a.btn-pos span,
+nav.navbar a.btn-pos span,
+.navbar a.btn-pos span,
+.navbar .btn-pos span,
+.btn-pos span,
+a.btn-pos span,
+li.nav-item .btn-pos span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  display: inline-block !important;
+  letter-spacing: 0.02em !important;
+}
+
+nav.navbar .nav-item a.btn-pos i,
+nav.navbar a.btn-pos i,
+.navbar a.btn-pos i,
+.navbar .btn-pos i,
+.btn-pos i,
+a.btn-pos i,
+li.nav-item .btn-pos i {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 15px !important;
+  display: inline-block !important;
+  margin-right: 0 !important;
+}
+
+/* Notification Badge Pill */
+#notification-icon {
+  position: relative !important;
+}
+
+.notification-number,
+.badge-danger.notification-number {
+  position: absolute !important;
+  top: 1px !important;
+  right: 1px !important;
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: 9999px !important;
+  border: 2px solid var(--neo-surface) !important;
+  box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4) !important;
+  line-height: 1 !important;
 }
 
 /* ====================================================================
@@ -629,6 +1044,59 @@ nav.navbar .nav-menu .dropdown > a {
   overflow: visible !important;
 }
 
+.zolo-warehouse-picker .bootstrap-select {
+  width: auto !important;
+  position: relative !important;
+}
+
+.zolo-warehouse-picker .bootstrap-select > .btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px 8px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: var(--neo-text-primary) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.zolo-warehouse-picker .bootstrap-select .dropdown-menu {
+  background: var(--neo-surface-card) !important;
+  border: 1px solid var(--neo-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--neo-shadow-lg) !important;
+  padding: 6px !important;
+  min-width: 220px !important;
+  z-index: 1050 !important;
+}
+
+.zolo-warehouse-picker .bootstrap-select .dropdown-menu .bs-searchbox {
+  padding: 6px 8px !important;
+}
+
+.zolo-warehouse-picker .bootstrap-select .dropdown-menu .bs-searchbox input {
+  border-radius: 8px !important;
+  border: 1px solid var(--neo-border) !important;
+  background: var(--neo-bg) !important;
+  color: var(--neo-text-primary) !important;
+  font-size: 13px !important;
+  padding: 6px 10px !important;
+}
+
+.zolo-warehouse-picker .bootstrap-select .dropdown-menu li a {
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  color: var(--neo-text-secondary) !important;
+}
+
+.zolo-warehouse-picker .bootstrap-select .dropdown-menu li.selected a,
+.zolo-warehouse-picker .bootstrap-select .dropdown-menu li a:hover {
+  background: var(--neo-primary-light) !important;
+  color: var(--neo-primary) !important;
+  font-weight: 600 !important;
+}
+
 .zolo-date-filter-btn {
   border-radius: 10px !important;
   font-size: 13px !important;
@@ -719,22 +1187,60 @@ nav.navbar .nav-menu .dropdown > a {
   border-color: var(--neo-danger) !important;
 }
 
-/* Form Controls */
-.form-control, input[type="text"], input[type="number"], input[type="date"], select {
+/* Form Controls & Inputs Uniformity */
+.form-control, input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select {
   font-family: var(--neo-font) !important;
-  background-color: var(--neo-surface) !important;
-  border: 1px solid var(--neo-border) !important;
-  border-radius: var(--neo-radius-md) !important;
-  color: var(--neo-text-primary) !important;
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  border: 1.5px solid var(--neo-border, #e2e8f0) !important;
+  border-radius: var(--neo-radius-md, 10px) !important;
+  color: var(--neo-text-primary, #0f172a) !important;
   padding: 9px 14px !important;
   font-size: 13.5px !important;
-  transition: all 0.15s ease-in-out !important;
+  font-weight: 500 !important;
+  min-height: 40px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
-.form-control:focus {
-  background-color: var(--neo-surface) !important;
-  border-color: var(--neo-primary) !important;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+.form-control:focus, input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  outline: none !important;
+}
+
+/* Form group labels uniformity */
+.form-group label,
+label {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--neo-text-secondary, #475569) !important;
+  margin-bottom: 6px !important;
+  letter-spacing: -0.01em;
+}
+
+/* Selectpicker Button Uniformity with Inputs */
+.bootstrap-select > .btn.dropdown-toggle {
+  height: 40px !important;
+  min-height: 40px !important;
+  border: 1.5px solid var(--neo-border, #e2e8f0) !important;
+  border-radius: var(--neo-radius-md, 10px) !important;
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  padding: 8px 14px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.bootstrap-select > .btn.dropdown-toggle:focus,
+.bootstrap-select.show > .btn.dropdown-toggle {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
   outline: none !important;
 }
 
@@ -748,9 +1254,21 @@ nav.navbar .nav-menu .dropdown > a {
   width: 100% !important;
   border: 1px solid var(--neo-border) !important;
   border-radius: var(--neo-radius-md) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   margin-top: 10px !important;
   margin-bottom: 16px !important;
+}
+
+.table thead tr:first-child th:first-child,
+.neo-table thead tr:first-child th:first-child,
+table.dataTable thead tr:first-child th:first-child {
+  border-top-left-radius: var(--neo-radius-md) !important;
+}
+
+.table thead tr:first-child th:last-child,
+.neo-table thead tr:first-child th:last-child,
+table.dataTable thead tr:first-child th:last-child {
+  border-top-right-radius: var(--neo-radius-md) !important;
 }
 
 .table thead th, .neo-table thead th, table.dataTable thead th {
@@ -925,6 +1443,235 @@ body.dark-mode .table-hover tbody tr:hover td {
   color: #ffffff !important;
   box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35) !important;
   transform: translateY(-1px);
+}
+
+/* ====================================================================
+   DATATABLE EXPORT BUTTONS & TOOLBAR
+   Fixes invisible icons/white text on white background
+   ==================================================================== */
+.dt-buttons,
+div.dt-buttons {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-bottom: 12px !important;
+}
+
+.dt-buttons.btn-group {
+  gap: 6px !important;
+}
+
+.dt-buttons.btn-group > .btn:first-child,
+.dt-buttons.btn-group > .btn:last-child,
+.dt-buttons.btn-group > .btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
+  border-radius: 10px !important;
+}
+
+.dt-buttons .btn,
+.dt-buttons button.dt-button,
+.dt-buttons .btn-default,
+div.dt-buttons button,
+div.dt-buttons a.btn {
+  background-color: var(--neo-surface, #ffffff) !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  border-radius: 10px !important;
+  padding: 6px 14px !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: var(--neo-shadow-xs) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-height: 38px !important;
+  text-decoration: none !important;
+}
+
+/* Force visible high-contrast icons & text inside buttons */
+.dt-buttons .btn span,
+.dt-buttons button.dt-button span,
+.dt-buttons .btn-default span,
+div.dt-buttons button span,
+div.dt-buttons a.btn span,
+.dt-buttons button span i,
+.dt-buttons .btn i,
+div.dt-buttons button i,
+div.dt-buttons a.btn i {
+  color: var(--neo-text-secondary, #475569) !important;
+  font-size: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: color 0.15s ease !important;
+}
+
+.dt-buttons .btn:hover,
+.dt-buttons button.dt-button:hover,
+.dt-buttons .btn-default:hover,
+div.dt-buttons button:hover,
+div.dt-buttons a.btn:hover {
+  background-color: var(--neo-surface, #ffffff) !important;
+  border-color: var(--neo-primary, #4f46e5) !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.18) !important;
+  transform: translateY(-1px) !important;
+}
+
+.dt-buttons .btn:hover span,
+.dt-buttons .btn:hover i,
+.dt-buttons button.dt-button:hover span,
+.dt-buttons button.dt-button:hover i,
+div.dt-buttons button:hover span,
+div.dt-buttons button:hover i {
+  color: var(--neo-primary, #4f46e5) !important;
+}
+
+/* Distinct Vibrant Modern Accents for Export Types */
+.dt-buttons .buttons-pdf i,
+.dt-buttons button.buttons-pdf i {
+  color: #ef4444 !important; /* Rose Red */
+}
+
+.dt-buttons .buttons-excel i,
+.dt-buttons button.buttons-excel i,
+.dt-buttons .buttons-csv i,
+.dt-buttons button.buttons-csv i {
+  color: #10b981 !important; /* Emerald Green */
+}
+
+.dt-buttons .buttons-print i,
+.dt-buttons button.buttons-print i {
+  color: #0ea5e9 !important; /* Sky Blue */
+}
+
+.dt-buttons .buttons-delete i,
+.dt-buttons button.buttons-delete i {
+  color: #f43f5e !important; /* Crimson Delete */
+}
+
+.dt-buttons .buttons-collection i,
+.dt-buttons button.buttons-collection i,
+.dt-buttons .buttons-colvis i,
+.dt-buttons button.buttons-colvis i {
+  color: #6366f1 !important; /* Indigo ColVis */
+}
+
+/* Caret on column collection button */
+.dt-buttons .buttons-collection::after {
+  content: '';
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-top: 4px solid var(--neo-text-secondary, #64748b);
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+
+/* ====================================================================
+   DATATABLE COLUMN VISIBILITY COLLECTION DROPDOWN
+   Fixes the blank white box popover
+   ==================================================================== */
+div.dt-button-collection,
+ul.dt-button-collection.dropdown-menu,
+.dt-button-collection {
+  position: absolute !important;
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  border-radius: var(--neo-radius-lg, 12px) !important;
+  box-shadow: 0 20px 45px -4px rgba(15, 23, 42, 0.22), 0 8px 16px -2px rgba(15, 23, 42, 0.1) !important;
+  padding: 8px !important;
+  min-width: 220px !important;
+  max-height: min(480px, calc(100vh - 160px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  z-index: 99999 !important;
+  margin-top: 6px !important;
+}
+
+div.dt-button-collection::-webkit-scrollbar {
+  width: 5px;
+}
+div.dt-button-collection::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+div.dt-button-collection::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+div.dt-button-collection .dt-button,
+ul.dt-button-collection.dropdown-menu a,
+ul.dt-button-collection.dropdown-menu button,
+.dt-button-collection button.dropdown-item,
+.dt-button-collection a.dropdown-item {
+  background: transparent !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  border-radius: var(--neo-radius-sm, 6px) !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  transition: all 0.15s ease !important;
+  border: none !important;
+  text-decoration: none !important;
+  width: 100% !important;
+  cursor: pointer !important;
+}
+
+div.dt-button-collection .dt-button span,
+ul.dt-button-collection.dropdown-menu a span,
+ul.dt-button-collection.dropdown-menu button span,
+.dt-button-collection button.dropdown-item span,
+.dt-button-collection a.dropdown-item span {
+  color: var(--neo-text-primary, #0f172a) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  text-align: left !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+div.dt-button-collection .dt-button:hover,
+ul.dt-button-collection.dropdown-menu a:hover,
+ul.dt-button-collection.dropdown-menu button:hover,
+.dt-button-collection button.dropdown-item:hover,
+.dt-button-collection a.dropdown-item:hover {
+  background-color: var(--neo-primary-light, #eef2ff) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+}
+
+div.dt-button-collection .dt-button:hover span,
+ul.dt-button-collection.dropdown-menu a:hover span,
+ul.dt-button-collection.dropdown-menu button:hover span,
+.dt-button-collection button.dropdown-item:hover span,
+.dt-button-collection a.dropdown-item:hover span {
+  color: var(--neo-primary, #4f46e5) !important;
+  font-weight: 600 !important;
+}
+
+/* Active State for Visible Columns */
+div.dt-button-collection .dt-button.active,
+.dt-button-collection .buttons-columnVisibility.active {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+  font-weight: 600 !important;
+}
+
+div.dt-button-collection .dt-button.active span,
+.dt-button-collection .buttons-columnVisibility.active span {
+  color: var(--neo-primary, #4f46e5) !important;
+  font-weight: 600 !important;
+}
+
+div.dt-button-collection .dt-button.active::after,
+.dt-button-collection .buttons-columnVisibility.active::after {
+  content: '✓';
+  color: var(--neo-primary, #4f46e5);
+  font-weight: bold;
+  margin-left: auto;
+  padding-left: 8px;
 }
 
 /* Badges with Soft Tint & Vibrant Pill Style */
@@ -1546,22 +2293,42 @@ body.dark-mode .zolo-kpi-card:hover {
   margin-bottom: 0 !important;
 }
 
-.dataTables_wrapper .dataTables_length select,
-.dataTables_wrapper .dataTables_length .btn-group,
-.dataTables_wrapper .dataTables_length .btn-group > .btn {
-  min-width: 70px !important;
-  height: 36px !important;
-  padding: 4px 12px !important;
+.dataTables_wrapper .dataTables_length select {
+  min-width: 78px !important;
+  height: 38px !important;
+  line-height: 28px !important;
+  padding: 4px 30px 4px 14px !important;
   border-radius: 10px !important;
-  background: var(--neo-surface-card) !important;
+  background-color: var(--neo-surface-card) !important;
   color: var(--neo-text-primary) !important;
-  border: 1px solid var(--neo-border) !important;
+  border: 1.5px solid var(--neo-border) !important;
   font-size: 13px !important;
-  font-weight: 500 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  font-weight: 600 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  cursor: pointer !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 12px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
 }
+
+.dataTables_wrapper .dataTables_length select:hover {
+  border-color: #a5b4fc !important;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.1) !important;
+}
+
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+
 
 .dataTables_wrapper .dataTables_filter {
   margin-bottom: 1rem;
@@ -1814,7 +2581,7 @@ body.dark-mode .zolo-kpi-card:hover {
    TABLES & GLOBAL ANTI-CLIPPING SYSTEM
    ==================================================================== */
 .table-responsive {
-  min-height: 280px !important;
+  min-height: 320px !important;
   position: relative;
 }
 
@@ -1822,13 +2589,13 @@ body.dark-mode .zolo-kpi-card:hover {
 .table-responsive .dropdown-menu,
 .table .dropdown-menu,
 .dropdown-menu.edit-options {
-  z-index: 1065 !important;
-  border-radius: var(--neo-radius-md) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid var(--neo-border) !important;
-  background-color: var(--neo-surface-card) !important;
+  z-index: 99999 !important;
+  border-radius: var(--neo-radius-md, 12px) !important;
+  box-shadow: 0 14px 35px -4px rgba(15, 23, 42, 0.18), 0 6px 14px -2px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  background-color: var(--neo-surface-card, #ffffff) !important;
   padding: 6px !important;
-  min-width: 140px !important;
+  min-width: 160px !important;
 }
 
 .dropdown-menu.edit-options li {
@@ -1839,10 +2606,10 @@ body.dark-mode .zolo-kpi-card:hover {
 .dropdown-menu.edit-options li .btn-link,
 .dropdown-menu.edit-options li a {
   padding: 8px 14px !important;
-  border-radius: var(--neo-radius-sm) !important;
+  border-radius: var(--neo-radius-sm, 6px) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
-  color: var(--neo-text-primary) !important;
+  color: var(--neo-text-primary, #0f172a) !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
@@ -1854,8 +2621,8 @@ body.dark-mode .zolo-kpi-card:hover {
 
 .dropdown-menu.edit-options li .btn-link:hover,
 .dropdown-menu.edit-options li a:hover {
-  background-color: var(--neo-primary-light) !important;
-  color: var(--neo-primary) !important;
+  background-color: var(--neo-primary-light, #eef2ff) !important;
+  color: var(--neo-primary, #4f46e5) !important;
 }
 
 .dropdown-menu.edit-options li .btn-link i,
@@ -1864,12 +2631,12 @@ body.dark-mode .zolo-kpi-card:hover {
   width: 18px !important;
   text-align: center !important;
   margin-right: 2px !important;
-  color: var(--neo-text-secondary) !important;
+  color: var(--neo-text-secondary, #64748b) !important;
 }
 
 .dropdown-menu.edit-options li .btn-link:hover i,
 .dropdown-menu.edit-options li a:hover i {
-  color: var(--neo-primary) !important;
+  color: var(--neo-primary, #4f46e5) !important;
 }
 
 /* Dropup animation and positioning */
@@ -1878,7 +2645,14 @@ body.dark-mode .zolo-kpi-card:hover {
   top: auto !important;
   bottom: 100% !important;
   margin-top: 0 !important;
-  margin-bottom: 4px !important;
+  margin-bottom: 6px !important;
+}
+
+/* Release overflow across ALL screen widths when any dropdown or collection is active */
+.table-responsive.dropdown-active,
+.table-responsive.dt-collection-active,
+.table-responsive.select-active {
+  overflow: visible !important;
 }
 
 /* Prevent clipping inside cards or sections containing tables */
@@ -1899,10 +2673,10 @@ body > .bs-container {
 .bs-container .dropdown-menu,
 .bootstrap-select .dropdown-menu {
   z-index: 99999 !important;
-  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(15, 23, 42, 0.08) !important;
   border-radius: 12px !important;
-  border: 1px solid var(--neo-border) !important;
-  max-height: 380px !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  max-height: min(420px, calc(100vh - 160px)) !important;
 }
 
 /* The installed selectpicker uses Bootstrap 3's open state with Bootstrap 4's menu CSS. */
@@ -1932,6 +2706,21 @@ body > .bs-container {
 .dark-mode .table tfoot td {
   background: var(--neo-surface-card) !important;
   color: var(--neo-text-primary) !important;
+}
+
+/* When any collection or select is open inside a container, release overflow universally */
+.table-responsive:has(.dt-button-collection),
+.table-responsive:has(div.dt-button-collection),
+.table-responsive.dt-collection-active,
+.dataTables_wrapper:has(.dt-button-collection),
+.dataTables_wrapper.dt-collection-active,
+.card:has(.dt-button-collection),
+.card.dt-collection-active,
+.card-body:has(.dt-button-collection),
+.card-body.dt-collection-active,
+section:has(.dt-button-collection),
+section.dt-collection-active {
+  overflow: visible !important;
 }
 
 .dataTables_wrapper,
@@ -1966,6 +2755,10 @@ body > .bs-container {
   overflow: visible !important;
 }
 
+.modal-body {
+  overflow: visible !important;
+}
+
 /* ====================================================================
    AUTHORITATIVE ZOLO-ERP SIDEBAR & SUBMENU STYLES
    Permanently eliminates white/light fallbacks in side navigation
@@ -1976,6 +2769,10 @@ nav.side-navbar {
   background: #0f172a !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #cbd5e1 !important;
+}
+
+.side-navbar:not(.icon-only):not(.full-hide):not(.shrink),
+nav.side-navbar:not(.icon-only):not(.full-hide):not(.shrink) {
   width: 256px !important;
   opacity: 1 !important;
 }

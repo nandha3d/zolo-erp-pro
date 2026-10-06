@@ -24,8 +24,16 @@
             items: items.map(({name, code, ...line}) => line), paid_amount: Number($('paid').value),
             paying_method: $('method').value, account_id: Number($('account').value),
             order_discount: Number($('discount').value), shipping_cost: Number($('freight').value),
-            transport_name: $('transport').value, lr_number: $('lr-number').value,
+            transport_name: $('transport')?.value || '', lr_no: $('lr-number')?.value || '', lr_number: $('lr-number')?.value || '',
+            bale_no: $('bale-no')?.value || '', no_of_bales: $('no-of-bales')?.value ? Number($('no-of-bales').value) : null,
+            lr_date: $('lr-date')?.value || null, station_to: $('station-to')?.value || '', order_no: $('order-no')?.value || '',
+            credit_days: $('credit-days')?.value ? Number($('credit-days').value) : null,
             [kind === 'sale' ? 'sale_note' : 'note']: $('note').value, idempotency_key: key};
+        if ($('series')?.value) data.series_id = Number($('series').value);
+        if (kind === 'sale' && $('sale-type')?.value) data.sale_type_id = Number($('sale-type').value);
+        if (kind === 'purchase' && $('purchase-type')?.value) data.purchase_type_id = Number($('purchase-type').value);
+        if ($('agent')?.value) data.agent_id = Number($('agent').value);
+        if ($('area')?.value) data.area_id = Number($('area').value);
         if (kind === 'sale' && $('override').value) data.credit_override_reason = $('override').value;
         if (document.body.dataset.projectId) data.project_id = Number(document.body.dataset.projectId);
         for (const [id, field] of [['lr-date','lr_date'],['bale-count','bale_count'],['bundle-count','bundle_count']]) {
@@ -41,6 +49,8 @@
             data.update_item_cost = $('update-cost').checked;
             data.update_item_hsn = $('update-hsn').checked;
             data.goods_receipt_no = $('receipt-number').value;
+            if ($('supplier-invoice-no')?.value) data.supplier_invoice_no = $('supplier-invoice-no').value;
+            if ($('supplier-invoice-date')?.value) data.supplier_invoice_date = $('supplier-invoice-date').value;
             if ($('purchase-order').value) data.purchase_order_id = Number($('purchase-order').value);
             if (data.status !== 2) data.items.forEach(line => delete line.received_qty);
         }
@@ -167,8 +177,22 @@
         for (const [id, field] of [['paid','paid_amount'],['freight','shipping_cost'],['discount','order_discount'],['transport','transport_name'],['lr-number','lr_number']]) $(id).value = data[field] ?? (['paid','freight','discount'].includes(id) ? 0 : '');
         $('note').value = data[kind === 'sale' ? 'sale_note' : 'note'] || ''; key = data.idempotency_key || crypto.randomUUID();
         $('method').value = data.paying_method || 'Cash'; $('account').value = data.account_id || $('account').value;
+        if (data.series_id && $('series')) $('series').value = data.series_id;
+        if (kind === 'sale' && data.sale_type_id && $('sale-type')) $('sale-type').value = data.sale_type_id;
+        if (kind === 'purchase' && data.purchase_type_id && $('purchase-type')) $('purchase-type').value = data.purchase_type_id;
+        if (data.agent_id && $('agent')) $('agent').value = data.agent_id;
+        if (data.area_id && $('area')) $('area').value = data.area_id;
         if (kind === 'sale') $('override').value = data.credit_override_reason || '';
-        if (kind === 'purchase') { $('receipt-status').value = data.status || 1; $('landed-method').value = data.landed_cost_method || 'value'; $('purchase-order').value = data.purchase_order_id || ''; $('receipt-number').value = data.goods_receipt_no || ''; $('update-cost').checked = !!data.update_item_cost; $('update-hsn').checked = !!data.update_item_hsn; }
+        if (kind === 'purchase') {
+            $('receipt-status').value = data.status || 1;
+            $('landed-method').value = data.landed_cost_method || 'value';
+            $('purchase-order').value = data.purchase_order_id || '';
+            $('receipt-number').value = data.goods_receipt_no || '';
+            $('update-cost').checked = !!data.update_item_cost;
+            $('update-hsn').checked = !!data.update_item_hsn;
+            if (data.supplier_invoice_no && $('supplier-invoice-no')) $('supplier-invoice-no').value = data.supplier_invoice_no;
+            if (data.supplier_invoice_date && $('supplier-invoice-date')) $('supplier-invoice-date').value = data.supplier_invoice_date;
+        }
         if (!party && data[kind === 'sale' ? 'customer_id' : 'supplier_id']) { const result = await api('/party/' + data[kind === 'sale' ? 'customer_id' : 'supplier_id']); party = result.party; }
         if (party) await selectParty(party); else { $('party-search').value = ''; text($('previous'), '—'); text($('combined'), '—'); } render(); changed();
     }
@@ -193,10 +217,178 @@
     }
     $('pending').addEventListener('click', () => partyDetails('Pending bills', true));
     async function statement() { await partyDetails('Party statement'); }
-    async function rates() { if (!party || !items.length) return message('Select a party and item first.',true); try { info('Previous rates',await api('/previous-rates?party_id='+party.id+'&product_id='+items[items.length-1].product_id), [['Bill', row => row[kind+'_id']], ['Quantity', row => row.qty], ['Net rate', row => Number(row[priceField]).toFixed(4)]]); } catch(error){message(error.message,true);} }
-    function openInline(resource) { inlineResource=resource; inlineKey=crypto.randomUUID(); $('inline-form').reset(); $('master-code').required=resource==='products'; text($('inline-title'),resource==='products'?'New item':'New party'); $('party-fields').hidden=resource==='products'; $('product-fields').hidden=resource!=='products'; text($('inline-error'),''); showDialog($('inline-dialog')); $('master-name').focus(); }
-    document.querySelectorAll('[data-inline]').forEach(button=>button.addEventListener('click',()=>openInline(button.dataset.inline)));
-    $('inline-form').addEventListener('submit',async event=>{event.preventDefault();if(inlineBusy)return;inlineBusy=true;const data={...Object.fromEntries(new FormData(event.target)),idempotency_key:inlineKey};try {const record=await api('/masters/'+inlineResource,data);$('inline-dialog').close();if(inlineResource==='products'){addProduct(record);lastFocus=document.activeElement;}else{selectParty(record);lastFocus=$('product-search');}}catch(error){text($('inline-error'),error.message);}finally{inlineBusy=false;} });
+    async function rates() {
+        if (!party || !items.length) return message('Select a party and item first.', true);
+        try {
+            const res = await api('/previous-rates?party_id=' + party.id + '&product_id=' + items[items.length - 1].product_id);
+            const rows = [];
+            if (res.last_sale) {
+                rows.push({
+                    type: 'Last Sale Bill',
+                    ref: res.last_sale.reference_no,
+                    date: res.last_sale.created_at ? String(res.last_sale.created_at).substring(0, 10) : '—',
+                    rate: res.last_sale.rate,
+                    qty: res.last_sale.qty
+                });
+            }
+            if (res.last_purchase) {
+                rows.push({
+                    type: 'Last Purchase Inward',
+                    ref: res.last_purchase.reference_no,
+                    date: res.last_purchase.created_at ? String(res.last_purchase.created_at).substring(0, 10) : '—',
+                    rate: res.last_purchase.cost,
+                    qty: res.last_purchase.qty
+                });
+            }
+            if (!rows.length) {
+                rows.push({ type: 'No previous transaction found', ref: '—', date: '—', rate: 0, qty: 0 });
+            }
+            info('Rate History (Optech Rate Details Lookup)', rows, [
+                ['Voucher Nature', row => row.type],
+                ['Bill #', row => row.ref],
+                ['Date', row => row.date],
+                ['Rate / Cost', row => Number(row.rate).toFixed(2)],
+                ['Qty', row => row.qty || '—']
+            ]);
+        } catch(error) { message(error.message, true); }
+    }
+    function openInline(resource) {
+        inlineResource = resource;
+        inlineKey = crypto.randomUUID();
+        $('inline-form').reset();
+        const titles = {
+            products: 'New item',
+            parties: kind === 'sale' ? 'New customer' : 'New supplier',
+            agents: 'New agent / broker',
+            areas: 'New area / route',
+            'bill-sundries': 'New bill sundry',
+            'sale-types': 'New sale type',
+            'purchase-types': 'New purchase type',
+            remarks: 'New predefined remark',
+            series: 'New voucher series'
+        };
+        text($('inline-title'), titles[resource] || 'New master');
+        ['party', 'product', 'agent', 'area', 'sundry', 'sale-type', 'purchase-type', 'remark', 'series'].forEach(s => {
+            const el = $(s + '-fields');
+            if (el) el.hidden = true;
+        });
+        const activeSection = {
+            parties: 'party',
+            products: 'product',
+            agents: 'agent',
+            areas: 'area',
+            'bill-sundries': 'sundry',
+            'sale-types': 'sale-type',
+            'purchase-types': 'purchase-type',
+            remarks: 'remark',
+            series: 'series'
+        }[resource];
+        if (activeSection && $(activeSection + '-fields')) {
+            $(activeSection + '-fields').hidden = false;
+        }
+        $('master-code').required = resource === 'products';
+        text($('inline-error'), '');
+        showDialog($('inline-dialog'));
+        $('master-name').focus();
+    }
+    document.querySelectorAll('[data-inline]').forEach(button => button.addEventListener('click', () => openInline(button.dataset.inline)));
+    $('inline-form').addEventListener('submit', async event => {
+        event.preventDefault();
+        if (inlineBusy) return;
+        inlineBusy = true;
+        const data = {...Object.fromEntries(new FormData(event.target)), idempotency_key: inlineKey};
+        try {
+            const record = await api('/masters/' + inlineResource, data);
+            $('inline-dialog').close();
+            if (inlineResource === 'products') {
+                addProduct(record);
+                lastFocus = document.activeElement;
+            } else if (inlineResource === 'parties') {
+                selectParty(record);
+                lastFocus = $('product-search');
+            } else if (inlineResource === 'agents') {
+                const opt = new Option(record.name + (record.commission_rate ? ` (${record.commission_rate}%)` : ''), record.id, true, true);
+                $('agent').append(opt);
+                changed();
+            } else if (inlineResource === 'areas') {
+                const opt = new Option(record.name, record.id, true, true);
+                $('area').append(opt);
+                changed();
+            } else if (inlineResource === 'sale-types') {
+                const opt = new Option(record.name, record.id, true, true);
+                $('sale-type').append(opt);
+                changed();
+            } else if (inlineResource === 'purchase-types') {
+                const opt = new Option(record.name, record.id, true, true);
+                $('purchase-type').append(opt);
+                changed();
+            } else if (inlineResource === 'bill-sundries') {
+                const opt = new Option(record.name + ` (${record.calculation_type})`, record.id, true, true);
+                opt.dataset.calc = record.calculation_type;
+                opt.dataset.val = record.default_value;
+                $('bill-sundry-select').append(opt);
+                $('bill-sundry-select').dispatchEvent(new Event('change'));
+            } else if (inlineResource === 'remarks') {
+                const opt = new Option(record.title, record.remark, true, true);
+                $('standard-remark').append(opt);
+                $('note').value = record.remark;
+                changed();
+            } else if (inlineResource === 'series') {
+                const opt = new Option(record.code + (record.prefix ? ` (${record.prefix}${record.next_number})` : ''), record.id, true, true);
+                $('series').append(opt);
+                changed();
+            }
+        } catch (error) {
+            text($('inline-error'), error.message);
+        } finally {
+            inlineBusy = false;
+        }
+    });
+    if ($('bill-sundry-select')) {
+        $('bill-sundry-select').addEventListener('change', () => {
+            const opt = $('bill-sundry-select').selectedOptions[0];
+            if (opt && opt.value) {
+                const defVal = Number(opt.dataset.val || 0);
+                $('sundry-amount').value = defVal;
+                if (opt.textContent.toLowerCase().includes('discount')) {
+                    if (opt.dataset.calc === 'percentage') {
+                        const subtotal = items.reduce((acc, it) => acc + (it.qty * it[priceField]), 0);
+                        $('discount').value = (subtotal * (defVal / 100)).toFixed(4);
+                    } else {
+                        $('discount').value = defVal;
+                    }
+                } else if (opt.textContent.toLowerCase().includes('freight') || opt.textContent.toLowerCase().includes('transport') || opt.textContent.toLowerCase().includes('loading')) {
+                    $('freight').value = defVal;
+                }
+                changed();
+            }
+        });
+        $('sundry-amount').addEventListener('input', () => {
+            const opt = $('bill-sundry-select').selectedOptions[0];
+            const val = Number($('sundry-amount').value || 0);
+            if (opt && opt.value) {
+                if (opt.textContent.toLowerCase().includes('discount')) {
+                    if (opt.dataset.calc === 'percentage') {
+                        const subtotal = items.reduce((acc, it) => acc + (it.qty * it[priceField]), 0);
+                        $('discount').value = (subtotal * (val / 100)).toFixed(4);
+                    } else {
+                        $('discount').value = val;
+                    }
+                } else if (opt.textContent.toLowerCase().includes('freight')) {
+                    $('freight').value = val;
+                }
+            }
+            changed();
+        });
+    }
+    if ($('standard-remark')) {
+        $('standard-remark').addEventListener('change', () => {
+            if ($('standard-remark').value) {
+                $('note').value = $('standard-remark').value;
+                changed();
+            }
+        });
+    }
     function openTracking(index) {
         trackingIndex = index; const item = items[index];
         $('serials').value = (item.serials || []).join(','); $('batch-id').value = item.product_batch_id || '';

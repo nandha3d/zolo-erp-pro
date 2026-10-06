@@ -355,7 +355,7 @@
           }
 
           $("div.alert").delay(3000).slideUp(750);
-          $('select').selectpicker({
+          $('select:not(.dataTables_length select):not([name$="_length"]):not(.custom-select-native)').selectpicker({
               style: 'btn-link',
           });
 

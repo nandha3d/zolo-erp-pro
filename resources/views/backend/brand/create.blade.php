@@ -27,10 +27,14 @@
                         <tr data-id="{{ $brand->id }}">
                             <td>{{ $key }}</td>
                             @if ($brand->image)
-                                <td> <img src="{{ url('images/brand', $brand->image) }}" height="80" width="80">
+                                <td>
+                                    <img src="{{ url('images/brand', $brand->image) }}" height="50" width="50" style="object-fit: contain; border-radius: 8px;" onerror="this.onerror=null; this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
+                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center" style="display:none; color: #4f46e5; background: #eef2ff; border-radius: 8px; font-size: 13px; height: 40px; min-width: 40px;">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
                                 </td>
                             @else
-                                <td>No Image</td>
+                                <td>
+                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center" style="display:inline-flex; color: #64748b; background: #f1f5f9; border-radius: 8px; font-size: 13px; height: 40px; min-width: 40px;">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
+                                </td>
                             @endif
                             <td>{{ $brand->title }}</td>
                             <td>
@@ -48,13 +52,13 @@
                                                 data-target="#editModal"><i class="dripicons-document-edit"></i>
                                                 {{ __('db.edit') }}</button></li>
                                         <li class="divider"></li>
-                                        {{ Form::open(['route' => ['brand.destroy', $brand->id], 'method' => 'DELETE']) }}
                                         <li>
-                                            <button type="submit" class="btn btn-link"
+                                            {{ Form::open(['route' => ['brand.destroy', $brand->id], 'method' => 'DELETE', 'class' => 'd-inline']) }}
+                                            <button type="submit" class="btn btn-link text-danger w-100 text-left"
                                                 onclick="return confirm('Are you sure want to delete?')"><i
                                                     class="dripicons-trash"></i> {{ __('db.delete') }}</button>
+                                            {{ Form::close() }}
                                         </li>
-                                        {{ Form::close() }}
                                     </ul>
                                 </div>
                             </td>
@@ -371,35 +375,56 @@
                     text: '<i title="delete" class="dripicons-cross"></i>',
                     className: 'buttons-delete',
                     action: function(e, dt, node, config) {
-                        if (user_verified == '1') {
-                            brand_id.length = 0;
-                            $(':checkbox:checked').each(function(i) {
-                                if (i) {
-                                    brand_id[i - 1] = $(this).closest('tr').data('id');
+                        var brand_id = [];
+                        $('#biller-table tbody input.dt-checkboxes:checked').each(function() {
+                            var id = $(this).closest('tr').data('id');
+                            if (id) {
+                                brand_id.push(id);
+                            }
+                        });
+                        // Fallback check
+                        if (!brand_id.length) {
+                            $(':checkbox:checked').each(function() {
+                                var id = $(this).closest('tr').data('id');
+                                if (id && brand_id.indexOf(id) === -1) {
+                                    brand_id.push(id);
                                 }
                             });
-                            if (brand_id.length && confirm("Are you sure want to delete?")) {
-                                $.ajax({
-                                    type: 'POST',
-                                    url: 'brand/deletebyselection',
-                                    data: {
-                                        brandIdArray: brand_id
-                                    },
-                                    success: function(data) {
-                                        $(':checkbox:checked').each(function(i) {
-                                            if (i) {
-                                                 dt.row($(this).closest('tr')).remove().draw(false);
-                                            }
-                                        });
-                                        alert(data);    
-                                    }
+                        }
+                        if (brand_id.length && confirm("Are you sure want to delete?")) {
+                            $.ajax({
+                                type: 'POST',
+                                url: 'brand/deletebyselection',
+                                data: {
+                                    brandIdArray: brand_id
+                                },
+                                success: function(data) {
+                                    // Remove checked rows from DataTable
+                                    $('#biller-table tbody input.dt-checkboxes:checked').each(function() {
+                                        dt.row($(this).closest('tr')).remove();
+                                    });
+                                    dt.draw(false);
 
-                                });
-                                // dt.rows({ page: 'current', selected: true }).remove().draw(false);
-                            } else if (!brand_id.length)
-                                alert('No brand is selected!');
-                        } else
-                            alert('This feature is disable for demo!');
+                                    // Display modern notification banner
+                                    $('section .alert').remove();
+                                    var alertMsg = typeof data === 'string' ? data : (data.message || 'Brand deleted successfully!');
+                                    var alertHtml = '<div class="alert alert-success alert-dismissible text-center fade show" role="alert" style="margin: 15px 0;">' +
+                                        '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                                        '<i class="dripicons-checkmark mr-1"></i> ' + alertMsg +
+                                        '</div>';
+                                    $('section > .container-fluid:first').prepend(alertHtml);
+
+                                    setTimeout(function() {
+                                        $('section .alert').fadeOut(600, function() { $(this).remove(); });
+                                    }, 4000);
+                                },
+                                error: function(xhr) {
+                                    alert(xhr.responseText || 'Error deleting selected brands.');
+                                }
+                            });
+                        } else if (!brand_id.length) {
+                            alert('No brand is selected! Please check at least one checkbox.');
+                        }
                     }
                 },
                 {

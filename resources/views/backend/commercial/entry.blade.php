@@ -17,11 +17,93 @@
     @isset($exchangeReturn)<p class="panel">Exchange against return {{ $exchangeReturn->reference_no }}. Select the same customer and enter replacement items.</p>@endisset
     <form id="entry-form">
         <section class="panel fields" aria-label="Document details">
-            <div class="search"><label for="party-search">{{ $kind === 'sale' ? 'Customer' : 'Supplier' }}</label><input id="party-search" autocomplete="off" placeholder="Name, city, alias or phone" aria-controls="party-results"><div id="party-results" class="results" aria-label="Party search results"></div><button type="button" data-inline="parties">New party · Alt+C</button></div>
-            <label for="warehouse">Warehouse<select id="warehouse" required>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected($project && $warehouse->id === $project->site_warehouse_id)>{{ $warehouse->name }}</option>@endforeach</select></label>
+            <div class="field-with-add">
+                <label for="series">Voucher Series
+                    <select id="series" name="series_id">
+                        @forelse($documentSeries as $series)
+                            <option value="{{ $series->id }}" @selected($series->is_default)>{{ $series->code ?? $series->prefix }} ({{ $series->prefix }}{{ $series->next_number }})</option>
+                        @empty
+                            <option value="">Default Series</option>
+                        @endforelse
+                    </select>
+                </label>
+                <button type="button" class="btn-inline-add" data-inline="series" title="Add New Series" aria-label="Add Series">+</button>
+            </div>
+            <div class="search">
+                <label for="party-search">{{ $kind === 'sale' ? 'Customer' : 'Supplier' }}</label>
+                <input id="party-search" autocomplete="off" placeholder="Name, city, alias or phone" aria-controls="party-results">
+                <div id="party-results" class="results" aria-label="Party search results"></div>
+                <button type="button" data-inline="parties">New party · Alt+C</button>
+            </div>
+            @if($kind === 'sale')
+            <div class="field-with-add">
+                <label for="sale-type">Sale Type
+                    <select id="sale-type" name="sale_type_id" required>
+                        @foreach($saleTypes as $st)
+                            <option value="{{ $st->id }}" data-rate="{{ $st->tax_rate }}" data-nature="{{ $st->tax_nature }}">{{ $st->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button type="button" class="btn-inline-add" data-inline="sale-types" title="Add New Sale Type" aria-label="Add Sale Type">+</button>
+            </div>
+            @else
+            <div class="field-with-add">
+                <label for="purchase-type">Purchase Type
+                    <select id="purchase-type" name="purchase_type_id" required>
+                        @foreach($purchaseTypes as $pt)
+                            <option value="{{ $pt->id }}" data-rate="{{ $pt->tax_rate }}" data-nature="{{ $pt->tax_nature }}">{{ $pt->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button type="button" class="btn-inline-add" data-inline="purchase-types" title="Add New Purchase Type" aria-label="Add Purchase Type">+</button>
+            </div>
+            @endif
+            <div class="field-with-add">
+                <label for="agent">Agent / Through
+                    <select id="agent" name="agent_id">
+                        <option value="">-- Direct --</option>
+                        @foreach($agents as $ag)
+                            <option value="{{ $ag->id }}" data-rate="{{ $ag->commission_rate }}">{{ $ag->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button type="button" class="btn-inline-add" data-inline="agents" title="Add New Agent" aria-label="Add Agent">+</button>
+            </div>
+            <div class="field-with-add">
+                <label for="area">Area / Route
+                    <select id="area" name="area_id">
+                        <option value="">-- General Area --</option>
+                        @foreach($areas as $ar)
+                            <option value="{{ $ar->id }}">{{ $ar->name }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button type="button" class="btn-inline-add" data-inline="areas" title="Add New Area" aria-label="Add Area">+</button>
+            </div>
+            <label for="warehouse">Warehouse
+                <select id="warehouse" required>
+                    @foreach($warehouses as $warehouse)
+                        <option value="{{ $warehouse->id }}" @selected($project && $warehouse->id === $project->site_warehouse_id)>{{ $warehouse->name }}</option>
+                    @endforeach
+                </select>
+            </label>
             <label for="business-date">Document date<input id="business-date" type="date" value="{{ $businessDate }}" required></label>
-            @if($kind === 'purchase')<label for="receipt-status">Receipt status<select id="receipt-status"><option value="1">Received</option><option value="2">Partial</option><option value="3">Pending</option><option value="4">Unbilled order</option></select></label>@endif
-            @if(config('compliance.enabled'))<label for="place-of-supply">Place of supply state code (optional)<input id="place-of-supply" maxlength="2" pattern="[0-9]{2}" placeholder="Party state"></label><label for="reverse-charge"><input id="reverse-charge" type="checkbox"> Reverse charge</label>@endif
+            @if($kind === 'purchase')
+            <label for="supplier-invoice-no">Supplier Inv No<input id="supplier-invoice-no" name="supplier_invoice_no" maxlength="100" placeholder="Vendor Invoice #"></label>
+            <label for="supplier-invoice-date">Supplier Inv Date<input id="supplier-invoice-date" name="supplier_invoice_date" type="date"></label>
+            <label for="receipt-status">Receipt status
+                <select id="receipt-status">
+                    <option value="1">Received</option>
+                    <option value="2">Partial</option>
+                    <option value="3">Pending</option>
+                    <option value="4">Unbilled order</option>
+                </select>
+            </label>
+            @endif
+            @if(config('compliance.enabled'))
+            <label for="place-of-supply">Place of supply state code (optional)<input id="place-of-supply" maxlength="2" pattern="[0-9]{2}" placeholder="Party state"></label>
+            <label for="reverse-charge"><input id="reverse-charge" type="checkbox"> Reverse charge</label>
+            @endif
         </section>
         @if($project)<p>Project: {{ $project->title }} · {{ $project->site_json['site_address'] }}</p>@endif
         @if($industry['profile']==='fmcg')<p>Batch items use earliest unexpired stock when no batch is chosen. Scheme free quantities appear as separate zero-price stock lines on save.</p>@endif
@@ -32,13 +114,67 @@
             <div class="table-scroll"><table><thead><tr><th scope="col">Item</th><th scope="col">Quantity</th><th scope="col">{{ $kind === 'sale' ? 'Net price' : 'Net cost' }}</th>@if($kind === 'purchase')<th scope="col">Received</th>@endif<th scope="col">Tracking</th><th scope="col">Actions</th></tr></thead><tbody id="item-lines"></tbody></table></div>
             <p id="empty-lines">No items yet. Enter an item code above.</p>
         </section>
-        <details class="panel"><summary>Charges, discount and transport</summary><div class="fields">
-            <label for="discount">Invoice discount<input id="discount" type="number" min="0" step="0.0001" value="0"></label><label for="freight">Freight<input id="freight" type="number" min="0" step="0.0001" value="0"></label>
-            @if($kind === 'purchase')<label for="landed-method">Allocate freight<select id="landed-method"><option value="value">By value</option><option value="quantity">By quantity</option><option value="weight">By weight</option><option value="manual">Manual</option></select></label><label for="purchase-order">Purchase order ID (optional)<input id="purchase-order" type="number" min="1"></label><label for="receipt-number">Goods receipt number (optional)<input id="receipt-number" maxlength="100"></label><label for="update-cost"><input id="update-cost" type="checkbox"> Update item cost on save</label><label for="update-hsn"><input id="update-hsn" type="checkbox"> Update item HSN on save</label>@endif
-            @if($industry['profile']==='textile')<label for="lr-date">LR date<input id="lr-date" type="date"></label><label for="bale-count">Bale count<input id="bale-count" type="number" min="0" step="1"></label><label for="bundle-count">Bundle count<input id="bundle-count" type="number" min="0" step="1"></label>@endif<label for="transport">Transport<input id="transport" maxlength="255"></label><label for="lr-number">LR number<input id="lr-number" maxlength="255"></label><label for="note">Note<textarea id="note" rows="2"></textarea></label>
+        <details class="panel"><summary>Charges, Bill Sundries, Transport & Remarks</summary><div class="fields">
+            <div class="sundry-box" style="grid-column: 1 / -1;">
+                <div class="sundry-box-heading">
+                    <span>Bill Sundries & Additional Charges</span>
+                    <button type="button" class="btn-inline-add" data-inline="bill-sundries" title="New Bill Sundry">+ New Sundry</button>
+                </div>
+                <div class="fields">
+                    <label for="discount">Invoice discount<input id="discount" type="number" min="0" step="0.0001" value="0"></label>
+                    <label for="freight">Freight<input id="freight" type="number" min="0" step="0.0001" value="0"></label>
+                    <label for="bill-sundry-select">Apply Sundry
+                        <select id="bill-sundry-select">
+                            <option value="">-- Select Sundry --</option>
+                            @foreach($billSundries as $bs)
+                                <option value="{{ $bs->id }}" data-calc="{{ $bs->calculation_type }}" data-val="{{ $bs->default_value }}">{{ $bs->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label for="sundry-amount">Sundry Amount / %<input id="sundry-amount" type="number" step="0.0001" value="0"></label>
+                </div>
+            </div>
+            @if($kind === 'purchase')
+            <label for="landed-method">Allocate freight<select id="landed-method"><option value="value">By value</option><option value="quantity">By quantity</option><option value="weight">By weight</option><option value="manual">Manual</option></select></label>
+            <label for="purchase-order">Purchase order ID (optional)<input id="purchase-order" type="number" min="1"></label>
+            <label for="receipt-number">Goods receipt number (optional)<input id="receipt-number" maxlength="100"></label>
+            <label for="update-cost"><input id="update-cost" type="checkbox"> Update item cost on save</label>
+            <label for="update-hsn"><input id="update-hsn" type="checkbox"> Update item HSN on save</label>
+            @endif
+            <div class="sundry-box" style="grid-column: 1 / -1;">
+                <div class="sundry-box-heading">
+                    <span>Transport Details &amp; Add-Ins</span>
+                </div>
+                <div class="fields">
+                    <label for="bale-no">Bale NO<input id="bale-no" name="bale_no" maxlength="100" placeholder="e.g. MJ-22"></label>
+                    <label for="no-of-bales">No Of Bales<input id="no-of-bales" name="no_of_bales" type="number" min="0" step="1" placeholder="e.g. 4"></label>
+                    <label for="lr-number">LR No<input id="lr-number" name="lr_no" maxlength="100" placeholder="Lorry Receipt #"></label>
+                    <label for="lr-date">LR Date<input id="lr-date" name="lr_date" type="date"></label>
+                    <label for="transport">Transport / Carrier<input id="transport" name="transport_name" maxlength="150" placeholder="Transporter name"></label>
+                    <label for="station-to">Station To<input id="station-to" name="station_to" maxlength="150" placeholder="Destination city / station"></label>
+                    <label for="order-no">Order NO<input id="order-no" name="order_no" maxlength="100" placeholder="Order / PO #"></label>
+                    @if($kind === 'sale')
+                    <label for="credit-days">Credit Days<input id="credit-days" name="credit_days" type="number" min="0" step="1" placeholder="e.g. 30"></label>
+                    @endif
+                </div>
+            </div>
+            <div class="field-with-add" style="grid-column: 1 / -1;">
+                <label for="standard-remark">Standard Remark / Terms
+                    <select id="standard-remark">
+                        <option value="">-- Select Predefined Remark --</option>
+                        @foreach($remarks as $rm)
+                            <option value="{{ $rm->remark }}">{{ $rm->title }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button type="button" class="btn-inline-add" data-inline="remarks" title="Add Predefined Remark" aria-label="Add Remark">+</button>
+            </div>
+            <label for="note" style="grid-column: 1 / -1;">Note / Terms<textarea id="note" rows="2"></textarea></label>
         </div></details>
         <section class="panel fields" aria-label="Payment">
-            <label for="paid">Initial payment<input id="paid" type="number" min="0" step="0.0001" value="0"></label><label for="method">Payment method<select id="method"><option>Cash</option><option>Bank</option><option>Cheque</option><option>Credit Card</option></select></label><label for="account">Payment account<select id="account">@foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select></label>
+            <label for="paid">Initial payment<input id="paid" type="number" min="0" step="0.0001" value="0"></label>
+            <label for="method">Payment method<select id="method"><option>Cash</option><option>Bank</option><option>Cheque</option><option>Credit Card</option></select></label>
+            <label for="account">Payment account<select id="account">@foreach($accounts as $account)<option value="{{ $account->id }}">{{ $account->name }}</option>@endforeach</select></label>
             @if($kind === 'sale')<label for="override">Credit override reason (permission required)<input id="override" maxlength="500"></label>@endif
         </section>
         <footer class="actions"><span id="draft-status">Draft not saved</span><button type="button" id="save-draft">Save draft</button><button type="button" id="clone">Clone prior bill</button><button type="button" id="pending">Pending bills · Ctrl+B</button><button type="submit" class="primary" id="post">Post invoice · Ctrl+Enter</button></footer>
@@ -46,7 +182,113 @@
     <p class="shortcuts">Space: party search · Enter: advance · Alt+C: new party · F6: new item · Ctrl+S: previous rates · Alt+Y: statement · Esc: close</p>
 </main>
 <dialog id="info-dialog"><div class="dialog-heading"><h2 id="info-title">Details</h2><button type="button" data-close aria-label="Close details">Close</button></div><div id="info-content"></div></dialog>
-<dialog id="inline-dialog"><form id="inline-form"><div class="dialog-heading"><h2 id="inline-title">New master</h2><button type="button" data-close>Close</button></div><label for="master-name">Name<input id="master-name" name="name" required maxlength="100"></label><div id="party-fields"><label for="master-phone">Phone<input id="master-phone" name="phone_number"></label><label for="master-city">City<input id="master-city" name="city"></label><label for="master-alias">Search alias<input id="master-alias" name="search_alias" maxlength="100"></label><label for="master-address">Address<input id="master-address" name="address"></label>@if($kind === 'sale')<label for="master-credit-days">Credit days<input id="master-credit-days" name="credit_days" type="number" min="0" max="3650" value="0"></label><label for="master-credit-limit">Credit limit<input id="master-credit-limit" name="credit_limit" type="number" min="0" step="0.0001" value="0"></label><label for="master-group">Customer group<select id="master-group" name="customer_group_id">@foreach($groups as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach</select></label>@endif</div><div id="product-fields"><label for="master-code">Code<input id="master-code" name="code"></label><label for="master-category">Category<select id="master-category" name="category_id">@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></label><label for="master-unit">Unit<select id="master-unit" name="unit_id">@foreach($units as $unit)<option value="{{ $unit->id }}">{{ $unit->unit_name }}</option>@endforeach</select></label><label for="master-price">Price<input id="master-price" name="price" type="number" min="0" step="0.0001" value="0"></label><label for="master-cost">Cost<input id="master-cost" name="cost" type="number" min="0" step="0.0001" value="0"></label></div><p id="inline-error" role="alert"></p><button class="primary" type="submit">Create and select</button></form></dialog>
+<dialog id="inline-dialog">
+    <form id="inline-form">
+        <div class="dialog-heading"><h2 id="inline-title">New master</h2><button type="button" data-close>Close</button></div>
+        <label for="master-name">Name / Title<input id="master-name" name="name" required maxlength="150"></label>
+        
+        <div id="party-fields">
+            <label for="master-phone">Phone<input id="master-phone" name="phone_number"></label>
+            <label for="master-city">City<input id="master-city" name="city"></label>
+            <label for="master-alias">Search alias<input id="master-alias" name="search_alias" maxlength="100"></label>
+            <label for="master-address">Address<input id="master-address" name="address"></label>
+            <label for="master-area">Area / Route
+                <select id="master-area" name="area_id">
+                    <option value="">-- Select Area --</option>
+                    @foreach($areas as $ar)<option value="{{ $ar->id }}">{{ $ar->name }}</option>@endforeach
+                </select>
+            </label>
+            <label for="master-agent">Agent / Through
+                <select id="master-agent" name="agent_id">
+                    <option value="">-- Direct --</option>
+                    @foreach($agents as $ag)<option value="{{ $ag->id }}">{{ $ag->name }}</option>@endforeach
+                </select>
+            </label>
+            @if($kind === 'sale')
+            <label for="master-credit-days">Credit days<input id="master-credit-days" name="credit_days" type="number" min="0" max="3650" value="0"></label>
+            <label for="master-credit-limit">Credit limit<input id="master-credit-limit" name="credit_limit" type="number" min="0" step="0.0001" value="0"></label>
+            <label for="master-group">Customer group<select id="master-group" name="customer_group_id">@foreach($groups as $group)<option value="{{ $group->id }}">{{ $group->name }}</option>@endforeach</select></label>
+            @endif
+        </div>
+
+        <div id="product-fields" hidden>
+            <label for="master-code">Code<input id="master-code" name="code"></label>
+            <label for="master-category">Category<select id="master-category" name="category_id">@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></label>
+            <label for="master-unit">Unit<select id="master-unit" name="unit_id">@foreach($units as $unit)<option value="{{ $unit->id }}">{{ $unit->unit_name }}</option>@endforeach</select></label>
+            <label for="master-price">Price<input id="master-price" name="price" type="number" min="0" step="0.0001" value="0"></label>
+            <label for="master-cost">Cost<input id="master-cost" name="cost" type="number" min="0" step="0.0001" value="0"></label>
+        </div>
+
+        <div id="agent-fields" hidden>
+            <label for="agent-code">Agent Code<input id="agent-code" name="code" maxlength="50"></label>
+            <label for="agent-phone">Phone<input id="agent-phone" name="phone" maxlength="50"></label>
+            <label for="agent-commission">Commission Rate (%)<input id="agent-commission" name="commission_rate" type="number" step="0.01" min="0" max="100" value="0"></label>
+        </div>
+
+        <div id="area-fields" hidden>
+            <label for="area-code">Area Code<input id="area-code" name="code" maxlength="50"></label>
+            <label for="area-city">City<input id="area-city" name="city" maxlength="100"></label>
+            <label for="area-pincode">Pincode<input id="area-pincode" name="pincode" maxlength="20"></label>
+        </div>
+
+        <div id="sundry-fields" hidden>
+            <label for="sundry-nature">Nature
+                <select id="sundry-nature" name="nature">
+                    <option value="{{ $kind === 'sale' ? 'sales' : 'purchase' }}">{{ ucfirst($kind) }} Only</option>
+                    <option value="both">Both Sales & Purchase</option>
+                </select>
+            </label>
+            <label for="sundry-calc">Calculation Type
+                <select id="sundry-calc" name="calculation_type">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="amount">Fixed Amount</option>
+                </select>
+            </label>
+            <label for="sundry-default">Default Value / Rate<input id="sundry-default" name="default_value" type="number" step="0.0001" value="0"></label>
+            <label for="sundry-tax">GST Tax Rate (%)<input id="sundry-tax" name="tax_rate" type="number" step="0.01" min="0" max="100" value="0"></label>
+        </div>
+
+        <div id="sale-type-fields" hidden>
+            <label for="st-code">Code<input id="st-code" name="code" maxlength="50"></label>
+            <label for="st-nature">Tax Nature
+                <select id="st-nature" name="tax_nature">
+                    <option value="local">Local GST</option>
+                    <option value="interstate">Interstate IGST</option>
+                    <option value="export">Export</option>
+                    <option value="sez">SEZ</option>
+                    <option value="exempted">Exempted</option>
+                </select>
+            </label>
+            <label for="st-rate">Tax Rate (%)<input id="st-rate" name="tax_rate" type="number" step="0.01" min="0" max="100" value="18"></label>
+        </div>
+
+        <div id="purchase-type-fields" hidden>
+            <label for="pt-code">Code<input id="pt-code" name="code" maxlength="50"></label>
+            <label for="pt-nature">Tax Nature
+                <select id="pt-nature" name="tax_nature">
+                    <option value="local">Local GST</option>
+                    <option value="interstate">Interstate IGST</option>
+                    <option value="import">Import</option>
+                    <option value="exempted">Exempted</option>
+                </select>
+            </label>
+            <label for="pt-rate">Tax Rate (%)<input id="pt-rate" name="tax_rate" type="number" step="0.01" min="0" max="100" value="18"></label>
+        </div>
+
+        <div id="remark-fields" hidden>
+            <label for="remark-text">Remark / Terms Text<textarea id="remark-text" name="remark" rows="3"></textarea></label>
+        </div>
+
+        <div id="series-fields" hidden>
+            <label for="series-code">Series Code / Name *<input id="series-code" name="code" maxlength="50" placeholder="e.g. SALES-2, MJ-23"></label>
+            <label for="series-prefix">Prefix<input id="series-prefix" name="prefix" maxlength="100" placeholder="e.g. MJ-, INV-"></label>
+            <label for="series-start">Start No<input id="series-start" name="next_number" type="number" min="1" value="1"></label>
+        </div>
+
+        <p id="inline-error" role="alert"></p>
+        <button class="primary" type="submit">Create and select</button>
+    </form>
+</dialog>
 <template id="line-unit-options"><select>@foreach($units as $unit)<option value="{{ $unit->id }}">{{ $unit->unit_name }}</option>@endforeach</select></template>
 <dialog id="tracking-dialog"><form id="tracking-form"><h2>Stock tracking and freight</h2><p>Enter the identities for this line. Stock rules validate these when posting.</p><label for="serials">Serials (comma separated)<textarea id="serials"></textarea></label><label for="batch-id">Existing batch ID<input id="batch-id" type="number" min="1"></label>@if($kind === 'purchase')<label for="batch-no">New batch number<input id="batch-no"></label><label for="expiry">Expiry date<input id="expiry" type="date"></label>@if($industry['profile']==='fmcg')<label for="mfg-date">Manufacturing date<input id="mfg-date" type="date"></label><label for="batch-mrp">Batch MRP<input id="batch-mrp" type="number" min="0" step="0.0001"></label>@endif<label for="hsn-code">Item HSN<input id="hsn-code" inputmode="numeric" maxlength="8"></label><label for="weight">Line weight<input id="weight" type="number" min="0" step="0.0001"></label><label for="manual-freight">Manual freight allocation<input id="manual-freight" type="number" min="0" step="0.0001"></label>@if($dimensionsEnabled)<fieldset><legend>New dimensioned piece</legend><label for="piece-uom">Dimension unit<select id="piece-uom">@foreach(['mm','cm','m','in','ft'] as $dimensionUnit)<option value="{{ $dimensionUnit }}" @selected($dimensionUnit===($industry['settings']['dimension_unit']??'mm'))>{{ $dimensionUnit }}</option>@endforeach</select></label><label for="piece-count">Number of pieces<input id="piece-count" type="number" min="1" step="1" value="1"></label><label for="piece-grade">Grade<input id="piece-grade" maxlength="50"></label><label for="piece-number">Piece number<input id="piece-number" maxlength="100"></label><div class="fields"><label for="piece-length">Length<input id="piece-length" type="number" min="0.000001" step="0.000001"></label><label for="piece-width">Width<input id="piece-width" type="number" min="0.000001" step="0.000001"></label><label for="piece-thickness">Thickness<input id="piece-thickness" type="number" min="0.000001" step="0.000001"></label></div></fieldset>@endif
 @endif

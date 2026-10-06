@@ -85,7 +85,7 @@
     @endif
 
     <!-- zoloERP Design System -->
-    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css" id="zolo-neo-style">
 
     @stack('css')
 
@@ -164,7 +164,7 @@
           }
 
           $("div.alert").delay(7000).slideUp(750);
-          $('select').selectpicker({
+          $('select:not(.dataTables_length select):not([name$="_length"]):not(.custom-select-native)').selectpicker({
               style: 'btn-link',
           });
 
@@ -298,6 +298,78 @@
             $('#account-statement-modal input[name="start_date"]').val(start_date);
             $('#account-statement-modal input[name="end_date"]').val(end_date);
           }
+      });
+
+      // Universal Anti-Clipping Dropdown & Collection Manager
+      var $ancestorContainers = function($el) {
+        return $el.parents('.table-responsive, .card-body, .card, .dataTables_wrapper, .modal-body, .modal-content, section');
+      };
+
+      $(document).on('show.bs.dropdown', function (e) {
+        var $target = $(e.target);
+        var $toggle = $target.find('.dropdown-toggle');
+        var $menu = $target.find('.dropdown-menu');
+        var $group = $target.closest('.btn-group, .dropdown');
+
+        $ancestorContainers($target).addClass('dropdown-active');
+
+        if ($toggle.length) {
+          var offset = $toggle.offset();
+          var toggleHeight = $toggle.outerHeight();
+          var menuHeight = $menu.outerHeight() || 190;
+          var windowHeight = $(window).height();
+          var scrollTop = $(window).scrollTop();
+          var spaceBelow = windowHeight - (offset.top - scrollTop + toggleHeight);
+          var spaceAbove = (offset.top - scrollTop);
+
+          if (spaceBelow < (menuHeight + 20) && spaceAbove > spaceBelow) {
+            $group.addClass('dropup');
+          } else {
+            $group.removeClass('dropup');
+          }
+        }
+      });
+
+      $(document).on('hidden.bs.dropdown', function (e) {
+        var $target = $(e.target);
+        $target.closest('.btn-group, .dropdown').removeClass('dropup');
+        if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show, div.dt-button-collection:visible').length) {
+          $('.table-responsive, .card-body, .card, .dataTables_wrapper, .modal-body, .modal-content, section').removeClass('dropdown-active');
+        }
+      });
+
+      $(document).on('click', '.buttons-collection, .buttons-colvis', function () {
+        var $btn = $(this);
+        $ancestorContainers($btn).addClass('dt-collection-active dropdown-active');
+
+        setTimeout(function () {
+          var $collection = $('div.dt-button-collection');
+          if ($collection.length) {
+            $collection.css({
+              'z-index': '99999',
+              'max-height': 'calc(100vh - 140px)',
+              'overflow-y': 'auto'
+            });
+            $ancestorContainers($collection).addClass('dt-collection-active dropdown-active');
+          }
+        }, 20);
+      });
+
+      $(document).on('click', '.dt-button-background', function () {
+        $('.dt-collection-active').removeClass('dt-collection-active');
+        if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show').length) {
+          $('.table-responsive, .card-body, .card, .dataTables_wrapper, section').removeClass('dropdown-active');
+        }
+      });
+
+      $(document).on('show.bs.select', function (e) {
+        $ancestorContainers($(e.target)).addClass('dropdown-active select-active');
+      });
+
+      $(document).on('hidden.bs.select', function () {
+        if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show, div.dt-button-collection:visible').length) {
+          $('.table-responsive, .card-body, .card, .modal-body, .modal-content, section').removeClass('dropdown-active select-active');
+        }
       });
     </script>
   </body>

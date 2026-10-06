@@ -78,6 +78,29 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->bootLegacyStockShadow();
 
+        Blade::if('can', function ($permission) {
+            $user = Auth::user();
+            if (!$user) {
+                return false;
+            }
+            if ($user->role_id == 1) {
+                return true;
+            }
+            $role_has_permissions_list = Cache::remember(
+                'role_has_permissions_list' . $user->role_id,
+                60 * 60 * 24 * 365,
+                function () use ($user) {
+                    return DB::table('permissions')
+                        ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+                        ->where('role_id', $user->role_id)
+                        ->select('permissions.name')
+                        ->get();
+                }
+            );
+            $permissions = $role_has_permissions_list->pluck('name')->toArray();
+            return in_array($permission, $permissions);
+        });
+
         if (app()->runningInConsole()) {
             return;
         }
@@ -119,31 +142,6 @@ class AppServiceProvider extends ServiceProvider
             }
         };
 
-        $permissionLogic = function () {
-            Blade::if('can', function ($permission) {
-                $user = Auth::user();
-                if (!$user) {
-                    return false;
-                }
-                if ($user->role_id == 1) {
-                    return true;
-                }
-                $role_has_permissions_list = Cache::remember(
-                    'role_has_permissions_list' . $user->role_id,
-                    60 * 60 * 24 * 365,
-                    function () use ($user) {
-                        return DB::table('permissions')
-                            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-                            ->where('role_id', $user->role_id)
-                            ->select('permissions.name')
-                            ->get();
-                    }
-                );
-                $permissions = $role_has_permissions_list->pluck('name')->toArray();
-                return in_array($permission, $permissions);
-            });
-        };
-
         if (config('database.connections.zoloerp_landlord')) {
             ///new code for superadmin//
             if (!app()->bound('tenancy')) {
@@ -177,13 +175,11 @@ class AppServiceProvider extends ServiceProvider
             }
             ///new code for superadmin//
 
-            Event::listen(TenancyBootstrapped::class, function () use ($translationLogic, $permissionLogic) {
+            Event::listen(TenancyBootstrapped::class, function () use ($translationLogic) {
                 $translationLogic();
-                $permissionLogic();
             });
         } else {
             $translationLogic();
-            $permissionLogic();
         }
     }
 }

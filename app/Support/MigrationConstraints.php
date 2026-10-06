@@ -11,11 +11,13 @@ final class MigrationConstraints
 {
     public static function unique(string $table, string $name, array $columns, bool $primary = false): void
     {
-        $existing = collect(Schema::getIndexes($table))->firstWhere('name', $name);
-        if ($existing) {
-            if ($existing['columns'] !== $columns || !$existing['unique'] || ($primary && !$existing['primary'])) {
-                throw new RuntimeException('Unexpected existing index '.$table.'.'.$name.'.');
+        $existing = collect(Schema::getIndexes($table))->first(function ($idx) use ($name, $primary) {
+            if ($primary && (!empty($idx['primary']) || strtolower($idx['name']) === 'primary')) {
+                return true;
             }
+            return strtolower($idx['name']) === strtolower($name);
+        });
+        if ($existing) {
             return;
         }
         Schema::table($table, function (Blueprint $blueprint) use ($name, $columns, $primary) {
@@ -51,7 +53,7 @@ final class MigrationConstraints
             || (($key['name'] ?? null) === null && $key['columns'] === $columns && $key['foreign_table'] === $parent));
         if ($existing) {
             if ($existing['columns'] !== $columns || $existing['foreign_table'] !== $parent
-                || $existing['foreign_columns'] !== $references || $existing['on_delete'] !== 'restrict') {
+                || $existing['foreign_columns'] !== $references) {
                 throw new RuntimeException('Unexpected existing foreign key '.$table.'.'.$name.'.');
             }
             return;

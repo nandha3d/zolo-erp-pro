@@ -6,7 +6,7 @@ use App\Http\Middleware\RequireSharedCommercial;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('commercial')->middleware(['auth', 'company.context', RequireSharedCommercial::class])
-    ->where(['kind' => 'sale|purchase', 'resource' => 'parties|products', 'id' => '[0-9]+'])->group(function () {
+    ->where(['kind' => 'sale|purchase', 'resource' => 'parties|products|agents|areas|bill-sundries|sale-types|purchase-types|remarks|series', 'id' => '[0-9]+'])->group(function () {
         Route::get('sale/entry', [CommercialController::class, 'entry'])->defaults('kind', 'sale')
             ->middleware(RequireCapability::class.':sales.fast_counter')->name('commercial.sale.entry');
         Route::get('purchase/entry', [CommercialController::class, 'entry'])->defaults('kind', 'purchase')

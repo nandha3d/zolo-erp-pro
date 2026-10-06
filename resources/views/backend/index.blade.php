@@ -299,7 +299,7 @@
                         @if (\Auth::user()->role_id <= 2)
                         <div class="zolo-warehouse-picker mr-2">
                             <i class="dripicons-location text-primary mr-1"></i>
-                            <select name="warehouse_id" class="selectpicker" id="warehouse_btn" data-container="body" data-live-search="true" data-live-search-style="begins">
+                            <select name="warehouse_id" class="selectpicker" id="warehouse_btn" data-live-search="true" data-live-search-style="begins">
                                 <option value="0">{{ __('db.All Warehouse') }}</option>
                                 @foreach ($lims_warehouse_list as $warehouse)
                                     <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>

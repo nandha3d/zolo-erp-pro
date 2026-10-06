@@ -651,31 +651,44 @@
             text: '<i title="delete" class="dripicons-cross"></i>',
             className: 'buttons-delete',
             action: function ( e, dt, node, config ) {
-                if(user_verified == '1') {
-                    customer_id.length = 0;
-                    $(':checkbox:checked').each(function(i){
-                        if(i){
-                            customer_id[i-1] = $(this).closest('tr').data('customer');
+                var customer_id = [];
+                $('#customer-table tbody input.dt-checkboxes:checked').each(function() {
+                    var id = $(this).closest('tr').data('customer');
+                    if (id) customer_id.push(id);
+                });
+                if (!customer_id.length) {
+                    $(':checkbox:checked').each(function() {
+                        var id = $(this).closest('tr').data('customer');
+                        if (id && customer_id.indexOf(id) === -1) customer_id.push(id);
+                    });
+                }
+                if (customer_id.length && confirm("Are you sure want to delete?")) {
+                    $.ajax({
+                        type:'POST',
+                        url:'customer/deletebyselection',
+                        data:{
+                            customerIdArray: customer_id
+                        },
+                        success:function(data){
+                            $('#customer-table tbody input.dt-checkboxes:checked').each(function() {
+                                dt.row($(this).closest('tr')).remove();
+                            });
+                            dt.draw(false);
+                            $('section .alert').remove();
+                            var alertHtml = '<div class="alert alert-success alert-dismissible text-center fade show" role="alert" style="margin: 15px 0;">' +
+                                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                                '<i class="dripicons-checkmark mr-1"></i> ' + (data || 'Customer deleted successfully!') +
+                                '</div>';
+                            $('section > .container-fluid:first').prepend(alertHtml);
+                            setTimeout(function() { $('section .alert').fadeOut(600, function() { $(this).remove(); }); }, 4000);
+                        },
+                        error: function(xhr) {
+                            alert(xhr.responseText || 'Error deleting selected customers.');
                         }
                     });
-                    if(customer_id.length && confirm("Are you sure want to delete?")) {
-                        $.ajax({
-                            type:'POST',
-                            url:'customer/deletebyselection',
-                            data:{
-                                customerIdArray: customer_id
-                            },
-                            success:function(data){
-                                alert(data);
-                            }
-                        });
-                        dt.rows({ page: 'current', selected: true }).remove().draw(false);
-                    }
-                    else if(!customer_id.length)
-                        alert('No customer is selected!');
                 }
-                else
-                    alert('This feature is disable for demo!');
+                else if(!customer_id.length)
+                    alert('No customer is selected!');
             }
         },
         {

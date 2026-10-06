@@ -229,7 +229,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   @endif
 
   <!-- zoloERP Design System -->
-  <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
+  <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css" id="zolo-neo-style">
 
   @stack('css')
 
@@ -241,6 +241,15 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <div id="loader"></div>
   <!-- Side Navbar -->
   <nav class="side-navbar d-print-none">
+    <script>
+      (function() {
+        try {
+          var s = localStorage.getItem('zolo_sidebar_state');
+          if (s === 'icon-only') document.currentScript.parentElement.classList.add('icon-only');
+          else if (s === 'full-hide') document.currentScript.parentElement.classList.add('full-hide', 'shrink');
+        } catch(e) {}
+      })();
+    </script>
     <span class="brand-big">
       <a href="{{url('/dashboard') }}" class="zolo-brand-link">
         <div class="zolo-brand-container">
@@ -257,11 +266,31 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   </nav>
 
   <div class="page">
+    <script>
+      (function() {
+        try {
+          var s = localStorage.getItem('zolo_sidebar_state');
+          if (s === 'icon-only') document.currentScript.parentElement.classList.add('sidebar-icon-only');
+          else if (s === 'full-hide') document.currentScript.parentElement.classList.add('sidebar-full-hide', 'active');
+        } catch(e) {}
+      })();
+    </script>
     <!-- navbar-->
     @if(Route::currentRouteName() != 'sale.pos')
     <header class="container-fluid">
       <nav class="navbar">
-        <a id="toggle-btn" href="#" class="menu-btn"><i class="fa fa-bars"> </i></a>
+        <a id="toggle-btn" href="#" class="menu-btn zolo-sidebar-toggle" title="Collapse to icons (1st tap)" data-state="expanded" aria-label="Toggle sidebar navigation" role="button">
+          <div class="toggle-icon-bars">
+            <span class="bar bar-1"></span>
+            <span class="bar bar-2"></span>
+            <span class="bar bar-3"></span>
+          </div>
+          <div class="toggle-state-indicator">
+            <span class="dot dot-1"></span>
+            <span class="dot dot-2"></span>
+            <span class="dot dot-3"></span>
+          </div>
+        </a>
 
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
           @unless($companyContext)
@@ -1213,9 +1242,9 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <script type="text/javascript" src="<?php echo asset('vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
-  <script type="text/javascript" src="<?php echo asset('js/front_rtl.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo asset('js/front_rtl.js') . '?v=' . (file_exists(public_path('js/front_rtl.js')) ? filemtime(public_path('js/front_rtl.js')) : time()) ?>"></script>
   @else
-  <script type="text/javascript" src="<?php echo asset('js/front.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo asset('js/front.js') . '?v=' . (file_exists(public_path('js/front.js')) ? filemtime(public_path('js/front.js')) : time()) ?>"></script>
   @endif
 
   @if(Route::currentRouteName() != '/')
@@ -1266,9 +1295,9 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <script type="text/javascript" src="<?php echo asset('../../vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
-  <script type="text/javascript" src="<?php echo asset('../../js/front_rtl.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo asset('../../js/front_rtl.js') . '?v=' . (file_exists(public_path('js/front_rtl.js')) ? filemtime(public_path('js/front_rtl.js')) : time()) ?>"></script>
   @else
-  <script type="text/javascript" src="<?php echo asset('../../js/front.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo asset('../../js/front.js') . '?v=' . (file_exists(public_path('js/front.js')) ? filemtime(public_path('js/front.js')) : time()) ?>"></script>
   @endif
 
   @if(Route::currentRouteName() != '/')
@@ -1341,7 +1370,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
 
     var alert_product = <?php echo json_encode($alert_product) ?>;
 
-    if ($(window).outerWidth() > 1199) {
+    if ($(window).outerWidth() > 1199 && !localStorage.getItem('zolo_sidebar_state')) {
       $('nav.side-navbar').removeClass('shrink');
     }
 
@@ -1356,6 +1385,9 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
         window.dispatchEvent(new Event('resize'));
       }, 50);
     }
+
+    var user_verified = <?php echo json_encode(env('USER_VERIFIED', '1') ?: '1'); ?>;
+    window.user_verified = user_verified;
 
     $("div.alert").delay(4000);
 
@@ -1373,6 +1405,36 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
       menu.style.setProperty('--zolo-dropdown-left', left + 'px');
       menu.style.setProperty('--zolo-dropdown-top', Math.max(8, Math.min(top, window.innerHeight - height - 8)) + 'px');
     }
+
+    var $ancestorContainers = function($el) {
+      return $el.parents('.table-responsive, .card-body, .card, .dataTables_wrapper, .modal-body, .modal-content, section');
+    };
+
+    $(document).on('show.bs.dropdown', function (e) {
+      var $target = $(e.target);
+      var $toggle = $target.find('.dropdown-toggle');
+      var $menu = $target.find('.dropdown-menu');
+      var $group = $target.closest('.btn-group, .dropdown');
+
+      $ancestorContainers($target).addClass('dropdown-active');
+
+      if ($toggle.length) {
+        var offset = $toggle.offset();
+        var toggleHeight = $toggle.outerHeight();
+        var menuHeight = $menu.outerHeight() || 190;
+        var windowHeight = $(window).height();
+        var scrollTop = $(window).scrollTop();
+        var spaceBelow = windowHeight - (offset.top - scrollTop + toggleHeight);
+        var spaceAbove = (offset.top - scrollTop);
+
+        if (spaceBelow < (menuHeight + 20) && spaceAbove > spaceBelow) {
+          $group.addClass('dropup');
+        } else {
+          $group.removeClass('dropup');
+        }
+      }
+    });
+
     $(document).on('shown.bs.dropdown', function (e) {
       var group = e.target;
       if (!group.closest('.table-responsive') || group.classList.contains('bootstrap-select')) return;
@@ -1382,15 +1444,23 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
       menu.classList.add('zolo-table-dropdown');
       positionTableDropdown(menu);
     });
+
     $(document).on('hidden.bs.dropdown', function (e) {
       var menu = e.target.querySelector('.zolo-table-dropdown');
-      if (!menu) return;
-      menu.classList.remove('zolo-table-dropdown');
-      var original = $(menu).data('table-menu-style');
-      if (original) menu.setAttribute('style', original);
-      else menu.removeAttribute('style');
-      $(menu).removeData('table-menu-style');
+      if (menu) {
+        menu.classList.remove('zolo-table-dropdown');
+        var original = $(menu).data('table-menu-style');
+        if (original) menu.setAttribute('style', original);
+        else menu.removeAttribute('style');
+        $(menu).removeData('table-menu-style');
+      }
+      var $target = $(e.target);
+      $target.closest('.btn-group, .dropdown').removeClass('dropup');
+      if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show, div.dt-button-collection:visible').length) {
+        $('.table-responsive, .card-body, .card, .dataTables_wrapper, .modal-body, .modal-content, section').removeClass('dropdown-active');
+      }
     });
+
     window.addEventListener('resize', function () {
       document.querySelectorAll('.zolo-table-dropdown').forEach(positionTableDropdown);
     });
@@ -1399,6 +1469,55 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
         if (!menu.contains(e.target)) positionTableDropdown(menu);
       });
     }, true);
+
+    // 2. DataTables Buttons Collection (ColVis eye button, Export collections)
+    $(document).on('click', '.buttons-collection, .buttons-colvis', function () {
+      var $btn = $(this);
+      $ancestorContainers($btn).addClass('dt-collection-active dropdown-active');
+
+      setTimeout(function () {
+        var $collection = $('div.dt-button-collection');
+        if ($collection.length) {
+          $collection.css({
+            'z-index': '99999',
+            'max-height': 'calc(100vh - 140px)',
+            'overflow-y': 'auto'
+          });
+          $ancestorContainers($collection).addClass('dt-collection-active dropdown-active');
+        }
+      }, 20);
+    });
+
+    $(document).on('click', '.dt-button-background', function () {
+      $('.dt-collection-active').removeClass('dt-collection-active');
+      if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show').length) {
+        $('.table-responsive, .card-body, .card, .dataTables_wrapper, section').removeClass('dropdown-active');
+      }
+    });
+
+    // 3. Bootstrap-Select Dropdowns
+    $(document).on('show.bs.select', function (e) {
+      $ancestorContainers($(e.target)).addClass('dropdown-active select-active');
+    });
+
+    $(document).on('hidden.bs.select', function () {
+      if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show, div.dt-button-collection:visible').length) {
+        $('.table-responsive, .card-body, .card, .modal-body, .modal-content, section').removeClass('dropdown-active select-active');
+      }
+    });
+
+    // 4. MutationObserver for dynamic dropdown popovers
+    if (window.MutationObserver) {
+      var dtGlobalObserver = new MutationObserver(function () {
+        var $col = $('div.dt-button-collection:visible');
+        if ($col.length) {
+          $ancestorContainers($col).addClass('dt-collection-active dropdown-active');
+        } else if (!$('.dropdown.show, .btn-group.show, .bootstrap-select.show').length) {
+          $('.dt-collection-active').removeClass('dt-collection-active');
+        }
+      });
+      dtGlobalObserver.observe(document.body, { childList: true, subtree: true });
+    }
 
     function confirmDelete() {
       if (confirm("Are you sure want to delete?")) {
@@ -1524,13 +1643,16 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
       todayHighlight: true
     });
 
-    if ($.fn.selectpicker) {
-      $.fn.selectpicker.Constructor.DEFAULTS.container = 'body';
-    }
-
     $('.selectpicker').selectpicker({
-      container: 'body',
       style: 'btn-link',
+    });
+
+    // Ensure DataTables length dropdowns remain clean native selects without Popper interference
+    $(document).on('init.dt', function(e, settings) {
+      var $select = $(settings.nTableWrapper).find('.dataTables_length select');
+      if ($select.data('selectpicker')) {
+        $select.selectpicker('destroy');
+      }
     });
 
 

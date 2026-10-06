@@ -39,10 +39,10 @@ $(document).ready(function () {
         });
     }
 
-    //Custom select - Universal anti-clipping container
+    //Custom select - Universal anti-clipping container (exclude DataTables and native selects)
     if ($.fn.selectpicker) {
         $.fn.selectpicker.Constructor.DEFAULTS.container = 'body';
-        $('select').selectpicker({
+        $('select:not(.dataTables_length select):not([name$="_length"]):not(.custom-select-native)').selectpicker({
             container: 'body'
         });
     }
@@ -65,29 +65,86 @@ $(document).ready(function () {
 
     // ------------------------------------------------------- //
     // Side Navbar Functionality
+    // ------------------------------------------------------- //
+    // 3-State Side Navbar Controller (Expanded -> Icon-Only -> Full-Hide)
     // ------------------------------------------------------ //
-    if ($(window).outerWidth() > 1199) {
-        $('nav.side-navbar').removeClass('shrink');
-    }
-    $('#toggle-btn').on('click', function (e) {
+    var SIDEBAR_CYCLE = {
+        'expanded': 'icon-only',
+        'icon-only': 'full-hide',
+        'full-hide': 'expanded'
+    };
 
-        e.preventDefault();
+    function applySidebarState(state) {
+        var $navbar = $('nav.side-navbar');
+        var $page = $('.page');
+        var $btn = $('#toggle-btn');
 
-        if ($(window).outerWidth() > 1199) {
-            $('nav.side-navbar').toggleClass('shrink');
-            $('.page').toggleClass('active');
-        } else {
-            $('nav.side-navbar').toggleClass('shrink');
-            $('.page').toggleClass('active-sm');
+        if (!state || !SIDEBAR_CYCLE[state]) {
+            state = 'expanded';
         }
+
+        $navbar.removeClass('icon-only full-hide shrink');
+        $page.removeClass('sidebar-icon-only sidebar-full-hide active active-sm');
+        $btn.find('.dot').removeClass('active');
+
+        if (state === 'icon-only') {
+            $navbar.addClass('icon-only');
+            $page.addClass('sidebar-icon-only');
+            $btn.attr('data-state', 'icon-only')
+                .attr('title', 'Hide sidebar (2nd tap)')
+                .attr('aria-label', 'Hide sidebar');
+            $btn.find('.dot-2').addClass('active');
+        } else if (state === 'full-hide') {
+            $navbar.addClass('full-hide shrink');
+            $page.addClass('sidebar-full-hide active');
+            $btn.attr('data-state', 'full-hide')
+                .attr('title', 'Show full sidebar (3rd tap)')
+                .attr('aria-label', 'Show full sidebar');
+            $btn.find('.dot-3').addClass('active');
+        } else {
+            $btn.attr('data-state', 'expanded')
+                .attr('title', 'Collapse to icons (1st tap)')
+                .attr('aria-label', 'Collapse sidebar to icons');
+            $btn.find('.dot-1').addClass('active');
+        }
+
+        try {
+            localStorage.setItem('zolo_sidebar_state', state);
+        } catch (e) {}
+
+        setTimeout(function() {
+            window.dispatchEvent(new Event('resize'));
+        }, 50);
+    }
+
+    var initialSidebarState = 'expanded';
+    try {
+        var storedState = localStorage.getItem('zolo_sidebar_state');
+        if (storedState && SIDEBAR_CYCLE[storedState]) {
+            initialSidebarState = storedState;
+        } else if ($(window).outerWidth() < 1200) {
+            initialSidebarState = 'full-hide';
+        }
+    } catch (e) {}
+
+    applySidebarState(initialSidebarState);
+
+    $(document).off('click', '#toggle-btn').on('click', '#toggle-btn', function (e) {
+        e.preventDefault();
+        var current = $(this).attr('data-state') || 'expanded';
+        var next = SIDEBAR_CYCLE[current] || 'expanded';
+        applySidebarState(next);
     });
+
     if ($(window).outerWidth() < 1199) {
-        $('nav.side-navbar').append('<span class="close"><i class="dripicons-cross"></i></span>');
+        if (!$('nav.side-navbar .close').length) {
+            $('nav.side-navbar').append('<span class="close"><i class="dripicons-cross"></i></span>');
+        }
     }
     $(document).on('click', 'nav.side-navbar .close', function(){
-        $('nav.side-navbar').addClass('shrink');
-    })
-    
+        applySidebarState('full-hide');
+    });
+
     $('.pos-page nav.side-navbar').addClass('shrink');
 
     // ------------------------------------------------------- //

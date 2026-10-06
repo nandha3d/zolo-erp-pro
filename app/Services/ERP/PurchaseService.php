@@ -72,6 +72,12 @@ class PurchaseService
             if (!empty($data['supplier_id'])) {
                 $guard->owned(Supplier::class, $data['supplier_id'], $context, 'supplier_id');
             }
+            if (!empty($data['purchase_type_id'])) {
+                $guard->owned(\App\Models\PurchaseType::class, $data['purchase_type_id'], $context, 'purchase_type_id');
+            }
+            if (!empty($data['agent_id'])) {
+                $guard->owned(\App\Models\Agent::class, $data['agent_id'], $context, 'agent_id');
+            }
             $guard->products($data['items'], $context, 'purchase_unit_id');
             $numbers = app(DocumentNumberService::class);
             $reservation = $numbers->reserve('purchase', $context, $date, $userId);
@@ -113,7 +119,7 @@ class PurchaseService
             if ($paidAmount > 0) {
                 $data['account_id'] = $guard->paymentAccount($data, $context);
             }
-            $purchase = (new Purchase)->forceFill([
+            $purFill = [
                 'company_id' => $context->companyId,
                 'created_at' => $date,
                 'reference_no' => $referenceNo,
@@ -134,7 +140,22 @@ class PurchaseService
                 'status' => $data['status'] ?? 1, // 1 = Received
                 'payment_status' => $paymentStatus,
                 'note' => $data['note'] ?? null,
-            ]);
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('purchases', 'supplier_invoice_no')) {
+                $purFill = array_merge($purFill, [
+                    'supplier_invoice_no' => $data['supplier_invoice_no'] ?? null,
+                    'supplier_invoice_date' => $data['supplier_invoice_date'] ?? null,
+                    'purchase_type_id' => $data['purchase_type_id'] ?? null,
+                    'agent_id' => $data['agent_id'] ?? null,
+                    'lr_no' => $data['lr_no'] ?? null,
+                    'lr_date' => $data['lr_date'] ?? null,
+                    'transport_name' => $data['transport_name'] ?? null,
+                    'order_no' => $data['order_no'] ?? null,
+                ]);
+            }
+
+            $purchase = (new Purchase)->forceFill($purFill);
             $purchase->save();
             $numbers->assign($reservation, $purchase);
 

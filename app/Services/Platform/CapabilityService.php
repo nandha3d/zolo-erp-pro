@@ -39,10 +39,14 @@ class CapabilityService
     public function forNavigation(CompanyContext|int|null $company = null): array
     {
         if ($company === null && !request()->attributes->has(CompanyContext::class)) {
-            $result = app(\App\Http\Middleware\ResolveCompanyContext::class)->handle(request(),
-                fn ($request) => $this->forNavigation($request->attributes->get(CompanyContext::class)));
-            // FY setup redirects are handled by context-protected routes; no optional menu is shown before setup.
-            return is_array($result) ? $result : [];
+            try {
+                $result = app(\App\Http\Middleware\ResolveCompanyContext::class)->handle(request(),
+                    fn ($request) => $this->forNavigation($request->attributes->get(CompanyContext::class)));
+                // FY setup redirects are handled by context-protected routes; no optional menu is shown before setup.
+                return is_array($result) ? $result : [];
+            } catch (\Throwable) {
+                return [];
+            }
         }
         return array_keys(array_filter($this->snapshot($this->companyId($company)), fn ($state) => $state['enabled']));
     }

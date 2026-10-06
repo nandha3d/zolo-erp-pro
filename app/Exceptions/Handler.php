@@ -50,7 +50,7 @@ class Handler extends ExceptionHandler
     public function report(Throwable $exception)
     {
         if ($exception instanceof \Illuminate\Database\QueryException || $exception instanceof \PDOException) {
-            \Illuminate\Support\Facades\Log::error('erp.database_failure', ['request_id' => request()->attributes->get('erp.request_id'), 'category' => class_basename($exception)]);
+            \Illuminate\Support\Facades\Log::error('erp.database_failure', ['message' => $exception->getMessage(), 'request_id' => request()->attributes->get('erp.request_id'), 'category' => class_basename($exception)]);
             return;
         }
         parent::report($exception);
