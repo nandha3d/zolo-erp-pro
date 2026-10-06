@@ -359,6 +359,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             ->middleware('hasPermanentDeletePermission');
         Route::get('sales/product_sale/{id}', 'productSaleData');
         Route::get('sales/get-sale/{id}', 'getSale');
+        Route::get('sales/{id}/json', 'getSaleJson');
         Route::post('importsale', 'importSale')->name('sale.import');
         Route::get('pos/{id?}', 'posSale')->name('sale.pos');
         Route::get('sales/recent-sale', 'recentSale');

@@ -8,12 +8,12 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-06 19:15:00 (+05:30)
+- **Last Updated:** 2026-10-06 20:05:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui (Synced)
-- **Latest Commit:** in progress — "feat(ui): integrate dockable bill list panel into existing sales and purchase command centers"
-- **Working Tree State:** Integrated Dockable Bill List Panel in Existing Sales & Purchase Command Centers
-- **Test Suite Status:** 21/21 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 103 assertions)
+- **Latest Commit:** in progress — "feat(commercial): transform sales and purchase command centers into optech voucher entry with in-place editing and side panel filters"
+- **Working Tree State:** Clean, all 25 automated feature tests passing
+- **Test Suite Status:** 25/25 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 125 assertions, 100%)
 
 ---
 
@@ -158,16 +158,55 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
   4. **Backend Controllers:**
      - `SaleController::index()`: Eager loads `$recent_bills = Sale::whereNull('deleted_at')->with('customer:id,name,phone_number')->latest('id')->limit(50)->get();` and passes `$recent_bills` to `backend.sale.index`.
      - `PurchaseController::index()`: Eager loads `$recent_bills = Purchase::with('supplier:id,name,company_name,phone_number')->latest('id')->limit(50)->get();` and passes `$recent_bills` to `backend.purchase.index`.
-  5. **Bug Fixes:**
-     - Fixed unclosed Stripe `<script src="...">` tag in `backend/sale/index.blade.php`.
-     - Maintained compact single-box styling and cache-busted CSS.
+
+---
+
+### H. Optech Commercial Voucher Entry Transformation in Sales & Purchase Command Centers
+- **Context & User Request:**
+  - In the main content area, do NOT show the table/DataTables bills register.
+  - The content area must be a voucher entry form (adding a new bill by default: `New Purchase Bill` / `New Sales Bill`) matching **Screenshot 3**.
+  - All options from "add purchase" and "add sale" brought directly into this simple Optech voucher entry workspace.
+  - The side panel lists recent bills. When a bill card or `[ ✎ Edit ]` is clicked in the side panel, it loads into the main form for in-place editing (Optech software workflow).
+  - The toolbar filters from **Screenshot 2** (PDF, Excel, CSV, Print, Reset icon buttons) moved into the side bill list panel.
+  - The filter dropdowns (`Warehouse`, `Purchase/Sale Status`, `Payment Status`) moved from the top bar into the side bill list panel itself.
+  - Strictly no invented logic or UI elements not present in the background.
+- **Architectural & Implementation Details:**
+  1. **Main Entry Workspace (`.comm-entry-workspace`) Matching Screenshot 3:**
+     - **Header Strip:** Breadcrumb trail (`Home / Buying / Purchase Bills / New` or `Home / Selling / Sales Bills / New`), document icon, dynamic title (`New Purchase Bill` / `New Sales Bill`), pill toggles (`Cash`/`Credit`, `Product`/`Service`/`Mixed`), due date and credit days metadata, quick tools (`[ 📖 Bill list ]`, `[ ⚙ Details ]`).
+     - **Primary Fields Row:** `Our bill number` (with series preview and hint), `Supplier bill no` / `Customer PO / Ref`, `Bill date`, `Entry date`, `Party *` (with `+ New Party` modal link and address hint), `Tax classification *` (`purchaseTypes` / `saleTypes`), `Series` (`documentSeries`), `Warehouse *`, and `Biller *` (for sales).
+     - **Items Grid Section:** Counter (`ITEMS 0 line(s) • 7 per page`), density selector (`Compact`, `Cozy`, `Large`), action buttons (`Multi Item`, `+ Create item`, `+ Add row`), quick barcode/item search with `F2` shortcut.
+     - **10-Column Purple Header Table (`#7c3aed`):** `#`, `ITEM`, `PURCHASE/SALE TYPE`, `UNIT`, `RATE`, `QTY`, `AMOUNT`, `TAX`, `TOTAL`, `ACTIONS`. Alternating row lines, empty placeholder state matching screenshot, and `< Page 1/1 >` footer.
+     - **Fixed Bottom Summary Bar:** `Charges & remarks (count)`, inline remarks preview, actions (`[ ↺ Discard ]`, `[ 💾 Save as ]`, `[ 💾 Save ]`, `[ ✓ Submit ]`, `[ Review ]`), live financial calculations (`NET`, `GST / TAX`, `GRAND TOTAL`).
+     - **Charges & Remarks Drawer:** Slide-over modal with tabs for Transport & Logistics (Bale No, No of Bales, LR No, LR Date, Transporter, Station To, Order No, Credit Days), Notes & Remarks (standard remark picker and notes textarea), and Payment/Account settlement.
+  2. **Dockable Side Panel with Screenshot 2 Filters & Dropdowns:**
+     - Compact toolbar with Screenshot 2 export/action icons: PDF, Excel, CSV, Print, Reset (`.side-toolbar-actions`).
+     - Search input (`Find a purchase...` / `Find a bill...`).
+     - Bill number filter (`Series or edited number`).
+     - Quick filter tabs: `All`, `Draft`, `Date`, `Range` with revealable date picker.
+     - Single compact box dropdown filters moved from top bar: `Warehouse`, `Purchase/Sale Status`, `Payment Status` (`.side-dropdown-filters`).
+     - Bill cards list: Displays reference number, amount in ₹, party name, transaction date, color-coded status badges (`Paid`, `Due`, `Partial`, `Draft`), and action links (`[ ✎ Edit ]`, `[ 👁 View ]`, `[ 🖨 Print ]`).
+  3. **Optech In-Place Editing Mechanics:**
+     - Clicking a card or `[ ✎ Edit ]` invokes `loadPurchaseToForm(id)` or `loadSaleToForm(id)` via AJAX (`/purchases/{id}` or `/sales/{id}/json`).
+     - Form switches method to `PUT` and action to update URL; title updates to `Edit Purchase Bill: [ref]` / `Edit Sales Bill: [ref]`; breadcrumb updates to `Edit: [ref]`; header inputs and items rows are loaded with live rates and totals.
+     - Active bill card in side list is highlighted with `.active-editing`.
+     - Clicking `++ New` or `[ ↺ Discard ]` calls `resetFormToNew()`, resetting method to `POST` and action to store route, clearing inputs and blanking items grid.
+  4. **Backend Controllers:**
+     - `PurchaseController`: Eager loads `$lims_product_list_without_variant`, `$lims_product_list_with_variant`, `$currency`, `$purchaseTypes`, `$documentSeries`, `$billSundries`, `$standardRemarks`, `$agents`, `$areas`, `$recent_bills`. Fixed `document_type` column query. `show($id)` returns JSON for in-place edit loading.
+     - `SaleController`: Eager loads product lists, series, types, bill sundries, remarks, and recent bills. Added `show($id)` and `getSaleJson($id)` returning JSON for in-place edit loading. Updated `limsProductSearch` to safely accept string queries from autocomplete.
+  5. **Automated Testing Evidence:**
+     - Feature tests in `OptechVoucherWebTest.php`:
+       - `test_purchase_command_center_renders_entry_workspace`: PASS
+       - `test_sales_command_center_renders_entry_workspace`: PASS
+       - `test_purchase_json_endpoint`: PASS
+       - `test_sale_json_endpoint`: PASS
+     - Full test suite: 25/25 passing (125 assertions, 100%).
 
 ---
 
 ## 3. Verification & Testing Evidence
 - Automated feature tests executed and passed:
   - `vendor/bin/phpunit tests/Feature/OptechMasterWebTest.php tests/Feature/OptechVoucherWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: 21 passed (103 assertions, 100%), Duration: 11.58s
+  - Results: 25 passed (125 assertions, 100%), Duration: 11.47s
 
 ---
 
@@ -179,3 +218,4 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
    - Review pending screens in documents/zolo_erp_implementation_docs/32_OPTECH_SCREENS_AUDIT_AND_BACKEND_GAP_REPORT.md.
    - Implement Delivery Challan (DC) and Goods Received Note (GRN) web management and entry UIs.
    - Continue audit and modernization of remaining modules (Job Work, Production, GST).
+

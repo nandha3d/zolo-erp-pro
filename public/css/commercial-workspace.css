@@ -1004,6 +1004,83 @@ body.commercial-screen-lock section {
     box-shadow: 0 1px 3px rgba(124, 58, 237, 0.25);
 }
 
+/* Toolbar Export/Action Icons (Screenshot 2) */
+.desk-bill-list-panel .side-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+    margin-top: 1px;
+}
+
+.desk-bill-list-panel .side-tool-btn {
+    width: 27px;
+    height: 25px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 11.5px;
+    padding: 0;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.desk-bill-list-panel .side-tool-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+/* Side Dropdown Filters (Moved from Top Bar) */
+.desk-bill-list-panel .side-dropdown-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 2px 0;
+    padding: 5px 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.desk-bill-list-panel .side-filter-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.desk-bill-list-panel .side-filter-group label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #475569;
+    margin: 0;
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+.desk-bill-list-panel .side-filter-group select,
+.desk-bill-list-panel .side-filter-group .form-control {
+    height: 24px !important;
+    font-size: 11px !important;
+    padding: 1px 5px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    flex: 1;
+}
+
+.side-bill-card.active-editing {
+    border-color: #7c3aed !important;
+    background: #f5f3ff !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25) !important;
+}
+
 .desk-bill-list-panel .side-list-container {
     flex: 1;
     overflow-y: auto;

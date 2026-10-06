@@ -3,16 +3,16 @@
 @section('content')
 
 <style type="text/css">
-    .btn-icon i{margin-right:5px}
-    .top-fields{margin-top:10px;position: relative;}
-    .top-fields label {background:#FFF;font-size:11px;font-weight:600;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;}
-    .top-fields input{font-size:13px;height:45px}
+    .btn-icon i { margin-right: 5px; }
+    .top-fields { margin-top: 10px; position: relative; }
+    .top-fields label { background: #FFF; font-size: 11px; font-weight: 600; margin-left: 10px; padding: 0 3px; position: absolute; top: -8px; z-index: 9; }
+    .top-fields input { font-size: 13px; height: 45px; }
 </style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-
+<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
 <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
 <script>
     document.documentElement.classList.add('commercial-screen-lock');
@@ -29,172 +29,309 @@
         </div>
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" id="tab-all-purchases" href="javascript:void(0)" data-status="0"><i class="dripicons-list"></i> {{ __('db.All') }} Purchases</a></li>
-            <li><a class="nav-link" id="tab-pending-purchases" href="javascript:void(0)" data-status="3"><i class="dripicons-hourglass"></i> Pending Receipts</a></li>
             <li><a class="nav-link" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Stock Transfers</a></li>
             <li><a class="nav-link" href="{{ route('return-purchase.index') }}"><i class="dripicons-return"></i> {{ __('Purchase Returns') }}</a></li>
         </ul>
         <div class="comm-actions">
-            <button type="button" class="btn btn-outline-secondary" id="toggle-filter" title="Toggle Filters">
-                <i class="dripicons-experiment"></i> {{ __('db.Filter') }}
-            </button>
-            @can('purchases-add')
-            <a href="{{ route('purchases.create') }}" class="btn btn-success" title="Full Purchase Form">
+            <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-top-new" title="Add New Purchase">
                 <i class="dripicons-plus"></i> {{ __('db.Add Purchase') }}
-            </a>
-            @endcan
-            <button type="button" class="btn btn-success" id="toggle-drawer-btn" title="Toggle Purchase List Panel (Alt+D)" style="background:#059669; border-color:#059669; color:#fff;">
+            </button>
+            <button type="button" class="btn btn-success py-1 px-3" id="toggle-drawer-btn" title="Toggle Purchase List Panel (Alt+D)" style="background:#059669; border-color:#059669; color:#fff;">
                 <i class="dripicons-view-list"></i> Purchase list
             </button>
         </div>
     </div>
 
-    <!-- KPI Summary Strip -->
-    <div class="comm-kpi-strip">
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Today's Purchases") }}</span>
-                <span class="comm-kpi-value">{{ $todayPurchasesCount ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">({{ number_format($todayPurchasesAmount ?? 0, 2) }})</small></span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#f0fdf4; color:#16a34a;">
-                <i class="dripicons-cart"></i>
-            </div>
-        </div>
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Paid Outflow") }}</span>
-                <span class="comm-kpi-value" style="color:#0284c7;">{{ number_format($totalPaid ?? 0, 2) }}</span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#f0f9ff; color:#0284c7;">
-                <i class="dripicons-checkmark"></i>
-            </div>
-        </div>
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Due Payables") }}</span>
-                <span class="comm-kpi-value" style="color:#ea580c;">{{ number_format($totalDue ?? 0, 2) }}</span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#fff7ed; color:#ea580c;">
-                <i class="dripicons-warning"></i>
-            </div>
-        </div>
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
-                <span class="comm-kpi-value">{{ number_format(($totalPaid ?? 0) + ($totalDue ?? 0), 2) }}</span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#eef2ff; color:#4f46e5;">
-                <i class="dripicons-archive"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2-Column Command Center Grid -->
+    <!-- 2-Column Command Center Grid: Main Entry Workspace + Side Bill List Panel -->
     <div class="comm-split-grid" id="comm-split-grid">
-        <!-- Left: Purchase Register Table -->
-        <div class="comm-register-card">
-            <!-- Sleek Inline Filter Bar -->
-            <div class="comm-table-filter-bar" id="filter-card">
-                <div class="filter-item">
-                    <label><i class="dripicons-calendar text-muted"></i></label>
-                    <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
-                    <input type="hidden" name="starting_date" value="{{$starting_date}}" />
-                    <input type="hidden" name="ending_date" value="{{$ending_date}}" />
-                </div>
-                <div class="filter-item @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                    <label>{{__('db.Warehouse')}}:</label>
-                    <select id="warehouse_id" name="warehouse_id" class="form-control" style="width:130px;">
-                        <option value="0">{{__('db.All Warehouse')}}</option>
-                        @foreach($lims_warehouse_list as $warehouse)
-                            <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label>{{__('db.Purchase Status')}}:</label>
-                    <select id="purchase-status" class="form-control" name="purchase_status" style="width:110px;">
-                        <option value="0">{{__('db.All')}}</option>
-                        <option value="1">{{__('db.Recieved')}}</option>
-                        <option value="2">{{__('db.Partial')}}</option>
-                        <option value="3">{{__('db.Pending')}}</option>
-                        <option value="4">{{__('db.Ordered')}}</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label>{{__('db.Payment Status')}}:</label>
-                    <select id="payment-status" class="form-control" name="payment_status" style="width:100px;">
-                        <option value="0">{{__('db.All')}}</option>
-                        <option value="1">{{__('db.Due')}}</option>
-                        <option value="2">{{__('db.Paid')}}</option>
-                    </select>
-                </div>
-                <button type="button" class="btn btn-sm btn-outline-success ml-auto" id="btn-quick-refresh" title="Reload Register">
-                    <i class="dripicons-clockwise"></i>
-                </button>
-            </div>
+        <!-- Main: Purchase Entry Workspace (Matching Screenshot 3) -->
+        <div class="comm-entry-workspace" id="comm-entry-workspace">
+            <form id="purchase-entry-form" method="POST" action="{{ route('purchases.store') }}" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="_method" id="entry-form-method" value="POST">
+                <input type="hidden" name="purchase_id" id="edit-purchase-id" value="">
+                <input type="hidden" name="status" id="purchase-status-val" value="1">
+                <input type="hidden" name="exchange_rate" id="exchange-rate-val" value="{{ $currency->exchange_rate ?? 1 }}">
+                <input type="hidden" name="currency_id" id="currency-id-val" value="{{ $currency->id ?? 1 }}">
+                <input type="hidden" name="paying_method" id="input-paying-method" value="Credit">
+                <input type="hidden" name="total_qty" id="hidden-total-qty" value="0">
+                <input type="hidden" name="total_discount" id="hidden-total-discount" value="0">
+                <input type="hidden" name="total_tax" id="hidden-total-tax" value="0">
+                <input type="hidden" name="total_cost" id="hidden-total-cost" value="0">
+                <input type="hidden" name="order_tax" id="hidden-order-tax" value="0">
+                <input type="hidden" name="grand_total" id="hidden-grand-total" value="0">
+                <input type="hidden" name="payment_status" id="hidden-payment-status" value="1">
+                <input type="hidden" name="paid_amount" id="hidden-paid-amount" value="0">
+                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
 
-            <!-- Sticky Header Table Viewport -->
-            <div class="comm-table-viewport">
-                <table id="purchase-table" class="table purchase-list mt-0" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th class="not-exported"></th>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.reference')}}</th>
-                            <th>{{__('db.Created By')}}</th>
-                            <th>{{__('db.Supplier')}}</th>
-                            @if ($general_setting->show_products_details_in_purchase_table)
-                                <th>{{ __('db.Products') }}</th>
-                                <th>{{ __('db.Quantity') }}</th>
-                            @endif
-                            <th>{{__('db.Purchase Status')}}</th>
-                            <th>{{__('db.grand total')}}</th>
-                            <th>{{__('db.Returned Amount')}}</th>
-                            <th>{{__('db.Paid')}}</th>
-                            <th>{{__('db.Due')}}</th>
-                            <th>{{__('db.Payment Status')}}</th>
-                            @foreach($custom_fields as $fieldName)
-                            <th>{{$fieldName}}</th>
-                            @endforeach
-                            <th class="not-exported">{{__('db.action')}}</th>
-                        </tr>
-                    </thead>
-                    <tfoot class="tfoot active">
-                        <th></th>
-                        <th>{{__('db.Total')}}</th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        @if ($general_setting->show_products_details_in_purchase_table)
-                            <th></th>
-                            <th></th>
-                        @endif
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        @foreach($custom_fields as $fieldName)
-                        <th></th>
+                <!-- 1. Header Strip (Matching Screenshot 3) -->
+                <div class="doc-header-strip">
+                    <div class="doc-title-block">
+                        <div class="doc-title-meta">
+                            <div class="desk-breadcrumb-trail" style="font-size:11px; color:#64748b; margin-bottom:2px;">
+                                <a href="{{ url('/') }}" style="color:#64748b;">Home</a> / <a href="{{ url('/purchases') }}" style="color:#64748b;">Buying</a> / <a href="{{ url('/purchases') }}" style="color:#64748b;">Purchase Bills</a> / <span id="doc-breadcrumb-mode" class="text-primary font-weight-bold">New</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="doc-icon-box" style="width:34px;height:34px;font-size:16px;">📄</div>
+                                <div>
+                                    <h2 id="doc-title-text" style="font-size:17px;font-weight:700;margin:0;color:#0f172a;line-height:1.2;">New Purchase Bill</h2>
+                                    <span class="doc-sub" id="doc-sub-text" style="font-size:11px;color:#64748b;">Purchase • New bill</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode Toggles (Cash/Credit & Line Nature) -->
+                    <div class="doc-toggle-group">
+                        <div class="pill-segmented" role="group" aria-label="Payment Mode">
+                            <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
+                            <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
+                        </div>
+                        <div class="pill-segmented" role="group" aria-label="Product Mode">
+                            <button type="button" class="segment-btn active" data-nature="product">Product</button>
+                            <button type="button" class="segment-btn" data-nature="service">Service</button>
+                            <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
+                        </div>
+                    </div>
+
+                    <!-- Metadata & Header Tools -->
+                    <div class="doc-header-meta">
+                        <div class="meta-terms">
+                            <span>Due <strong id="display-due-date">{{ date('d-m-Y') }}</strong></span>
+                            <span>Credit days <strong id="header-credit-days">—</strong></span>
+                            <span>Terms <strong>Standard</strong></span>
+                        </div>
+                        <div class="header-action-btns">
+                            <button type="button" class="btn-desk-action" id="btn-header-toggle-list" title="Toggle Purchase List">
+                                📖 Bill list
+                            </button>
+                            <button type="button" class="btn-desk-action" id="btn-open-details" title="Open Charges & Transport Details">
+                                ⚙ Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Primary Document Fields (Row 1 matching Screenshot 3) -->
+                <div class="desk-card doc-primary-fields mb-2" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;">
+                    <div class="fields-grid-neo">
+                        <!-- Our Bill Number -->
+                        <div class="field-item">
+                            <label for="reference_no">Our bill number</label>
+                            <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Series number assigned on save" autocomplete="off">
+                            <span class="field-hint">Series preview • editable</span>
+                        </div>
+
+                        <!-- Supplier Bill No -->
+                        <div class="field-item">
+                            <label for="supplier_invoice_no">Supplier bill no</label>
+                            <input type="text" id="supplier_invoice_no" name="supplier_invoice_no" class="form-control" placeholder="From the paper invoice">
+                        </div>
+
+                        <!-- Bill Date -->
+                        <div class="field-item">
+                            <label for="supplier_invoice_date">Bill date</label>
+                            <input type="date" id="supplier_invoice_date" name="supplier_invoice_date" class="form-control" value="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <!-- Entry Date -->
+                        <div class="field-item">
+                            <label for="created_at">Entry date</label>
+                            <input type="date" id="created_at" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <!-- Party (Supplier) -->
+                        <div class="field-item field-item-wide">
+                            <div class="label-with-action">
+                                <label for="supplier_id">Party *</label>
+                                <a href="{{ route('supplier.index') }}" target="_blank" class="link-btn-add">+ New Party</a>
+                            </div>
+                            <select id="supplier_id" name="supplier_id" class="form-control selectpicker" data-live-search="true" title="Select Supplier" required>
+                                @foreach($lims_supplier_list as $supplier)
+                                    <option value="{{ $supplier->id }}">{{ $supplier->name }} ({{ $supplier->company_name ?? 'Individual' }})</option>
+                                @endforeach
+                            </select>
+                            <span class="field-hint" id="party-hint-note">Sri Murugan Textiles Private Limited Party address loads automatically</span>
+                        </div>
+
+                        <!-- Tax Classification -->
+                        <div class="field-item">
+                            <label for="purchase_type_id">Tax classification *</label>
+                            <select id="purchase_type_id" name="purchase_type_id" class="form-control">
+                                <option value="0">GST • Multiple rates</option>
+                                @foreach($purchaseTypes as $pt)
+                                    <option value="{{ $pt->id }}">{{ $pt->name }}</option>
+                                @endforeach
+                            </select>
+                            <span class="field-hint text-muted">Choose each item's tax slab</span>
+                        </div>
+
+                        <!-- Series -->
+                        <div class="field-item">
+                            <label for="series_id">Series</label>
+                            <select id="series_id" name="series_id" class="form-control">
+                                <option value="0">Purchase</option>
+                                @foreach($documentSeries as $ds)
+                                    <option value="{{ $ds->id }}">{{ $ds->prefix ?? $ds->code }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Warehouse Selection (Hidden or compact) -->
+                        <div class="field-item">
+                            <label for="form_warehouse_id">Warehouse *</label>
+                            <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
+                                @foreach($lims_warehouse_list as $wh)
+                                    <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ITEMS Section (Matching Screenshot 3) -->
+                <div class="desk-card items-container mb-2" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:0;overflow:hidden;">
+                    <div class="items-section-header" style="padding:8px 14px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;">
+                        <div class="items-counter-group" style="display:flex;align-items:center;gap:8px;">
+                            <span class="items-title" style="font-weight:700;font-size:12px;color:#0f172a;">ITEMS</span>
+                            <span class="items-meta-badge text-muted" id="items-meta-count" style="font-size:11px;">0 line(s) • 7 per page</span>
+                        </div>
+                        <div class="items-controls-group" style="display:flex;align-items:center;gap:6px;">
+                            <div class="density-segmented">
+                                <button type="button" class="density-btn" data-density="compact">Compact</button>
+                                <button type="button" class="density-btn active" data-density="cozy">Cozy</button>
+                                <button type="button" class="density-btn" data-density="large">Large</button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:11px;" id="btn-multi-item">
+                                <i class="dripicons-menu"></i> Multi item
+                            </button>
+                            <a href="{{ route('products.create') }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:11px;">
+                                + Create item
+                            </a>
+                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:11px;background:#7c3aed;border-color:#7c3aed;" id="btn-add-item-row">
+                                + Add row
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Barcode / Item Search Bar -->
+                    <div class="item-quick-search-bar" style="padding:6px 14px;background:#ffffff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
+                        <div style="position:relative;flex:1;">
+                            <i class="fa fa-barcode text-muted" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;"></i>
+                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode, enter item code or name... (Press Enter or Alt+UpArrow for search)" style="padding-left:32px;height:30px;font-size:12px;" autocomplete="off">
+                        </div>
+                        <span style="font-size:11px;color:#94a3b8;"><kbd style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:1px 4px;font-size:10px;">F2</kbd> Quick Search</span>
+                    </div>
+
+                    <!-- Items Grid Table -->
+                    <div class="table-responsive" style="max-height: calc(100vh - 430px); min-height: 180px; overflow-y:auto;">
+                        <table class="desk-grid-table cozy table table-sm mb-0" id="order-table" style="width:100%;">
+                            <thead>
+                                <tr style="background:#7c3aed;color:#ffffff;font-size:11px;">
+                                    <th style="width:40px;text-align:center;">#</th>
+                                    <th style="min-width:220px;">ITEM</th>
+                                    <th style="width:130px;">PURCHASE TYPE</th>
+                                    <th style="width:80px;">UNIT</th>
+                                    <th style="width:100px;text-align:right;">RATE</th>
+                                    <th style="width:80px;text-align:center;">QTY</th>
+                                    <th style="width:110px;text-align:right;">AMOUNT</th>
+                                    <th style="width:120px;">TAX</th>
+                                    <th style="width:110px;text-align:right;">TOTAL</th>
+                                    <th style="width:70px;text-align:center;">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-table-body">
+                                <!-- Initial Blank Row matching Screenshot 3 -->
+                                <tr class="empty-placeholder-row">
+                                    <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
+                                        No items added yet. Search or scan above or click "+ Add row".
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination-footer" style="padding:4px 14px;border-top:1px solid #f1f5f9;display:flex;justify-content:center;gap:10px;font-size:11px;color:#64748b;background:#f8fafc;">
+                        <span class="pagination-arrow">&lt;</span>
+                        <span>Page 1/1</span>
+                        <span class="pagination-arrow">&gt;</span>
+                    </div>
+                </div>
+
+                <!-- 4. Fixed Bottom Action & Summary Bar (Matching Screenshot 3) -->
+                <div class="desk-summary-bottom-bar" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -2px 10px rgba(0,0,0,0.03);">
+                    <div class="d-flex align-items-center gap-3">
+                        <button type="button" class="btn btn-outline-secondary py-1 px-3 d-inline-flex align-items-center gap-2" id="btn-bottom-charges" style="font-size:11.5px;font-weight:600;">
+                            <span>Charges & remarks</span>
+                            <span class="badge badge-light" id="charges-badge-count">0</span>
+                        </button>
+                        <span class="text-muted" style="font-size:11px;" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-form-discard" style="font-size:12px;font-weight:600;">
+                            <i class="dripicons-clockwise"></i> Discard
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-form-save-as" style="font-size:12px;font-weight:600;">
+                            <i class="dripicons-copy"></i> Save as
+                        </button>
+                        <button type="submit" class="btn btn-primary py-1 px-3" id="btn-form-save" style="font-size:12px;font-weight:700;background:#7c3aed;border-color:#7c3aed;">
+                            <i class="dripicons-document-edit"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-success py-1 px-3" id="btn-form-submit" style="font-size:12px;font-weight:700;background:#4338ca;border-color:#4338ca;">
+                            <i class="dripicons-checkmark"></i> Submit
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary py-1 px-2" id="btn-form-review" style="font-size:12px;">
+                            Review
+                        </button>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="text-align:right;">
+                            <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">NET</div>
+                            <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-net-amount">₹ 0.00</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">GST / TAX</div>
+                            <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-tax-amount">₹ 0.00</div>
+                        </div>
+                        <div style="text-align:right;border-left:1px solid #cbd5e1;padding-left:12px;">
+                            <div style="font-size:9.5px;font-weight:800;color:#d97706;letter-spacing:0.04em;">GRAND TOTAL</div>
+                            <div style="font-size:16px;font-weight:800;color:#d97706;" id="display-grand-total">₹ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for Optech details -->
+                <div style="display:none;">
+                    <input type="text" name="bale_no" id="hidden-bale-no">
+                    <input type="number" name="no_of_bales" id="hidden-no-of-bales">
+                    <input type="text" name="lr_no" id="hidden-lr-no">
+                    <input type="date" name="lr_date" id="hidden-lr-date">
+                    <input type="text" name="transporter_name" id="hidden-transporter-name">
+                    <input type="text" name="station_to" id="hidden-station-to">
+                    <input type="text" name="order_no" id="hidden-order-no">
+                    <input type="number" name="credit_days" id="hidden-credit-days">
+                    <input type="text" name="note" id="hidden-note">
+                    <select name="account_id" id="hidden-account-id">
+                        @foreach($lims_account_list as $acc)
+                            <option value="{{ $acc->id }}">{{ $acc->name }}</option>
                         @endforeach
-                        <th></th>
-                    </tfoot>
-                </table>
-            </div>
+                    </select>
+                </div>
+            </form>
         </div>
 
-        <!-- Right / Dockable Side Panel: Purchase List -->
+        <!-- Right / Dockable Side Panel: Purchase List with Screenshot 2 Filters & Dropdowns -->
         <aside class="comm-drawer-card desk-bill-list-panel" id="comm-drawer" aria-label="Transaction List Panel">
             <div class="comm-drawer-header">
                 <div class="comm-drawer-title-wrap">
                     <h3 class="comm-drawer-title"><i class="dripicons-view-list text-success"></i> Purchase list</h3>
                 </div>
                 <div class="comm-drawer-tools">
-                    @can('purchases-add')
-                    <a href="{{ route('purchases.create') }}" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Purchase">
-                        <i class="dripicons-plus"></i> + New
-                    </a>
-                    @endcan
+                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" id="btn-side-new" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Purchase (Clear Form)">
+                        <i class="dripicons-plus"></i> ++ New
+                    </button>
                     <button type="button" class="side-icon-btn" id="btn-dock-toggle" title="Arrange Panel Side (Dock Left / Dock Right)">
                         <span id="dock-icon">⇄</span>
                         <span class="dock-tooltip" id="dock-label">Dock Left</span>
@@ -204,6 +341,15 @@
             </div>
 
             <div class="comm-drawer-body">
+                <!-- Toolbar Export & Action Icons (Screenshot 2) -->
+                <div class="side-toolbar-actions">
+                    <button type="button" class="side-tool-btn text-danger" id="side-export-pdf" title="Export PDF"><i class="fa fa-file-pdf-o"></i></button>
+                    <button type="button" class="side-tool-btn text-success" id="side-export-excel" title="Export Excel"><i class="fa fa-file-excel-o"></i></button>
+                    <button type="button" class="side-tool-btn text-info" id="side-export-csv" title="Export CSV"><i class="fa fa-file-text-o"></i></button>
+                    <button type="button" class="side-tool-btn text-primary" id="side-export-print" title="Print Register"><i class="fa fa-print"></i></button>
+                    <button type="button" class="side-tool-btn text-danger" id="side-filter-reset" title="Reset Filters"><i class="fa fa-times"></i></button>
+                </div>
+
                 <!-- Search Filter -->
                 <div class="side-panel-search">
                     <input type="text" id="side-search-input" class="form-control" placeholder="Find a purchase..." autocomplete="off">
@@ -228,6 +374,37 @@
                     <input type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
                 </div>
 
+                <!-- Dropdown Filters (Moved from Top Bar) -->
+                <div class="side-dropdown-filters">
+                    <div class="side-filter-group">
+                        <label>Warehouse</label>
+                        <select id="side-filter-warehouse" class="form-control">
+                            <option value="0">All Warehouse</option>
+                            @foreach($lims_warehouse_list as $wh)
+                                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="side-filter-group">
+                        <label>Purchase Status</label>
+                        <select id="side-filter-status" class="form-control">
+                            <option value="0">All</option>
+                            <option value="1">Received</option>
+                            <option value="2">Partial</option>
+                            <option value="3">Pending</option>
+                            <option value="4">Ordered</option>
+                        </select>
+                    </div>
+                    <div class="side-filter-group">
+                        <label>Payment Status</label>
+                        <select id="side-filter-payment" class="form-control">
+                            <option value="0">All</option>
+                            <option value="1">Due</option>
+                            <option value="2">Paid</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Recent Purchases List -->
                 <div class="side-list-container" id="side-bill-list">
                     @forelse($recent_bills as $bill)
@@ -239,7 +416,7 @@
                             $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
                             $supplierName = $bill->supplier->name ?? 'Default Supplier';
                         @endphp
-                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($supplierName) }}" data-status="{{ strtolower($statusLabel) }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($supplierName) }}" data-status="{{ strtolower($statusLabel) }}" data-status-id="{{ $bill->status }}" data-payment-status-id="{{ $bill->payment_status }}" data-warehouse-id="{{ $bill->warehouse_id }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
                             <div class="side-card-top">
                                 <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
                                 <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
@@ -252,7 +429,7 @@
                                 <span class="side-card-status {{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <div class="side-card-actions">
-                                <a href="{{ route('purchases.edit', $bill->id) }}" class="side-action-btn edit" title="Edit this purchase">
+                                <a href="javascript:void(0)" class="side-action-btn edit btn-side-load-edit" data-id="{{ $bill->id }}" title="Edit this purchase in main area">
                                     <i class="dripicons-document-edit"></i> Edit
                                 </a>
                                 <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View purchase details">
@@ -274,9 +451,135 @@
     </div>
 </section>
 
+<!-- CHARGES, TRANSPORT & REMARKS MODAL DRAWER -->
+<div id="charges-drawer" class="modal fade text-left" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold"><i class="dripicons-gear text-primary"></i> Charges, Transport, Sundries &amp; Remarks</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="chargesTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="tab-transport" data-toggle="tab" href="#content-transport" role="tab">Transport &amp; Bales</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-sundries" data-toggle="tab" href="#content-sundries" role="tab">Bill Sundries</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-remarks" data-toggle="tab" href="#content-remarks" role="tab">Remarks &amp; Notes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-settlement" data-toggle="tab" href="#content-settlement" role="tab">Settlement</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="chargesTabContent">
+                    <!-- Transport & Bales -->
+                    <div class="tab-pane fade show active" id="content-transport" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Bale No</label>
+                                <input type="text" id="drawer-bale-no" class="form-control" placeholder="Bale / Package identifier">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>No of Bales / Packages</label>
+                                <input type="number" id="drawer-no-of-bales" class="form-control" placeholder="Count of bales">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>LR No / Consignment Note</label>
+                                <input type="text" id="drawer-lr-no" class="form-control" placeholder="LR tracking number">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>LR Date</label>
+                                <input type="date" id="drawer-lr-date" class="form-control">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Transporter Name</label>
+                                <input type="text" id="drawer-transporter-name" class="form-control" placeholder="Logistics carrier">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Station To / Destination</label>
+                                <input type="text" id="drawer-station-to" class="form-control" placeholder="Delivery destination">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Order No / Purchase Order</label>
+                                <input type="text" id="drawer-order-no" class="form-control" placeholder="PO reference">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Credit Days</label>
+                                <input type="number" id="drawer-credit-days" class="form-control" placeholder="e.g. 30">
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- Bill Sundries -->
+                    <div class="tab-pane fade" id="content-sundries" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Bill Sundry</label>
+                                <select id="drawer-bill-sundry-select" class="form-control">
+                                    <option value="">-- Select Sundry --</option>
+                                    @foreach($billSundries as $bs)
+                                        <option value="{{ $bs->id }}" data-val="{{ $bs->default_value }}">{{ $bs->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Amount (₹)</label>
+                                <input type="number" id="drawer-sundry-amount" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarks & Notes -->
+                    <div class="tab-pane fade" id="content-remarks" role="tabpanel">
+                        <div class="form-group">
+                            <label>Standard Remark</label>
+                            <select id="drawer-standard-remark" class="form-control">
+                                <option value="">-- Select Predefined Remark --</option>
+                                @foreach($standardRemarks as $rm)
+                                    <option value="{{ $rm->remark }}">{{ $rm->title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bill Remarks &amp; Notes</label>
+                            <textarea id="drawer-note" class="form-control" rows="4" placeholder="Enter notes or shipping instructions..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Settlement -->
+                    <div class="tab-pane fade" id="content-settlement" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Settlement Account</label>
+                                <select id="drawer-account-id" class="form-control">
+                                    @foreach($lims_account_list as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->name }} [{{ $acc->account_no }}]</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Paid Amount</label>
+                                <input type="number" id="drawer-paid-amount" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btn-save-drawer-details" data-dismiss="modal">Apply &amp; Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW DETAILS MODAL -->
 <div id="purchase-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
+    <div role="document" class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="container mt-3 pb-2 border-bottom">
             <div class="row">
@@ -294,9 +597,9 @@
                 </div>
             </div>
         </div>
-            <div id="purchase-content" class="modal-body"></div>
-            <br>
-            <div class="table-responsive document-lines" tabindex="0" role="region" aria-label="{{__('db.Purchase Details')}}">
+        <div id="purchase-content" class="modal-body"></div>
+        <br>
+        <div class="table-responsive document-lines px-3" tabindex="0" role="region" aria-label="{{__('db.Purchase Details')}}">
             <table class="table table-bordered product-purchase-list">
                 <thead>
                     <th>#</th>
@@ -312,197 +615,9 @@
                 <tbody>
                 </tbody>
             </table>
-            </div>
-            <div id="purchase-footer" class="modal-body"></div>
+        </div>
+        <div id="purchase-footer" class="modal-body"></div>
       </div>
-    </div>
-</div>
-
-<div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.All Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-hover payment-list">
-                    <thead>
-                        <tr>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.Reference No')}}</th>
-                            <th>{{__('db.Account')}}</th>
-                            <th>{{__('db.Amount')}}</th>
-                            <th>{{__('db.Paid By')}}</th>
-                            <th>{{__('db.Payment Date')}}</th>
-                            <th>{{__('db.action')}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="add-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                {!! Form::open(['route' => 'purchase.add-payment', 'method' => 'post', 'class' => 'payment-form' ]) !!}
-                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
-                    <div class="row">
-                        <input type="hidden" name="balance">
-                        <div class="col-md-6">
-                            <label>{{__('db.Recieved Amount')}} *</label>
-                            <input type="text" name="paying_amount" class="form-control numkey"  step="any" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label>{{__('db.Paying Amount')}} *</label>
-                            <input type="text" id="amount" name="amount" class="form-control"  step="any" required>
-                        </div>
-                        <div class="col-md-6 mt-1">
-                            <label>{{__('db.Change')}} : </label>
-                            <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
-                        </div>
-                        <div class="col-md-6 mt-1">
-                            <label>{{__('db.Paid By')}}</label>
-                            <select name="paid_by_id" class="form-control">
-                                <option value="1">{{ __('db.Cash') }}</option>
-                                <option value="3">{{ __('db.Credit Card') }}</option>
-                                <option value="4">{{ __('db.Cheque') }}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group mt-2">
-                        <div class="card-element" class="form-control">
-                        </div>
-                        <div class="card-errors" role="alert"></div>
-                    </div>
-                    <div id="cheque">
-                        <div class="form-group">
-                            <label>{{__('db.Cheque Number')}} *</label>
-                            <input type="text" name="cheque_no" class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col-md-6">
-                            <label> {{__('db.Account')}}</label>
-                            <select class="form-control selectpicker" name="account_id">
-                                @foreach($lims_account_list as $account)
-                                    @if($account->is_default)
-                                    <option selected value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                                    @else
-                                    <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label>{{ __('db.Payment Date') }}</label>
-                            <input type="text" name="payment_at" id="payment_at" class="form-control"
-                                value="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Currency')}} & {{__('db.Exchange Rate')}}</label>
-                            <div class="form-group d-flex align-items-center">
-                                <p id="currency_display" class="form-control-plaintext mb-0 font-weight-bold mr-3"></p>
-                                <p id="exchange_rate_display" class="form-control-plaintext mb-0 font-weight-bold"></p>
-                            </div>
-
-                            <!-- Hidden fields for backend -->
-                            <input type="hidden" name="currency_id" id="currency_id">
-                            <input type="hidden" name="exchange_rate" id="exchange_rate">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{__('db.Payment Note')}}</label>
-                        <textarea rows="3" class="form-control" name="payment_note"></textarea>
-                    </div>
-
-                    <input type="hidden" name="purchase_id">
-
-                    <button type="submit" class="btn btn-primary">{{__('db.submit')}}</button>
-                {{ Form::close() }}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="edit-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Update Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                {!! Form::open(['route' => 'purchase.update-payment', 'method' => 'post', 'class' => 'payment-form' ]) !!}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label>{{__('db.Recieved Amount')}} *</label>
-                            <input type="text" name="edit_paying_amount" class="form-control numkey"  step="any" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label>{{__('db.Paying Amount')}} *</label>
-                            <input type="text" name="edit_amount" class="form-control"  step="any" required>
-                        </div>
-                        <div class="col-md-6 mt-1">
-                            <label>{{__('db.Change')}} : </label>
-                            <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
-                        </div>
-                        <div class="col-md-6 mt-1">
-                            <label>{{__('db.Paid By')}}</label>
-                            <select name="edit_paid_by_id" class="form-control selectpicker">
-                                <option value="1">{{ __('db.Cash') }}</option>
-                                <option value="3">{{ __('db.Credit Card') }}</option>
-                                <option value="4">{{ __('db.Cheque') }}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group mt-2">
-                        <div class="card-element" class="form-control">
-                        </div>
-                        <div class="card-errors" role="alert"></div>
-                    </div>
-                    <div id="edit-cheque">
-                        <div class="form-group">
-                            <label>{{__('db.Cheque Number')}} *</label>
-                            <input type="text" name="edit_cheque_no" class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col-md-6">
-                            <label> {{__('db.Account')}}</label>
-                            <select class="form-control selectpicker" name="account_id">
-                            @foreach($lims_account_list as $account)
-                                <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                            @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label>{{ __('db.Payment Date') }}</label>
-                            <input type="text" name="payment_at" id="edit_payment_at" class="form-control"
-                                value="" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{__('db.Payment Note')}}</label>
-                        <textarea rows="3" class="form-control" name="edit_payment_note"></textarea>
-                    </div>
-
-                    <input type="hidden" name="payment_id">
-
-                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
-                {{ Form::close() }}
-            </div>
-        </div>
     </div>
 </div>
 
@@ -510,902 +625,580 @@
 
 @push('scripts')
 <script type="text/javascript">
+(function() {
+    'use strict';
 
-    $('#toggle-filter').on('click', function() {
-        $('#filter-card').slideToggle('slow');
-    });
+    // --- Product List Autocomplete Data ---
+    var productArray = [];
+    var lims_product_code = [
+        @foreach($lims_product_list_without_variant as $product)
+            "{{ htmlspecialchars($product->code) }}|{{ preg_replace('/[\n\r]/', ' ', htmlspecialchars($product->name)) }}",
+        @endforeach
+        @foreach($lims_product_list_with_variant as $product)
+            "{{ htmlspecialchars($product->item_code) }}|{{ preg_replace('/[\n\r]/', ' ', htmlspecialchars($product->name)) }}",
+        @endforeach
+    ];
 
-    $(function () {
-        $('#payment_at').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        }).datepicker("setDate", new Date());
-        $('#edit_payment_at').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    });
+    // --- State variables ---
+    var rowCounter = 0;
+    var taxList = @json($lims_tax_list);
+    var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
 
-    $('.daterangepicker-field').daterangepicker({
-        autoUpdateInput: true,
-        locale: {
-            format: 'YYYY-MM-DD',
-            cancelLabel: 'Clear'
+    // --- Autocomplete setup ---
+    $('#lims_productcodeSearch').autocomplete({
+        source: function(request, response) {
+            var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
+            response($.grep(lims_product_code, function(item) {
+                return matcher.test(item);
+            }).slice(0, 20));
         },
-        showDropdowns: true,
-        ranges: {
-            'Today': [moment(), moment()],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'Last 90 Days': [moment().subtract(89, 'days'), moment()],
-            'Last Year': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
-            'All Time': [moment('2000-01-01'), moment()]
-        }
-    }, function (start, end, label) {
-        let starting_date = start.format('YYYY-MM-DD');
-        let ending_date = end.format('YYYY-MM-DD');
-        let title = starting_date + ' To ' + ending_date;
-
-        $('.daterangepicker-field').val(title);
-        $('input[name="starting_date"]').val(starting_date);
-        $('input[name="ending_date"]').val(ending_date);
-
-        purchaseTable.ajax.reload();
-    });
-
-    $("ul#purchase").siblings('a').attr('aria-expanded','true');
-    $("ul#purchase").addClass("show");
-    $("ul#purchase #purchase-list-menu").addClass("active");
-
-    @if($lims_pos_setting_data)
-        var public_key = <?php echo json_encode($lims_pos_setting_data->stripe_public_key) ?>;
-    @endif
-    var all_permission = <?php echo json_encode($all_permission) ?>;
-
-    var purchase_id = [];
-    var user_verified = <?php echo json_encode(env('USER_VERIFIED')) ?>;
-    var starting_date = <?php echo json_encode($starting_date); ?>;
-    var ending_date = <?php echo json_encode($ending_date); ?>;
-    var warehouse_id = <?php echo json_encode($warehouse_id); ?>;
-    var purchase_status = <?php echo json_encode($purchase_status); ?>;
-    var payment_status = <?php echo json_encode($payment_status); ?>;
-
-    var show_purchase_product_details = <?php echo json_encode($general_setting->show_products_details_in_purchase_table) ?>;
-    if(show_purchase_product_details == 1){
-        var columns = [
-            {"data": "key"},
-            {"data": "date"},
-            {"data": "reference_no"},
-            {"data": "created_by"},
-            {"data": "supplier"},
-            {"data": "products"},
-            {"data": "products_qty"},
-            {"data": "purchase_status"},
-            {"data": "grand_total"},
-            {"data": "returned_amount"},
-            {"data": "paid_amount"},
-            {"data": "due"},
-            {"data": "payment_status"}
-        ];
-    }else{
-        var columns = [
-            {"data": "key"},
-            {"data": "date"},
-            {"data": "reference_no"},
-            {"data": "created_by"},
-            {"data": "supplier"},
-            {"data": "purchase_status"},
-            {"data": "grand_total"},
-            {"data": "returned_amount"},
-            {"data": "paid_amount"},
-            {"data": "due"},
-            {"data": "payment_status"}
-        ];
-    }
-
-    var field_name = <?php echo json_encode($field_name) ?>;
-    for(i = 0; i < field_name.length; i++) {
-        columns.push({"data": field_name[i]});
-    }
-    columns.push({"data": "options"});
-
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-    $("#warehouse_id").val(warehouse_id);
-    $("#purchase-status").val(purchase_status);
-    $("#payment-status").val(payment_status);
-
-    $('.selectpicker').selectpicker('refresh');
-
-    function confirmDelete() {
-        if (confirm("Are you sure want to delete?")) {
-            return true;
-        }
-        return false;
-    }
-
-    function confirmDeletePayment() {
-        if (confirm("Are you sure want to delete? If you delete this money will be refunded")) {
-            return true;
-        }
-        return false;
-    }
-
-    $(document).on("click", "tr.purchase-link td:not(:first-child, :last-child)", function(){
-        var purchase = $(this).parent().data('purchase');
-        purchaseDetails(purchase);
-    });
-
-    $(document).on("click", ".view", function(){
-        var purchase = $(this).parent().parent().parent().parent().parent().data('purchase');
-        purchaseDetails(purchase);
-    });
-
-    $("#print-btn").on("click", function(){
-        var divContents = document.getElementById("purchase-details").innerHTML;
-        var a = window.open('');
-        a.document.write('<html>');
-        a.document.write('<body><style>body{font-family: sans-serif;line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-center{text-align:center}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left;}td{padding:10px}table, th, td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>');
-        a.document.write(divContents);
-        a.document.write('</body></html>');
-        a.document.close();
-        setTimeout(function(){a.close();},10);
-        a.print();
-    });
-
-    $(document).on("click", "table.purchase-list tbody .add-payment", function(event) {
-        $("#cheque").hide();
-        $(".card-element").hide();
-        $('select[name="paid_by_id"]').val(1);
-        rowindex = $(this).closest('tr').index();
-        var purchase_id = $(this).data('id').toString();
-        let currency_name = $(this).data('currency_name');
-        let currency_id = $(this).data('currency_id');
-        let exchange_rate = parseFloat($(this).data('exchange_rate')) || 1;
-        if(show_purchase_product_details == 1){
-            var balance = $('table.purchase-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(11)').text();
-        }else{
-            var balance = $('table.purchase-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(9)').text();
-        }
-
-        balance = parseFloat(balance.replace(/,/g, ''));
-        $('input[name="amount"]').val(balance);
-        $('input[name="balance"]').val(balance);
-        $('input[name="paying_amount"]').val(balance);
-        $('input[name="purchase_id"]').val(purchase_id);
-        // Fill readonly currency info
-        $('#currency_display').text(currency_name);
-        $('#exchange_rate_display').text(exchange_rate.toFixed(2));
-
-        // Hidden inputs for backend
-        $('#currency_id').val(currency_id);
-        $('#exchange_rate').val(exchange_rate);
-    });
-
-    $(document).on("click", "table.purchase-list tbody .get-payment", function(event) {
-        var id = $(this).data('id').toString();
-        $.get('purchases/getpayment/' + id, function(data) {
-            $(".payment-list tbody").remove();
-            var newBody = $("<tbody>");
-            payment_date  = data[0];
-            payment_reference = data[1];
-            paid_amount = data[2];
-            paying_method = data[3];
-            payment_id = data[4];
-            payment_note = data[5];
-            cheque_no = data[6];
-            change = data[7];
-            paying_amount = data[8];
-            account_name = data[9];
-            account_id = data[10];
-            payment_at = data[11];
-
-            $.each(payment_date, function(index){
-                var newRow = $("<tr>");
-                var cols = '';
-
-                cols += '<td>' + payment_date[index] + '</td>';
-                cols += '<td>' + payment_reference[index] + '</td>';
-                cols += '<td>' + account_name[index] + '</td>';
-                cols += '<td>' + paid_amount[index] + '</td>';
-                cols += '<td>' + paying_method[index] + '</td>';
-                cols += '<td>' + payment_at[index] + '</td>';
-                cols += '<td><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Action<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">';
-                if(all_permission.indexOf("purchase-payment-edit") != -1)
-                    cols += '<li><button type="button" class="btn btn-link edit-btn" data-id="' + payment_id[index] +'" data-clicked=false data-toggle="modal" data-target="#edit-payment"><i class="dripicons-document-edit"></i> Edit</button></li><li class="divider"></li>';
-                if(all_permission.indexOf("purchase-payment-delete") != -1)
-                    cols += '{{ Form::open(['route' => 'purchase.delete-payment', 'method' => 'post'] ) }}<li><input type="hidden" name="id" value="' + payment_id[index] + '" /> <button type="submit" class="btn btn-link" onclick="return confirmDeletePayment()"><i class="dripicons-trash"></i> Delete</button></li>{{ Form::close() }}';
-                cols += '</ul></div></td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-                $("table.payment-list").append(newBody);
-            });
-            $('#view-payment').modal('show');
-        });
-    });
-
-    $(document).on("click", "table.payment-list .edit-btn", function(event) {
-        $(".edit-btn").attr('data-clicked', true);
-        $(".card-element").hide();
-        $("#edit-cheque").hide();
-        $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
-        var id = $(this).data('id').toString();
-        $.each(payment_id, function(index){
-            if(payment_id[index] == parseFloat(id)){
-                $('input[name="payment_id"]').val(payment_id[index]);
-                $('#edit-payment select[name="account_id"]').val(account_id[index]);
-                if(paying_method[index] == 'Cash')
-                    $('select[name="edit_paid_by_id"]').val(1);
-                else if(paying_method[index] == 'Credit Card'){
-                    $('select[name="edit_paid_by_id"]').val(3);
-                    @if($lims_pos_setting_data && (strlen($lims_pos_setting_data->stripe_public_key)>0) && (strlen($lims_pos_setting_data->stripe_secret_key )>0))
-                        $.getScript( "vendor/stripe/checkout.js" );
-                        $(".card-element").show();
-                    @endif
-                    $("#edit-cheque").hide();
-                    $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', true);
-                }
-                else{
-                    $('select[name="edit_paid_by_id"]').val(4);
-                    $("#edit-cheque").show();
-                    $('input[name="edit_cheque_no"]').val(cheque_no[index]);
-                    $('input[name="edit_cheque_no"]').attr('required', true);
-                }
-                $('input[name="edit_date"]').val(payment_date[index]);
-                $("#payment_reference").html(payment_reference[index]);
-                $('input[name="edit_amount"]').val(paid_amount[index]);
-                $('input[name="edit_paying_amount"]').val(paying_amount[index]);
-                $('.change').text(change[index]);
-                $('textarea[name="edit_payment_note"]').val(payment_note[index]);
-                $('input[name="payment_at"]').val(payment_at[index]);
-                return false;
-            }
-        });
-        $('.selectpicker').selectpicker('refresh');
-        $('#view-payment').modal('hide');
-    });
-
-    $('select[name="paid_by_id"]').on("change", function() {
-        var id = $('select[name="paid_by_id"]').val();
-        $('input[name="cheque_no"]').attr('required', false);
-        $(".payment-form").off("submit");
-        if (id == 3) {
-            $.getScript( "vendor/stripe/checkout.js" );
-            $(".card-element").show();
-            $("#cheque").hide();
-        } else if (id == 4) {
-            $("#cheque").show();
-            $(".card-element").hide();
-            $('input[name="cheque_no"]').attr('required', true);
-        } else {
-            $(".card-element").hide();
-            $("#cheque").hide();
-        }
-    });
-
-    $('input[name="paying_amount"]').on("input", function() {
-        $(".change").text(parseFloat( $(this).val() - $('input[name="amount"]').val() ).toFixed({{$general_setting->decimal}}));
-    });
-
-    $('input[name="amount"]').on("input", function() {
-        if( $(this).val() > parseFloat($('input[name="paying_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
+        select: function(event, ui) {
+            fetchProductAndAddRow(ui.item.value);
             $(this).val('');
+            return false;
         }
-        else if( $(this).val() > parseFloat($('input[name="balance"]').val()) ) {
-            alert('Paying amount cannot be bigger than due amount');
-            $(this).val('');
-        }
-        $(".change").text(parseFloat($('input[name="paying_amount"]').val() - $(this).val()).toFixed({{$general_setting->decimal}}));
-    });
-
-    $('select[name="edit_paid_by_id"]').on("change", function() {
-        var id = $('select[name="edit_paid_by_id"]').val();
-        $('input[name="edit_cheque_no"]').attr('required', false);
-        $(".payment-form").off("submit");
-        if (id == 3) {
-            $(".edit-btn").attr('data-clicked', true);
-            $.getScript( "vendor/stripe/checkout.js" );
-            $(".card-element").show();
-            $("#edit-cheque").hide();
-        } else if (id == 4) {
-            $("#edit-cheque").show();
-            $(".card-element").hide();
-            $('input[name="edit_cheque_no"]').attr('required', true);
-        } else {
-            $(".card-element").hide();
-            $("#edit-cheque").hide();
-        }
-    });
-
-    $('input[name="edit_amount"]').on("input", function() {
-        if( $(this).val() > parseFloat($('input[name="edit_paying_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $(this).val('');
-        }
-        $(".change").text(parseFloat($('input[name="edit_paying_amount"]').val() - $(this).val()).toFixed({{$general_setting->decimal}}));
-    });
-
-    $('input[name="edit_paying_amount"]').on("input", function() {
-        $(".change").text(parseFloat( $(this).val() - $('input[name="edit_amount"]').val() ).toFixed({{$general_setting->decimal}}));
-    });
-
-    let targets = [];
-
-    if (show_purchase_product_details == 1) {
-        targets = [0, 3, 4, 5, 6, 7, 9, 11, 12];
-    } else {
-        targets = [0, 3, 4, 5, 7, 9, 10];
-    }
-
-    let buttons = [];
-    @can('purchase_export')
-        buttons.push(
-            {
-                extend: 'pdf',
-                text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
-                exportOptions: {
-                    columns: ':visible:Not(.not-exported)',
-                    rows: ':visible'
-                },
-                action: function(e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.pdfHtml5.action.call(this, e, dt, button, config);
-                    datatable_sum(dt, false);
-                },
-                footer:true
-            },
-            {
-                extend: 'excel',
-                text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
-                exportOptions: {
-                    columns: ':visible:not(.not-exported)',
-                    rows: ':visible'
-                },
-                action: function(e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
-                    datatable_sum(dt, false);
-                },
-                footer:true
-            },
-            {
-                extend: 'csv',
-                text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
-                exportOptions: {
-                    columns: ':visible:not(.not-exported)',
-                    rows: ':visible'
-                },
-                action: function(e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
-                    datatable_sum(dt, false);
-                },
-                footer:true
-            },
-            {
-                extend: 'print',
-                text: '<i title="print" class="fa fa-print"></i>',
-                exportOptions: {
-                    columns: ':visible:not(.not-exported)',
-                    rows: ':visible'
-                },
-                action: function(e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
-                    datatable_sum(dt, false);
-                },
-                footer:true
-            }
-        );
-    @endcan
-
-    buttons.push(
-        {
-            text: '<i title="delete" class="dripicons-cross"></i>',
-            className: 'buttons-delete',
-            action: function ( e, dt, node, config ) {
-                if(user_verified == '1') {
-                    purchase_id.length = 0;
-                    $(':checkbox:checked').each(function(i){
-                        if(i){
-                            var purchase = $(this).closest('tr').data('purchase');
-                            if(purchase)
-                                purchase_id[i-1] = purchase[3];
-                        }
-                    });
-                    if(purchase_id.length && confirm(@json(config('commercial.enabled') ? 'Reverse selected documents and preserve their history?' : 'Are you sure want to delete?'))) {
-                        @if(config('commercial.enabled'))
-                        var reversalReason = prompt('Reason for reversal (at least 3 characters):');
-                        if (!reversalReason || reversalReason.trim().length < 3) return;
-                        var reversalDate = prompt('Reversal date (YYYY-MM-DD):', @json(date('Y-m-d')));
-                        if (!reversalDate) return;
-                        @endif
-                        $.ajax({
-                            type:'POST',
-                            url:'purchases/deletebyselection',
-                            data:{
-                                purchaseIdArray: purchase_id
-                                @if(config('commercial.enabled'))
-                                ,reason: reversalReason, business_date: reversalDate
-                                @endif
-                            },
-                            success:function(res) {
-                                @if(config('commercial.enabled'))
-                                alert('Documents reversed; original history preserved.'); location.reload(); return;
-                                @endif
-                                if (!res || !Array.isArray(res.deleted)) {
-                                    alert(res.message || 'Unexpected server response');
-                                    return;
-                                }
-                                res.deleted.forEach(function(id){
-                                    var row = $('#purchase-table tbody tr[data-id="'+id+'"]');
-                                    if (row.length) dt.row(row).remove();
-                                });
-                                dt.draw(false);
-                                alert(res.message || 'Deleted');
-                                //dt.rows({ page: 'current', selected: true }).deselect();
-                                //dt.rows({ page: 'current', selected: true }).remove().draw(false);
-                            },
-                            error: function(xhr) {
-                                // if the server responded with HTML (redirect/login), show a friendly message
-                                var contentType = xhr.getResponseHeader('Content-Type') || '';
-                                if (contentType.indexOf('text/html') !== -1) {
-                                    console.warn('Server returned HTML — likely a redirect to login.', xhr.responseText);
-                                    alert('Session expired or not authenticated. Please login again.');
-                                    // Optional: redirect user to login page
-                                    window.location = '/login';
-                                    return;
-                                }
-                                let json = null;
-                                try { json = xhr.responseJSON; } catch(e){}
-                                alert((json && json.message) ? json.message : 'Delete failed: ' + xhr.status);
-                            }
-                        });
-                    }
-                    else if(!purchase_id.length)
-                        alert('Nothing is selected!');
-                }
-                else
-                    alert('This feature is disable for demo!');
-            }
-        },
-        {
-            extend: 'colvis',
-            text: '<i title="column visibility" class="fa fa-eye"></i>',
-            columns: ':gt(0)'
-        }
-    );
-
-    var purchaseTable = $('#purchase-table').DataTable( {
-        "processing": true,
-        "serverSide": true,
-        "ajax":{
-            url:"purchases/purchase-data",
-            data: function (d) {
-                d.all_permission   = all_permission;
-                d.starting_date    = $('input[name=starting_date]').val();
-                d.ending_date      = $('input[name=ending_date]').val();
-                d.warehouse_id     = $('#warehouse_id').val();
-                d.purchase_status  = $('#purchase-status').val();
-                d.payment_status   = $('#payment-status').val();
-            },
-            dataType: "json",
-            type:"post",
-            /*success:function(data){
-                console.log(data);
-            }*/
-        },
-        "createdRow": function( row, data, dataIndex ) {
-            $(row).addClass('purchase-link');
-            $(row).attr('data-purchase', data['purchase']);
-        },
-        "columns": columns,
-        'language': {
-            /*'searchPlaceholder': "{{__('db.Type date or purchase reference')}}",*/
-            'lengthMenu': '_MENU_ {{__("db.records per page")}}',
-             "info":      '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
-            "search":  '{{__("db.Search")}}',
-            'paginate': {
-                    'previous': '<i class="dripicons-chevron-left"></i>',
-                    'next': '<i class="dripicons-chevron-right"></i>'
-            }
-        },
-        order:[['1', 'desc']],
-        'columnDefs': [
-            {
-                "orderable": false,
-                'targets': targets
-            },
-            {
-                'render': function(data, type, row, meta){
-                    if(type === 'display'){
-                        data = '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>';
-                    }
-
-                   return data;
-                },
-                'checkboxes': {
-                   'selectRow': true,
-                   'selectAllRender': '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>'
-                },
-                'targets': [0]
-            }
-        ],
-        'select': { style: 'multi',  selector: 'td:first-child'},
-        'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        dom: '<"row"lfB>rtip',
-        buttons: buttons,
-        drawCallback: function () {
-            var api = this.api();
-            datatable_sum(api, false);
-        }
-    });
-
-    function datatable_sum(dt_selector, is_calling_first) {
-
-        if(show_purchase_product_details == 1){
-             if (dt_selector.rows( '.selected' ).any() && is_calling_first) {
-                var rows = dt_selector.rows( '.selected' ).indexes();
-                $( dt_selector.column( 8 ).footer() ).html(dt_selector.cells( rows, 8, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 9 ).footer() ).html(dt_selector.cells( rows, 9, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 10 ).footer() ).html(dt_selector.cells( rows, 10, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 11 ).footer() ).html(dt_selector.cells( rows, 11, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-            else {
-                $( dt_selector.column( 8 ).footer() ).html(dt_selector.column( 8, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 9 ).footer() ).html(dt_selector.column( 9, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 10 ).footer() ).html(dt_selector.column( 10, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 11 ).footer() ).html(dt_selector.column( 11, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-        }else{
-            if (dt_selector.rows( '.selected' ).any() && is_calling_first) {
-                var rows = dt_selector.rows( '.selected' ).indexes();
-                $( dt_selector.column( 6 ).footer() ).html(dt_selector.cells( rows, 6, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 7 ).footer() ).html(dt_selector.cells( rows, 7, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 8 ).footer() ).html(dt_selector.cells( rows, 8, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 9 ).footer() ).html(dt_selector.cells( rows, 9, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-            else {
-                $( dt_selector.column( 6 ).footer() ).html(dt_selector.column( 6, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 7 ).footer() ).html(dt_selector.column( 7, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 8 ).footer() ).html(dt_selector.column( 8, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 9 ).footer() ).html(dt_selector.column( 9, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-        }
-
-    }
-
-    $('#warehouse_id, #purchase-status, #payment-status').on('change', function () {
-        purchaseTable.ajax.reload();
-    });
-
-    // for date range picker
-    $('.daterangepicker-field').on('apply.daterangepicker', function(ev, picker) {
-        $('input[name=starting_date]').val(picker.startDate.format('YYYY-MM-DD'));
-        $('input[name=ending_date]').val(picker.endDate.format('YYYY-MM-DD'));
-        purchaseTable.ajax.reload();
-    });
-
-    // Show loader on request
-    purchaseTable.on('preXhr.dt', function () {
-        $('#filter-loading').show();
-    });
-
-    // Hide loader after draw
-    purchaseTable.on('xhr.dt', function () {
-        $('#filter-loading').hide();
-    });
-
-
-    function purchaseDetails(purchase){
-        // console.log(purchase);
-        var htmltext = '{{__("db.date")}}: '+purchase[0]+'<br>{{__("db.reference")}}: '+purchase[1]+'<br>{{__("db.Purchase Status")}}: '+purchase[2]+'<br>{{__("db.Currency")}}: '+purchase[26];
-        if(purchase[27])
-            htmltext += '<br>{{__("db.Exchange Rate")}}: '+purchase[27]+'<br>';
-        else
-            htmltext += '<br>{{__("db.Exchange Rate")}}: N/A<br>';
-        if(purchase[25])
-            htmltext += '{{__("db.Attach Document")}}: <a href="{{ url('secure-documents/purchase') }}/'+purchase[25]+'">Download</a><br>';
-        htmltext += '<br><div class="row"><div class="col-md-6">{{__("db.From")}}:<br>'+purchase[7]+'<br>'+purchase[8]+'<br>'+purchase[9]+'<br>'+purchase[10]+'<br>'+purchase[11]+'<br>'+purchase[12]+'</div><div class="col-md-6"><div class="float-right">{{__("db.To")}}:<br>'+purchase[4]+'<br>'+purchase[5]+'<br>'+purchase[6]+'</div></div></div>';
-        $(".product-purchase-list tbody").remove();
-        $.get('purchases/product_purchase/' + purchase[3], function(data) {
-            // console.log(data);
-            if(data == 'Something is wrong!') {
-                var newBody = $("<tbody>");
-                var newRow = $("<tr>");
-                cols = '<td colspan="8">Something is wrong!</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-            }
-            else {
-                var name_code = data[0];
-                var qty = data[1];
-                var unit_code = data[2];
-                var tax = data[3];
-                var tax_rate = data[4];
-                var discount = data[5];
-                var subtotal = data[6];
-                var batch_no = data[7];
-                var returned = data[8];
-                var newBody = $("<tbody>");
-                $.each(name_code, function(index) {
-                    var newRow = $("<tr>");
-                    var cols = '';
-                    cols += '<td>' + (index+1) + '</td>';
-                    cols += '<td>' + name_code[index] + '</td>';
-                    cols += '<td>' + batch_no[index] + '</td>';
-                    cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
-                    cols += '<td>' + returned[index] + '</td>';
-                    cols += '<td>' + (parseFloat(subtotal[index] / qty[index]).toFixed({{$general_setting->decimal}})) + '</td>';
-                    cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
-                    cols += '<td>' + discount[index] + '</td>';
-                    cols += '<td>' + subtotal[index] + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
-                });
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=6>{{__("db.Total")}}:</td>';
-                cols += '<td>' + purchase[13] + '</td>';
-                cols += '<td>' + purchase[14] + '</td>';
-                cols += '<td>' + purchase[15] + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=8>{{__("db.Order Tax")}}:</td>';
-                cols += '<td>' + purchase[16] + '(' + purchase[17] + '%)' + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=8>{{__("db.Order Discount")}}:</td>';
-                cols += '<td>' + purchase[18] + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=8>{{__("db.Shipping Cost")}}:</td>';
-                cols += '<td>' + purchase[19] + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=8>{{__("db.grand total")}}:</td>';
-                cols += '<td>' + purchase[20] + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=8>{{__("db.Paid Amount")}}:</td>';
-                cols += '<td>' + purchase[21] + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=8>{{__("db.Due")}}:</td>';
-                cols += '<td>' + (purchase[20] - purchase[21]) + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-
-                 $("table.product-purchase-list").append(newBody);
-             }
-        });
-
-        var htmlfooter = '<p>{{__("db.Note")}}: '+purchase[22]+'</p>{{__("db.Created By")}}:<br>'+purchase[23]+'<br>'+purchase[24];
-
-        $('#purchase-content').html(htmltext);
-        $('#purchase-footer').html(htmlfooter);
-        $('#purchase-details').modal('show');
-    }
-
-    $(document).on('submit', '.payment-form', function(e) {
-        if( $('input[name="paying_amount"]').val() < parseFloat($('#amount').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $('input[name="amount"]').val('');
-            $(".change").text(parseFloat( $('input[name="paying_amount"]').val() - $('#amount').val() ).toFixed({{$general_setting->decimal}}));
+    }).on('keydown', function(e) {
+        if (e.which === 13) {
             e.preventDefault();
-        }
-        else if( $('input[name="edit_paying_amount"]').val() < parseFloat($('input[name="edit_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $('input[name="edit_amount"]').val('');
-            $(".change").text(parseFloat( $('input[name="edit_paying_amount"]').val() - $('input[name="edit_amount"]').val() ).toFixed({{$general_setting->decimal}}));
-            e.preventDefault();
-        }
-
-        $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
-    });
-
-    if(all_permission.indexOf("purchases-delete") == -1)
-        $('.buttons-delete').addClass('d-none');
-
-
-</script>
-<script type="text/javascript" src="https://js.stripe.com/v3/">
-    // --- Commercial Workspace Single-Screen SPA Ergonomics (Purchases) ---
-    function showProgressBar() {
-        $('#comm-progress-bar').removeClass('done').addClass('active');
-    }
-    function hideProgressBar() {
-        $('#comm-progress-bar').addClass('done');
-        setTimeout(function() { $('#comm-progress-bar').removeClass('active done'); }, 300);
-    }
-
-    // Tab switching without page reload
-    $('#tab-all-purchases').on('click', function(e) {
-        e.preventDefault();
-        $('.comm-nav-pills .nav-link').removeClass('active');
-        $(this).addClass('active');
-        $('#purchase-status').val('0');
-        showProgressBar();
-        $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
-    });
-
-    $('#tab-pending-purchases').on('click', function(e) {
-        e.preventDefault();
-        $('.comm-nav-pills .nav-link').removeClass('active');
-        $(this).addClass('active');
-        $('#purchase-status').val('3');
-        showProgressBar();
-        $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
-    });
-
-    $('#btn-quick-refresh').on('click', function() {
-        showProgressBar();
-        $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
-    });
-
-    // --- Purchase List Panel Docking & Toggling ---
-    // Restore saved dock position & open state
-    (function initPurchasePanelState() {
-        let savedDock = localStorage.getItem('zolo_bill_panel_dock');
-        if (savedDock === 'left') {
-            $('#comm-split-grid').addClass('dock-left');
-            $('#dock-label').text('Dock Right');
-        } else {
-            $('#comm-split-grid').removeClass('dock-left');
-            $('#dock-label').text('Dock Left');
-        }
-
-        let savedOpen = localStorage.getItem('zolo_bill_panel_open');
-        if (savedOpen === '0') {
-            $('#comm-drawer').addClass('collapsed');
-            $('#comm-split-grid').addClass('drawer-collapsed');
-        }
-    })();
-
-    // Dock toggle: switch side panel between Left and Right
-    $('#btn-dock-toggle').on('click', function() {
-        let isLeft = $('#comm-split-grid').toggleClass('dock-left').hasClass('dock-left');
-        $('#dock-label').text(isLeft ? 'Dock Right' : 'Dock Left');
-        localStorage.setItem('zolo_bill_panel_dock', isLeft ? 'left' : 'right');
-        if ($.fn.DataTable.isDataTable('#purchase-table')) {
-            $('#purchase-table').DataTable().columns.adjust().draw(false);
+            var val = $(this).val().trim();
+            if (val) {
+                fetchProductAndAddRow(val);
+                $(this).val('');
+            }
         }
     });
 
-    // Panel collapse / expand toggle
-    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
-        let isClosed = $('#comm-drawer').toggleClass('collapsed').hasClass('collapsed');
-        $('#comm-split-grid').toggleClass('drawer-collapsed', isClosed);
-        localStorage.setItem('zolo_bill_panel_open', isClosed ? '0' : '1');
-        if ($.fn.DataTable.isDataTable('#purchase-table')) {
-            $('#purchase-table').DataTable().columns.adjust().draw(false);
-        }
-    });
-
-    // Hotkey: Alt+D toggles side panel
+    // Quick F2 focus
     $(document).on('keydown', function(e) {
-        if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+        if (e.which === 113) { // F2
             e.preventDefault();
-            $('#toggle-drawer-btn').trigger('click');
+            $('#lims_productcodeSearch').focus();
         }
     });
 
-    // --- Purchase List Live Search & Filtering ---
-    function filterSidePurchases() {
-        let search = $('#side-search-input').val().trim().toLowerCase();
-        let series = $('#side-filter-series').val().trim().toLowerCase();
-        let activeTab = $('.side-filter-tabs .side-tab.active').data('filter') || 'all';
-        let selectedDate = $('#side-filter-date-val').val();
-
-        let visibleCount = 0;
-        $('#side-bill-list .side-bill-card').each(function() {
-            let card = $(this);
-            let ref = card.data('ref') || '';
-            let party = card.data('party') || '';
-            let status = card.data('status') || '';
-            let date = card.data('date') || '';
-
-            let matchesSearch = !search || ref.indexOf(search) !== -1 || party.indexOf(search) !== -1;
-            let matchesSeries = !series || ref.indexOf(series) !== -1;
-            let matchesTab = true;
-
-            if (activeTab === 'draft') {
-                matchesTab = (status === 'draft');
-            } else if (activeTab === 'date') {
-                matchesTab = !selectedDate || (date === selectedDate);
-            } else if (activeTab === 'range') {
-                matchesTab = true;
+    // --- Fetch Product via AJAX & Add Row ---
+    function fetchProductAndAddRow(searchTerm) {
+        $.ajax({
+            type: 'GET',
+            url: '{{ route("product_purchase.search") }}',
+            data: { data: searchTerm },
+            success: function(data) {
+                if (data && data.length) {
+                    addProductRow({
+                        product_id: data[9],
+                        product_name: data[0],
+                        product_code: data[1],
+                        cost: parseFloat(data[2]) || 0,
+                        tax_rate: parseFloat(data[3]) || 0,
+                        unit: (data[6] ? data[6].split(',')[0] : 'Unit'),
+                        qty: 1
+                    });
+                } else {
+                    alert('Product not found: ' + searchTerm);
+                }
+            },
+            error: function() {
+                // Fallback manual line
+                addProductRow({
+                    product_id: 0,
+                    product_name: searchTerm.split('|')[1] || searchTerm,
+                    product_code: searchTerm.split('|')[0] || '',
+                    cost: 0,
+                    tax_rate: 0,
+                    unit: 'Unit',
+                    qty: 1
+                });
             }
+        });
+    }
 
-            if (matchesSearch && matchesSeries && matchesTab) {
-                card.show();
+    // --- Add Row to Items Grid Table ---
+    function addProductRow(item) {
+        // Remove empty placeholder row if exists
+        $('#order-table-body .empty-placeholder-row').remove();
+
+        rowCounter++;
+        var rate = item.cost || 0;
+        var qty = item.qty || 1;
+        var taxRate = item.tax_rate || 0;
+        var amount = rate * qty;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        var tr = $(`
+            <tr class="order-item-row" data-row-id="${rowCounter}">
+                <td style="text-align:center;font-weight:600;color:#64748b;">${$('#order-table-body tr').length + 1}</td>
+                <td>
+                    <div style="font-weight:600;color:#0f172a;">${item.product_name}</div>
+                    <small style="color:#64748b;">${item.product_code}</small>
+                    <input type="hidden" name="product_id[]" value="${item.product_id}">
+                    <input type="hidden" name="product_code[]" value="${item.product_code}">
+                </td>
+                <td>
+                    <span class="grid-type-pill">Purchase</span>
+                </td>
+                <td>
+                    <span class="badge badge-light border" style="font-size:11px;">${item.unit || 'Unit'}</span>
+                    <input type="hidden" name="purchase_unit[]" value="${item.unit || 'Unit'}">
+                </td>
+                <td style="text-align:right;">
+                    <input type="number" name="net_unit_cost[]" class="form-control form-control-sm row-rate text-right" style="height:26px;font-size:12px;padding:2px 6px;" value="${rate.toFixed(decimalPlaces)}" step="0.01">
+                </td>
+                <td style="text-align:center;">
+                    <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" style="height:26px;font-size:12px;padding:2px 4px;max-width:70px;margin:auto;" value="${qty}" step="any" min="0.01">
+                </td>
+                <td style="text-align:right;font-weight:600;color:#0f172a;">
+                    <span class="row-amount-display">₹ ${amount.toFixed(decimalPlaces)}</span>
+                    <input type="hidden" name="subtotal[]" class="row-subtotal-input" value="${lineTotal.toFixed(decimalPlaces)}">
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate" style="height:26px;font-size:11px;padding:1px 4px;">
+                            <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
+                            <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
+                            <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
+                            <option value="18" ${taxRate == 18 ? 'selected' : ''}>18%</option>
+                            <option value="28" ${taxRate == 28 ? 'selected' : ''}>28%</option>
+                        </select>
+                        <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
+                    </div>
+                </td>
+                <td style="text-align:right;font-weight:700;color:#059669;">
+                    <span class="row-total-display">₹ ${lineTotal.toFixed(decimalPlaces)}</span>
+                </td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 btn-delete-row" title="Delete Row" style="height:24px;font-size:11px;">
+                        <i class="dripicons-trash"></i>
+                    </button>
+                    <input type="hidden" name="discount[]" value="0">
+                </td>
+            </tr>
+        `);
+
+        $('#order-table-body').append(tr);
+        recalcTableSummary();
+    }
+
+    // Manual Add Row
+    $('#btn-add-item-row').on('click', function() {
+        $('#lims_productcodeSearch').focus();
+    });
+
+    // Delete Row
+    $(document).on('click', '.btn-delete-row', function() {
+        $(this).closest('tr').remove();
+        reindexRows();
+        recalcTableSummary();
+    });
+
+    // Live Row Calculation on Change
+    $(document).on('input change', '.row-rate, .row-qty, .row-tax-rate', function() {
+        var tr = $(this).closest('tr');
+        var rate = parseFloat(tr.find('.row-rate').val()) || 0;
+        var qty = parseFloat(tr.find('.row-qty').val()) || 0;
+        var taxRate = parseFloat(tr.find('.row-tax-rate').val()) || 0;
+
+        var amount = rate * qty;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        tr.find('.row-amount-display').text('₹ ' + amount.toFixed(decimalPlaces));
+        tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+        tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('.row-total-display').text('₹ ' + lineTotal.toFixed(decimalPlaces));
+
+        recalcTableSummary();
+    });
+
+    function reindexRows() {
+        var rows = $('#order-table-body tr.order-item-row');
+        if (rows.length === 0) {
+            $('#order-table-body').html(`
+                <tr class="empty-placeholder-row">
+                    <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
+                        No items added yet. Search or scan above or click "+ Add row".
+                    </td>
+                </tr>
+            `);
+        } else {
+            rows.each(function(index) {
+                $(this).find('td:first').text(index + 1);
+            });
+        }
+    }
+
+    // --- Recalculate Table Summary Totals ---
+    function recalcTableSummary() {
+        var net = 0;
+        var tax = 0;
+        var grand = 0;
+        var totalQty = 0;
+        var count = 0;
+
+        $('#order-table-body tr.order-item-row').each(function() {
+            count++;
+            var rate = parseFloat($(this).find('.row-rate').val()) || 0;
+            var qty = parseFloat($(this).find('.row-qty').val()) || 0;
+            var taxRate = parseFloat($(this).find('.row-tax-rate').val()) || 0;
+            var amount = rate * qty;
+            var taxAmount = amount * (taxRate / 100);
+
+            net += amount;
+            tax += taxAmount;
+            grand += (amount + taxAmount);
+            totalQty += qty;
+        });
+
+        $('#display-net-amount').text('₹ ' + net.toFixed(decimalPlaces));
+        $('#display-tax-amount').text('₹ ' + tax.toFixed(decimalPlaces));
+        $('#display-grand-total').text('₹ ' + grand.toFixed(decimalPlaces));
+        $('#items-meta-count').text(count + ' line(s) • 7 per page');
+
+        $('#hidden-total-qty').val(totalQty);
+        $('#hidden-total-cost').val(net.toFixed(decimalPlaces));
+        $('#hidden-total-tax').val(tax.toFixed(decimalPlaces));
+        $('#hidden-grand-total').val(grand.toFixed(decimalPlaces));
+    }
+
+    // --- Load Purchase To Form for In-Place Editing ---
+    window.loadPurchaseToForm = function(id) {
+        $('#comm-progress-bar').addClass('active');
+        $.ajax({
+            type: 'GET',
+            url: '{{ url("purchases") }}/' + id,
+            dataType: 'json',
+            success: function(res) {
+                $('#comm-progress-bar').removeClass('active').addClass('done');
+                setTimeout(() => $('#comm-progress-bar').removeClass('done'), 300);
+
+                if (!res || !res.purchase) {
+                    alert('Could not load purchase details.');
+                    return;
+                }
+
+                var p = res.purchase;
+                // Switch Form to Update Mode
+                $('#entry-form-method').val('PUT');
+                $('#edit-purchase-id').val(p.id);
+                $('#purchase-entry-form').attr('action', '{{ url("purchases") }}/' + p.id);
+
+                // Update UI Labels
+                $('#doc-breadcrumb-mode').text('Edit: ' + (p.reference_no || '#' + p.id)).removeClass('text-primary').addClass('text-success');
+                $('#doc-title-text').text('Edit Purchase Bill: ' + (p.reference_no || '#' + p.id));
+                $('#doc-sub-text').text('Editing saved purchase record');
+
+                // Populate Header Inputs
+                $('#reference_no').val(p.reference_no || '');
+                $('#supplier_invoice_no').val(p.supplier_invoice_no || '');
+                if (p.supplier_invoice_date) $('#supplier_invoice_date').val(p.supplier_invoice_date.slice(0, 10));
+                if (p.created_at) $('#created_at').val(p.created_at.slice(0, 10));
+                
+                $('#supplier_id').val(p.supplier_id).trigger('change');
+                $('.selectpicker').selectpicker('refresh');
+                if (p.warehouse_id) $('#form_warehouse_id').val(p.warehouse_id);
+
+                // Highlight active card in side list
+                $('.side-bill-card').removeClass('active-editing');
+                $('.side-bill-card[data-bill-id="' + id + '"]').addClass('active-editing');
+
+                // Populate Items
+                $('#order-table-body').empty();
+                rowCounter = 0;
+                if (res.items && res.items.length) {
+                    res.items.forEach(function(item) {
+                        addProductRow({
+                            product_id: item.product_id,
+                            product_name: item.product_name,
+                            product_code: item.product_code,
+                            cost: parseFloat(item.net_unit_cost) || 0,
+                            tax_rate: parseFloat(item.tax_rate) || 0,
+                            unit: item.unit_code || 'Unit',
+                            qty: parseFloat(item.qty) || 1
+                        });
+                    });
+                } else {
+                    reindexRows();
+                }
+
+                // Scroll smoothly to top of form
+                $('#comm-entry-workspace').animate({ scrollTop: 0 }, 200);
+            },
+            error: function() {
+                $('#comm-progress-bar').removeClass('active');
+                alert('Failed to fetch purchase details from server.');
+            }
+        });
+    };
+
+    // --- Reset Form to Blank New Purchase ---
+    window.resetFormToNew = function() {
+        $('#entry-form-method').val('POST');
+        $('#edit-purchase-id').val('');
+        $('#purchase-entry-form').attr('action', '{{ route("purchases.store") }}');
+
+        $('#doc-breadcrumb-mode').text('New').removeClass('text-success').addClass('text-primary');
+        $('#doc-title-text').text('New Purchase Bill');
+        $('#doc-sub-text').text('Purchase • New bill');
+
+        $('#reference_no').val('');
+        $('#supplier_invoice_no').val('');
+        $('#supplier_invoice_date').val('{{ date("Y-m-d") }}');
+        $('#created_at').val('{{ date("Y-m-d") }}');
+        $('#supplier_id').val('').trigger('change');
+        $('.selectpicker').selectpicker('refresh');
+
+        $('.side-bill-card').removeClass('active-editing');
+        $('#order-table-body').empty();
+        rowCounter = 0;
+        reindexRows();
+        recalcTableSummary();
+    };
+
+    // Actions triggering reset to new
+    $('#btn-side-new, #btn-top-new, #btn-form-discard').on('click', function(e) {
+        e.preventDefault();
+        resetFormToNew();
+    });
+
+    // Card click & edit button click
+    $(document).on('click', '.side-bill-card', function(e) {
+        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print').length) return;
+        var id = $(this).data('bill-id');
+        if (id) loadPurchaseToForm(id);
+    });
+
+    $(document).on('click', '.btn-side-load-edit', function(e) {
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (id) loadPurchaseToForm(id);
+    });
+
+    // --- Slideover Drawer Handlers ---
+    $('#btn-open-details, #btn-bottom-charges').on('click', function() {
+        $('#charges-drawer').modal('show');
+    });
+
+    $('#btn-save-drawer-details').on('click', function() {
+        $('#hidden-bale-no').val($('#drawer-bale-no').val());
+        $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val());
+        $('#hidden-lr-no').val($('#drawer-lr-no').val());
+        $('#hidden-lr-date').val($('#drawer-lr-date').val());
+        $('#hidden-transporter-name').val($('#drawer-transporter-name').val());
+        $('#hidden-station-to').val($('#drawer-station-to').val());
+        $('#hidden-order-no').val($('#drawer-order-no').val());
+        $('#hidden-credit-days').val($('#drawer-credit-days').val());
+        $('#hidden-note').val($('#drawer-note').val());
+        $('#hidden-account-id').val($('#drawer-account-id').val());
+        $('#hidden-paid-amount').val($('#drawer-paid-amount').val());
+
+        var count = 0;
+        if ($('#drawer-bale-no').val()) count++;
+        if ($('#drawer-lr-no').val()) count++;
+        if ($('#drawer-note').val()) count++;
+        if (parseFloat($('#drawer-paid-amount').val()) > 0) count++;
+        $('#charges-badge-count').text(count);
+        if ($('#drawer-note').val()) {
+            $('#remarks-summary-preview').text('Remarks: ' + $('#drawer-note').val().slice(0, 40) + '...');
+        }
+    });
+
+    // Pill Segmented Mode Toggle (Cash/Credit)
+    $('.pill-segmented button[data-mode]').on('click', function() {
+        $('.pill-segmented button[data-mode]').removeClass('active');
+        $(this).addClass('active');
+        var mode = $(this).data('mode');
+        $('#input-paying-method').val(mode);
+    });
+
+    // Density segmented
+    $('.density-segmented button').on('click', function() {
+        $('.density-segmented button').removeClass('active');
+        $(this).addClass('active');
+        var d = $(this).data('density');
+        $('#order-table').removeClass('compact cozy large').addClass(d);
+    });
+
+    // --- Side Panel Filtering Functions ---
+    function filterSidePurchases() {
+        var query = $('#side-search-input').val().toLowerCase().trim();
+        var seriesQuery = $('#side-filter-series').val().toLowerCase().trim();
+        var activeTab = $('.side-filter-tabs .side-tab.active').data('filter') || 'all';
+        var dateVal = $('#side-filter-date-val').val();
+        var whId = $('#side-filter-warehouse').val();
+        var statusId = $('#side-filter-status').val();
+        var paymentId = $('#side-filter-payment').val();
+
+        var visibleCount = 0;
+        $('#side-bill-list .side-bill-card').each(function() {
+            var $c = $(this);
+            var ref = $c.data('ref') || '';
+            var party = $c.data('party') || '';
+            var status = $c.data('status') || '';
+            var cardStatusId = String($c.data('status-id') || '');
+            var cardPayId = String($c.data('payment-status-id') || '');
+            var cardWhId = String($c.data('warehouse-id') || '');
+            var cardDate = $c.data('date') || '';
+
+            var matchSearch = !query || ref.indexOf(query) !== -1 || party.indexOf(query) !== -1;
+            var matchSeries = !seriesQuery || ref.indexOf(seriesQuery) !== -1;
+            var matchTab = true;
+
+            if (activeTab === 'draft') matchTab = (status === 'draft');
+            else if (activeTab === 'date') matchTab = (dateVal && cardDate === dateVal);
+
+            var matchWh = (!whId || whId == '0' || cardWhId === whId);
+            var matchStatus = (!statusId || statusId == '0' || cardStatusId === statusId);
+            var matchPayment = (!paymentId || paymentId == '0' || cardPayId === paymentId);
+
+            if (matchSearch && matchSeries && matchTab && matchWh && matchStatus && matchPayment) {
+                $c.show();
                 visibleCount++;
             } else {
-                card.hide();
+                $c.hide();
             }
         });
 
-        if (visibleCount === 0) {
-            if ($('#side-bill-list .side-empty-state').length === 0) {
-                $('#side-bill-list').append('<div class="side-empty-state"><p>No purchases match these filters</p></div>');
-            } else {
-                $('#side-bill-list .side-empty-state').show();
-            }
-        } else {
-            $('#side-bill-list .side-empty-state').hide();
-        }
+        $('.side-empty-state').toggle(visibleCount === 0);
     }
 
     $('#side-search-input, #side-filter-series').on('input', filterSidePurchases);
+    $('#side-filter-warehouse, #side-filter-status, #side-filter-payment').on('change', filterSidePurchases);
+    $('#side-filter-date-val').on('change', filterSidePurchases);
 
     $('.side-filter-tabs .side-tab').on('click', function() {
         $('.side-filter-tabs .side-tab').removeClass('active');
         $(this).addClass('active');
-        let filter = $(this).data('filter');
-        if (filter === 'date' || filter === 'range') {
-            $('#side-date-picker-box').slideDown(150);
-        } else {
-            $('#side-date-picker-box').slideUp(150);
-        }
+        var f = $(this).data('filter');
+        $('#side-date-picker-box').toggle(f === 'date' || f === 'range');
         filterSidePurchases();
     });
 
-    $('#side-filter-date-val').on('change', filterSidePurchases);
-
-    // Clicking anywhere on a card opens edit mode directly
-    $(document).on('click', '.side-bill-card', function(e) {
-        if ($(e.target).closest('.side-card-actions').length > 0) return;
-        let billId = $(this).data('bill-id');
-        if (billId) {
-            window.location.href = '{{ url("purchases") }}/' + billId + '/edit';
-        }
+    // Reset toolbar button
+    $('#side-filter-reset').on('click', function() {
+        $('#side-search-input').val('');
+        $('#side-filter-series').val('');
+        $('#side-filter-warehouse').val('0');
+        $('#side-filter-status').val('0');
+        $('#side-filter-payment').val('0');
+        $('.side-filter-tabs .side-tab').removeClass('active');
+        $('.side-filter-tabs .side-tab[data-filter="all"]').addClass('active');
+        $('#side-date-picker-box').hide();
+        filterSidePurchases();
     });
 
-    // Clicking View button on card
+    // Export toolbar buttons
+    $('#side-export-print').on('click', function() { window.print(); });
+    $('#side-export-excel, #side-export-csv').on('click', function() {
+        alert('Exporting recent purchases list...');
+    });
+    $('#side-export-pdf').on('click', function() {
+        var activeId = $('#edit-purchase-id').val();
+        if (activeId) window.open('{{ url("purchases/gen_invoice") }}/' + activeId, '_blank');
+        else window.print();
+    });
+
+    // --- View Modal Handler ---
     $(document).on('click', '.btn-side-view', function(e) {
-        e.preventDefault();
         e.stopPropagation();
-        let billId = $(this).data('id');
-        let row = $('#purchase-table tbody tr[data-id="' + billId + '"]');
-        if (row.length && row.data('purchase')) {
-            purchaseDetails(row.data('purchase'));
-        } else {
-            window.location.href = '{{ url("purchases") }}/' + billId + '/edit';
+        var id = $(this).data('id');
+        if (id) {
+            $.get('{{ url("purchases/product_purchase") }}/' + id, function(data) {
+                $(".product-purchase-list tbody").empty();
+                if (data && data[0]) {
+                    var names = data[0];
+                    var qtys = data[1];
+                    var units = data[2];
+                    var taxes = data[3];
+                    var subtotals = data[6];
+                    for (var i = 0; i < names.length; i++) {
+                        $(".product-purchase-list tbody").append(`
+                            <tr>
+                                <td>${i+1}</td>
+                                <td>${names[i]}</td>
+                                <td>${data[7] ? data[7][i] : 'N/A'}</td>
+                                <td>${qtys[i]} ${units[i]}</td>
+                                <td>${data[8] ? data[8][i] : 0}</td>
+                                <td>${parseFloat(subtotals[i]/qtys[i]).toFixed(decimalPlaces)}</td>
+                                <td>${taxes[i]}</td>
+                                <td>${data[5] ? data[5][i] : 0}</td>
+                                <td>${subtotals[i]}</td>
+                            </tr>
+                        `);
+                    }
+                }
+                $('#purchase-details').modal('show');
+            });
         }
     });
 
-    // Clicking Print button on card
-    $(document).on('click', '.btn-side-print', function(e) {
+    // --- Docking & Drawer Collapse Mechanics ---
+    var STORAGE_DOCK_KEY = 'zolo_bill_panel_dock';
+    var STORAGE_OPEN_KEY = 'zolo_bill_panel_open';
+
+    function initPanelState() {
+        var dock = localStorage.getItem(STORAGE_DOCK_KEY) || 'right';
+        var open = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
+        applyDock(dock);
+        applyDrawer(open);
+    }
+
+    function applyDock(dock) {
+        var grid = document.getElementById('comm-split-grid');
+        var label = document.getElementById('dock-label');
+        if (!grid) return;
+        if (dock === 'left') {
+            grid.classList.add('dock-left');
+            if (label) label.textContent = 'Dock Right';
+        } else {
+            grid.classList.remove('dock-left');
+            if (label) label.textContent = 'Dock Left';
+        }
+        localStorage.setItem(STORAGE_DOCK_KEY, dock);
+    }
+
+    function applyDrawer(open) {
+        var grid = document.getElementById('comm-split-grid');
+        var drawer = document.getElementById('comm-drawer');
+        if (!grid || !drawer) return;
+        if (open) {
+            grid.classList.remove('drawer-collapsed');
+            drawer.classList.remove('collapsed');
+        } else {
+            grid.classList.add('drawer-collapsed');
+            drawer.classList.add('collapsed');
+        }
+        localStorage.setItem(STORAGE_OPEN_KEY, open ? 'true' : 'false');
+    }
+
+    $('#btn-dock-toggle').on('click', function(e) {
         e.preventDefault();
-        e.stopPropagation();
-        let billId = $(this).data('id');
-        window.open('{{ url("purchases") }}/' + billId, '_blank');
+        var current = localStorage.getItem(STORAGE_DOCK_KEY) || 'right';
+        applyDock(current === 'right' ? 'left' : 'right');
     });
+
+    $('#close-drawer-btn').on('click', function(e) {
+        e.preventDefault();
+        applyDrawer(false);
+    });
+
+    $('#toggle-drawer-btn, #btn-header-toggle-list').on('click', function(e) {
+        e.preventDefault();
+        var isOpen = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
+        applyDrawer(!isOpen);
+    });
+
+    // Form submission buttons
+    $('#btn-form-save-as').on('click', function() {
+        $('#purchase-status-val').val(3); // Draft
+        $('#purchase-entry-form').submit();
+    });
+
+    $('#btn-form-submit').on('click', function() {
+        $('#purchase-status-val').val(1); // Received
+        $('#purchase-entry-form').submit();
+    });
+
+    initPanelState();
+})();
 </script>
 @endpush

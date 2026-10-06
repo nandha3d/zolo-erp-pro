@@ -179,10 +179,79 @@ class SaleController extends Controller
                 ->latest('id')
                 ->limit(50)
                 ->get();
-            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills'));
+            $lims_tax_list = Tax::where('is_active', true)->get();
+            $lims_biller_list = Biller::where('is_active', true)->get();
+            $currency = Currency::where('is_active', true)->first() ?? (object)['id' => 1, 'exchange_rate' => 1, 'code' => 'INR'];
+            $lims_product_list_without_variant = $this->productWithoutVariant();
+            $lims_product_list_with_variant = $this->productWithVariant();
+            $saleTypes = class_exists(\App\Models\SaleType::class) ? \App\Models\SaleType::where('is_active', true)->get() : collect();
+            $documentSeries = class_exists(\App\Models\DocumentSeries::class) ? \App\Models\DocumentSeries::where('document_type', 'sale')->orWhereNull('document_type')->get() : collect();
+            $billSundries = class_exists(\App\Models\BillSundry::class) ? \App\Models\BillSundry::where('is_active', true)->get() : collect();
+            $standardRemarks = class_exists(\App\Models\StandardRemark::class) ? \App\Models\StandardRemark::where('is_active', true)->get() : collect();
+            $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
+            $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
+            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills', 'lims_tax_list', 'lims_biller_list', 'currency', 'saleTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'lims_product_list_without_variant', 'lims_product_list_with_variant'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+    }
+
+    public function show($id)
+    {
+        return $this->getSaleJson($id);
+    }
+
+    public function productWithoutVariant()
+    {
+        return Product::ActiveStandard()->select('id', 'name', 'code')
+                ->whereNull('is_variant')->get();
+    }
+
+    public function productWithVariant()
+    {
+        return Product::join('product_variants', 'products.id', 'product_variants.product_id')
+            ->ActiveStandard()
+            ->whereNotNull('is_variant')
+            ->select('products.id', 'products.name', 'product_variants.item_code')
+            ->orderBy('position')
+            ->get();
+    }
+
+    public function getSaleJson($id)
+    {
+        $sale = Sale::with(['customer', 'warehouse', 'biller'])->find($id);
+        if (!$sale) {
+            return response()->json(['success' => false, 'message' => 'Sale not found'], 404);
+        }
+
+        $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
+        $items = [];
+        foreach ($lims_product_sale_data as $ps) {
+            $product = Product::find($ps->product_id);
+            $unit = Unit::find($ps->sale_unit_id);
+            $items[] = [
+                'id' => $ps->id,
+                'product_id' => $ps->product_id,
+                'product_name' => $product->name ?? 'Unknown',
+                'product_code' => $product->code ?? '',
+                'qty' => (float)$ps->qty,
+                'net_unit_price' => (float)$ps->net_unit_price,
+                'discount' => (float)$ps->discount,
+                'tax_rate' => (float)$ps->tax_rate,
+                'tax' => (float)$ps->tax,
+                'total' => (float)$ps->total,
+                'unit_code' => $unit->unit_code ?? ($unit->unit_name ?? 'Unit'),
+                'sale_unit_id' => $ps->sale_unit_id,
+                'batch_no' => $ps->product_batch_id ? (ProductBatch::where('id', $ps->product_batch_id)->value('batch_no') ?? '') : '',
+                'imei_number' => $ps->imei_number ?? '',
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'sale' => $sale,
+            'items' => $items,
+        ]);
     }
 
 
@@ -2199,19 +2268,26 @@ class SaleController extends Controller
     public function limsProductSearch(Request $request)
     {
         $todayDate = date('Y-m-d');
-        // $productData = explode("|", $request['data']);
-        // $productInfo = explode("?", $productData[4]);
+        if (is_string($request->data)) {
+            $product_code = explode("|", $request['data']);
+            $code = rtrim($product_code[0], " ");
+            $qty = 1;
+            $is_embedded = 0;
+            $batch_id = null;
+            $customerId = $request->customer_id ?? null;
+            $productVariantId = null;
+        } else {
+            $code = $request->data['code'] ?? '';
+            $qty = $request->data['qty'] ?? 1;
+            $is_embedded = $request->data['embedded'] ?? 0;
+            $batch_id = $request->data['batch'] ?? null;
+            $customerId = $request->data['customer_id'] ?? null;
+            $productVariantId = null;
+            $qty = ($is_embedded == 1) ? substr($code, 7, 5) / 1000 : ($request->data['pre_qty'] ?? 1);
 
-        $code = $request->data['code'];
-        $qty = $request->data['qty'];
-        $is_embedded = $request->data['embedded'];
-        $batch_id = $request->data['batch'];
-        $customerId = $request->data['customer_id'];
-        $productVariantId = null;
-        $qty = ($is_embedded == 1) ? substr($code, 7, 5) / 1000 : $request->data['pre_qty'];
-
-        if ($is_embedded == 1) {
-            $code = substr($code, 0, 7);
+            if ($is_embedded == 1) {
+                $code = substr($code, 0, 7);
+            }
         }
 
         // Fetch customer discounts
@@ -2355,9 +2431,8 @@ class SaleController extends Controller
             $product->is_variant, //14
             $qty, //15
             $product->wholesale_price, //16
-            $product->cost, //17
-            $request->data['imei'], // IMEI number //18
-            $request->data['qty'], // warehouse qty //19
+            is_array($request->data) ? ($request->data['imei'] ?? '') : '', // IMEI number //18
+            is_array($request->data) ? ($request->data['qty'] ?? 1) : 1, // warehouse qty //19
             $product->type, //20
             $batch_id, // batch ID //21
             $batch->batch_no ?? '' //22

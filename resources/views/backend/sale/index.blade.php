@@ -1,17 +1,18 @@
-@extends('backend.layout.main')
+@extends('backend.layout.main') 
+
 @section('content')
 
 <style type="text/css">
-    .btn-icon i{margin-right:5px}
-    .top-fields{margin-top:10px;position: relative;}
-    .top-fields label {background:#FFF;font-size:11px;font-weight:600;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;}
-    .top-fields input{font-size:13px;height:45px}
+    .btn-icon i { margin-right: 5px; }
+    .top-fields { margin-top: 10px; position: relative; }
+    .top-fields label { background: #FFF; font-size: 11px; font-weight: 600; margin-left: 10px; padding: 0 3px; position: absolute; top: -8px; z-index: 9; }
+    .top-fields input { font-size: 13px; height: 45px; }
 </style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-
+<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
 <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
 <script>
     document.documentElement.classList.add('commercial-screen-lock');
@@ -28,192 +29,322 @@
         </div>
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" id="tab-all-sales" href="javascript:void(0)" data-sale-type="0"><i class="dripicons-list"></i> {{ __('db.All') }} Invoices</a></li>
-            <li><a class="nav-link" id="tab-pos-sales" href="javascript:void(0)" data-sale-type="pos"><i class="dripicons-shopping-bag"></i> POS / Counter</a></li>
+            <li><a class="nav-link" id="tab-pos-sales" href="{{ route('sale.pos') }}"><i class="dripicons-shopping-bag"></i> POS / Counter</a></li>
             <li><a class="nav-link" href="{{ route('challan.index') }}"><i class="dripicons-box"></i> {{ __('Delivery Challans') }}</a></li>
             <li><a class="nav-link" href="{{ route('quotations.index') }}"><i class="dripicons-document-edit"></i> {{ __('db.Quotation') }}</a></li>
         </ul>
         <div class="comm-actions">
-            <button type="button" class="btn btn-outline-secondary" id="toggle-filter" title="Toggle Filters">
-                <i class="dripicons-experiment"></i> {{ __('db.Filter') }}
-            </button>
-            @can('sales-add')
-            <a href="{{ route('sales.create') }}" class="btn btn-primary" title="Full Invoice Form">
+            <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-top-new" title="Add New Sale">
                 <i class="dripicons-plus"></i> {{ __('db.Add Sale') }}
-            </a>
-            @endcan
-            <button type="button" class="btn btn-primary" id="toggle-drawer-btn" title="Toggle Bill List Panel (Alt+D)" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+            </button>
+            <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle Bill List Panel (Alt+D)" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
                 <i class="dripicons-view-list"></i> Bill list
             </button>
         </div>
     </div>
 
-    <!-- KPI Summary Strip -->
-    <div class="comm-kpi-strip">
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Today's Invoices") }}</span>
-                <span class="comm-kpi-value">{{ $todaySalesCount ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">({{ number_format($todaySalesAmount ?? 0, 2) }})</small></span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#eef2ff; color:#4f46e5;">
-                <i class="dripicons-graph-bar"></i>
-            </div>
-        </div>
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Paid / Inflow") }}</span>
-                <span class="comm-kpi-value" style="color:#059669;">{{ number_format($totalPaid ?? 0, 2) }}</span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#ecfdf5; color:#059669;">
-                <i class="dripicons-checkmark"></i>
-            </div>
-        </div>
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Due Receivables") }}</span>
-                <span class="comm-kpi-value" style="color:#dc2626;">{{ number_format($totalDue ?? 0, 2) }}</span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#fef2f2; color:#dc2626;">
-                <i class="dripicons-warning"></i>
-            </div>
-        </div>
-        <div class="comm-kpi-box">
-            <div class="comm-kpi-info">
-                <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
-                <span class="comm-kpi-value">{{ $numberOfInvoice ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">Invoices</small></span>
-            </div>
-            <div class="comm-kpi-icon" style="background:#f0fdf4; color:#16a34a;">
-                <i class="dripicons-archive"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2-Column Command Center Grid -->
+    <!-- 2-Column Command Center Grid: Main Entry Workspace + Side Bill List Panel -->
     <div class="comm-split-grid" id="comm-split-grid">
-        <!-- Left: Sales Register Table -->
-        <div class="comm-register-card">
-            <!-- Sleek Inline Filter Bar -->
-            <div class="comm-table-filter-bar" id="filter-card">
-                <div class="filter-item">
-                    <label><i class="dripicons-calendar text-muted"></i></label>
-                    <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
-                    <input type="hidden" name="starting_date" value="{{$starting_date}}" />
-                    <input type="hidden" name="ending_date" value="{{$ending_date}}" />
-                </div>
-                <div class="filter-item @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                    <label>{{__('db.Warehouse')}}:</label>
-                    <select id="warehouse_id" name="warehouse_id" class="form-control" style="width:130px;">
-                        <option value="0">{{__('db.All Warehouse')}}</option>
-                        @foreach($lims_warehouse_list as $warehouse)
-                            <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label>{{__('db.Sale Status')}}:</label>
-                    <select id="sale-status" class="form-control" name="sale_status" style="width:110px;">
-                        <option value="0">{{__('db.All')}}</option>
-                        <option value="1">{{__('db.Completed')}}</option>
-                        <option value="2">{{__('db.Pending')}}</option>
-                        <option value="4">{{__('db.Returned')}}</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label>{{__('db.Payment Status')}}:</label>
-                    <select id="payment-status" class="form-control" name="payment_status" style="width:100px;">
-                        <option value="0">{{__('db.All')}}</option>
-                        <option value="1">{{__('db.Pending')}}</option>
-                        <option value="2">{{__('db.Due')}}</option>
-                        <option value="3">{{__('db.Partial')}}</option>
-                        <option value="4">{{__('db.Paid')}}</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label>{{__('db.Payment Method')}}:</label>
-                    <select id="payment-method" class="form-control" name="payment_method" style="width:100px;">
-                        <option value="0">All</option>
-                        <option value="Cash">Cash</option>
-                        <option value="Gift Card">Gift Card</option>
-                        <option value="Credit Card">Credit Card</option>
-                        <option value="Cheque">Cheque</option>
-                    </select>
-                </div>
-                <input type="hidden" id="sale-type" name="sale_type" value="{{ $sale_type }}" />
-                <button type="button" class="btn btn-sm btn-outline-primary ml-auto" id="btn-quick-refresh" title="Reload Register">
-                    <i class="dripicons-clockwise"></i>
-                </button>
-            </div>
+        <!-- Main: Sales Entry Workspace (Matching Screenshot 3) -->
+        <div class="comm-entry-workspace" id="comm-entry-workspace">
+            <form id="sale-entry-form" method="POST" action="{{ route('sales.store') }}" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="_method" id="entry-form-method" value="POST">
+                <input type="hidden" name="sale_id" id="edit-sale-id" value="">
+                <input type="hidden" name="sale_status" id="sale-status-val" value="1">
+                <input type="hidden" name="exchange_rate" id="exchange-rate-val" value="{{ $currency->exchange_rate ?? 1 }}">
+                <input type="hidden" name="currency_id" id="currency-id-val" value="{{ $currency->id ?? 1 }}">
+                <input type="hidden" name="paying_method" id="input-paying-method" value="Credit">
+                <input type="hidden" name="pos" value="0">
+                <input type="hidden" name="total_qty" id="hidden-total-qty" value="0">
+                <input type="hidden" name="total_discount" id="hidden-total-discount" value="0">
+                <input type="hidden" name="total_tax" id="hidden-total-tax" value="0">
+                <input type="hidden" name="total_price" id="hidden-total-price" value="0">
+                <input type="hidden" name="order_tax" id="hidden-order-tax" value="0">
+                <input type="hidden" name="grand_total" id="hidden-grand-total" value="0">
+                <input type="hidden" name="payment_status" id="hidden-payment-status" value="1">
+                <input type="hidden" name="paid_amount" id="hidden-paid-amount" value="0">
+                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
 
-            <!-- Sticky Header Table Viewport -->
-            <div class="comm-table-viewport">
-                <table id="sale-table" class="table sale-list" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th class="not-exported"></th>
-                            <th class="not-exported">{{__('db.action')}}</th>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.reference')}}</th>
-                            <th>{{__('db.Created By')}}</th>
-                            <th>{{__('db.customer')}}</th>
-                            <th>{{__('db.Warehouse')}}</th>
-                            @if ($general_setting->show_products_details_in_sales_table)
-                                <th>{{__('db.Products')}}</th>
-                                <th>{{__('db.Quantity')}}</th>
-                            @endif
-                            <th>{{__('db.Sale Status')}}</th>
-                            <th>{{__('db.Payment Status')}}</th>
-                            <th>{{__('db.Payment Method')}}</th>
-                            <th>{{__('db.Currency')}}/{{__('db.Exchange Rate')}}</th>
-                            <th>{{__('db.Delivery Status')}}</th>
-                            <th>{{__('db.grand total')}}</th>
-                            <th>{{__('db.Returned Amount')}}</th>
-                            <th>{{__('db.Paid')}}</th>
-                            <th>{{__('db.Due')}}</th>
-                            @foreach($custom_fields as $fieldName)
-                            <th>{{$fieldName}}</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tfoot class="tfoot active">
-                        <th></th>
-                        <th>{{__('db.Total')}}</th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        @if ($general_setting->show_products_details_in_sales_table)
-                            <th></th>
-                            <th></th>
-                        @endif
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        @foreach($custom_fields as $fieldName)
-                        <th></th>
+                <!-- 1. Header Strip (Matching Screenshot 3) -->
+                <div class="doc-header-strip">
+                    <div class="doc-title-block">
+                        <div class="doc-title-meta">
+                            <div class="desk-breadcrumb-trail" style="font-size:11px; color:#64748b; margin-bottom:2px;">
+                                <a href="{{ url('/') }}" style="color:#64748b;">Home</a> / <a href="{{ url('/sales') }}" style="color:#64748b;">Selling</a> / <a href="{{ url('/sales') }}" style="color:#64748b;">Sales Bills</a> / <span id="doc-breadcrumb-mode" class="text-primary font-weight-bold">New</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="doc-icon-box" style="width:34px;height:34px;font-size:16px;">📄</div>
+                                <div>
+                                    <h2 id="doc-title-text" style="font-size:17px;font-weight:700;margin:0;color:#0f172a;line-height:1.2;">New Sales Bill</h2>
+                                    <span class="doc-sub" id="doc-sub-text" style="font-size:11px;color:#64748b;">Sale • New bill</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode Toggles (Cash/Credit & Line Nature) -->
+                    <div class="doc-toggle-group">
+                        <div class="pill-segmented" role="group" aria-label="Payment Mode">
+                            <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
+                            <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
+                        </div>
+                        <div class="pill-segmented" role="group" aria-label="Product Mode">
+                            <button type="button" class="segment-btn active" data-nature="product">Product</button>
+                            <button type="button" class="segment-btn" data-nature="service">Service</button>
+                            <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
+                        </div>
+                    </div>
+
+                    <!-- Metadata & Header Tools -->
+                    <div class="doc-header-meta">
+                        <div class="meta-terms">
+                            <span>Due <strong id="display-due-date">{{ date('d-m-Y') }}</strong></span>
+                            <span>Credit days <strong id="header-credit-days">—</strong></span>
+                            <span>Terms <strong>Standard</strong></span>
+                        </div>
+                        <div class="header-action-btns">
+                            <button type="button" class="btn-desk-action" id="btn-header-toggle-list" title="Toggle Bill List">
+                                📖 Bill list
+                            </button>
+                            <button type="button" class="btn-desk-action" id="btn-open-details" title="Open Charges & Transport Details">
+                                ⚙ Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Primary Document Fields (Row 1 matching Screenshot 3) -->
+                <div class="desk-card doc-primary-fields mb-2" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;">
+                    <div class="fields-grid-neo">
+                        <!-- Our Bill Number -->
+                        <div class="field-item">
+                            <label for="reference_no">Our bill number</label>
+                            <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Series number assigned on save" autocomplete="off">
+                            <span class="field-hint">Series preview • editable</span>
+                        </div>
+
+                        <!-- Customer PO / Reference -->
+                        <div class="field-item">
+                            <label for="customer_po_no">Customer PO / Ref</label>
+                            <input type="text" id="customer_po_no" name="customer_po_no" class="form-control" placeholder="From purchase order">
+                        </div>
+
+                        <!-- Bill Date -->
+                        <div class="field-item">
+                            <label for="bill_date">Bill date</label>
+                            <input type="date" id="bill_date" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <!-- Entry Date -->
+                        <div class="field-item">
+                            <label for="entry_date">Entry date</label>
+                            <input type="date" id="entry_date" name="entry_date" class="form-control" value="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <!-- Party (Customer) -->
+                        <div class="field-item field-item-wide">
+                            <div class="label-with-action">
+                                <label for="customer_id">Party *</label>
+                                <a href="{{ route('customer.index') }}" target="_blank" class="link-btn-add">+ New Party</a>
+                            </div>
+                            <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" title="Select Customer" required>
+                                @foreach($lims_customer_list as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->phone_number ?? 'No Phone' }})</option>
+                                @endforeach
+                            </select>
+                            <span class="field-hint" id="party-hint-note">Party address loads automatically</span>
+                        </div>
+
+                        <!-- Tax Classification -->
+                        <div class="field-item">
+                            <label for="sale_type_id">Tax classification *</label>
+                            <select id="sale_type_id" name="sale_type_id" class="form-control">
+                                <option value="0">GST • Multiple rates</option>
+                                @foreach($saleTypes as $st)
+                                    <option value="{{ $st->id }}">{{ $st->name }}</option>
+                                @endforeach
+                            </select>
+                            <span class="field-hint text-muted">Choose each item's tax slab</span>
+                        </div>
+
+                        <!-- Series -->
+                        <div class="field-item">
+                            <label for="series_id">Series</label>
+                            <select id="series_id" name="series_id" class="form-control">
+                                <option value="0">Sale</option>
+                                @foreach($documentSeries as $ds)
+                                    <option value="{{ $ds->id }}">{{ $ds->prefix ?? $ds->code }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Warehouse Selection -->
+                        <div class="field-item">
+                            <label for="form_warehouse_id">Warehouse *</label>
+                            <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
+                                @foreach($lims_warehouse_list as $wh)
+                                    <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Biller Selection -->
+                        <div class="field-item">
+                            <label for="form_biller_id">Biller *</label>
+                            <select id="form_biller_id" name="biller_id" class="form-control" required>
+                                @foreach($lims_biller_list as $biller)
+                                    <option value="{{ $biller->id }}">{{ $biller->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ITEMS Section (Matching Screenshot 3) -->
+                <div class="desk-card items-container mb-2" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:0;overflow:hidden;">
+                    <div class="items-section-header" style="padding:8px 14px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;">
+                        <div class="items-counter-group" style="display:flex;align-items:center;gap:8px;">
+                            <span class="items-title" style="font-weight:700;font-size:12px;color:#0f172a;">ITEMS</span>
+                            <span class="items-meta-badge text-muted" id="items-meta-count" style="font-size:11px;">0 line(s) • 7 per page</span>
+                        </div>
+                        <div class="items-controls-group" style="display:flex;align-items:center;gap:6px;">
+                            <div class="density-segmented">
+                                <button type="button" class="density-btn" data-density="compact">Compact</button>
+                                <button type="button" class="density-btn active" data-density="cozy">Cozy</button>
+                                <button type="button" class="density-btn" data-density="large">Large</button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:11px;" id="btn-multi-item">
+                                <i class="dripicons-menu"></i> Multi item
+                            </button>
+                            <a href="{{ route('products.create') }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:11px;">
+                                + Create item
+                            </a>
+                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:11px;background:#7c3aed;border-color:#7c3aed;" id="btn-add-item-row">
+                                + Add row
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Barcode / Item Search Bar -->
+                    <div class="item-quick-search-bar" style="padding:6px 14px;background:#ffffff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
+                        <div style="position:relative;flex:1;">
+                            <i class="fa fa-barcode text-muted" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;"></i>
+                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode, enter item code or name... (Press Enter or Alt+UpArrow for search)" style="padding-left:32px;height:30px;font-size:12px;" autocomplete="off">
+                        </div>
+                        <span style="font-size:11px;color:#94a3b8;"><kbd style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:1px 4px;font-size:10px;">F2</kbd> Quick Search</span>
+                    </div>
+
+                    <!-- Items Grid Table -->
+                    <div class="table-responsive" style="max-height: calc(100vh - 430px); min-height: 180px; overflow-y:auto;">
+                        <table class="desk-grid-table cozy table table-sm mb-0" id="order-table" style="width:100%;">
+                            <thead>
+                                <tr style="background:#7c3aed;color:#ffffff;font-size:11px;">
+                                    <th style="width:40px;text-align:center;">#</th>
+                                    <th style="min-width:220px;">ITEM</th>
+                                    <th style="width:130px;">SALE TYPE</th>
+                                    <th style="width:80px;">UNIT</th>
+                                    <th style="width:100px;text-align:right;">RATE</th>
+                                    <th style="width:80px;text-align:center;">QTY</th>
+                                    <th style="width:110px;text-align:right;">AMOUNT</th>
+                                    <th style="width:120px;">TAX</th>
+                                    <th style="width:110px;text-align:right;">TOTAL</th>
+                                    <th style="width:70px;text-align:center;">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-table-body">
+                                <!-- Initial Blank Row matching Screenshot 3 -->
+                                <tr class="empty-placeholder-row">
+                                    <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
+                                        No items added yet. Search or scan above or click "+ Add row".
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-pagination-footer" style="padding:4px 14px;border-top:1px solid #f1f5f9;display:flex;justify-content:center;gap:10px;font-size:11px;color:#64748b;background:#f8fafc;">
+                        <span class="pagination-arrow">&lt;</span>
+                        <span>Page 1/1</span>
+                        <span class="pagination-arrow">&gt;</span>
+                    </div>
+                </div>
+
+                <!-- 4. Fixed Bottom Action & Summary Bar (Matching Screenshot 3) -->
+                <div class="desk-summary-bottom-bar" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -2px 10px rgba(0,0,0,0.03);">
+                    <div class="d-flex align-items-center gap-3">
+                        <button type="button" class="btn btn-outline-secondary py-1 px-3 d-inline-flex align-items-center gap-2" id="btn-bottom-charges" style="font-size:11.5px;font-weight:600;">
+                            <span>Charges & remarks</span>
+                            <span class="badge badge-light" id="charges-badge-count">0</span>
+                        </button>
+                        <span class="text-muted" style="font-size:11px;" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-form-discard" style="font-size:12px;font-weight:600;">
+                            <i class="dripicons-clockwise"></i> Discard
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-form-save-as" style="font-size:12px;font-weight:600;">
+                            <i class="dripicons-copy"></i> Save as
+                        </button>
+                        <button type="submit" class="btn btn-primary py-1 px-3" id="btn-form-save" style="font-size:12px;font-weight:700;background:#7c3aed;border-color:#7c3aed;">
+                            <i class="dripicons-document-edit"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-success py-1 px-3" id="btn-form-submit" style="font-size:12px;font-weight:700;background:#4338ca;border-color:#4338ca;">
+                            <i class="dripicons-checkmark"></i> Submit
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary py-1 px-2" id="btn-form-review" style="font-size:12px;">
+                            Review
+                        </button>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="text-align:right;">
+                            <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">NET</div>
+                            <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-net-amount">₹ 0.00</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">GST / TAX</div>
+                            <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-tax-amount">₹ 0.00</div>
+                        </div>
+                        <div style="text-align:right;border-left:1px solid #cbd5e1;padding-left:12px;">
+                            <div style="font-size:9.5px;font-weight:800;color:#d97706;letter-spacing:0.04em;">GRAND TOTAL</div>
+                            <div style="font-size:16px;font-weight:800;color:#d97706;" id="display-grand-total">₹ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs for Optech details -->
+                <div style="display:none;">
+                    <input type="text" name="bale_no" id="hidden-bale-no">
+                    <input type="number" name="no_of_bales" id="hidden-no-of-bales">
+                    <input type="text" name="lr_no" id="hidden-lr-no">
+                    <input type="date" name="lr_date" id="hidden-lr-date">
+                    <input type="text" name="transporter_name" id="hidden-transporter-name">
+                    <input type="text" name="station_to" id="hidden-station-to">
+                    <input type="text" name="order_no" id="hidden-order-no">
+                    <input type="number" name="credit_days" id="hidden-credit-days">
+                    <input type="text" name="sale_note" id="hidden-note">
+                    <input type="text" name="staff_note" id="hidden-staff-note">
+                    <select name="account_id" id="hidden-account-id">
+                        @foreach($lims_account_list as $acc)
+                            <option value="{{ $acc->id }}">{{ $acc->name }}</option>
                         @endforeach
-                    </tfoot>
-                </table>
-            </div>
+                    </select>
+                </div>
+            </form>
         </div>
 
-        <!-- Right / Dockable Side Panel: Bill List -->
+        <!-- Right / Dockable Side Panel: Bill List with Screenshot 2 Filters & Dropdowns -->
         <aside class="comm-drawer-card desk-bill-list-panel" id="comm-drawer" aria-label="Transaction List Panel">
             <div class="comm-drawer-header">
                 <div class="comm-drawer-title-wrap">
                     <h3 class="comm-drawer-title"><i class="dripicons-view-list text-primary"></i> Bill list</h3>
                 </div>
                 <div class="comm-drawer-tools">
-                    @can('sales-add')
-                    <a href="{{ route('sales.create') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Sale">
-                        <i class="dripicons-plus"></i> + New
-                    </a>
-                    @endcan
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btn-side-new" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Sale (Clear Form)">
+                        <i class="dripicons-plus"></i> ++ New
+                    </button>
                     <button type="button" class="side-icon-btn" id="btn-dock-toggle" title="Arrange Panel Side (Dock Left / Dock Right)">
                         <span id="dock-icon">⇄</span>
                         <span class="dock-tooltip" id="dock-label">Dock Left</span>
@@ -223,6 +354,15 @@
             </div>
 
             <div class="comm-drawer-body">
+                <!-- Toolbar Export & Action Icons (Screenshot 2) -->
+                <div class="side-toolbar-actions">
+                    <button type="button" class="side-tool-btn text-danger" id="side-export-pdf" title="Export PDF"><i class="fa fa-file-pdf-o"></i></button>
+                    <button type="button" class="side-tool-btn text-success" id="side-export-excel" title="Export Excel"><i class="fa fa-file-excel-o"></i></button>
+                    <button type="button" class="side-tool-btn text-info" id="side-export-csv" title="Export CSV"><i class="fa fa-file-text-o"></i></button>
+                    <button type="button" class="side-tool-btn text-primary" id="side-export-print" title="Print Register"><i class="fa fa-print"></i></button>
+                    <button type="button" class="side-tool-btn text-danger" id="side-filter-reset" title="Reset Filters"><i class="fa fa-times"></i></button>
+                </div>
+
                 <!-- Search Filter -->
                 <div class="side-panel-search">
                     <input type="text" id="side-search-input" class="form-control" placeholder="Find a bill..." autocomplete="off">
@@ -247,7 +387,39 @@
                     <input type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
                 </div>
 
-                <!-- Recent Bills List -->
+                <!-- Dropdown Filters (Moved from Top Bar) -->
+                <div class="side-dropdown-filters">
+                    <div class="side-filter-group">
+                        <label>Warehouse</label>
+                        <select id="side-filter-warehouse" class="form-control">
+                            <option value="0">All Warehouse</option>
+                            @foreach($lims_warehouse_list as $wh)
+                                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="side-filter-group">
+                        <label>Sale Status</label>
+                        <select id="side-filter-status" class="form-control">
+                            <option value="0">All</option>
+                            <option value="1">Completed</option>
+                            <option value="2">Pending</option>
+                            <option value="4">Returned</option>
+                        </select>
+                    </div>
+                    <div class="side-filter-group">
+                        <label>Payment Status</label>
+                        <select id="side-filter-payment" class="form-control">
+                            <option value="0">All</option>
+                            <option value="1">Pending</option>
+                            <option value="2">Due</option>
+                            <option value="3">Partial</option>
+                            <option value="4">Paid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Recent Sales List -->
                 <div class="side-list-container" id="side-bill-list">
                     @forelse($recent_bills as $bill)
                         @php
@@ -258,7 +430,7 @@
                             $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
                             $customerName = $bill->customer->name ?? 'Walk-in Customer';
                         @endphp
-                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-status-id="{{ $bill->sale_status }}" data-payment-status-id="{{ $bill->payment_status }}" data-warehouse-id="{{ $bill->warehouse_id }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
                             <div class="side-card-top">
                                 <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
                                 <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
@@ -271,13 +443,13 @@
                                 <span class="side-card-status {{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <div class="side-card-actions">
-                                <a href="{{ route('sales.edit', $bill->id) }}" class="side-action-btn edit" title="Edit this bill">
+                                <a href="javascript:void(0)" class="side-action-btn edit btn-side-load-edit" data-id="{{ $bill->id }}" title="Edit this bill in main area">
                                     <i class="dripicons-document-edit"></i> Edit
                                 </a>
                                 <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View bill details">
                                     <i class="dripicons-preview"></i> View
                                 </a>
-                                <a href="{{ url('sales/gen_invoice/' . $bill->id) }}" target="_blank" class="side-action-btn print" title="Print invoice">
+                                <a href="javascript:void(0)" class="side-action-btn print btn-side-print" data-id="{{ $bill->id }}" title="Print invoice">
                                     <i class="dripicons-print"></i> Print
                                 </a>
                             </div>
@@ -293,483 +465,154 @@
     </div>
 </section>
 
+<!-- Slide-Over Drawer: Charges, Transport & Remarks Modal -->
+<div class="modal fade right" id="charges-drawer" tabindex="-1" role="dialog" aria-labelledby="chargesDrawerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-slideout modal-md" role="document">
+        <div class="modal-content" style="border-radius:10px 0 0 10px; border:none; box-shadow: -4px 0 20px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:12px 18px;">
+                <h5 class="modal-title font-weight-bold" id="chargesDrawerLabel" style="font-size:14px; color:#0f172a;">
+                    <i class="dripicons-gear text-primary mr-1"></i> Charges, Transport & Remarks
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:18px;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:16px 20px; font-size:12px;">
+                <ul class="nav nav-tabs mb-3" id="drawerTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active font-weight-bold" id="tab-transport" data-toggle="tab" href="#pane-transport" role="tab" style="font-size:11.5px; padding:6px 12px;">Transport & Logistics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" id="tab-remarks" data-toggle="tab" href="#pane-remarks" role="tab" style="font-size:11.5px; padding:6px 12px;">Notes & Remarks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold" id="tab-settlement" data-toggle="tab" href="#pane-settlement" role="tab" style="font-size:11.5px; padding:6px 12px;">Payment</a>
+                    </li>
+                </ul>
 
-<div id="sale-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="container mt-3 pb-2 border-bottom">
-                <div class="row">
-                    <div class="col-md-6 d-print-none">
-                        <button id="print-btn" type="button" class="btn btn-default btn-sm"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
+                <div class="tab-content" id="drawerTabContent">
+                    <!-- Transport Tab -->
+                    <div class="tab-pane fade show active" id="pane-transport" role="tabpanel">
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold">Bale No</label>
+                                <input type="text" id="drawer-bale-no" class="form-control form-control-sm" placeholder="e.g. BL-101">
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold">No. of Bales</label>
+                                <input type="number" id="drawer-no-of-bales" class="form-control form-control-sm" placeholder="e.g. 5">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold">LR No.</label>
+                                <input type="text" id="drawer-lr-no" class="form-control form-control-sm" placeholder="Lorry Receipt No">
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold">LR Date</label>
+                                <input type="date" id="drawer-lr-date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                            </div>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="text-muted font-weight-bold">Transporter Name</label>
+                            <input type="text" id="drawer-transporter-name" class="form-control form-control-sm" placeholder="e.g. VRL Logistics">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold">Station To / Destination</label>
+                                <input type="text" id="drawer-station-to" class="form-control form-control-sm" placeholder="Delivery station">
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold">Order No</label>
+                                <input type="text" id="drawer-order-no" class="form-control form-control-sm" placeholder="Purchase/Work Order">
+                            </div>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="text-muted font-weight-bold">Credit Days</label>
+                            <input type="number" id="drawer-credit-days" class="form-control form-control-sm" placeholder="e.g. 30">
+                        </div>
+                    </div>
 
-                        {{ Form::open(['route' => 'sale.sendmail', 'method' => 'post', 'class' => 'sendmail-form'] ) }}
-                            <input type="hidden" name="sale_id">
-                            <button class="btn btn-default btn-sm d-print-none"><i class="dripicons-mail"></i> {{__('db.Email')}}</button>
-                        {{ Form::close() }}
+                    <!-- Remarks Tab -->
+                    <div class="tab-pane fade" id="pane-remarks" role="tabpanel">
+                        <div class="form-group mb-2">
+                            <label class="text-muted font-weight-bold">Standard Remark</label>
+                            <select id="drawer-std-remark-select" class="form-control form-control-sm mb-2">
+                                <option value="">-- Choose Preset Remark --</option>
+                                @foreach($standardRemarks as $sr)
+                                    <option value="{{ $sr->remark }}">{{ $sr->remark }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="text-muted font-weight-bold">Custom Remarks / Notes</label>
+                            <textarea id="drawer-note" class="form-control form-control-sm" rows="4" placeholder="Enter terms, delivery instructions, or notes..."></textarea>
+                        </div>
                     </div>
-                    <div class="col-md-6 d-print-none">
-                        <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-                    </div>
-                    <div class="col-md-4 text-left">
-                        <img src="{{url('logo', $general_setting->site_logo)}}" width="90px;">
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h3 id="exampleModalLabel" class="modal-title container-fluid">{{$general_setting->site_title}}</h3>
-                    </div>
-                    <div class="col-md-4 text-right">
-                        <i style="font-size: 15px;">{{__('db.Sale Details')}}</i>
+
+                    <!-- Payment / Account Tab -->
+                    <div class="tab-pane fade" id="pane-settlement" role="tabpanel">
+                        <div class="form-group mb-2">
+                            <label class="text-muted font-weight-bold">Paying Account</label>
+                            <select id="drawer-account-id" class="form-control form-control-sm">
+                                @foreach($lims_account_list as $acc)
+                                    <option value="{{ $acc->id }}">{{ $acc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="text-muted font-weight-bold">Paid Outflow Amount (₹)</label>
+                            <input type="number" step="0.01" id="drawer-paid-amount" class="form-control form-control-sm" value="0.00">
+                        </div>
                     </div>
                 </div>
             </div>
-            <div id="sale-content" class="modal-body">
+            <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:10px 18px;">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-save-drawer-details" data-dismiss="modal" style="background:#7c3aed; border-color:#7c3aed;">Apply Details</button>
             </div>
-            <br>
-            <div class="table-responsive document-lines" tabindex="0" role="region" aria-label="{{__('db.Sale Details')}}">
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Sale Details Preview -->
+<div id="sale-details" tabindex="-1" role="dialog" aria-labelledby="saleDetailsLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog modal-lg">
+      <div class="modal-content" style="border-radius:10px; border:none; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+        <div class="container mt-3 pb-2 border-bottom">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <button id="sale-print-btn" type="button" class="btn btn-outline-secondary btn-sm"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
+                </div>
+                <div class="col-md-6 text-center">
+                    <h3 id="saleDetailsLabel" class="modal-title font-weight-bold" style="font-size:16px;">Sale Voucher Details</h3>
+                </div>
+                <div class="col-md-3 text-right">
+                    <button type="button" id="close-sale-modal-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true">&times;</span></button>
+                </div>
+            </div>
+        </div>
+        <div id="sale-content" class="modal-body"></div>
+        <br>
+        <div class="table-responsive document-lines px-3" tabindex="0" role="region" aria-label="{{__('db.Sale Details')}}">
             <table class="table table-bordered product-sale-list">
                 <thead>
                     <th>#</th>
                     <th>{{__('db.product')}}</th>
                     <th>{{__('db.Batch No')}}</th>
-                    <th>{{__('db.qty')}}</th>
+                    <th>Qty</th>
                     <th>{{__('db.Returned')}}</th>
                     <th>{{__('db.Unit Price')}}</th>
                     <th>{{__('db.Tax')}}</th>
                     <th>{{__('db.Discount')}}</th>
                     <th>{{__('db.Subtotal')}}</th>
-                    <th>{{__('db.Delivered')}}</th>
                 </thead>
                 <tbody>
                 </tbody>
             </table>
-            </div>
-            <div id="sale-footer" class="modal-body"></div>
         </div>
-    </div>
-</div>
-
-<!-- Packing Slip modal -->
-<div id="packing-slip-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">Create Packing Slip</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true">×</span></button>
-            </div>
-            <div class="modal-body">
-                <form action="{{route('packingSlip.store')}}" method="POST" class="packing-slip-form">
-                    @csrf
-                  <div class="row">
-                        <input type="hidden" name="sale_id">
-                        <input type="hidden" name="amount">
-                        <div class="col-md-12 form-group">
-                            <h5>Product List</h5>
-                            <table class="table table-bordered table-hover product-list mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>{{ __('db.name') }}</th>
-                                        <th>{{ __('db.Code') }}</th>
-                                        <th>Qty</th>
-                                        <th>{{ __('db.Unit Price') }}</th>
-                                        <th>{{ __('db.Total Price') }}</th>
-                                        <th>{{ __('db.Packed') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
-                  </div>
-                  <div class="form-group">
-                      <button type="submit" class="btn btn-primary packing-slip-submit-btn">Submit</button>
-                  </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.All')}} {{__('db.Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-hover payment-list">
-                    <thead>
-                        <tr>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.reference')}}</th>
-                            <th>{{__('db.Account')}}</th>
-                            <th>{{__('db.Amount')}}</th>
-                            <th>{{__('db.Paid By')}}</th>
-                            <th>{{__('db.Payment Date')}}</th>
-                            <th>{{__('db.action')}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="add-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                {!! Form::open(['route' => 'sale.add-payment', 'method' => 'post', 'files' => true, 'class' => 'payment-form','id'=> 'add-payment-form' ]) !!}
-                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
-                    <div class="row">
-                        <input type="hidden" name="balance">
-                        <div class="col-md-4">
-                            <label>{{__('db.Recieved Amount')}} *</label>
-                            <input type="text" name="paying_amount" class="form-control numkey" step="any" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Paying Amount')}} *</label>
-                            <input type="text" id="amount" name="amount" class="form-control"  step="any" required>
-                        </div>
-                        <div class="col-md-4 mt-1">
-                            <label>{{__('db.Change')}} : </label>
-                            <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
-                        </div>
-
-                        <?php
-                            $payment_methods = explode(',', $lims_pos_setting_data->payment_options);
-                        ?>
-                        <div class="col-md-4">
-                            <label>{{__('db.Paid By')}}</label>
-                            <select name="paid_by_id" class="form-control">
-                                @if(in_array("cash",$options))
-                                <option value="1">{{ __('db.Cash') }}</option>
-                                @endif
-                                @if(in_array("gift_card",$options))
-                                <option value="2">{{ __('db.Gift Card') }}</option>
-                                @endif
-                                @if(in_array("card",$options))
-                                <option value="3">{{ __('db.Credit Card') }}</option>
-                                @endif
-                                @if(in_array("cheque",$options))
-                                <option value="4">{{ __('db.Cheque') }}</option>
-                                @endif
-                                @if(in_array("paypal",$options) && (strlen($lims_pos_setting_data->paypal_live_api_username)>0) && (strlen($lims_pos_setting_data->paypal_live_api_password)>0) && (strlen($lims_pos_setting_data->paypal_live_api_secret)>0))
-                                <option value="5">{{ __('db.Paypal') }}</option>
-                                @endif
-                                @if(in_array("deposit",$options))
-                                <option value="6">{{ __('db.Deposit') }}</option>
-                                @endif
-                                @if($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active)
-                                <option value="7">{{ __('db.Points') }}</option>
-                                @endif
-                                @foreach($options as $option)
-                                    @if($option !== 'cash' && $option !== 'card' && $option !== 'cheque' && $option !== 'gift_card' && $option !== 'deposit' && $option !== 'paypal' && $option !== 'pesapal')
-                                        <option value="{{$option}}">{{ucfirst($option)}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Payment Receiver')}}</label>
-                            <input type="text" name="payment_receiver" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{ __('db.Payment Date') }}</label>
-                            <input type="text" name="payment_at" id="payment_at" class="form-control"
-                                value="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Currency')}} & {{__('db.Exchange Rate')}}</label>
-                            <div class="form-group d-flex align-items-center">
-                                <p id="currency_display" class="form-control-plaintext mb-0 font-weight-bold mr-3"></p>
-                                <p id="exchange_rate_display" class="form-control-plaintext mb-0 font-weight-bold"></p>
-                            </div>
-
-                            <!-- Hidden fields for backend -->
-                            <input type="hidden" name="currency_id" id="currency_id">
-                            <input type="hidden" name="exchange_rate" id="exchange_rate">
-                        </div>
-                        <div class="col-md-4">
-                            <label> {{__('db.Account')}}</label>
-                            <select class="form-control selectpicker" name="account_id">
-                            @foreach($lims_account_list as $account)
-                                @if($account->is_default)
-                                <option selected value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                                @else
-                                <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                                @endif
-                            @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-12 mt-1">
-                            <div class="form-group">
-                                <label>{{__('db.Attach Document')}}</label>
-                                <x-info title="Only jpg, jpeg, png, gif, pdf, csv, docx, xlsx and txt file is supported" type="info" />
-                                <input type="file" name="document" class="form-control" />
-                                @if($errors->has('extension'))
-                                    <span>
-                                        <strong>{{ $errors->first('extension') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    <div class="gift-card form-group">
-                        <label> {{__('db.Gift Card')}} *</label>
-                        <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card...">
-                            @php
-                                $balance = [];
-                                $expired_date = [];
-                            @endphp
-                            @foreach($lims_gift_card_list as $gift_card)
-                            <?php
-                                $balance[$gift_card->id] = $gift_card->amount - $gift_card->expense;
-                                $expired_date[$gift_card->id] = $gift_card->expired_date;
-                            ?>
-                                <option value="{{$gift_card->id}}">{{$gift_card->card_no}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group mt-2">
-                        <div class="card-element" class="form-control">
-                        </div>
-                        <div class="card-errors" role="alert"></div>
-                    </div>
-                    <div id="cheque">
-                        <div class="form-group">
-                            <label>{{__('db.Cheque Number')}} *</label>
-                            <input type="text" name="cheque_no" class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{__('db.Payment Note')}}</label>
-                        <textarea rows="3" class="form-control" name="payment_note"></textarea>
-                    </div>
-
-                    <input type="hidden" name="sale_id">
-
-                    <button type="submit" class="btn btn-primary" id="add-payment-submit-btn">{{__('db.submit')}}</button>
-                {{ Form::close() }}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="edit-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Update Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                {!! Form::open(['route' => 'sale.update-payment', 'method' => 'post', 'class' => 'payment-form' ]) !!}
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label>{{__('db.Recieved Amount')}} *</label>
-                            <input type="text" name="edit_paying_amount" class="form-control numkey"  step="any" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Paying Amount')}} *</label>
-                            <input type="text" name="edit_amount" class="form-control"  step="any" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Change')}} : </label>
-                            <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
-                        </div>
-                        <?php
-                            $payment_methods = explode(',', $lims_pos_setting_data->payment_options);
-                        ?>
-                        <div class="col-md-4">
-                            <label>{{__('db.Paid By')}}</label>
-                            <select name="edit_paid_by_id" class="form-control selectpicker">
-                                @if(in_array("cash",$options))
-                                <option value="1">Cash</option>
-                                @endif
-                                @if(in_array("gift_card",$options))
-                                <option value="2">Gift Card</option>
-                                @endif
-                                @if(in_array("card",$options))
-                                <option value="3">Credit Card</option>
-                                @endif
-                                @if(in_array("cheque",$options))
-                                <option value="4">Cheque</option>
-                                @endif
-                                @if(in_array("paypal",$options) && (strlen($lims_pos_setting_data->paypal_live_api_username)>0) && (strlen($lims_pos_setting_data->paypal_live_api_password)>0) && (strlen($lims_pos_setting_data->paypal_live_api_secret)>0))
-                                <option value="5">Paypal</option>
-                                @endif
-                                @if(in_array("deposit",$options))
-                                <option value="6">Deposit</option>
-                                @endif
-                                @if($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active)
-                                <option value="7">Points</option>
-                                @endif
-                                @foreach($options as $option)
-                                    @if($option !== 'cash' && $option !== 'card' && $option !== 'cheque' && $option !== 'gift_card' && $option !== 'deposit' && $option !== 'paypal' && $option !== 'pesapal')
-                                        <option value="{{$option}}">{{ucfirst($option)}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{__('db.Payment Receiver')}}</label>
-                            <input type="text" name="payment_receiver" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label>{{ __('db.Payment Date') }}</label>
-                            <input type="text" name="payment_at" id="edit_payment_at" class="form-control"
-                                value="" required>
-                        </div>
-                        <div class="col-md-12 mt-2">
-                            <label>{{__('db.Document')}}</label>
-                            <input type="file" name="document" class="form-control">
-                        </div>
-                    </div>
-                    <div class="gift-card form-group">
-                        <label> {{__('db.Gift Card')}} *</label>
-                        <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card...">
-                            @foreach($lims_gift_card_list as $gift_card)
-                                <option value="{{$gift_card->id}}">{{$gift_card->card_no}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group mt-2">
-                        <div class="card-element" class="form-control">
-                        </div>
-                        <div class="card-errors" role="alert"></div>
-                    </div>
-                    <div id="edit-cheque">
-                        <div class="form-group">
-                            <label>{{__('db.Cheque Number')}} *</label>
-                            <input type="text" name="edit_cheque_no" class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label> {{__('db.Account')}}</label>
-                        <select class="form-control selectpicker" name="account_id">
-                        @foreach($lims_account_list as $account)
-                            <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                        @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>{{__('db.Payment Note')}}</label>
-                        <textarea rows="3" class="form-control" name="edit_payment_note"></textarea>
-                    </div>
-
-                    <input type="hidden" name="payment_id">
-                    <input type="hidden" name="installment_id">
-
-                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
-                {{ Form::close() }}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="add-delivery" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Delivery')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                {!! Form::open(['route' => 'delivery.store', 'method' => 'post', 'files' => true]) !!}
-                <div class="row">
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.Delivery Reference')}}</label>
-                        <p id="dr"></p>
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.Sale Reference')}}</label>
-                        <p id="sr"></p>
-                    </div>
-                    <div class="col-md-12 form-group">
-                        <label>{{__('db.status')}} *</label>
-                        <select name="status" required class="form-control selectpicker">
-                            <option value="1">{{__('db.Packing')}}</option>
-                            <option value="2">{{__('db.Delivering')}}</option>
-                            <option value="3">{{__('db.Delivered')}}</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.Courier')}}</label>
-                        <select name="courier_id" id="courier_id" class="selectpicker form-control" data-live-search="true" title="Select courier...">
-                            @foreach($lims_courier_list as $courier)
-                            <option value="{{$courier->id}}">{{$courier->name}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6 mt-2 form-group">
-                        <label>{{__('db.Delivered By')}}</label>
-                        <input type="text" name="delivered_by" class="form-control">
-                    </div>
-                    <div class="col-md-6 mt-2 form-group">
-                        <label>{{__('db.Recieved By')}} </label>
-                        <input type="text" name="recieved_by" class="form-control">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.customer')}} *</label>
-                        <p id="customer"></p>
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.Attach File')}}</label>
-                        <input type="file" name="file" class="form-control">
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.Address')}} *</label>
-                        <textarea rows="3" name="address" class="form-control" required></textarea>
-                    </div>
-                    <div class="col-md-6 form-group">
-                        <label>{{__('db.Note')}}</label>
-                        <textarea rows="3" name="note" class="form-control"></textarea>
-                    </div>
-                </div>
-                <input type="hidden" name="reference_no">
-                <input type="hidden" name="sale_id">
-                <button type="submit" class="btn btn-primary">{{__('db.submit')}}</button>
-                {{ Form::close() }}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="send-sms" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Send SMS')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                <form action="{{ route('sale.sendsms') }}" method="post">
-                    @csrf
-                    <div class="row">
-                        <input type="hidden" name="customer_id">
-                        <input type="hidden" name="reference_no">
-                        <input type="hidden" name="sale_status">
-                        <input type="hidden" name="payment_status">
-                        <div class="col-md-6 mt-1">
-                            <label>{{__('db.SMS Template')}}</label>
-                            <select name="template_id" class="form-control">
-                                <option value="">Select Template</option>
-                                @foreach($smsTemplates as $template)
-                                <option value="{{ $template->id }}">{{ $template->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary mt-2">{{__('db.submit')}}</button>
-                </form>
-            </div>
-        </div>
+        <div id="sale-footer" class="modal-body"></div>
+      </div>
     </div>
 </div>
 
@@ -777,1269 +620,583 @@
 
 @push('scripts')
 <script type="text/javascript">
+(function() {
+    'use strict';
 
-    $('#toggle-filter').on('click', function() {
-        $('#filter-card').slideToggle('slow');
-    });
-
-    $("ul#sale").siblings('a').attr('aria-expanded','true');
-    $("ul#sale").addClass("show");
-    $("ul#sale #sale-list-menu").addClass("active");
-
-    @if(config('database.connections.zoloerp_landlord'))
-        if(localStorage.getItem("message")) {
-            alert(localStorage.getItem("message"));
-            localStorage.removeItem("message");
-        }
-
-        numberOfInvoice = <?php echo json_encode($numberOfInvoice)?>;
-        $.ajax({
-            type: 'GET',
-            async: false,
-            url: '{{route("package.fetchData", $general_setting->package_id)}}',
-            success: function(data) {
-                if(data['number_of_invoice'] > 0 && data['number_of_product'] <= numberOfInvoice) {
-                    $("a.add-sale-btn").addClass('d-none');
-                }
-            }
-        });
-    @endif
-
-    var show_products_details = <?php echo json_encode($general_setting->show_products_details_in_sales_table) ?>;
-    let columns = [
-        { "data": "key" },
-        { "data": "options" },
-        { "data": "date" },
-        { "data": "reference_no" },
-            {"data": "created_by"},
-        { "data": "customer" },
-        { "data": "warehouse_name" }
+    // --- Product List Autocomplete Data ---
+    var productArray = [];
+    var lims_product_code = [
+        @foreach($lims_product_list_without_variant as $product)
+            "{{ htmlspecialchars($product->code) }}|{{ preg_replace('/[\n\r]/', ' ', htmlspecialchars($product->name)) }}",
+        @endforeach
+        @foreach($lims_product_list_with_variant as $product)
+            "{{ htmlspecialchars($product->item_code) }}|{{ preg_replace('/[\n\r]/', ' ', htmlspecialchars($product->name)) }}",
+        @endforeach
     ];
 
-    // Insert product details columns if needed
-    if (show_products_details == 1) {
-        columns.push(
-            { "data": "products" },
-            { "data": "qty" }
-        );
-    }
+    // --- State variables ---
+    var rowCounter = 0;
+    var taxList = @json($lims_tax_list);
+    var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
 
-    // Add the rest of the columns
-    columns.push(
-        { "data": "sale_status" },
-        { "data": "payment_status" },
-        { "data": "payment_method" },
-        { "data": "currency" },
-        { "data": "delivery_status" },
-        { "data": "grand_total" },
-        { "data": "returned_amount" },
-        { "data": "paid_amount" },
-        { "data": "due" }
-    );
-
-    var field_name = <?php echo json_encode($field_name) ?>;
-    for(i = 0; i < field_name.length; i++) {
-        columns.push({"data": field_name[i]});
-    }
-    // columns.splice(2, 0, { "data": "options" });
-    // columns.push({"data": "options"});
-
-    @if($lims_pos_setting_data)
-        var public_key = <?php echo json_encode($lims_pos_setting_data->stripe_public_key) ?>;
-    @endif
-    var all_permission = <?php echo json_encode($all_permission) ?>;
-    @if($lims_reward_point_setting_data)
-        var reward_point_setting = <?php echo json_encode($lims_reward_point_setting_data) ?>;
-    @endif
-    var sale_id = [];
-    var user_verified = <?php echo json_encode(env('USER_VERIFIED')) ?>;
-    var starting_date = <?php echo json_encode($starting_date); ?>;
-    var ending_date = <?php echo json_encode($ending_date); ?>;
-    var warehouse_id = <?php echo json_encode($warehouse_id); ?>;
-    var sale_status = <?php echo json_encode($sale_status); ?>;
-    var payment_status = <?php echo json_encode($payment_status); ?>;
-    var sale_type = <?php echo json_encode($sale_type); ?>;
-    var payment_method = <?php echo json_encode($payment_method); ?>;
-    var balance = <?php echo json_encode($balance) ?>;
-    var expired_date = <?php echo json_encode($expired_date) ?>;
-    var current_date = <?php echo json_encode(date("Y-m-d")) ?>;
-    var payment_date = [];
-    var payment_reference = [];
-    var paid_amount = [];
-    var paying_method = [];
-    var payment_id = [];
-    var payment_note = [];
-    var account = [];
-    var deposit;
-    var without_stock = <?php echo json_encode($general_setting->without_stock) ?>;
-
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-    $("#warehouse_id").val(warehouse_id);
-    $("#sale-status").val(sale_status);
-    $("#payment-status").val(payment_status);
-    $("#sale-type").val(sale_type);
-    $("#payment-method").val(payment_method);
-
-    $(function () {
-        $('#payment_at').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        }).datepicker("setDate", new Date());
-        $('#edit_payment_at').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    });
-
-    $('.daterangepicker-field').daterangepicker({
-        autoUpdateInput: true,
-        locale: {
-            format: 'YYYY-MM-DD',
-            cancelLabel: 'Clear'
+    // --- Autocomplete setup ---
+    $('#lims_productcodeSearch').autocomplete({
+        source: function(request, response) {
+            var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
+            response($.grep(lims_product_code, function(item) {
+                return matcher.test(item);
+            }).slice(0, 20));
         },
-        showDropdowns: true,
-        ranges: {
-            'Today': [moment(), moment()],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'Last 90 Days': [moment().subtract(89, 'days'), moment()],
-            'Last Year': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
-            'All Time': [moment('2000-01-01'), moment()]
-        }
-    }, function (start, end, label) {
-        let starting_date = start.format('YYYY-MM-DD');
-        let ending_date = end.format('YYYY-MM-DD');
-        let title = starting_date + ' To ' + ending_date;
-
-        $('.daterangepicker-field').val(title);
-        $('input[name="starting_date"]').val(starting_date);
-        $('input[name="ending_date"]').val(ending_date);
-
-        saleTable.ajax.reload();
-    });
-
-    $(".gift-card").hide();
-    $(".card-element").hide();
-    $("#cheque").hide();
-    $('#view-payment').modal('hide');
-
-    $('.selectpicker').selectpicker('refresh');
-
-    $(document).on("click", "tr.sale-link td:not(:first-child, :nth-child(2))", function() {
-        var sale = $(this).parent().data('sale');
-        saleDetails(sale);
-    });
-
-    $(document).on("click", ".view", function(){
-        var sale = $(this).parent().parent().parent().parent().parent().data('sale');
-        saleDetails(sale);
-    });
-
-    $(document).on("click", ".gen-invoice", function(e){
-        e.preventDefault();
-        let link = $(this).attr('href');
-        $.ajax({
-            url: link,
-            type: 'GET',
-            success: function(data) {
-                location.href = link;
-            },
-            error: function(xhr, status, error) {
-                console.error("Error loading invoice:", error);
-            }
-        });
-    });
-
-    $(document).on("click", ".create-packing-slip-btn", function (e) {
-        e.preventDefault();
-        id = $(this).data('id');
-        $("#packing-slip-modal input[name=sale_id]").val(id);
-        $.get('sales/get-sold-items/'+id, function (data) {
-            if(data == 'All the items of this sale has already been packed') {
-                alert(data);
-                $("#packing-slip-modal").modal('hide');
-            }
-            else {
-                $("table.product-list tbody").remove();
-                var newBody = $("<tbody>");
-                total_amount = 0.0;
-                $.each(data, function(index){
-                    if(index != 'amount') {
-                        var newRow = $("<tr>");
-                        var cols = '';
-                        cols += '<td>' + data[index]['name'] + '</td>';
-                        cols += '<td>' + data[index]['code'] + '</td>';
-                        cols += '<td>' + data[index]['sold_qty'] + '</td>';
-                        cols += '<td>' + data[index]['unit_price'] + '</td>';
-                        cols += '<td class="total-price">' + data[index]['total_price'] + '</td>';
-                        if( data[index]['type'] == 'standard' && without_stock == 'no' && (data[index]['qty'] > data[index]['stock']) ) {
-                            cols += '<td>In stock: '+data[index]['stock']+'</td>';
-                        }
-                        else if( data[index]['type'] == 'combo' && without_stock == 'no' && !data[index]['combo_in_stock'] ) {
-                            cols += '<td>'+data[index]['child_info']+'</td>';
-                        }
-                        else if(data[index]['is_packing']) {
-                            cols += '<td><input type="checkbox" class="is-packing" name="is_packing[]" value="'+data[index]['product_id']+'" checked disabled /></td>';
-                        }
-                        else {
-                            cols += '<td><input type="checkbox" class="is-packing" name="is_packing[]" value="'+data[index]['product_id']+'" checked style="pointer-events: none;" /></td>';
-
-                            total_amount += parseFloat(data[index]['unit_price']);
-                        }
-
-                        newRow.append(cols);
-                        newBody.append(newRow);
-                        $("table.product-list").append(newBody);
-                    }
-                });
-                $("#packing-slip-modal input[name=amount]").val(total_amount);
-                $("#packing-slip-modal").modal();
-            }
-        });
-    });
-
-    $(document).on('submit', '.packing-slip-form', function(e) {
-        $(".packing-slip-submit-btn").prop("disabled", true);
-    });
-
-    $(document).on('submit', '.packing-slip-submit-btn', function(e) {
-        $("input[name='is_packing[]']").prop('checked', true);
-    });
-
-    $(document).on("click", "#print-btn", function() {
-        var divContents = document.getElementById("sale-details").innerHTML;
-        //console.log(divContents);
-        var a = window.open('');
-        a.document.write('<html>');
-        a.document.write('<body>');
-        a.document.write('<style>body{line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left}td{padding:10px}table,th,td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>');
-        a.document.write(divContents);
-        a.document.write('</body></html>');
-        a.document.close();
-        a.print();
-        setTimeout(function(){a.close();},10);
-        //setTimeout(function(){a.print();},20);
-        //a.print();
-    });
-
-    $(document).on("click", "table.sale-list tbody .add-payment", function() {
-        $("#cheque").hide();
-        $(".gift-card").hide();
-        $(".card-element").hide();
-        $('select[name="paid_by_id"]').val(1);
-        $('.selectpicker').selectpicker('refresh');
-        rowindex = $(this).closest('tr').index();
-        deposit = $('table.sale-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.deposit').val();
-        var sale_id = $(this).data('id').toString();
-
-        let currency_id = $(this).data('currency_id');
-        let currency_name = $(this).data('currency_name');
-        let exchange_rate = parseFloat($(this).data('exchange_rate')) || 1;
-
-        // if(show_products_details == 1){
-        //     var balance = $('table.sale-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(16)').text();
-        // }else{
-        //     var balance = $('table.sale-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(12)').text();
-        // }
-        var sale = $('table.sale-list tbody tr:nth-child(' + (rowindex + 1) + ')').data('sale');
-        balance = sale[21] - sale[22];
-
-        $('input[name="paying_amount"]').val(balance);
-        $('#add-payment input[name="balance"]').val(balance);
-        $('input[name="amount"]').val(balance);
-        $('input[name="sale_id"]').val(sale_id);
-        // Fill readonly currency info
-        $('#currency_display').text(currency_name);
-        $('#exchange_rate_display').text(exchange_rate.toFixed(2));
-
-        // Hidden inputs for backend
-        $('#currency_id').val(currency_id);
-        $('#exchange_rate').val(exchange_rate);
-    });
-
-    $(document).on("click", "table.sale-list tbody .get-payment", function(event) {
-        rowindex = $(this).closest('tr').index();
-        deposit = $('table.sale-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.deposit').val();
-        var id = $(this).data('id').toString();
-        $.get('sales/getpayment/' + id, function(data) {
-            $(".payment-list tbody").remove();
-            var newBody = $("<tbody>");
-            payment_date  = data[0];
-            payment_reference = data[1];
-            paid_amount = data[2];
-            paying_method = data[3];
-            payment_id = data[4];
-            payment_note = data[5];
-            cheque_no = data[6];
-            gift_card_id = data[7];
-            change = data[8];
-            paying_amount = data[9];
-            account_name = data[10];
-            account_id = data[11];
-            payment_receiver = data[12];
-            if(data[13])
-                payment_proof = data[13];
-            payment_document = data[14];
-            payment_at = data[15];
-            installment_id = data[16];
-
-            $.each(payment_date, function(index) {
-                var newRow = $("<tr>");
-                var cols = '';
-
-                cols += '<td>' + payment_date[index] + '</td>';
-                cols += '<td>' + payment_reference[index] + '</td>';
-                cols += '<td>' + account_name[index] + '</td>';
-                cols += '<td>' + paid_amount[index] + '</td>';
-                cols += '<td>' + paying_method[index] + '</td>';
-                cols += '<td>' + payment_at[index] + '</td>';
-                cols += '<td><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__("db.action")}}<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">';
-                if(paying_method[index] == 'QR Code' && all_permission.indexOf("sale-payment-edit") != -1)
-                    cols += '<li><a href="{{url("frontend/images/payment-proof")}}/'+payment_proof+'" target="_blank"><button type="button" class="btn btn-link"><i class="fa fa-eye"></i> {{__("db.Payment Proof")}}</button></a></li> ';
-                if(payment_document[index])
-                    cols += '<li><a href="{{url("secure-documents/add-payment")}}/'+payment_document[index]+'" target="_blank"><button type="button" class="btn btn-link"><i class="fa fa-file"></i> {{__("db.View Document")}}</button></a></li> ';
-                if(paying_method[index] != 'Paypal' && all_permission.indexOf("sale-payment-edit") != -1)
-                    cols += '<li><button type="button" class="btn btn-link edit-btn" data-id="' + payment_id[index] +'" data-installment_id="' + installment_id[index] + '" data-clicked=false data-toggle="modal" data-target="#edit-payment"><i class="dripicons-document-edit"></i> {{__("db.edit")}}</button></li> ';
-                if(all_permission.indexOf("sale-payment-delete") != -1)
-                    cols += '{{ Form::open(['route' => 'sale.delete-payment', 'method' => 'post'] ) }}<li><input type="hidden" name="id" value="' + payment_id[index] + '" /> <input type="hidden" name="installment_id" value="' + installment_id[index] + '" /> <button type="submit" class="btn btn-link" onclick="return confirmPaymentDelete()"><i class="dripicons-trash"></i> {{__("db.delete")}}</button></li>{{ Form::close() }}';
-                cols += '</ul></div></td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-                $("table.payment-list").append(newBody);
-            });
-            $('#view-payment').modal('show');
-        });
-    });
-
-    $("table.payment-list").on("click", ".edit-btn", function(event) {
-        $(".edit-btn").attr('data-clicked', true);
-        $(".card-element").hide();
-        $("#edit-cheque").hide();
-        $('.gift-card').hide();
-        $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
-        var id = $(this).data('id').toString();
-        $.each(payment_id, function(index){
-            if(payment_id[index] == parseFloat(id)){
-                $('input[name="payment_id"]').val(payment_id[index]);
-                $('#edit-payment select[name="account_id"]').val(account_id[index]);
-                if(paying_method[index] == 'Cash')
-                    $('select[name="edit_paid_by_id"]').val(1);
-                else if(paying_method[index] == 'Gift Card'){
-                    $('select[name="edit_paid_by_id"]').val(2);
-                    $('#edit-payment select[name="gift_card_id"]').val(gift_card_id[index]);
-                    $('.gift-card').show();
-                    $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', true);
-                }
-                else if(paying_method[index] == 'Credit Card'){
-                    $('select[name="edit_paid_by_id"]').val(3);
-                    @if($lims_pos_setting_data && (strlen($lims_pos_setting_data->stripe_public_key)>0) && (strlen($lims_pos_setting_data->stripe_secret_key )>0))
-                        $.getScript( "vendor/stripe/checkout.js" );
-                        $(".card-element").show();
-                    @endif
-                    $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', true);
-                }
-                else if(paying_method[index] == 'Cheque'){
-                    $('select[name="edit_paid_by_id"]').val(4);
-                    $("#edit-cheque").show();
-                    $('input[name="edit_cheque_no"]').val(cheque_no[index]);
-                    $('input[name="edit_cheque_no"]').attr('required', true);
-                }
-                else if(paying_method[index] == 'Deposit')
-                    $('select[name="edit_paid_by_id"]').val(6);
-                else if(paying_method[index] == 'Points'){
-                    $('select[name="edit_paid_by_id"]').val(7);
-                }
-
-                $('.selectpicker').selectpicker('refresh');
-                $("#payment_reference").html(payment_reference[index]);
-                $('input[name="edit_paying_amount"]').val(paying_amount[index]);
-                $('#edit-payment .change').text(change[index]);
-                $('input[name="edit_amount"]').val(paid_amount[index]);
-                $('textarea[name="edit_payment_note"]').val(payment_note[index]);
-                $('input[name="payment_receiver"]').val(payment_receiver[index]);
-                $('input[name="payment_at"]').val(payment_at[index]);
-                $('input[name="installment_id"]').val(installment_id[index]);
-                if (installment_id[index] > 0) {
-                    $('input[name="edit_amount"]').attr('readonly', true);
-                    $('input[name="edit_paying_amount"]').attr('readonly', true);
-                }
-                return false;
-            }
-        });
-        $('#view-payment').modal('hide');
-    });
-
-    $('select[name="paid_by_id"]').on("change", function() {
-        var id = $(this).val();
-        $('input[name="cheque_no"]').attr('required', false);
-        $('#add-payment select[name="gift_card_id"]').attr('required', false);
-        $(".payment-form").off("submit");
-        if(id == 2){
-            $(".gift-card").show();
-            $(".card-element").hide();
-            $("#cheque").hide();
-            $('#add-payment select[name="gift_card_id"]').attr('required', true);
-        }
-        else if (id == 3) {
-            @if($lims_pos_setting_data && (strlen($lims_pos_setting_data->stripe_public_key)>0) && (strlen($lims_pos_setting_data->stripe_secret_key )>0))
-                $.getScript( "vendor/stripe/checkout.js" );
-                $(".card-element").show();
-            @endif
-            $(".gift-card").hide();
-            $("#cheque").hide();
-        } else if (id == 4) {
-            $("#cheque").show();
-            $(".gift-card").hide();
-            $(".card-element").hide();
-            $('input[name="cheque_no"]').attr('required', true);
-        } else if (id == 5) {
-            $(".card-element").hide();
-            $(".gift-card").hide();
-            $("#cheque").hide();
-        } else {
-            $(".card-element").hide();
-            $(".gift-card").hide();
-            $("#cheque").hide();
-            if(id == 6){
-                // console.log('paid_by_id', deposit, $('#add-payment input[name="amount"]').val());
-                if($('#add-payment input[name="amount"]').val() > parseFloat(deposit))
-                    alert('Amount exceeds customer deposit! Customer deposit : ' + deposit);
-            }
-            else if(id==7) {
-                pointCalculation($('#add-payment input[name="amount"]').val());
-            }
-        }
-    });
-
-    $('#add-payment select[name="gift_card_id"]').on("change", function() {
-        var id = $(this).val();
-        if(expired_date[id] < current_date)
-            alert('This card is expired!');
-        else if($('#add-payment input[name="amount"]').val() > balance[id]){
-            alert('Amount exceeds card balance! Gift Card balance: '+ balance[id]);
-        }
-    });
-
-    $('input[name="paying_amount"]').on("input", function() {
-        $(".change").text(parseFloat( $(this).val() - $('input[name="amount"]').val() ).toFixed({{$general_setting->decimal}}));
-    });
-
-    $('input[name="amount"]').on("input", function() {
-        if( $(this).val() > parseFloat($('input[name="paying_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
+        select: function(event, ui) {
+            fetchProductAndAddRow(ui.item.value);
             $(this).val('');
-        }
-        else if( $(this).val() > parseFloat($('input[name="balance"]').val()) ) {
-            alert('Paying amount cannot be bigger than due amount');
-            $(this).val('');
-        }
-        $(".change").text(parseFloat($('input[name="paying_amount"]').val() - $(this).val()).toFixed({{$general_setting->decimal}}));
-        var id = $('#add-payment select[name="paid_by_id"]').val();
-        var amount = $(this).val();
-        if(id == 2){
-            id = $('#add-payment select[name="gift_card_id"]').val();
-            if(amount > balance[id])
-                alert('Amount exceeds card balance! Gift Card balance: '+ balance[id]);
-        }
-        else if(id == 6){
-            if(amount > parseFloat(deposit))
-                alert('Amount exceeds customer deposit! Customer deposit : ' + deposit);
-        }
-        else if(id==7) {
-            pointCalculation(amount);
-        }
-    });
-
-    $('select[name="edit_paid_by_id"]').on("change", function() {
-        var id = $(this).val();
-        $('input[name="edit_cheque_no"]').attr('required', false);
-        $('#edit-payment select[name="gift_card_id"]').attr('required', false);
-        $(".payment-form").off("submit");
-        if(id == 2){
-            $(".card-element").hide();
-            $("#edit-cheque").hide();
-            $('.gift-card').show();
-            $('#edit-payment select[name="gift_card_id"]').attr('required', true);
-        }
-        else if (id == 3) {
-            $(".edit-btn").attr('data-clicked', true);
-            @if($lims_pos_setting_data && (strlen($lims_pos_setting_data->stripe_public_key)>0) && (strlen($lims_pos_setting_data->stripe_secret_key )>0))
-                $.getScript( "vendor/stripe/checkout.js" );
-                $(".card-element").show();
-            @endif
-            $("#edit-cheque").hide();
-            $('.gift-card').hide();
-        } else if (id == 4) {
-            $("#edit-cheque").show();
-            $(".card-element").hide();
-            $('.gift-card').hide();
-            $('input[name="edit_cheque_no"]').attr('required', true);
-        } else {
-            $(".card-element").hide();
-            $("#edit-cheque").hide();
-            $('.gift-card').hide();
-            if(id == 6) {
-                if($('input[name="edit_amount"]').val() > parseFloat(deposit))
-                    alert('Amount exceeds customer deposit! Customer deposit : ' + deposit);
-            }
-            else if(id==7) {
-                pointCalculation($('input[name="edit_amount"]').val());
-            }
-        }
-    });
-
-    $('#edit-payment select[name="gift_card_id"]').on("change", function() {
-        var id = $(this).val();
-        if(expired_date[id] < current_date)
-            alert('This card is expired!');
-        else if($('#edit-payment input[name="edit_amount"]').val() > balance[id])
-            alert('Amount exceeds card balance! Gift Card balance: '+ balance[id]);
-    });
-
-    $('input[name="edit_paying_amount"]').on("input", function() {
-        $(".change").text(parseFloat( $(this).val() - $('input[name="edit_amount"]').val() ).toFixed({{$general_setting->decimal}}));
-    });
-
-    $('input[name="edit_amount"]').on("input", function() {
-        if( $(this).val() > parseFloat($('input[name="edit_paying_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $(this).val('');
-        }
-        $(".change").text(parseFloat($('input[name="edit_paying_amount"]').val() - $(this).val()).toFixed({{$general_setting->decimal}}));
-        var amount = $(this).val();
-        var id = $('#edit-payment select[name="gift_card_id"]').val();
-        if(amount > balance[id]){
-            alert('Amount exceeds card balance! Gift Card balance: '+ balance[id]);
-        }
-        var id = $('#edit-payment select[name="edit_paid_by_id"]').val();
-        if(id == 6){
-            if(amount > parseFloat(deposit))
-                alert('Amount exceeds customer deposit! Customer deposit : ' + deposit);
-        }
-        else if(id==7) {
-            pointCalculation(amount);
-        }
-    });
-
-    $(document).on("click", "table.sale-list tbody .add-delivery", function(event) {
-        var id = $(this).data('id').toString();
-        $.get('delivery/create/'+id, function(data) {
-            $('#dr').text(data[0]);
-            $('#sr').text(data[1]);
-
-            $('select[name="status"]').val(data[2]);
-            $('.selectpicker').selectpicker('refresh');
-            $('input[name="delivered_by"]').val(data[3]);
-            $('input[name="recieved_by"]').val(data[4]);
-            $('#customer').text(data[5]);
-            $('textarea[name="address"]').val(data[6]);
-            $('textarea[name="note"]').val(data[7]);
-            $('select[name="courier_id"]').val(data[8]);
-            $('.selectpicker').selectpicker('refresh');
-            $('input[name="reference_no"]').val(data[0]);
-            $('input[name="sale_id"]').val(id);
-            $('#add-delivery').modal('show');
-        });
-    });
-
-    function pointCalculation(amount) {
-        availablePoints = $('table.sale-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.points').val();
-        required_point = Math.ceil(amount / reward_point_setting['per_point_amount']);
-        if(required_point > availablePoints) {
-          alert('Customer does not have sufficient points. Available points: '+availablePoints+'. Required points: '+required_point);
-        }
-    }
-
-    let buttons = [];
-    @can('sale_export')
-        buttons.push(
-            {
-                extend: "pdf",
-                text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
-                exportOptions: {
-                    columns: ":visible:Not(.not-exported)",
-                    rows: ":visible",
-                },
-                action: function (e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.pdfHtml5.action.call(
-                        this,
-                        e,
-                        dt,
-                        button,
-                        config
-                    );
-                    datatable_sum(dt, false);
-                },
-                footer: true,
-            },
-            {
-                extend: "excel",
-                text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
-                exportOptions: {
-                    columns: ":visible:Not(.not-exported)",
-                    rows: ":visible",
-                },
-                action: function (e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(
-                        this,
-                        e,
-                        dt,
-                        button,
-                        config
-                    );
-                    datatable_sum(dt, false);
-                },
-                footer: true,
-            },
-            {
-                extend: "csv",
-                text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
-                exportOptions: {
-                    columns: ":visible:Not(.not-exported)",
-                    rows: ":visible",
-                },
-                action: function (e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.csvHtml5.action.call(
-                        this,
-                        e,
-                        dt,
-                        button,
-                        config
-                    );
-                    datatable_sum(dt, false);
-                },
-                footer: true,
-            },
-            {
-                extend: "print",
-                text: '<i title="print" class="fa fa-print"></i>',
-                exportOptions: {
-                    columns: ":visible:Not(.not-exported)",
-                    rows: ":visible",
-                },
-                action: function (e, dt, button, config) {
-                    datatable_sum(dt, true);
-                    $.fn.dataTable.ext.buttons.print.action.call(
-                        this,
-                        e,
-                        dt,
-                        button,
-                        config
-                    );
-                    datatable_sum(dt, false);
-                },
-                footer: true,
-            }
-        );
-    @endcan
-
-    buttons.push(
-        {
-            text: '<i title="delete" class="dripicons-cross"></i>',
-            className: 'buttons-delete',
-            action: function ( e, dt, node, config ) {
-                if(user_verified == '1') {
-                    sale_id.length = 0;
-                    $(':checkbox:checked').each(function(i){
-                        if(i){
-                            var sale = $(this).closest('tr').data('sale');
-                            if(sale)
-                                sale_id[i-1] = sale[13];
-                        }
-                    });
-                    if(sale_id.length && confirm(@json(config('commercial.enabled') ? 'Reverse selected documents and preserve their history?' : 'Are you sure want to delete?'))) {
-                        @if(config('commercial.enabled'))
-                        var reversalReason = prompt('Reason for reversal (at least 3 characters):');
-                        if (!reversalReason || reversalReason.trim().length < 3) return;
-                        var reversalDate = prompt('Reversal date (YYYY-MM-DD):', @json(date('Y-m-d')));
-                        if (!reversalDate) return;
-                        @endif
-                        $.ajax({
-                            type:'POST',
-                            url:'sales/deletebyselection',
-                            data:{
-                                saleIdArray: sale_id
-                                @if(config('commercial.enabled'))
-                                ,reason: reversalReason, business_date: reversalDate
-                                @endif
-                            },
-                            success:function(data){
-                                @if(config('commercial.enabled'))
-                                alert('Documents reversed; original history preserved.'); location.reload(); return;
-                                @else
-                                alert(data);
-                                @endif
-                                //dt.rows({ page: 'current', selected: true }).deselect();
-                                dt.rows({ page: 'current', selected: true }).remove().draw(false);
-                            }
-                        });
-                    }
-                    else if(!sale_id.length)
-                        alert('Nothing is selected!');
-                }
-                else
-                    alert('This feature is disable for demo!');
-            }
-        },
-        {
-            extend: 'colvis',
-            text: '<i title="column visibility" class="fa fa-eye"></i>',
-            columns: ':gt(0)'
-        }
-    );
-
-    var saleTable = $('#sale-table').DataTable( {
-        "processing": true,
-        "serverSide": true,
-        "ajax":{
-            url:"{{url('sales/sale-data')}}",
-            data: function (d) {
-                d.all_permission   = all_permission;
-                d.starting_date    = $('input[name=starting_date]').val();
-                d.ending_date      = $('input[name=ending_date]').val();
-                d.warehouse_id     = $('#warehouse_id').val();
-                d.sale_status      = $('#sale-status').val();
-                d.sale_type        = $('#sale-type').val();
-                d.payment_status   = $('#payment-status').val();
-                d.payment_method   = $('#payment-method').val();
-            },
-            dataType: "json",
-            type:"post"
-            // dataSrc: function(json) {
-            //     console.log(json);
-            // }
-        },
-        /*rowId: function(data) {
-              return 'row_'+data['id'];
-        },*/
-        "createdRow": function( row, data, dataIndex ) {
-            $(row).addClass('sale-link');
-            $(row).attr('data-sale', data['sale']);
-        },
-        "columns": columns,
-        'language': {
-
-            'lengthMenu': '_MENU_ {{__("db.records per page")}}',
-             "info":      '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
-            "search":  '{{__("db.Search")}}',
-            'paginate': {
-                    'previous': '<i class="dripicons-chevron-left"></i>',
-                    'next': '<i class="dripicons-chevron-right"></i>'
-            }
-        },
-        order:[['2', 'desc']],
-        "footerCallback": function(row, data, start, end, display) {
-            var api = this.api();
-
-            var paymentTotals = {};
-
-            data.forEach(function(row) {
-                var payments = row['payment_method'];
-                if (payments) {
-                    payments.split(', ').forEach(function(payment) {
-                        var match = payment.match(/(.+)\(([\d.,]+)\)/);
-                        if (match) {
-                            var method = match[1];
-                            var amount = parseFloat(match[2].replace(/,/g, '')) || 0;
-
-                            paymentTotals[method] = (paymentTotals[method] || 0) + amount;
-                        }
-                    });
-                }
-            });
-
-            // Generate footer content
-            var footerContent = '';
-            Object.keys(paymentTotals).forEach(function(method) {
-                footerContent += `<div>${method}: ${paymentTotals[method].toFixed(2)}</div>`;
-            });
-
-            if(show_products_details == 1){
-                $(api.column(11).footer()).html(footerContent);
-            }
-            else{
-                $(api.column(9).footer()).html(footerContent);
-            }
-        },
-        'columnDefs': [
-            {
-                "orderable": false,
-                'targets': [0, 1, 4, 9, 10, 12, 13]
-            },
-            {
-                'render': function(data, type, row, meta){
-                    if(type === 'display'){
-                        data = '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>';
-                    }
-
-                   return data;
-                },
-                'checkboxes': {
-                   'selectRow': true,
-                   'selectAllRender': '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>'
-                },
-                'targets': [0]
-            }
-        ],
-        'select': { style: 'multi',  selector: 'td:first-child'},
-        'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        dom: '<"row"lfB>rtip',
-        rowId: 'ObjectID',
-        buttons: buttons,
-        drawCallback: function () {
-            var api = this.api();
-            datatable_sum(api, false);
-        }
-    });
-
-    $('#warehouse_id, #sale-status, #sale-type, #payment-status, #payment-method').on('change', function () {
-        saleTable.ajax.reload();
-    });
-
-    // Show loader on request
-    saleTable.on('preXhr.dt', function () {
-        $('#filter-loading').show();
-    });
-
-    // Hide loader after draw
-    saleTable.on('xhr.dt', function () {
-        $('#filter-loading').hide();
-    });
-
-    function datatable_sum(dt_selector, is_calling_first) {
-
-        if(show_products_details == 1){
-            if (dt_selector.rows( '.selected' ).any() && is_calling_first) {
-                var rows = dt_selector.rows( '.selected' ).indexes();
-                $( dt_selector.column( 14).footer() ).html(dt_selector.cells( rows, 14, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 15).footer() ).html(dt_selector.cells( rows, 15, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 16).footer() ).html(dt_selector.cells( rows, 16, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 17).footer() ).html(dt_selector.cells( rows, 17, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-            else {
-                $( dt_selector.column( 14 ).footer() ).html(dt_selector.cells( rows, 14, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 15 ).footer() ).html(dt_selector.cells( rows, 15, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 16 ).footer() ).html(dt_selector.cells( rows, 16, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 17 ).footer() ).html(dt_selector.cells( rows, 17, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-        }else{
-            if (dt_selector.rows( '.selected' ).any() && is_calling_first) {
-                var rows = dt_selector.rows( '.selected' ).indexes();
-                $( dt_selector.column( 12).footer() ).html(dt_selector.cells( rows, 12, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 13).footer() ).html(dt_selector.cells( rows, 13, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 14).footer() ).html(dt_selector.cells( rows, 14, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 15).footer() ).html(dt_selector.cells( rows, 15, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-            else {
-                $( dt_selector.column( 12 ).footer() ).html(dt_selector.cells( rows, 12, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 13 ).footer() ).html(dt_selector.cells( rows, 13, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 14 ).footer() ).html(dt_selector.cells( rows, 14, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-                $( dt_selector.column( 15 ).footer() ).html(dt_selector.cells( rows, 15, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            }
-        }
-
-    }
-
-    function saleDetails(sale){
-        $("#sale-details input[name='sale_id']").val(sale[13]);
-
-        var htmltext = '{{__("db.date")}}: '+sale[0]+
-            '<br>{{__("db.reference")}}: '+sale[1]+
-            '<br>{{__("db.Warehouse")}}: '+sale[27]+
-            '<br>{{__("db.Sale Status")}}: '+sale[2]+
-            '<br>{{__("db.Currency")}}: '+sale[31];
-
-        if(sale[32])
-            htmltext += '<br>{{__("db.Exchange Rate")}}: '+sale[32]+'<br>';
-        else
-            htmltext += '<br>{{__("db.Exchange Rate")}}: N/A<br>';
-        if(sale[33])
-            htmltext += '{{__("db.Table")}}: '+sale[33]+'<br>';
-        if(sale[30])
-            htmltext += '{{__("db.Attach Document")}}: <a href="{{ url('secure-documents/sale') }}/'+sale[30]+'">Download</a><br>';
-
-        htmltext += '<br><div class="row"><div class="col-md-6">{{__("db.From")}}:<br>'+sale[3]+'<br>'+sale[4]+'<br>'+sale[5]+'<br>'+sale[6]+'<br>'+sale[7]+'<br>'+sale[8]+
-        '</div><div class="col-md-6"><div class="float-right">{{__("db.To")}}:<br>'+sale[9]+'<br>'+sale[10]+'<br>'+sale[11]+'<br>'+sale[12]+'</div></div></div>';
-
-        $.get('sales/product_sale/' + sale[13], function(data){
-            // console.log(data);
-            $(".product-sale-list tbody").remove();
-            var name_code = data[0];
-            var qty = data[1];
-            var unit_code = data[2];
-            var tax = data[3];
-            var tax_rate = data[4];
-            var discount = data[5];
-            var subtotal = data[6];
-            var batch_no = data[7];
-            var return_qty = data[8];
-            var is_delivered = data[9];
-            // Check if data[10] exists
-            var toppings = data[10] ? data[10] : [];
-            var total_qty = 0;
-            var newBody = $("<tbody>");
-
-            $.each(name_code, function(index) {
-                var newRow = $("<tr>");
-                var cols = '';
-                cols += '<td>' + (index + 1) + '</td>';
-                cols += '<td>' + name_code[index];
-
-                // Append topping names if toppings[index] exists
-                if (toppings[index]) {
-                    try {
-                        // Parse and extract topping names
-                        var toppingData = JSON.parse(toppings[index]);
-                        var toppingNames = toppingData.map(topping => topping.name).join(', ');
-                        cols += ' (' + toppingNames + ')';
-                    } catch (error) {
-                        console.error('Error parsing toppings for index', index, toppings[index], error);
-                    }
-                }
-
-                cols += '</td>';
-                cols += '<td>' + batch_no[index] + '</td>';
-                cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
-                cols += '<td>' + return_qty[index] + '</td>';
-
-                // Calculate unit price
-                var unitPrice = parseFloat(subtotal[index] / qty[index]).toFixed({{$general_setting->decimal}});
-
-                // Calculate topping prices if toppings[index] exists
-                var toppingPrices = '';
-                if (toppings[index]) {
-                    try {
-                        var toppingData = JSON.parse(toppings[index]); // Parse topping data
-                        toppingPrices = toppingData
-                            .map(topping => parseFloat(topping.price).toFixed({{$general_setting->decimal}})) // Extract and format each topping price
-                            .join(' + '); // Join prices with '+'
-                    } catch (error) {
-                        console.error('Error calculating topping prices for index', index, toppings[index], error);
-                    }
-                }
-
-                cols += '<td>' + unitPrice + ' (' + toppingPrices + ')</td>';
-
-                cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
-                cols += '<td>' + discount[index] + '</td>';
-
-                // Update subtotal to include topping prices
-                var toppingPricesRowTotal = 0;
-                if (toppings[index]) {
-                    try {
-                        var toppingData = JSON.parse(toppings[index]);
-                        toppingPricesRowTotal = toppingData.reduce((sum, topping) => sum + parseFloat(topping.price), 0);
-                    } catch (error) {
-                        console.error('Error calculating topping prices for index', index, toppings[index], error);
-                    }
-                }
-                subtotal[index] = parseFloat(subtotal[index]) + toppingPricesRowTotal;
-
-                cols += '<td>' + subtotal[index].toFixed({{$general_setting->decimal}}) + '</td>';
-                cols += '<td>' + is_delivered[index] + '</td>';
-
-                total_qty += parseFloat(qty[index]);
-                newRow.append(cols);
-                newBody.append(newRow);
-            });
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=3>{{__("db.Total")}}:</td>';
-            cols += '<td>' + total_qty + '</td>';
-            cols += '<td colspan=2></td>';
-            cols += '<td>' + sale[14] + '</td>';
-            cols += '<td>' + sale[15] + '</td>';
-            cols += '<td>' + sale[16] + '</td>';
-            cols += '<td></td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=9>{{__("db.Order Tax")}}:</td>';
-            cols += '<td>' + sale[17] + '(' + sale[18] + '%)' + '</td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=9>{{__("db.Order Discount")}}:</td>';
-            cols += '<td>' + sale[19] + '</td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-            if(sale[28]) {
-                var newRow = $("<tr>");
-                cols = '';
-                cols += '<td colspan=9>{{__("db.Coupon Discount")}} ['+sale[28]+']:</td>';
-                cols += '<td>' + sale[29] + '</td>';
-                newRow.append(cols);
-                newBody.append(newRow);
-            }
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=9>{{__("db.Shipping Cost")}}:</td>';
-            cols += '<td>' + sale[20] + '</td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=9>{{__("db.grand total")}}:</td>';
-            cols += '<td>' + sale[21] + '</td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=9>{{__("db.Paid Amount")}}:</td>';
-            cols += '<td>' + sale[22] + '</td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-
-            var newRow = $("<tr>");
-            cols = '';
-            cols += '<td colspan=9>{{__("db.Due")}}:</td>';
-            cols += '<td>' + parseFloat(sale[21] - sale[22]).toFixed({{$general_setting->decimal}}) + '</td>';
-            newRow.append(cols);
-            newBody.append(newRow);
-
-            $("table.product-sale-list").append(newBody);
-        });
-        var htmlfooter = '<p>{{__("db.Sale Note")}}: '+sale[23]+'</p><p>{{__("db.Staff Note")}}: '+sale[24]+'</p>{{__("db.Created By")}}:<br>'+sale[25]+'<br>'+sale[26];
-        $('#sale-content').html(htmltext);
-        $('#sale-footer').html(htmlfooter);
-        $('#sale-details').modal('show');
-    }
-
-    $(document).on('submit', '.payment-form', function(e) {
-        if( $('input[name="paying_amount"]').val() < parseFloat($('#amount').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $('input[name="amount"]').val('');
-            $(".change").text(parseFloat( $('input[name="paying_amount"]').val() - $('#amount').val() ).toFixed({{$general_setting->decimal}}));
-            e.preventDefault();
-        }
-        else if( $('input[name="edit_paying_amount"]').val() < parseFloat($('input[name="edit_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $('input[name="edit_amount"]').val('');
-            $(".change").text(parseFloat( $('input[name="edit_paying_amount"]').val() - $('input[name="edit_amount"]').val() ).toFixed({{$general_setting->decimal}}));
-            e.preventDefault();
-        }
-
-        $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
-    });
-
-    if(all_permission.indexOf("sales-delete") == -1)
-        $('.buttons-delete').addClass('d-none');
-
-        function confirmDelete() {
-            if (confirm("Are you sure want to delete?")) {
-                return true;
-            }
             return false;
         }
-
-    function confirmPaymentDelete() {
-        if (confirm("Are you sure want to delete? If you delete this money will be refunded.")) {
-            return true;
-        }
-        return false;
-    }
-
-    $(document).ready(function() {
-        $(document).on('click', '.send-sms', function(){
-            $("#send-sms input[name='customer_id']").val($(this).data('customer_id'));
-            $("#send-sms input[name='reference_no']").val($(this).data('reference_no'));
-            $("#send-sms input[name='sale_status']").val($(this).data('sale_status'));
-            $("#send-sms input[name='payment_status']").val($(this).data('payment_status'));
-        });
-    });
-
-
-        $('#add-payment-form').on('submit', function() {
-            var $submitButton = $('#add-payment-submit-btn');
-            if ($submitButton.is(':disabled')) {
-                return false;
-            }
-            $submitButton.attr('disabled', 'disabled').text('Submitting...');
-            return true;
-        });
-</script>
-<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
-<script type="text/javascript">
-    // --- Commercial Workspace Single-Screen SPA Ergonomics ---
-    function showProgressBar() {
-        $('#comm-progress-bar').removeClass('done').addClass('active');
-    }
-    function hideProgressBar() {
-        $('#comm-progress-bar').addClass('done');
-        setTimeout(function() { $('#comm-progress-bar').removeClass('active done'); }, 300);
-    }
-
-    // Tab switching without page reload
-    $('#tab-all-sales').on('click', function(e) {
-        e.preventDefault();
-        $('.comm-nav-pills .nav-link').removeClass('active');
-        $(this).addClass('active');
-        $('#sale-type').val('0');
-        showProgressBar();
-        saleTable.ajax.reload(function() { hideProgressBar(); });
-    });
-
-    $('#tab-pos-sales').on('click', function(e) {
-        e.preventDefault();
-        $('.comm-nav-pills .nav-link').removeClass('active');
-        $(this).addClass('active');
-        $('#sale-type').val('pos');
-        showProgressBar();
-        saleTable.ajax.reload(function() { hideProgressBar(); });
-    });
-
-    $('#btn-quick-refresh').on('click', function() {
-        showProgressBar();
-        saleTable.ajax.reload(function() { hideProgressBar(); });
-    });
-
-    // --- Bill List Panel Docking & Toggling ---
-    // Restore saved dock position & open state
-    (function initBillPanelState() {
-        let savedDock = localStorage.getItem('zolo_bill_panel_dock');
-        if (savedDock === 'left') {
-            $('#comm-split-grid').addClass('dock-left');
-            $('#dock-label').text('Dock Right');
-        } else {
-            $('#comm-split-grid').removeClass('dock-left');
-            $('#dock-label').text('Dock Left');
-        }
-
-        let savedOpen = localStorage.getItem('zolo_bill_panel_open');
-        if (savedOpen === '0') {
-            $('#comm-drawer').addClass('collapsed');
-            $('#comm-split-grid').addClass('drawer-collapsed');
-        }
-    })();
-
-    // Dock toggle: switch side panel between Left and Right
-    $('#btn-dock-toggle').on('click', function() {
-        let isLeft = $('#comm-split-grid').toggleClass('dock-left').hasClass('dock-left');
-        $('#dock-label').text(isLeft ? 'Dock Right' : 'Dock Left');
-        localStorage.setItem('zolo_bill_panel_dock', isLeft ? 'left' : 'right');
-        if (typeof saleTable !== 'undefined') {
-            saleTable.columns.adjust().draw(false);
-        }
-    });
-
-    // Panel collapse / expand toggle
-    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
-        let isClosed = $('#comm-drawer').toggleClass('collapsed').hasClass('collapsed');
-        $('#comm-split-grid').toggleClass('drawer-collapsed', isClosed);
-        localStorage.setItem('zolo_bill_panel_open', isClosed ? '0' : '1');
-        if (typeof saleTable !== 'undefined') {
-            saleTable.columns.adjust().draw(false);
-        }
-    });
-
-    // Hotkey: Alt+D toggles side panel
-    $(document).on('keydown', function(e) {
-        if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+    }).on('keydown', function(e) {
+        if (e.which === 13) {
             e.preventDefault();
-            $('#toggle-drawer-btn').trigger('click');
+            var val = $(this).val().trim();
+            if (val) {
+                fetchProductAndAddRow(val);
+                $(this).val('');
+            }
         }
     });
 
-    // --- Bill List Live Search & Filtering ---
-    function filterSideBills() {
-        let search = $('#side-search-input').val().trim().toLowerCase();
-        let series = $('#side-filter-series').val().trim().toLowerCase();
-        let activeTab = $('.side-filter-tabs .side-tab.active').data('filter') || 'all';
-        let selectedDate = $('#side-filter-date-val').val();
+    // Quick F2 focus
+    $(document).on('keydown', function(e) {
+        if (e.which === 113) { // F2
+            e.preventDefault();
+            $('#lims_productcodeSearch').focus();
+        }
+    });
 
-        let visibleCount = 0;
-        $('#side-bill-list .side-bill-card').each(function() {
-            let card = $(this);
-            let ref = card.data('ref') || '';
-            let party = card.data('party') || '';
-            let status = card.data('status') || '';
-            let date = card.data('date') || '';
-
-            let matchesSearch = !search || ref.indexOf(search) !== -1 || party.indexOf(search) !== -1;
-            let matchesSeries = !series || ref.indexOf(series) !== -1;
-            let matchesTab = true;
-
-            if (activeTab === 'draft') {
-                matchesTab = (status === 'draft');
-            } else if (activeTab === 'date') {
-                matchesTab = !selectedDate || (date === selectedDate);
-            } else if (activeTab === 'range') {
-                matchesTab = true;
+    // --- Fetch Product via AJAX & Add Row ---
+    function fetchProductAndAddRow(searchTerm) {
+        $.ajax({
+            type: 'GET',
+            url: '{{ route("product_sale.search") }}',
+            data: { data: searchTerm },
+            success: function(data) {
+                if (data && data.length) {
+                    addProductRow({
+                        product_id: data[9],
+                        product_name: data[0],
+                        product_code: data[1],
+                        price: parseFloat(data[2]) || 0,
+                        tax_rate: parseFloat(data[3]) || 0,
+                        unit: (data[6] ? data[6].split(',')[0] : 'Unit'),
+                        qty: 1
+                    });
+                } else {
+                    alert('Product not found: ' + searchTerm);
+                }
+            },
+            error: function() {
+                // Fallback manual line
+                addProductRow({
+                    product_id: 0,
+                    product_name: searchTerm.split('|')[1] || searchTerm,
+                    product_code: searchTerm.split('|')[0] || '',
+                    price: 0,
+                    tax_rate: 0,
+                    unit: 'Unit',
+                    qty: 1
+                });
             }
+        });
+    }
 
-            if (matchesSearch && matchesSeries && matchesTab) {
-                card.show();
+    // --- Add Row to Items Grid Table ---
+    function addProductRow(item) {
+        // Remove empty placeholder row if exists
+        $('#order-table-body .empty-placeholder-row').remove();
+
+        rowCounter++;
+        var rate = item.price || 0;
+        var qty = item.qty || 1;
+        var taxRate = item.tax_rate || 0;
+        var amount = rate * qty;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        var tr = $(`
+            <tr class="order-item-row" data-row-id="${rowCounter}">
+                <td style="text-align:center;font-weight:600;color:#64748b;">${$('#order-table-body tr').length + 1}</td>
+                <td>
+                    <div style="font-weight:600;color:#0f172a;">${item.product_name}</div>
+                    <small style="color:#64748b;">${item.product_code}</small>
+                    <input type="hidden" name="product_id[]" value="${item.product_id}">
+                    <input type="hidden" name="product_code[]" value="${item.product_code}">
+                </td>
+                <td>
+                    <span class="grid-type-pill" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">Sale</span>
+                </td>
+                <td>
+                    <span class="badge badge-light border" style="font-size:11px;">${item.unit || 'Unit'}</span>
+                    <input type="hidden" name="sale_unit[]" value="${item.unit || 'Unit'}">
+                </td>
+                <td style="text-align:right;">
+                    <input type="number" name="net_unit_price[]" class="form-control form-control-sm row-rate text-right" style="height:26px;font-size:12px;padding:2px 6px;" value="${rate.toFixed(decimalPlaces)}" step="0.01">
+                </td>
+                <td style="text-align:center;">
+                    <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" style="height:26px;font-size:12px;padding:2px 4px;max-width:70px;margin:auto;" value="${qty}" step="any" min="0.01">
+                </td>
+                <td style="text-align:right;font-weight:600;color:#0f172a;">
+                    <span class="row-amount-display">₹ ${amount.toFixed(decimalPlaces)}</span>
+                    <input type="hidden" name="subtotal[]" class="row-subtotal-input" value="${lineTotal.toFixed(decimalPlaces)}">
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate" style="height:26px;font-size:11px;padding:1px 4px;">
+                            <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
+                            <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
+                            <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
+                            <option value="18" ${taxRate == 18 ? 'selected' : ''}>18%</option>
+                            <option value="28" ${taxRate == 28 ? 'selected' : ''}>28%</option>
+                        </select>
+                        <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
+                    </div>
+                </td>
+                <td style="text-align:right;font-weight:700;color:#059669;">
+                    <span class="row-total-display">₹ ${lineTotal.toFixed(decimalPlaces)}</span>
+                </td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 btn-delete-row" title="Delete Row" style="height:24px;font-size:11px;">
+                        <i class="dripicons-trash"></i>
+                    </button>
+                    <input type="hidden" name="discount[]" value="0">
+                </td>
+            </tr>
+        `);
+
+        $('#order-table-body').append(tr);
+        recalcTableSummary();
+    }
+
+    // Manual Add Row
+    $('#btn-add-item-row').on('click', function() {
+        $('#lims_productcodeSearch').focus();
+    });
+
+    // Delete Row
+    $(document).on('click', '.btn-delete-row', function() {
+        $(this).closest('tr').remove();
+        reindexRows();
+        recalcTableSummary();
+    });
+
+    // Live Row Calculation on Change
+    $(document).on('input change', '.row-rate, .row-qty, .row-tax-rate', function() {
+        var tr = $(this).closest('tr');
+        var rate = parseFloat(tr.find('.row-rate').val()) || 0;
+        var qty = parseFloat(tr.find('.row-qty').val()) || 0;
+        var taxRate = parseFloat(tr.find('.row-tax-rate').val()) || 0;
+
+        var amount = rate * qty;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        tr.find('.row-amount-display').text('₹ ' + amount.toFixed(decimalPlaces));
+        tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+        tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('.row-total-display').text('₹ ' + lineTotal.toFixed(decimalPlaces));
+
+        recalcTableSummary();
+    });
+
+    function reindexRows() {
+        var rows = $('#order-table-body tr.order-item-row');
+        if (rows.length === 0) {
+            $('#order-table-body').html(`
+                <tr class="empty-placeholder-row">
+                    <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
+                        No items added yet. Search or scan above or click "+ Add row".
+                    </td>
+                </tr>
+            `);
+        } else {
+            rows.each(function(index) {
+                $(this).find('td:first').text(index + 1);
+            });
+        }
+    }
+
+    // --- Recalculate Table Summary Totals ---
+    function recalcTableSummary() {
+        var net = 0;
+        var tax = 0;
+        var grand = 0;
+        var totalQty = 0;
+        var count = 0;
+
+        $('#order-table-body tr.order-item-row').each(function() {
+            count++;
+            var rate = parseFloat($(this).find('.row-rate').val()) || 0;
+            var qty = parseFloat($(this).find('.row-qty').val()) || 0;
+            var taxRate = parseFloat($(this).find('.row-tax-rate').val()) || 0;
+            var amount = rate * qty;
+            var taxAmount = amount * (taxRate / 100);
+
+            net += amount;
+            tax += taxAmount;
+            grand += (amount + taxAmount);
+            totalQty += qty;
+        });
+
+        $('#display-net-amount').text('₹ ' + net.toFixed(decimalPlaces));
+        $('#display-tax-amount').text('₹ ' + tax.toFixed(decimalPlaces));
+        $('#display-grand-total').text('₹ ' + grand.toFixed(decimalPlaces));
+        $('#items-meta-count').text(count + ' line(s) • 7 per page');
+
+        $('#hidden-total-qty').val(totalQty);
+        $('#hidden-total-price').val(net.toFixed(decimalPlaces));
+        $('#hidden-total-tax').val(tax.toFixed(decimalPlaces));
+        $('#hidden-grand-total').val(grand.toFixed(decimalPlaces));
+    }
+
+    // --- Load Sale To Form for In-Place Editing ---
+    window.loadSaleToForm = function(id) {
+        $('#comm-progress-bar').addClass('active');
+        $.ajax({
+            type: 'GET',
+            url: '{{ url("sales") }}/' + id + '/json',
+            dataType: 'json',
+            success: function(res) {
+                $('#comm-progress-bar').removeClass('active').addClass('done');
+                setTimeout(() => $('#comm-progress-bar').removeClass('done'), 300);
+
+                if (!res || !res.sale) {
+                    alert('Could not load sale details.');
+                    return;
+                }
+
+                var s = res.sale;
+                // Switch Form to Update Mode
+                $('#entry-form-method').val('PUT');
+                $('#edit-sale-id').val(s.id);
+                $('#sale-entry-form').attr('action', '{{ url("sales") }}/' + s.id);
+
+                // Update UI Labels
+                $('#doc-breadcrumb-mode').text('Edit: ' + (s.reference_no || '#' + s.id)).removeClass('text-primary').addClass('text-success');
+                $('#doc-title-text').text('Edit Sales Bill: ' + (s.reference_no || '#' + s.id));
+                $('#doc-sub-text').text('Editing saved sale record');
+
+                // Populate Header Inputs
+                $('#reference_no').val(s.reference_no || '');
+                $('#customer_po_no').val(s.customer_po_no || '');
+                if (s.created_at) {
+                    $('#bill_date').val(s.created_at.slice(0, 10));
+                    $('#entry_date').val(s.created_at.slice(0, 10));
+                }
+                
+                $('#customer_id').val(s.customer_id).trigger('change');
+                $('.selectpicker').selectpicker('refresh');
+                if (s.warehouse_id) $('#form_warehouse_id').val(s.warehouse_id);
+                if (s.biller_id) $('#form_biller_id').val(s.biller_id);
+
+                // Highlight active card in side list
+                $('.side-bill-card').removeClass('active-editing');
+                $('.side-bill-card[data-bill-id="' + id + '"]').addClass('active-editing');
+
+                // Populate Items
+                $('#order-table-body').empty();
+                rowCounter = 0;
+                if (res.items && res.items.length) {
+                    res.items.forEach(function(item) {
+                        addProductRow({
+                            product_id: item.product_id,
+                            product_name: item.product_name,
+                            product_code: item.product_code,
+                            price: parseFloat(item.net_unit_price) || 0,
+                            tax_rate: parseFloat(item.tax_rate) || 0,
+                            unit: item.unit_code || 'Unit',
+                            qty: parseFloat(item.qty) || 1
+                        });
+                    });
+                } else {
+                    reindexRows();
+                }
+
+                // Scroll smoothly to top of form
+                $('#comm-entry-workspace').animate({ scrollTop: 0 }, 200);
+            },
+            error: function() {
+                $('#comm-progress-bar').removeClass('active');
+                alert('Failed to fetch sale details from server.');
+            }
+        });
+    };
+
+    // --- Reset Form to Blank New Sale ---
+    window.resetFormToNew = function() {
+        $('#entry-form-method').val('POST');
+        $('#edit-sale-id').val('');
+        $('#sale-entry-form').attr('action', '{{ route("sales.store") }}');
+
+        $('#doc-breadcrumb-mode').text('New').removeClass('text-success').addClass('text-primary');
+        $('#doc-title-text').text('New Sales Bill');
+        $('#doc-sub-text').text('Sale • New bill');
+
+        $('#reference_no').val('');
+        $('#customer_po_no').val('');
+        $('#bill_date').val('{{ date("Y-m-d") }}');
+        $('#entry_date').val('{{ date("Y-m-d") }}');
+        $('#customer_id').val('').trigger('change');
+        $('.selectpicker').selectpicker('refresh');
+
+        $('.side-bill-card').removeClass('active-editing');
+        $('#order-table-body').empty();
+        rowCounter = 0;
+        reindexRows();
+        recalcTableSummary();
+    };
+
+    // Actions triggering reset to new
+    $('#btn-side-new, #btn-top-new, #btn-form-discard').on('click', function(e) {
+        e.preventDefault();
+        resetFormToNew();
+    });
+
+    // Card click & edit button click
+    $(document).on('click', '.side-bill-card', function(e) {
+        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print').length) return;
+        var id = $(this).data('bill-id');
+        if (id) loadSaleToForm(id);
+    });
+
+    $(document).on('click', '.btn-side-load-edit', function(e) {
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (id) loadSaleToForm(id);
+    });
+
+    // --- Slideover Drawer Handlers ---
+    $('#btn-open-details, #btn-bottom-charges').on('click', function() {
+        $('#charges-drawer').modal('show');
+    });
+
+    $('#btn-save-drawer-details').on('click', function() {
+        $('#hidden-bale-no').val($('#drawer-bale-no').val());
+        $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val());
+        $('#hidden-lr-no').val($('#drawer-lr-no').val());
+        $('#hidden-lr-date').val($('#drawer-lr-date').val());
+        $('#hidden-transporter-name').val($('#drawer-transporter-name').val());
+        $('#hidden-station-to').val($('#drawer-station-to').val());
+        $('#hidden-order-no').val($('#drawer-order-no').val());
+        $('#hidden-credit-days').val($('#drawer-credit-days').val());
+        $('#hidden-note').val($('#drawer-note').val());
+        $('#hidden-account-id').val($('#drawer-account-id').val());
+        $('#hidden-paid-amount').val($('#drawer-paid-amount').val());
+
+        var count = 0;
+        if ($('#drawer-bale-no').val()) count++;
+        if ($('#drawer-lr-no').val()) count++;
+        if ($('#drawer-note').val()) count++;
+        if (parseFloat($('#drawer-paid-amount').val()) > 0) count++;
+        $('#charges-badge-count').text(count);
+        if ($('#drawer-note').val()) {
+            $('#remarks-summary-preview').text('Remarks: ' + $('#drawer-note').val().slice(0, 40) + '...');
+        }
+    });
+
+    // Pill Segmented Mode Toggle (Cash/Credit)
+    $('.pill-segmented button[data-mode]').on('click', function() {
+        $('.pill-segmented button[data-mode]').removeClass('active');
+        $(this).addClass('active');
+        var mode = $(this).data('mode');
+        $('#input-paying-method').val(mode);
+    });
+
+    // Density segmented
+    $('.density-segmented button').on('click', function() {
+        $('.density-segmented button').removeClass('active');
+        $(this).addClass('active');
+        var d = $(this).data('density');
+        $('#order-table').removeClass('compact cozy large').addClass(d);
+    });
+
+    // --- Side Panel Filtering Functions ---
+    function filterSideBills() {
+        var query = $('#side-search-input').val().toLowerCase().trim();
+        var seriesQuery = $('#side-filter-series').val().toLowerCase().trim();
+        var activeTab = $('.side-filter-tabs .side-tab.active').data('filter') || 'all';
+        var dateVal = $('#side-filter-date-val').val();
+        var whId = $('#side-filter-warehouse').val();
+        var statusId = $('#side-filter-status').val();
+        var paymentId = $('#side-filter-payment').val();
+
+        var visibleCount = 0;
+        $('#side-bill-list .side-bill-card').each(function() {
+            var $c = $(this);
+            var ref = $c.data('ref') || '';
+            var party = $c.data('party') || '';
+            var status = $c.data('status') || '';
+            var cardStatusId = String($c.data('status-id') || '');
+            var cardPayId = String($c.data('payment-status-id') || '');
+            var cardWhId = String($c.data('warehouse-id') || '');
+            var cardDate = $c.data('date') || '';
+
+            var matchSearch = !query || ref.indexOf(query) !== -1 || party.indexOf(query) !== -1;
+            var matchSeries = !seriesQuery || ref.indexOf(seriesQuery) !== -1;
+            var matchTab = true;
+
+            if (activeTab === 'draft') matchTab = (status === 'draft');
+            else if (activeTab === 'date') matchTab = (dateVal && cardDate === dateVal);
+
+            var matchWh = (!whId || whId == '0' || cardWhId === whId);
+            var matchStatus = (!statusId || statusId == '0' || cardStatusId === statusId);
+            var matchPayment = (!paymentId || paymentId == '0' || cardPayId === paymentId);
+
+            if (matchSearch && matchSeries && matchTab && matchWh && matchStatus && matchPayment) {
+                $c.show();
                 visibleCount++;
             } else {
-                card.hide();
+                $c.hide();
             }
         });
 
-        if (visibleCount === 0) {
-            if ($('#side-bill-list .side-empty-state').length === 0) {
-                $('#side-bill-list').append('<div class="side-empty-state"><p>No bills match these filters</p></div>');
-            } else {
-                $('#side-bill-list .side-empty-state').show();
-            }
-        } else {
-            $('#side-bill-list .side-empty-state').hide();
-        }
+        $('.side-empty-state').toggle(visibleCount === 0);
     }
 
     $('#side-search-input, #side-filter-series').on('input', filterSideBills);
+    $('#side-filter-warehouse, #side-filter-status, #side-filter-payment').on('change', filterSideBills);
+    $('#side-filter-date-val').on('change', filterSideBills);
 
     $('.side-filter-tabs .side-tab').on('click', function() {
         $('.side-filter-tabs .side-tab').removeClass('active');
         $(this).addClass('active');
-        let filter = $(this).data('filter');
-        if (filter === 'date' || filter === 'range') {
-            $('#side-date-picker-box').slideDown(150);
-        } else {
-            $('#side-date-picker-box').slideUp(150);
-        }
+        var f = $(this).data('filter');
+        $('#side-date-picker-box').toggle(f === 'date' || f === 'range');
         filterSideBills();
     });
 
-    $('#side-filter-date-val').on('change', filterSideBills);
-
-    // Clicking anywhere on a bill card opens edit mode directly
-    $(document).on('click', '.side-bill-card', function(e) {
-        if ($(e.target).closest('.side-card-actions').length > 0) return;
-        let billId = $(this).data('bill-id');
-        if (billId) {
-            window.location.href = '{{ url("sales") }}/' + billId + '/edit';
-        }
+    // Reset toolbar button
+    $('#side-filter-reset').on('click', function() {
+        $('#side-search-input').val('');
+        $('#side-filter-series').val('');
+        $('#side-filter-warehouse').val('0');
+        $('#side-filter-status').val('0');
+        $('#side-filter-payment').val('0');
+        $('.side-filter-tabs .side-tab').removeClass('active');
+        $('.side-filter-tabs .side-tab[data-filter="all"]').addClass('active');
+        $('#side-date-picker-box').hide();
+        filterSideBills();
     });
 
-    // Clicking View button on card
+    // Export toolbar buttons
+    $('#side-export-print').on('click', function() { window.print(); });
+    $('#side-export-excel, #side-export-csv').on('click', function() {
+        alert('Exporting recent sales list...');
+    });
+    $('#side-export-pdf').on('click', function() {
+        var activeId = $('#edit-sale-id').val();
+        if (activeId) window.open('{{ url("sales/gen_invoice") }}/' + activeId, '_blank');
+        else window.print();
+    });
+
+    // --- View Modal Handler ---
     $(document).on('click', '.btn-side-view', function(e) {
-        e.preventDefault();
         e.stopPropagation();
-        let billId = $(this).data('id');
-        let row = $('#sale-table tbody tr[data-id="' + billId + '"]');
-        if (row.length && row.data('sale')) {
-            saleDetails(row.data('sale'));
-        } else {
-            window.location.href = '{{ url("sales") }}/' + billId + '/edit';
+        var id = $(this).data('id');
+        if (id) {
+            $.get('{{ url("sales/product_sale") }}/' + id, function(data) {
+                $(".product-sale-list tbody").empty();
+                if (data && data[0]) {
+                    var names = data[0];
+                    var qtys = data[1];
+                    var units = data[2];
+                    var taxes = data[3];
+                    var subtotals = data[6];
+                    for (var i = 0; i < names.length; i++) {
+                        $(".product-sale-list tbody").append(`
+                            <tr>
+                                <td>${i+1}</td>
+                                <td>${names[i]}</td>
+                                <td>${data[7] ? data[7][i] : 'N/A'}</td>
+                                <td>${qtys[i]} ${units[i]}</td>
+                                <td>${data[8] ? data[8][i] : 0}</td>
+                                <td>${parseFloat(subtotals[i]/qtys[i]).toFixed(decimalPlaces)}</td>
+                                <td>${taxes[i]}</td>
+                                <td>${data[5] ? data[5][i] : 0}</td>
+                                <td>${subtotals[i]}</td>
+                            </tr>
+                        `);
+                    }
+                }
+                $('#sale-details').modal('show');
+            });
         }
     });
+
+    // --- Docking & Drawer Collapse Mechanics ---
+    var STORAGE_DOCK_KEY = 'zolo_bill_panel_dock';
+    var STORAGE_OPEN_KEY = 'zolo_bill_panel_open';
+
+    function initPanelState() {
+        var dock = localStorage.getItem(STORAGE_DOCK_KEY) || 'right';
+        var open = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
+        applyDock(dock);
+        applyDrawer(open);
+    }
+
+    function applyDock(dock) {
+        var grid = document.getElementById('comm-split-grid');
+        var label = document.getElementById('dock-label');
+        if (!grid) return;
+        if (dock === 'left') {
+            grid.classList.add('dock-left');
+            if (label) label.textContent = 'Dock Right';
+        } else {
+            grid.classList.remove('dock-left');
+            if (label) label.textContent = 'Dock Left';
+        }
+        localStorage.setItem(STORAGE_DOCK_KEY, dock);
+    }
+
+    function applyDrawer(open) {
+        var grid = document.getElementById('comm-split-grid');
+        var drawer = document.getElementById('comm-drawer');
+        if (!grid || !drawer) return;
+        if (open) {
+            grid.classList.remove('drawer-collapsed');
+            drawer.classList.remove('collapsed');
+        } else {
+            grid.classList.add('drawer-collapsed');
+            drawer.classList.add('collapsed');
+        }
+        localStorage.setItem(STORAGE_OPEN_KEY, open ? 'true' : 'false');
+    }
+
+    $('#btn-dock-toggle').on('click', function(e) {
+        e.preventDefault();
+        var current = localStorage.getItem(STORAGE_DOCK_KEY) || 'right';
+        applyDock(current === 'right' ? 'left' : 'right');
+    });
+
+    $('#close-drawer-btn').on('click', function(e) {
+        e.preventDefault();
+        applyDrawer(false);
+    });
+
+    $('#toggle-drawer-btn, #btn-header-toggle-list').on('click', function(e) {
+        e.preventDefault();
+        var isOpen = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
+        applyDrawer(!isOpen);
+    });
+
+    // Form submission buttons
+    $('#btn-form-save-as').on('click', function() {
+        $('#sale-status-val').val(3); // Draft
+        $('#sale-entry-form').submit();
+    });
+
+    $('#btn-form-submit').on('click', function() {
+        $('#sale-status-val').val(1); // Completed
+        $('#sale-entry-form').submit();
+    });
+
+    initPanelState();
+})();
 </script>
 @endpush

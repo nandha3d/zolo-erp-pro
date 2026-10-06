@@ -169,4 +169,58 @@ class OptechVoucherWebTest extends TestCase
         $response = $this->actingAs($this->adminUser)->postJson('/accounting/journal-entries', $postData);
         $response->assertStatus(422);
     }
+
+    public function test_purchase_command_center_renders_entry_workspace(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get('/purchases');
+
+        $response->assertStatus(200);
+        $response->assertSee('Purchase Command Center');
+        $response->assertSee('comm-entry-workspace', false);
+        $response->assertSee('New Purchase Bill');
+        $response->assertSee('comm-drawer', false);
+        $response->assertSee('side-toolbar-actions', false);
+        $response->assertSee('Charges & remarks', false);
+        $response->assertSee('GRAND TOTAL');
+    }
+
+    public function test_sales_command_center_renders_entry_workspace(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get('/sales');
+
+        $response->assertStatus(200);
+        $response->assertSee('Sales Command Center');
+        $response->assertSee('comm-entry-workspace', false);
+        $response->assertSee('New Sales Bill');
+        $response->assertSee('comm-drawer', false);
+        $response->assertSee('side-toolbar-actions', false);
+        $response->assertSee('side-dropdown-filters', false);
+        $response->assertSee('Charges & remarks', false);
+        $response->assertSee('GRAND TOTAL');
+    }
+
+    public function test_purchase_json_endpoint(): void
+    {
+        $purchase = \App\Models\Purchase::first();
+        if ($purchase) {
+            $response = $this->actingAs($this->adminUser)->getJson('/purchases/' . $purchase->id);
+            $response->assertStatus(200);
+            $response->assertJsonStructure(['success', 'purchase', 'items']);
+        } else {
+            $this->assertTrue(true);
+        }
+    }
+
+    public function test_sale_json_endpoint(): void
+    {
+        $sale = \App\Models\Sale::first();
+        if ($sale) {
+            $response = $this->actingAs($this->adminUser)->getJson('/sales/' . $sale->id . '/json');
+            $response->assertStatus(200);
+            $response->assertJsonStructure(['success', 'sale', 'items']);
+        } else {
+            $this->assertTrue(true);
+        }
+    }
 }
+

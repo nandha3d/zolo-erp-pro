@@ -103,10 +103,57 @@ class PurchaseController extends Controller
                 ->latest('id')
                 ->limit(50)
                 ->get();
-            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills'));
+            $lims_tax_list = Tax::where('is_active', true)->get();
+            $lims_product_list_without_variant = $this->productWithoutVariant();
+            $lims_product_list_with_variant = $this->productWithVariant();
+            $currency = Currency::where('is_active', true)->first() ?? (object)['id' => 1, 'exchange_rate' => 1, 'code' => 'INR'];
+            $purchaseTypes = class_exists(\App\Models\PurchaseType::class) ? \App\Models\PurchaseType::where('is_active', true)->get() : collect();
+            $documentSeries = class_exists(\App\Models\DocumentSeries::class) ? \App\Models\DocumentSeries::where('document_type', 'purchase')->orWhereNull('document_type')->get() : collect();
+            $billSundries = class_exists(\App\Models\BillSundry::class) ? \App\Models\BillSundry::where('is_active', true)->get() : collect();
+            $standardRemarks = class_exists(\App\Models\StandardRemark::class) ? \App\Models\StandardRemark::where('is_active', true)->get() : collect();
+            $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
+            $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
+            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+    }
+
+    public function show($id)
+    {
+        $purchase = Purchase::with(['supplier', 'warehouse'])->find($id);
+        if (!$purchase) {
+            return response()->json(['success' => false, 'message' => 'Purchase not found'], 404);
+        }
+
+        $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
+        $items = [];
+        foreach ($lims_product_purchase_data as $pp) {
+            $product = Product::find($pp->product_id);
+            $unit = Unit::find($pp->purchase_unit_id);
+            $items[] = [
+                'id' => $pp->id,
+                'product_id' => $pp->product_id,
+                'product_name' => $product->name ?? 'Unknown',
+                'product_code' => $product->code ?? '',
+                'qty' => (float)$pp->qty,
+                'net_unit_cost' => (float)$pp->net_unit_cost,
+                'discount' => (float)$pp->discount,
+                'tax_rate' => (float)$pp->tax_rate,
+                'tax' => (float)$pp->tax,
+                'total' => (float)$pp->total,
+                'unit_code' => $unit->unit_code ?? ($unit->unit_name ?? 'Unit'),
+                'purchase_unit_id' => $pp->purchase_unit_id,
+                'batch_no' => $pp->product_batch_id ? (ProductBatch::where('id', $pp->product_batch_id)->value('batch_no') ?? '') : '',
+                'imei_number' => $pp->imei_number ?? '',
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'purchase' => $purchase,
+            'items' => $items,
+        ]);
     }
 
     private function isImeiExist(string $imei, string $product_id): bool
