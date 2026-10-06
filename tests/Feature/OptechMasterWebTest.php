@@ -42,6 +42,15 @@ class OptechMasterWebTest extends TestCase
         $response->assertSee('Sale Type');
         $response->assertSee('Agent / Through');
         $response->assertSee('Bill Sundries');
+        // Assert New Desk UI Elements
+        $response->assertSee('side-panel');
+        $response->assertSee('btn-dock-toggle');
+        $response->assertSee('btn-toggle-bill-list');
+        $response->assertSee('charges-drawer');
+        $response->assertSee('Charges & remarks', false);
+        $response->assertSee('RATE + TAX');
+        $response->assertSee('TAXABLE AMOUNT');
+        $response->assertSee('LINE TOTAL');
     }
 
     public function test_commercial_purchase_entry_page_loads_with_database_masters(): void
@@ -55,6 +64,12 @@ class OptechMasterWebTest extends TestCase
         $response->assertViewHas('billSundries');
         $response->assertSee('Purchase Type');
         $response->assertSee('Supplier Inv No');
+        // Assert New Desk UI Elements
+        $response->assertSee('side-panel');
+        $response->assertSee('btn-dock-toggle');
+        $response->assertSee('btn-toggle-bill-list');
+        $response->assertSee('charges-drawer');
+        $response->assertSee('Purchase Bills');
     }
 
     public function test_inline_creation_of_all_optech_masters(): void

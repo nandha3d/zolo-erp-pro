@@ -92,6 +92,9 @@ class CommercialController extends Controller
                 ->where('branch_id', $context->branchId)->where('financial_year_id', $context->financialYearId)
                 ->where('document_type', $kind)->get(),
             'businessDate' => \Carbon\CarbonImmutable::now(\App\Models\Company::findOrFail($context->companyId)->timezone)->toDateString(),
+            'company' => \App\Models\Company::find($context->companyId),
+            'recentBills' => ($kind === 'sale' ? \App\Models\Sale::class : \App\Models\Purchase::class)::visibleIn($context)
+                ->orderByDesc('id')->limit(25)->get(),
         ]);
     }
 

@@ -1,4 +1,4 @@
-﻿# zoloERP Pro — Persistent Session Memory & State
+# zoloERP Pro — Persistent Session Memory & State
 
 > **CRITICAL AGENT INSTRUCTION (Crash Recovery & Session Persistence)**:
 > This document is the single persistent source of truth for the active development session.
@@ -8,12 +8,12 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-06 14:55:00 (+05:30)
+- **Last Updated:** 2026-10-06 15:15:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui (Synced)
-- **Latest Commit:** 89f5b32 — "feat(ui): enhance UI with Optech master modules, voucher entry, and commercial billing"
-- **Working Tree State:** Clean (100% committed and pushed)
-- **Test Suite Status:** 14/14 tests passing (OptechMasterWebTest, OptechVoucherWebTest — 73 assertions)
+- **Latest Commit:** in progress — "feat(ui): add modern desk billing workspace with dockable side panel and 12-column items table"
+- **Working Tree State:** Enhanced Modern Desk UI for Sales and Purchase
+- **Test Suite Status:** 21/21 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 103 assertions)
 
 ---
 
@@ -86,6 +86,43 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
   - Real-time current balance indicator for selected ledger accounts.
   - Bill-by-bill allocation dialog for outstanding invoice settlement.
   - Inline account creation modal ([+] / Alt+C).
+
+---
+
+### E. Modern Desk Workspace Billing UI (Sales & Purchase)
+- **Files Modified:**
+  - `resources/views/backend/commercial/entry.blade.php`
+  - `public/css/commercial-entry.css`
+  - `public/js/commercial-entry.js`
+  - `app/Http/Controllers/CommercialController.php`
+  - `resources/views/backend/sale/index.blade.php`
+  - `resources/views/backend/purchase/index.blade.php`
+  - `tests/Feature/OptechMasterWebTest.php`
+- **Features & Visual Alignment:**
+  - **Left Desk Sidebar:** Collapsible dark sidebar (`#111827`), Selling and Buying modules with purple active pill badges, fast navigation across Desk modules.
+  - **Top Desk Navigation Bar:** Breadcrumb badges (Selling / Buying), global search with ⌘K badge, company badge with pulsing status dot (`● Sri Murugan Textiles` / active entity), user profile pill.
+  - **Multi-Tab Document Strip:** Tabs for `Bills • Browse list`, `Draft 1`, and `+ New bill`.
+  - **Toggleable & Dockable Side Panel ("Bill list" / "Purchase list"):**
+    - Toggleable via button (`[ 📖 Bill list ]` / `[ 📖 Purchase list ]`), top tab, or `✕` close.
+    - Dockable on **EITHER side** (arrangeable on LEFT or RIGHT via `⇄ Dock Right` / `⇄ Dock Left` button).
+    - Preference persisted across sessions via `localStorage` (`zolo_panel_dock` and `zolo_panel_open`).
+    - Search input, bill number filter, tabs (`All`, `Draft`, `Date`, `Range`), bill card list with load-to-form capability.
+  - **Header Controls & Segmented Pills:**
+    - Cash / Credit pill toggle (Credit selected in bright blue/purple).
+    - Product / Service / Mixed line nature pill toggle.
+    - Bill number with live Series preview, party search with address loader note, tax classification (Sale Type / Purchase Type) with GST badge.
+  - **12-Column Items Grid Table with Vibrant Purple Header (`#7c3aed`):**
+    - `S.NO`, `ITEM`, `SALES TYPE`, `UNIT`, `QTY`, `RATE + TAX`, `RATE`, `TAXABLE AMOUNT`, `GST / IGST %`, `TAX AMOUNT`, `LINE TOTAL`, `ACTIONS`.
+    - Density selector pills (`Compact`, `Cozy`, `Large`).
+    - Clean empty-state placeholder rows matching the reference ERP screen.
+    - Live calculation of taxable amounts, taxes, and line totals.
+  - **Charges, Transport & Remarks Slide-Over Drawer:**
+    - Opens via `[ Charges & remarks  (count) ]` button or header `[ ⚙ Details ]`.
+    - Tabs for Bill Sundries, Transport & Bales (Bale No, No of Bales, LR No, LR Date, Transporter, Station To, Order No, Credit Days), Remarks & Notes, Settlement.
+  - **Fixed Bottom Summary & Action Bar:**
+    - Action buttons: `[ ↺ Discard ]`, `[ 💾 Save as ]`, `[ 💾 Save ]` (primary purple), `[ Review ]`.
+    - Summary totals: `NET`, `GST / TAX`, and `GRAND TOTAL`.
+  - **Zero Regression Rule:** 100% of existing backend fields, models, migrations, and inline creation modals ([+]) are preserved intact.
 
 ---
 

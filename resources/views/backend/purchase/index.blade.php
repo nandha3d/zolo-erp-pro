@@ -42,8 +42,8 @@
                 <i class="dripicons-plus"></i> {{ __('db.Add Purchase') }}
             </a>
             @endcan
-            <a href="{{ route('commercial.purchase.entry') }}" class="btn btn-dark" title="Keyboard Fast Purchase (F12)">
-                <i class="dripicons-bolt text-warning"></i> Fast Entry <kbd style="font-size:10px; background:#334155; padding:1px 4px; border-radius:3px;">F12</kbd>
+            <a href="{{ route('commercial.purchase.entry') }}" class="btn btn-dark" style="background:#7c3aed; border-color:#7c3aed; color:#fff;" title="Modern Desk Purchase Inward (F12)">
+                <i class="dripicons-document text-light"></i> Modern Desk Inward <kbd style="font-size:10px; background:#5b21b6; padding:1px 4px; border-radius:3px;">F12</kbd>
             </a>
             <button type="button" class="btn btn-light border" id="toggle-drawer-btn" title="Toggle Quick Drawer (Alt+D)">
                 <i class="dripicons-menu"></i>
