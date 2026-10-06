@@ -8,11 +8,11 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-06 15:15:00 (+05:30)
+- **Last Updated:** 2026-10-06 15:45:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui (Synced)
-- **Latest Commit:** in progress — "feat(ui): add modern desk billing workspace with dockable side panel and 12-column items table"
-- **Working Tree State:** Enhanced Modern Desk UI for Sales and Purchase
+- **Latest Commit:** in progress — "feat(ui): eliminate double boxes across dropdowns, selectpickers, and pagination"
+- **Working Tree State:** Single Compact Box UI Normalization (Sales & Purchase)
 - **Test Suite Status:** 21/21 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 103 assertions)
 
 ---
@@ -123,13 +123,28 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
     - Action buttons: `[ ↺ Discard ]`, `[ 💾 Save as ]`, `[ 💾 Save ]` (primary purple), `[ Review ]`.
     - Summary totals: `NET`, `GST / TAX`, and `GRAND TOTAL`.
   - **Zero Regression Rule:** 100% of existing backend fields, models, migrations, and inline creation modals ([+]) are preserved intact.
+ 
+---
+ 
+### F. Single Compact Box UI Normalization (Elimination of Double Boxes)
+- **Problem:** User reported nested/double boxes on:
+  1. Filter dropdowns (Warehouse, Purchase Status, Payment Status).
+  2. Opened dropdown menus (outer container vs inner list).
+  3. DataTables pagination at footer (`<`, `1`, `>`).
+  4. Export / action buttons (PDF, Excel, Colvis) and row action buttons.
+- **Root Causes Identified & Fixed:**
+  1. **Bootstrap Select Wrapper:** `<select class="form-control">` causes bootstrap-select to clone `.form-control` onto the outer `.btn-group.bootstrap-select`. Both outer container and inner `.btn.dropdown-toggle` had borders/shadows, creating a nested double box. Neutralized outer container border, background, and padding across `commercial-workspace.css` and `zolo-erp-neo.css`.
+  2. **Dropdown Menus:** In bootstrap-select, `.dropdown-menu` wraps `.inner` and `ul.inner`. Stripped borders/shadows/padding from inner elements, retaining a single crisp 1px bordered card container (`border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 6px 18px rgba(15,23,42,0.08)`).
+  3. **DataTables Pagination:** In Bootstrap 4 DataTables markup (`<li class="paginate_button page-item"><a class="page-link">1</a></li>`), outer `<li>` had borders/padding and inner `<a>` had borders/padding. Stripped all styling from outer `li` and normalized `.page-link` to a single compact box (`26px height, 1px solid #cbd5e1, 5px radius`).
+  4. **DataTables Buttons:** DataTables wrapped nested arrays in `.btn-group`. Flattened `buttons.push(...)` in `purchase/index.blade.php` and `sale/index.blade.php`, swapped Excel export icon to `fa fa-file-excel-o`, and added single compact box styles to action buttons, search box, and length selector.
+  5. **Dynamic Cache-Busting:** Added dynamic `?v={{ filemtime(...) }}` query parameters to CSS links in `purchase/index.blade.php` and `sale/index.blade.php` to guarantee immediate browser cache invalidation.
 
 ---
 
 ## 3. Verification & Testing Evidence
 - Automated feature tests executed and passed:
-  - php artisan test tests/Feature/OptechMasterWebTest.php tests/Feature/OptechVoucherWebTest.php
-  - Results: 14 passed (73 assertions), Duration: 9.19s
+  - `vendor/bin/phpunit tests/Feature/OptechMasterWebTest.php tests/Feature/OptechVoucherWebTest.php tests/Feature/AccountingWebTest.php`
+  - Results: 21 passed (103 assertions, 100%), Duration: 11.58s
 
 ---
 

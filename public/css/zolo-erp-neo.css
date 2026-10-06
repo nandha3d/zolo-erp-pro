@@ -1219,17 +1219,29 @@ label {
   letter-spacing: -0.01em;
 }
 
-/* Selectpicker Button Uniformity with Inputs */
+/* Selectpicker Uniformity & Double Box Elimination */
+.bootstrap-select,
+.bootstrap-select.form-control,
+div.bootstrap-select {
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+}
+
 .bootstrap-select > .btn.dropdown-toggle {
-  height: 40px !important;
-  min-height: 40px !important;
-  border: 1.5px solid var(--neo-border, #e2e8f0) !important;
-  border-radius: var(--neo-radius-md, 10px) !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: var(--neo-radius-md, 8px) !important;
   background-color: var(--neo-surface-card, #ffffff) !important;
   color: var(--neo-text-primary, #0f172a) !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-weight: 500 !important;
-  padding: 8px 14px !important;
+  padding: 6px 12px !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   display: flex !important;
@@ -1240,7 +1252,7 @@ label {
 .bootstrap-select > .btn.dropdown-toggle:focus,
 .bootstrap-select.show > .btn.dropdown-toggle {
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
   outline: none !important;
 }
 
@@ -1380,42 +1392,77 @@ body.dark-mode .table-hover tbody tr:hover td {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
 }
 
-/* DataTables Pagination & Info */
+/* DataTables Pagination & Info - Single Compact Box Normalization */
 .dataTables_wrapper .dataTables_info {
   font-size: 12.5px !important;
   color: var(--neo-text-muted) !important;
-  padding-top: 14px !important;
+  padding-top: 8px !important;
 }
 
 .dataTables_wrapper .dataTables_paginate {
-  padding-top: 10px !important;
+  padding-top: 6px !important;
+  border: none !important;
+  background: transparent !important;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-  padding: 6px 13px !important;
-  margin: 0 2px !important;
-  border-radius: 8px !important;
-  border: 1px solid var(--neo-border) !important;
-  background: var(--neo-surface) !important;
-  color: var(--neo-text-secondary) !important;
-  font-size: 12.5px !important;
+/* Strip outer borders and padding from the li/container */
+.dataTables_wrapper .dataTables_paginate li.paginate_button,
+.dataTables_wrapper .dataTables_paginate .page-item,
+.dataTables_wrapper .dataTables_paginate ul.pagination li {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 1px !important;
+}
+
+/* Single compact box for the page link */
+.dataTables_wrapper .dataTables_paginate .page-link,
+.dataTables_wrapper .dataTables_paginate a.paginate_button,
+.dataTables_wrapper .dataTables_paginate span.paginate_button:not(.page-item) {
+  padding: 3px 8px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 1px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  background: var(--neo-surface, #ffffff) !important;
+  color: var(--neo-text-secondary, #475569) !important;
+  font-size: 11.5px !important;
   font-weight: 500 !important;
-  transition: all 0.2s ease !important;
+  line-height: 1 !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-  background: var(--neo-primary-light) !important;
-  color: var(--neo-primary) !important;
-  border-color: var(--neo-primary) !important;
+.dataTables_wrapper .dataTables_paginate .page-link:hover,
+.dataTables_wrapper .dataTables_paginate a.paginate_button:hover {
+  background: var(--neo-primary-light, #eef2ff) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+  border-color: var(--neo-primary, #4f46e5) !important;
 }
 
+.dataTables_wrapper .dataTables_paginate .page-item.active .page-link,
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,
 .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-  background: var(--neo-primary-gradient) !important;
+  background: var(--neo-primary, #7c3aed) !important;
   color: #ffffff !important;
-  border-color: var(--neo-primary) !important;
+  border-color: var(--neo-primary, #7c3aed) !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  opacity: 0.45 !important;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
 }
 
 /* Table Action Buttons with Clean Proper Alignment */
@@ -1447,24 +1494,33 @@ body.dark-mode .table-hover tbody tr:hover td {
 
 /* ====================================================================
    DATATABLE EXPORT BUTTONS & TOOLBAR
-   Fixes invisible icons/white text on white background
+   Clean, compact single box styling without nested borders
    ==================================================================== */
 .dt-buttons,
 div.dt-buttons {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  margin-bottom: 12px !important;
+  gap: 4px !important;
+  margin-bottom: 8px !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
-.dt-buttons.btn-group {
-  gap: 6px !important;
+.dt-buttons.btn-group,
+.dt-buttons .btn-group {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  gap: 4px !important;
+  padding: 0 !important;
 }
 
 .dt-buttons.btn-group > .btn:first-child,
 .dt-buttons.btn-group > .btn:last-child,
 .dt-buttons.btn-group > .btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
-  border-radius: 10px !important;
+  border-radius: 6px !important;
 }
 
 .dt-buttons .btn,
@@ -1473,23 +1529,24 @@ div.dt-buttons {
 div.dt-buttons button,
 div.dt-buttons a.btn {
   background-color: var(--neo-surface, #ffffff) !important;
-  border: 1px solid var(--neo-border, #e2e8f0) !important;
-  border-radius: 10px !important;
-  padding: 6px 14px !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
   color: var(--neo-text-primary, #0f172a) !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  box-shadow: var(--neo-shadow-xs) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  min-height: 38px !important;
+  gap: 4px !important;
+  transition: all 0.15s ease !important;
+  min-height: 28px !important;
+  height: 28px !important;
   text-decoration: none !important;
 }
 
-/* Force visible high-contrast icons & text inside buttons */
+/* Force visible high-contrast icons & text inside buttons, no nested borders */
 .dt-buttons .btn span,
 .dt-buttons button.dt-button span,
 .dt-buttons .btn-default span,
@@ -1500,10 +1557,15 @@ div.dt-buttons a.btn span,
 div.dt-buttons button i,
 div.dt-buttons a.btn i {
   color: var(--neo-text-secondary, #475569) !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   display: inline-flex !important;
   align-items: center !important;
   transition: color 0.15s ease !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .dt-buttons .btn:hover,
@@ -1511,10 +1573,11 @@ div.dt-buttons a.btn i {
 .dt-buttons .btn-default:hover,
 div.dt-buttons button:hover,
 div.dt-buttons a.btn:hover {
-  background-color: var(--neo-surface, #ffffff) !important;
-  border-color: var(--neo-primary, #4f46e5) !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.18) !important;
-  transform: translateY(-1px) !important;
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+  transform: none !important;
 }
 
 .dt-buttons .btn:hover span,
@@ -1947,55 +2010,99 @@ input[type="submit"].btn.btn-primary:hover,
   color: #ffffff !important;
 }
 
-/* Unified Bootstrap Select & Dropdowns */
-.bootstrap-select > .dropdown-toggle {
-  background: var(--neo-surface) !important;
-  border: 1.5px solid var(--neo-border) !important;
-  border-radius: 10px !important;
-  color: var(--neo-text-primary) !important;
-  padding: 9px 14px !important;
-  font-size: 13.5px !important;
-  font-weight: 500 !important;
+/* Unified Bootstrap Select & Dropdowns - Single Compact Box */
+.bootstrap-select,
+.bootstrap-select.form-control,
+div.bootstrap-select {
+  border: none !important;
+  background: transparent !important;
   box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.bootstrap-select > .dropdown-toggle,
+.bootstrap-select > .btn.dropdown-toggle {
+  background: var(--neo-surface, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: 6px !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
   outline: none !important;
 }
 
 .bootstrap-select > .dropdown-toggle:focus,
-.bootstrap-select > .dropdown-toggle:active {
-  border-color: var(--neo-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+.bootstrap-select > .dropdown-toggle:active,
+.bootstrap-select.show > .dropdown-toggle,
+.bootstrap-select.show > .btn.dropdown-toggle {
+  border-color: var(--neo-primary, #6366f1) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
   outline: none !important;
 }
 
-.bootstrap-select .dropdown-menu {
-  background: var(--neo-surface-card) !important;
-  border: 1px solid var(--neo-border) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.3) !important;
-  padding: 6px !important;
+.bootstrap-select .dropdown-menu,
+.dropdown-menu {
+  background: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+  padding: 4px !important;
   z-index: 1060 !important;
 }
 
-.bootstrap-select .dropdown-menu li a {
-  border-radius: 8px !important;
-  color: var(--neo-text-primary) !important;
-  padding: 8px 12px !important;
-  font-size: 13px !important;
+/* Eliminate nested double containers inside dropdown-menu */
+.bootstrap-select .dropdown-menu .inner,
+.bootstrap-select .inner,
+.dropdown-menu .inner,
+div.dropdown-menu > ul.dropdown-menu,
+ul.dropdown-menu.inner {
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+}
+
+.bootstrap-select .dropdown-menu li,
+.dropdown-menu li {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.bootstrap-select .dropdown-menu li a,
+.dropdown-menu .dropdown-item {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 5px !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  padding: 6px 10px !important;
+  font-size: 12.5px !important;
   font-weight: 500 !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.12s ease !important;
 }
 
 .bootstrap-select .dropdown-menu li a:hover,
-.bootstrap-select .dropdown-menu li.selected a {
-  background: var(--neo-primary-light) !important;
-  color: var(--neo-primary) !important;
+.bootstrap-select .dropdown-menu li.selected a,
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus,
+.dropdown-menu .dropdown-item.active {
+  background: var(--neo-primary-light, #eef2ff) !important;
+  color: var(--neo-primary, #4f46e5) !important;
   font-weight: 600 !important;
 }
 
 .bootstrap-select .bs-searchbox input.form-control {
-  border-radius: 8px !important;
-  margin-bottom: 6px !important;
-  height: 36px !important;
+  border-radius: 6px !important;
+  margin-bottom: 4px !important;
+  height: 32px !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
 }
 
 .dropdown-header {

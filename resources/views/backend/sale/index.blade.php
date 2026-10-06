@@ -12,7 +12,7 @@
 <x-error-message key="not_permitted" />
 
 
-<link rel="stylesheet" href="{{ asset('css/commercial-workspace.css') }}" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
 <script>
     document.documentElement.classList.add('commercial-screen-lock');
     document.body.classList.add('commercial-screen-lock');
@@ -1383,7 +1383,7 @@
 
     let buttons = [];
     @can('sale_export')
-        buttons.push([
+        buttons.push(
             {
                 extend: "pdf",
                 text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
@@ -1406,7 +1406,7 @@
             },
             {
                 extend: "excel",
-                text: '<i title="export to excel" class="dripicons-document-new"></i>',
+                text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
                 exportOptions: {
                     columns: ":visible:Not(.not-exported)",
                     rows: ":visible",
@@ -1463,11 +1463,11 @@
                     datatable_sum(dt, false);
                 },
                 footer: true,
-            },
-        ]);
+            }
+        );
     @endcan
 
-    buttons.push([
+    buttons.push(
         {
             text: '<i title="delete" class="dripicons-cross"></i>',
             className: 'buttons-delete',
@@ -1519,8 +1519,8 @@
             extend: 'colvis',
             text: '<i title="column visibility" class="fa fa-eye"></i>',
             columns: ':gt(0)'
-        },
-    ]);
+        }
+    );
 
     var saleTable = $('#sale-table').DataTable( {
         "processing": true,
