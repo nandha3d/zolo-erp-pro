@@ -8,11 +8,11 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-06 15:45:00 (+05:30)
+- **Last Updated:** 2026-10-06 19:15:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui (Synced)
-- **Latest Commit:** in progress — "feat(ui): eliminate double boxes across dropdowns, selectpickers, and pagination"
-- **Working Tree State:** Single Compact Box UI Normalization (Sales & Purchase)
+- **Latest Commit:** in progress — "feat(ui): integrate dockable bill list panel into existing sales and purchase command centers"
+- **Working Tree State:** Integrated Dockable Bill List Panel in Existing Sales & Purchase Command Centers
 - **Test Suite Status:** 21/21 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 103 assertions)
 
 ---
@@ -138,6 +138,29 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
   3. **DataTables Pagination:** In Bootstrap 4 DataTables markup (`<li class="paginate_button page-item"><a class="page-link">1</a></li>`), outer `<li>` had borders/padding and inner `<a>` had borders/padding. Stripped all styling from outer `li` and normalized `.page-link` to a single compact box (`26px height, 1px solid #cbd5e1, 5px radius`).
   4. **DataTables Buttons:** DataTables wrapped nested arrays in `.btn-group`. Flattened `buttons.push(...)` in `purchase/index.blade.php` and `sale/index.blade.php`, swapped Excel export icon to `fa fa-file-excel-o`, and added single compact box styles to action buttons, search box, and length selector.
   5. **Dynamic Cache-Busting:** Added dynamic `?v={{ filemtime(...) }}` query parameters to CSS links in `purchase/index.blade.php` and `sale/index.blade.php` to guarantee immediate browser cache invalidation.
+
+---
+ 
+### G. Integrated Dockable Bill List Panel directly into Existing Sales & Purchase Command Centers
+- **Context & User Request:** Rather than navigating to a separate Desk billing interface (`/commercial/sales/entry`), user requested enhancing the **existing** `/sales` and `/purchases` workspaces.
+- **Architectural & UI Implementation:**
+  1. **Retained 100% of Existing Workspace:** In the main area, the full DataTables register, date/warehouse/status filter bar, column visibility buttons, pagination, and KPI summary counters are preserved unchanged.
+  2. **Transformed Right Drawer into Bill List Panel:**
+     - Replaced the redundant "Fast Sale Console" and "Fast Purchase Console" right drawer with the dockable **Bill list** (`desk-bill-list-panel`).
+     - Directly lists recent invoices/purchases with live search (`Find a bill...` / `Find a purchase...`), series filter (`Series or edited number`), and status pills (`All`, `Draft`, `Date`, `Range`).
+     - Each card displays invoice number, customer/supplier name, transaction date, amount formatted in ₹, and color-coded status badges (`Paid`, `Due`, `Partial`, `Draft`).
+     - Cards include immediate action links: `[ ✎ Edit ]` (navigates directly to the bill edit page for instant modification), `[ 👁 View ]` (triggers modal detail review), and `[ 🖨 Print ]` (opens printable invoice).
+  3. **Dockable to Either Side & Fully Toggleable:**
+     - Header tools include `⇄ Dock Left` / `⇄ Dock Right` button and `✕` close button.
+     - Top navigation bar includes `[ 📖 Bill list ]` / `[ 📖 Purchase list ]` button to reopen collapsed drawer.
+     - Docking mechanics leverage CSS Grid (`grid-template-columns: 1fr 360px` vs `360px 1fr` via `.dock-left` and flex order) for seamless positioning without DOM displacement.
+     - User preferences for panel open/collapsed and dock orientation (left vs right) are automatically persisted across page reloads in `localStorage` (`zolo_bill_panel_dock` and `zolo_bill_panel_open`).
+  4. **Backend Controllers:**
+     - `SaleController::index()`: Eager loads `$recent_bills = Sale::whereNull('deleted_at')->with('customer:id,name,phone_number')->latest('id')->limit(50)->get();` and passes `$recent_bills` to `backend.sale.index`.
+     - `PurchaseController::index()`: Eager loads `$recent_bills = Purchase::with('supplier:id,name,company_name,phone_number')->latest('id')->limit(50)->get();` and passes `$recent_bills` to `backend.purchase.index`.
+  5. **Bug Fixes:**
+     - Fixed unclosed Stripe `<script src="...">` tag in `backend/sale/index.blade.php`.
+     - Maintained compact single-box styling and cache-busted CSS.
 
 ---
 

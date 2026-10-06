@@ -42,11 +42,8 @@
                 <i class="dripicons-plus"></i> {{ __('db.Add Purchase') }}
             </a>
             @endcan
-            <a href="{{ route('commercial.purchase.entry') }}" class="btn btn-dark" style="background:#7c3aed; border-color:#7c3aed; color:#fff;" title="Modern Desk Purchase Inward (F12)">
-                <i class="dripicons-document text-light"></i> Modern Desk Inward <kbd style="font-size:10px; background:#5b21b6; padding:1px 4px; border-radius:3px;">F12</kbd>
-            </a>
-            <button type="button" class="btn btn-light border" id="toggle-drawer-btn" title="Toggle Quick Drawer (Alt+D)">
-                <i class="dripicons-menu"></i>
+            <button type="button" class="btn btn-success" id="toggle-drawer-btn" title="Toggle Purchase List Panel (Alt+D)" style="background:#059669; border-color:#059669; color:#fff;">
+                <i class="dripicons-view-list"></i> Purchase list
             </button>
         </div>
     </div>
@@ -186,113 +183,94 @@
             </div>
         </div>
 
-        <!-- Right: Fast Purchase Console Drawer -->
-        <div class="comm-drawer-card" id="comm-drawer">
+        <!-- Right / Dockable Side Panel: Purchase List -->
+        <aside class="comm-drawer-card desk-bill-list-panel" id="comm-drawer" aria-label="Transaction List Panel">
             <div class="comm-drawer-header">
-                <h3 class="comm-drawer-title"><i class="dripicons-bolt text-success"></i> Fast Purchase Console</h3>
+                <div class="comm-drawer-title-wrap">
+                    <h3 class="comm-drawer-title"><i class="dripicons-view-list text-success"></i> Purchase list</h3>
+                </div>
                 <div class="comm-drawer-tools">
-                    <span class="badge badge-light border" style="font-size:10px;">F12 Active</span>
-                    <button type="button" class="btn btn-sm btn-link text-muted p-0" id="close-drawer-btn"><i class="dripicons-cross"></i></button>
-                </div>
-            </div>
-            <div class="comm-drawer-body">
-                <div class="comm-form-group">
-                    <label>{{ __('db.Supplier') }} <a href="{{ route('supplier.create') }}" target="_blank" class="text-success">+ New</a></label>
-                    <select id="quick-supplier-id" class="form-control">
-                        @if(isset($lims_supplier_list) && count($lims_supplier_list))
-                            @foreach($lims_supplier_list as $sup)
-                                <option value="{{ $sup->id }}">{{ $sup->name }} @if($sup->company_name)({{ $sup->company_name }})@endif</option>
-                            @endforeach
-                        @else
-                            <option value="1">Default Vendor</option>
-                        @endif
-                    </select>
-                </div>
-
-                <div class="comm-form-row">
-                    <div class="comm-form-group">
-                        <label>{{ __('db.Warehouse') }}</label>
-                        <select id="quick-purchase-warehouse-id" class="form-control">
-                            @foreach($lims_warehouse_list as $wh)
-                                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="comm-form-group">
-                        <label>{{ __('db.date') }}</label>
-                        <input type="date" id="quick-purchase-date" class="form-control" value="{{ date('Y-m-d') }}" />
-                    </div>
-                </div>
-
-                <div class="comm-form-group position-relative">
-                    <label>{{ __('Search Item (Code / Barcode)') }}</label>
-                    <div class="input-group">
-                        <input type="text" id="quick-purchase-product-search" class="form-control" placeholder="Type product name or scan..." autocomplete="off" />
-                        <div class="input-group-append">
-                            <button class="btn btn-sm btn-success" type="button" id="btn-quick-purchase-add-item"><i class="dripicons-plus"></i></button>
-                        </div>
-                    </div>
-                    <div id="quick-purchase-search-results" class="list-group position-absolute shadow" style="z-index:999; display:none; max-height:160px; overflow-y:auto; width:100%; top:58px; background:#fff;"></div>
-                </div>
-
-                <!-- Fast Line Items -->
-                <div class="comm-drawer-lines">
-                    <table class="table" id="quick-purchase-items-table">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th style="width:60px;">Qty</th>
-                                <th style="width:70px;">Cost</th>
-                                <th style="width:70px;">Total</th>
-                                <th style="width:30px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="quick-purchase-items-body">
-                            <tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added. Search above or press F12.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Totals -->
-                <div class="comm-summary-box">
-                    <div class="comm-summary-row">
-                        <span>Items Subtotal:</span>
-                        <span id="quick-purchase-subtotal">0.00</span>
-                    </div>
-                    <div class="comm-summary-row">
-                        <span>Status:</span>
-                        <span class="badge badge-success">Received</span>
-                    </div>
-                    <div class="comm-summary-row grand-total">
-                        <span>Total Payable:</span>
-                        <span id="quick-purchase-grand-total">0.00</span>
-                    </div>
-                </div>
-
-                <div class="comm-form-row">
-                    <div class="comm-form-group">
-                        <label>{{ __('db.Payment Status') }}</label>
-                        <select id="quick-purchase-payment-status" class="form-control">
-                            <option value="Paid">Paid</option>
-                            <option value="Due">Due</option>
-                        </select>
-                    </div>
-                    <div class="comm-form-group">
-                        <label>{{ __('Paid Amount') }}</label>
-                        <input type="number" id="quick-purchase-paid-amount" class="form-control" placeholder="0.00" />
-                    </div>
-                </div>
-
-                <div class="comm-drawer-footer">
-                    <button type="button" class="btn-comm-primary" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);" id="btn-quick-post-purchase">
-                        <i class="dripicons-checkmark"></i> Post Purchase
-                    </button>
-                    <a href="{{ route('commercial.purchase.entry') }}" class="btn-comm-secondary" title="Open Full Fast Purchase">
-                        <i class="dripicons-external"></i> Full Entry (F12)
+                    @can('purchases-add')
+                    <a href="{{ route('purchases.create') }}" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Purchase">
+                        <i class="dripicons-plus"></i> + New
                     </a>
+                    @endcan
+                    <button type="button" class="side-icon-btn" id="btn-dock-toggle" title="Arrange Panel Side (Dock Left / Dock Right)">
+                        <span id="dock-icon">⇄</span>
+                        <span class="dock-tooltip" id="dock-label">Dock Left</span>
+                    </button>
+                    <button type="button" class="side-icon-btn text-muted" id="close-drawer-btn" title="Collapse Panel">✕</button>
                 </div>
             </div>
-        </div>
+
+            <div class="comm-drawer-body">
+                <!-- Search Filter -->
+                <div class="side-panel-search">
+                    <input type="text" id="side-search-input" class="form-control" placeholder="Find a purchase..." autocomplete="off">
+                </div>
+
+                <!-- Series / Bill Number Filter -->
+                <div class="side-panel-filter-label">BILL NUMBER</div>
+                <div class="side-panel-series-filter">
+                    <input type="text" id="side-filter-series" class="form-control" placeholder="Series or edited number" autocomplete="off">
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="side-filter-tabs">
+                    <button type="button" class="side-tab active" data-filter="all">All</button>
+                    <button type="button" class="side-tab" data-filter="draft">Draft</button>
+                    <button type="button" class="side-tab" data-filter="date">Date</button>
+                    <button type="button" class="side-tab" data-filter="range">Range</button>
+                </div>
+
+                <!-- Date Inputs (revealed if Date/Range selected) -->
+                <div class="side-date-picker-box" id="side-date-picker-box" style="display:none; padding:4px 0;">
+                    <input type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
+                </div>
+
+                <!-- Recent Purchases List -->
+                <div class="side-list-container" id="side-bill-list">
+                    @forelse($recent_bills as $bill)
+                        @php
+                            $isPaid = ($bill->payment_status == 2 || ($bill->grand_total > 0 && $bill->paid_amount >= $bill->grand_total));
+                            $isPartial = ($bill->payment_status == 1 || ($bill->paid_amount > 0 && $bill->paid_amount < $bill->grand_total));
+                            $isDraft = ($bill->status == 3);
+                            $statusLabel = $isDraft ? 'Draft' : ($isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Due'));
+                            $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
+                            $supplierName = $bill->supplier->name ?? 'Default Supplier';
+                        @endphp
+                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($supplierName) }}" data-status="{{ strtolower($statusLabel) }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                            <div class="side-card-top">
+                                <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
+                                <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
+                            </div>
+                            <div class="side-card-party">
+                                <i class="dripicons-user" style="font-size:10px; color:#94a3b8;"></i> {{ $supplierName }}
+                            </div>
+                            <div class="side-card-bottom">
+                                <span class="side-card-date"><i class="dripicons-calendar" style="font-size:10px;"></i> {{ substr($bill->created_at ?? '', 0, 10) }}</span>
+                                <span class="side-card-status {{ $statusClass }}">{{ $statusLabel }}</span>
+                            </div>
+                            <div class="side-card-actions">
+                                <a href="{{ route('purchases.edit', $bill->id) }}" class="side-action-btn edit" title="Edit this purchase">
+                                    <i class="dripicons-document-edit"></i> Edit
+                                </a>
+                                <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View purchase details">
+                                    <i class="dripicons-preview"></i> View
+                                </a>
+                                <a href="javascript:void(0)" class="side-action-btn print btn-side-print" data-id="{{ $bill->id }}" title="Print purchase">
+                                    <i class="dripicons-print"></i> Print
+                                </a>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="side-empty-state">
+                            <p>No purchases match these filters</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </aside>
     </div>
 </section>
 
@@ -1291,138 +1269,143 @@
         $('#purchase-table').DataTable().ajax.reload(function() { hideProgressBar(); });
     });
 
-    // Drawer collapse / expand
-    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
-        $('#comm-drawer').toggleClass('collapsed');
-        $('#comm-split-grid').toggleClass('drawer-collapsed');
+    // --- Purchase List Panel Docking & Toggling ---
+    // Restore saved dock position & open state
+    (function initPurchasePanelState() {
+        let savedDock = localStorage.getItem('zolo_bill_panel_dock');
+        if (savedDock === 'left') {
+            $('#comm-split-grid').addClass('dock-left');
+            $('#dock-label').text('Dock Right');
+        } else {
+            $('#comm-split-grid').removeClass('dock-left');
+            $('#dock-label').text('Dock Left');
+        }
+
+        let savedOpen = localStorage.getItem('zolo_bill_panel_open');
+        if (savedOpen === '0') {
+            $('#comm-drawer').addClass('collapsed');
+            $('#comm-split-grid').addClass('drawer-collapsed');
+        }
+    })();
+
+    // Dock toggle: switch side panel between Left and Right
+    $('#btn-dock-toggle').on('click', function() {
+        let isLeft = $('#comm-split-grid').toggleClass('dock-left').hasClass('dock-left');
+        $('#dock-label').text(isLeft ? 'Dock Right' : 'Dock Left');
+        localStorage.setItem('zolo_bill_panel_dock', isLeft ? 'left' : 'right');
         if ($.fn.DataTable.isDataTable('#purchase-table')) {
             $('#purchase-table').DataTable().columns.adjust().draw(false);
         }
     });
 
-    // Hotkeys: F12 focuses quick purchase / fast entry, Alt+D toggles drawer
+    // Panel collapse / expand toggle
+    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
+        let isClosed = $('#comm-drawer').toggleClass('collapsed').hasClass('collapsed');
+        $('#comm-split-grid').toggleClass('drawer-collapsed', isClosed);
+        localStorage.setItem('zolo_bill_panel_open', isClosed ? '0' : '1');
+        if ($.fn.DataTable.isDataTable('#purchase-table')) {
+            $('#purchase-table').DataTable().columns.adjust().draw(false);
+        }
+    });
+
+    // Hotkey: Alt+D toggles side panel
     $(document).on('keydown', function(e) {
-        if (e.key === 'F12') {
-            e.preventDefault();
-            if ($('#comm-drawer').hasClass('collapsed')) {
-                $('#toggle-drawer-btn').trigger('click');
-            }
-            $('#quick-purchase-product-search').focus();
-        } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+        if (e.altKey && (e.key === 'd' || e.key === 'D')) {
             e.preventDefault();
             $('#toggle-drawer-btn').trigger('click');
         }
     });
 
-    // Fast product search in drawer
-    let quickPurchaseItems = [];
-    $('#quick-purchase-product-search').on('input', function() {
-        let q = $(this).val().trim();
-        if (q.length < 2) {
-            $('#quick-purchase-search-results').hide().empty();
-            return;
-        }
-        $.ajax({
-            url: '{{ url("purchases/lims_product_search") }}',
-            data: { data: q },
-            type: 'GET',
-            success: function(response) {
-                let res = $('#quick-purchase-search-results').empty();
-                if (Array.isArray(response) && response.length > 0) {
-                    response.slice(0, 8).forEach(function(item) {
-                        let parts = item.split('|');
-                        let name = parts[0];
-                        let code = parts[1];
-                        let qty = parts[2];
-                        let cost = parseFloat(parts[3]) || 50;
-                        let a = $('<a href="javascript:void(0)" class="list-group-item list-group-item-action py-1 px-2" style="font-size:12px;"></a>')
-                            .text(name + ' (' + code + ')')
-                            .data('item', { name: name, code: code, qty: qty, cost: cost });
-                        res.append(a);
-                    });
-                    res.show();
-                } else {
-                    res.hide();
-                }
+    // --- Purchase List Live Search & Filtering ---
+    function filterSidePurchases() {
+        let search = $('#side-search-input').val().trim().toLowerCase();
+        let series = $('#side-filter-series').val().trim().toLowerCase();
+        let activeTab = $('.side-filter-tabs .side-tab.active').data('filter') || 'all';
+        let selectedDate = $('#side-filter-date-val').val();
+
+        let visibleCount = 0;
+        $('#side-bill-list .side-bill-card').each(function() {
+            let card = $(this);
+            let ref = card.data('ref') || '';
+            let party = card.data('party') || '';
+            let status = card.data('status') || '';
+            let date = card.data('date') || '';
+
+            let matchesSearch = !search || ref.indexOf(search) !== -1 || party.indexOf(search) !== -1;
+            let matchesSeries = !series || ref.indexOf(series) !== -1;
+            let matchesTab = true;
+
+            if (activeTab === 'draft') {
+                matchesTab = (status === 'draft');
+            } else if (activeTab === 'date') {
+                matchesTab = !selectedDate || (date === selectedDate);
+            } else if (activeTab === 'range') {
+                matchesTab = true;
+            }
+
+            if (matchesSearch && matchesSeries && matchesTab) {
+                card.show();
+                visibleCount++;
+            } else {
+                card.hide();
             }
         });
-    });
 
-    $(document).on('click', '#quick-purchase-search-results a', function() {
-        let item = $(this).data('item');
-        addQuickPurchaseItem(item);
-        $('#quick-purchase-search-results').hide().empty();
-        $('#quick-purchase-product-search').val('').focus();
-    });
-
-    function addQuickPurchaseItem(item) {
-        let existing = quickPurchaseItems.find(i => i.code === item.code);
-        if (existing) {
-            existing.qty += 1;
+        if (visibleCount === 0) {
+            if ($('#side-bill-list .side-empty-state').length === 0) {
+                $('#side-bill-list').append('<div class="side-empty-state"><p>No purchases match these filters</p></div>');
+            } else {
+                $('#side-bill-list .side-empty-state').show();
+            }
         } else {
-            quickPurchaseItems.push({
-                name: item.name,
-                code: item.code,
-                qty: 1,
-                cost: item.cost || 50
-            });
-        }
-        renderQuickPurchaseItems();
-    }
-
-    function renderQuickPurchaseItems() {
-        let tbody = $('#quick-purchase-items-body').empty();
-        let total = 0;
-        if (quickPurchaseItems.length === 0) {
-            tbody.append('<tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added. Search above or press F12.</td></tr>');
-        } else {
-            quickPurchaseItems.forEach(function(item, idx) {
-                let lineTotal = item.qty * item.cost;
-                total += lineTotal;
-                tbody.append('<tr>' +
-                    '<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + item.name + '">' + item.name + '</td>' +
-                    '<td><input type="number" class="form-control p-1 text-center quick-p-qty-input" data-idx="' + idx + '" value="' + item.qty + '" min="1" style="height:24px;font-size:11px;"></td>' +
-                    '<td><input type="number" class="form-control p-1 text-right quick-p-cost-input" data-idx="' + idx + '" value="' + item.cost + '" step="0.5" style="height:24px;font-size:11px;"></td>' +
-                    '<td class="text-right font-weight-bold">' + lineTotal.toFixed(2) + '</td>' +
-                    '<td class="text-center"><a href="javascript:void(0)" class="text-danger remove-quick-p-item" data-idx="' + idx + '">&times;</a></td>' +
-                '</tr>');
-            });
-        }
-        $('#quick-purchase-subtotal').text(total.toFixed(2));
-        $('#quick-purchase-grand-total').text(total.toFixed(2));
-        if ($('#quick-purchase-payment-status').val() === 'Paid') {
-            $('#quick-purchase-paid-amount').val(total.toFixed(2));
+            $('#side-bill-list .side-empty-state').hide();
         }
     }
 
-    $(document).on('input', '.quick-p-qty-input', function() {
-        let idx = $(this).data('idx');
-        let val = parseFloat($(this).val()) || 1;
-        quickPurchaseItems[idx].qty = val;
-        renderQuickPurchaseItems();
-    });
+    $('#side-search-input, #side-filter-series').on('input', filterSidePurchases);
 
-    $(document).on('input', '.quick-p-cost-input', function() {
-        let idx = $(this).data('idx');
-        let val = parseFloat($(this).val()) || 0;
-        quickPurchaseItems[idx].cost = val;
-        renderQuickPurchaseItems();
-    });
-
-    $(document).on('click', '.remove-quick-p-item', function() {
-        let idx = $(this).data('idx');
-        quickPurchaseItems.splice(idx, 1);
-        renderQuickPurchaseItems();
-    });
-
-    // Quick Post Purchase button
-    $('#btn-quick-post-purchase').on('click', function() {
-        if (quickPurchaseItems.length === 0) {
-            alert('Please add at least one item before posting purchase.');
-            return;
+    $('.side-filter-tabs .side-tab').on('click', function() {
+        $('.side-filter-tabs .side-tab').removeClass('active');
+        $(this).addClass('active');
+        let filter = $(this).data('filter');
+        if (filter === 'date' || filter === 'range') {
+            $('#side-date-picker-box').slideDown(150);
+        } else {
+            $('#side-date-picker-box').slideUp(150);
         }
-        showProgressBar();
-        window.location.href = '{{ route("commercial.purchase.entry") }}';
+        filterSidePurchases();
+    });
+
+    $('#side-filter-date-val').on('change', filterSidePurchases);
+
+    // Clicking anywhere on a card opens edit mode directly
+    $(document).on('click', '.side-bill-card', function(e) {
+        if ($(e.target).closest('.side-card-actions').length > 0) return;
+        let billId = $(this).data('bill-id');
+        if (billId) {
+            window.location.href = '{{ url("purchases") }}/' + billId + '/edit';
+        }
+    });
+
+    // Clicking View button on card
+    $(document).on('click', '.btn-side-view', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        let billId = $(this).data('id');
+        let row = $('#purchase-table tbody tr[data-id="' + billId + '"]');
+        if (row.length && row.data('purchase')) {
+            purchaseDetails(row.data('purchase'));
+        } else {
+            window.location.href = '{{ url("purchases") }}/' + billId + '/edit';
+        }
+    });
+
+    // Clicking Print button on card
+    $(document).on('click', '.btn-side-print', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        let billId = $(this).data('id');
+        window.open('{{ url("purchases") }}/' + billId, '_blank');
     });
 </script>
 @endpush

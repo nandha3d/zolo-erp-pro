@@ -174,7 +174,12 @@ class SaleController extends Controller
             $totalPaid = Sale::whereNull('deleted_at')->sum('paid_amount');
             $totalDue = Sale::whereNull('deleted_at')->selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
             $lims_customer_list = Customer::where('is_active', true)->select('id', 'name', 'phone_number')->limit(100)->get();
-            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list'));
+            $recent_bills = Sale::whereNull('deleted_at')
+                ->with('customer:id,name,phone_number')
+                ->latest('id')
+                ->limit(50)
+                ->get();
+            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

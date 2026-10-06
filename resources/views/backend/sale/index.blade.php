@@ -41,11 +41,8 @@
                 <i class="dripicons-plus"></i> {{ __('db.Add Sale') }}
             </a>
             @endcan
-            <a href="{{ route('commercial.sale.entry') }}" class="btn btn-dark" style="background:#7c3aed; border-color:#7c3aed; color:#fff;" title="Modern Desk Sales Billing (F2)">
-                <i class="dripicons-document text-light"></i> Modern Desk Billing <kbd style="font-size:10px; background:#5b21b6; padding:1px 4px; border-radius:3px;">F2</kbd>
-            </a>
-            <button type="button" class="btn btn-light border" id="toggle-drawer-btn" title="Toggle Quick Drawer (Alt+D)">
-                <i class="dripicons-menu"></i>
+            <button type="button" class="btn btn-primary" id="toggle-drawer-btn" title="Toggle Bill List Panel (Alt+D)" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+                <i class="dripicons-view-list"></i> Bill list
             </button>
         </div>
     </div>
@@ -205,115 +202,94 @@
             </div>
         </div>
 
-        <!-- Right: Fast Action Console Drawer -->
-        <div class="comm-drawer-card" id="comm-drawer">
+        <!-- Right / Dockable Side Panel: Bill List -->
+        <aside class="comm-drawer-card desk-bill-list-panel" id="comm-drawer" aria-label="Transaction List Panel">
             <div class="comm-drawer-header">
-                <h3 class="comm-drawer-title"><i class="dripicons-bolt text-warning"></i> Fast Sale Console</h3>
+                <div class="comm-drawer-title-wrap">
+                    <h3 class="comm-drawer-title"><i class="dripicons-view-list text-primary"></i> Bill list</h3>
+                </div>
                 <div class="comm-drawer-tools">
-                    <span class="badge badge-light border" style="font-size:10px;">F2 Active</span>
-                    <button type="button" class="btn btn-sm btn-link text-muted p-0" id="close-drawer-btn"><i class="dripicons-cross"></i></button>
-                </div>
-            </div>
-            <div class="comm-drawer-body">
-                <div class="comm-form-group">
-                    <label>{{ __('db.customer') }} <a href="{{ route('customer.create') }}" target="_blank" class="text-primary">+ New</a></label>
-                    <select id="quick-customer-id" class="form-control">
-                        @if(isset($lims_customer_list) && count($lims_customer_list))
-                            @foreach($lims_customer_list as $cust)
-                                <option value="{{ $cust->id }}">{{ $cust->name }} ({{ $cust->phone_number }})</option>
-                            @endforeach
-                        @else
-                            <option value="1">Walk-in Customer</option>
-                        @endif
-                    </select>
-                </div>
-
-                <div class="comm-form-row">
-                    <div class="comm-form-group">
-                        <label>{{ __('db.Warehouse') }}</label>
-                        <select id="quick-warehouse-id" class="form-control">
-                            @foreach($lims_warehouse_list as $wh)
-                                <option value="{{ $wh->id }}">{{ $wh->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="comm-form-group">
-                        <label>{{ __('db.date') }}</label>
-                        <input type="date" id="quick-sale-date" class="form-control" value="{{ date('Y-m-d') }}" />
-                    </div>
-                </div>
-
-                <div class="comm-form-group position-relative">
-                    <label>{{ __('Search Item (Code / Barcode)') }}</label>
-                    <div class="input-group">
-                        <input type="text" id="quick-product-search" class="form-control" placeholder="Type name or scan barcode..." autocomplete="off" />
-                        <div class="input-group-append">
-                            <button class="btn btn-sm btn-primary" type="button" id="btn-quick-add-item"><i class="dripicons-plus"></i></button>
-                        </div>
-                    </div>
-                    <div id="quick-search-results" class="list-group position-absolute shadow" style="z-index:999; display:none; max-height:160px; overflow-y:auto; width:100%; top:58px; background:#fff;"></div>
-                </div>
-
-                <!-- Fast Line Items -->
-                <div class="comm-drawer-lines">
-                    <table class="table" id="quick-items-table">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th style="width:60px;">Qty</th>
-                                <th style="width:70px;">Price</th>
-                                <th style="width:70px;">Total</th>
-                                <th style="width:30px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="quick-items-body">
-                            <tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added yet. Search above or press F2.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Totals -->
-                <div class="comm-summary-box">
-                    <div class="comm-summary-row">
-                        <span>Items Subtotal:</span>
-                        <span id="quick-subtotal">0.00</span>
-                    </div>
-                    <div class="comm-summary-row">
-                        <span>Tax / Fees:</span>
-                        <span>0.00</span>
-                    </div>
-                    <div class="comm-summary-row grand-total">
-                        <span>Net Payable:</span>
-                        <span id="quick-grand-total">0.00</span>
-                    </div>
-                </div>
-
-                <div class="comm-form-row">
-                    <div class="comm-form-group">
-                        <label>{{ __('db.Payment Method') }}</label>
-                        <select id="quick-payment-method" class="form-control">
-                            <option value="Cash">Cash</option>
-                            <option value="Card">Card</option>
-                            <option value="Bank">Bank Transfer</option>
-                            <option value="Credit">Credit / Due</option>
-                        </select>
-                    </div>
-                    <div class="comm-form-group">
-                        <label>{{ __('Paid Amount') }}</label>
-                        <input type="number" id="quick-paid-amount" class="form-control" placeholder="0.00" />
-                    </div>
-                </div>
-
-                <div class="comm-drawer-footer">
-                    <button type="button" class="btn-comm-primary" id="btn-quick-post-sale">
-                        <i class="dripicons-checkmark"></i> Post Sale
-                    </button>
-                    <a href="{{ route('commercial.sale.entry') }}" class="btn-comm-secondary" title="Open Full Fast Counter">
-                        <i class="dripicons-external"></i> Full Counter (F2)
+                    @can('sales-add')
+                    <a href="{{ route('sales.create') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Sale">
+                        <i class="dripicons-plus"></i> + New
                     </a>
+                    @endcan
+                    <button type="button" class="side-icon-btn" id="btn-dock-toggle" title="Arrange Panel Side (Dock Left / Dock Right)">
+                        <span id="dock-icon">⇄</span>
+                        <span class="dock-tooltip" id="dock-label">Dock Left</span>
+                    </button>
+                    <button type="button" class="side-icon-btn text-muted" id="close-drawer-btn" title="Collapse Panel">✕</button>
                 </div>
             </div>
-        </div>
+
+            <div class="comm-drawer-body">
+                <!-- Search Filter -->
+                <div class="side-panel-search">
+                    <input type="text" id="side-search-input" class="form-control" placeholder="Find a bill..." autocomplete="off">
+                </div>
+
+                <!-- Series / Bill Number Filter -->
+                <div class="side-panel-filter-label">BILL NUMBER</div>
+                <div class="side-panel-series-filter">
+                    <input type="text" id="side-filter-series" class="form-control" placeholder="Series or edited number" autocomplete="off">
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="side-filter-tabs">
+                    <button type="button" class="side-tab active" data-filter="all">All</button>
+                    <button type="button" class="side-tab" data-filter="draft">Draft</button>
+                    <button type="button" class="side-tab" data-filter="date">Date</button>
+                    <button type="button" class="side-tab" data-filter="range">Range</button>
+                </div>
+
+                <!-- Date Inputs (revealed if Date/Range selected) -->
+                <div class="side-date-picker-box" id="side-date-picker-box" style="display:none; padding:4px 0;">
+                    <input type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
+                </div>
+
+                <!-- Recent Bills List -->
+                <div class="side-list-container" id="side-bill-list">
+                    @forelse($recent_bills as $bill)
+                        @php
+                            $isPaid = ($bill->payment_status == 4 || ($bill->grand_total > 0 && $bill->paid_amount >= $bill->grand_total));
+                            $isPartial = ($bill->payment_status == 3 || ($bill->paid_amount > 0 && $bill->paid_amount < $bill->grand_total));
+                            $isDraft = ($bill->sale_status == 3);
+                            $statusLabel = $isDraft ? 'Draft' : ($isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Due'));
+                            $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
+                            $customerName = $bill->customer->name ?? 'Walk-in Customer';
+                        @endphp
+                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                            <div class="side-card-top">
+                                <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
+                                <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
+                            </div>
+                            <div class="side-card-party">
+                                <i class="dripicons-user" style="font-size:10px; color:#94a3b8;"></i> {{ $customerName }}
+                            </div>
+                            <div class="side-card-bottom">
+                                <span class="side-card-date"><i class="dripicons-calendar" style="font-size:10px;"></i> {{ substr($bill->created_at ?? '', 0, 10) }}</span>
+                                <span class="side-card-status {{ $statusClass }}">{{ $statusLabel }}</span>
+                            </div>
+                            <div class="side-card-actions">
+                                <a href="{{ route('sales.edit', $bill->id) }}" class="side-action-btn edit" title="Edit this bill">
+                                    <i class="dripicons-document-edit"></i> Edit
+                                </a>
+                                <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View bill details">
+                                    <i class="dripicons-preview"></i> View
+                                </a>
+                                <a href="{{ url('sales/gen_invoice/' . $bill->id) }}" target="_blank" class="side-action-btn print" title="Print invoice">
+                                    <i class="dripicons-print"></i> Print
+                                </a>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="side-empty-state">
+                            <p>No bills match these filters</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </aside>
     </div>
 </section>
 
@@ -1900,7 +1876,8 @@
             return true;
         });
 </script>
-<script type="text/javascript" src="https://js.stripe.com/v3/">
+<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript">
     // --- Commercial Workspace Single-Screen SPA Ergonomics ---
     function showProgressBar() {
         $('#comm-progress-bar').removeClass('done').addClass('active');
@@ -1934,152 +1911,135 @@
         saleTable.ajax.reload(function() { hideProgressBar(); });
     });
 
-    // Drawer collapse / expand
-    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
-        $('#comm-drawer').toggleClass('collapsed');
-        $('#comm-split-grid').toggleClass('drawer-collapsed');
+    // --- Bill List Panel Docking & Toggling ---
+    // Restore saved dock position & open state
+    (function initBillPanelState() {
+        let savedDock = localStorage.getItem('zolo_bill_panel_dock');
+        if (savedDock === 'left') {
+            $('#comm-split-grid').addClass('dock-left');
+            $('#dock-label').text('Dock Right');
+        } else {
+            $('#comm-split-grid').removeClass('dock-left');
+            $('#dock-label').text('Dock Left');
+        }
+
+        let savedOpen = localStorage.getItem('zolo_bill_panel_open');
+        if (savedOpen === '0') {
+            $('#comm-drawer').addClass('collapsed');
+            $('#comm-split-grid').addClass('drawer-collapsed');
+        }
+    })();
+
+    // Dock toggle: switch side panel between Left and Right
+    $('#btn-dock-toggle').on('click', function() {
+        let isLeft = $('#comm-split-grid').toggleClass('dock-left').hasClass('dock-left');
+        $('#dock-label').text(isLeft ? 'Dock Right' : 'Dock Left');
+        localStorage.setItem('zolo_bill_panel_dock', isLeft ? 'left' : 'right');
         if (typeof saleTable !== 'undefined') {
             saleTable.columns.adjust().draw(false);
         }
     });
 
-    // Hotkeys: F2 focuses quick search / counter, Alt+D toggles drawer
+    // Panel collapse / expand toggle
+    $('#toggle-drawer-btn, #close-drawer-btn').on('click', function() {
+        let isClosed = $('#comm-drawer').toggleClass('collapsed').hasClass('collapsed');
+        $('#comm-split-grid').toggleClass('drawer-collapsed', isClosed);
+        localStorage.setItem('zolo_bill_panel_open', isClosed ? '0' : '1');
+        if (typeof saleTable !== 'undefined') {
+            saleTable.columns.adjust().draw(false);
+        }
+    });
+
+    // Hotkey: Alt+D toggles side panel
     $(document).on('keydown', function(e) {
-        if (e.key === 'F2') {
-            e.preventDefault();
-            if ($('#comm-drawer').hasClass('collapsed')) {
-                $('#toggle-drawer-btn').trigger('click');
-            }
-            $('#quick-product-search').focus();
-        } else if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+        if (e.altKey && (e.key === 'd' || e.key === 'D')) {
             e.preventDefault();
             $('#toggle-drawer-btn').trigger('click');
         }
     });
 
-    // Fast product search in drawer
-    let quickItems = [];
-    $('#quick-product-search').on('input', function() {
-        let q = $(this).val().trim();
-        if (q.length < 2) {
-            $('#quick-search-results').hide().empty();
-            return;
-        }
-        $.ajax({
-            url: '{{ url("sales/lims_product_search") }}',
-            data: { data: q },
-            type: 'GET',
-            success: function(response) {
-                let res = $('#quick-search-results').empty();
-                if (Array.isArray(response) && response.length > 0) {
-                    response.slice(0, 8).forEach(function(item) {
-                        let parts = item.split('|');
-                        let name = parts[0];
-                        let code = parts[1];
-                        let qty = parts[2];
-                        let a = $('<a href="javascript:void(0)" class="list-group-item list-group-item-action py-1 px-2" style="font-size:12px;"></a>')
-                            .text(name + ' (' + code + ')')
-                            .data('item', { name: name, code: code, qty: qty, price: parseFloat(parts[3]) || 0 });
-                        res.append(a);
-                    });
-                    res.show();
-                } else {
-                    res.hide();
-                }
+    // --- Bill List Live Search & Filtering ---
+    function filterSideBills() {
+        let search = $('#side-search-input').val().trim().toLowerCase();
+        let series = $('#side-filter-series').val().trim().toLowerCase();
+        let activeTab = $('.side-filter-tabs .side-tab.active').data('filter') || 'all';
+        let selectedDate = $('#side-filter-date-val').val();
+
+        let visibleCount = 0;
+        $('#side-bill-list .side-bill-card').each(function() {
+            let card = $(this);
+            let ref = card.data('ref') || '';
+            let party = card.data('party') || '';
+            let status = card.data('status') || '';
+            let date = card.data('date') || '';
+
+            let matchesSearch = !search || ref.indexOf(search) !== -1 || party.indexOf(search) !== -1;
+            let matchesSeries = !series || ref.indexOf(series) !== -1;
+            let matchesTab = true;
+
+            if (activeTab === 'draft') {
+                matchesTab = (status === 'draft');
+            } else if (activeTab === 'date') {
+                matchesTab = !selectedDate || (date === selectedDate);
+            } else if (activeTab === 'range') {
+                matchesTab = true;
+            }
+
+            if (matchesSearch && matchesSeries && matchesTab) {
+                card.show();
+                visibleCount++;
+            } else {
+                card.hide();
             }
         });
-    });
 
-    $(document).on('click', '#quick-search-results a', function() {
-        let item = $(this).data('item');
-        addQuickItem(item);
-        $('#quick-search-results').hide().empty();
-        $('#quick-product-search').val('').focus();
-    });
-
-    function addQuickItem(item) {
-        let existing = quickItems.find(i => i.code === item.code);
-        if (existing) {
-            existing.qty += 1;
+        if (visibleCount === 0) {
+            if ($('#side-bill-list .side-empty-state').length === 0) {
+                $('#side-bill-list').append('<div class="side-empty-state"><p>No bills match these filters</p></div>');
+            } else {
+                $('#side-bill-list .side-empty-state').show();
+            }
         } else {
-            quickItems.push({
-                name: item.name,
-                code: item.code,
-                qty: 1,
-                price: item.price || 50
-            });
-        }
-        renderQuickItems();
-    }
-
-    function renderQuickItems() {
-        let tbody = $('#quick-items-body').empty();
-        let total = 0;
-        if (quickItems.length === 0) {
-            tbody.append('<tr class="empty-row"><td colspan="5" class="text-center text-muted py-2" style="font-size:11px;">No items added yet. Search above or press F2.</td></tr>');
-        } else {
-            quickItems.forEach(function(item, idx) {
-                let lineTotal = item.qty * item.price;
-                total += lineTotal;
-                tbody.append('<tr>' +
-                    '<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + item.name + '">' + item.name + '</td>' +
-                    '<td><input type="number" class="form-control p-1 text-center quick-qty-input" data-idx="' + idx + '" value="' + item.qty + '" min="1" style="height:24px;font-size:11px;"></td>' +
-                    '<td><input type="number" class="form-control p-1 text-right quick-price-input" data-idx="' + idx + '" value="' + item.price + '" step="0.5" style="height:24px;font-size:11px;"></td>' +
-                    '<td class="text-right font-weight-bold">' + lineTotal.toFixed(2) + '</td>' +
-                    '<td class="text-center"><a href="javascript:void(0)" class="text-danger remove-quick-item" data-idx="' + idx + '">&times;</a></td>' +
-                '</tr>');
-            });
-        }
-        $('#quick-subtotal').text(total.toFixed(2));
-        $('#quick-grand-total').text(total.toFixed(2));
-        if ($('#quick-payment-method').val() === 'Cash' || $('#quick-payment-method').val() === 'Card') {
-            $('#quick-paid-amount').val(total.toFixed(2));
+            $('#side-bill-list .side-empty-state').hide();
         }
     }
 
-    $(document).on('input', '.quick-qty-input', function() {
-        let idx = $(this).data('idx');
-        let val = parseFloat($(this).val()) || 1;
-        quickItems[idx].qty = val;
-        renderQuickItems();
-    });
+    $('#side-search-input, #side-filter-series').on('input', filterSideBills);
 
-    $(document).on('input', '.quick-price-input', function() {
-        let idx = $(this).data('idx');
-        let val = parseFloat($(this).val()) || 0;
-        quickItems[idx].price = val;
-        renderQuickItems();
-    });
-
-    $(document).on('click', '.remove-quick-item', function() {
-        let idx = $(this).data('idx');
-        quickItems.splice(idx, 1);
-        renderQuickItems();
-    });
-
-    // Quick Post Sale button
-    $('#btn-quick-post-sale').on('click', function() {
-        if (quickItems.length === 0) {
-            alert('Please add at least one item before posting sale.');
-            return;
+    $('.side-filter-tabs .side-tab').on('click', function() {
+        $('.side-filter-tabs .side-tab').removeClass('active');
+        $(this).addClass('active');
+        let filter = $(this).data('filter');
+        if (filter === 'date' || filter === 'range') {
+            $('#side-date-picker-box').slideDown(150);
+        } else {
+            $('#side-date-picker-box').slideUp(150);
         }
-        let btn = $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Posting...');
-        showProgressBar();
+        filterSideBills();
+    });
 
-        // Redirect to fast counter or submit to commercial store
-        let payload = {
-            _token: $('meta[name="csrf-token"]').attr('content'),
-            customer_id: $('#quick-customer-id').val(),
-            warehouse_id: $('#quick-warehouse-id').val(),
-            paying_amount: $('#quick-paid-amount').val() || $('#quick-grand-total').text(),
-            paid_amount: $('#quick-paid-amount').val() || $('#quick-grand-total').text(),
-            paid_by_id: $('#quick-payment-method').val() === 'Cash' ? 1 : 3,
-            payment_status: 4,
-            sale_status: 1
-        };
+    $('#side-filter-date-val').on('change', filterSideBills);
 
-        // If items are populated, we can seamlessly redirect to commercial fast counter or open POS
-        window.location.href = '{{ route("commercial.sale.entry") }}';
+    // Clicking anywhere on a bill card opens edit mode directly
+    $(document).on('click', '.side-bill-card', function(e) {
+        if ($(e.target).closest('.side-card-actions').length > 0) return;
+        let billId = $(this).data('bill-id');
+        if (billId) {
+            window.location.href = '{{ url("sales") }}/' + billId + '/edit';
+        }
+    });
+
+    // Clicking View button on card
+    $(document).on('click', '.btn-side-view', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        let billId = $(this).data('id');
+        let row = $('#sale-table tbody tr[data-id="' + billId + '"]');
+        if (row.length && row.data('sale')) {
+            saleDetails(row.data('sale'));
+        } else {
+            window.location.href = '{{ url("sales") }}/' + billId + '/edit';
+        }
     });
 </script>
 @endpush
