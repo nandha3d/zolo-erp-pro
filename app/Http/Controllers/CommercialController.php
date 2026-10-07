@@ -754,5 +754,80 @@ class CommercialController extends Controller
             'customer' => $customerArr,
         ]);
     }
+
+    public function gstLookup(Request $request)
+    {
+        $gstin = strtoupper(trim($request->input('gstin', '')));
+        if (!$gstin) {
+            return response()->json(['success' => false, 'message' => 'Please enter a valid GSTIN.'], 422);
+        }
+
+        $parsed = \App\Services\Tax\Gstin::parse($gstin);
+
+        // Fetch company state code to determine intra vs inter-state tax rule (default Tamil Nadu: 33)
+        $companyStateCode = '33';
+        $company = \App\Models\Company::first();
+        if ($company && !empty($company->vat_number) && strlen($company->vat_number) >= 2) {
+            $companyStateCode = substr($company->vat_number, 0, 2);
+        }
+
+        $isLocal = ($parsed['state_code'] === $companyStateCode);
+        $taxRule = $isLocal ? 'Local Intra-State (CGST + SGST)' : 'Inter-State (IGST)';
+
+        // 1. Search internal ERP database for matching supplier or customer (zero cost, instant recall)
+        $partyData = null;
+        $partyType = null;
+        $existing = \App\Models\Supplier::where('vat_number', $gstin)->orWhere('tax_no', $gstin)->first();
+        if ($existing) {
+            $partyType = 'supplier';
+        } else {
+            $existing = \App\Models\Customer::where('tax_no', $gstin)->first();
+            if ($existing) {
+                $partyType = 'customer';
+            }
+        }
+
+        if (!$existing && !empty($parsed['pan'])) {
+            $pan = $parsed['pan'];
+            $existing = \App\Models\Supplier::where('vat_number', 'like', "%{$pan}%")->orWhere('tax_no', 'like', "%{$pan}%")->first();
+            if ($existing) {
+                $partyType = 'supplier';
+            } else {
+                $existing = \App\Models\Customer::where('tax_no', 'like', "%{$pan}%")->first();
+                if ($existing) {
+                    $partyType = 'customer';
+                }
+            }
+        }
+
+        if ($existing) {
+            $partyData = [
+                'name' => $existing->name ?? '',
+                'company_name' => $existing->company_name ?? ($existing->name ?? ''),
+                'address' => $existing->address ?? '',
+                'city' => $existing->city ?? '',
+                'state' => $existing->state ?? $parsed['state_name'],
+                'postal_code' => $existing->postal_code ?? '',
+                'phone_number' => $existing->phone_number ?? '',
+                'email' => $existing->email ?? '',
+                'party_type' => $partyType,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'gstin' => $parsed['gstin'],
+            'is_valid' => $parsed['is_valid'],
+            'error' => $parsed['error'],
+            'state_code' => $parsed['state_code'],
+            'state_name' => $parsed['state_name'],
+            'pan' => $parsed['pan'],
+            'constitution' => $parsed['constitution'],
+            'is_local' => $isLocal,
+            'tax_rule' => $taxRule,
+            'is_existing' => (bool)$partyData,
+            'party' => $partyData,
+        ]);
+    }
 }
 

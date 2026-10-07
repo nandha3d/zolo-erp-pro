@@ -568,5 +568,62 @@ class OptechMasterWebTest extends TestCase
             'company_name' => 'Dual Enterprises',
         ]);
     }
+
+    public function test_gst_lookup_decodes_statutory_gstin_and_state(): void
+    {
+        // 33AIUPN6412D1ZA -> Tamil Nadu, PAN: AIUPN6412D, Proprietorship
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/gst-lookup', [
+                'gstin' => '33AIUPN6412D1ZA',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'gstin' => '33AIUPN6412D1ZA',
+            'is_valid' => true,
+            'state_code' => '33',
+            'state_name' => 'Tamil Nadu',
+            'pan' => 'AIUPN6412D',
+            'constitution' => 'Proprietorship / Individual',
+            'is_local' => true,
+            'tax_rule' => 'Local Intra-State (CGST + SGST)',
+        ]);
+    }
+
+    public function test_gst_lookup_recalls_existing_party_from_database(): void
+    {
+        // Pre-create supplier with a GSTIN
+        \App\Models\Supplier::create([
+            'company_id' => 1,
+            'name' => 'Ravi Textiles',
+            'company_name' => 'Ravi Silk Mills',
+            'vat_number' => '33AABCR1234F1Z8',
+            'phone_number' => '9842100000',
+            'email' => 'ravi@textiles.com',
+            'address' => '12 Mill Road',
+            'city' => 'Coimbatore',
+            'state' => 'Tamil Nadu',
+            'postal_code' => '641001',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/gst-lookup', [
+                'gstin' => '33AABCR1234F1Z8',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'is_existing' => true,
+            'party' => [
+                'name' => 'Ravi Textiles',
+                'company_name' => 'Ravi Silk Mills',
+                'city' => 'Coimbatore',
+            ],
+        ]);
+    }
 }
+
 

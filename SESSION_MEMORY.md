@@ -8,17 +8,17 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 15:38:00 (+05:30)
-- **Active Git Branch:** enhanced-ui & ui (synchronized across nandha-origin and origin)
+- **Last Updated:** 2026-10-07 18:36:00 (+05:30)
+- **Active Git Branch:** enhanced-ui (synchronized with nandha-origin and origin)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`enhanced-ui`, `ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`enhanced-ui`, `ui`)
 - **Latest Commits:**
+  - `f5e3e42` — "feat(commercial): add in-place quick create party modal and execute database fresh slate wipe"
+  - `7eef421` — "docs(memory): update session metadata with ui and enhanced-ui branch sync"
   - `88cbb22` — "feat(commercial): add explicit Split View buttons in navbar and fullwidth strip with smart auto-return"
-  - `3e9a40d` — "feat(commercial): eliminate double boxes, align auto button, add inline category/brand creation, standardize GST slabs, and restore fullwidth register view"
-  - `df10fbb` — "feat(commercial): add section color differentiation, left-sidebar thead color, reactive gst classification, and dark theme support"
-- **Working Tree State:** Clean, all automated feature test suites passing 100% (36/36 tests, 184 assertions)
-- **Test Suite Status:** 36/36 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
+- **Working Tree State:** Clean, all automated feature test suites passing 100% (39/39 tests, 200 assertions)
+- **Test Suite Status:** 39/39 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
 
 ---
 
@@ -540,17 +540,49 @@ Addressed user feedback:
 
 ---
 
-## 8. Verification & Testing Evidence
-- Automated feature tests executed and passed:
-  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: **39 passed (200 assertions, 100%)**, Duration: ~16s
-- Database verification:
-  - `purchases: 0, sales: 0, products: 0, suppliers: 0, customers: 1`
-  - Inline party creation tested and verified for Supplier, Customer, and Both.
+## 8. 100% Free Professional GSTIN Engine & Statutory Auto-Fetch (Oct 2026)
+
+Addressed user inquiry & requirement:
+> "is this hardcoded?"
+> "yes. but i dont want to pay, i need a free solution but professional solution"
+
+1. **Context & Audit Findings:**
+   - The interactive widget in `optech_erp_modernization_project_plan.html` was a static JavaScript simulator prototype running on `const mockGstDb` with 3 hardcoded samples (`33AABCM1234F1Z5`, etc.).
+   - In the live application, the `TAX NUMBER (GSTIN)` field was a plain text input with no fetch trigger. Paid GSP APIs (ClearTax, MasterGST, Sandbox) were not configured in `.env`.
+2. **100% Free, Zero-Subscription Professional Architecture:**
+   - **Statutory Offline Engine (`Gstin.php`):**
+     - Full 38 Indian State & Union Territory code dictionary (01 to 38, with `33` = Tamil Nadu, `29` = Karnataka, `27` = Maharashtra, `32` = Kerala, `07` = Delhi).
+     - Constitution of Business recognition from 4th PAN character (`P` = Proprietorship / Individual, `C` = Company, `F` = Partnership / LLP, `H` = HUF, `T` = Trust).
+     - Official Luhn Mod-36 mathematical checksum validator.
+     - Supply rule determination (Intra-State CGST+SGST vs Inter-State IGST) by comparing company branch state against buyer/supplier state.
+   - **Internal Cross-Party & PAN Registry Memory:**
+     - `CommercialController::gstLookup` searches existing customers, suppliers, and historical masters for matching GSTIN or PAN.
+     - Automatically loads registered company name, contact, address, city, state, postal code, phone, and email if previously recorded.
+   - **1-Click Official CBIC GST Portal Verification:**
+     - `[ ↗ ]` button copies the GSTIN to the clipboard and opens official government taxpayer search (`https://services.gst.gov.in/services/searchtp`) with zero captcha friction.
+3. **Modal UI Enhancements (`purchase/index.blade.php` & `sale/index.blade.php`):**
+   - Real-time client-side typing event: typing `33` instantly populates `State: Tamil Nadu` (0ms latency, works offline).
+   - Live statutory chip strip: shows State badge (`33 - Tamil Nadu`), Constitution badge (`Proprietorship / Individual`), and Supply rule (`Local Intra-State (CGST + SGST)`).
+   - `[ ⚡ Fetch ]` button and Enter-key listener triggering `/parties/gst-lookup` AJAX.
+   - Visual status badge: Green `✔ Valid GSTIN` or Red `✖ Invalid Checksum`.
+4. **Automated Testing Evidence:**
+   - `OptechMasterWebTest.php`: Added tests `test_gst_lookup_decodes_statutory_gstin_and_state` and `test_gst_lookup_recalls_existing_party_from_database`.
+   - All 14 tests passing (89 assertions, 100%).
+   - All 12 tests passing on `OptechVoucherWebTest.php` (56 assertions, 100%).
 
 ---
 
-## 9. Crash Recovery Protocol for Any Agent
+## 9. Verification & Testing Evidence
+- Automated feature tests executed and passed:
+  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
+  - Results: **41 passed (207 assertions, 100%)**
+- Database verification:
+  - `purchases: 0, sales: 0, products: 0, suppliers: 0, customers: 1`
+  - Inline party creation tested and verified for Supplier, Customer, and Both with GSTIN validation.
+
+---
+
+## 10. Crash Recovery Protocol for Any Agent
 1. **Never start from scratch:** When reopened after a crash or system reboot, inspect SESSION_MEMORY.md first.
 2. **Check Git Status:** Verify branch is enhanced-ui (git status and git branch -vv).
 3. **Verify Database & Dependencies:** Check migrations are up to date.

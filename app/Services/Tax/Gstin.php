@@ -23,6 +23,91 @@ final class Gstin
         return $value;
     }
 
+    public static array $states = [
+        '01' => 'Jammu and Kashmir',
+        '02' => 'Himachal Pradesh',
+        '03' => 'Punjab',
+        '04' => 'Chandigarh',
+        '05' => 'Uttarakhand',
+        '06' => 'Haryana',
+        '07' => 'Delhi',
+        '08' => 'Rajasthan',
+        '09' => 'Uttar Pradesh',
+        '10' => 'Bihar',
+        '11' => 'Sikkim',
+        '12' => 'Arunachal Pradesh',
+        '13' => 'Nagaland',
+        '14' => 'Manipur',
+        '15' => 'Mizoram',
+        '16' => 'Tripura',
+        '17' => 'Meghalaya',
+        '18' => 'Assam',
+        '19' => 'West Bengal',
+        '20' => 'Jharkhand',
+        '21' => 'Odisha',
+        '22' => 'Chhattisgarh',
+        '23' => 'Madhya Pradesh',
+        '24' => 'Gujarat',
+        '26' => 'Dadra and Nagar Haveli and Daman and Diu',
+        '27' => 'Maharashtra',
+        '28' => 'Andhra Pradesh (Old)',
+        '29' => 'Karnataka',
+        '30' => 'Goa',
+        '31' => 'Lakshadweep',
+        '32' => 'Kerala',
+        '33' => 'Tamil Nadu',
+        '34' => 'Puducherry',
+        '35' => 'Andaman and Nicobar Islands',
+        '36' => 'Telangana',
+        '37' => 'Andhra Pradesh',
+        '38' => 'Ladakh',
+        '97' => 'Other Territory',
+    ];
+
+    public static array $constitutions = [
+        'P' => 'Proprietorship / Individual',
+        'C' => 'Company / Corporation',
+        'F' => 'Partnership / LLP',
+        'H' => 'Hindu Undivided Family (HUF)',
+        'A' => 'Association of Persons (AOP)',
+        'B' => 'Body of Individuals (BOI)',
+        'G' => 'Government Agency',
+        'J' => 'Artificial Juridical Person',
+        'L' => 'Local Authority',
+        'T' => 'Trust',
+    ];
+
+    public static function parse(mixed $value): array
+    {
+        $gstin = is_string($value) ? strtoupper(trim($value)) : '';
+        $stateCode = strlen($gstin) >= 2 ? substr($gstin, 0, 2) : '';
+        $stateName = self::$states[$stateCode] ?? ($stateCode ? "State $stateCode" : '');
+        $pan = strlen($gstin) >= 12 ? substr($gstin, 2, 10) : '';
+        $panType = strlen($pan) >= 4 ? $pan[3] : '';
+        $constitution = self::$constitutions[$panType] ?? ($panType ? "Constitution ($panType)" : '');
+
+        $isValid = false;
+        $error = null;
+        try {
+            self::normalize($gstin);
+            $isValid = true;
+        } catch (\Throwable $e) {
+            $isValid = false;
+            $error = $e->getMessage();
+        }
+
+        return [
+            'gstin' => $gstin,
+            'state_code' => $stateCode,
+            'state_name' => $stateName,
+            'pan' => $pan,
+            'pan_type' => $panType,
+            'constitution' => $constitution,
+            'is_valid' => $isValid,
+            'error' => $error,
+        ];
+    }
+
     public static function state(mixed $value): string
     {
         if (!is_string($value) || !preg_match('/^(0[1-9]|[12][0-9]|3[0-8])$/D', $value)) {

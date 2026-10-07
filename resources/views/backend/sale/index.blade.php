@@ -1314,8 +1314,30 @@
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
-                                <label>Tax Number (GSTIN)</label>
-                                <input type="text" id="party-vat-number" name="vat_number" class="form-control" placeholder="e.g. 33AAAAA0000A1Z5" style="height:34px;font-size:12.5px;">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <label class="mb-0">Tax Number (GSTIN)</label>
+                                    <span id="party-gst-badge" class="badge" style="display:none;font-size:10px;padding:2px 6px;"></span>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase" placeholder="e.g. 33AIUPN6412D1ZA" maxlength="15" autocomplete="off" style="height:34px;font-size:12px;font-family:monospace;font-weight:700;letter-spacing:0.5px;">
+                                    <div class="input-group-append">
+                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary" title="1-Click Auto-Fill from GSTIN (Free)" style="height:34px;font-size:11px;padding:0 10px;font-weight:600;display:flex;align-items:center;gap:4px;">
+                                            <i class="fa fa-bolt"></i> <span>Fetch</span>
+                                        </button>
+                                        <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary" title="Verify on official Government GST Portal (Free)" style="height:34px;font-size:11px;padding:0 9px;display:flex;align-items:center;">
+                                            <i class="fa fa-external-link"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <!-- Live Statutory GSTIN Insight Strip -->
+                                <div id="party-gst-preview-strip" class="mt-1" style="display:none;font-size:10.5px;padding:4px 8px;border-radius:5px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.4;">
+                                    <div class="d-flex align-items-center flex-wrap" style="gap:4px;">
+                                        <span id="gst-strip-state" class="badge badge-info" style="font-size:10px;font-weight:600;"></span>
+                                        <span id="gst-strip-const" class="badge badge-dark" style="font-size:10px;font-weight:600;"></span>
+                                        <span id="gst-strip-tax" class="badge badge-success" style="font-size:10px;font-weight:600;"></span>
+                                    </div>
+                                    <div id="gst-strip-msg" class="text-muted mt-1" style="font-size:10px;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2564,6 +2586,170 @@
             $('#party-customer-group-col').slideDown(200);
         } else {
             $('#party-customer-group-col').slideUp(200);
+        }
+    });
+
+    // --- GSTIN 1-Click Auto-Fill & Instant Statutory Decoding (100% Free) ---
+    var GST_STATE_MAP = {
+        '01': 'Jammu and Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh',
+        '05': 'Uttarakhand', '06': 'Haryana', '07': 'Delhi', '08': 'Rajasthan',
+        '09': 'Uttar Pradesh', '10': 'Bihar', '11': 'Sikkim', '12': 'Arunachal Pradesh',
+        '13': 'Nagaland', '14': 'Manipur', '15': 'Mizoram', '16': 'Tripura',
+        '17': 'Meghalaya', '18': 'Assam', '19': 'West Bengal', '20': 'Jharkhand',
+        '21': 'Odisha', '22': 'Chhattisgarh', '23': 'Madhya Pradesh', '24': 'Gujarat',
+        '26': 'Dadra and Nagar Haveli and Daman and Diu', '27': 'Maharashtra',
+        '28': 'Andhra Pradesh (Old)', '29': 'Karnataka', '30': 'Goa', '31': 'Lakshadweep',
+        '32': 'Kerala', '33': 'Tamil Nadu', '34': 'Puducherry', '35': 'Andaman and Nicobar Islands',
+        '36': 'Telangana', '37': 'Andhra Pradesh', '38': 'Ladakh', '97': 'Other Territory'
+    };
+
+    var GST_PAN_CONSTITUTIONS = {
+        'P': 'Proprietorship / Individual', 'C': 'Company / Corporation', 'F': 'Partnership Firm / LLP',
+        'H': 'Hindu Undivided Family (HUF)', 'A': 'Association of Persons (AOP)', 'B': 'Body of Individuals (BOI)',
+        'G': 'Government Agency', 'J': 'Artificial Juridical Person', 'L': 'Local Authority', 'T': 'Trust'
+    };
+
+    function validateGstinChecksum(gstin) {
+        if (!/^(0[1-9]|[12][0-9]|3[0-8])[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) {
+            return false;
+        }
+        var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var sum = 0, factor = 2;
+        for (var i = 13; i >= 0; i--) {
+            var n = alphabet.indexOf(gstin[i]) * factor;
+            sum += Math.floor(n / 36) + (n % 36);
+            factor = (factor === 2) ? 1 : 2;
+        }
+        return alphabet[(36 - (sum % 36)) % 36] === gstin[14];
+    }
+
+    function updateGstClientInsight(gstin) {
+        gstin = (gstin || '').trim().toUpperCase();
+        if (gstin.length < 2) {
+            $('#party-gst-badge').hide();
+            $('#party-gst-preview-strip').hide();
+            return;
+        }
+        var stateCode = gstin.substring(0, 2);
+        var stateName = GST_STATE_MAP[stateCode];
+
+        // Auto-fill State input field immediately
+        if (stateName) {
+            $('#party-state').val(stateName);
+        }
+
+        var pan = gstin.length >= 10 ? gstin.substring(2, 10) : '';
+        var panType = pan.length >= 4 ? pan[3] : '';
+        var constitution = GST_PAN_CONSTITUTIONS[panType] || '';
+
+        // Supply type compared to Tamil Nadu (33)
+        var isLocal = (stateCode === '33');
+        var taxRule = isLocal ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)';
+
+        if (stateName) {
+            $('#gst-strip-state').text(stateCode + ' - ' + stateName).show();
+            $('#gst-strip-const').text(constitution || 'Business Entity').toggle(!!constitution);
+            $('#gst-strip-tax').text(taxRule).show();
+            $('#party-gst-preview-strip').slideDown(150);
+        }
+
+        if (gstin.length === 15) {
+            var isValid = validateGstinChecksum(gstin);
+            if (isValid) {
+                $('#party-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
+                $('#gst-strip-msg').html('<span class="text-success font-weight-bold">✔ Luhn Mod-36 Checksum verified.</span> Click Fetch to auto-populate existing records.');
+            } else {
+                $('#party-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
+                $('#gst-strip-msg').html('<span class="text-danger">GSTIN checksum does not match official statutory algorithm.</span>');
+            }
+        } else {
+            $('#party-gst-badge').removeClass('badge-success badge-danger').addClass('badge-secondary').text(gstin.length + '/15').show();
+            $('#gst-strip-msg').text('Enter all 15 characters to verify official checksum.');
+        }
+    }
+
+    $('#party-vat-number').on('input change', function() {
+        var val = $(this).val().toUpperCase();
+        $(this).val(val);
+        updateGstClientInsight(val);
+    });
+
+    function executeGstLookup() {
+        var gstin = $('#party-vat-number').val().trim().toUpperCase();
+        if (!gstin) {
+            alert('Please enter a GSTIN first.');
+            $('#party-vat-number').focus();
+            return;
+        }
+
+        var $btn = $('#btn-fetch-gstin');
+        var originalBtn = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            type: 'POST',
+            url: '{{ route("parties.gst-lookup") }}',
+            data: {
+                _token: '{{ csrf_token() }}',
+                gstin: gstin
+            },
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(originalBtn);
+                if (res && res.success) {
+                    if (res.state_name) {
+                        $('#party-state').val(res.state_name);
+                    }
+                    if (res.is_valid) {
+                        $('#party-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
+                    } else if (res.error) {
+                        $('#party-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
+                    }
+
+                    $('#gst-strip-state').text(res.state_code + ' - ' + res.state_name).show();
+                    $('#gst-strip-const').text(res.constitution || 'Business Entity').toggle(!!res.constitution);
+                    $('#gst-strip-tax').text(res.tax_rule).show();
+                    $('#party-gst-preview-strip').slideDown(150);
+
+                    if (res.is_existing && res.party) {
+                        var p = res.party;
+                        if (p.name && !$('#party-name').val()) $('#party-name').val(p.name);
+                        if (p.company_name && !$('#party-company-name').val()) $('#party-company-name').val(p.company_name);
+                        if (p.address && !$('#party-address').val()) $('#party-address').val(p.address);
+                        if (p.city && !$('#party-city').val()) $('#party-city').val(p.city);
+                        if (p.postal_code && !$('#party-postal-code').val()) $('#party-postal-code').val(p.postal_code);
+                        if (p.phone_number && !$('#party-phone-number').val()) $('#party-phone-number').val(p.phone_number);
+                        if (p.email && !$('#party-email').val()) $('#party-email').val(p.email);
+                        $('#gst-strip-msg').html('<span class="text-success font-weight-bold">✔ Matched existing party in ERP!</span> Registered name & address loaded.');
+                    } else {
+                        $('#gst-strip-msg').html('<span class="text-info font-weight-bold">✔ Statutory Verified:</span> ' + res.state_name + ' (' + res.constitution + '). State set automatically.');
+                    }
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html(originalBtn);
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'GST lookup failed.';
+                alert(msg);
+            }
+        });
+    }
+
+    $('#btn-fetch-gstin').on('click', function(e) {
+        e.preventDefault();
+        executeGstLookup();
+    });
+
+    $('#party-vat-number').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            executeGstLookup();
+        }
+    });
+
+    $('#btn-open-gst-portal').on('click', function(e) {
+        var gstin = $('#party-vat-number').val().trim().toUpperCase();
+        if (gstin && navigator.clipboard) {
+            navigator.clipboard.writeText(gstin);
         }
     });
 
