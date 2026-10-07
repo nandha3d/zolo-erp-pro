@@ -10,7 +10,7 @@ class Customer extends Model
     use ScopesCompanyQueries;
 
     protected $fillable =[
-        "customer_group_id", "user_id", "name", "print_name", "company_name", "contact_person",
+        "company_id", "customer_group_id", "user_id", "name", "print_name", "company_name", "contact_person",
         "email", "type", "phone_number", "wa_number", "tax_no", "tin_no", "is_sez", "address", "city", "credit_days", "cd_days", "cd_percent", "bill_by_bill", "search_alias",
         "area_id", "agent_id",
         "state", "postal_code", "country", "opening_balance", "credit_limit", "points", "deposit", "pay_term_no","pay_term_period", "expense", "wishlist", "is_active"

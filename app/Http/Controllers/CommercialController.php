@@ -635,5 +635,124 @@ class CommercialController extends Controller
             'message' => 'Brand created successfully',
         ]);
     }
+
+    public function quickStoreParty(Request $request)
+    {
+        $validated = $request->validate([
+            'party_type' => 'nullable|in:supplier,customer,both',
+            'both' => 'nullable',
+            'customer_group_id' => 'nullable|integer',
+            'name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'vat_number' => 'nullable|string|max:50',
+            'tax_no' => 'nullable|string|max:50',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'email' => 'nullable|email|max:255',
+            'phone_number' => 'required|string|max:50',
+            'wa_number' => 'nullable|string|max:50',
+            'address' => 'required|string|max:500',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'country' => 'nullable|string|max:100',
+            'credit_days' => 'nullable|integer|min:0|max:3650',
+        ]);
+
+        $companyId = session('company_id') ?? 1;
+        if (auth()->check() && auth()->user()->company_id) {
+            $companyId = auth()->user()->company_id;
+        }
+
+        $partyType = $validated['party_type'] ?? 'supplier';
+        if (!empty($request->both) || $request->both == '1') {
+            $partyType = 'both';
+        }
+
+        $taxNo = trim($validated['vat_number'] ?? ($validated['tax_no'] ?? ''));
+        $waNumber = !empty($validated['wa_number']) ? trim($validated['wa_number']) : trim($validated['phone_number']);
+        $country = !empty($validated['country']) ? trim($validated['country']) : 'India';
+        $creditDays = isset($validated['credit_days']) && $validated['credit_days'] !== '' ? (int)$validated['credit_days'] : 30;
+        $openingBalance = isset($validated['opening_balance']) && $validated['opening_balance'] !== '' ? (float)$validated['opening_balance'] : 0;
+        $customerGroupId = !empty($validated['customer_group_id']) ? (int)$validated['customer_group_id'] : 1;
+
+        $supplier = null;
+        $customer = null;
+
+        DB::transaction(function () use (
+            $partyType, $companyId, $validated, $taxNo, $waNumber, $country, $creditDays, $openingBalance, $customerGroupId, &$supplier, &$customer
+        ) {
+            if ($partyType === 'supplier' || $partyType === 'both') {
+                $supplier = Supplier::create([
+                    'company_id' => $companyId,
+                    'name' => trim($validated['name']),
+                    'company_name' => trim($validated['company_name']),
+                    'vat_number' => $taxNo,
+                    'tax_no' => $taxNo,
+                    'email' => !empty($validated['email']) ? trim($validated['email']) : null,
+                    'phone_number' => trim($validated['phone_number']),
+                    'wa_number' => $waNumber,
+                    'address' => trim($validated['address']),
+                    'city' => trim($validated['city']),
+                    'state' => !empty($validated['state']) ? trim($validated['state']) : null,
+                    'postal_code' => !empty($validated['postal_code']) ? trim($validated['postal_code']) : null,
+                    'country' => $country,
+                    'opening_balance' => $openingBalance,
+                    'credit_days' => $creditDays,
+                    'is_active' => true,
+                ]);
+            }
+
+            if ($partyType === 'customer' || $partyType === 'both') {
+                $customer = Customer::create([
+                    'company_id' => $companyId,
+                    'customer_group_id' => $customerGroupId,
+                    'name' => trim($validated['name']),
+                    'company_name' => trim($validated['company_name']),
+                    'tax_no' => $taxNo,
+                    'email' => !empty($validated['email']) ? trim($validated['email']) : null,
+                    'phone_number' => trim($validated['phone_number']),
+                    'wa_number' => $waNumber,
+                    'address' => trim($validated['address']),
+                    'city' => trim($validated['city']),
+                    'state' => !empty($validated['state']) ? trim($validated['state']) : null,
+                    'postal_code' => !empty($validated['postal_code']) ? trim($validated['postal_code']) : null,
+                    'country' => $country,
+                    'opening_balance' => $openingBalance,
+                    'credit_days' => $creditDays,
+                    'bill_by_bill' => 1,
+                    'is_active' => true,
+                ]);
+            }
+        });
+
+        $supplierArr = $supplier ? [
+            'id' => $supplier->id,
+            'name' => $supplier->name,
+            'company_name' => $supplier->company_name,
+            'vat_number' => $supplier->vat_number ?? $supplier->tax_no ?? '',
+            'tax_no' => $supplier->tax_no ?? $supplier->vat_number ?? '',
+            'address' => $supplier->address . ($supplier->city ? (', ' . $supplier->city) : ''),
+            'credit_days' => $supplier->credit_days ?? 30,
+            'phone_number' => $supplier->phone_number,
+        ] : null;
+
+        $customerArr = $customer ? [
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'company_name' => $customer->company_name,
+            'tax_no' => $customer->tax_no ?? '',
+            'address' => $customer->address . ($customer->city ? (', ' . $customer->city) : ''),
+            'credit_days' => $customer->credit_days ?? 30,
+            'phone_number' => $customer->phone_number,
+        ] : null;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Party created successfully',
+            'party_type' => $partyType,
+            'supplier' => $supplierArr,
+            'customer' => $customerArr,
+        ]);
+    }
 }
 

@@ -119,7 +119,8 @@ class PurchaseController extends Controller
             $lims_brand_list = Brand::where('is_active', true)->get();
             $lims_category_list = Category::where('is_active', true)->get();
             $lims_unit_list = Unit::where('is_active', true)->get();
-            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'pending_grns', 'lims_brand_list', 'lims_category_list', 'lims_unit_list'));
+            $lims_customer_group_all = class_exists(\App\Models\CustomerGroup::class) ? \App\Models\CustomerGroup::where('is_active', true)->get() : collect();
+            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'pending_grns', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_customer_group_all'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

@@ -123,7 +123,7 @@
                         <div class="field-compact-item" style="width:250px;flex-shrink:0;">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="customer_id">Party *</label>
-                                <a href="{{ route('customer.index') }}" target="_blank" style="font-size:9.5px;color:#7c3aed;font-weight:700;">+ New Party</a>
+                                <button type="button" class="btn btn-link p-0 btn-open-party-modal" id="btn-quick-new-party" data-party-type="customer" style="font-size:9.5px;color:#7c3aed;font-weight:700;text-decoration:none;border:none;background:none;cursor:pointer;">+ New Party</button>
                             </div>
                             <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" title="Select Customer" required>
                                 @foreach($lims_customer_list as $customer)
@@ -1252,6 +1252,165 @@
     </div>
 </div>
 
+<!-- Quick Create Party Modal (Inline Popup with All Options) -->
+<div id="quick-create-party-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 820px;">
+        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 16px 40px rgba(0,0,0,0.22);overflow:hidden;">
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #e2e8f0;">
+                <div>
+                    <h5 class="modal-title font-weight-bold" style="font-size:14.5px;color:#0f172a;margin:0;">
+                        <span id="quick-party-modal-title"><i class="fa fa-user-plus text-primary mr-1"></i> Add Customer</span>
+                    </h5>
+                    <small class="text-muted italic d-block" style="font-size:11px;margin-top:2px;">The field labels marked with * are required input fields.</small>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="quick-create-party-form">
+                @csrf
+                <input type="hidden" id="party_type_input" name="party_type" value="customer">
+                <div class="modal-body" style="padding:16px 20px;max-height:calc(85vh - 120px);overflow-y:auto;">
+                    
+                    <!-- Top Options: Dual Nature & Customer Group -->
+                    <div class="row align-items-center mb-3 p-2" style="background:#f1f5f9;border-radius:6px;border:1px solid #e2e8f0;margin:0 0 14px 0;">
+                        <div class="col-md-5">
+                            <div class="form-check d-flex align-items-center mb-0" style="gap:8px;">
+                                <input type="checkbox" id="party-both-checkbox" name="both" value="1" class="form-check-input" style="margin-top:0;cursor:pointer;width:16px;height:16px;">
+                                <label for="party-both-checkbox" class="form-check-label font-weight-bold" style="font-size:12px;cursor:pointer;color:#1e293b;user-select:none;margin-bottom:0;">
+                                    Both Customer and Supplier
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-7" id="party-customer-group-col">
+                            <div class="d-flex align-items-center" style="gap:8px;">
+                                <label style="font-size:11.5px;font-weight:700;color:#334155;white-space:nowrap;margin:0;">Customer Group *</label>
+                                <select id="party-customer-group-id" name="customer_group_id" class="form-control form-control-sm" style="height:32px;font-size:12px;">
+                                    @if(isset($lims_customer_group_all) && count($lims_customer_group_all))
+                                        @foreach($lims_customer_group_all as $cg)
+                                            <option value="{{ $cg->id }}">{{ $cg->name }}</option>
+                                        @endforeach
+                                    @else
+                                        <option value="1">General</option>
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 1: Name, Company Name, VAT/Tax/GSTIN -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Name *</label>
+                                <input type="text" id="party-name" name="name" class="form-control" placeholder="Contact or Customer Name" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Company Name *</label>
+                                <input type="text" id="party-company-name" name="company_name" class="form-control" placeholder="Company / Trade Name" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Tax Number (GSTIN)</label>
+                                <input type="text" id="party-vat-number" name="vat_number" class="form-control" placeholder="e.g. 33AAAAA0000A1Z5" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Opening Balance, Email, Phone Number -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Opening balance (Due) <i class="fa fa-info-circle text-muted" title="Amount due at start"></i></label>
+                                <input type="number" id="party-opening-balance" name="opening_balance" class="form-control" value="0" step="any" min="0" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Email *</label>
+                                <input type="email" id="party-email" name="email" class="form-control" placeholder="example@example.com" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Phone Number *</label>
+                                <input type="text" id="party-phone-number" name="phone_number" class="form-control" placeholder="Primary Phone" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: WhatsApp Number, Credit Days, City -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>WhatsApp Number</label>
+                                <input type="text" id="party-wa-number" name="wa_number" class="form-control" placeholder="WhatsApp Number" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Credit Days</label>
+                                <input type="number" id="party-credit-days" name="credit_days" class="form-control" value="30" min="0" placeholder="30" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>City *</label>
+                                <input type="text" id="party-city" name="city" class="form-control" placeholder="City" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Address, State, Postal Code -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Address *</label>
+                                <input type="text" id="party-address" name="address" class="form-control" placeholder="Street / Door No / Area" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>State</label>
+                                <input type="text" id="party-state" name="state" class="form-control" placeholder="State" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Postal Code</label>
+                                <input type="text" id="party-postal-code" name="postal_code" class="form-control" placeholder="Postal / Pin Code" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Country & Error Display -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Country</label>
+                                <input type="text" id="party-country" name="country" class="form-control" value="India" placeholder="Country" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-8 d-flex align-items-center">
+                            <div id="party-form-error" class="alert alert-danger w-100 mb-0 py-1 px-3" style="display:none;font-size:12px;border-radius:6px;"></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 20px;border-top:1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="height:34px;padding:0 16px;border-radius:6px;font-weight:600;">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary" id="btn-save-party" style="background:#7c3aed;border-color:#7c3aed;height:34px;padding:0 22px;border-radius:6px;font-weight:700;font-size:13px;">
+                        <i class="dripicons-checkmark mr-1"></i> Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
         <div class="modal-content">
@@ -1690,7 +1849,7 @@
 
     // Append modals directly to body to avoid container clipping
     $(function() {
-        $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #sale-details, #view-payment, #add-payment, #edit-payment, #add-delivery, #send-sms, #quick-create-category-modal, #quick-create-brand-modal').appendTo('body');
+        $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #sale-details, #view-payment, #add-payment, #edit-payment, #add-delivery, #send-sms, #quick-create-category-modal, #quick-create-brand-modal, #quick-create-party-modal').appendTo('body');
     });
 
     // --- State variables ---
@@ -2374,6 +2533,96 @@
             error: function() {
                 btn.prop('disabled', false).text('Save Brand');
                 alert('Failed to save brand');
+            }
+        });
+    });
+
+    // --- Inline Party Creation Handlers ---
+    $(document).on('click', '.btn-open-party-modal, #btn-quick-new-party', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var partyType = $(this).data('party-type') || 'customer';
+        $('#party_type_input').val(partyType);
+        if (partyType === 'customer') {
+            $('#quick-party-modal-title').html('<i class="fa fa-user-plus text-primary mr-1"></i> Add Customer');
+            $('#party-both-checkbox').prop('checked', false);
+            $('#party-customer-group-col').show();
+        } else {
+            $('#quick-party-modal-title').html('<i class="fa fa-truck text-primary mr-1"></i> Add Supplier');
+            $('#party-both-checkbox').prop('checked', false);
+            $('#party-customer-group-col').hide();
+        }
+        $('#party-form-error').hide().empty();
+        $('#quick-create-party-modal').modal('show');
+        setTimeout(function() {
+            $('#party-name').focus();
+        }, 300);
+    });
+
+    $('#party-both-checkbox').on('change', function() {
+        if ($(this).is(':checked') || $('#party_type_input').val() === 'customer') {
+            $('#party-customer-group-col').slideDown(200);
+        } else {
+            $('#party-customer-group-col').slideUp(200);
+        }
+    });
+
+    $('#quick-create-party-form').on('submit', function(e) {
+        e.preventDefault();
+        var $btn = $('#btn-save-party');
+        var originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Saving...');
+        $('#party-form-error').hide().empty();
+
+        var formData = $(this).serialize();
+
+        $.ajax({
+            type: 'POST',
+            url: '{{ route("parties.quick-store") }}',
+            data: formData,
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(originalText);
+                if (res && res.success) {
+                    var party = res.customer || res.supplier;
+                    if (party && $('#customer_id').length) {
+                        var label = party.name + ' (' + (party.company_name || party.phone_number || 'Individual') + ')';
+                        var newOpt = $('<option>', {
+                            value: party.id,
+                            text: label,
+                            'data-tax-no': party.tax_no || party.vat_number || '',
+                            'data-address': party.address || '',
+                            'data-city': party.city || '',
+                            'data-state': party.state || '',
+                            'data-postal': party.postal_code || '',
+                            'data-credit-days': party.credit_days || 0
+                        });
+                        $('#customer_id').append(newOpt);
+                        $('#customer_id').val(party.id).trigger('change');
+                        if ($.fn.selectpicker) {
+                            $('#customer_id').selectpicker('refresh');
+                        }
+                    }
+
+                    $('#quick-create-party-modal').modal('hide');
+                    $('#quick-create-party-form')[0].reset();
+                } else {
+                    $('#party-form-error').text((res && res.message) ? res.message : 'Failed to save party').show();
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html(originalText);
+                var errText = 'An error occurred while saving party.';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    var msgs = [];
+                    $.each(xhr.responseJSON.errors, function(k, v) {
+                        msgs.push(v[0]);
+                    });
+                    errText = msgs.join('<br>');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errText = xhr.responseJSON.message;
+                }
+                $('#party-form-error').html(errText).show();
             }
         });
     });

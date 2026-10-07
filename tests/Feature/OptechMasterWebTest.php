@@ -9,6 +9,7 @@ use App\Models\SaleType;
 use App\Models\PurchaseType;
 use App\Models\Product;
 use App\Models\StandardRemark;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -27,6 +28,22 @@ class OptechMasterWebTest extends TestCase
         $_ENV['ERP_OPTIONAL_ACTIVATION_READY'] = 'true';
         \Illuminate\Support\Facades\Cache::flush();
         $this->adminUser = User::first();
+
+        if (!\Illuminate\Support\Facades\DB::table('suppliers')->where('id', 1)->exists()) {
+            \Illuminate\Support\Facades\DB::table('suppliers')->insert([
+                'id' => 1,
+                'company_id' => 1,
+                'name' => 'Test Supplier',
+                'company_name' => 'Test Supplier Co',
+                'phone_number' => '1234567890',
+                'email' => 'supplier@test.com',
+                'address' => 'Test Address',
+                'city' => 'Test City',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     public function test_commercial_sale_entry_page_loads_with_database_masters(): void
@@ -183,7 +200,7 @@ class OptechMasterWebTest extends TestCase
         ]);
 
         $purType = PurchaseType::where('company_id', 1)->first();
-        $this->actingAs($this->adminUser)
+        $resPur = $this->actingAs($this->adminUser)
             ->postJson('/commercial/purchase', [
                 'warehouse_id' => 1,
                 'business_date' => now()->toDateString(),
@@ -437,4 +454,119 @@ class OptechMasterWebTest extends TestCase
         $this->assertEquals(150, (float) $ratesRes->json('last_sale.rate'));
         $this->assertEquals(120, (float) $ratesRes->json('last_purchase.cost'));
     }
+
+    public function test_quick_store_party_creates_supplier_inline(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/quick-store', [
+                'party_type' => 'supplier',
+                'name' => 'Apex Textiles Supplier',
+                'company_name' => 'Apex Spinners Ltd',
+                'vat_number' => '33AABCA1234F1Z1',
+                'opening_balance' => 0,
+                'email' => 'apex@spinners.com',
+                'phone_number' => '9842100000',
+                'wa_number' => '9842100000',
+                'credit_days' => 45,
+                'city' => 'Tirupur',
+                'address' => '12 Mill Road, Cotton Nagar',
+                'state' => 'Tamil Nadu',
+                'postal_code' => '641601',
+                'country' => 'India',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'party_type' => 'supplier',
+        ]);
+        $this->assertNotNull($response->json('supplier.id'));
+        $this->assertEquals('Apex Textiles Supplier', $response->json('supplier.name'));
+        $this->assertEquals('Apex Spinners Ltd', $response->json('supplier.company_name'));
+        $this->assertEquals('33AABCA1234F1Z1', $response->json('supplier.vat_number'));
+
+        $this->assertDatabaseHas('suppliers', [
+            'name' => 'Apex Textiles Supplier',
+            'company_name' => 'Apex Spinners Ltd',
+            'city' => 'Tirupur',
+            'credit_days' => 45,
+        ]);
+    }
+
+    public function test_quick_store_party_creates_customer_inline(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/quick-store', [
+                'party_type' => 'customer',
+                'customer_group_id' => 1,
+                'name' => 'Sri Krishna Retailer',
+                'company_name' => 'Sri Krishna Silks',
+                'vat_number' => '33XYZ1234F1Z5',
+                'opening_balance' => 500,
+                'email' => 'krishna@silks.com',
+                'phone_number' => '9443200000',
+                'wa_number' => '9443200000',
+                'credit_days' => 30,
+                'city' => 'Salem',
+                'address' => '45 Bazaar Street',
+                'state' => 'Tamil Nadu',
+                'postal_code' => '636001',
+                'country' => 'India',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'party_type' => 'customer',
+        ]);
+        $this->assertNotNull($response->json('customer.id'));
+        $this->assertEquals('Sri Krishna Retailer', $response->json('customer.name'));
+        $this->assertEquals('Sri Krishna Silks', $response->json('customer.company_name'));
+
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Sri Krishna Retailer',
+            'company_name' => 'Sri Krishna Silks',
+            'city' => 'Salem',
+            'credit_days' => 30,
+        ]);
+    }
+
+    public function test_quick_store_party_creates_both_supplier_and_customer(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/quick-store', [
+                'party_type' => 'supplier',
+                'both' => 1,
+                'customer_group_id' => 1,
+                'name' => 'Dual Trading Entity',
+                'company_name' => 'Dual Enterprises',
+                'vat_number' => '33DUAL1234F1Z9',
+                'opening_balance' => 0,
+                'email' => 'dual@enterprise.com',
+                'phone_number' => '9123456789',
+                'city' => 'Erode',
+                'address' => '88 Market Complex',
+                'state' => 'Tamil Nadu',
+                'postal_code' => '638001',
+                'country' => 'India',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'party_type' => 'both',
+        ]);
+        $this->assertNotNull($response->json('supplier.id'));
+        $this->assertNotNull($response->json('customer.id'));
+
+        $this->assertDatabaseHas('suppliers', [
+            'name' => 'Dual Trading Entity',
+            'company_name' => 'Dual Enterprises',
+        ]);
+        $this->assertDatabaseHas('customers', [
+            'name' => 'Dual Trading Entity',
+            'company_name' => 'Dual Enterprises',
+        ]);
+    }
 }
+

@@ -510,17 +510,47 @@ Addressed user feedback:
 
 ---
 
-## 7. Verification & Testing Evidence
-- Automated feature tests executed and passed:
-  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: **36 passed (184 assertions, 100%)**, Duration: ~16s
-- Database verification:
-  - Active taxes: 0%, 5%, 12%, 18%, 28%. VAT 10% inactive.
-  - Category and Brand quick-store verified via automated tests.
+## 7. Database Fresh Slate Wipe & In-Place Quick Create Party Modal (Oct 2026)
+
+Addressed user feedback:
+> "delete all the purchase and party sales product entries and make a fresh"
+> "when i click the "+new party " popup instead of new window and bring all the options, same window as a popup."
+
+1. **Database Fresh Slate Wipe:**
+   - **Snapshot Pre-Wipe Backup:** Full JSON database backup saved to `database/backups/pre_fresh_slate_backup_20261007_182938.json` (251.21 KB) prior to truncation.
+   - **Truncation:** Safely truncated 58 transactional, payment, stock, and demo product tables with `SET FOREIGN_KEY_CHECKS=0`.
+   - **Clean Seed State:** Preserved all master configurations (warehouses, users, roles, permissions, GST slabs, units, document series, billers). Reseeded clean default `Walk-in Customer` (ID=1) for POS/system integrity. Reset `AUTO_INCREMENT = 1` across truncated tables.
+   - **Verified Counts:** `purchases: 0, sales: 0, products: 0, suppliers: 0, customers: 1`.
+
+2. **In-Place Quick Create Party Modal (Zero New Window Redirection):**
+   - **Eliminated New Tab / Window:** Replaced external `target="_blank"` anchor links with `<button type="button" class="btn btn-link btn-open-party-modal" id="btn-quick-new-party">` in both `purchase/index.blade.php` and `sale/index.blade.php`.
+   - **Comprehensive Field Layout (Matching Reference Screenshot):**
+     - Checkbox: "Both Customer and Supplier" (dynamically creates both supplier and customer records under a single form submit).
+     - Customer Group selector (revealed when customer or both is checked).
+     - Contact & Company: Name *, Company Name *.
+     - Taxes & Financials: VAT / Tax Number (GSTIN), Opening balance (Due) (default: 0), Credit Days (default: 30).
+     - Communications: Email *, Phone Number *, WhatsApp Number.
+     - Address: City *, Address *, State, Postal Code, Country.
+   - **Multi-Tenancy Guard (`CompanyWriteGuard`):** Added `company_id` to `$fillable` in `Supplier.php` and `Customer.php` to ensure records pass company-scoped authorization cleanly.
+   - **Endpoint & Instant Dropdown Refresh:**
+     - Route: `POST /parties/quick-store` handled by `CommercialController::quickStoreParty`.
+     - Validates and saves in DB transaction.
+     - Returns JSON with created IDs and formatted party details.
+     - Appends new option to active dropdown (`#supplier_id` in purchases or `#customer_id` in sales), selects it, refreshes Bootstrap-Select picker, triggers `updatePartyCard()`, and closes the modal without page reload.
 
 ---
 
-## 8. Crash Recovery Protocol for Any Agent
+## 8. Verification & Testing Evidence
+- Automated feature tests executed and passed:
+  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
+  - Results: **39 passed (200 assertions, 100%)**, Duration: ~16s
+- Database verification:
+  - `purchases: 0, sales: 0, products: 0, suppliers: 0, customers: 1`
+  - Inline party creation tested and verified for Supplier, Customer, and Both.
+
+---
+
+## 9. Crash Recovery Protocol for Any Agent
 1. **Never start from scratch:** When reopened after a crash or system reboot, inspect SESSION_MEMORY.md first.
 2. **Check Git Status:** Verify branch is enhanced-ui (git status and git branch -vv).
 3. **Verify Database & Dependencies:** Check migrations are up to date.

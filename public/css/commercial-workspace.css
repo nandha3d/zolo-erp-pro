@@ -3405,5 +3405,74 @@ body.dark-mode .ui-autocomplete .custom-ac-item .item-rate {
     color: #34d399 !important;
 }
 
+/* Quick Create Party Modal Styling */
+#quick-create-party-modal .modal-content {
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22) !important;
+}
+
+#quick-create-party-modal .compact-field-block {
+    margin-bottom: 11px !important;
+}
+
+#quick-create-party-modal .compact-field-block label {
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    color: #475569 !important;
+    margin-bottom: 3px !important;
+    display: block !important;
+}
+
+#quick-create-party-modal .compact-field-block .form-control {
+    height: 34px !important;
+    font-size: 12.5px !important;
+    padding: 4px 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+#quick-create-party-modal .compact-field-block .form-control:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+}
+
+/* Dark Mode for Quick Create Party Modal */
+body.dark-mode #quick-create-party-modal .modal-content {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode #quick-create-party-modal .modal-header,
+body.dark-mode #quick-create-party-modal .modal-footer {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #quick-create-party-modal .modal-title {
+    color: #f8fafc !important;
+}
+
+body.dark-mode #quick-create-party-modal .compact-field-block label {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode #quick-create-party-modal .compact-field-block .form-control {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focus {
+    border-color: #a78bfa !important;
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25) !important;
+}
+
 
 

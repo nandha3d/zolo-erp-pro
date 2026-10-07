@@ -10,7 +10,7 @@ class Supplier extends Model
     use ScopesCompanyQueries;
 
     protected $fillable =[
-        "name", "print_name", "image", "company_name", "contact_person", "vat_number", "tax_no", "tin_no",
+        "company_id", "name", "print_name", "image", "company_name", "contact_person", "vat_number", "tax_no", "tin_no",
         "email", "phone_number", "wa_number", "address", "city", "state", "postal_code", "country",
         "area_id", "agent_id", "opening_balance", "credit_days", "credit_limit", "cd_days", "cd_percent", "bill_by_bill",
         "pay_term_no", "pay_term_period", "is_active"
