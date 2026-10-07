@@ -292,6 +292,12 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
           </div>
         </a>
 
+        @hasSection('navbar-center')
+          <div class="navbar-center-area flex-grow-1 mx-2 d-flex align-items-center justify-content-between overflow-hidden" style="min-width:0;">
+            @yield('navbar-center')
+          </div>
+        @endif
+
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
           @unless($companyContext)
           <div class="dropdown">

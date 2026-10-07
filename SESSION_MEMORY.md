@@ -8,18 +8,52 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 10:25:00 (+05:30)
+- **Last Updated:** 2026-10-07 11:15:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui
 - **Latest Commits:**
-  - ab15f7c — "fix(voucher): resolve product search autocomplete, density switching, multi-item picker and row entry in sales and purchases"
-  - In-progress enhancements for stacked feedback items (12 items)
+  - 26ce97f — "fix(commercial): address 12 stacked UI feedback items for sales and purchase command centers"
+  - In-progress: Vertical space compaction (navbar consolidation, 52px primary fields, 100% editable table, modal fixes)
 - **Working Tree State:** All automated feature suites passing (100%)
 - **Test Suite Status:** 33/33 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
 
 ---
 
-## 2. Session Recovery & Stacked User Feedback Resolution
+## 2. Vertical Space Compaction, In-Cell Table Editing & Modal Activation (Oct 2026)
+
+Addressed user feedback regarding vertical space occupation, bill fields height reduction by >50%, table editability, and modal activation:
+
+1. **Top Navbar Command Strip Consolidation:**
+   - Moved all page titles (`Purchase Command Center` / `Sales Command Center`, `New Purchase Bill` / `New Sales Bill`), breadcrumb mode badges, cash/credit segmented pills, product/service/mixed pills, register navigation pills (`All`, `GRN`/`DC`, `Transfers`, `Returns`), live `TOTAL: ₹ 0.00` badge, `⚙ Details`, and `📖 Bill list` buttons directly into the empty space in the main layout navbar (`resources/views/backend/layout/main.blade.php` via `@hasSection('navbar-center')`).
+   - Completely eliminated the redundant `.comm-command-bar` from the page content, saving ~38px of vertical height.
+
+2. **Ultra-Compact Primary Document Fields (Height Reduced by >60%):**
+   - Re-architected primary fields into a tight 2-row layout with 24px input heights and 9.5px uppercase labels (`.doc-primary-fields.compact-fields`).
+   - Total card height reduced to ~52px (down from ~160px), reclaiming >100px of vertical space for the items table.
+   - Row 1: Our Bill No, Supplier Inv No / Customer PO, Bill Date, Entry Date, Party selector with `+ New Party`, and inline GSTIN / formatted address / credit days strip.
+   - Row 2: Tax Classification, Series, Warehouse (and Biller for sales), plus compact Logistics & Remarks quick strip.
+
+3. **Full Viewport Space Utilization for Items Grid:**
+   - Removed redundant `< Page 1/1 >` pagination row below the items table.
+   - Set `.comm-entry-workspace form`, `.desk-card.items-container`, and `.table-responsive` to flex-grow (`flex: 1 1 auto; height: 100%`) so the table stretches all the way down to the bottom summary bar, filling all available vertical space.
+
+4. **100% In-Cell Editable Items Table:**
+   - Updated `addProductRow` in both `purchase/index.blade.php` and `sale/index.blade.php` so all table cells are editable:
+     - Item Name: `<input class="form-control form-control-sm row-item-name" name="product_name_text[]">`
+     - Type: `<select class="row-type-select" name="purchase_type_line[]">` / `name="sale_type_line[]"`
+     - Unit: `<select class="row-unit-select" name="purchase_unit[]">` / `name="sale_unit[]"`
+     - Rate: `<input class="row-rate">`
+     - Qty: `<input class="row-qty">`
+     - Amount: `<input class="row-amount">` with two-way reactive calculation (editing Amount recalculates Rate: `rate = amount / qty`; editing Rate recalculates Amount: `amount = rate * qty`)
+     - Tax Rate: `<select class="row-tax-rate">`
+     - Total: `<input class="row-total" readonly>`
+     - Actions: Pencil button opens `#row-detail-modal` for Batch, Expiry, Serial/IMEI, Item Discount; trash button deletes row.
+   - Preserved `Product::firstOrCreate` auto-creation in controllers for custom/ad-hoc typed items.
+
+5. **Fixed "+ Create item" and "Multi item" Modals:**
+   - Added standard Bootstrap `data-toggle="modal" data-target="#..."` attributes to buttons.
+   - Appended modals directly to `document.body` on load (`$('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #purchase-details').appendTo('body')`), completely eliminating clipping, transform, or backdrop z-index trapping.
+   - Added explicit JavaScript trigger handlers to guarantee instant modal display without page reload or navigation.
 
 Recovered undelivered stacked user messages from conversation storage and implemented solutions for all 12 feedback requests:
 

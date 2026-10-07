@@ -1016,13 +1016,33 @@ class SaleController extends Controller
 
             foreach ($product_id as $i => $id) {
                 $lims_product_data = Product::where('id', $id)->first();
+                if (!$lims_product_data && !empty($data['product_name_text'][$i])) {
+                    $manualName = trim($data['product_name_text'][$i]);
+                    $lims_product_data = Product::firstOrCreate(
+                        ['name' => $manualName],
+                        [
+                            'code' => 'ITM-' . mt_rand(100000, 999999),
+                            'type' => 'standard',
+                            'barcode_symbology' => 'code128',
+                            'unit_id' => 1,
+                            'purchase_unit_id' => 1,
+                            'sale_unit_id' => 1,
+                            'cost' => $net_unit_price[$i] ?? 0,
+                            'price' => $net_unit_price[$i] ?? 0,
+                            'is_active' => true,
+                        ]
+                    );
+                    $id = $lims_product_data->id;
+                    $product_id[$i] = $id;
+                }
+                if (!$lims_product_data) continue;
                 // DB::rollback();
                 $product_sale['variant_id'] = null;
                 $product_sale['product_batch_id'] = null;
 
                 if($sale_unit[$i] != 'n/a' && $lims_product_data->type != 'combo') {
-                    $lims_sale_unit_data  = Unit::where('unit_name', $sale_unit[$i])->first();
-                    $sale_unit_id = $lims_sale_unit_data->id;
+                    $lims_sale_unit_data = Unit::where('unit_name', $sale_unit[$i])->orWhere('unit_code', $sale_unit[$i])->first() ?? Unit::first();
+                    $sale_unit_id = $lims_sale_unit_data ? $lims_sale_unit_data->id : 1;
                     if($lims_product_data->is_variant) {
                         $lims_product_variant_data = ProductVariant::select('id', 'variant_id')->FindExactProductWithCode($id, $product_code[$i])->first();
                         $product_sale['variant_id'] = $lims_product_variant_data->variant_id;
@@ -2987,6 +3007,25 @@ class SaleController extends Controller
         $log_data['item_description'] = '';
         foreach ($product_id as $key => $pro_id) {
             $lims_product_data = Product::find($pro_id);
+            if (!$lims_product_data && !empty($data['product_name_text'][$key])) {
+                $manualName = trim($data['product_name_text'][$key]);
+                $lims_product_data = Product::firstOrCreate(
+                    ['name' => $manualName],
+                    [
+                        'code' => 'ITM-' . mt_rand(100000, 999999),
+                        'type' => 'standard',
+                        'barcode_symbology' => 'code128',
+                        'unit_id' => 1,
+                        'purchase_unit_id' => 1,
+                        'sale_unit_id' => 1,
+                        'cost' => $net_unit_price[$key] ?? 0,
+                        'price' => $net_unit_price[$key] ?? 0,
+                        'is_active' => true,
+                    ]
+                );
+                $pro_id = $lims_product_data->id;
+                $product_id[$key] = $pro_id;
+            }
             if (!$lims_product_data) continue;
             $product_sale['variant_id'] = null;
             $uName = $sale_unit[$key] ?? 'Unit';

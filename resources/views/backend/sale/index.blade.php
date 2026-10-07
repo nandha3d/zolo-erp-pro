@@ -1,5 +1,55 @@
 @extends('backend.layout.main') 
 
+@section('navbar-center')
+<div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100" style="gap:6px; min-width:0;">
+    <!-- Left Title & Mode Toggles -->
+    <div class="d-flex align-items-center" style="gap:6px; min-width:0; flex-shrink:1; overflow:hidden;">
+        <span class="badge" style="background:#0f172a;color:#a855f7;font-size:10.5px;font-weight:700;padding:3px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">
+            <i class="dripicons-cart text-primary"></i> Sales Command Center
+        </span>
+        <span style="color:#94a3b8;font-size:11px;">/</span>
+        <span id="doc-title-text" style="font-size:11.5px;font-weight:700;color:#7c3aed;white-space:nowrap;">New Sales Bill</span>
+        <span id="doc-breadcrumb-mode" class="badge badge-primary" style="font-size:9px;padding:1px 5px;">New</span>
+
+        <!-- Segmented Mode Toggles -->
+        <div class="pill-segmented-compact ml-1" role="group" aria-label="Payment Mode">
+            <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
+            <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
+        </div>
+        <div class="pill-segmented-compact d-none d-lg-inline-flex" role="group" aria-label="Product Mode">
+            <button type="button" class="segment-btn active" data-nature="product">Product</button>
+            <button type="button" class="segment-btn" data-nature="service">Service</button>
+            <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
+        </div>
+    </div>
+
+    <!-- Center Navigation Register Pills -->
+    <div class="d-none d-xl-flex align-items-center" style="gap:3px; flex-shrink:0;">
+        <a class="btn btn-sm btn-light py-0 px-2 active" id="tab-all-sales" href="javascript:void(0)" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;font-weight:600;"><i class="dripicons-list"></i> All</a>
+        <a class="btn btn-sm btn-light py-0 px-2" href="{{ route('sale.pos') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-shopping-bag"></i> POS</a>
+        <a class="btn btn-sm btn-light py-0 px-2" href="{{ route('delivery-challans.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-box"></i> Challans</a>
+        <a class="btn btn-sm btn-light py-0 px-2" href="{{ route('quotations.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-document-edit"></i> Quotations</a>
+    </div>
+
+    <!-- Right Controls: Live Total, Details, Bill List, Add New -->
+    <div class="d-flex align-items-center" style="gap:5px; flex-shrink:0;">
+        <div class="header-grand-total-badge px-2" style="background:#fef3c7; border:1px solid #fde68a; border-radius:4px; font-size:11px; font-weight:800; color:#d97706; height:22px; display:inline-flex; align-items:center; gap:4px;">
+            <span style="font-size:9px; color:#92400e; font-weight:700;">TOTAL:</span>
+            <span id="header-grand-total-display">₹ 0.00</span>
+        </div>
+        <button type="button" class="btn btn-outline-secondary py-0 px-2" id="btn-open-details" title="Open Charges & Transport Details" style="height:22px;font-size:10.5px;line-height:20px;">
+            ⚙ Details
+        </button>
+        <button type="button" class="btn btn-outline-secondary py-0 px-2" id="btn-header-toggle-list" title="Toggle Bill List Panel" style="height:22px;font-size:10.5px;line-height:20px;">
+            📖 Bill list
+        </button>
+        <button type="button" class="btn btn-primary py-0 px-2" id="btn-top-new" title="Add New Sale" style="height:22px;font-size:10.5px;line-height:20px;background:#7c3aed;border-color:#7c3aed;color:#fff;">
+            <i class="dripicons-plus"></i> New
+        </button>
+    </div>
+</div>
+@endsection
+
 @section('content')
 
 <style type="text/css">
@@ -21,28 +71,6 @@
 <div id="comm-progress-bar"></div>
 
 <section class="commercial-workspace-view">
-    <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-cart text-primary"></i> {{ __('Sales') }} Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-wallet"></i> Invoices & Counter Orders</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link active" id="tab-all-sales" href="javascript:void(0)" data-sale-type="0"><i class="dripicons-list"></i> {{ __('db.All') }} Invoices</a></li>
-            <li><a class="nav-link" id="tab-pos-sales" href="{{ route('sale.pos') }}"><i class="dripicons-shopping-bag"></i> POS / Counter</a></li>
-            <li><a class="nav-link" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> {{ __('Delivery Challans') }}</a></li>
-            <li><a class="nav-link" href="{{ route('quotations.index') }}"><i class="dripicons-document-edit"></i> {{ __('db.Quotation') }}</a></li>
-        </ul>
-        <div class="comm-actions">
-            <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-top-new" title="Add New Sale">
-                <i class="dripicons-plus"></i> {{ __('db.Add Sale') }}
-            </button>
-            <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle Bill List Panel (Alt+D)" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
-                <i class="dripicons-view-list"></i> Bill list
-            </button>
-        </div>
-    </div>
-
     <!-- 2-Column Command Center Grid: Main Entry Workspace + Side Bill List Panel -->
     <div class="comm-split-grid" id="comm-split-grid">
         <!-- Main: Sales Entry Workspace (Matching Screenshot 3) -->
@@ -66,91 +94,30 @@
                 <input type="hidden" name="paid_amount" id="hidden-paid-amount" value="0">
                 @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
 
-                <!-- 1. Header Strip (Matching Screenshot 3) -->
-                <div class="doc-header-strip">
-                    <div class="doc-title-block">
-                        <div class="doc-title-meta">
-                            <div class="desk-breadcrumb-trail" style="font-size:11px; color:#64748b; margin-bottom:2px;">
-                                <a href="{{ url('/') }}" style="color:#64748b;">Home</a> / <a href="{{ url('/sales') }}" style="color:#64748b;">Selling</a> / <a href="{{ url('/sales') }}" style="color:#64748b;">Sales Bills</a> / <span id="doc-breadcrumb-mode" class="text-primary font-weight-bold">New</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="doc-icon-box" style="width:34px;height:34px;font-size:16px;">📄</div>
-                                <div>
-                                    <h2 id="doc-title-text" style="font-size:17px;font-weight:700;margin:0;color:#0f172a;line-height:1.2;">New Sales Bill</h2>
-                                    <span class="doc-sub" id="doc-sub-text" style="font-size:11px;color:#64748b;">Sale • New bill</span>
-                                </div>
-                            </div>
+                <!-- 2. Primary Document Fields (Ultra-Compact 2-Row Layout, ~52px height, >60% reduced) -->
+                <div class="desk-card doc-primary-fields compact-fields mb-1">
+                    <!-- Compact Row 1: Bill No, Customer PO, Dates, Party & Inline Info -->
+                    <div class="fields-compact-row">
+                        <div class="field-compact-item" style="width:120px;flex-shrink:0;">
+                            <label for="reference_no">Our Bill No</label>
+                            <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Auto series" autocomplete="off">
                         </div>
-                    </div>
-
-                    <!-- Mode Toggles (Cash/Credit & Line Nature) -->
-                    <div class="doc-toggle-group">
-                        <div class="pill-segmented" role="group" aria-label="Payment Mode">
-                            <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
-                            <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
-                        </div>
-                        <div class="pill-segmented" role="group" aria-label="Product Mode">
-                            <button type="button" class="segment-btn active" data-nature="product">Product</button>
-                            <button type="button" class="segment-btn" data-nature="service">Service</button>
-                            <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
-                        </div>
-                    </div>
-
-                    <!-- Metadata & Header Tools -->
-                    <div class="doc-header-meta">
-                        <div class="header-grand-total-badge px-2 py-1" style="background:#fef3c7; border:1px solid #fde68a; border-radius:6px; font-size:11px; font-weight:800; color:#d97706; display:inline-flex; align-items:center; gap:5px;">
-                            <span style="font-size:9.5px; color:#92400e; font-weight:700;">TOTAL:</span>
-                            <span id="header-grand-total-display">₹ 0.00</span>
-                        </div>
-                        <div class="meta-terms">
-                            <span>Due <strong id="display-due-date">{{ date('d-m-Y') }}</strong></span>
-                            <span>Credit days <strong id="header-credit-days">—</strong></span>
-                            <span>Terms <strong>Standard</strong></span>
-                        </div>
-                        <div class="header-action-btns">
-                            <button type="button" class="btn-desk-action" id="btn-header-toggle-list" title="Toggle Bill List">
-                                📖 Bill list
-                            </button>
-                            <button type="button" class="btn-desk-action" id="btn-open-details" title="Open Charges & Transport Details">
-                                ⚙ Details
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Primary Document Fields (Row 1 matching Screenshot 3) -->
-                <div class="desk-card doc-primary-fields mb-2" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;">
-                    <div class="fields-grid-neo">
-                        <!-- Our Bill Number -->
-                        <div class="field-item">
-                            <label for="reference_no">Our bill number</label>
-                            <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Series number assigned on save" autocomplete="off">
-                            <span class="field-hint">Series preview • editable</span>
-                        </div>
-
-                        <!-- Customer PO / Reference -->
-                        <div class="field-item">
+                        <div class="field-compact-item" style="width:115px;flex-shrink:0;">
                             <label for="customer_po_no">Customer PO / Ref</label>
                             <input type="text" id="customer_po_no" name="customer_po_no" class="form-control" placeholder="From purchase order">
                         </div>
-
-                        <!-- Bill Date -->
-                        <div class="field-item">
-                            <label for="bill_date">Bill date</label>
+                        <div class="field-compact-item" style="width:110px;flex-shrink:0;">
+                            <label for="bill_date">Bill Date</label>
                             <input type="date" id="bill_date" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-
-                        <!-- Entry Date -->
-                        <div class="field-item">
-                            <label for="entry_date">Entry date</label>
+                        <div class="field-compact-item" style="width:110px;flex-shrink:0;">
+                            <label for="entry_date">Entry Date</label>
                             <input type="date" id="entry_date" name="entry_date" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-
-                        <!-- Party (Customer) -->
-                        <div class="field-item field-item-wide">
-                            <div class="label-with-action">
+                        <div class="field-compact-item" style="width:200px;flex-shrink:0;">
+                            <div class="d-flex align-items-center justify-content-between">
                                 <label for="customer_id">Party *</label>
-                                <a href="{{ route('customer.index') }}" target="_blank" class="link-btn-add">+ New Party</a>
+                                <a href="{{ route('customer.index') }}" target="_blank" style="font-size:9.5px;color:#7c3aed;font-weight:700;">+ New Party</a>
                             </div>
                             <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" title="Select Customer" required>
                                 @foreach($lims_customer_list as $customer)
@@ -165,31 +132,26 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="party-info-card" id="party-info-card" style="display:none;">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span style="font-size:11px; font-weight:700; color:#475569;">
-                                        GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span>
-                                    </span>
-                                    <span class="badge" id="party-credit-badge" style="background:#e0f2fe; color:#0369a1; font-size:10px; font-weight:600;">Credit: 0 days</span>
-                                </div>
-                                <div class="party-address-text" id="party-address-text"></div>
-                            </div>
                         </div>
+                        <div class="party-info-compact-inline" id="party-info-card" style="display:flex;">
+                            <span style="font-size:10px;font-weight:700;color:#475569;white-space:nowrap;">GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span></span>
+                            <span style="font-size:10.5px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" id="party-address-text">Party address loads on select</span>
+                            <span class="badge" id="party-credit-badge" style="background:#e0f2fe;color:#0369a1;font-size:9.5px;font-weight:600;white-space:nowrap;">Credit: 0 days</span>
+                        </div>
+                    </div>
 
-                        <!-- Tax Classification -->
-                        <div class="field-item">
-                            <label for="sale_type_id">Tax classification *</label>
+                    <!-- Compact Row 2: Tax Classification, Series, Warehouse, Biller, Logistics Note -->
+                    <div class="fields-compact-row">
+                        <div class="field-compact-item" style="width:150px;flex-shrink:0;">
+                            <label for="sale_type_id">Tax Classification *</label>
                             <select id="sale_type_id" name="sale_type_id" class="form-control">
                                 <option value="0">GST • Multiple rates</option>
                                 @foreach($saleTypes as $st)
                                     <option value="{{ $st->id }}">{{ $st->name }}</option>
                                 @endforeach
                             </select>
-                            <span class="field-hint text-muted">Choose each item's tax slab</span>
                         </div>
-
-                        <!-- Series -->
-                        <div class="field-item">
+                        <div class="field-compact-item" style="width:110px;flex-shrink:0;">
                             <label for="series_id">Series</label>
                             <select id="series_id" name="series_id" class="form-control">
                                 <option value="0">Sale</option>
@@ -198,9 +160,7 @@
                                 @endforeach
                             </select>
                         </div>
-
-                        <!-- Warehouse Selection -->
-                        <div class="field-item">
+                        <div class="field-compact-item" style="width:130px;flex-shrink:0;">
                             <label for="form_warehouse_id">Warehouse *</label>
                             <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
                                 @foreach($lims_warehouse_list as $wh)
@@ -208,9 +168,7 @@
                                 @endforeach
                             </select>
                         </div>
-
-                        <!-- Biller Selection -->
-                        <div class="field-item">
+                        <div class="field-compact-item" style="width:130px;flex-shrink:0;">
                             <label for="form_biller_id">Biller *</label>
                             <select id="form_biller_id" name="biller_id" class="form-control" required>
                                 @foreach($lims_biller_list as $biller)
@@ -218,62 +176,67 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div style="flex:1;display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:1px 8px;height:24px;font-size:10.5px;color:#64748b;overflow:hidden;">
+                            <span>Terms: <strong style="color:#0f172a;">Standard</strong></span>
+                            <span class="d-none d-md-inline">Credit Days: <strong id="header-credit-days" style="color:#0f172a;">—</strong></span>
+                            <a href="javascript:void(0)" id="btn-quick-logistics" style="color:#7c3aed;font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">
+                                + Transport &amp; Remarks &rarr;
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3. ITEMS Section (Matching Screenshot 3) -->
-                <div class="desk-card items-container mb-2" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:0;overflow:hidden;">
-                    <div class="items-section-header" style="padding:8px 14px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;">
-                        <div class="items-counter-group" style="display:flex;align-items:center;gap:8px;">
-                            <span class="items-title" style="font-weight:700;font-size:12px;color:#0f172a;">ITEMS</span>
-                            <span class="items-meta-badge text-muted" id="items-meta-count" style="font-size:11px;">0 line(s) • 7 per page</span>
+                <!-- 3. ITEMS Section (Expanded to Fill All Available Viewport Space) -->
+                <div class="desk-card items-container mb-1" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
+                    <div class="items-section-header" style="padding:4px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;flex-shrink:0;">
+                        <div class="items-counter-group" style="display:flex;align-items:center;gap:6px;">
+                            <span class="items-title" style="font-weight:700;font-size:11.5px;color:#0f172a;">ITEMS</span>
+                            <span class="items-meta-badge text-muted" id="items-meta-count" style="font-size:10.5px;">0 line(s)</span>
                         </div>
-                        <div class="items-controls-group" style="display:flex;align-items:center;gap:6px;">
+
+                        <!-- Inlined Barcode Search in the Space -->
+                        <div class="item-quick-search-inline" style="position:relative;width:340px;max-width:40%;">
+                            <i class="fa fa-barcode text-muted" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;"></i>
+                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (F2)" style="padding-left:26px;padding-right:28px;height:26px;font-size:11.5px;border-radius:4px;" autocomplete="off">
+                            <span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9.5px;background:#e2e8f0;padding:1px 4px;border-radius:3px;color:#475569;font-weight:700;">F2</span>
+                        </div>
+
+                        <div class="items-controls-group" style="display:flex;align-items:center;gap:5px;">
                             <div class="density-segmented">
                                 <button type="button" class="density-btn" data-density="compact">Compact</button>
                                 <button type="button" class="density-btn active" data-density="cozy">Cozy</button>
                                 <button type="button" class="density-btn" data-density="large">Large</button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:11px;" id="btn-multi-item" data-toggle="modal" data-target="#multi-item-modal">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:11px;height:24px;" id="btn-multi-item" data-toggle="modal" data-target="#multi-item-modal">
                                 <i class="dripicons-menu"></i> Multi item
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:11px;" id="btn-create-item-modal" data-toggle="modal" data-target="#quick-create-item-modal">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px;height:24px;" id="btn-create-item-modal" data-toggle="modal" data-target="#quick-create-item-modal">
                                 + Create item
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:11px;background:#7c3aed;border-color:#7c3aed;" id="btn-add-item-row">
+                            <button type="button" class="btn btn-sm btn-primary py-0 px-2" style="font-size:11px;height:24px;background:#7c3aed;border-color:#7c3aed;" id="btn-add-item-row">
                                 + Add row
                             </button>
                         </div>
                     </div>
 
-                    <!-- Quick Barcode / Item Search Bar -->
-                    <div class="item-quick-search-bar" style="padding:6px 14px;background:#ffffff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
-                        <div style="position:relative;flex:1;">
-                            <i class="fa fa-barcode text-muted" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;"></i>
-                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode, enter item code or name... (Press Enter or Alt+UpArrow for search)" style="padding-left:32px;height:30px;font-size:12px;" autocomplete="off">
-                        </div>
-                        <span style="font-size:11px;color:#94a3b8;"><kbd style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:1px 4px;font-size:10px;">F2</kbd> Quick Search</span>
-                    </div>
-
-                    <!-- Items Grid Table -->
-                    <div class="table-responsive" style="max-height: calc(100vh - 430px); min-height: 180px; overflow-y:auto;">
+                    <!-- Items Grid Table (Expands to bottom summary bar) -->
+                    <div class="table-responsive" style="flex:1 1 auto;overflow-y:auto;min-height:200px;height:100%;margin:0;">
                         <table class="desk-grid-table cozy table table-sm mb-0" id="order-table" style="width:100%;">
                             <thead>
                                 <tr style="background:#7c3aed;color:#ffffff;font-size:11px;">
-                                    <th style="width:40px;text-align:center;">#</th>
+                                    <th style="width:36px;text-align:center;">#</th>
                                     <th style="min-width:220px;">ITEM</th>
-                                    <th style="width:130px;">SALE TYPE</th>
-                                    <th style="width:80px;">UNIT</th>
-                                    <th style="width:100px;text-align:right;">RATE</th>
-                                    <th style="width:80px;text-align:center;">QTY</th>
-                                    <th style="width:110px;text-align:right;">AMOUNT</th>
-                                    <th style="width:120px;">TAX</th>
-                                    <th style="width:110px;text-align:right;">TOTAL</th>
-                                    <th style="width:70px;text-align:center;">ACTIONS</th>
+                                    <th style="width:110px;">SALE TYPE</th>
+                                    <th style="width:75px;">UNIT</th>
+                                    <th style="width:95px;text-align:right;">RATE</th>
+                                    <th style="width:70px;text-align:center;">QTY</th>
+                                    <th style="width:100px;text-align:right;">AMOUNT</th>
+                                    <th style="width:90px;">TAX</th>
+                                    <th style="width:105px;text-align:right;">TOTAL</th>
+                                    <th style="width:65px;text-align:center;">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody id="order-table-body">
-                                <!-- Initial Blank Row matching Screenshot 3 -->
                                 <tr class="empty-placeholder-row">
                                     <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
                                         No items added yet. Search or scan above or click "+ Add row".
@@ -282,13 +245,9 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="table-pagination-footer" style="padding:4px 14px;border-top:1px solid #f1f5f9;display:flex;justify-content:center;gap:10px;font-size:11px;color:#64748b;background:#f8fafc;">
-                        <span class="pagination-arrow">&lt;</span>
-                        <span>Page 1/1</span>
-                        <span class="pagination-arrow">&gt;</span>
-                    </div>
                 </div>
+
+
 
                 <!-- 4. Fixed Bottom Action & Summary Bar (Matching Screenshot 3) -->
                 <div class="desk-summary-bottom-bar" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -2px 10px rgba(0,0,0,0.03);">
@@ -638,6 +597,49 @@
         <div id="sale-footer" class="modal-body"></div>
       </div>
     </div>
+</div>
+
+<!-- Row Detail Modal (Batch, Expiry, Serial/IMEI, Discount) -->
+<div id="row-detail-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
+    <div class="modal-dialog" style="max-width:480px;">
+        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                    <i class="dripicons-pencil" style="color:#7c3aed;"></i> <span id="row-detail-modal-title">Item Details</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:16px 18px;">
+                <input type="hidden" id="modal-target-row-id" value="">
+                <div class="form-group mb-2">
+                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Batch Number</label>
+                    <input type="text" id="modal-row-batch" class="form-control form-control-sm" placeholder="e.g. BATCH-2026-01" style="height:32px;font-size:12px;">
+                </div>
+                <div class="form-group mb-2">
+                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Expiry Date</label>
+                    <input type="date" id="modal-row-expire" class="form-control form-control-sm" style="height:32px;font-size:12px;">
+                </div>
+                <div class="form-group mb-2">
+                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">IMEI / Serial Numbers</label>
+                    <textarea id="modal-row-imei" class="form-control form-control-sm" rows="2" placeholder="Comma separated IMEIs or serials" style="font-size:12px;"></textarea>
+                </div>
+                <div class="form-group mb-0">
+                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Item Discount (₹)</label>
+                    <input type="number" id="modal-row-discount" class="form-control form-control-sm" placeholder="0.00" step="0.01" style="height:32px;font-size:12px;">
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-save-row-detail" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                    Save Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Multi-Item Selection Modal (Optech Grid) -->
 <div id="multi-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
     <div class="modal-dialog modal-lg" style="max-width:850px;">
@@ -817,6 +819,11 @@
     var allProducts = @json($jsProductList);
     var lims_product_code = allProducts.map(function(p) { return p.value; });
 
+    // Append modals directly to body to avoid container clipping
+    $(function() {
+        $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #sale-details').appendTo('body');
+    });
+
     // --- State variables ---
     var rowCounter = 0;
     var taxList = @json($lims_tax_list);
@@ -988,69 +995,75 @@
         var amount = rate * qty;
         var taxAmount = amount * (taxRate / 100);
         var lineTotal = amount + taxAmount;
-
-        var itemColHtml = '';
-        if (item.is_manual) {
-            itemColHtml = `
-                <input type="text" name="product_name_manual[]" class="form-control form-control-sm row-item-name" placeholder="Type item name..." value="${item.product_name || ''}">
-                <input type="hidden" name="product_id[]" value="0">
-                <input type="hidden" name="product_code[]" value="">
-            `;
-        } else {
-            itemColHtml = `
-                <div style="font-weight:600;color:#0f172a;">${item.product_name}</div>
-                <small style="color:#64748b;">${item.product_code}</small>
-                <input type="hidden" name="product_id[]" value="${item.product_id}">
-                <input type="hidden" name="product_code[]" value="${item.product_code}">
-            `;
-        }
+        var unitVal = item.unit || item.unit_code || 'Pc';
 
         var tr = $(`
             <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}">
-                <td style="text-align:center;font-weight:600;color:#64748b;">${$('#order-table-body tr.order-item-row').length + 1}</td>
+                <td style="text-align:center;font-weight:600;color:#64748b;vertical-align:middle;">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
-                    ${itemColHtml}
+                    <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${item.product_name || ''}" placeholder="Type item name..." title="${item.product_code ? 'Code: ' + item.product_code : ''}">
+                    <input type="hidden" name="product_id[]" class="row-product-id" value="${item.product_id || 0}">
+                    <input type="hidden" name="product_code[]" class="row-product-code" value="${item.product_code || ''}">
                 </td>
                 <td>
-                    <span class="grid-type-pill" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">Sale</span>
+                    <select name="sale_type_line[]" class="form-control form-control-sm row-type-select">
+                        <option value="Sale" selected>Sale</option>
+                        <option value="Taxable">Taxable</option>
+                        <option value="Exempt">Exempt</option>
+                        <option value="Zero Rated">Zero</option>
+                    </select>
                 </td>
                 <td>
-                    <span class="badge badge-light border" style="font-size:11px;">${item.unit || 'Unit'}</span>
-                    <input type="hidden" name="sale_unit[]" value="${item.unit || 'Unit'}">
+                    <select name="sale_unit[]" class="form-control form-control-sm row-unit-select">
+                        <option value="Pc" ${unitVal === 'Pc' || unitVal === 'piece' ? 'selected' : ''}>Pc</option>
+                        <option value="Nos" ${unitVal === 'Nos' ? 'selected' : ''}>Nos</option>
+                        <option value="Kg" ${unitVal === 'Kg' ? 'selected' : ''}>Kg</option>
+                        <option value="Box" ${unitVal === 'Box' ? 'selected' : ''}>Box</option>
+                        <option value="Mtr" ${unitVal === 'Mtr' ? 'selected' : ''}>Mtr</option>
+                        <option value="Set" ${unitVal === 'Set' ? 'selected' : ''}>Set</option>
+                        <option value="Gm" ${unitVal === 'Gm' ? 'selected' : ''}>Gm</option>
+                        <option value="Pkt" ${unitVal === 'Pkt' ? 'selected' : ''}>Pkt</option>
+                        <option value="Roll" ${unitVal === 'Roll' ? 'selected' : ''}>Roll</option>
+                        <option value="Bale" ${unitVal === 'Bale' ? 'selected' : ''}>Bale</option>
+                    </select>
                 </td>
                 <td style="text-align:right;">
                     <input type="number" name="net_unit_price[]" class="form-control form-control-sm row-rate text-right" value="${rate.toFixed(decimalPlaces)}" step="0.01">
                 </td>
                 <td style="text-align:center;">
-                    <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" value="${qty}" step="any" min="0.01" style="max-width:75px;margin:auto;">
+                    <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" value="${qty}" step="any" min="0.01">
                 </td>
-                <td style="text-align:right;font-weight:600;color:#0f172a;">
-                    <span class="row-amount-display">₹ ${amount.toFixed(decimalPlaces)}</span>
+                <td style="text-align:right;">
+                    <input type="number" name="row_amount[]" class="form-control form-control-sm row-amount text-right" value="${amount.toFixed(decimalPlaces)}" step="0.01">
                     <input type="hidden" name="subtotal[]" class="row-subtotal-input" value="${lineTotal.toFixed(decimalPlaces)}">
                 </td>
                 <td>
-                    <div class="d-flex align-items-center gap-1">
-                        <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate">
-                            <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
-                            <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
-                            <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
-                            <option value="18" ${taxRate == 18 ? 'selected' : ''}>18%</option>
-                            <option value="28" ${taxRate == 28 ? 'selected' : ''}>28%</option>
-                        </select>
-                        <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
-                    </div>
+                    <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate">
+                        <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
+                        <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
+                        <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
+                        <option value="18" ${taxRate == 18 ? 'selected' : ''}>18%</option>
+                        <option value="28" ${taxRate == 28 ? 'selected' : ''}>28%</option>
+                    </select>
+                    <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
                 </td>
-                <td style="text-align:right;font-weight:700;color:#059669;">
-                    <span class="row-total-display">₹ ${lineTotal.toFixed(decimalPlaces)}</span>
+                <td style="text-align:right;">
+                    <input type="number" class="form-control form-control-sm row-total text-right" value="${lineTotal.toFixed(decimalPlaces)}" step="0.01" readonly style="background:#f8fafc;font-weight:700;color:#059669;">
                 </td>
                 <td style="text-align:center; vertical-align:middle;">
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-row" title="Delete Row">
-                        <i class="dripicons-trash"></i>
-                    </button>
-                    <input type="hidden" name="discount[]" value="0">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-edit-row" title="Edit row details (batch, expiry, serial)">
+                            <i class="dripicons-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete-row" title="Delete Row">
+                            <i class="dripicons-trash"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" name="discount[]" class="row-discount-val" value="${item.discount || 0}">
                     <input type="hidden" name="recieved[]" value="${qty}">
-                    <input type="hidden" name="batch_no[]" value="">
-                    <input type="hidden" name="imei_number[]" value="">
+                    <input type="hidden" name="batch_no[]" class="row-batch-val" value="${item.batch_no || ''}">
+                    <input type="hidden" name="expired_date[]" class="row-expire-val" value="${item.expired_date || ''}">
+                    <input type="hidden" name="imei_number[]" class="row-imei-val" value="${item.imei_number || ''}">
                 </td>
             </tr>
         `);
@@ -1060,7 +1073,7 @@
             tr.find('.row-item-name').focus();
         }
         recalcTableSummary();
-        $('#items-meta-count').text($('#order-table-body tr.order-item-row').length + ' line(s) • 7 per page');
+        $('#items-meta-count').text($('#order-table-body tr.order-item-row').length + ' line(s)');
     }
 
     // Manual Add Row (+ Add row button)
@@ -1260,13 +1273,13 @@
         $(this).closest('tr').remove();
         reindexRows();
         recalcTableSummary();
-        $('#items-meta-count').text($('#order-table-body tr.order-item-row').length + ' line(s) • 7 per page');
+        $('#items-meta-count').text($('#order-table-body tr.order-item-row').length + ' line(s)');
     });
 
-    // Live Row Calculation on Change
-    $(document).on('input change', '.row-rate, .row-qty, .row-tax-rate', function() {
+    // Row Rate Change -> Updates Amount & Total
+    $(document).on('input change', '.row-rate', function() {
         var tr = $(this).closest('tr');
-        var rate = parseFloat(tr.find('.row-rate').val()) || 0;
+        var rate = parseFloat($(this).val()) || 0;
         var qty = parseFloat(tr.find('.row-qty').val()) || 0;
         var taxRate = parseFloat(tr.find('.row-tax-rate').val()) || 0;
 
@@ -1274,12 +1287,107 @@
         var taxAmount = amount * (taxRate / 100);
         var lineTotal = amount + taxAmount;
 
-        tr.find('.row-amount-display').text('₹ ' + amount.toFixed(decimalPlaces));
+        tr.find('.row-amount').val(amount.toFixed(decimalPlaces));
         tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
         tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
-        tr.find('.row-total-display').text('₹ ' + lineTotal.toFixed(decimalPlaces));
-
+        tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
         recalcTableSummary();
+    });
+
+    // Row Qty Change -> Updates Amount & Total
+    $(document).on('input change', '.row-qty', function() {
+        var tr = $(this).closest('tr');
+        var qty = parseFloat($(this).val()) || 0;
+        var rate = parseFloat(tr.find('.row-rate').val()) || 0;
+        var taxRate = parseFloat(tr.find('.row-tax-rate').val()) || 0;
+
+        var amount = rate * qty;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        tr.find('.row-amount').val(amount.toFixed(decimalPlaces));
+        tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+        tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('input[name="recieved[]"]').val(qty);
+        recalcTableSummary();
+    });
+
+    // Row Amount Change -> Two-Way Reactive Recalculation of Rate & Total
+    $(document).on('input change', '.row-amount', function() {
+        var tr = $(this).closest('tr');
+        var amount = parseFloat($(this).val()) || 0;
+        var qty = parseFloat(tr.find('.row-qty').val()) || 0;
+        var taxRate = parseFloat(tr.find('.row-tax-rate').val()) || 0;
+
+        var rate = qty > 0 ? (amount / qty) : 0;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        tr.find('.row-rate').val(rate.toFixed(decimalPlaces));
+        tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+        tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
+        recalcTableSummary();
+    });
+
+    // Row Tax Rate Change -> Updates Tax Amount & Total
+    $(document).on('input change', '.row-tax-rate', function() {
+        var tr = $(this).closest('tr');
+        var amount = parseFloat(tr.find('.row-amount').val()) || 0;
+        var taxRate = parseFloat($(this).val()) || 0;
+
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+        tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
+        recalcTableSummary();
+    });
+
+    // Open Row Detail Modal on Pencil Click
+    $(document).on('click', '.btn-edit-row', function(e) {
+        e.preventDefault();
+        var tr = $(this).closest('tr');
+        var rowId = tr.data('row-id');
+        var itemName = tr.find('.row-item-name').val() || 'Item';
+        $('#modal-target-row-id').val(rowId);
+        $('#row-detail-modal-title').text('Item Details: ' + itemName);
+        $('#modal-row-batch').val(tr.find('.row-batch-val').val() || '');
+        $('#modal-row-expire').val(tr.find('.row-expire-val').val() || '');
+        $('#modal-row-imei').val(tr.find('.row-imei-val').val() || '');
+        $('#modal-row-discount').val(tr.find('.row-discount-val').val() || 0);
+        $('#row-detail-modal').modal('show');
+    });
+
+    // Save Row Detail Modal
+    $('#btn-save-row-detail').on('click', function() {
+        var rowId = $('#modal-target-row-id').val();
+        var tr = $('#order-table-body tr.order-item-row[data-row-id="' + rowId + '"]');
+        if (tr.length) {
+            tr.find('.row-batch-val').val($('#modal-row-batch').val());
+            tr.find('.row-expire-val').val($('#modal-row-expire').val());
+            tr.find('.row-imei-val').val($('#modal-row-imei').val());
+            tr.find('.row-discount-val').val($('#modal-row-discount').val());
+        }
+        $('#row-detail-modal').modal('hide');
+    });
+
+    // Explicit Modal Open Handlers
+    $('#btn-create-item-modal').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#quick-create-item-form')[0].reset();
+        $('#btn-quick-gen-code').trigger('click');
+        $('#quick-create-item-modal').modal('show');
+    });
+
+    $('#btn-multi-item').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        populateMultiItemModal();
+        $('#multi-item-modal').modal('show');
     });
 
     function reindexRows() {

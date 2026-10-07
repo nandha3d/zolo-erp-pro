@@ -307,6 +307,25 @@ class PurchaseController extends Controller
                     $lims_purchase_unit_data = Unit::first();
                 }
                 $lims_product_data = Product::find($id);
+                if (!$lims_product_data && !empty($data['product_name_text'][$i])) {
+                    $manualName = trim($data['product_name_text'][$i]);
+                    $lims_product_data = Product::firstOrCreate(
+                        ['name' => $manualName],
+                        [
+                            'code' => 'ITM-' . mt_rand(100000, 999999),
+                            'type' => 'standard',
+                            'barcode_symbology' => 'code128',
+                            'unit_id' => $lims_purchase_unit_data->id ?? 1,
+                            'purchase_unit_id' => $lims_purchase_unit_data->id ?? 1,
+                            'sale_unit_id' => $lims_purchase_unit_data->id ?? 1,
+                            'cost' => $net_unit_cost[$i] ?? 0,
+                            'price' => $net_unit_cost[$i] ?? 0,
+                            'is_active' => true,
+                        ]
+                    );
+                    $id = $lims_product_data->id;
+                    $product_id[$i] = $id;
+                }
                 if (!$lims_product_data) continue;
                 $price = $lims_product_data->price;
                 //dealing with product batch: only its identity here, the stock movement posts the quantity
@@ -1229,8 +1248,27 @@ class PurchaseController extends Controller
             $warehousePrices = [];
             foreach ($product_id as $key => $pro_id) {
                 $uName = $purchase_unit[$key] ?? 'Unit';
-                $lims_purchase_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first();
+                $lims_purchase_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first() ?? Unit::first();
                 $lims_product_data = Product::find($pro_id);
+                if (!$lims_product_data && !empty($data['product_name_text'][$key])) {
+                    $manualName = trim($data['product_name_text'][$key]);
+                    $lims_product_data = Product::firstOrCreate(
+                        ['name' => $manualName],
+                        [
+                            'code' => 'ITM-' . mt_rand(100000, 999999),
+                            'type' => 'standard',
+                            'barcode_symbology' => 'code128',
+                            'unit_id' => $lims_purchase_unit_data->id ?? 1,
+                            'purchase_unit_id' => $lims_purchase_unit_data->id ?? 1,
+                            'sale_unit_id' => $lims_purchase_unit_data->id ?? 1,
+                            'cost' => $net_unit_cost[$key] ?? 0,
+                            'price' => $net_unit_cost[$key] ?? 0,
+                            'is_active' => true,
+                        ]
+                    );
+                    $pro_id = $lims_product_data->id;
+                    $product_id[$key] = $pro_id;
+                }
                 if (!$lims_product_data) continue;
                 $price = null;
                 //dealing with product batch: only its identity here, the stock movement posts the quantity

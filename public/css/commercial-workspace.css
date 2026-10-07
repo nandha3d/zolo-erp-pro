@@ -22,17 +22,32 @@ body.commercial-screen-lock .main-footer {
     display: none !important;
 }
 
+body.commercial-screen-lock header.container-fluid,
+body.commercial-screen-lock header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 10px !important;
+    margin-bottom: 0 !important;
+}
+
+body.commercial-screen-lock .navbar {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+}
+
 body.commercial-screen-lock #content {
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     padding: 0 !important;
-    height: calc(100vh - 65px) !important;
+    height: calc(100vh - 38px) !important;
 }
 
 body.commercial-screen-lock section {
-    padding: 3px 10px 4px 10px !important;
+    padding: 2px 8px 3px 8px !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1614,5 +1629,260 @@ body.commercial-screen-lock section {
 #multi-item-modal .multi-item-row:hover {
     background: #f8fafc;
 }
+
+/* ====================================================================
+ * Ultra-Compact Document Fields Layout (Reduced Height by > 50%)
+ * ==================================================================== */
+.doc-primary-fields.compact-fields {
+    padding: 5px 10px !important;
+    margin-bottom: 3px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+}
+
+.fields-compact-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.field-compact-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+}
+
+.field-compact-item label {
+    font-size: 9.5px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    margin-bottom: 1px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+.field-compact-item input.form-control,
+.field-compact-item select.form-control {
+    height: 24px !important;
+    font-size: 11px !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    line-height: 22px !important;
+}
+
+.field-compact-item input.form-control:focus,
+.field-compact-item select.form-control:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+}
+
+.field-compact-item .bootstrap-select > .btn.dropdown-toggle {
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 1px 6px !important;
+    font-size: 11px !important;
+    border-radius: 4px !important;
+    line-height: 22px !important;
+}
+
+.party-info-compact-inline {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 1px 8px !important;
+    height: 24px !important;
+    overflow: hidden !important;
+    flex: 1 !important;
+}
+
+.party-info-compact-inline .party-gst-badge {
+    font-family: monospace;
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10.5px;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* ====================================================================
+ * Top Navbar Center Area Integration
+ * ==================================================================== */
+.navbar-center-area {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    height: 34px !important;
+    min-width: 0 !important;
+}
+
+.comm-navbar-center-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+}
+
+/* ====================================================================
+ * Fully Editable Items Table Row Cells
+ * ==================================================================== */
+.desk-grid-table td .row-item-name {
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    height: 26px !important;
+    width: 100% !important;
+}
+
+.desk-grid-table td .row-item-name:focus {
+    border-color: #7c3aed !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15) !important;
+}
+
+.desk-grid-table td .row-type-select,
+.desk-grid-table td .row-unit-select {
+    height: 26px !important;
+    font-size: 11px !important;
+    padding: 1px 4px !important;
+    border-radius: 4px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+}
+
+.desk-grid-table td .row-rate,
+.desk-grid-table td .row-qty,
+.desk-grid-table td .row-amount,
+.desk-grid-table td .row-total {
+    height: 26px !important;
+    font-size: 11.5px !important;
+    border-radius: 4px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    padding: 2px 6px !important;
+}
+
+.desk-grid-table td .row-amount:focus,
+.desk-grid-table td .row-total:focus {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15) !important;
+}
+
+.desk-grid-table td .btn-edit-row {
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    border-radius: 4px !important;
+    margin-right: 2px !important;
+}
+
+/* Modal Layering & Priority */
+#multi-item-modal,
+#quick-create-item-modal,
+#row-detail-modal,
+#charges-drawer,
+#purchase-details,
+#sale-details {
+    z-index: 1055 !important;
+}
+
+#multi-item-modal .modal-dialog,
+#quick-create-item-modal .modal-dialog,
+#row-detail-modal .modal-dialog,
+#charges-drawer .modal-dialog {
+    z-index: 1056 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+/* Compact Segmented Pills for Command Bar */
+.pill-segmented-compact {
+    display: inline-flex;
+    align-items: center;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 9999px;
+    padding: 1px;
+    gap: 2px;
+}
+
+.pill-segmented-compact .segment-btn {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 1px 7px;
+    height: 20px;
+    line-height: 18px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pill-segmented-compact .segment-btn:hover {
+    color: #f8fafc;
+}
+
+.pill-segmented-compact .segment-btn.active {
+    background: #7c3aed;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.4);
+}
+
+/* Full Viewport Height Utilization for Items Section */
+.comm-entry-workspace form {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.desk-card.items-container {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    margin-bottom: 3px !important;
+}
+
+.desk-card.items-container .table-responsive {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    max-height: none !important;
+    min-height: 180px !important;
+    overflow-y: auto !important;
+}
+
+.desk-summary-bottom-bar {
+    flex-shrink: 0 !important;
+    padding: 4px 12px !important;
+    margin-top: auto !important;
+}
+
 
 
