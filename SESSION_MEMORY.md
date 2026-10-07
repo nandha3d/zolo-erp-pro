@@ -8,17 +8,17 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 18:36:00 (+05:30)
+- **Last Updated:** 2026-10-07 19:07:00 (+05:30)
 - **Active Git Branch:** enhanced-ui (synchronized with nandha-origin and origin)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`enhanced-ui`, `ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`enhanced-ui`, `ui`)
 - **Latest Commits:**
+  - `45b0749` — "feat(gst): support external live GST provider with high free limits and fallback to statutory engine"
+  - `1346775` — "feat(gst): implement 100% free professional GSTIN engine with statutory auto-fill, Luhn validation, and cross-party memory"
   - `f5e3e42` — "feat(commercial): add in-place quick create party modal and execute database fresh slate wipe"
-  - `7eef421` — "docs(memory): update session metadata with ui and enhanced-ui branch sync"
-  - `88cbb22` — "feat(commercial): add explicit Split View buttons in navbar and fullwidth strip with smart auto-return"
-- **Working Tree State:** Clean, all automated feature test suites passing 100% (39/39 tests, 200 assertions)
-- **Test Suite Status:** 39/39 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
+- **Working Tree State:** Clean, all automated feature test suites passing 100% (41/41 tests, 207 assertions)
+- **Test Suite Status:** 41/41 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
 
 ---
 
