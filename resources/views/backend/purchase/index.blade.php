@@ -29,6 +29,7 @@
         </div>
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" id="tab-all-purchases" href="javascript:void(0)" data-status="0"><i class="dripicons-list"></i> {{ __('db.All') }} Purchases</a></li>
+            <li><a class="nav-link" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> Goods Received Notes (GRN)</a></li>
             <li><a class="nav-link" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Stock Transfers</a></li>
             <li><a class="nav-link" href="{{ route('return-purchase.index') }}"><i class="dripicons-return"></i> {{ __('Purchase Returns') }}</a></li>
         </ul>
@@ -1603,6 +1604,40 @@
         $('#purchase-status-val').val(1); // Received
         $('#purchase-entry-form').submit();
     });
+
+    // --- Auto load Goods Received Note if from_grn param present ---
+    var urlParams = new URLSearchParams(window.location.search);
+    var fromGrnId = urlParams.get('from_grn');
+    if (fromGrnId) {
+        $.getJSON('/goods-received-notes/' + fromGrnId, function(res) {
+            if (res && res.grn) {
+                var gn = res.grn;
+                $('#supplier_id_select').val(gn.supplier_id).trigger('change');
+                if (gn.warehouse_id) $('#warehouse_id_select').val(gn.warehouse_id).trigger('change');
+                if (gn.purchase_type_id) $('#purchase_type_id').val(gn.purchase_type_id);
+                if (gn.agent_id) $('#agent_id').val(gn.agent_id);
+                if (gn.transport_name) $('#transporter_name').val(gn.transport_name);
+                if (gn.lr_no) $('#lr_no').val(gn.lr_no);
+                if (gn.lr_date) $('#lr_date').val(gn.lr_date.substring(0, 10));
+                if (gn.order_no) $('#supplier_invoice_no').val(gn.order_no);
+                if (gn.remarks) $('#custom_remarks').val(gn.remarks);
+
+                if (!$('#goods_received_note_id_input').length) {
+                    $('#purchase-entry-form').append('<input type="hidden" name="goods_received_note_id" id="goods_received_note_id_input" value="' + gn.id + '">');
+                } else {
+                    $('#goods_received_note_id_input').val(gn.id);
+                }
+
+                if (res.items && res.items.length) {
+                    $('#order-table-body tr.item-row').remove();
+                    res.items.forEach(function(item) {
+                        addProductRow(item);
+                    });
+                }
+                $('#entry-title-text').text('New Purchase Bill (from GRN #' + gn.grn_no + ')');
+            }
+        });
+    }
 
     initPanelState();
 })();

@@ -99,6 +99,7 @@
             <ul id="purchase" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('purchases-index'))
                     <li id="purchase-list-menu"><a href="{{route('purchases.index')}}">{{__('db.Purchase List')}}</a></li>
+                    <li id="grn-list-menu"><a href="{{route('goods-received-notes.index')}}">Goods Received Note (GRN)</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('purchases-add'))
                     <li id="purchase-create-menu"><a href="{{route('purchases.create')}}">{{__('db.Add Purchase')}}</a></li>

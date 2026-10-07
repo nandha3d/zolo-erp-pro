@@ -113,7 +113,8 @@ class PurchaseController extends Controller
             $standardRemarks = class_exists(\App\Models\StandardRemark::class) ? \App\Models\StandardRemark::where('is_active', true)->get() : collect();
             $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
             $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
-            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas'));
+            $pending_grns = class_exists(\App\Models\GoodsReceivedNote::class) ? \App\Models\GoodsReceivedNote::with(['supplier:id,name', 'items.product', 'items.unit'])->where('status', 'pending')->latest('id')->limit(30)->get() : collect();
+            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'pending_grns'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -257,6 +258,12 @@ class PurchaseController extends Controller
             $lims_purchase_data = Purchase::create($data);
             if (isset($numberReservation)) {
                 $this->assignNumber($numberReservation, $lims_purchase_data);
+            }
+            if (!empty($request->goods_received_note_id) && class_exists(\App\Models\GoodsReceivedNote::class)) {
+                \App\Models\GoodsReceivedNote::where('id', $request->goods_received_note_id)->update([
+                    'status' => 'converted_to_purchase',
+                    'purchase_id' => $lims_purchase_data->id,
+                ]);
             }
             //inserting data for custom fields
             $custom_field_data = [];
