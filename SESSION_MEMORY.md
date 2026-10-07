@@ -8,20 +8,24 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 19:07:00 (+05:30)
-- **Active Git Branch:** enhanced-ui (synchronized with nandha-origin and origin)
+- **Last Updated:** 2026-10-07 19:27:00 (+05:30)
+- **Active Git Branch:** ui (synchronized with enhanced-ui, origin/ui, and origin/enhanced-ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`enhanced-ui`, `ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`enhanced-ui`, `ui`)
 - **Latest Commits:**
+  - `855f02d` — "docs(backup): create chat session dialogue history and raw transcript backup"
+  - `38a4f02` — "docs(memory): update session memory with commit 45b0749"
   - `45b0749` — "feat(gst): support external live GST provider with high free limits and fallback to statutory engine"
   - `1346775` — "feat(gst): implement 100% free professional GSTIN engine with statutory auto-fill, Luhn validation, and cross-party memory"
   - `f5e3e42` — "feat(commercial): add in-place quick create party modal and execute database fresh slate wipe"
 - **Working Tree State:** Clean, all automated feature test suites passing 100% (41/41 tests, 207 assertions)
-- **Test Suite Status:** 41/41 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
+- **Database & Server State:**
+  - Database: MariaDB (Ubuntu WSL daemon) running on port 3307 with all 179 tables and Optech master migrations applied and seeded (`sale_types`, `purchase_types`, `dc`, `grn`).
+  - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`).
 - **Chat & Transcript Backups:**
-  - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
-  - Readable History: [`documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md)
+  - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
+  - Readable History: [`documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md)
 
 ---
 
