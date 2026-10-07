@@ -8,10 +8,10 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-06 20:05:00 (+05:30)
+- **Last Updated:** 2026-10-07 09:30:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
-- **Upstream Remote:** nandha-origin/enhanced-ui (Synced)
-- **Latest Commit:** in progress — "feat(commercial): transform sales and purchase command centers into optech voucher entry with in-place editing and side panel filters"
+- **Upstream Remote:** nandha-origin/enhanced-ui
+- **Latest Commit:** ab15f7c — "fix(voucher): resolve product search autocomplete, density switching, multi-item picker and row entry in sales and purchases"
 - **Working Tree State:** Clean, all 25 automated feature tests passing
 - **Test Suite Status:** 25/25 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 125 assertions, 100%)
 
@@ -200,6 +200,26 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
        - `test_purchase_json_endpoint`: PASS
        - `test_sale_json_endpoint`: PASS
      - Full test suite: 25/25 passing (125 assertions, 100%).
+
+---
+
+### I. Product Search Autocomplete, Density Switcher & Fast Items Entry
+- **Context & Problem:** Typing in the quick search box (`#lims_productcodeSearch`) in `/sales` or `/purchases` showed no items or autocomplete dropdown.
+- **Root Cause Analysis:**
+  1. All 55 products in the database had `is_active = 0`. As a result, `Product::ActiveStandard()` returned 0 rows, so `$lims_product_code = []`.
+  2. In `app/Models/Product.php`, `scopeActiveStandard` did not qualify table names or handle nulls flexibly.
+  3. In `SaleController::limsProductSearch`, PHP 8 fatal error occurred when accessing `$request->data['price']` when `$request->data` was passed as a search query string.
+  4. Product queries omitted unit and pricing metadata needed for live calculations.
+  5. Missing tailored styling for jQuery UI autocomplete dropdown, resulting in low z-index clipping behind modal layers.
+- **Fixes Applied:**
+  1. Updated `Product::scopeActiveStandard` with table-qualified `products.is_active` and `products.type` checks.
+  2. Activated existing 55 database products (`UPDATE products SET is_active = 1`).
+  3. Fixed `SaleController::limsProductSearch` array guard and enriched both `SaleController` and `PurchaseController` product queries with joined unit names, unit codes, costs, and tax IDs.
+  4. In `backend.sale.index` and `backend.purchase.index`, implemented high-performance `@json($jsProductList)` data structures, custom jQuery UI `_renderItem` with item title, code badge, unit, and green rate badge.
+  5. Implemented live row creation on select, duplicate product quantity incrementing, `+ Add row` custom row insertion with inline item title input, `#multi-item-modal` Fast Batch Picker, and `#quick-create-item-modal` on-the-fly product creation.
+  6. Implemented density switcher (`Compact`, `Cozy`, `Large`) with persistence in `localStorage`.
+  7. Formatted autocomplete dropdown in `commercial-workspace.css` with `z-index: 999999 !important` and soft drop-shadow.
+- **Test Evidence:** All 25 feature tests passing (100%).
 
 ---
 
