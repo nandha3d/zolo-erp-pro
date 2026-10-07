@@ -303,6 +303,18 @@ body.commercial-screen-lock nav.navbar .badge,
     color: #0f172a !important;
 }
 
+.comm-navbar-center-wrap .comm-nav-btn.btn-mode-split {
+    background: #7c3aed !important;
+    border: 1px solid #6d28d9 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.comm-navbar-center-wrap .comm-nav-btn.btn-mode-split:hover {
+    background: #6d28d9 !important;
+    border-color: #5b21b6 !important;
+    color: #ffffff !important;
+}
+
 .comm-navbar-center-wrap .comm-nav-btn-success {
     background: #059669 !important;
     border: 1px solid #047857 !important;
@@ -2970,6 +2982,17 @@ body.dark-mode .comm-nav-btn-secondary {
 body.dark-mode .comm-nav-btn-secondary:hover {
     background: #334155 !important;
     border-color: #475569 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .comm-nav-btn.btn-mode-split {
+    background: #7c3aed !important;
+    border: 1px solid #6d28d9 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+body.dark-mode .comm-nav-btn.btn-mode-split:hover {
+    background: #6d28d9 !important;
+    border-color: #5b21b6 !important;
     color: #ffffff !important;
 }
 body.dark-mode .header-grand-total-badge {

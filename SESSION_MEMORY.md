@@ -489,11 +489,22 @@ Addressed user feedback:
      - Updated `addProductRow()` in both `purchase/index.blade.php` and `sale/index.blade.php` to render table row tax options 100% dynamically from `taxList` (the global GST slabs), eliminating hardcoded `10%`.
      - Linked `Tax Classification` header dropdown reactively with table row tax selection: selecting a specific GST rate locks row taxes uniformly, while multi-tax mode (`L/MultiTax`, `Interstate MultiTax`) unlocks individual row tax customization.
 
-5. **Full Width Initial Register View Restored:**
-   - Clicking `[ ⛶ Full Width ]` (`#btn-panel-fullscreen`) toggles between Voucher Entry mode (`#comm-split-grid`) and the full DataTables register setup (`#fullwidth-register-view`) that existed before the UI update.
-   - Includes full KPI summary cards (`Total Invoiced`, `Paid Inflow`, `Due Receivables`), live date range picker, warehouse and status filters, and the complete DataTables register with PDF/Excel/CSV/Print exports.
-   - Clicking `[ + New Bill ]` / `[ + New Purchase ]` or clicking `[ ✎ Edit ]` on any register row smoothly switches back to Voucher Entry mode and loads the document for in-place editing.
+5. **Full Width Initial Register & Two-Way "Split View" Navigation:**
+   - Addressed user inquiry: *"once the full width enabled, there is no split view option to go back?"*
+   - **Prominent Split View Button:** Replaced ambiguous grey `⧉ Voucher Entry` button on `#fullwidth-register-view` header strip with a high-contrast purple primary button:
+     - `[ ⇄ Split View ]` (`#btn-switch-voucher-mode`) styled in `#7c3aed` with explicit tooltip *"Return to Split View (Voucher Entry + Bill List)"*.
+   - **Top Navbar Mode Switcher:** Added `#btn-navbar-workspace-toggle` directly into the top main navbar:
+     - Displays `⛶ Full Width` in Split View mode.
+     - Dynamically changes to `⇄ Split View` (highlighted in purple `.btn-mode-split`) when in Full Width mode.
+   - **Intelligent Auto-Return Mechanics:**
+     - Clicking `[ 📖 Bill list ]` or `[ 📖 Purchase list ]` in the top navbar while in Full Width mode automatically switches to Split View and opens the bill list panel.
+     - Clicking `[ + New ]`, `[ + New Purchase ]`, or `[ + New Sale ]` resets the voucher form and switches to Split View.
+     - Clicking `[ ✎ Edit ]` on any row in the register table switches to Split View and loads that bill into the form for in-place editing.
    - Mode preference persisted across sessions in `localStorage` (`zolo_purchase_workspace_mode`, `zolo_sale_workspace_mode`).
+
+6. **Category & Brand Inline Creation Fix:**
+   - Fixed `Unknown column 'slug' in 'field list'` error that caused `"Failed to save category"` by removing the non-existent `slug` column from `Category::firstOrCreate` and `Brand::firstOrCreate` in `CommercialController.php`.
+   - Verified via unit & feature tests with 100% pass rate.
 
 ---
 

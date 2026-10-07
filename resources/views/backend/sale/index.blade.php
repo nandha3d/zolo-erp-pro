@@ -40,6 +40,9 @@
         <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-open-details" title="Open Charges & Transport Details">
             <i class="dripicons-gear"></i> Details
         </button>
+        <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-navbar-workspace-toggle" title="Toggle between Split View (Voucher + List) and Full Width Register">
+            <span id="nav-mode-icon">⛶</span> <span id="nav-mode-text">Full Width</span>
+        </button>
         <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-header-toggle-list" title="Toggle Bill List Panel">
             <i class="dripicons-list"></i> Bill list
         </button>
@@ -476,8 +479,8 @@
                 <span class="badge badge-secondary" style="font-size:10px;padding:3px 7px;">Full Register View</span>
             </div>
             <div class="d-flex align-items-center" style="gap:8px;">
-                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 font-weight-bold" id="btn-switch-voucher-mode" title="Return to Voucher Entry Form">
-                    <i class="dripicons-document"></i> ⧉ Voucher Entry
+                <button type="button" class="btn btn-sm btn-primary py-1 px-3 font-weight-bold" id="btn-switch-voucher-mode" style="background:#7c3aed; border-color:#7c3aed; color:#ffffff;" title="Return to Split View (Voucher Entry + Bill List)">
+                    <i class="dripicons-view-thumb mr-1"></i> ⇄ Split View
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-success py-1 px-3 font-weight-bold" id="btn-fullwidth-new" title="Create New Sales Bill">
                     <i class="dripicons-plus"></i> + New Sale
@@ -2736,13 +2739,16 @@
     $('#customer_id').on('change', updatePartyCard);
     updatePartyCard();
 
-    // --- Workspace Mode Switching (Voucher Entry vs Full Width Initial Register) ---
+    // --- Workspace Mode Switching (Split View vs Full Width Register) ---
     function switchWorkspaceMode(mode) {
         if (mode === 'register') {
             $('#comm-split-grid').hide();
             $('#fullwidth-register-view').show();
-            $('#fullscreen-icon').text('⧉');
-            $('#fullscreen-tooltip').text('Voucher Entry');
+            $('#fullscreen-icon').text('⇄');
+            $('#fullscreen-tooltip').text('Split View');
+            $('#nav-mode-icon').text('⇄');
+            $('#nav-mode-text').text('Split View');
+            $('#btn-navbar-workspace-toggle').addClass('btn-mode-split').attr('title', 'Switch to Split View (Voucher Entry + Bill List)');
             localStorage.setItem('zolo_sale_workspace_mode', 'register');
             if ($.fn.DataTable.isDataTable('#sale-table')) {
                 $('#sale-table').DataTable().columns.adjust().draw(false);
@@ -2754,11 +2760,14 @@
             $('#comm-split-grid').show();
             $('#fullscreen-icon').text('⛶');
             $('#fullscreen-tooltip').text('Full Width');
+            $('#nav-mode-icon').text('⛶');
+            $('#nav-mode-text').text('Full Width');
+            $('#btn-navbar-workspace-toggle').removeClass('btn-mode-split').attr('title', 'Switch to Full Width Register');
             localStorage.setItem('zolo_sale_workspace_mode', 'voucher');
         }
     }
 
-    $('#btn-panel-fullscreen').on('click', function(e) {
+    $('#btn-panel-fullscreen, #btn-navbar-workspace-toggle').on('click', function(e) {
         e.preventDefault();
         var current = $('#fullwidth-register-view').is(':visible') ? 'register' : 'voucher';
         switchWorkspaceMode(current === 'register' ? 'voucher' : 'register');
@@ -2773,6 +2782,14 @@
         e.preventDefault();
         resetFormToNew();
         switchWorkspaceMode('voucher');
+    });
+
+    $('#btn-top-new').on('click', function(e) {
+        if ($('#fullwidth-register-view').is(':visible')) {
+            e.preventDefault();
+            resetFormToNew();
+            switchWorkspaceMode('voucher');
+        }
     });
 
     // Date range picker for full width register
@@ -3299,6 +3316,11 @@
 
     $('#toggle-drawer-btn, #btn-header-toggle-list').on('click', function(e) {
         e.preventDefault();
+        if ($('#fullwidth-register-view').is(':visible')) {
+            switchWorkspaceMode('voucher');
+            applyDrawer(true);
+            return;
+        }
         var isOpen = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
         applyDrawer(!isOpen);
     });
