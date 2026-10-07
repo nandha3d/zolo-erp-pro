@@ -101,23 +101,23 @@
                 <div class="desk-card doc-primary-fields compact-fields mb-1">
                     <!-- Compact Row 1: Bill No, Customer PO, Dates, Party & Inline Info -->
                     <div class="fields-compact-row">
-                        <div class="field-compact-item" style="width:120px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:140px;flex-shrink:0;">
                             <label for="reference_no">Our Bill No</label>
                             <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Auto series" autocomplete="off">
                         </div>
-                        <div class="field-compact-item" style="width:115px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:165px;flex-shrink:0;">
                             <label for="customer_po_no">Customer PO / Ref</label>
                             <input type="text" id="customer_po_no" name="customer_po_no" class="form-control" placeholder="From purchase order">
                         </div>
-                        <div class="field-compact-item" style="width:110px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:125px;flex-shrink:0;">
                             <label for="bill_date">Bill Date</label>
                             <input type="date" id="bill_date" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-                        <div class="field-compact-item" style="width:110px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:125px;flex-shrink:0;">
                             <label for="entry_date">Entry Date</label>
                             <input type="date" id="entry_date" name="entry_date" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-                        <div class="field-compact-item" style="width:200px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:250px;flex-shrink:0;">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="customer_id">Party *</label>
                                 <a href="{{ route('customer.index') }}" target="_blank" style="font-size:9.5px;color:#7c3aed;font-weight:700;">+ New Party</a>
@@ -145,7 +145,7 @@
 
                     <!-- Compact Row 2: Tax Classification, Series, Warehouse, Biller, Logistics Note -->
                     <div class="fields-compact-row">
-                        <div class="field-compact-item" style="width:150px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:205px;flex-shrink:0;">
                             <label for="sale_type_id">Tax Classification *</label>
                             <select id="sale_type_id" name="sale_type_id" class="form-control">
                                 <option value="0">GST • Multiple rates</option>
@@ -154,7 +154,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="field-compact-item" style="width:110px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:145px;flex-shrink:0;">
                             <label for="series_id">Series</label>
                             <select id="series_id" name="series_id" class="form-control">
                                 <option value="0">Sale</option>
@@ -163,7 +163,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="field-compact-item" style="width:130px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:200px;flex-shrink:0;">
                             <label for="form_warehouse_id">Warehouse *</label>
                             <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
                                 @foreach($lims_warehouse_list as $wh)
@@ -171,7 +171,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="field-compact-item" style="width:130px;flex-shrink:0;">
+                        <div class="field-compact-item" style="width:200px;flex-shrink:0;">
                             <label for="form_biller_id">Biller *</label>
                             <select id="form_biller_id" name="biller_id" class="form-control" required>
                                 @foreach($lims_biller_list as $biller)
@@ -179,7 +179,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div style="flex:1;display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:1px 8px;height:24px;font-size:10.5px;color:#64748b;overflow:hidden;">
+                        <div class="terms-compact-inline">
                             <span>Terms: <strong style="color:#0f172a;">Standard</strong></span>
                             <span class="d-none d-md-inline">Credit Days: <strong id="header-credit-days" style="color:#0f172a;">—</strong></span>
                             <a href="javascript:void(0)" id="btn-quick-logistics" style="color:#7c3aed;font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">

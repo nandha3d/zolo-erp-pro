@@ -383,7 +383,35 @@ Addressed user feedback:
 
 ---
 
-## 4. Verification & Testing Evidence
+## 4. Horizontal Space Optimization, Terms Compaction & Spacious Fields (Oct 2026)
+
+Addressed user feedback:
+> "this area can be little more spacious, not in height, but we can use the horizontal space, because the terms section is taking too much space, reduce that and give 3 more pixel padding. we can extend the tax series warehouse and bbiller etc. make it some more larger than now."
+
+1. **Horizontal Space Reallocation & Terms Compaction:**
+   - Previously in Row 2, the Terms container was set to `flex: 1`, occupying >800px of empty space across wide viewports.
+   - Constrained the Terms container into `.terms-compact-inline` (`width: 335px !important; flex-shrink: 0 !important; margin-left: auto !important; white-space: nowrap !important;`), pinning `Terms: Standard`, `Credit Days: Standard`, and `+ Transport & Remarks →` neatly to the right edge on a single clean line.
+   - Reallocated ~400px of reclaimed horizontal space directly into primary document input fields.
+
+2. **3px Padding & Breathing Room Enhancements:**
+   - Increased container card horizontal padding from `10px` to `13px` (`.doc-primary-fields.compact-fields`).
+   - Increased flex item gaps from `6px` to `9px` (`.fields-compact-row`).
+   - Added 3px more padding inside input and select fields (`padding: 1px 9px !important;` up from `1px 6px`).
+   - Added 3px more padding inside bootstrap-select buttons (`.bootstrap-select > .btn.dropdown-toggle`).
+   - Increased inline party info strip padding to `1px 11px !important; gap: 10px !important;`.
+   - Maintained the ultra-compact 24px vertical field height and ~52px overall card height intact.
+
+3. **Expanded Field Widths (Sales & Purchases):**
+   - **Sales Command Center (`sale/index.blade.php`):**
+     - Row 1: `Our Bill No` (140px), `Customer PO / Ref` (165px — prevents placeholder truncation), `Bill Date` (125px), `Entry Date` (125px), `Party *` (250px).
+     - Row 2: `Tax Classification *` (205px), `Series` (145px), `Warehouse *` (200px), `Biller *` (200px).
+   - **Purchase Command Center (`purchase/index.blade.php`):**
+     - Row 1: `Our Bill No` (140px), `Supplier Bill No` (165px), `Bill Date` (125px), `Entry Date` (125px), `Party *` (250px).
+     - Row 2: `Tax Classification *` (230px), `Series` (160px), `Warehouse *` (230px).
+
+---
+
+## 5. Verification & Testing Evidence
 - Automated feature tests executed and passed:
   - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
   - Results: **33 passed (167 assertions, 100%)**, Duration: ~13s
