@@ -98,6 +98,10 @@
 
                     <!-- Metadata & Header Tools -->
                     <div class="doc-header-meta">
+                        <div class="header-grand-total-badge px-2 py-1" style="background:#fef3c7; border:1px solid #fde68a; border-radius:6px; font-size:11px; font-weight:800; color:#d97706; display:inline-flex; align-items:center; gap:5px;">
+                            <span style="font-size:9.5px; color:#92400e; font-weight:700;">TOTAL:</span>
+                            <span id="header-grand-total-display">₹ 0.00</span>
+                        </div>
                         <div class="meta-terms">
                             <span>Due <strong id="display-due-date">{{ date('d-m-Y') }}</strong></span>
                             <span>Credit days <strong id="header-credit-days">—</strong></span>
@@ -150,10 +154,26 @@
                             </div>
                             <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" title="Select Customer" required>
                                 @foreach($lims_customer_list as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->phone_number ?? 'No Phone' }})</option>
+                                    <option value="{{ $customer->id }}"
+                                        data-tax-no="{{ $customer->tax_no ?? '' }}"
+                                        data-address="{{ $customer->address ?? '' }}"
+                                        data-city="{{ $customer->city ?? '' }}"
+                                        data-state="{{ $customer->state ?? '' }}"
+                                        data-postal="{{ $customer->postal_code ?? '' }}"
+                                        data-credit-days="{{ $customer->credit_days ?? 0 }}">
+                                        {{ $customer->name }} ({{ $customer->phone_number ?? 'No Phone' }})
+                                    </option>
                                 @endforeach
                             </select>
-                            <span class="field-hint" id="party-hint-note">Party address loads automatically</span>
+                            <div class="party-info-card" id="party-info-card" style="display:none;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span style="font-size:11px; font-weight:700; color:#475569;">
+                                        GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span>
+                                    </span>
+                                    <span class="badge" id="party-credit-badge" style="background:#e0f2fe; color:#0369a1; font-size:10px; font-weight:600;">Credit: 0 days</span>
+                                </div>
+                                <div class="party-address-text" id="party-address-text"></div>
+                            </div>
                         </div>
 
                         <!-- Tax Classification -->
@@ -343,7 +363,11 @@
                 </div>
                 <div class="comm-drawer-tools">
                     <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btn-side-new" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Sale (Clear Form)">
-                        <i class="dripicons-plus"></i> ++ New
+                        <i class="dripicons-plus"></i> New Bill
+                    </button>
+                    <button type="button" class="side-icon-btn" id="btn-panel-fullscreen" title="Toggle Full Width Register View">
+                        <span id="fullscreen-icon">⛶</span>
+                        <span class="dock-tooltip" id="fullscreen-tooltip">Full Width</span>
                     </button>
                     <button type="button" class="side-icon-btn" id="btn-dock-toggle" title="Arrange Panel Side (Dock Left / Dock Right)">
                         <span id="dock-icon">⇄</span>
@@ -619,9 +643,14 @@
     <div class="modal-dialog modal-lg" style="max-width:850px;">
         <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
             <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-                <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
-                    <i class="dripicons-menu" style="color:#7c3aed;"></i> Multi-Item Fast Batch Picker
-                </h5>
+                <div>
+                    <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin:0;">
+                        <i class="dripicons-menu" style="color:#7c3aed;"></i> Multi-Item Fast Batch Picker
+                    </h5>
+                    <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
+                        Select multiple products with quantities and insert them all at once into the voucher table.
+                    </div>
+                </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -963,7 +992,7 @@
         var itemColHtml = '';
         if (item.is_manual) {
             itemColHtml = `
-                <input type="text" name="product_name_manual[]" class="form-control form-control-sm row-item-name" placeholder="Type item name..." value="${item.product_name || ''}" style="height:26px;font-size:12px;font-weight:600;">
+                <input type="text" name="product_name_manual[]" class="form-control form-control-sm row-item-name" placeholder="Type item name..." value="${item.product_name || ''}">
                 <input type="hidden" name="product_id[]" value="0">
                 <input type="hidden" name="product_code[]" value="">
             `;
@@ -990,10 +1019,10 @@
                     <input type="hidden" name="sale_unit[]" value="${item.unit || 'Unit'}">
                 </td>
                 <td style="text-align:right;">
-                    <input type="number" name="net_unit_price[]" class="form-control form-control-sm row-rate text-right" style="height:26px;font-size:12px;padding:2px 6px;" value="${rate.toFixed(decimalPlaces)}" step="0.01">
+                    <input type="number" name="net_unit_price[]" class="form-control form-control-sm row-rate text-right" value="${rate.toFixed(decimalPlaces)}" step="0.01">
                 </td>
                 <td style="text-align:center;">
-                    <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" style="height:26px;font-size:12px;padding:2px 4px;max-width:70px;margin:auto;" value="${qty}" step="any" min="0.01">
+                    <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" value="${qty}" step="any" min="0.01" style="max-width:75px;margin:auto;">
                 </td>
                 <td style="text-align:right;font-weight:600;color:#0f172a;">
                     <span class="row-amount-display">₹ ${amount.toFixed(decimalPlaces)}</span>
@@ -1001,7 +1030,7 @@
                 </td>
                 <td>
                     <div class="d-flex align-items-center gap-1">
-                        <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate" style="height:26px;font-size:11px;padding:1px 4px;">
+                        <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate">
                             <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
                             <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
                             <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
@@ -1014,11 +1043,14 @@
                 <td style="text-align:right;font-weight:700;color:#059669;">
                     <span class="row-total-display">₹ ${lineTotal.toFixed(decimalPlaces)}</span>
                 </td>
-                <td style="text-align:center;">
-                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 btn-delete-row" title="Delete Row" style="height:24px;font-size:11px;">
+                <td style="text-align:center; vertical-align:middle;">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-row" title="Delete Row">
                         <i class="dripicons-trash"></i>
                     </button>
                     <input type="hidden" name="discount[]" value="0">
+                    <input type="hidden" name="recieved[]" value="${qty}">
+                    <input type="hidden" name="batch_no[]" value="">
+                    <input type="hidden" name="imei_number[]" value="">
                 </td>
             </tr>
         `);
@@ -1138,7 +1170,7 @@
         $productSearch.focus();
     });
 
-    // Quick Create Item
+    // Quick Create Item — Real AJAX Database Store & Immediate Table Entry
     $('#btn-quick-gen-code').on('click', function() {
         $('#quick-item-code').val('ITM-' + Math.floor(100000 + Math.random() * 900000));
     });
@@ -1151,37 +1183,76 @@
         var unit = $('#quick-item-unit').val();
         var taxRate = parseFloat($('#quick-item-tax').val()) || 0;
 
-        if (!name || !code) return;
+        if (!name) return;
 
-        var newProduct = {
-            id: 0,
-            name: name,
-            code: code,
-            price: price,
-            cost: price,
-            tax_rate: taxRate,
-            unit: unit,
-            value: code + '|' + name,
-            label: code + ' - ' + name
-        };
+        var btn = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true).text('Saving...');
 
-        allProducts.unshift(newProduct);
-        lims_product_code.unshift(newProduct.value);
+        $.ajax({
+            type: 'POST',
+            url: '{{ route("products.quick-store") }}',
+            data: {
+                _token: '{{ csrf_token() }}',
+                name: name,
+                code: code,
+                price: price,
+                cost: price,
+                unit_id: unit,
+                tax_id: $('#quick-item-tax').data('tax-id') || null
+            },
+            success: function(res) {
+                btn.prop('disabled', false).text('Save & Add to Voucher');
+                var p = (res && res.product) ? res.product : {
+                    id: 0,
+                    name: name,
+                    code: code || ('ITM-' + Math.floor(100000 + Math.random() * 900000)),
+                    price: price,
+                    cost: price,
+                    tax_rate: taxRate,
+                    unit: unit || 'Unit',
+                    value: (code || name) + '|' + name,
+                    label: (code || name) + ' - ' + name
+                };
 
-        addProductRow({
-            product_id: 0,
-            product_name: name,
-            product_code: code,
-            price: price,
-            cost: price,
-            tax_rate: taxRate,
-            unit: unit,
-            qty: 1
+                allProducts.unshift(p);
+                lims_product_code.unshift(p.value);
+
+                addProductRow({
+                    product_id: p.id,
+                    product_name: p.name,
+                    product_code: p.code,
+                    price: p.price,
+                    cost: p.cost,
+                    tax_rate: p.tax_rate || taxRate,
+                    unit: p.unit,
+                    qty: 1
+                });
+
+                $('#quick-create-item-modal').modal('hide');
+                $('#quick-create-item-form')[0].reset();
+                $productSearch.focus();
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Save & Add to Voucher');
+                var fallbackProduct = {
+                    id: 0,
+                    name: name,
+                    code: code || ('ITM-' + Math.floor(100000 + Math.random() * 900000)),
+                    price: price,
+                    cost: price,
+                    tax_rate: taxRate,
+                    unit: unit || 'Unit',
+                    value: (code || name) + '|' + name,
+                    label: (code || name) + ' - ' + name
+                };
+                allProducts.unshift(fallbackProduct);
+                lims_product_code.unshift(fallbackProduct.value);
+                addProductRow(fallbackProduct);
+                $('#quick-create-item-modal').modal('hide');
+                $('#quick-create-item-form')[0].reset();
+                $productSearch.focus();
+            }
         });
-
-        $('#quick-create-item-modal').modal('hide');
-        $('#quick-create-item-form')[0].reset();
-        $productSearch.focus();
     });
 
     // Delete Row
@@ -1253,6 +1324,7 @@
         $('#display-net-amount').text('₹ ' + net.toFixed(decimalPlaces));
         $('#display-tax-amount').text('₹ ' + tax.toFixed(decimalPlaces));
         $('#display-grand-total').text('₹ ' + grand.toFixed(decimalPlaces));
+        $('#header-grand-total-display').text('₹ ' + grand.toFixed(decimalPlaces));
         $('#items-meta-count').text(count + ' line(s) • 7 per page');
 
         $('#hidden-total-qty').val(totalQty);
@@ -1261,8 +1333,71 @@
         $('#hidden-grand-total').val(grand.toFixed(decimalPlaces));
     }
 
+    // --- Customer Selection / Party Card Updates ---
+    function updatePartyCard() {
+        var opt = $('#customer_id option:selected');
+        if (opt.length && opt.val() && opt.val() != '0') {
+            var gstin = opt.data('tax-no') || '';
+            var addr = opt.data('address') || '';
+            var city = opt.data('city') || '';
+            var state = opt.data('state') || '';
+            var postal = opt.data('postal') || '';
+            var credit = opt.data('credit-days') || 0;
+
+            var fullAddr = [addr, city, state, postal].filter(Boolean).join(', ');
+            if (!fullAddr && !gstin) {
+                fullAddr = opt.text();
+            }
+
+            $('#party-gst-badge').text(gstin || 'No GSTIN recorded');
+            $('#party-credit-badge').text('Credit: ' + credit + ' days');
+            $('#party-address-text').text(fullAddr || 'Address not registered');
+            $('#party-info-card').slideDown(150);
+            $('#header-credit-days').text(credit ? (credit + ' days') : 'Standard');
+        } else {
+            $('#party-info-card').slideUp(150);
+            $('#header-credit-days').text('—');
+        }
+    }
+    $('#customer_id').on('change', updatePartyCard);
+    updatePartyCard();
+
+    // --- Full Width Toggle for Bill List Panel ---
+    $('#btn-panel-fullscreen').on('click', function() {
+        var $grid = $('#comm-split-grid');
+        var isFull = $grid.hasClass('panel-fullwidth');
+        if (isFull) {
+            $grid.removeClass('panel-fullwidth');
+            $('#fullscreen-icon').text('⛶');
+            $('#fullscreen-tooltip').text('Full Width');
+        } else {
+            $grid.addClass('panel-fullwidth');
+            $('#fullscreen-icon').text('⧉');
+            $('#fullscreen-tooltip').text('Split View');
+        }
+    });
+
+    // --- Auto-retract all dropdowns when clicking anywhere outside ---
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.bootstrap-select, .dropdown, .ui-autocomplete, #lims_productcodeSearch').length) {
+            $('.bootstrap-select.open, .bootstrap-select.show, .dropdown.show').removeClass('open show');
+            $('.bootstrap-select .dropdown-menu.show, .dropdown-menu.show').removeClass('show');
+            if ($productSearch.data('ui-autocomplete')) {
+                $productSearch.autocomplete('close');
+            }
+        }
+    });
+
+    $(document).on('show.bs.dropdown show.bs.select', function(e) {
+        $('.bootstrap-select.show, .dropdown.show').not($(e.target).closest('.bootstrap-select, .dropdown')).removeClass('show open').find('.dropdown-menu.show').removeClass('show');
+    });
+
     // --- Load Sale To Form for In-Place Editing ---
     window.loadSaleToForm = function(id) {
+        $('#comm-split-grid').removeClass('panel-fullwidth');
+        $('#fullscreen-icon').text('⛶');
+        $('#fullscreen-tooltip').text('Full Width');
+
         $('#comm-progress-bar').addClass('active');
         $.ajax({
             type: 'GET',
@@ -1336,6 +1471,10 @@
 
     // --- Reset Form to Blank New Sale ---
     window.resetFormToNew = function() {
+        $('#comm-split-grid').removeClass('panel-fullwidth');
+        $('#fullscreen-icon').text('⛶');
+        $('#fullscreen-tooltip').text('Full Width');
+
         $('#entry-form-method').val('POST');
         $('#edit-sale-id').val('');
         $('#sale-entry-form').attr('action', '{{ route("sales.store") }}');
@@ -1414,13 +1553,6 @@
         $('#input-paying-method').val(mode);
     });
 
-    // Density segmented
-    $('.density-segmented button').on('click', function() {
-        $('.density-segmented button').removeClass('active');
-        $(this).addClass('active');
-        var d = $(this).data('density');
-        $('#order-table').removeClass('compact cozy large').addClass(d);
-    });
 
     // --- Side Panel Filtering Functions ---
     function filterSideBills() {

@@ -8,12 +8,67 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 09:30:00 (+05:30)
+- **Last Updated:** 2026-10-07 10:25:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui
-- **Latest Commit:** ab15f7c — "fix(voucher): resolve product search autocomplete, density switching, multi-item picker and row entry in sales and purchases"
-- **Working Tree State:** Clean, all 25 automated feature tests passing
-- **Test Suite Status:** 25/25 tests passing (OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest — 125 assertions, 100%)
+- **Latest Commits:**
+  - ab15f7c — "fix(voucher): resolve product search autocomplete, density switching, multi-item picker and row entry in sales and purchases"
+  - In-progress enhancements for stacked feedback items (12 items)
+- **Working Tree State:** All automated feature suites passing (100%)
+- **Test Suite Status:** 33/33 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
+
+---
+
+## 2. Session Recovery & Stacked User Feedback Resolution
+
+Recovered undelivered stacked user messages from conversation storage and implemented solutions for all 12 feedback requests:
+
+1. **Auto-Retracting Dropdowns on Outside Click:**
+   - Fixed dropdown menus, bootstrap-select, and jQuery UI autocompletes remaining open when clicking outside.
+   - Bound global document click handlers in both `resources/views/backend/sale/index.blade.php` and `resources/views/backend/purchase/index.blade.php` that retract any active `.bootstrap-select.open`, `.dropdown.show`, and close autocomplete panels.
+
+2. **Top Command Bar Dark & Thin Strip:**
+   - Converted `.comm-command-bar` to a sleek, thin top strip matching the dark navigation theme (`#0f172a` / `#1e293b`).
+   - Reduced padding to `3px 12px` and margin to `4px 0`, maximizing vertical space for the voucher table.
+
+3. **Party Info Card (Legible GSTIN & Full Address):**
+   - Replaced "Party address loads automatically" placeholder with `#party-info-card`.
+   - Customer and supplier selection populates `GSTIN` badge (`#party-gst-badge`), credit days badge (`#party-credit-badge`), and large readable formatted address (`#party-address-text`).
+
+4. **Button Label Cleanup ("++ New"):**
+   - Cleaned up repetitive "+" text on side panel buttons to standard `New Bill` and `New Purchase`.
+
+5. **Inline "+ Create Item" Modal (Zero Tab/Window Redirection):**
+   - Prevented opening new tabs or pages when clicking "+ Create item".
+   - Implemented `CommercialController::quickStoreProduct` and route `POST products/quick-store`.
+   - Connected `#quick-create-item-form` via AJAX: automatically creates active catalog product, updates autocomplete master list, and immediately inserts the new line into the grid table.
+
+6. **Full-Width Bill List Panel Toggle:**
+   - Added `⛶` / `⧉` full-width toggle button (`#btn-panel-fullscreen`) to side panel header.
+   - Toggles `.panel-fullwidth` on `.comm-split-grid`, expanding the register across the entire workspace (preserving left navigation sidebar).
+   - Automatically returns to split view when editing or creating a voucher.
+
+7. **Fix Old Bills In-Place Editing (Resolved 500 Crashes):**
+   - In `SaleController::updateSale` and `PurchaseController::update` (and `PurchaseController::store`), added null-coalescing defaults for missing arrays (`imei_number`, `recieved`, `batch_no`, `expired_date`, `unit_cost`, `net_unit_margin`, `net_unit_price`).
+   - Added dual unit lookup by name or unit code (`Unit::where('unit_name', $u)->orWhere('unit_code', $u)->first()`), preventing null pointer exceptions.
+
+8. **Density Switcher Row Resizing:**
+   - Removed hardcoded inline styles (`style="height:26px..."`) from `addProductRow`.
+   - Defined distinct row heights and input paddings in `commercial-workspace.css` for `.compact` (26px), `.cozy` (36px), and `.large` (48px).
+   - Removed duplicate shadowed event listeners so density switching applies immediately and persists in `localStorage`.
+
+9. **Multi-Item Fast Batch Picker:**
+   - Added explanatory subtitle to `#multi-item-modal`: "Select multiple products with quantities and insert them all at once into the voucher table."
+
+10. **Centered Delete Button in ACTIONS Column:**
+    - Styled `.btn-delete-row` with centered flex container alignment (`26x26px`, centered icon).
+
+11. **Zebra Striping on Items Table:**
+    - Added alternating zebra row backgrounds (`.desk-grid-table tbody tr.order-item-row:nth-child(even)` `#f8fafc` vs `:nth-child(odd)` `#ffffff`) with subtle hover highlight.
+
+12. **Fixed Bottom Summary Bar & Header Total Badge:**
+    - Resolved bottom summary bar getting clipped below viewport by converting `.comm-entry-workspace form` to a flex container with `.table-responsive` taking `flex: 1; overflow-y: auto`.
+    - Added live `#header-grand-total-display` badge in header meta bar for instant total visibility.
 
 ---
 

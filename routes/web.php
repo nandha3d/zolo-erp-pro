@@ -228,6 +228,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('product-price/{id}', 'getProductPrice');
     });
 
+    Route::post('products/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreProduct'])->name('products.quick-store');
+
+
 
     Route::get('language_switch/{id}', [LanguageController::class, 'switchLanguage']);
 

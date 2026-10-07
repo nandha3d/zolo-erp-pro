@@ -469,4 +469,73 @@ class CommercialController extends Controller
         });
         return response()->json(['data' => $record], 201);
     }
+
+    public function quickStoreProduct(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:100',
+            'price' => 'required|numeric|min:0',
+            'cost' => 'nullable|numeric|min:0',
+            'unit_id' => 'nullable',
+            'tax_id' => 'nullable',
+        ]);
+
+        $name = trim($validated['name']);
+        $code = !empty($validated['code']) ? trim($validated['code']) : ('ITM-' . mt_rand(100000, 999999));
+        $price = (float)$validated['price'];
+        $cost = isset($validated['cost']) ? (float)$validated['cost'] : $price;
+
+        $unit = null;
+        if (!empty($validated['unit_id'])) {
+            $unit = \App\Models\Unit::find($validated['unit_id'])
+                ?? \App\Models\Unit::where('unit_code', $validated['unit_id'])->orWhere('unit_name', $validated['unit_id'])->first();
+        }
+        if (!$unit) {
+            $unit = \App\Models\Unit::first();
+        }
+
+        $category = \App\Models\Category::where('is_active', true)->first();
+        $categoryId = $category ? $category->id : 1;
+
+        $tax = null;
+        if (!empty($validated['tax_id'])) {
+            $tax = \App\Models\Tax::find($validated['tax_id']);
+        }
+        $taxRate = $tax ? (float)$tax->rate : 0;
+
+        $product = \App\Models\Product::create([
+            'name' => $name,
+            'code' => $code,
+            'type' => 'standard',
+            'barcode_symbology' => 'code128',
+            'category_id' => $categoryId,
+            'unit_id' => $unit ? $unit->id : 1,
+            'purchase_unit_id' => $unit ? $unit->id : 1,
+            'sale_unit_id' => $unit ? $unit->id : 1,
+            'cost' => $cost,
+            'price' => $price,
+            'tax_id' => $tax ? $tax->id : null,
+            'tax_method' => 1,
+            'qty' => 0,
+            'is_active' => 1,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'code' => $product->code,
+                'price' => (float)$product->price,
+                'cost' => (float)$product->cost,
+                'tax_rate' => $taxRate,
+                'unit' => $unit ? ($unit->unit_code ?? $unit->unit_name) : 'Unit',
+                'value' => $product->code . '|' . $product->name,
+                'label' => $product->code . ' - ' . $product->name,
+            ],
+            'message' => 'Product created successfully',
+        ]);
+    }
 }
+

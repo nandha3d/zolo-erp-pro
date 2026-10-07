@@ -173,7 +173,7 @@ class SaleController extends Controller
             $todaySalesCount = Sale::whereNull('deleted_at')->whereDate('created_at', date('Y-m-d'))->count();
             $totalPaid = Sale::whereNull('deleted_at')->sum('paid_amount');
             $totalDue = Sale::whereNull('deleted_at')->selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
-            $lims_customer_list = Customer::where('is_active', true)->select('id', 'name', 'phone_number')->limit(100)->get();
+            $lims_customer_list = Customer::where('is_active', true)->select('id', 'name', 'phone_number', 'tax_no', 'address', 'city', 'state', 'postal_code', 'credit_days')->limit(200)->get();
             $recent_bills = Sale::whereNull('deleted_at')
                 ->with('customer:id,name,phone_number')
                 ->latest('id')
@@ -2948,25 +2948,25 @@ class SaleController extends Controller
             Product_Sale::where('sale_id', $id)->delete();
         }
 
-        $product_id = $data['product_id'];
-        $imei_number = $data['imei_number'];
+        $product_id = $data['product_id'] ?? [];
+        $imei_number = $data['imei_number'] ?? array_fill(0, count($product_id), null);
         if(isset($data['product_batch_id'])){
             $product_batch_id = $data['product_batch_id'];
         }else{
             $product_batch_id = null;
         }
-        $product_code = $data['product_code'];
+        $product_code = $data['product_code'] ?? [];
         if(!empty($data['product_variant_id']))
             $product_variant_id = $data['product_variant_id'];
         else
             $product_variant_id = null;
-        $qty = $data['qty'];
-        $sale_unit = $data['sale_unit'];
-        $net_unit_price = $data['net_unit_price'];
-        $discount = $data['discount'];
-        $tax_rate = $data['tax_rate'];
-        $tax = $data['tax'];
-        $total = $data['subtotal'];
+        $qty = $data['qty'] ?? [];
+        $sale_unit = $data['sale_unit'] ?? [];
+        $net_unit_price = $data['net_unit_price'] ?? [];
+        $discount = $data['discount'] ?? array_fill(0, count($product_id), 0);
+        $tax_rate = $data['tax_rate'] ?? array_fill(0, count($product_id), 0);
+        $tax = $data['tax'] ?? array_fill(0, count($product_id), 0);
+        $total = $data['subtotal'] ?? [];
         $old_product_id = [];
         $product_sale = [];
         foreach ($lims_product_sale_data as  $key => $product_sale_data) {
@@ -2987,10 +2987,12 @@ class SaleController extends Controller
         $log_data['item_description'] = '';
         foreach ($product_id as $key => $pro_id) {
             $lims_product_data = Product::find($pro_id);
+            if (!$lims_product_data) continue;
             $product_sale['variant_id'] = null;
-            if($sale_unit[$key] != 'n/a') {
-                $lims_sale_unit_data = Unit::where('unit_name', $sale_unit[$key])->first();
-                $sale_unit_id = $lims_sale_unit_data->id;
+            $uName = $sale_unit[$key] ?? 'Unit';
+            if($uName != 'n/a') {
+                $lims_sale_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first();
+                $sale_unit_id = $lims_sale_unit_data ? $lims_sale_unit_data->id : ($lims_product_data->unit_id ?? 1);
                 if($lims_product_data->is_variant) {
                     $lims_product_variant_data = ProductVariant::select('id', 'variant_id', 'qty')->FindExactProductWithCode($pro_id, $product_code[$key])->first();
                     $product_sale['variant_id'] = $lims_product_variant_data->variant_id;

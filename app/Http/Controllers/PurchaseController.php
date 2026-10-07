@@ -98,7 +98,7 @@ class PurchaseController extends Controller
             $todayPurchasesCount = Purchase::whereDate('created_at', date('Y-m-d'))->count();
             $totalPaid = Purchase::sum('paid_amount');
             $totalDue = Purchase::selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
-            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number')->limit(100)->get();
+            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number', 'tax_no', 'address', 'city', 'state', 'postal_code', 'credit_days')->limit(200)->get();
             $recent_bills = Purchase::with('supplier:id,name,company_name,phone_number')
                 ->latest('id')
                 ->limit(50)
@@ -279,30 +279,35 @@ class PurchaseController extends Controller
             }
             if(count($custom_field_data))
                 DB::table('purchases')->where('id', $lims_purchase_data->id)->update($custom_field_data);
-            $product_id = $data['product_id'];
-            $product_code = $data['product_code'];
-            $qty = $data['qty'];
-            $recieved = $data['recieved'];
-            $batch_no = $data['batch_no'] ?? null;
-            $expired_date = $data['expired_date'] ?? null;
-            $purchase_unit = $data['purchase_unit'];
-            $unit_cost = $data['unit_cost'];
-            $net_unit_cost = $data['net_unit_cost'];
-            $net_unit_margin = $data['net_unit_margin'];
-            $net_unit_margin_type = $data['net_unit_margin_type'];
-            $net_unit_price = $data['net_unit_price'];
-            $discount = $data['discount'];
-            $tax_rate = $data['tax_rate'];
-            $tax = $data['tax'];
-            $total = $data['subtotal'];
-            $imei_numbers = $data['imei_number'];
+            $product_id = $data['product_id'] ?? [];
+            $product_code = $data['product_code'] ?? [];
+            $qty = $data['qty'] ?? [];
+            $recieved = $data['recieved'] ?? $qty;
+            $batch_no = $data['batch_no'] ?? array_fill(0, count($product_id), null);
+            $expired_date = $data['expired_date'] ?? array_fill(0, count($product_id), null);
+            $purchase_unit = $data['purchase_unit'] ?? array_fill(0, count($product_id), 'Unit');
+            $net_unit_cost = $data['net_unit_cost'] ?? [];
+            $unit_cost = $data['unit_cost'] ?? $net_unit_cost;
+            $net_unit_margin = $data['net_unit_margin'] ?? array_fill(0, count($product_id), 0);
+            $net_unit_margin_type = $data['net_unit_margin_type'] ?? array_fill(0, count($product_id), 'percentage');
+            $net_unit_price = $data['net_unit_price'] ?? $net_unit_cost;
+            $discount = $data['discount'] ?? array_fill(0, count($product_id), 0);
+            $tax_rate = $data['tax_rate'] ?? array_fill(0, count($product_id), 0);
+            $tax = $data['tax'] ?? array_fill(0, count($product_id), 0);
+            $total = $data['subtotal'] ?? [];
+            $imei_numbers = $data['imei_number'] ?? array_fill(0, count($product_id), null);
             $product_purchase = [];
             $log_data['item_description'] = '';
 
             $warehousePrices = [];
             foreach ($product_id as $i => $id) {
-                $lims_purchase_unit_data  = Unit::where('unit_name', $purchase_unit[$i])->first();
+                $uName = $purchase_unit[$i] ?? 'Unit';
+                $lims_purchase_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first();
+                if (!$lims_purchase_unit_data) {
+                    $lims_purchase_unit_data = Unit::first();
+                }
                 $lims_product_data = Product::find($id);
+                if (!$lims_product_data) continue;
                 $price = $lims_product_data->price;
                 //dealing with product batch: only its identity here, the stock movement posts the quantity
                 if(isset($batch_no[$i])) {
@@ -349,15 +354,15 @@ class PurchaseController extends Controller
                     $warehousePrices[] = [$id, $product_purchase['variant_id'], $product_purchase['product_batch_id'], $price];
                 }
                 // update cost, profit margin, and price
-                $lims_product_data->cost = $unit_cost[$i];
-                $lims_product_data->profit_margin = $net_unit_margin[$i];
-                $lims_product_data->profit_margin_type = $net_unit_margin_type[$i];
+                $lims_product_data->cost = $unit_cost[$i] ?? $lims_product_data->cost;
+                $lims_product_data->profit_margin = $net_unit_margin[$i] ?? $lims_product_data->profit_margin;
+                $lims_product_data->profit_margin_type = $net_unit_margin_type[$i] ?? $lims_product_data->profit_margin_type;
 
-                $lims_product_data->price = $net_unit_price[$i];
+                $lims_product_data->price = $net_unit_price[$i] ?? $lims_product_data->price;
 
                 $lims_product_data->save();
 
-                if($imei_numbers[$i]) {
+                if(!empty($imei_numbers[$i])) {
                     // prevent duplication
                     $imeis = explode(',', $imei_numbers[$i]);
                     $imeis = array_map('trim', $imeis);
@@ -1186,45 +1191,47 @@ class PurchaseController extends Controller
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
 
             $data['created_at'] = date("Y-m-d", strtotime(str_replace("/", "-", $data['created_at']))) . ' '. date("H:i:s");
-            $product_id = $data['product_id'];
-            $product_code = $data['product_code'];
-            $qty = $data['qty'];
-            $recieved = $data['recieved'];
-            $batch_no = $data['batch_no'];
-            $expired_date = $data['expired_date'];
-            $purchase_unit = $data['purchase_unit'];
-            $unit_cost = $data['unit_cost'];
-            $net_unit_cost = $data['net_unit_cost'];
-            $net_unit_margin = $data['net_unit_margin'];
-            $net_unit_margin_type = $data['net_unit_margin_type'];
-            $net_unit_price = $data['net_unit_price'];
-            $discount = $data['discount'];
-            $tax_rate = $data['tax_rate'];
-            $tax = $data['tax'];
-            $total = $data['subtotal'];
-            $imei_number = $new_imei_number = $data['imei_number'];
+            $product_id = $data['product_id'] ?? [];
+            $product_code = $data['product_code'] ?? [];
+            $qty = $data['qty'] ?? [];
+            $recieved = $data['recieved'] ?? $qty;
+            $batch_no = $data['batch_no'] ?? array_fill(0, count($product_id), null);
+            $expired_date = $data['expired_date'] ?? array_fill(0, count($product_id), null);
+            $purchase_unit = $data['purchase_unit'] ?? array_fill(0, count($product_id), 'Unit');
+            $net_unit_cost = $data['net_unit_cost'] ?? [];
+            $unit_cost = $data['unit_cost'] ?? $net_unit_cost;
+            $net_unit_margin = $data['net_unit_margin'] ?? array_fill(0, count($product_id), 0);
+            $net_unit_margin_type = $data['net_unit_margin_type'] ?? array_fill(0, count($product_id), 'percentage');
+            $net_unit_price = $data['net_unit_price'] ?? $net_unit_cost;
+            $discount = $data['discount'] ?? array_fill(0, count($product_id), 0);
+            $tax_rate = $data['tax_rate'] ?? array_fill(0, count($product_id), 0);
+            $tax = $data['tax'] ?? array_fill(0, count($product_id), 0);
+            $total = $data['subtotal'] ?? [];
+            $imei_number = $new_imei_number = $data['imei_number'] ?? array_fill(0, count($product_id), null);
             $product_purchase = [];
 
             // Return what the purchase received before its lines change; the new lines are received after the update.
             $this->reversePurchaseStock($lims_purchase_data);
             foreach ($lims_product_purchase_data as $i => $product_purchase_data) {
                 $lims_product_data = Product::find($product_purchase_data->product_id);
-                // update cost, profit margin, and price
-                $lims_product_data->cost = $unit_cost[$i];
-                $lims_product_data->profit_margin = $net_unit_margin[$i];
-                $lims_product_data->profit_margin_type = $net_unit_margin_type[$i];
-
-                $lims_product_data->price = $net_unit_price[$i];
-
-                $lims_product_data->save();
+                if ($lims_product_data) {
+                    // update cost, profit margin, and price
+                    $lims_product_data->cost = $unit_cost[$i] ?? $lims_product_data->cost;
+                    $lims_product_data->profit_margin = $net_unit_margin[$i] ?? $lims_product_data->profit_margin;
+                    $lims_product_data->profit_margin_type = $net_unit_margin_type[$i] ?? $lims_product_data->profit_margin_type;
+                    $lims_product_data->price = $net_unit_price[$i] ?? $lims_product_data->price;
+                    $lims_product_data->save();
+                }
                 $product_purchase_data->delete();
             }
 
             $log_data['item_description'] = '';
             $warehousePrices = [];
             foreach ($product_id as $key => $pro_id) {
-                $lims_purchase_unit_data = Unit::where('unit_name', $purchase_unit[$key])->first();
+                $uName = $purchase_unit[$key] ?? 'Unit';
+                $lims_purchase_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first();
                 $lims_product_data = Product::find($pro_id);
+                if (!$lims_product_data) continue;
                 $price = null;
                 //dealing with product batch: only its identity here, the stock movement posts the quantity
                 if($batch_no[$key]) {

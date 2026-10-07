@@ -32,7 +32,7 @@ body.commercial-screen-lock #content {
 }
 
 body.commercial-screen-lock section {
-    padding: 6px 14px 8px 14px !important;
+    padding: 3px 10px 4px 10px !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -62,86 +62,115 @@ body.commercial-screen-lock section {
     width: 100%;
 }
 
-/* Command Header Bar */
+/* Sleek Thin Dark Command Header Bar (Matching Left Desk Panel #0f172a / #111827) */
 .comm-command-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 6px 14px;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 3px 10px;
+    margin-bottom: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
-    gap: 12px;
+    gap: 8px;
+    color: #f8fafc;
 }
 
 .comm-title-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .comm-title-group h1 {
-    font-size: 16px;
+    font-size: 13.5px;
     font-weight: 700;
     margin: 0;
-    color: #0f172a;
+    color: #f8fafc;
     line-height: 1.2;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .comm-title-badge {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
     white-space: nowrap;
 }
 
 /* Navigation Register Pills */
 .comm-nav-pills {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     margin: 0;
-    padding: 0;
-    list-style: none;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
     padding: 2px;
+    list-style: none;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
 }
 
 .comm-nav-pills .nav-link {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 6px;
-    color: #475569;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #cbd5e1;
     border: none;
     transition: all 0.15s ease-in-out;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
 }
 
 .comm-nav-pills .nav-link:hover {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: #334155;
+    color: #ffffff;
 }
 
 .comm-nav-pills .nav-link.active {
-    background: #4f46e5 !important;
+    background: #7c3aed !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 4px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.35);
 }
+
+.comm-actions .btn-outline-secondary {
+    border-color: #334155;
+    background: #1e293b;
+    color: #cbd5e1;
+    font-size: 11px;
+    padding: 2px 8px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.comm-actions .btn-outline-secondary:hover {
+    background: #334155;
+    color: #ffffff;
+    border-color: #475569;
+}
+.comm-actions .btn-primary {
+    height: 26px;
+    font-size: 11px;
+    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 
 /* Action Button Group */
 .comm-actions {
@@ -1339,25 +1368,54 @@ body.commercial-screen-lock section {
     color: #059669;
 }
 
-/* Items Grid Density Modes */
-.desk-grid-table.compact thead th {
-    padding: 4px 6px !important;
-    font-size: 10.5px !important;
-    height: 26px !important;
-}
-.desk-grid-table.compact tbody td {
-    padding: 2px 5px !important;
-    font-size: 11px !important;
-    height: 28px !important;
-}
-.desk-grid-table.compact .form-control-sm {
-    height: 22px !important;
-    font-size: 11px !important;
-    padding: 1px 4px !important;
+/* Items Grid Density Modes — Visually Distinct Row Heights & Sizing */
+.desk-grid-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
 }
 
+/* Zebra Striping Alternate Colors for Rows */
+.desk-grid-table tbody tr.order-item-row:nth-child(even) {
+    background-color: #f8fafc !important;
+}
+.desk-grid-table tbody tr.order-item-row:nth-child(odd) {
+    background-color: #ffffff !important;
+}
+.desk-grid-table tbody tr.order-item-row:hover {
+    background-color: #f1f5f9 !important;
+}
+.desk-grid-table td {
+    vertical-align: middle !important;
+}
+
+/* Compact Mode (Ultra dense) */
+.desk-grid-table.compact thead th {
+    padding: 3px 5px !important;
+    font-size: 10px !important;
+    height: 24px !important;
+}
+.desk-grid-table.compact tbody td {
+    padding: 2px 4px !important;
+    font-size: 11px !important;
+    height: 26px !important;
+}
+.desk-grid-table.compact .form-control-sm,
+.desk-grid-table.compact input.form-control,
+.desk-grid-table.compact select.form-control {
+    height: 22px !important;
+    font-size: 10.5px !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+}
+.desk-grid-table.compact .btn-delete-row {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 10px !important;
+}
+
+/* Cozy Mode (Balanced, default) */
 .desk-grid-table.cozy thead th {
-    padding: 6px 8px !important;
+    padding: 5px 8px !important;
     font-size: 11px !important;
     height: 32px !important;
 }
@@ -1366,26 +1424,60 @@ body.commercial-screen-lock section {
     font-size: 12px !important;
     height: 36px !important;
 }
-.desk-grid-table.cozy .form-control-sm {
-    height: 26px !important;
+.desk-grid-table.cozy .form-control-sm,
+.desk-grid-table.cozy input.form-control,
+.desk-grid-table.cozy select.form-control {
+    height: 28px !important;
     font-size: 12px !important;
     padding: 2px 6px !important;
+    border-radius: 4px !important;
+}
+.desk-grid-table.cozy .btn-delete-row {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 11.5px !important;
 }
 
+/* Large Mode (Roomy, touch-friendly) */
 .desk-grid-table.large thead th {
-    padding: 9px 12px !important;
-    font-size: 12px !important;
-    height: 40px !important;
+    padding: 8px 12px !important;
+    font-size: 12.5px !important;
+    height: 42px !important;
 }
 .desk-grid-table.large tbody td {
     padding: 8px 12px !important;
-    font-size: 13px !important;
-    height: 46px !important;
+    font-size: 13.5px !important;
+    height: 48px !important;
 }
-.desk-grid-table.large .form-control-sm {
-    height: 32px !important;
-    font-size: 13px !important;
+.desk-grid-table.large .form-control-sm,
+.desk-grid-table.large input.form-control,
+.desk-grid-table.large select.form-control {
+    height: 34px !important;
+    font-size: 13.5px !important;
     padding: 4px 8px !important;
+    border-radius: 6px !important;
+}
+.desk-grid-table.large .btn-delete-row {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 13px !important;
+}
+
+/* Row Action & Delete Button Perfect Centered Alignment */
+.btn-delete-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    line-height: 1 !important;
+    transition: all 0.15s ease !important;
+}
+.btn-delete-row:hover {
+    background-color: #fee2e2 !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
 }
 
 /* Density Segmented Control */
@@ -1422,6 +1514,85 @@ body.commercial-screen-lock section {
     font-weight: 700;
 }
 
+/* Fixed Bottom Summary Bar & Viewport Pinning (Guaranteed Zero-Clipping) */
+.comm-entry-workspace form {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+.comm-entry-workspace .items-container {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.comm-entry-workspace .items-container .table-responsive {
+    flex: 1 !important;
+    min-height: 120px !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+
+.desk-summary-bottom-bar {
+    flex-shrink: 0 !important;
+    margin-top: auto !important;
+    z-index: 20 !important;
+    padding: 5px 12px !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.04) !important;
+}
+
+/* Full Width Expansion Toggle for Side Bill List Panel */
+.comm-split-grid.panel-fullwidth {
+    grid-template-columns: 1fr !important;
+}
+.comm-split-grid.panel-fullwidth .comm-entry-workspace {
+    display: none !important;
+}
+.comm-split-grid.panel-fullwidth .desk-bill-list-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-column: 1 !important;
+}
+.comm-split-grid.panel-fullwidth .side-list-container {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 8px !important;
+    padding: 6px !important;
+}
+
+/* Party Info Card (Replacing "Party address loads automatically") */
+.party-info-card {
+    margin-top: 4px;
+    padding: 6px 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+.party-info-card .party-gst-badge {
+    font-family: monospace;
+    color: #0f172a;
+    background: #e2e8f0;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 11.5px;
+}
+.party-info-card .party-address-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.35;
+    margin-top: 3px;
+}
+
 /* Multi-Item Modal Grid */
 #multi-item-modal .modal-content {
     border-radius: 10px;
@@ -1443,4 +1614,5 @@ body.commercial-screen-lock section {
 #multi-item-modal .multi-item-row:hover {
     background: #f8fafc;
 }
+
 
