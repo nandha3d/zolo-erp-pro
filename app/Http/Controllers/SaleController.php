@@ -190,7 +190,8 @@ class SaleController extends Controller
             $standardRemarks = class_exists(\App\Models\StandardRemark::class) ? \App\Models\StandardRemark::where('is_active', true)->get() : collect();
             $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
             $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
-            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills', 'lims_tax_list', 'lims_biller_list', 'currency', 'saleTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'lims_product_list_without_variant', 'lims_product_list_with_variant'));
+            $pending_challans = class_exists(\App\Models\DeliveryChallan::class) ? \App\Models\DeliveryChallan::with(['customer:id,name', 'items.product', 'items.unit'])->where('status', 'pending')->latest('id')->limit(30)->get() : collect();
+            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills', 'lims_tax_list', 'lims_biller_list', 'currency', 'saleTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'pending_challans'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -905,6 +906,12 @@ class SaleController extends Controller
             $lims_sale_data = Sale::create($data);
             if (isset($numberReservation)) {
                 $this->assignNumber($numberReservation, $lims_sale_data);
+            }
+            if (!empty($request->delivery_challan_id) && class_exists(\App\Models\DeliveryChallan::class)) {
+                \App\Models\DeliveryChallan::where('id', $request->delivery_challan_id)->update([
+                    'status' => 'converted_to_sale',
+                    'sale_id' => $lims_sale_data->id,
+                ]);
             }
 
 

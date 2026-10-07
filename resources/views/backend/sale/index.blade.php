@@ -30,7 +30,7 @@
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" id="tab-all-sales" href="javascript:void(0)" data-sale-type="0"><i class="dripicons-list"></i> {{ __('db.All') }} Invoices</a></li>
             <li><a class="nav-link" id="tab-pos-sales" href="{{ route('sale.pos') }}"><i class="dripicons-shopping-bag"></i> POS / Counter</a></li>
-            <li><a class="nav-link" href="{{ route('challan.index') }}"><i class="dripicons-box"></i> {{ __('Delivery Challans') }}</a></li>
+            <li><a class="nav-link" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> {{ __('Delivery Challans') }}</a></li>
             <li><a class="nav-link" href="{{ route('quotations.index') }}"><i class="dripicons-document-edit"></i> {{ __('db.Quotation') }}</a></li>
         </ul>
         <div class="comm-actions">
@@ -1601,6 +1601,42 @@
         $('#sale-status-val').val(1); // Completed
         $('#sale-entry-form').submit();
     });
+
+    // --- Auto load Delivery Challan if from_dc param present ---
+    var urlParams = new URLSearchParams(window.location.search);
+    var fromDcId = urlParams.get('from_dc');
+    if (fromDcId) {
+        $.getJSON('/delivery-challans/' + fromDcId, function(res) {
+            if (res && res.challan) {
+                var ch = res.challan;
+                $('#customer_id_select').val(ch.customer_id).trigger('change');
+                if (ch.warehouse_id) $('#warehouse_id_select').val(ch.warehouse_id).trigger('change');
+                if (ch.sale_type_id) $('#sale_type_id').val(ch.sale_type_id);
+                if (ch.agent_id) $('#agent_id').val(ch.agent_id);
+                if (ch.transport_name) $('#transporter_name').val(ch.transport_name);
+                if (ch.lr_no) $('#lr_no').val(ch.lr_no);
+                if (ch.lr_date) $('#lr_date').val(ch.lr_date.substring(0, 10));
+                if (ch.bale_no) $('#bale_no').val(ch.bale_no);
+                if (ch.no_of_bales) $('#no_of_bales').val(ch.no_of_bales);
+                if (ch.station_to) $('#station_to').val(ch.station_to);
+                if (ch.remarks) $('#custom_remarks').val(ch.remarks);
+
+                if (!$('#delivery_challan_id_input').length) {
+                    $('#sale-entry-form').append('<input type="hidden" name="delivery_challan_id" id="delivery_challan_id_input" value="' + ch.id + '">');
+                } else {
+                    $('#delivery_challan_id_input').val(ch.id);
+                }
+
+                if (res.items && res.items.length) {
+                    $('#order-table-body tr.item-row').remove();
+                    res.items.forEach(function(item) {
+                        addProductRow(item);
+                    });
+                }
+                $('#entry-title-text').text('New Sales Bill (from DC #' + ch.challan_no + ')');
+            }
+        });
+    }
 
     initPanelState();
 })();

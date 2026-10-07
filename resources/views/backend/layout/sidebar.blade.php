@@ -145,6 +145,7 @@
                 @if($isAdmin || $canNavigate('packing_slip_challan'))
                     <li id="packing-list-menu"><a href="{{route('packingSlip.index')}}">{{__('db.Packing Slip List')}}</a></li>
                     <li id="challan-list-menu"><a href="{{route('challan.index')}}">{{__('db.Challan List')}}</a></li>
+                    <li id="delivery-challan-menu"><a href="{{route('delivery-challans.index')}}">Delivery Challan (DC)</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('delivery'))
                     <li id="delivery-menu"><a href="{{route('delivery.index')}}">{{__('db.Delivery List')}}</a></li>

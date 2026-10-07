@@ -30,6 +30,7 @@ use App\Http\Controllers\SaleTypeController;
 use App\Http\Controllers\PurchaseTypeController;
 use App\Http\Controllers\StandardRemarkController;
 use App\Http\Controllers\DocumentSeriesController;
+use App\Http\Controllers\DeliveryChallanController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\BillerController;
 use App\Http\Controllers\CouponController;
@@ -290,6 +291,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::resource('purchase-type', PurchaseTypeController::class);
     Route::resource('standard-remark', StandardRemarkController::class);
     Route::resource('document-series', DocumentSeriesController::class);
+    Route::post('delivery-challans/{id}/convert-to-sale', [DeliveryChallanController::class, 'convertToSale'])->name('delivery-challans.convert-to-sale');
+    Route::resource('delivery-challans', DeliveryChallanController::class);
 
 
     Route::controller(TaxController::class)->group(function () {
