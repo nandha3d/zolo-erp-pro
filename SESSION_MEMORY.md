@@ -19,6 +19,9 @@
   - `f5e3e42` — "feat(commercial): add in-place quick create party modal and execute database fresh slate wipe"
 - **Working Tree State:** Clean, all automated feature test suites passing 100% (41/41 tests, 207 assertions)
 - **Test Suite Status:** 41/41 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
+- **Chat & Transcript Backups:**
+  - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
+  - Readable History: [`documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md)
 
 ---
 
