@@ -222,5 +222,78 @@ class OptechVoucherWebTest extends TestCase
             $this->assertTrue(true);
         }
     }
+
+    public function test_quick_store_category(): void
+    {
+        $catName = 'Test Yarn Fabrics ' . uniqid();
+        $response = $this->actingAs($this->adminUser)->postJson('/categories/quick-store', [
+            'name' => $catName,
+        ]);
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        $response->assertJsonStructure(['success', 'category' => ['id', 'name']]);
+        $this->assertDatabaseHas('categories', [
+            'name' => $catName,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_quick_store_brand(): void
+    {
+        $brandTitle = 'Test Apex Brand ' . uniqid();
+        $response = $this->actingAs($this->adminUser)->postJson('/brands/quick-store', [
+            'title' => $brandTitle,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        $response->assertJsonStructure(['success', 'brand' => ['id', 'title']]);
+        $this->assertDatabaseHas('brands', [
+            'title' => $brandTitle,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_quick_store_product_full_catalog(): void
+    {
+        $code = 'ITM-TEST-' . rand(100000, 999999);
+        $unit = \App\Models\Unit::first();
+        $tax = \App\Models\Tax::where('rate', 18)->first();
+
+        $response = $this->actingAs($this->adminUser)->postJson('/products/quick-store', [
+            'name' => 'Premium Grey Cotton 40s',
+            'code' => $code,
+            'type' => 'standard',
+            'barcode_symbology' => 'code128',
+            'unit_id' => $unit ? $unit->id : 1,
+            'cost' => 450.00,
+            'price' => 562.50,
+            'profit_margin' => 25.00,
+            'profit_margin_type' => 'percentage',
+            'wholesale_price' => 520.00,
+            'daily_sale_objective' => 10,
+            'alert_quantity' => 5,
+            'tax_id' => $tax ? $tax->id : null,
+            'tax_method' => 1,
+            'warranty' => 12,
+            'warranty_type' => 'months',
+            'guarantee' => 6,
+            'guarantee_type' => 'months',
+            'is_batch' => 1,
+            'is_imei' => 0,
+            'featured' => 1,
+            'is_online' => 1,
+            'in_stock' => 1,
+            'product_details' => 'Full catalog created via modal',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+        $this->assertDatabaseHas('products', [
+            'code' => $code,
+            'name' => 'Premium Grey Cotton 40s',
+            'is_active' => true,
+        ]);
+    }
 }
 

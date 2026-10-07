@@ -451,6 +451,163 @@
             </div>
         </aside>
     </div>
+
+    <!-- Full Width Register View (Initial Setup Before Changing to New UI) -->
+    <div class="comm-fullwidth-register" id="fullwidth-register-view" style="display: none;">
+        <!-- Top Return & Action Bar -->
+        <div class="comm-fullwidth-header-strip">
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="mb-0 font-weight-bold" style="font-size:14px;color:#0f172a;">
+                    <i class="dripicons-list text-success mr-1"></i> {{ __('db.Purchase') }} Register &amp; Inward GRN
+                </h5>
+                <span class="badge badge-secondary" style="font-size:10px;padding:3px 7px;">Full Register View</span>
+            </div>
+            <div class="d-flex align-items-center" style="gap:8px;">
+                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 font-weight-bold" id="btn-switch-voucher-mode" title="Return to Voucher Entry Form">
+                    <i class="dripicons-document"></i> ⧉ Voucher Entry
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success py-1 px-3 font-weight-bold" id="btn-fullwidth-new" title="Create New Purchase Bill">
+                    <i class="dripicons-plus"></i> + New Purchase
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" id="toggle-filter" title="Toggle Filters">
+                    <i class="dripicons-experiment"></i> Filter
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Summary Strip -->
+        <div class="comm-kpi-strip">
+            <div class="comm-kpi-box">
+                <div class="comm-kpi-info">
+                    <span class="comm-kpi-title">{{ __("Today's Purchases") }}</span>
+                    <span class="comm-kpi-value">{{ $todayPurchasesCount ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">({{ number_format($todayPurchasesAmount ?? 0, 2) }})</small></span>
+                </div>
+                <div class="comm-kpi-icon" style="background:#f0fdf4; color:#16a34a;">
+                    <i class="dripicons-cart"></i>
+                </div>
+            </div>
+            <div class="comm-kpi-box">
+                <div class="comm-kpi-info">
+                    <span class="comm-kpi-title">{{ __("Paid Outflow") }}</span>
+                    <span class="comm-kpi-value" style="color:#0284c7;">{{ number_format($totalPaid ?? 0, 2) }}</span>
+                </div>
+                <div class="comm-kpi-icon" style="background:#f0f9ff; color:#0284c7;">
+                    <i class="dripicons-checkmark"></i>
+                </div>
+            </div>
+            <div class="comm-kpi-box">
+                <div class="comm-kpi-info">
+                    <span class="comm-kpi-title">{{ __("Due Payables") }}</span>
+                    <span class="comm-kpi-value" style="color:#ea580c;">{{ number_format($totalDue ?? 0, 2) }}</span>
+                </div>
+                <div class="comm-kpi-icon" style="background:#fff7ed; color:#ea580c;">
+                    <i class="dripicons-warning"></i>
+                </div>
+            </div>
+            <div class="comm-kpi-box">
+                <div class="comm-kpi-info">
+                    <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
+                    <span class="comm-kpi-value">{{ number_format(($totalPaid ?? 0) + ($totalDue ?? 0), 2) }}</span>
+                </div>
+                <div class="comm-kpi-icon" style="background:#eef2ff; color:#4f46e5;">
+                    <i class="dripicons-archive"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Register Card -->
+        <div class="comm-register-card">
+            <!-- Sleek Inline Filter Bar -->
+            <div class="comm-table-filter-bar" id="filter-card">
+                <div class="filter-item">
+                    <label><i class="dripicons-calendar text-muted"></i></label>
+                    <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
+                    <input type="hidden" name="starting_date" value="{{$starting_date}}" />
+                    <input type="hidden" name="ending_date" value="{{$ending_date}}" />
+                </div>
+                <div class="filter-item @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
+                    <label>{{__('db.Warehouse')}}:</label>
+                    <select id="warehouse_id" name="warehouse_id" class="form-control" style="width:130px;">
+                        <option value="0">{{__('db.All Warehouse')}}</option>
+                        @foreach($lims_warehouse_list as $warehouse)
+                            <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Purchase Status')}}:</label>
+                    <select id="purchase-status" class="form-control" name="purchase_status" style="width:110px;">
+                        <option value="0">{{__('db.All')}}</option>
+                        <option value="1">{{__('db.Recieved')}}</option>
+                        <option value="2">{{__('db.Partial')}}</option>
+                        <option value="3">{{__('db.Pending')}}</option>
+                        <option value="4">{{__('db.Ordered')}}</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>{{__('db.Payment Status')}}:</label>
+                    <select id="payment-status" class="form-control" name="payment_status" style="width:100px;">
+                        <option value="0">{{__('db.All')}}</option>
+                        <option value="1">{{__('db.Due')}}</option>
+                        <option value="2">{{__('db.Paid')}}</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-success ml-auto" id="btn-quick-refresh" title="Reload Register">
+                    <i class="dripicons-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Sticky Header Table Viewport -->
+            <div class="comm-table-viewport">
+                <table id="purchase-table" class="table purchase-list mt-0" style="width: 100%">
+                    <thead>
+                        <tr>
+                            <th class="not-exported"></th>
+                            <th>{{__('db.date')}}</th>
+                            <th>{{__('db.reference')}}</th>
+                            <th>{{__('db.Created By')}}</th>
+                            <th>{{__('db.Supplier')}}</th>
+                            @if ($general_setting->show_products_details_in_purchase_table)
+                                <th>{{ __('db.Products') }}</th>
+                                <th>{{ __('db.Quantity') }}</th>
+                            @endif
+                            <th>{{__('db.Purchase Status')}}</th>
+                            <th>{{__('db.grand total')}}</th>
+                            <th>{{__('db.Returned Amount')}}</th>
+                            <th>{{__('db.Paid')}}</th>
+                            <th>{{__('db.Due')}}</th>
+                            <th>{{__('db.Payment Status')}}</th>
+                            @foreach($custom_fields as $fieldName)
+                            <th>{{$fieldName}}</th>
+                            @endforeach
+                            <th class="not-exported">{{__('db.action')}}</th>
+                        </tr>
+                    </thead>
+                    <tfoot class="tfoot active">
+                        <th></th>
+                        <th>{{__('db.Total')}}</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @if ($general_setting->show_products_details_in_purchase_table)
+                            <th></th>
+                            <th></th>
+                        @endif
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        @foreach($custom_fields as $fieldName)
+                        <th></th>
+                        @endforeach
+                        <th></th>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
 </section>
 
 <!-- CHARGES, TRANSPORT & REMARKS MODAL DRAWER -->
@@ -623,6 +780,180 @@
     </div>
 </div>
 
+<div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="viewPaymentLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="viewPaymentLabel" class="modal-title font-weight-bold">{{__('db.All Payment')}}</h5>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover payment-list">
+                    <thead>
+                        <tr>
+                            <th>{{__('db.date')}}</th>
+                            <th>{{__('db.Reference No')}}</th>
+                            <th>{{__('db.Account')}}</th>
+                            <th>{{__('db.Amount')}}</th>
+                            <th>{{__('db.Paid By')}}</th>
+                            <th>{{__('db.Payment Date')}}</th>
+                            <th>{{__('db.action')}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="add-payment" tabindex="-1" role="dialog" aria-labelledby="addPaymentLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="addPaymentLabel" class="modal-title font-weight-bold">{{__('db.Add Payment')}}</h5>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                {!! Form::open(['route' => 'purchase.add-payment', 'method' => 'post', 'class' => 'payment-form' ]) !!}
+                @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
+                    <div class="row">
+                        <input type="hidden" name="balance">
+                        <div class="col-md-6">
+                            <label>{{__('db.Recieved Amount')}} *</label>
+                            <input type="text" name="paying_amount" class="form-control numkey" step="any" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>{{__('db.Paying Amount')}} *</label>
+                            <input type="text" id="amount" name="amount" class="form-control" step="any" required>
+                        </div>
+                        <div class="col-md-6 mt-1">
+                            <label>{{__('db.Change')}} : </label>
+                            <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
+                        </div>
+                        <div class="col-md-6 mt-1">
+                            <label>{{__('db.Paid By')}}</label>
+                            <select name="paid_by_id" class="form-control">
+                                <option value="1">{{ __('db.Cash') }}</option>
+                                <option value="3">{{ __('db.Credit Card') }}</option>
+                                <option value="4">{{ __('db.Cheque') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <div class="card-element" class="form-control">
+                        </div>
+                        <div class="card-errors" role="alert"></div>
+                    </div>
+                    <div id="cheque">
+                        <div class="form-group">
+                            <label>{{__('db.Cheque Number')}} *</label>
+                            <input type="text" name="cheque_no" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-6">
+                            <label> {{__('db.Account')}}</label>
+                            <select class="form-control selectpicker" name="account_id">
+                                @foreach($lims_account_list as $account)
+                                    @if($account->is_default)
+                                    <option selected value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
+                                    @else
+                                    <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>{{ __('db.Payment Date') }}</label>
+                            <input type="text" name="payment_at" id="payment_at" class="form-control" value="{{ date('Y-m-d') }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>{{__('db.Payment Note')}}</label>
+                        <textarea rows="3" class="form-control" name="payment_note"></textarea>
+                    </div>
+
+                    <input type="hidden" name="purchase_id">
+
+                    <button type="submit" class="btn btn-primary">{{__('db.submit')}}</button>
+                {{ Form::close() }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="edit-payment" tabindex="-1" role="dialog" aria-labelledby="editPaymentLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="editPaymentLabel" class="modal-title font-weight-bold">{{__('db.Update Payment')}}</h5>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                {!! Form::open(['route' => 'purchase.update-payment', 'method' => 'post', 'class' => 'payment-form' ]) !!}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>{{__('db.Recieved Amount')}} *</label>
+                            <input type="text" name="edit_paying_amount" class="form-control numkey" step="any" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>{{__('db.Paying Amount')}} *</label>
+                            <input type="text" name="edit_amount" class="form-control" step="any" required>
+                        </div>
+                        <div class="col-md-6 mt-1">
+                            <label>{{__('db.Change')}} : </label>
+                            <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
+                        </div>
+                        <div class="col-md-6 mt-1">
+                            <label>{{__('db.Paid By')}}</label>
+                            <select name="edit_paid_by_id" class="form-control selectpicker">
+                                <option value="1">{{ __('db.Cash') }}</option>
+                                <option value="3">{{ __('db.Credit Card') }}</option>
+                                <option value="4">{{ __('db.Cheque') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <div class="card-element" class="form-control">
+                        </div>
+                        <div class="card-errors" role="alert"></div>
+                    </div>
+                    <div id="edit-cheque">
+                        <div class="form-group">
+                            <label>{{__('db.Cheque Number')}} *</label>
+                            <input type="text" name="edit_cheque_no" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-6">
+                            <label> {{__('db.Account')}}</label>
+                            <select class="form-control selectpicker" name="account_id">
+                            @foreach($lims_account_list as $account)
+                                <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
+                            @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>{{ __('db.Payment Date') }}</label>
+                            <input type="text" name="payment_at" id="edit_payment_at" class="form-control" value="" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>{{__('db.Payment Note')}}</label>
+                        <textarea rows="3" class="form-control" name="edit_payment_note"></textarea>
+                    </div>
+
+                    <input type="hidden" name="payment_id">
+
+                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
+                {{ Form::close() }}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Row Detail Modal (Batch, Expiry, Serial/IMEI, Discount) -->
 <div id="row-detail-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
     <div class="modal-dialog" style="max-width:480px;">
@@ -721,29 +1052,29 @@
     </div>
 </div>
 
-<!-- Compact Add Product Modal (Screen 4 Form Embedded in Voucher) -->
+<!-- Executive Spacious Add Product Modal (Catalog Master) -->
 <div id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left compact-add-product-modal">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header d-flex align-items-center justify-content-between">
                 <div>
-                    <h5 class="modal-title" style="font-size:13.5px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px;margin:0;">
-                        <i class="fa fa-plus-circle" style="color:#7c3aed;"></i> Add Product
+                    <h5 class="modal-title font-weight-bold" style="font-size:15px;color:#0f172a;display:flex;align-items:center;gap:8px;margin:0;">
+                        <i class="fa fa-plus-circle" style="color:#7c3aed;font-size:18px;"></i> Add Product (Catalog Master)
                     </h5>
-                    <span style="font-size:10.5px;color:#64748b;">The field labels marked with * are required. Adds immediately to voucher.</span>
+                    <span style="font-size:11.5px;color:#64748b;">The field labels marked with * are required. Once created, the item is immediately selected and added to the voucher.</span>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:22px;outline:none;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <form id="quick-create-item-form">
                 <div class="modal-body">
-                    <!-- Section 1: Identification -->
+                    <!-- Section 1: Identification (3 columns) -->
                     <div class="compact-modal-section-title">
                         <i class="dripicons-information"></i> 1. Product Identification
                     </div>
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Product Type *</label>
                                 <select id="quick-item-type" name="type" class="form-control" required>
@@ -754,7 +1085,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Product Name *</label>
                                 <input type="text" id="quick-item-name" name="name" class="form-control" placeholder="e.g. Cotton Grey Yarn 40s" required autocomplete="off">
@@ -763,19 +1094,17 @@
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Product Code *</label>
-                                <div class="input-group input-group-sm">
+                                <div class="input-group">
                                     <input type="text" id="quick-item-code" name="code" class="form-control" placeholder="e.g. ITM-1002" required autocomplete="off">
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-gen-code" title="Generate Random Code" style="height:26px;font-size:10.5px;padding:0 8px;line-height:1;"><i class="fa fa-refresh"></i> Auto</button>
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-gen-code" title="Generate Random Code" style="height:34px;line-height:32px;padding:0 12px;font-size:11.5px;"><i class="fa fa-refresh"></i> Auto</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Section 2: Symbology & Organization -->
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Barcode Symbology *</label>
                                 <select id="quick-item-symbology" name="barcode_symbology" class="form-control" required>
@@ -791,33 +1120,43 @@
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Brand</label>
-                                <select id="quick-item-brand" name="brand_id" class="form-control">
-                                    <option value="">Select Brand...</option>
-                                    @if(isset($lims_brand_list))
-                                        @foreach($lims_brand_list as $b)
-                                            <option value="{{ $b->id }}">{{ $b->title }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
+                                <div class="input-group">
+                                    <select id="quick-item-brand" name="brand_id" class="form-control">
+                                        <option value="">Select Brand...</option>
+                                        @if(isset($lims_brand_list))
+                                            @foreach($lims_brand_list as $b)
+                                                <option value="{{ $b->id }}">{{ $b->title }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-add-brand" title="Create Brand Inline" style="padding:0 10px;"><i class="dripicons-plus"></i></button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Category *</label>
-                                <select id="quick-item-category" name="category_id" class="form-control" required>
-                                    <option value="" disabled selected>Select Category...</option>
-                                    @if(isset($lims_category_list))
-                                        @foreach($lims_category_list as $cat)
-                                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
+                                <div class="input-group">
+                                    <select id="quick-item-category" name="category_id" class="form-control" required>
+                                        <option value="" disabled selected>Select Category...</option>
+                                        @if(isset($lims_category_list))
+                                            @foreach($lims_category_list as $cat)
+                                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-add-category" title="Create Category Inline" style="padding:0 10px;"><i class="dripicons-plus"></i></button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Section 3: Units of Measure -->
-                    <div class="compact-modal-section-title mt-2">
+                    <!-- Section 2: Units of Measure (3 columns) -->
+                    <div class="compact-modal-section-title">
                         <i class="dripicons-box"></i> 2. Units of Measure
                     </div>
                     <div class="row">
@@ -864,9 +1203,9 @@
                         </div>
                     </div>
 
-                    <!-- Section 4: Cost, Pricing & Margins -->
-                    <div class="compact-modal-section-title mt-2">
-                        <i class="dripicons-tag"></i> 3. Cost, Pricing & Margins
+                    <!-- Section 3: Cost, Pricing & Margins (4 columns) -->
+                    <div class="compact-modal-section-title">
+                        <i class="dripicons-tag"></i> 3. Cost, Pricing &amp; Margins
                     </div>
                     <div class="row">
                         <div class="col-md-3">
@@ -877,8 +1216,16 @@
                         </div>
                         <div class="col-md-3">
                             <div class="compact-field-block">
-                                <label>Profit Margin (%)</label>
-                                <input type="number" id="quick-item-margin" name="profit_margin" class="form-control" placeholder="25.00" step="0.01" value="25.00">
+                                <label>Profit Margin</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend" style="width: 52px;">
+                                        <select id="quick-item-margin-type" name="profit_margin_type" class="form-control" style="padding:4px 6px;">
+                                            <option value="percentage" selected>%</option>
+                                            <option value="flat">₹</option>
+                                        </select>
+                                    </div>
+                                    <input type="number" id="quick-item-margin" name="profit_margin" class="form-control" placeholder="25.00" step="0.01" value="25.00">
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -894,12 +1241,19 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Section 5: Tax, Inventory & Warranty -->
-                    <div class="compact-modal-section-title mt-2">
-                        <i class="dripicons-gear"></i> 4. Tax & Inventory
-                    </div>
                     <div class="row">
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Daily Sale Objective</label>
+                                <input type="number" id="quick-item-daily-sale" name="daily_sale_objective" class="form-control" placeholder="e.g. 10" step="any">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Alert Quantity</label>
+                                <input type="number" id="quick-item-alert-qty" name="alert_quantity" class="form-control" placeholder="10" step="any">
+                            </div>
+                        </div>
                         <div class="col-md-3">
                             <div class="compact-field-block">
                                 <label>Product Tax</label>
@@ -922,34 +1276,151 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Alert Quantity</label>
-                                <input type="number" id="quick-item-alert-qty" name="alert_quantity" class="form-control" placeholder="10" step="any">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
+                    </div>
+
+                    <!-- Section 4: Warranty & Guarantee -->
+                    <div class="compact-modal-section-title">
+                        <i class="dripicons-shield"></i> 4. Warranty &amp; Guarantee
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="compact-field-block">
                                 <label>Warranty</label>
-                                <div class="d-flex" style="gap:4px;">
-                                    <input type="number" id="quick-item-warranty" name="warranty" class="form-control" placeholder="1" style="width:50%;">
-                                    <select id="quick-item-warranty-type" name="warranty_type" class="form-control" style="width:50%;">
-                                        <option value="months" selected>Months</option>
-                                        <option value="years">Years</option>
-                                        <option value="days">Days</option>
-                                    </select>
+                                <div class="input-group">
+                                    <input type="number" id="quick-item-warranty" name="warranty" class="form-control" placeholder="e.g. 1" min="1">
+                                    <div class="input-group-append" style="width: 105px;">
+                                        <select id="quick-item-warranty-type" name="warranty_type" class="form-control">
+                                            <option value="months" selected>Months</option>
+                                            <option value="years">Years</option>
+                                            <option value="days">Days</option>
+                                        </select>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="compact-field-block">
+                                <label>Guarantee</label>
+                                <div class="input-group">
+                                    <input type="number" id="quick-item-guarantee" name="guarantee" class="form-control" placeholder="e.g. 1" min="1">
+                                    <div class="input-group-append" style="width: 105px;">
+                                        <select id="quick-item-guarantee-type" name="guarantee_type" class="form-control">
+                                            <option value="months" selected>Months</option>
+                                            <option value="years">Years</option>
+                                            <option value="days">Days</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Inventory Tracking & POS Options -->
+                    <div class="compact-modal-section-title">
+                        <i class="dripicons-checklist"></i> 5. Inventory Tracking &amp; POS Options
+                    </div>
+                    <div class="compact-modal-checkbox-group">
+                        <label class="compact-modal-checkbox-item">
+                            <input type="checkbox" id="quick-item-is-batch" name="is_batch" value="1">
+                            <span>Batch &amp; Expired Date</span>
+                        </label>
+                        <label class="compact-modal-checkbox-item">
+                            <input type="checkbox" id="quick-item-is-imei" name="is_imei" value="1">
+                            <span>IMEI or Serial Numbers</span>
+                        </label>
+                        <label class="compact-modal-checkbox-item">
+                            <input type="checkbox" id="quick-item-featured" name="featured" value="1">
+                            <span>Featured in POS</span>
+                        </label>
+                        <label class="compact-modal-checkbox-item">
+                            <input type="checkbox" id="quick-item-is-embeded" name="is_embeded" value="1">
+                            <span>Embedded Barcode (Scale)</span>
+                        </label>
+                        <label class="compact-modal-checkbox-item">
+                            <input type="checkbox" id="quick-item-is-online" name="is_online" value="1" checked>
+                            <span>Sell Online</span>
+                        </label>
+                        <label class="compact-modal-checkbox-item">
+                            <input type="checkbox" id="quick-item-in-stock" name="in_stock" value="1" checked>
+                            <span>In Stock</span>
+                        </label>
+                    </div>
+
+                    <!-- Section 6: Product Details -->
+                    <div class="compact-modal-section-title">
+                        <i class="dripicons-document"></i> 6. Product Details &amp; Specification
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="compact-field-block mb-0">
+                                <textarea id="quick-item-details" name="product_details" class="form-control" rows="2" placeholder="Enter specifications, notes, or product description..." style="height:auto !important;min-height:56px;"></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer d-flex align-items-center justify-content-between">
                     <button type="button" class="btn btn-sm btn-secondary comm-bottom-btn" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-quick-create-submit">
-                        <i class="dripicons-checkmark"></i> 💾 Save & Add to Voucher
+                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-quick-create-submit" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                        <i class="dripicons-checkmark"></i> 💾 Save &amp; Add to Voucher
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Create Category Modal (Inline) -->
+<div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 12px 30px rgba(0,0,0,0.25);">
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title font-weight-bold" style="font-size:13.5px;color:#0f172a;margin:0;">
+                    <i class="dripicons-plus text-primary mr-1"></i> Create New Category
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:18px;outline:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:16px 18px;">
+                <div class="form-group mb-0">
+                    <label style="font-size:11.5px;font-weight:600;color:#334155;margin-bottom:4px;">Category Name *</label>
+                    <input type="text" id="quick-cat-name-input" class="form-control" placeholder="e.g. Raw Material, Yarn..." style="height:34px;font-size:12.5px;">
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-cat" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                    Save Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Create Brand Modal (Inline) -->
+<div id="quick-create-brand-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 12px 30px rgba(0,0,0,0.25);">
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title font-weight-bold" style="font-size:13.5px;color:#0f172a;margin:0;">
+                    <i class="dripicons-plus text-primary mr-1"></i> Create New Brand
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:18px;outline:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:16px 18px;">
+                <div class="form-group mb-0">
+                    <label style="font-size:11.5px;font-weight:600;color:#334155;margin-bottom:4px;">Brand Title *</label>
+                    <input type="text" id="quick-brand-title-input" class="form-control" placeholder="e.g. Raymond, Vardhman..." style="height:34px;font-size:12.5px;">
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-brand" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                    Save Brand
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -1007,7 +1478,7 @@
 
     // Append modals directly to body to avoid container clipping
     $(function() {
-        $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #purchase-details').appendTo('body');
+        $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #purchase-details, #quick-create-category-modal, #quick-create-brand-modal').appendTo('body');
     });
 
     // --- State variables ---
@@ -1440,11 +1911,21 @@
                 <td>
                     <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate" style="${isTaxLocked ? 'pointer-events:none;background-color:#f1f5f9;color:#475569;cursor:not-allowed;' : ''}">
                         <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
-                        <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
-                        <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
-                        <option value="18" ${taxRate == 18 ? 'selected' : ''}>18%</option>
-                        <option value="28" ${taxRate == 28 ? 'selected' : ''}>28%</option>
-                        ${[0, 5, 12, 18, 28].indexOf(taxRate) === -1 ? `<option value="${taxRate}" selected>${taxRate}%</option>` : ''}
+                        ${(function() {
+                            var opts = '';
+                            if (taxList && taxList.length) {
+                                taxList.forEach(function(t) {
+                                    var r = parseFloat(t.rate) || 0;
+                                    if (r > 0) {
+                                        opts += `<option value="${r}" ${r === taxRate ? 'selected' : ''}>${r}%</option>`;
+                                    }
+                                });
+                            }
+                            if (taxRate > 0 && !(taxList || []).some(function(t){ return parseFloat(t.rate) === taxRate; })) {
+                                opts += `<option value="${taxRate}" selected>${taxRate}%</option>`;
+                            }
+                            return opts;
+                        })()}
                     </select>
                     <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
                 </td>
@@ -1588,21 +2069,106 @@
     function calcQuickPrice() {
         var c = parseFloat($('#quick-item-cost').val()) || 0;
         var m = parseFloat($('#quick-item-margin').val()) || 0;
-        var p = c + (c * (m / 100));
+        var type = $('#quick-item-margin-type').val() || 'percentage';
+        var p = c;
+        if (type === 'percentage') {
+            p = c + (c * (m / 100));
+        } else {
+            p = c + m;
+        }
         $('#quick-item-price').val(p.toFixed(decimalPlaces));
     }
-    $('#quick-item-cost, #quick-item-margin').on('input', calcQuickPrice);
+    $('#quick-item-cost, #quick-item-margin, #quick-item-margin-type').on('input change', calcQuickPrice);
     $('#quick-item-price').on('input', function() {
         var c = parseFloat($('#quick-item-cost').val()) || 0;
         var p = parseFloat($(this).val()) || 0;
-        if (c > 0) {
-            var m = ((p - c) / c) * 100;
-            $('#quick-item-margin').val(m.toFixed(2));
+        var type = $('#quick-item-margin-type').val() || 'percentage';
+        if (type === 'percentage') {
+            if (c > 0) {
+                var m = ((p - c) / c) * 100;
+                $('#quick-item-margin').val(m.toFixed(2));
+            }
+        } else {
+            $('#quick-item-margin').val((p - c).toFixed(decimalPlaces));
         }
     });
 
     $('#btn-quick-gen-code').on('click', function() {
         $('#quick-item-code').val('ITM-' + Math.floor(100000 + Math.random() * 900000));
+    });
+
+    // Inline Category Creation Handlers
+    $('#btn-quick-add-category').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#quick-cat-name-input').val('');
+        $('#quick-create-category-modal').modal('show');
+    });
+
+    $('#btn-submit-quick-cat').on('click', function() {
+        var name = $('#quick-cat-name-input').val().trim();
+        if (!name) {
+            alert('Please enter a category name');
+            return;
+        }
+        var btn = $(this).prop('disabled', true).text('Saving...');
+        $.ajax({
+            type: 'POST',
+            url: '{{ route("categories.quick-store") }}',
+            data: {
+                _token: '{{ csrf_token() }}',
+                name: name
+            },
+            success: function(res) {
+                btn.prop('disabled', false).text('Save Category');
+                if (res && res.category) {
+                    var newOpt = `<option value="${res.category.id}" selected>${res.category.name}</option>`;
+                    $('#quick-item-category').append(newOpt).val(res.category.id);
+                    $('#quick-create-category-modal').modal('hide');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Save Category');
+                alert('Failed to save category');
+            }
+        });
+    });
+
+    // Inline Brand Creation Handlers
+    $('#btn-quick-add-brand').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#quick-brand-title-input').val('');
+        $('#quick-create-brand-modal').modal('show');
+    });
+
+    $('#btn-submit-quick-brand').on('click', function() {
+        var title = $('#quick-brand-title-input').val().trim();
+        if (!title) {
+            alert('Please enter a brand title');
+            return;
+        }
+        var btn = $(this).prop('disabled', true).text('Saving...');
+        $.ajax({
+            type: 'POST',
+            url: '{{ route("brands.quick-store") }}',
+            data: {
+                _token: '{{ csrf_token() }}',
+                title: title
+            },
+            success: function(res) {
+                btn.prop('disabled', false).text('Save Brand');
+                if (res && res.brand) {
+                    var newOpt = `<option value="${res.brand.id}" selected>${res.brand.title}</option>`;
+                    $('#quick-item-brand').append(newOpt).val(res.brand.id);
+                    $('#quick-create-brand-modal').modal('hide');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Save Brand');
+                alert('Failed to save brand');
+            }
+        });
     });
 
     $('#quick-create-item-form').on('submit', function(e) {
@@ -1634,13 +2200,23 @@
             cost: cost,
             price: price,
             profit_margin: parseFloat($('#quick-item-margin').val()) || null,
-            profit_margin_type: 'percentage',
+            profit_margin_type: $('#quick-item-margin-type').val() || 'percentage',
             wholesale_price: parseFloat($('#quick-item-wholesale').val()) || null,
+            daily_sale_objective: parseFloat($('#quick-item-daily-sale').val()) || null,
             alert_quantity: parseFloat($('#quick-item-alert-qty').val()) || null,
             tax_id: $('#quick-item-tax').val() || null,
             tax_method: $('#quick-item-tax-method').val() || 1,
             warranty: $('#quick-item-warranty').val() || null,
             warranty_type: $('#quick-item-warranty-type').val() || 'months',
+            guarantee: $('#quick-item-guarantee').val() || null,
+            guarantee_type: $('#quick-item-guarantee-type').val() || 'months',
+            is_batch: $('#quick-item-is-batch').is(':checked') ? 1 : 0,
+            is_imei: $('#quick-item-is-imei').is(':checked') ? 1 : 0,
+            featured: $('#quick-item-featured').is(':checked') ? 1 : 0,
+            is_embeded: $('#quick-item-is-embeded').is(':checked') ? 1 : 0,
+            is_online: $('#quick-item-is-online').is(':checked') ? 1 : 0,
+            in_stock: $('#quick-item-in-stock').is(':checked') ? 1 : 0,
+            product_details: $('#quick-item-details').val() || null,
         };
 
         $.ajax({
@@ -1962,20 +2538,203 @@
     $('#supplier_id').on('change', updatePartyCard);
     updatePartyCard();
 
-    // --- Full Width Toggle for Bill List Panel ---
-    $('#btn-panel-fullscreen').on('click', function() {
-        var $grid = $('#comm-split-grid');
-        var isFull = $grid.hasClass('panel-fullwidth');
-        if (isFull) {
-            $grid.removeClass('panel-fullwidth');
+    // --- Workspace Mode Switching (Voucher Entry vs Full Width Initial Register) ---
+    function switchWorkspaceMode(mode) {
+        if (mode === 'register') {
+            $('#comm-split-grid').hide();
+            $('#fullwidth-register-view').show();
+            $('#fullscreen-icon').text('⧉');
+            $('#fullscreen-tooltip').text('Voucher Entry');
+            localStorage.setItem('zolo_purchase_workspace_mode', 'register');
+            if ($.fn.DataTable.isDataTable('#purchase-table')) {
+                $('#purchase-table').DataTable().columns.adjust().draw(false);
+            } else {
+                initPurchaseDataTable();
+            }
+        } else {
+            $('#fullwidth-register-view').hide();
+            $('#comm-split-grid').show();
             $('#fullscreen-icon').text('⛶');
             $('#fullscreen-tooltip').text('Full Width');
-        } else {
-            $grid.addClass('panel-fullwidth');
-            $('#fullscreen-icon').text('⧉');
-            $('#fullscreen-tooltip').text('Split View');
+            localStorage.setItem('zolo_purchase_workspace_mode', 'voucher');
         }
+    }
+
+    $('#btn-panel-fullscreen').on('click', function(e) {
+        e.preventDefault();
+        var current = $('#fullwidth-register-view').is(':visible') ? 'register' : 'voucher';
+        switchWorkspaceMode(current === 'register' ? 'voucher' : 'register');
     });
+
+    $('#btn-switch-voucher-mode').on('click', function(e) {
+        e.preventDefault();
+        switchWorkspaceMode('voucher');
+    });
+
+    $('#btn-fullwidth-new').on('click', function(e) {
+        e.preventDefault();
+        resetFormToNew();
+        switchWorkspaceMode('voucher');
+    });
+
+    // Date range picker for full width register
+    if ($.fn.daterangepicker) {
+        $('.daterangepicker-field').daterangepicker({
+            callback: function(startDate, endDate, period) {
+                var starting_date = startDate.format('YYYY-MM-DD');
+                var ending_date = endDate.format('YYYY-MM-DD');
+                var title = starting_date + ' To ' + ending_date;
+                $(this).val(title);
+                $('#fullwidth-register-view input[name="starting_date"]').val(starting_date);
+                $('#fullwidth-register-view input[name="ending_date"]').val(ending_date);
+                if ($.fn.DataTable.isDataTable('#purchase-table')) {
+                    $('#purchase-table').DataTable().draw();
+                }
+            }
+        });
+    }
+
+    function initPurchaseDataTable() {
+        if ($.fn.DataTable.isDataTable('#purchase-table')) return;
+
+        var all_permission = @json($all_permission ?? []);
+        var show_purchase_product_details = {{ $general_setting->show_products_details_in_purchase_table ?? 0 }};
+        var decimal_places = {{ $general_setting->decimal ?? 2 }};
+
+        var columns = [
+            {"data": "key"},
+            {"data": "date"},
+            {"data": "reference_no"},
+            {"data": "created_by"},
+            {"data": "supplier"}
+        ];
+        if (show_purchase_product_details == 1) {
+            columns.push({"data": "products"});
+            columns.push({"data": "products_qty"});
+        }
+        columns.push({"data": "purchase_status"});
+        columns.push({"data": "grand_total"});
+        columns.push({"data": "returned_amount"});
+        columns.push({"data": "paid_amount"});
+        columns.push({"data": "due"});
+        columns.push({"data": "payment_status"});
+
+        var field_name = @json($field_name ?? []);
+        for (var i = 0; i < field_name.length; i++) {
+            columns.push({"data": field_name[i]});
+        }
+        columns.push({"data": "options"});
+
+        var buttons = [
+            {
+                extend: 'pdf',
+                text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                exportOptions: { columns: ':visible:Not(.not-exported)', rows: ':visible' },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.pdfHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'excel',
+                text: '<i title="export to excel" class="fa fa-file-excel-o"></i>',
+                exportOptions: { columns: ':visible:Not(.not-exported)', rows: ':visible' },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'csv',
+                text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                exportOptions: { columns: ':visible:Not(.not-exported)', rows: ':visible' },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'print',
+                text: '<i title="print" class="fa fa-print"></i>',
+                exportOptions: { columns: ':visible:Not(.not-exported)', rows: ':visible' },
+                action: function(e, dt, button, config) {
+                    datatable_sum(dt, true);
+                    $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
+                    datatable_sum(dt, false);
+                },
+                footer: true
+            },
+            {
+                extend: 'colvis',
+                text: '<i title="column visibility" class="fa fa-eye"></i>',
+                columns: ':gt(0)'
+            }
+        ];
+
+        var purchaseTable = $('#purchase-table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ url('purchases/purchase-data') }}",
+                type: "POST",
+                data: function (d) {
+                    d._token = '{{ csrf_token() }}';
+                    d.all_permission = all_permission;
+                    d.starting_date = $('#fullwidth-register-view input[name=starting_date]').val();
+                    d.ending_date = $('#fullwidth-register-view input[name=ending_date]').val();
+                    d.warehouse_id = $('#fullwidth-register-view #warehouse_id').val();
+                    d.purchase_status = $('#fullwidth-register-view #purchase-status').val();
+                    d.payment_status = $('#fullwidth-register-view #payment-status').val();
+                }
+            },
+            createdRow: function(row, data, dataIndex) {
+                $(row).addClass('purchase-link').attr('data-purchase', data['purchase']);
+            },
+            columns: columns,
+            order: [['1', 'desc']],
+            dom: '<"row align-items-center mb-2"<"col-sm-6 d-flex align-items-center gap-2"lB><"col-sm-6 text-right"f>>rtip',
+            buttons: buttons,
+            drawCallback: function () {
+                var api = this.api();
+                datatable_sum(api, false);
+            }
+        });
+
+        function datatable_sum(dt_selector, is_calling_first) {
+            var baseCol = (show_purchase_product_details == 1) ? 8 : 6;
+            for (var c = baseCol; c <= baseCol + 3; c++) {
+                if ($(dt_selector.column(c).footer()).length) {
+                    var total = dt_selector.column(c, {page: 'current'}).data().sum();
+                    $(dt_selector.column(c).footer()).html(parseFloat(total || 0).toFixed(decimal_places));
+                }
+            }
+        }
+
+        $('#fullwidth-register-view #warehouse_id, #fullwidth-register-view #purchase-status, #fullwidth-register-view #payment-status').on('change', function() {
+            purchaseTable.draw();
+        });
+
+        $('#btn-quick-refresh').on('click', function() {
+            purchaseTable.draw();
+        });
+
+        // Clicking Edit on any row in DataTables switches to Voucher Entry mode and loads that bill
+        $(document).on('click', '#purchase-table a', function(e) {
+            var href = $(this).attr('href') || '';
+            var match = href.match(/purchases\/(\d+)\/edit/);
+            if (match && match[1]) {
+                e.preventDefault();
+                switchWorkspaceMode('voucher');
+                loadPurchaseToForm(match[1]);
+            }
+        });
+    }
 
     // --- Auto-retract all dropdowns when clicking anywhere outside ---
     $(document).on('click', function(e) {
@@ -2381,6 +3140,11 @@
                 $('#entry-title-text').text('New Purchase Bill (from GRN #' + gn.grn_no + ')');
             }
         });
+    }
+
+    var savedMode = localStorage.getItem('zolo_purchase_workspace_mode');
+    if (savedMode === 'register') {
+        switchWorkspaceMode('register');
     }
 
     initPanelState();

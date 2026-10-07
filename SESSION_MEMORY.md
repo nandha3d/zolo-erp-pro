@@ -447,17 +447,67 @@ Addressed user feedback:
 
 ---
 
-## 6. Verification & Testing Evidence
-- Automated feature tests executed and passed:
-  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: **33 passed (167 assertions, 100%)**, Duration: ~14s
-- Visual browser verification:
-  - Light mode: Verified `#f1f5f9` top box, `#0f172a` dark thead matching left panel, alternating zebra rows, and reactive tax calculations.
-  - Dark mode: Verified complete theme consistency across workspace, table, cards, inputs, and bottom bar.
+## 6. Single Box Control, Auto Button Alignment, Inline Masters & Global GST Standardization (Oct 2026)
+
+Addressed user feedback:
+> "why each elements are in double boxes? keep it single, also how to create the category in the page itself?auto button not aligned. why there are different types of tax in each place? is that hardcoded? if hardcoded, then make it dynamic and globally accessible i hope the GST engine is implemented right?"
+> "when we extend this to full width, bring the initial setup before changing the new UI."
+
+1. **Elimination of Nested "Double Boxes":**
+   - **Root Cause:** In the Add Product popup and workspace, `<select class="form-control">` caused Bootstrap-Select to wrap elements with `<div class="btn-group bootstrap-select form-control">`. When both the outer `.form-control` wrapper and inner `<button class="btn dropdown-toggle">` declared visible borders and rounded edges, dropdowns rendered as an outer border box containing an inner border box.
+   - **Fix:** Stripped `border`, `border-radius`, `background`, and `box-shadow` from `.compact-add-product-modal .bootstrap-select.form-control` and `.compact-field-block .bootstrap-select.form-control`. Preserved the inner `.btn.dropdown-toggle` as the single crisp 34px input container.
+
+2. **Seamless Auto Button & Unified Input Group Alignment:**
+   - **Root Cause:** Disjointed rounded pills with mismatched borders between input and button inside `.input-group`.
+   - **Fix:** Fused `.input-group` controls seamlessly:
+     - Applied `border-top-right-radius: 0; border-bottom-right-radius: 0;` to input.
+     - Applied `border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none;` to adjacent buttons (e.g., `⚡ Auto` button, `+` create buttons).
+     - Standardized uniform 34px control heights across all inputs, dropdowns, and button add-ons.
+
+3. **Inline Category & Brand Creation Direct on the Page:**
+   - Added inline `+` button right next to Category (`#btn-quick-add-category`) and Brand (`#btn-quick-add-brand`) in the Add Product modal.
+   - Implemented `#quick-create-category-modal` and `#quick-create-brand-modal` sub-dialogs appended directly to `document.body`.
+   - Implemented endpoints `POST /categories/quick-store` and `POST /brands/quick-store` handled by `CommercialController`:
+     - Creates records via `firstOrCreate(['name' => $name])` and `firstOrCreate(['title' => $title])`.
+     - Returns JSON representation of the new master.
+     - Dynamically appends and immediately selects the newly created category/brand in the dropdown without page refresh or navigation.
+
+4. **Global GST Slab Synchronization & Engine Integration:**
+   - **Diagnosis of Discrepancies:**
+     - Taxes table previously had legacy `VAT 10%` and only `GST 5%`.
+     - Catalog products had legacy `tax_id = 1` (10%), which triggered a table fallback injecting `10%` into table row dropdowns.
+   - **Standardization Executed:**
+     - Updated `app/Models/Tax.php` `$fillable` to include `company_id`.
+     - Upserted official Indian GST slabs into `taxes` table:
+       - `GST 0% (Nil / Exempt)` (0%)
+       - `GST 5%` (5%)
+       - `GST 12%` (12%)
+       - `GST 18%` (18%)
+       - `GST 28%` (28%)
+     - Deactivated legacy `VAT 10%` (`is_active = 0`).
+     - Migrated existing catalog products with `tax_id = 1` (VAT 10%) to `GST 18%`.
+     - Updated `addProductRow()` in both `purchase/index.blade.php` and `sale/index.blade.php` to render table row tax options 100% dynamically from `taxList` (the global GST slabs), eliminating hardcoded `10%`.
+     - Linked `Tax Classification` header dropdown reactively with table row tax selection: selecting a specific GST rate locks row taxes uniformly, while multi-tax mode (`L/MultiTax`, `Interstate MultiTax`) unlocks individual row tax customization.
+
+5. **Full Width Initial Register View Restored:**
+   - Clicking `[ ⛶ Full Width ]` (`#btn-panel-fullscreen`) toggles between Voucher Entry mode (`#comm-split-grid`) and the full DataTables register setup (`#fullwidth-register-view`) that existed before the UI update.
+   - Includes full KPI summary cards (`Total Invoiced`, `Paid Inflow`, `Due Receivables`), live date range picker, warehouse and status filters, and the complete DataTables register with PDF/Excel/CSV/Print exports.
+   - Clicking `[ + New Bill ]` / `[ + New Purchase ]` or clicking `[ ✎ Edit ]` on any register row smoothly switches back to Voucher Entry mode and loads the document for in-place editing.
+   - Mode preference persisted across sessions in `localStorage` (`zolo_purchase_workspace_mode`, `zolo_sale_workspace_mode`).
 
 ---
 
-## 7. Crash Recovery Protocol for Any Agent
+## 7. Verification & Testing Evidence
+- Automated feature tests executed and passed:
+  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
+  - Results: **36 passed (184 assertions, 100%)**, Duration: ~16s
+- Database verification:
+  - Active taxes: 0%, 5%, 12%, 18%, 28%. VAT 10% inactive.
+  - Category and Brand quick-store verified via automated tests.
+
+---
+
+## 8. Crash Recovery Protocol for Any Agent
 1. **Never start from scratch:** When reopened after a crash or system reboot, inspect SESSION_MEMORY.md first.
 2. **Check Git Status:** Verify branch is enhanced-ui (git status and git branch -vv).
 3. **Verify Database & Dependencies:** Check migrations are up to date.

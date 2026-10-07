@@ -495,6 +495,13 @@ class CommercialController extends Controller
             'warranty_type' => 'nullable|string',
             'guarantee' => 'nullable',
             'guarantee_type' => 'nullable|string',
+            'is_batch' => 'nullable|boolean',
+            'is_imei' => 'nullable|boolean',
+            'featured' => 'nullable|boolean',
+            'is_embeded' => 'nullable|boolean',
+            'is_online' => 'nullable|boolean',
+            'in_stock' => 'nullable|boolean',
+            'product_details' => 'nullable|string',
         ]);
 
         $name = trim($validated['name']);
@@ -553,6 +560,11 @@ class CommercialController extends Controller
             'warranty_type' => $validated['warranty_type'] ?? 'months',
             'guarantee' => $validated['guarantee'] ?? null,
             'guarantee_type' => $validated['guarantee_type'] ?? 'months',
+            'is_batch' => !empty($validated['is_batch']) ? 1 : 0,
+            'is_imei' => !empty($validated['is_imei']) ? 1 : 0,
+            'featured' => !empty($validated['featured']) ? 1 : 0,
+            'is_embeded' => !empty($validated['is_embeded']) ? 1 : 0,
+            'product_details' => $validated['product_details'] ?? null,
             'qty' => 0,
             'is_active' => 1,
         ]);
@@ -571,6 +583,56 @@ class CommercialController extends Controller
                 'label' => $product->code . ' - ' . $product->name,
             ],
             'message' => 'Product created successfully',
+        ]);
+    }
+
+    public function quickStoreCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'parent_id' => 'nullable|integer',
+        ]);
+
+        $name = trim($validated['name']);
+        $category = \App\Models\Category::firstOrCreate(
+            ['name' => $name],
+            [
+                'parent_id' => $validated['parent_id'] ?? null,
+                'is_active' => true,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+            ],
+            'message' => 'Category created successfully',
+        ]);
+    }
+
+    public function quickStoreBrand(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $title = trim($validated['title']);
+        $brand = \App\Models\Brand::firstOrCreate(
+            ['title' => $title],
+            [
+                'is_active' => true,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'brand' => [
+                'id' => $brand->id,
+                'title' => $brand->title,
+            ],
+            'message' => 'Brand created successfully',
         ]);
     }
 }

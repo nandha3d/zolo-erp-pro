@@ -229,6 +229,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     });
 
     Route::post('products/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreProduct'])->name('products.quick-store');
+    Route::post('categories/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreCategory'])->name('categories.quick-store');
+    Route::post('brands/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreBrand'])->name('brands.quick-store');
 
 
 
