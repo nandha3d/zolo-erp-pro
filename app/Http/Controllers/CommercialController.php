@@ -811,7 +811,59 @@ class CommercialController extends Controller
                 'phone_number' => $existing->phone_number ?? '',
                 'email' => $existing->email ?? '',
                 'party_type' => $partyType,
+                'source' => 'local_database',
             ];
+        }
+
+        // 2. If not found locally, query live external provider if configured in .env (e.g. gstin_lookup or Sandbox)
+        if (!$partyData && $parsed['is_valid']) {
+            $lookupUrl = config('compliance.gst_lookup_url') ?: env('GST_LOOKUP_URL');
+            if ($lookupUrl) {
+                try {
+                    $url = rtrim($lookupUrl, '/') . '/' . $gstin;
+                    $token = config('compliance.gst_lookup_token') ?: env('GST_LOOKUP_TOKEN');
+                    $client = \Illuminate\Support\Facades\Http::timeout(5);
+                    if ($token) {
+                        $client = $client->withToken($token);
+                    }
+                    $response = $client->get($url);
+                    if ($response->successful()) {
+                        $ext = $response->json();
+                        // Normalize across gstin_lookup, sandbox, or standard GSP schemas
+                        $data = $ext['data'] ?? $ext;
+                        $legalName = $data['legalName'] ?? ($data['legal_name'] ?? ($data['lgnm'] ?? ''));
+                        $tradeName = $data['tradeName'] ?? ($data['trade_name'] ?? ($data['tradeNam'] ?? $legalName));
+                        
+                        $address = $data['principalAddress'] ?? ($data['address'] ?? '');
+                        if (!$address && isset($data['pradr']['addr'])) {
+                            $addr = $data['pradr']['addr'];
+                            $parts = array_filter([$addr['bno'] ?? '', $addr['flno'] ?? '', $addr['st'] ?? '', $addr['loc'] ?? '', $addr['dst'] ?? '']);
+                            $address = implode(', ', $parts);
+                        }
+
+                        $pincode = $data['pincode'] ?? ($data['postal_code'] ?? ($data['pradr']['addr']['pncd'] ?? ''));
+                        $city = $data['city'] ?? ($data['pradr']['addr']['dst'] ?? '');
+                        $state = $data['state'] ?? ($data['pradr']['addr']['stcd'] ?? $parsed['state_name']);
+
+                        if ($legalName || $tradeName) {
+                            $partyData = [
+                                'name' => $legalName ?: $tradeName,
+                                'company_name' => $tradeName ?: $legalName,
+                                'address' => $address,
+                                'city' => $city,
+                                'state' => $state,
+                                'postal_code' => $pincode,
+                                'phone_number' => $data['phone_number'] ?? '',
+                                'email' => $data['email'] ?? '',
+                                'party_type' => 'registered_business',
+                                'source' => 'live_api',
+                            ];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Gracefully fallback to statutory parser
+                }
+            }
         }
 
         return response()->json([
