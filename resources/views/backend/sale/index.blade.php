@@ -148,9 +148,14 @@
                         <div class="field-compact-item" style="width:205px;flex-shrink:0;">
                             <label for="sale_type_id">Tax Classification *</label>
                             <select id="sale_type_id" name="sale_type_id" class="form-control">
-                                <option value="0">GST • Multiple rates</option>
+                                <option value="0" data-tax-rate="" data-is-multi="1">GST • Multiple rates</option>
                                 @foreach($saleTypes as $st)
-                                    <option value="{{ $st->id }}">{{ $st->name }}</option>
+                                    <option value="{{ $st->id }}"
+                                        data-tax-rate="{{ (float)$st->tax_rate }}"
+                                        data-code="{{ $st->code }}"
+                                        data-is-multi="{{ (in_array($st->code, ['SMULTI', 'SIMULTI']) || (float)$st->tax_rate == 0) ? '1' : '0' }}">
+                                        {{ $st->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -190,7 +195,7 @@
                 </div>
 
                 <!-- 3. ITEMS Section (Expanded to Fill All Available Viewport Space) -->
-                <div class="desk-card items-container mb-1" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
+                <div class="desk-card items-container mb-1" style="border-radius:6px;padding:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
                     <div class="items-section-header">
                         <div class="items-counter-group" style="display:flex;align-items:center;gap:6px;">
                             <span class="items-title" style="font-weight:700;font-size:11.5px;color:#0f172a;">ITEMS</span>
@@ -219,7 +224,7 @@
                     <div class="table-responsive" style="flex:1 1 auto;overflow-y:auto;min-height:200px;height:100%;margin:0;">
                         <table class="desk-grid-table cozy table table-sm mb-0" id="order-table" style="width:100%;">
                             <thead>
-                                <tr style="background:#7c3aed;color:#ffffff;font-size:11px;">
+                                <tr style="background:#0f172a;color:#ffffff;font-size:11px;">
                                     <th style="width:36px;text-align:center;">#</th>
                                     <th style="min-width:240px;">ITEM</th>
                                     <th style="width:110px;">SALE TYPE</th>
@@ -1170,16 +1175,57 @@
             }
         }
 
-        // Match Tax Rate
-        if (p.tax_rate !== undefined && p.tax_rate !== null) {
-            var tSel = tr.find('.row-tax-rate');
-            var tVal = parseFloat(p.tax_rate);
+        // Match Tax Rate based on Header Tax Classification or Multi-Tax
+        var $headerTaxSel = $('#sale_type_id');
+        var headerOpt = $headerTaxSel.find('option:selected');
+        var isHeaderMulti = headerOpt.data('is-multi') == '1' || headerOpt.data('is-multi') === 1;
+        var headerRateAttr = headerOpt.data('tax-rate');
+        var headerRate = (headerRateAttr !== undefined && headerRateAttr !== '' && headerRateAttr !== null) ? parseFloat(headerRateAttr) : null;
+        var tSel = tr.find('.row-tax-rate');
+
+        if (!isHeaderMulti && headerRate !== null && !isNaN(headerRate)) {
+            // Locked single GST classification (e.g. 18%)
+            var matched = false;
             tSel.find('option').each(function() {
-                if (parseFloat($(this).val()) === tVal) {
+                if (parseFloat($(this).val()) === headerRate) {
                     tSel.val($(this).val());
+                    matched = true;
                     return false;
                 }
             });
+            if (!matched) {
+                tSel.append(`<option value="${headerRate}">${headerRate}%</option>`);
+                tSel.val(headerRate);
+            }
+            tSel.css({
+                'pointer-events': 'none',
+                'background-color': '#f1f5f9',
+                'color': '#475569',
+                'cursor': 'not-allowed'
+            });
+        } else {
+            // Multi-tax: freely selectable tax rates per row
+            tSel.css({
+                'pointer-events': 'auto',
+                'background-color': '',
+                'color': '',
+                'cursor': 'pointer'
+            });
+            if (p.tax_rate !== undefined && p.tax_rate !== null) {
+                var tVal = parseFloat(p.tax_rate);
+                var matched = false;
+                tSel.find('option').each(function() {
+                    if (parseFloat($(this).val()) === tVal) {
+                        tSel.val($(this).val());
+                        matched = true;
+                        return false;
+                    }
+                });
+                if (!matched) {
+                    tSel.append(`<option value="${tVal}">${tVal}%</option>`);
+                    tSel.val(tVal);
+                }
+            }
         }
 
         // Recalculate Row Totals
@@ -1318,7 +1364,21 @@
         rowCounter++;
         var rate = item.price || 0;
         var qty = item.qty || 1;
-        var taxRate = item.tax_rate || 0;
+
+        // Check Header Tax Classification Mode
+        var $headerTaxSel = $('#sale_type_id');
+        var headerOpt = $headerTaxSel.find('option:selected');
+        var isHeaderMulti = headerOpt.data('is-multi') == '1' || headerOpt.data('is-multi') === 1;
+        var headerRateAttr = headerOpt.data('tax-rate');
+        var headerRate = (headerRateAttr !== undefined && headerRateAttr !== '' && headerRateAttr !== null) ? parseFloat(headerRateAttr) : null;
+
+        var taxRate = item.tax_rate !== undefined ? parseFloat(item.tax_rate) : 0;
+        var isTaxLocked = false;
+        if (!isHeaderMulti && headerRate !== null && !isNaN(headerRate)) {
+            taxRate = headerRate;
+            isTaxLocked = true;
+        }
+
         var amount = rate * qty;
         var taxAmount = amount * (taxRate / 100);
         var lineTotal = amount + taxAmount;
@@ -1365,12 +1425,13 @@
                     <input type="hidden" name="subtotal[]" class="row-subtotal-input" value="${lineTotal.toFixed(decimalPlaces)}">
                 </td>
                 <td>
-                    <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate">
+                    <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate" style="${isTaxLocked ? 'pointer-events:none;background-color:#f1f5f9;color:#475569;cursor:not-allowed;' : ''}">
                         <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
                         <option value="5" ${taxRate == 5 ? 'selected' : ''}>5%</option>
                         <option value="12" ${taxRate == 12 ? 'selected' : ''}>12%</option>
                         <option value="18" ${taxRate == 18 ? 'selected' : ''}>18%</option>
                         <option value="28" ${taxRate == 28 ? 'selected' : ''}>28%</option>
+                        ${[0, 5, 12, 18, 28].indexOf(taxRate) === -1 ? `<option value="${taxRate}" selected>${taxRate}%</option>` : ''}
                     </select>
                     <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
                 </td>
@@ -1702,6 +1763,63 @@
         recalcTableSummary();
     });
 
+    // --- Reactive Tax Classification Sync to Items Grid ---
+    function syncTaxClassificationToRows() {
+        var $sel = $('#sale_type_id');
+        var selectedOption = $sel.find('option:selected');
+        var isMulti = selectedOption.data('is-multi') == '1' || selectedOption.data('is-multi') === 1;
+        var taxRateAttr = selectedOption.data('tax-rate');
+        var fixedRate = (taxRateAttr !== undefined && taxRateAttr !== '' && taxRateAttr !== null) ? parseFloat(taxRateAttr) : null;
+
+        if (!isMulti && fixedRate !== null && !isNaN(fixedRate)) {
+            // Apply single GST classification across all table rows & lock select
+            $('#order-table-body tr.order-item-row').each(function() {
+                var tr = $(this);
+                var tSel = tr.find('.row-tax-rate');
+                var matched = false;
+                tSel.find('option').each(function() {
+                    if (parseFloat($(this).val()) === fixedRate) {
+                        tSel.val($(this).val());
+                        matched = true;
+                        return false;
+                    }
+                });
+                if (!matched) {
+                    tSel.append(`<option value="${fixedRate}">${fixedRate}%</option>`);
+                    tSel.val(fixedRate);
+                }
+                tSel.css({
+                    'pointer-events': 'none',
+                    'background-color': '#f1f5f9',
+                    'color': '#475569',
+                    'cursor': 'not-allowed'
+                });
+
+                var amount = parseFloat(tr.find('.row-amount').val()) || 0;
+                var taxAmount = amount * (fixedRate / 100);
+                var lineTotal = amount + taxAmount;
+                tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+                tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+                tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
+            });
+            recalcTableSummary();
+        } else {
+            // Multi-tax: Unlock so user can freely select any tax rate per row
+            $('#order-table-body tr.order-item-row').each(function() {
+                var tr = $(this);
+                var tSel = tr.find('.row-tax-rate');
+                tSel.css({
+                    'pointer-events': 'auto',
+                    'background-color': '',
+                    'color': '',
+                    'cursor': 'pointer'
+                });
+            });
+        }
+    }
+
+    $('#sale_type_id').on('change', syncTaxClassificationToRows);
+
     // Open Row Detail Modal on Pencil Click
     $(document).on('click', '.btn-edit-row', function(e) {
         e.preventDefault();
@@ -1909,6 +2027,11 @@
                 $('.selectpicker').selectpicker('refresh');
                 if (s.warehouse_id) $('#form_warehouse_id').val(s.warehouse_id);
                 if (s.biller_id) $('#form_biller_id').val(s.biller_id);
+                if (s.sale_type_id) {
+                    $('#sale_type_id').val(s.sale_type_id);
+                } else {
+                    $('#sale_type_id').val('0');
+                }
 
                 // Highlight active card in side list
                 $('.side-bill-card').removeClass('active-editing');
@@ -1932,6 +2055,8 @@
                 } else {
                     reindexRows();
                 }
+
+                syncTaxClassificationToRows();
 
                 // Scroll smoothly to top of form
                 $('#comm-entry-workspace').animate({ scrollTop: 0 }, 200);
@@ -1963,11 +2088,13 @@
         $('#entry_date').val('{{ date("Y-m-d") }}');
         $('#customer_id').val('').trigger('change');
         $('.selectpicker').selectpicker('refresh');
+        $('#sale_type_id').val('0');
 
         $('.side-bill-card').removeClass('active-editing');
         $('#order-table-body').empty();
         rowCounter = 0;
         reindexRows();
+        syncTaxClassificationToRows();
         recalcTableSummary();
     };
 

@@ -1828,15 +1828,28 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     border-spacing: 0 !important;
 }
 
-/* Zebra Striping Alternate Colors for Rows */
-.desk-grid-table tbody tr.order-item-row:nth-child(even) {
-    background-color: #f8fafc !important;
+/* Table Header Matching Left Sidebar (#0f172a) */
+.desk-grid-table thead tr,
+.desk-grid-table thead tr th {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-color: #1e293b !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
 }
-.desk-grid-table tbody tr.order-item-row:nth-child(odd) {
+
+/* Zebra Striping Alternate Colors for Rows */
+.desk-grid-table tbody tr.order-item-row:nth-child(even),
+.desk-grid-table tbody tr.order-item-row:nth-child(even) td {
+    background-color: #f1f5f9 !important;
+}
+.desk-grid-table tbody tr.order-item-row:nth-child(odd),
+.desk-grid-table tbody tr.order-item-row:nth-child(odd) td {
     background-color: #ffffff !important;
 }
-.desk-grid-table tbody tr.order-item-row:hover {
-    background-color: #f1f5f9 !important;
+.desk-grid-table tbody tr.order-item-row:hover,
+.desk-grid-table tbody tr.order-item-row:hover td {
+    background-color: #e2e8f0 !important;
 }
 .desk-grid-table td {
     vertical-align: middle !important;
@@ -2089,8 +2102,8 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 .doc-primary-fields.compact-fields {
     padding: 5px 13px !important;
     margin-bottom: 3px !important;
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
     border-radius: 6px !important;
 }
 
@@ -2355,6 +2368,9 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     min-height: 0 !important;
     margin-bottom: 2px !important;
     overflow: hidden !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
 }
 
 .desk-card.items-container .table-responsive {
@@ -2675,6 +2691,462 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     display: flex !important;
     align-items: center !important;
     gap: 5px !important;
+}
+
+/* ====================================================================
+ * Comprehensive Dark Mode Support for Commercial Workspace
+ * Supports body.dark-mode across all workspace elements & modals
+ * ==================================================================== */
+
+/* 1. Header & Navigation in Dark Mode */
+body.dark-mode.commercial-screen-lock header.container-fluid,
+body.dark-mode.commercial-screen-lock header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+body.dark-mode.commercial-screen-lock nav.navbar {
+    background: transparent !important;
+}
+body.dark-mode.commercial-screen-lock nav.navbar a.menu-btn,
+body.dark-mode.commercial-screen-lock nav.navbar #toggle-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+body.dark-mode.commercial-screen-lock nav.navbar a.menu-btn:hover {
+    background: #334155 !important;
+    color: #f8fafc !important;
+}
+body.dark-mode.commercial-screen-lock nav.navbar a.menu-btn .toggle-icon-bars .bar {
+    background: #cbd5e1 !important;
+}
+body.dark-mode .comm-navbar-center-wrap .comm-title-badge {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .comm-doc-title {
+    color: #f8fafc !important;
+}
+body.dark-mode .comm-nav-btn-secondary {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .comm-nav-btn-secondary:hover {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .header-grand-total-badge {
+    background: #27272a !important;
+    border: 1px solid #3f3f46 !important;
+}
+body.dark-mode .header-grand-total-badge span:first-child {
+    color: #fbbf24 !important;
+}
+body.dark-mode #header-grand-total-display {
+    color: #facc15 !important;
+}
+body.dark-mode .pill-segmented-compact {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .pill-segmented-compact .segment-btn {
+    color: #94a3b8 !important;
+}
+body.dark-mode .pill-segmented-compact .segment-btn.active {
+    background: #7c3aed !important;
+    color: #ffffff !important;
+}
+
+/* 2. Workspace Backgrounds & Primary Fields */
+body.dark-mode .commercial-workspace-view {
+    background: #0b0f19 !important;
+}
+body.dark-mode .comm-split-grid {
+    background: #0b0f19 !important;
+}
+body.dark-mode .comm-entry-workspace {
+    background: #0b0f19 !important;
+}
+body.dark-mode .doc-primary-fields.compact-fields {
+    background: #141c2e !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+body.dark-mode .field-compact-item label {
+    color: #94a3b8 !important;
+}
+body.dark-mode .field-compact-item input.form-control,
+body.dark-mode .field-compact-item select.form-control {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .field-compact-item input.form-control:focus,
+body.dark-mode .field-compact-item select.form-control:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+}
+body.dark-mode .party-info-compact-inline {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .party-info-compact-inline span:first-child {
+    color: #94a3b8 !important;
+}
+body.dark-mode .party-info-compact-inline .party-gst-badge {
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode #party-address-text {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .party-info-compact-inline #party-credit-badge {
+    background: #0c4a6e !important;
+    color: #38bdf8 !important;
+}
+body.dark-mode .terms-compact-inline {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+}
+body.dark-mode .terms-compact-inline strong {
+    color: #f8fafc !important;
+}
+
+/* 3. Items Container & Desk Grid Table in Dark Mode */
+body.dark-mode .desk-card.items-container {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .items-section-header {
+    background: #141c2e !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark-mode .items-title {
+    color: #f8fafc !important;
+}
+body.dark-mode .density-segmented {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .density-btn {
+    color: #94a3b8 !important;
+}
+body.dark-mode .density-btn.active {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .comm-items-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .comm-items-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .comm-items-btn-primary {
+    background: #7c3aed !important;
+    border-color: #6d28d9 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .desk-grid-table {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+}
+body.dark-mode .desk-grid-table thead tr,
+body.dark-mode .desk-grid-table thead tr th {
+    background: #090d16 !important;
+    color: #f8fafc !important;
+    border-color: #1e293b !important;
+}
+body.dark-mode .desk-grid-table tbody tr.table-search-row,
+body.dark-mode .desk-grid-table tbody tr.table-search-row td {
+    background: #162032 !important;
+    border-bottom: 2px solid #334155 !important;
+}
+body.dark-mode .desk-grid-table tbody tr.table-search-row #lims_productcodeSearch {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+body.dark-mode .desk-grid-table tbody tr.table-search-row #lims_productcodeSearch:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Dark Mode Table Alternate Rows (Zebra Striping) */
+body.dark-mode .desk-grid-table tbody tr.order-item-row:nth-child(even),
+body.dark-mode .desk-grid-table tbody tr.order-item-row:nth-child(even) td {
+    background-color: #141c2c !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .desk-grid-table tbody tr.order-item-row:nth-child(odd),
+body.dark-mode .desk-grid-table tbody tr.order-item-row:nth-child(odd) td {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .desk-grid-table tbody tr.order-item-row:hover,
+body.dark-mode .desk-grid-table tbody tr.order-item-row:hover td {
+    background-color: #27354f !important;
+}
+body.dark-mode .desk-grid-table tbody tr.order-item-row td {
+    color: #f8fafc !important;
+}
+body.dark-mode .desk-grid-table input.form-control,
+body.dark-mode .desk-grid-table select.form-control {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .desk-grid-table input.form-control:focus,
+body.dark-mode .desk-grid-table select.form-control:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+}
+body.dark-mode .desk-grid-table input.row-item-name {
+    color: #f8fafc !important;
+}
+body.dark-mode .desk-grid-table input.row-total {
+    background: #0f172a !important;
+    color: #34d399 !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .desk-grid-table .btn-edit-row {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #a78bfa !important;
+}
+body.dark-mode .desk-grid-table .btn-delete-row {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f87171 !important;
+}
+body.dark-mode .desk-grid-table .btn-delete-row:hover {
+    background: #7f1d1d !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .desk-grid-table .empty-placeholder-row td {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+}
+
+/* 4. Bottom Summary Bar in Dark Mode */
+body.dark-mode .desk-summary-bottom-bar {
+    background: #141c2e !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+body.dark-mode .desk-summary-bottom-bar .comm-bottom-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .desk-summary-bottom-bar .comm-bottom-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .desk-summary-bottom-bar .comm-bottom-btn-primary {
+    background: #7c3aed !important;
+    border-color: #6d28d9 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .desk-summary-bottom-bar .comm-bottom-btn-success {
+    background: #059669 !important;
+    border-color: #047857 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .desk-summary-bottom-bar #remarks-summary-preview {
+    color: #94a3b8 !important;
+}
+body.dark-mode .desk-summary-bottom-bar #display-net-amount,
+body.dark-mode .desk-summary-bottom-bar #display-tax-amount {
+    color: #f8fafc !important;
+}
+body.dark-mode .desk-summary-bottom-bar #display-grand-total {
+    color: #f59e0b !important;
+}
+
+/* 5. Side Bill List Panel in Dark Mode */
+body.dark-mode .desk-bill-list-panel {
+    background: #141c2e !important;
+    border-left: 1px solid #334155 !important;
+    border-right: 1px solid #334155 !important;
+}
+body.dark-mode .comm-drawer-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark-mode .comm-drawer-header .comm-drawer-title {
+    color: #f8fafc !important;
+}
+body.dark-mode .side-bill-search,
+body.dark-mode .side-series-filter {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .side-bill-search:focus,
+body.dark-mode .side-series-filter:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+}
+body.dark-mode .side-dropdown-filters select {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .side-dropdown-filters .filter-item-label {
+    color: #94a3b8 !important;
+}
+body.dark-mode .side-tabs-segmented,
+body.dark-mode .side-filter-tabs {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .side-tab-btn,
+body.dark-mode .side-tab {
+    color: #94a3b8 !important;
+    background: transparent !important;
+    border: none !important;
+}
+body.dark-mode .side-tab-btn.active,
+body.dark-mode .side-tab.active {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .side-toolbar-actions button,
+body.dark-mode .side-tool-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .side-toolbar-actions button:hover,
+body.dark-mode .side-tool-btn:hover {
+    background: #334155 !important;
+}
+body.dark-mode .side-panel-filter-label {
+    color: #94a3b8 !important;
+}
+body.dark-mode .side-panel-series-filter input,
+body.dark-mode #side-filter-series {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .side-bill-card,
+body.dark-mode .bill-card {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+body.dark-mode .side-bill-card:hover,
+body.dark-mode .bill-card:hover {
+    background: #27354f !important;
+    border-color: #475569 !important;
+}
+body.dark-mode .side-bill-card.active-editing,
+body.dark-mode .bill-card.active-editing {
+    background: #2e1065 !important;
+    border-color: #8b5cf6 !important;
+}
+body.dark-mode .side-card-ref,
+body.dark-mode .bill-card .bill-card-ref {
+    color: #a5b4fc !important;
+}
+body.dark-mode .side-card-party,
+body.dark-mode .bill-card .bill-card-party {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .side-card-amount,
+body.dark-mode .bill-card .bill-card-amount {
+    color: #34d399 !important;
+}
+body.dark-mode .side-card-date {
+    color: #64748b !important;
+}
+body.dark-mode .side-action-btn {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .side-action-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+/* 6. Modals & Autocomplete in Dark Mode */
+body.dark-mode .modal-content {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+body.dark-mode .modal-header {
+    background: #141c2e !important;
+    border-bottom: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+body.dark-mode .modal-header .modal-title {
+    color: #f8fafc !important;
+}
+body.dark-mode .modal-header .close {
+    color: #94a3b8 !important;
+}
+body.dark-mode .modal-footer {
+    background: #141c2e !important;
+    border-top: 1px solid #334155 !important;
+}
+body.dark-mode .compact-field-block label {
+    color: #94a3b8 !important;
+}
+body.dark-mode .compact-field-block .form-control {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .compact-modal-section-title {
+    color: #a78bfa !important;
+    border-bottom-color: #334155 !important;
+}
+body.dark-mode .bootstrap-select > .btn.dropdown-toggle {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .bootstrap-select .dropdown-menu {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+body.dark-mode .bootstrap-select .dropdown-menu li a {
+    color: #f8fafc !important;
+}
+body.dark-mode .bootstrap-select .dropdown-menu li a:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .ui-autocomplete {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+body.dark-mode .ui-autocomplete .custom-ac-item .item-title {
+    color: #f8fafc !important;
+}
+body.dark-mode .ui-autocomplete .custom-ac-item .item-code-badge {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .ui-autocomplete .custom-ac-item .item-rate {
+    color: #34d399 !important;
 }
 
 

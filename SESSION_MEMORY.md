@@ -8,13 +8,14 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 11:32:00 (+05:30)
-- **Active Git Branch:** enhanced-ui
-- **Upstream Remote:** nandha-origin/enhanced-ui
+- **Last Updated:** 2026-10-07 14:15:00 (+05:30)
+- **Active Git Branch:** enhanced-ui (synchronized with nandha-origin/enhanced-ui and origin/enhanced-ui)
+- **Upstream Remote:** nandha-origin/enhanced-ui & origin/enhanced-ui
 - **Latest Commits:**
-  - 26ce97f — "fix(commercial): address 12 stacked UI feedback items for sales and purchase command centers"
-  - In-progress: Top bar clipping & overlap fix, Focus mode (hide/show top bar toggle)
-- **Working Tree State:** All automated feature suites passing (100%)
+  - 39b1540 — "feat(commercial): expand primary document field widths, add 3px padding and compact terms strip"
+  - 213e88c — "feat(commercial): make table item inputs searchable in-place with autocomplete and reactive row auto-population"
+  - 4f5d9d3 — "feat(commercial): integrate in-table search, realign barcode, space bottom bar buttons, and embed compact Add Product modal"
+- **Working Tree State:** All automated feature suites passing (100%), preparing commit for section colors, dark mode, and reactive tax linking
 - **Test Suite Status:** 33/33 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
 
 ---
@@ -411,14 +412,52 @@ Addressed user feedback:
 
 ---
 
-## 5. Verification & Testing Evidence
-- Automated feature tests executed and passed:
-  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: **33 passed (167 assertions, 100%)**, Duration: ~13s
+## 5. Section Color Differentiation, Left Sidebar Table Header, Reactive GST & Dark Theme Suite (Oct 2026)
+
+Addressed user feedback:
+> "make the colors to differentiate each section. for example, table should be different color, bill top section with the date and other details box is slightly different color. and the table header is at left side panle color. and the dark theme is not working for the new theme."
+> "this is not working, if selected the particular gst, it should reflect in the tax column in the table. also the alternate tables are different color to identify. if it is multi tax, then we can select any tax rate. also the product rate if it is mentioned in the product creation, then display that, bu we can override that if want."
+
+1. **Section Differentiation Colors & Visual Hierarchy:**
+   - **Bill Top Details Box:** Styled `.doc-primary-fields.compact-fields` with a distinct soft slate background (`#f1f5f9` Slate-100) and crisp subtle border (`1px solid #cbd5e1`), separating the top header fields cleanly from the white page canvas and table container.
+   - **Items Table Header (`<thead> <tr> <th>`):** Shifted from vibrant purple to the deep dark color of the left side panel (`#0f172a` Slate-900) with crisp white text (`#ffffff`), establishing visual coherence with the left navigation bar.
+   - **Distinct Zebra Striping:** Enforced high-contrast alternating row colors for table rows: `:nth-child(even)` is `#f1f5f9` (Slate-100) and `:nth-child(odd)` is `#ffffff` (Pure White), with a smooth hover tint of `#e2e8f0` (Slate-200).
+
+2. **Complete Dark Theme Implementation for Commercial Workspaces:**
+   - Addressed broken dark theme where `commercial-workspace.css` previously forced `#ffffff !important` with zero dark mode rules.
+   - Implemented a complete `body.dark-mode` design system across `commercial-workspace.css`:
+     - Top Navigation & Command Strip: Deep dark `#0f172a` with light slate text `#e2e8f0`.
+     - Main Canvas: Sleek dark canvas background `#0b0f19`.
+     - Primary Fields Box: Slate card background `#141c2e` with `#334155` border.
+     - Table Header: Ultra-dark `#090d16` with `#f8fafc` text.
+     - Table Container & Rows: Dark slate `#1e293b` with zebra striping (`#1e293b` vs `#141c2c`) and hover `#27354f`.
+     - Inputs, Selects & Autocompletes: `#0f172a` background, `#f8fafc` text, and `#334155` borders with focused glow.
+     - Bottom Action Bar: Dark `#141c2e` with high-contrast buttons and glowing totals.
+     - Side Bill List Panel: Dark slate `#141c2e` with `#1e293b` bill cards (`.side-bill-card`), dark search/filters, and purple active-editing card highlight (`#2e1065`).
+     - Modal Dialogs: Dark `#1e293b` with crisp borders and legible controls.
+
+3. **Reactive GST Classification & Multi-Tax Grid Linking:**
+   - Enriched `<select id="purchase_type_id">` and `<select id="sale_type_id">` options with data attributes:
+     - `data-tax-rate`: Numerical rate (e.g., `18`, `12`, `5`, `0`).
+     - `data-code`: Standard code (e.g., `GST18`, `GST12`, `GST_MULTI`).
+     - `data-is-multi`: Flag (`1` for multi-tax / mixed, `0` for single fixed rate).
+   - **Single GST Mode:** When a specific GST rate is selected (e.g. `18%-GST Inward` or `12%`), changing the dropdown immediately updates the `TAX` column across all existing table rows and locks them (`pointer-events: none; background: #f1f5f9; color: #475569;`) to maintain tax uniformity without disabling form POST serialization. New rows added default automatically to this active rate.
+   - **Multi-Tax Mode:** When `GST • Multiple rates` or `L/MultiTax` or `Interstate MultiTax` is selected (`is_multi = 1`), row tax dropdowns unlock immediately (`pointer-events: auto`), allowing per-line tax rate customization (0%, 5%, 12%, 18%, 28%).
+   - **Default Product Rate & Free Override:** When items are selected from autocomplete or catalog, the default product price/cost is inserted into `.row-rate`. The user can freely override Rate or Amount at any time, with two-way reactive calculation recalculating line amounts and voucher totals dynamically.
 
 ---
 
-## 5. Crash Recovery Protocol for Any Agent
+## 6. Verification & Testing Evidence
+- Automated feature tests executed and passed:
+  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
+  - Results: **33 passed (167 assertions, 100%)**, Duration: ~14s
+- Visual browser verification:
+  - Light mode: Verified `#f1f5f9` top box, `#0f172a` dark thead matching left panel, alternating zebra rows, and reactive tax calculations.
+  - Dark mode: Verified complete theme consistency across workspace, table, cards, inputs, and bottom bar.
+
+---
+
+## 7. Crash Recovery Protocol for Any Agent
 1. **Never start from scratch:** When reopened after a crash or system reboot, inspect SESSION_MEMORY.md first.
 2. **Check Git Status:** Verify branch is enhanced-ui (git status and git branch -vv).
 3. **Verify Database & Dependencies:** Check migrations are up to date.
