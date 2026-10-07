@@ -1265,3 +1265,182 @@ body.commercial-screen-lock section {
         height: auto;
     }
 }
+
+/* =========================================================================
+   Optech Voucher Entry — Items Grid, Autocomplete & Density Styles
+   ========================================================================= */
+
+/* jQuery UI Autocomplete Floating Dropdown */
+.ui-autocomplete {
+    z-index: 999999 !important;
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.08) !important;
+    padding: 4px !important;
+    min-width: 380px !important;
+    list-style: none !important;
+    margin: 4px 0 0 0 !important;
+}
+
+.ui-autocomplete .ui-menu-item {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+}
+
+.ui-autocomplete .ui-menu-item-wrapper {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+}
+
+.ui-autocomplete .ui-menu-item-wrapper.ui-state-active,
+.ui-autocomplete .ui-menu-item-wrapper:hover,
+.ui-autocomplete .ui-menu-item:hover {
+    background: #f8fafc !important;
+}
+
+.ui-autocomplete .custom-ac-item {
+    padding: 7px 10px;
+    border-radius: 6px;
+    transition: background 0.12s ease;
+}
+
+.ui-autocomplete .custom-ac-item:hover,
+.ui-autocomplete .ui-state-active .custom-ac-item {
+    background: #f5f3ff !important;
+}
+
+.ui-autocomplete .custom-ac-item .item-title {
+    font-weight: 600;
+    font-size: 12.5px;
+    color: #0f172a;
+}
+
+.ui-autocomplete .custom-ac-item .item-code-badge {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.ui-autocomplete .custom-ac-item .item-rate {
+    font-size: 12px;
+    font-weight: 700;
+    color: #059669;
+}
+
+/* Items Grid Density Modes */
+.desk-grid-table.compact thead th {
+    padding: 4px 6px !important;
+    font-size: 10.5px !important;
+    height: 26px !important;
+}
+.desk-grid-table.compact tbody td {
+    padding: 2px 5px !important;
+    font-size: 11px !important;
+    height: 28px !important;
+}
+.desk-grid-table.compact .form-control-sm {
+    height: 22px !important;
+    font-size: 11px !important;
+    padding: 1px 4px !important;
+}
+
+.desk-grid-table.cozy thead th {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+    height: 32px !important;
+}
+.desk-grid-table.cozy tbody td {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    height: 36px !important;
+}
+.desk-grid-table.cozy .form-control-sm {
+    height: 26px !important;
+    font-size: 12px !important;
+    padding: 2px 6px !important;
+}
+
+.desk-grid-table.large thead th {
+    padding: 9px 12px !important;
+    font-size: 12px !important;
+    height: 40px !important;
+}
+.desk-grid-table.large tbody td {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    height: 46px !important;
+}
+.desk-grid-table.large .form-control-sm {
+    height: 32px !important;
+    font-size: 13px !important;
+    padding: 4px 8px !important;
+}
+
+/* Density Segmented Control */
+.density-segmented {
+    display: inline-flex;
+    background: #e2e8f0;
+    padding: 2px;
+    border-radius: 5px;
+    gap: 2px;
+}
+
+.density-segmented .density-btn {
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+}
+
+.density-segmented .density-btn.active,
+.density-segmented .density-btn:hover {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.density-segmented .density-btn.active {
+    color: #7c3aed;
+    font-weight: 700;
+}
+
+/* Multi-Item Modal Grid */
+#multi-item-modal .modal-content {
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+}
+#multi-item-modal .modal-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 16px;
+}
+#multi-item-modal .multi-item-search {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    height: 32px;
+    font-size: 12px;
+    padding-left: 28px;
+}
+#multi-item-modal .multi-item-row:hover {
+    background: #f8fafc;
+}
+

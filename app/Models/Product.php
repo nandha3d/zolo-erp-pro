@@ -74,10 +74,11 @@ class Product extends Model
 
     public function scopeActiveStandard($query)
     {
-        return $query->where([
-            ['is_active', true],
-            ['type', 'standard']
-        ]);
+        return $query->where(function($q) {
+            $q->where('products.is_active', true)->orWhere('products.is_active', 1)->orWhereNull('products.is_active');
+        })->where(function($q) {
+            $q->where('products.type', 'standard')->orWhereNull('products.type');
+        });
     }
 
     public function scopeActiveFeatured($query)

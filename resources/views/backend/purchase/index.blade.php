@@ -202,12 +202,12 @@
                                 <button type="button" class="density-btn active" data-density="cozy">Cozy</button>
                                 <button type="button" class="density-btn" data-density="large">Large</button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:11px;" id="btn-multi-item">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size:11px;" id="btn-multi-item" data-toggle="modal" data-target="#multi-item-modal">
                                 <i class="dripicons-menu"></i> Multi item
                             </button>
-                            <a href="{{ route('products.create') }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:11px;">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size:11px;" id="btn-create-item-modal" data-toggle="modal" data-target="#quick-create-item-modal">
                                 + Create item
-                            </a>
+                            </button>
                             <button type="button" class="btn btn-sm btn-primary py-1 px-2" style="font-size:11px;background:#7c3aed;border-color:#7c3aed;" id="btn-add-item-row">
                                 + Add row
                             </button>
@@ -619,6 +619,127 @@
         <div id="purchase-footer" class="modal-body"></div>
       </div>
     </div>
+<!-- Multi-Item Selection Modal (Optech Grid) -->
+<div id="multi-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
+    <div class="modal-dialog modal-lg" style="max-width:850px;">
+        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                    <i class="dripicons-menu" style="color:#7c3aed;"></i> Multi-Item Fast Batch Picker
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding:14px 18px;">
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                    <div style="position:relative;flex:1;">
+                        <i class="fa fa-search text-muted" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;"></i>
+                        <input type="text" id="multi-item-filter" class="form-control form-control-sm" placeholder="Filter items by name or code..." style="padding-left:30px;height:32px;font-size:12px;">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge badge-light border" id="multi-item-count-badge" style="font-size:11px;padding:5px 8px;">0 selected</span>
+                    </div>
+                </div>
+                <div class="table-responsive" style="max-height:360px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
+                    <table class="table table-sm table-hover mb-0" id="multi-item-table" style="font-size:12px;">
+                        <thead style="background:#f1f5f9;position:sticky;top:0;z-index:10;">
+                            <tr>
+                                <th style="width:36px;text-align:center;">
+                                    <input type="checkbox" id="multi-item-select-all">
+                                </th>
+                                <th style="min-width:240px;">Item Name</th>
+                                <th style="width:130px;">Item Code</th>
+                                <th style="width:110px;text-align:right;">Cost</th>
+                                <th style="width:90px;text-align:center;">Qty</th>
+                                <th style="width:70px;text-align:center;">Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="multi-item-tbody">
+                            <!-- Populated dynamically via JS from allProducts -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-add-selected-items" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                    + Add Selected Items to Voucher
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Create Item Modal -->
+<div id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
+    <div class="modal-dialog" style="max-width:520px;">
+        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
+            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                    <i class="fa fa-plus-circle" style="color:#7c3aed;"></i> Quick Create Item
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="quick-create-item-form">
+                <div class="modal-body" style="padding:16px 18px;">
+                    <div class="form-group mb-2">
+                        <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Item Name *</label>
+                        <input type="text" id="quick-item-name" class="form-control form-control-sm" placeholder="e.g. Cotton Grey Yarn 40s" required style="height:32px;font-size:12px;">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Item Code / Barcode *</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="quick-item-code" class="form-control form-control-sm" placeholder="e.g. ITM-1002" required style="height:32px;font-size:12px;">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary" id="btn-quick-gen-code" style="font-size:11px;">⚡ Auto</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Cost / Purchase Rate (₹) *</label>
+                            <input type="number" id="quick-item-cost" class="form-control form-control-sm" placeholder="0.00" step="0.01" min="0" required style="height:32px;font-size:12px;">
+                        </div>
+                        <div class="col-6">
+                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Unit</label>
+                            <select id="quick-item-unit" class="form-control form-control-sm" style="height:32px;font-size:12px;">
+                                <option value="Pc">Pc (Piece)</option>
+                                <option value="Kg">Kg (Kilogram)</option>
+                                <option value="Mtr">Mtr (Meter)</option>
+                                <option value="Box">Box</option>
+                                <option value="Unit">Unit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">GST Tax Rate</label>
+                            <select id="quick-item-tax" class="form-control form-control-sm" style="height:32px;font-size:12px;">
+                                <option value="0">0% (Nil)</option>
+                                <option value="5">5%</option>
+                                <option value="12">12%</option>
+                                <option value="18" selected>18%</option>
+                                <option value="28">28%</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Type</label>
+                            <input type="text" class="form-control form-control-sm" value="Standard" readonly style="height:32px;font-size:12px;background:#f8fafc;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                        💾 Save & Add to Voucher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @endsection
@@ -628,42 +749,148 @@
 (function() {
     'use strict';
 
-    // --- Product List Autocomplete Data ---
-    var productArray = [];
-    var lims_product_code = [
-        @foreach($lims_product_list_without_variant as $product)
-            "{{ htmlspecialchars($product->code) }}|{{ preg_replace('/[\n\r]/', ' ', htmlspecialchars($product->name)) }}",
-        @endforeach
-        @foreach($lims_product_list_with_variant as $product)
-            "{{ htmlspecialchars($product->item_code) }}|{{ preg_replace('/[\n\r]/', ' ', htmlspecialchars($product->name)) }}",
-        @endforeach
-    ];
+    // --- Product List Autocomplete & Item Master Data ---
+    @php
+        $jsProductList = [];
+        foreach($lims_product_list_without_variant as $prod) {
+            $taxVal = 0;
+            if (!empty($prod->tax_id)) {
+                $taxObj = collect($lims_tax_list)->firstWhere('id', $prod->tax_id);
+                $taxVal = $taxObj ? (float)$taxObj->rate : 0;
+            }
+            $jsProductList[] = [
+                'id' => (int)$prod->id,
+                'name' => (string)$prod->name,
+                'code' => (string)$prod->code,
+                'price' => (float)($prod->price ?? 0),
+                'cost' => (float)($prod->cost ?? 0),
+                'tax_rate' => $taxVal,
+                'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
+                'value' => (string)$prod->code . '|' . (string)$prod->name,
+                'label' => (string)$prod->code . ' - ' . (string)$prod->name,
+            ];
+        }
+        foreach($lims_product_list_with_variant as $prod) {
+            $taxVal = 0;
+            if (!empty($prod->tax_id)) {
+                $taxObj = collect($lims_tax_list)->firstWhere('id', $prod->tax_id);
+                $taxVal = $taxObj ? (float)$taxObj->rate : 0;
+            }
+            $jsProductList[] = [
+                'id' => (int)$prod->id,
+                'name' => (string)$prod->name,
+                'code' => (string)($prod->item_code ?? $prod->code),
+                'price' => (float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)),
+                'cost' => (float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)),
+                'tax_rate' => $taxVal,
+                'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
+                'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
+                'label' => (string)($prod->item_code ?? $prod->code) . ' - ' . (string)$prod->name,
+            ];
+        }
+    @endphp
+
+    var allProducts = @json($jsProductList);
+    var lims_product_code = allProducts.map(function(p) { return p.value; });
 
     // --- State variables ---
     var rowCounter = 0;
     var taxList = @json($lims_tax_list);
     var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
 
-    // --- Autocomplete setup ---
-    $('#lims_productcodeSearch').autocomplete({
+    // --- Table Density Switcher & Persistence ---
+    $('.density-btn').on('click', function() {
+        $('.density-btn').removeClass('active');
+        $(this).addClass('active');
+        var density = $(this).data('density');
+        $('#order-table').removeClass('compact cozy large').addClass(density);
+        localStorage.setItem('zolo_voucher_density', density);
+    });
+    var savedDensity = localStorage.getItem('zolo_voucher_density') || 'cozy';
+    $('.density-btn[data-density="' + savedDensity + '"]').addClass('active').siblings().removeClass('active');
+    $('#order-table').removeClass('compact cozy large').addClass(savedDensity);
+
+    // --- Autocomplete setup with Custom Render Item ---
+    var $productSearch = $('#lims_productcodeSearch');
+    $productSearch.autocomplete({
+        minLength: 1,
+        autoFocus: true,
         source: function(request, response) {
-            var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
-            response($.grep(lims_product_code, function(item) {
-                return matcher.test(item);
-            }).slice(0, 20));
+            var term = request.term.toLowerCase().trim();
+            var matches = allProducts.filter(function(p) {
+                return (p.name && p.name.toLowerCase().includes(term)) ||
+                       (p.code && p.code.toLowerCase().includes(term));
+            });
+            response(matches.slice(0, 20));
         },
         select: function(event, ui) {
-            fetchProductAndAddRow(ui.item.value);
+            if (ui && ui.item) {
+                addProductRow({
+                    product_id: ui.item.id,
+                    product_name: ui.item.name,
+                    product_code: ui.item.code,
+                    price: ui.item.price,
+                    cost: ui.item.cost,
+                    tax_rate: ui.item.tax_rate,
+                    unit: ui.item.unit,
+                    qty: 1
+                });
+            }
             $(this).val('');
             return false;
         }
-    }).on('keydown', function(e) {
+    });
+
+    if ($productSearch.data('ui-autocomplete')) {
+        $productSearch.data('ui-autocomplete')._renderItem = function(ul, item) {
+            var rateStr = '₹ ' + (parseFloat(item.cost || item.price || 0)).toFixed(decimalPlaces);
+            return $("<li>")
+                .append(`
+                    <div class="custom-ac-item d-flex align-items-center justify-content-between">
+                        <div style="flex:1;min-width:0;padding-right:8px;">
+                            <div class="item-title">${item.name}</div>
+                            <div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px;">
+                                <span class="item-code-badge">${item.code}</span>
+                                <span>•</span>
+                                <span class="item-rate">${rateStr}</span>
+                                <span>•</span>
+                                <span>${item.unit || 'Unit'}</span>
+                            </div>
+                        </div>
+                        <div style="flex-shrink:0;">
+                            <span class="badge" style="background:#f3e8ff;color:#7c3aed;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">+ Add</span>
+                        </div>
+                    </div>
+                `)
+                .appendTo(ul);
+        };
+    }
+
+    $productSearch.on('keydown', function(e) {
         if (e.which === 13) {
             e.preventDefault();
             var val = $(this).val().trim();
             if (val) {
-                fetchProductAndAddRow(val);
-                $(this).val('');
+                var exact = allProducts.find(function(p) {
+                    return (p.code && p.code.toLowerCase() === val.toLowerCase()) ||
+                           (p.name && p.name.toLowerCase() === val.toLowerCase());
+                });
+                if (exact) {
+                    addProductRow({
+                        product_id: exact.id,
+                        product_name: exact.name,
+                        product_code: exact.code,
+                        price: exact.price,
+                        cost: exact.cost,
+                        tax_rate: exact.tax_rate,
+                        unit: exact.unit,
+                        qty: 1
+                    });
+                    $(this).val('');
+                } else {
+                    fetchProductAndAddRow(val);
+                    $(this).val('');
+                }
             }
         }
     });
@@ -672,7 +899,7 @@
     $(document).on('keydown', function(e) {
         if (e.which === 113) { // F2
             e.preventDefault();
-            $('#lims_productcodeSearch').focus();
+            $productSearch.focus();
         }
     });
 
@@ -717,22 +944,48 @@
         // Remove empty placeholder row if exists
         $('#order-table-body .empty-placeholder-row').remove();
 
+        // If product already in grid, increment qty
+        if (item.product_id && item.product_id > 0) {
+            var existing = $('#order-table-body tr.order-item-row[data-product-id="' + item.product_id + '"]');
+            if (existing.length) {
+                var qtyInput = existing.find('.row-qty');
+                var currentQty = parseFloat(qtyInput.val()) || 0;
+                qtyInput.val((currentQty + (item.qty || 1)).toFixed(2)).trigger('input');
+                existing.css('background-color', '#f5f3ff');
+                setTimeout(function() { existing.css('background-color', ''); }, 400);
+                return;
+            }
+        }
+
         rowCounter++;
-        var rate = item.cost || 0;
+        var rate = item.cost || item.price || 0;
         var qty = item.qty || 1;
         var taxRate = item.tax_rate || 0;
         var amount = rate * qty;
         var taxAmount = amount * (taxRate / 100);
         var lineTotal = amount + taxAmount;
 
+        var itemColHtml = '';
+        if (item.is_manual) {
+            itemColHtml = `
+                <input type="text" name="product_name_manual[]" class="form-control form-control-sm row-item-name" placeholder="Type item name..." value="${item.product_name || ''}" style="height:26px;font-size:12px;font-weight:600;">
+                <input type="hidden" name="product_id[]" value="0">
+                <input type="hidden" name="product_code[]" value="">
+            `;
+        } else {
+            itemColHtml = `
+                <div style="font-weight:600;color:#0f172a;">${item.product_name}</div>
+                <small style="color:#64748b;">${item.product_code}</small>
+                <input type="hidden" name="product_id[]" value="${item.product_id}">
+                <input type="hidden" name="product_code[]" value="${item.product_code}">
+            `;
+        }
+
         var tr = $(`
-            <tr class="order-item-row" data-row-id="${rowCounter}">
-                <td style="text-align:center;font-weight:600;color:#64748b;">${$('#order-table-body tr').length + 1}</td>
+            <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}">
+                <td style="text-align:center;font-weight:600;color:#64748b;">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
-                    <div style="font-weight:600;color:#0f172a;">${item.product_name}</div>
-                    <small style="color:#64748b;">${item.product_code}</small>
-                    <input type="hidden" name="product_id[]" value="${item.product_id}">
-                    <input type="hidden" name="product_code[]" value="${item.product_code}">
+                    ${itemColHtml}
                 </td>
                 <td>
                     <span class="grid-type-pill">Purchase</span>
@@ -776,12 +1029,164 @@
         `);
 
         $('#order-table-body').append(tr);
+        if (item.is_manual) {
+            tr.find('.row-item-name').focus();
+        }
         recalcTableSummary();
+        $('#items-meta-count').text($('#order-table-body tr.order-item-row').length + ' line(s) • 7 per page');
     }
 
-    // Manual Add Row
+    // Manual Add Row (+ Add row button)
     $('#btn-add-item-row').on('click', function() {
-        $('#lims_productcodeSearch').focus();
+        addProductRow({
+            product_id: 0,
+            product_name: '',
+            product_code: '',
+            price: 0,
+            cost: 0,
+            tax_rate: 0,
+            unit: 'Unit',
+            qty: 1,
+            is_manual: true
+        });
+    });
+
+    // Multi-Item Modal Batch Picker
+    function populateMultiItemModal() {
+        var tbody = $('#multi-item-tbody');
+        tbody.empty();
+        allProducts.forEach(function(p, idx) {
+            tbody.append(`
+                <tr class="multi-item-row" data-id="${p.id}" data-name="${(p.name || '').toLowerCase()}" data-code="${(p.code || '').toLowerCase()}">
+                    <td style="text-align:center;">
+                        <input type="checkbox" class="multi-item-check" data-index="${idx}">
+                    </td>
+                    <td>
+                        <div style="font-weight:600;color:#0f172a;">${p.name}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-light border">${p.code}</span>
+                    </td>
+                    <td style="text-align:right;font-weight:600;color:#059669;">
+                        ₹ ${(p.cost || p.price || 0).toFixed(decimalPlaces)}
+                    </td>
+                    <td style="text-align:center;">
+                        <input type="number" class="form-control form-control-sm multi-item-qty text-center" value="1" min="1" style="height:24px;width:60px;margin:auto;font-size:11px;">
+                    </td>
+                    <td style="text-align:center;color:#64748b;font-size:11px;">
+                        ${p.unit || 'Unit'}
+                    </td>
+                </tr>
+            `);
+        });
+        updateMultiItemCount();
+    }
+
+    $('#multi-item-modal').on('show.bs.modal', function() {
+        if ($('#multi-item-tbody tr').length === 0) {
+            populateMultiItemModal();
+        }
+    });
+
+    $('#multi-item-filter').on('input', function() {
+        var term = $(this).val().toLowerCase().trim();
+        $('#multi-item-tbody tr').each(function() {
+            var name = $(this).data('name') || '';
+            var code = $(this).data('code') || '';
+            if (name.includes(term) || code.includes(term)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#multi-item-select-all').on('change', function() {
+        var checked = $(this).is(':checked');
+        $('#multi-item-tbody tr:visible .multi-item-check').prop('checked', checked);
+        updateMultiItemCount();
+    });
+
+    $(document).on('change', '.multi-item-check', function() {
+        updateMultiItemCount();
+    });
+
+    function updateMultiItemCount() {
+        var count = $('.multi-item-check:checked').length;
+        $('#multi-item-count-badge').text(count + ' selected');
+        $('#btn-add-selected-items').text('+ Add ' + count + ' Selected Item' + (count === 1 ? '' : 's') + ' to Voucher');
+    }
+
+    $('#btn-add-selected-items').on('click', function() {
+        $('.multi-item-check:checked').each(function() {
+            var idx = $(this).data('index');
+            var tr = $(this).closest('tr');
+            var qty = parseFloat(tr.find('.multi-item-qty').val()) || 1;
+            var prod = allProducts[idx];
+            if (prod) {
+                addProductRow({
+                    product_id: prod.id,
+                    product_name: prod.name,
+                    product_code: prod.code,
+                    price: prod.price,
+                    cost: prod.cost,
+                    tax_rate: prod.tax_rate,
+                    unit: prod.unit,
+                    qty: qty
+                });
+            }
+        });
+        $('#multi-item-modal').modal('hide');
+        $('.multi-item-check').prop('checked', false);
+        $('#multi-item-select-all').prop('checked', false);
+        updateMultiItemCount();
+        $productSearch.focus();
+    });
+
+    // Quick Create Item
+    $('#btn-quick-gen-code').on('click', function() {
+        $('#quick-item-code').val('ITM-' + Math.floor(100000 + Math.random() * 900000));
+    });
+
+    $('#quick-create-item-form').on('submit', function(e) {
+        e.preventDefault();
+        var name = $('#quick-item-name').val().trim();
+        var code = $('#quick-item-code').val().trim();
+        var cost = parseFloat($('#quick-item-cost').val()) || 0;
+        var unit = $('#quick-item-unit').val();
+        var taxRate = parseFloat($('#quick-item-tax').val()) || 0;
+
+        if (!name || !code) return;
+
+        var newProduct = {
+            id: 0,
+            name: name,
+            code: code,
+            price: cost,
+            cost: cost,
+            tax_rate: taxRate,
+            unit: unit,
+            value: code + '|' + name,
+            label: code + ' - ' + name
+        };
+
+        allProducts.unshift(newProduct);
+        lims_product_code.unshift(newProduct.value);
+
+        addProductRow({
+            product_id: 0,
+            product_name: name,
+            product_code: code,
+            price: cost,
+            cost: cost,
+            tax_rate: taxRate,
+            unit: unit,
+            qty: 1
+        });
+
+        $('#quick-create-item-modal').modal('hide');
+        $('#quick-create-item-form')[0].reset();
+        $productSearch.focus();
     });
 
     // Delete Row
@@ -789,6 +1194,7 @@
         $(this).closest('tr').remove();
         reindexRows();
         recalcTableSummary();
+        $('#items-meta-count').text($('#order-table-body tr.order-item-row').length + ' line(s) • 7 per page');
     });
 
     // Live Row Calculation on Change
