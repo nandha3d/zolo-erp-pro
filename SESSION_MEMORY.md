@@ -1,4 +1,4 @@
-# zoloERP Pro — Persistent Session Memory & State
+﻿# zoloERP Pro — Persistent Session Memory & State
 
 > **CRITICAL AGENT INSTRUCTION (Crash Recovery & Session Persistence)**:
 > This document is the single persistent source of truth for the active development session.
@@ -19,7 +19,7 @@
   - `45b0749` — "feat(gst): support external live GST provider with high free limits and fallback to statutory engine"
   - `1346775` — "feat(gst): implement 100% free professional GSTIN engine with statutory auto-fill, Luhn validation, and cross-party memory"
   - `f5e3e42` — "feat(commercial): add in-place quick create party modal and execute database fresh slate wipe"
-- **Working Tree State:** Uncommitted command center navigation and entry mode changes are in progress on `ui`. Previous validation: 41/41 tests, 207 assertions; current work has its own validation below.
+- **Working Tree State:** Command center navigation and entry mode changes are complete and uncommitted on `ui`. Current validation is recorded below.
 - **Database & Server State:**
   - Database: MariaDB (Ubuntu WSL daemon) running on port 3307 with all 179 tables and Optech master migrations applied and seeded (`sale_types`, `purchase_types`, `dc`, `grn`).
   - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`).
@@ -597,12 +597,31 @@ Addressed user inquiry & requirement:
    - Review pending screens in documents/zolo_erp_implementation_docs/32_OPTECH_SCREENS_AUDIT_AND_BACKEND_GAP_REPORT.md.
    - Continue audit and modernization of remaining modules (Job Work, Production, GST).
 
-## 11. Active Command Center Consolidation (2026-10-07)
+## 11. Completed Command Center Consolidation (2026-10-07)
 
 - Work on `ui`, as explicitly required by the user. Preserve all current uncommitted edits.
 - Keep `App\Services\Commercial` and its shared pricing, posting, draft, reversal, and permission services.
 - Sales and Purchase Command Centers own operator navigation. Fast Entry is a mode at `/sales?entry=fast` or `/purchases?entry=fast`, using the common application shell. Old `/commercial/{kind}/entry` links redirect while preserving query context.
 - Orders reuse pending sales (status 2) and ordered purchases (status 4); no new order posting engine is introduced.
-- Validation so far: canonical entry master rendering passes (2 tests, 29 assertions); isolated entry rendering, redirects, feature/capability gates, and company role permission checks pass (4 tests, 24 assertions).
-- Remaining: complete browser checks for both modes and shortcuts, validate order filtering and normal command centers, review the diff, and record final results. Bootstrap's closed-dialog display conflict is fixed in the command center stylesheet.
+- Validation: shared posting, boundary, and entry mode tests pass (28 tests, 164 assertions). Canonical entry master and normal command center tests pass (5 tests, 57 assertions). Industry entry profile rendering passes (1 test, 17 assertions). Total: 34 tests, 238 assertions.
+- Updated isolated fixtures to include current Optech master/transport migrations, application shell view data, and explicit optional-module defaults. The opt-in fixture export also passes (4 tests, 25 assertions with export enabled).
+- Browser checks on the existing localhost server confirm canonical navigation, F2/F12 switching, current-mode item focus without reload, dialog open/close and shortcut suppression, and both Orders status filters (sales 2, purchases 4). Final browser console check reports no errors. Bootstrap's closed-dialog display conflict is fixed in the command center stylesheet.
+- Item search on the normal entry forms uses Alt+I so it does not compete with F2/F12. Legacy New Bill actions remain available when the fast capability is disabled.
+- Project invoice and exchange links now enter the canonical Sales mode. Internal `/commercial` APIs and the shared services remain in place.
+- Screenshot: `scratch/command-center-sales.jpg`. Changes remain uncommitted; no deployment was performed.
+- The command center request is complete. Future work should follow the user's next request on `ui`.
 
+
+## 12. Completed UI Action Wiring Audit (2026-10-07)
+
+- User requested UI regression fixes against main, beginning with Delivery Challan Add row and list. Work stays on `ui`; existing uncommitted edits and section 11 navigation consolidation were preserved.
+- Fixed DC/GRN dependency order through shared material-document.js. Real catalog/unit IDs, product/party creation, row editing, transport, list controls and show links work. Server validates company-owned references and calculates totals. Converted sources are locked against edits/deletion.
+- Shared posting now links and marks DC/GRN converted atomically, rejects duplicate conversions and preserves idempotent retries. Fixed zero-tax preview/save type mismatch. Reversal service rejects a second replacement of an already reversed source while allowing retries.
+- Sales/Purchase normal UI now connects Review, Save/Submit, versioned draft save/resume/consumption, View, Print, filtered CSV and date ranges. Product/Service/Mixed and Cash/Credit controls work. Multi-item selection uses stable product IDs. Purchase charges use existing freight/discount fields.
+- Reset clears source/draft/retry context. Edit/draft restoration retains line rates, real units, metadata, batch/serial details, charges and supported payment method/account/amount. Reversed bills retain history with View/Print; unsupported mixed settlements keep the reviewed backend restriction.
+- Responsive footer/list overlap, clipped material form and unreadable material numeric fields were repaired with existing scroll/wrap layout.
+- Validation: CommercialUiWiringTest + SharedCommercialTest PASS (24 tests, 145 assertions); DC + GRN web tests PASS (8 tests, 44 assertions); final command-center render/JSON subset PASS (4 tests, 22 assertions). Voucher/master combined run passed 23 tests; three posting tests initially lacked accounting fixtures, then all three passed with test-only account fixtures (11 assertions). Changed PHP and shared JS syntax checks pass; git diff --check has no whitespace errors.
+- Browser used actual app with a disposable SQLite copy, normal capability checks, and fixture accounting roles. Verified challan/GRN create/load/convert, quick product/party creation, sales and purchase draft posting/removal, service catalog, freight/discount total, replacement with Bank settlement, View/CSV, voucher posting and area creation. At 800px, purchase footer/list do not overlap and there is no horizontal page overflow. Final console check is clear.
+- Actual local database lacks chart-of-accounts/semantic posting mappings. Do not invent real financial mappings: posting is correctly blocked until company setup. Fixture accounts were created only in the disposable SQLite DB.
+- Full report: documents/zolo_erp_implementation_docs/33_UI_ACTION_WIRING_AUDIT.md. Proof: scratch/ui-wiring-challan-proof.jpg and scratch/ui-wiring-purchase-responsive-proof.jpg. Browser tab closed; disposable server stopped after verification. No deployment or commit performed.
+- Next work follows the user's next request. This audit does not certify all optional ERP modules/reference screens in the modernization plan.

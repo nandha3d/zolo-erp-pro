@@ -77,6 +77,7 @@
 <div id="comm-progress-bar"></div>
 
 <section class="commercial-workspace-view">
+@include('backend.partials.command-center-nav', ['kind' => 'sale'])
     <!-- 2-Column Command Center Grid: Main Entry Workspace + Side Bill List Panel -->
     <div class="comm-split-grid" id="comm-split-grid">
         <!-- Main: Sales Entry Workspace (Matching Screenshot 3) -->
@@ -244,13 +245,13 @@
                                 <!-- Integrated In-Table Item Search Row -->
                                 <tr class="table-search-row" id="table-search-row">
                                     <td style="text-align:center;vertical-align:middle;width:36px;">
-                                        <i class="fa fa-barcode" style="font-size:15px;color:#7c3aed;" title="Scan Barcode (F2)"></i>
+                                        <i class="fa fa-barcode" style="font-size:15px;color:#7c3aed;" title="Scan Barcode (Alt+I)"></i>
                                     </td>
                                     <td style="vertical-align:middle;">
                                         <div class="table-search-input-wrap">
                                             <i class="fa fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:#7c3aed;pointer-events:none;"></i>
-                                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (F2)" autocomplete="off">
-                                            <span class="table-search-f2-badge">F2</span>
+                                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (Alt+I)" autocomplete="off">
+                                            <span class="table-search-f2-badge">Alt+I</span>
                                         </div>
                                     </td>
                                     <td colspan="8" style="vertical-align:middle;font-size:11px;color:#6b21a8;font-style:italic;">
@@ -360,7 +361,7 @@
                 <!-- Toolbar Export & Action Icons (Screenshot 2) -->
                 <div class="side-toolbar-actions">
                     <button type="button" class="side-tool-btn text-danger" id="side-export-pdf" title="Export PDF"><i class="fa fa-file-pdf-o"></i></button>
-                    <button type="button" class="side-tool-btn text-success" id="side-export-excel" title="Export Excel"><i class="fa fa-file-excel-o"></i></button>
+                    <button type="button" class="side-tool-btn text-success" id="side-export-excel" title="Export for Excel (CSV)"><i class="fa fa-file-excel-o"></i></button>
                     <button type="button" class="side-tool-btn text-info" id="side-export-csv" title="Export CSV"><i class="fa fa-file-text-o"></i></button>
                     <button type="button" class="side-tool-btn text-primary" id="side-export-print" title="Print Register"><i class="fa fa-print"></i></button>
                     <button type="button" class="side-tool-btn text-danger" id="side-filter-reset" title="Reset Filters"><i class="fa fa-times"></i></button>
@@ -387,7 +388,8 @@
 
                 <!-- Date Inputs (revealed if Date/Range selected) -->
                 <div class="side-date-picker-box" id="side-date-picker-box" style="display:none; padding:4px 0;">
-                    <input type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
+                    <input aria-label="From date" type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
+                    <input aria-label="To date" type="date" id="side-filter-date-end" class="form-control" style="height:28px; font-size:11px; display:none;" value="{{ date('Y-m-d') }}" />
                 </div>
 
                 <!-- Dropdown Filters (Moved from Top Bar) -->
@@ -429,11 +431,11 @@
                             $isPaid = ($bill->payment_status == 4 || ($bill->grand_total > 0 && $bill->paid_amount >= $bill->grand_total));
                             $isPartial = ($bill->payment_status == 3 || ($bill->paid_amount > 0 && $bill->paid_amount < $bill->grand_total));
                             $isDraft = ($bill->sale_status == 3);
-                            $statusLabel = $isDraft ? 'Draft' : ($isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Due'));
+                            $statusLabel = $bill->reversed_at ? 'Reversed' : ($isDraft ? 'Draft' : ($isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Due')));
                             $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
                             $customerName = $bill->customer->name ?? 'Walk-in Customer';
                         @endphp
-                        <div class="side-bill-card" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-status-id="{{ $bill->sale_status }}" data-payment-status-id="{{ $bill->payment_status }}" data-warehouse-id="{{ $bill->warehouse_id }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                        <div class="side-bill-card" data-reversed="{{ $bill->reversed_at ? 1 : 0 }}" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-status-id="{{ $bill->sale_status }}" data-payment-status-id="{{ $bill->payment_status }}" data-warehouse-id="{{ $bill->warehouse_id }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
                             <div class="side-card-top">
                                 <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
                                 <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
@@ -446,9 +448,11 @@
                                 <span class="side-card-status {{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <div class="side-card-actions">
+                                @unless($bill->reversed_at)
                                 <a href="javascript:void(0)" class="side-action-btn edit btn-side-load-edit" data-id="{{ $bill->id }}" title="Edit this bill in main area">
                                     <i class="dripicons-document-edit"></i> Edit
                                 </a>
+                                @endunless
                                 <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View bill details">
                                     <i class="dripicons-preview"></i> View
                                 </a>
@@ -555,7 +559,7 @@
                     <select id="sale-status" class="form-control" name="sale_status" style="width:110px;">
                         <option value="0">{{__('db.All')}}</option>
                         <option value="1">{{__('db.Completed')}}</option>
-                        <option value="2">{{__('db.Pending')}}</option>
+                        <option value="2" @selected(request('view') === 'orders')>{{__('db.Pending')}}</option>
                         <option value="4">{{__('db.Returned')}}</option>
                     </select>
                 </div>
@@ -721,6 +725,26 @@
 
                     <!-- Payment / Account Tab -->
                     <div class="tab-pane fade" id="pane-settlement" role="tabpanel">
+                        <div class="form-group mb-2">
+                            <label for="drawer-paying-method" class="text-muted font-weight-bold">Payment Method</label>
+                            <select id="drawer-paying-method" class="form-control form-control-sm">
+                                <option value="Credit">Credit / Unpaid</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Bank">Bank</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit Card">Credit Card</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="drawer-paying-method" class="text-muted font-weight-bold">Payment Method</label>
+                            <select id="drawer-paying-method" class="form-control form-control-sm">
+                                <option value="Credit">Credit / Unpaid</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Bank">Bank</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit Card">Credit Card</option>
+                            </select>
+                        </div>
                         <div class="form-group mb-2">
                             <label class="text-muted font-weight-bold">Paying Account</label>
                             <select id="drawer-account-id" class="form-control form-control-sm">
@@ -1836,6 +1860,7 @@
             }
             $jsProductList[] = [
                 'id' => (int)$prod->id,
+                'type' => (string)($prod->type ?? 'standard'),
                 'name' => (string)$prod->name,
                 'code' => (string)$prod->code,
                 'price' => (float)($prod->price ?? 0),
@@ -1854,6 +1879,7 @@
             }
             $jsProductList[] = [
                 'id' => (int)$prod->id,
+                'type' => (string)($prod->type ?? 'standard'),
                 'name' => (string)$prod->name,
                 'code' => (string)($prod->item_code ?? $prod->code),
                 'price' => (float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)),
@@ -1867,6 +1893,10 @@
     @endphp
 
     var allProducts = @json($jsProductList);
+    function matchesProductMode(product) {
+        var mode = $('[data-nature].active').data('nature') || 'mixed';
+        return mode === 'mixed' || (mode === 'service' ? ['service', 'digital'].includes(product.type) : !['service', 'digital'].includes(product.type));
+    }
     var lims_product_code = allProducts.map(function(p) { return p.value; });
 
     // Append modals directly to body to avoid container clipping
@@ -1877,6 +1907,8 @@
     // --- State variables ---
     var rowCounter = 0;
     var taxList = @json($lims_tax_list);
+    var unitList = @json($lims_unit_list ?? \App\Models\Unit::where('is_active', true)->get());
+    function escapeHtml(value) { return $('<span>').text(value ?? '').html().replaceAll('"', '&quot;').replaceAll("'", '&#39;'); }
     var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
 
     // --- Table Density Switcher & Persistence ---
@@ -1899,8 +1931,8 @@
         source: function(request, response) {
             var term = request.term.toLowerCase().trim();
             var matches = allProducts.filter(function(p) {
-                return (p.name && p.name.toLowerCase().includes(term)) ||
-                       (p.code && p.code.toLowerCase().includes(term));
+                return matchesProductMode(p) && ((p.name && p.name.toLowerCase().includes(term)) ||
+                       (p.code && p.code.toLowerCase().includes(term)));
             });
             response(matches.slice(0, 20));
         },
@@ -1976,9 +2008,9 @@
         }
     });
 
-    // Quick F2 focus
+    // Item search shortcut; F2 belongs to the command center entry mode.
     $(document).on('keydown', function(e) {
-        if (e.which === 113) { // F2
+        if (e.altKey && e.key.toLowerCase() === 'i') { // Item search
             e.preventDefault();
             $productSearch.focus();
         }
@@ -2027,22 +2059,24 @@
         tr.find('.row-product-code').val(p.code);
         tr.find('.row-item-name').val(p.name).attr('title', p.code ? 'Code: ' + p.code : '');
 
-        var rate = parseFloat(p.price || p.cost || 0);
-        tr.find('.row-rate').val(rate.toFixed(decimalPlaces));
+        var rate = Number(p.price ?? p.cost ?? 0);
+        tr.find('.row-rate').val(rate);
 
         // Match or add Unit
         if (p.unit) {
+            var selectedUnit = unitList.find(u => u.unit_name === p.unit || u.unit_code === p.unit);
+            var productUnit = selectedUnit?.unit_name || p.unit;
             var uSel = tr.find('.row-unit-select');
             var matched = false;
             uSel.find('option').each(function() {
-                if ($(this).val().toLowerCase() === p.unit.toLowerCase() || $(this).text().toLowerCase() === p.unit.toLowerCase()) {
+                if ($(this).val().toLowerCase() === productUnit.toLowerCase() || $(this).text().toLowerCase() === productUnit.toLowerCase()) {
                     uSel.val($(this).val());
                     matched = true;
                     return false;
                 }
             });
             if (!matched) {
-                uSel.append(`<option value="${p.unit}" selected>${p.unit}</option>`);
+                uSel.append(`<option value="${escapeHtml(productUnit)}" selected>${escapeHtml(productUnit)}</option>`);
             }
         }
 
@@ -2128,8 +2162,8 @@
             source: function(request, response) {
                 var term = request.term.toLowerCase().trim();
                 var matches = allProducts.filter(function(p) {
-                    return (p.name && p.name.toLowerCase().includes(term)) ||
-                           (p.code && p.code.toLowerCase().includes(term));
+                    return matchesProductMode(p) && ((p.name && p.name.toLowerCase().includes(term)) ||
+                           (p.code && p.code.toLowerCase().includes(term)));
                 });
                 response(matches.slice(0, 20));
             },
@@ -2220,7 +2254,7 @@
         $('#order-table-body .empty-placeholder-row').remove();
 
         // If product already in grid and not manual edit, increment qty
-        if (item.product_id && item.product_id > 0 && !item.is_manual) {
+        if (item.product_id && item.product_id > 0 && !item.is_manual && !item.preserve_line) {
             var existing = $('#order-table-body tr.order-item-row[data-product-id="' + item.product_id + '"]');
             if (existing.length) {
                 var qtyInput = existing.find('.row-qty');
@@ -2233,8 +2267,8 @@
         }
 
         rowCounter++;
-        var rate = item.price || 0;
-        var qty = item.qty || 1;
+        var rate = Number(item.price ?? item.rate ?? 0);
+        var qty = Number(item.qty ?? 1);
 
         // Check Header Tax Classification Mode
         var $headerTaxSel = $('#sale_type_id');
@@ -2245,7 +2279,7 @@
 
         var taxRate = item.tax_rate !== undefined ? parseFloat(item.tax_rate) : 0;
         var isTaxLocked = false;
-        if (!isHeaderMulti && headerRate !== null && !isNaN(headerRate)) {
+        if (!item.preserve_line && !isHeaderMulti && headerRate !== null && !isNaN(headerRate)) {
             taxRate = headerRate;
             isTaxLocked = true;
         }
@@ -2256,12 +2290,12 @@
         var unitVal = item.unit || item.unit_code || 'Pc';
 
         var tr = $(`
-            <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}">
+            <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}" data-batch-id="${Number(item.product_batch_id) || ''}">
                 <td style="text-align:center;font-weight:600;color:#64748b;vertical-align:middle;">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
-                    <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${item.product_name || ''}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
+                    <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${escapeHtml(item.product_name || '')}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
                     <input type="hidden" name="product_id[]" class="row-product-id" value="${item.product_id || 0}">
-                    <input type="hidden" name="product_code[]" class="row-product-code" value="${item.product_code || ''}">
+                    <input type="hidden" name="product_code[]" class="row-product-code" value="${escapeHtml(item.product_code || '')}">
                 </td>
                 <td>
                     <select name="sale_type_line[]" class="form-control form-control-sm row-type-select">
@@ -2273,20 +2307,11 @@
                 </td>
                 <td>
                     <select name="sale_unit[]" class="form-control form-control-sm row-unit-select">
-                        <option value="Pc" ${unitVal === 'Pc' || unitVal === 'piece' ? 'selected' : ''}>Pc</option>
-                        <option value="Nos" ${unitVal === 'Nos' ? 'selected' : ''}>Nos</option>
-                        <option value="Kg" ${unitVal === 'Kg' ? 'selected' : ''}>Kg</option>
-                        <option value="Box" ${unitVal === 'Box' ? 'selected' : ''}>Box</option>
-                        <option value="Mtr" ${unitVal === 'Mtr' ? 'selected' : ''}>Mtr</option>
-                        <option value="Set" ${unitVal === 'Set' ? 'selected' : ''}>Set</option>
-                        <option value="Gm" ${unitVal === 'Gm' ? 'selected' : ''}>Gm</option>
-                        <option value="Pkt" ${unitVal === 'Pkt' ? 'selected' : ''}>Pkt</option>
-                        <option value="Roll" ${unitVal === 'Roll' ? 'selected' : ''}>Roll</option>
-                        <option value="Bale" ${unitVal === 'Bale' ? 'selected' : ''}>Bale</option>
+                        ${unitList.map(u => `<option value="${escapeHtml(u.unit_name)}" ${u.unit_name === unitVal || u.unit_code === unitVal ? 'selected' : ''}>${escapeHtml(u.unit_name)}</option>`).join('')}
                     </select>
                 </td>
                 <td style="text-align:right;">
-                    <input type="number" name="net_unit_price[]" class="form-control form-control-sm row-rate text-right" value="${rate.toFixed(decimalPlaces)}" step="0.01">
+                    <input type="number" name="net_unit_price[]" class="form-control form-control-sm row-rate text-right" value="${rate}" step="0.0001" min="0" required>
                 </td>
                 <td style="text-align:center;">
                     <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" value="${qty}" step="any" min="0.01">
@@ -2330,9 +2355,9 @@
                     </div>
                     <input type="hidden" name="discount[]" class="row-discount-val" value="${item.discount || 0}">
                     <input type="hidden" name="recieved[]" value="${qty}">
-                    <input type="hidden" name="batch_no[]" class="row-batch-val" value="${item.batch_no || ''}">
-                    <input type="hidden" name="expired_date[]" class="row-expire-val" value="${item.expired_date || ''}">
-                    <input type="hidden" name="imei_number[]" class="row-imei-val" value="${item.imei_number || ''}">
+                    <input type="hidden" name="batch_no[]" class="row-batch-val" value="${escapeHtml(item.batch_no || '')}">
+                    <input type="hidden" name="expired_date[]" class="row-expire-val" value="${escapeHtml(item.expired_date || '')}">
+                    <input type="hidden" name="imei_number[]" class="row-imei-val" value="${escapeHtml(item.imei_number || '')}">
                 </td>
             </tr>
         `);
@@ -2365,26 +2390,26 @@
     function populateMultiItemModal() {
         var tbody = $('#multi-item-tbody');
         tbody.empty();
-        allProducts.forEach(function(p, idx) {
+        allProducts.filter(matchesProductMode).forEach(function(p) {
             tbody.append(`
-                <tr class="multi-item-row" data-id="${p.id}" data-name="${(p.name || '').toLowerCase()}" data-code="${(p.code || '').toLowerCase()}">
+                <tr class="multi-item-row" data-id="${p.id}" data-name="${escapeHtml((p.name || '').toLowerCase())}" data-code="${escapeHtml((p.code || '').toLowerCase())}">
                     <td style="text-align:center;">
-                        <input type="checkbox" class="multi-item-check" data-index="${idx}">
+                        <input type="checkbox" class="multi-item-check" data-product-id="${p.id}">
                     </td>
                     <td>
-                        <div style="font-weight:600;color:#0f172a;">${p.name}</div>
+                        <div style="font-weight:600;color:#0f172a;">${escapeHtml(p.name)}</div>
                     </td>
                     <td>
-                        <span class="badge badge-light border">${p.code}</span>
+                        <span class="badge badge-light border">${escapeHtml(p.code)}</span>
                     </td>
                     <td style="text-align:right;font-weight:600;color:#059669;">
-                        ₹ ${(p.price || p.cost || 0).toFixed(decimalPlaces)}
+                        ₹ ${Number(p.price ?? p.cost ?? 0).toFixed(decimalPlaces)}
                     </td>
                     <td style="text-align:center;">
                         <input type="number" class="form-control form-control-sm multi-item-qty text-center" value="1" min="1" style="height:24px;width:60px;margin:auto;font-size:11px;">
                     </td>
                     <td style="text-align:center;color:#64748b;font-size:11px;">
-                        ${p.unit || 'Unit'}
+                        ${escapeHtml(p.unit || 'Unit')}
                     </td>
                 </tr>
             `);
@@ -2393,9 +2418,9 @@
     }
 
     $('#multi-item-modal').on('show.bs.modal', function() {
-        if ($('#multi-item-tbody tr').length === 0) {
-            populateMultiItemModal();
-        }
+        populateMultiItemModal();
+        $('#multi-item-filter').val('');
+        $('#multi-item-select-all').prop('checked', false);
     });
 
     $('#multi-item-filter').on('input', function() {
@@ -2429,10 +2454,10 @@
 
     $('#btn-add-selected-items').on('click', function() {
         $('.multi-item-check:checked').each(function() {
-            var idx = $(this).data('index');
+            var productId = $(this).data('product-id');
             var tr = $(this).closest('tr');
             var qty = parseFloat(tr.find('.multi-item-qty').val()) || 1;
-            var prod = allProducts[idx];
+            var prod = allProducts.find(p => String(p.id) === String(productId));
             if (prod) {
                 addProductRow({
                     product_id: prod.id,
@@ -3133,6 +3158,8 @@
             totalQty += qty;
         });
 
+        grand += (Number($('#hidden-shipping-cost').val()) || 0) - (Number($('#hidden-order-discount').val()) || 0);
+
         $('#display-net-amount').text('₹ ' + net.toFixed(decimalPlaces));
         $('#display-tax-amount').text('₹ ' + tax.toFixed(decimalPlaces));
         $('#display-grand-total').text('₹ ' + grand.toFixed(decimalPlaces));
@@ -3474,6 +3501,7 @@
                 if (res.items && res.items.length) {
                     res.items.forEach(function(item) {
                         addProductRow({
+                            ...item, preserve_line: true,
                             product_id: item.product_id,
                             product_name: item.product_name,
                             product_code: item.product_code,
@@ -3487,7 +3515,8 @@
                     reindexRows();
                 }
 
-                syncTaxClassificationToRows();
+                recalcTableSummary();
+                $(document).trigger("command-center-loaded", [res.sale]);
 
                 // Scroll smoothly to top of form
                 $('#comm-entry-workspace').animate({ scrollTop: 0 }, 200);
@@ -3527,6 +3556,7 @@
         reindexRows();
         syncTaxClassificationToRows();
         recalcTableSummary();
+        $(document).trigger("command-center-reset");
     };
 
     // Actions triggering reset to new
@@ -3537,6 +3567,7 @@
 
     // Card click & edit button click
     $(document).on('click', '.side-bill-card', function(e) {
+        if ($(this).data('reversed')) return;
         if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print').length) return;
         var id = $(this).data('bill-id');
         if (id) loadSaleToForm(id);
@@ -3564,6 +3595,8 @@
         $('#hidden-credit-days').val($('#drawer-credit-days').val());
         $('#hidden-note').val($('#drawer-note').val());
         $('#hidden-account-id').val($('#drawer-account-id').val());
+        $('#input-paying-method').val($('#drawer-paying-method').val());
+        $('#input-paying-method').val($('#drawer-paying-method').val());
         $('#hidden-paid-amount').val($('#drawer-paid-amount').val());
 
         var count = 0;
@@ -3578,11 +3611,12 @@
     });
 
     // Pill Segmented Mode Toggle (Cash/Credit)
-    $('.pill-segmented button[data-mode]').on('click', function() {
-        $('.pill-segmented button[data-mode]').removeClass('active');
+    $('.pill-segmented-compact button[data-mode]').on('click', function() {
+        $('.pill-segmented-compact button[data-mode]').removeClass('active');
         $(this).addClass('active');
         var mode = $(this).data('mode');
-        $('#input-paying-method').val(mode);
+        $('#input-paying-method, #drawer-paying-method').val(mode);
+        $('#drawer-paying-method').selectpicker('refresh');
     });
 
 
@@ -3613,6 +3647,7 @@
 
             if (activeTab === 'draft') matchTab = (status === 'draft');
             else if (activeTab === 'date') matchTab = (dateVal && cardDate === dateVal);
+            else if (activeTab === 'range') matchTab = (!dateVal || cardDate >= dateVal) && (!$('#side-filter-date-end').val() || cardDate <= $('#side-filter-date-end').val());
 
             var matchWh = (!whId || whId == '0' || cardWhId === whId);
             var matchStatus = (!statusId || statusId == '0' || cardStatusId === statusId);
@@ -3631,13 +3666,14 @@
 
     $('#side-search-input, #side-filter-series').on('input', filterSideBills);
     $('#side-filter-warehouse, #side-filter-status, #side-filter-payment').on('change', filterSideBills);
-    $('#side-filter-date-val').on('change', filterSideBills);
+    $('#side-filter-date-val, #side-filter-date-end').on('change', filterSideBills);
 
     $('.side-filter-tabs .side-tab').on('click', function() {
         $('.side-filter-tabs .side-tab').removeClass('active');
         $(this).addClass('active');
         var f = $(this).data('filter');
         $('#side-date-picker-box').toggle(f === 'date' || f === 'range');
+        $('#side-filter-date-end').toggle(f === 'range');
         filterSideBills();
     });
 
@@ -3652,51 +3688,6 @@
         $('.side-filter-tabs .side-tab[data-filter="all"]').addClass('active');
         $('#side-date-picker-box').hide();
         filterSideBills();
-    });
-
-    // Export toolbar buttons
-    $('#side-export-print').on('click', function() { window.print(); });
-    $('#side-export-excel, #side-export-csv').on('click', function() {
-        alert('Exporting recent sales list...');
-    });
-    $('#side-export-pdf').on('click', function() {
-        var activeId = $('#edit-sale-id').val();
-        if (activeId) window.open('{{ url("sales/gen_invoice") }}/' + activeId, '_blank');
-        else window.print();
-    });
-
-    // --- View Modal Handler ---
-    $(document).on('click', '.btn-side-view', function(e) {
-        e.stopPropagation();
-        var id = $(this).data('id');
-        if (id) {
-            $.get('{{ url("sales/product_sale") }}/' + id, function(data) {
-                $(".product-sale-list tbody").empty();
-                if (data && data[0]) {
-                    var names = data[0];
-                    var qtys = data[1];
-                    var units = data[2];
-                    var taxes = data[3];
-                    var subtotals = data[6];
-                    for (var i = 0; i < names.length; i++) {
-                        $(".product-sale-list tbody").append(`
-                            <tr>
-                                <td>${i+1}</td>
-                                <td>${names[i]}</td>
-                                <td>${data[7] ? data[7][i] : 'N/A'}</td>
-                                <td>${qtys[i]} ${units[i]}</td>
-                                <td>${data[8] ? data[8][i] : 0}</td>
-                                <td>${parseFloat(subtotals[i]/qtys[i]).toFixed(decimalPlaces)}</td>
-                                <td>${taxes[i]}</td>
-                                <td>${data[5] ? data[5][i] : 0}</td>
-                                <td>${subtotals[i]}</td>
-                            </tr>
-                        `);
-                    }
-                }
-                $('#sale-details').modal('show');
-            });
-        }
     });
 
     // --- Docking & Drawer Collapse Mechanics ---
@@ -3760,35 +3751,25 @@
         applyDrawer(!isOpen);
     });
 
-    // Form submission buttons
-    $('#btn-form-save-as').on('click', function() {
-        $('#sale-status-val').val(3); // Draft
-        $('#sale-entry-form').submit();
-    });
-
-    $('#btn-form-submit').on('click', function() {
-        $('#sale-status-val').val(1); // Completed
-        $('#sale-entry-form').submit();
-    });
-
     // --- Auto load Delivery Challan if from_dc param present ---
     var urlParams = new URLSearchParams(window.location.search);
     var fromDcId = urlParams.get('from_dc');
     if (fromDcId) {
+        switchWorkspaceMode('voucher');
         $.getJSON('/delivery-challans/' + fromDcId, function(res) {
             if (res && res.challan) {
                 var ch = res.challan;
-                $('#customer_id_select').val(ch.customer_id).trigger('change');
-                if (ch.warehouse_id) $('#warehouse_id_select').val(ch.warehouse_id).trigger('change');
+                $('#customer_id').val(ch.customer_id).trigger('change');
+                if (ch.warehouse_id) $('#form_warehouse_id').val(ch.warehouse_id).trigger('change');
                 if (ch.sale_type_id) $('#sale_type_id').val(ch.sale_type_id);
                 if (ch.agent_id) $('#agent_id').val(ch.agent_id);
-                if (ch.transport_name) $('#transporter_name').val(ch.transport_name);
-                if (ch.lr_no) $('#lr_no').val(ch.lr_no);
-                if (ch.lr_date) $('#lr_date').val(ch.lr_date.substring(0, 10));
-                if (ch.bale_no) $('#bale_no').val(ch.bale_no);
-                if (ch.no_of_bales) $('#no_of_bales').val(ch.no_of_bales);
-                if (ch.station_to) $('#station_to').val(ch.station_to);
-                if (ch.remarks) $('#custom_remarks').val(ch.remarks);
+                if (ch.transport_name) $('#hidden-transporter-name, #drawer-transporter-name').val(ch.transport_name);
+                if (ch.lr_no) $('#hidden-lr-no, #drawer-lr-no').val(ch.lr_no);
+                if (ch.lr_date) $('#hidden-lr-date, #drawer-lr-date').val(ch.lr_date.substring(0, 10));
+                if (ch.bale_no) $('#hidden-bale-no, #drawer-bale-no').val(ch.bale_no);
+                if (ch.no_of_bales) $('#hidden-no-of-bales, #drawer-no-of-bales').val(ch.no_of_bales);
+                if (ch.station_to) $('#hidden-station-to, #drawer-station-to').val(ch.station_to);
+                if (ch.remarks) $('#hidden-note, #drawer-note').val(ch.remarks);
 
                 if (!$('#delivery_challan_id_input').length) {
                     $('#sale-entry-form').append('<input type="hidden" name="delivery_challan_id" id="delivery_challan_id_input" value="' + ch.id + '">');
@@ -3797,22 +3778,27 @@
                 }
 
                 if (res.items && res.items.length) {
-                    $('#order-table-body tr.item-row').remove();
+                    $('#order-table-body tr.order-item-row').remove();
                     res.items.forEach(function(item) {
-                        addProductRow(item);
+                        addProductRow({...item, preserve_line: true});
                     });
                 }
-                $('#entry-title-text').text('New Sales Bill (from DC #' + ch.challan_no + ')');
+                $('.selectpicker').selectpicker('refresh');
+                recalcTableSummary();
+                $('#doc-title-text').text('New Sales Bill (from DC #' + ch.challan_no + ')');
             }
         });
     }
 
-    var savedMode = localStorage.getItem('zolo_sale_workspace_mode');
-    if (savedMode === 'register') {
+    var savedMode = @json(request('view') === 'orders') ? 'register' : localStorage.getItem('zolo_sale_workspace_mode');
+    if (savedMode === 'register' && !fromDcId) {
         switchWorkspaceMode('register');
     }
 
     initPanelState();
+    window.commandCenterGrid = {addProductRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts};
 })();
 </script>
 @endpush
+
+@include('backend.partials.command-center-form', ['kind' => 'sale'])

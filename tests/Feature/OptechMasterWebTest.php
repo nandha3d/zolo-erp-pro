@@ -48,7 +48,7 @@ class OptechMasterWebTest extends TestCase
 
     public function test_commercial_sale_entry_page_loads_with_database_masters(): void
     {
-        $response = $this->actingAs($this->adminUser)->get('/commercial/sale/entry');
+        $response = $this->actingAs($this->adminUser)->get('/sales?entry=fast');
 
         $response->assertStatus(200);
         $response->assertViewHas('saleTypes');
@@ -72,7 +72,7 @@ class OptechMasterWebTest extends TestCase
 
     public function test_commercial_purchase_entry_page_loads_with_database_masters(): void
     {
-        $response = $this->actingAs($this->adminUser)->get('/commercial/purchase/entry');
+        $response = $this->actingAs($this->adminUser)->get('/purchases?entry=fast');
 
         $response->assertStatus(200);
         $response->assertViewHas('purchaseTypes');
@@ -86,7 +86,7 @@ class OptechMasterWebTest extends TestCase
         $response->assertSee('btn-dock-toggle');
         $response->assertSee('btn-toggle-bill-list');
         $response->assertSee('charges-drawer');
-        $response->assertSee('Purchase Bills');
+        $response->assertSee('Purchase Command Center');
     }
 
     public function test_inline_creation_of_all_optech_masters(): void
@@ -180,6 +180,7 @@ class OptechMasterWebTest extends TestCase
 
     public function test_sale_posting_persists_optech_sale_type_and_agent(): void
     {
+        $this->configurePostingAccounts();
         $saleType = SaleType::where('company_id', 1)->first();
         $agent = Agent::where('company_id', 1)->first();
 
@@ -257,6 +258,7 @@ class OptechMasterWebTest extends TestCase
 
     public function test_purchase_posting_persists_optech_purchase_type_and_agent_and_supplier_invoice(): void
     {
+        $this->configurePostingAccounts();
         $purType = PurchaseType::where('company_id', 1)->first();
         $agent = Agent::where('company_id', 1)->first();
 
@@ -359,6 +361,7 @@ class OptechMasterWebTest extends TestCase
 
     public function test_sale_posting_persists_transport_and_addins_and_returns_rate_history(): void
     {
+        $this->configurePostingAccounts();
         $saleType = SaleType::where('company_id', 1)->first();
         $agent = Agent::where('company_id', 1)->first();
 
@@ -567,6 +570,17 @@ class OptechMasterWebTest extends TestCase
             'name' => 'Dual Trading Entity',
             'company_name' => 'Dual Enterprises',
         ]);
+    }
+
+    private function configurePostingAccounts(): void
+    {
+        foreach (\App\Services\Accounting\SemanticAccountResolver::ROLES as $role => [$subType, $types]) {
+            \App\Models\Accounting\ChartOfAccount::forceCreate(['company_id' => 1, 'code' => 'TEST-POST-'.$role,
+                'name' => 'Test '.$role, 'type' => is_array($types) ? $types[0] : $types,
+                'sub_type' => $subType, 'is_active' => true, 'is_system' => true,
+            ]);
+        }
+        app(\App\Services\Accounting\SemanticAccountResolver::class)->seedCompany(1);
     }
 
     public function test_gst_lookup_decodes_statutory_gstin_and_state(): void

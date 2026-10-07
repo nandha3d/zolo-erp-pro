@@ -48,8 +48,8 @@ class OperationsWebTest extends OperationsTestCase
         $this->withoutExceptionHandling();
         foreach (['fmcg' => 'distribution', 'textile' => 'wholesale', 'timber' => 'trading', 'solar' => 'epc'] as $profile => $subtype) {
             app(IndustryProfileService::class)->apply($profile, $subtype, $this->context(), 1);
-            $this->get('/commercial/sale/entry')->assertOk()->assertSee('line-unit-options', false);
-            $purchase = $this->get('/commercial/purchase/entry')->assertOk();
+            $this->get('/sales?entry=fast')->assertOk()->assertSee('line-unit-options', false);
+            $purchase = $this->get('/purchases?entry=fast')->assertOk();
             if ($profile === 'fmcg') $purchase->assertSee('Manufacturing date')->assertSee('Batch MRP');
             else $purchase->assertDontSee('Batch MRP');
         }

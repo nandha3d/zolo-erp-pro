@@ -26,6 +26,16 @@ class GoodsReceivedNoteWebTest extends TestCase
         $_ENV['ERP_OPTIONAL_ACTIVATION_READY'] = 'true';
         \Illuminate\Support\Facades\Cache::flush();
         $this->adminUser = User::first();
+        if (!Product::first()) {
+            Product::forceCreate(['company_id' => 1, 'name' => 'Document fixture', 'code' => 'DOC-FIXTURE',
+                'type' => 'standard', 'barcode_symbology' => 'C128', 'category_id' => 1, 'unit_id' => 1,
+                'sale_unit_id' => 1, 'purchase_unit_id' => 1, 'price' => 10, 'cost' => 5, 'qty' => 0, 'is_active' => true]);
+        }
+        if (!Supplier::first()) {
+            Supplier::forceCreate(['company_id' => 1, 'name' => 'Supplier fixture', 'company_name' => 'Fixture',
+                'phone_number' => '123', 'email' => 'fixture@example.test', 'address' => 'Fixture', 'city' => 'Fixture', 'is_active' => true]);
+        }
+
     }
 
     public function test_goods_received_note_command_center_renders_entry_workspace(): void
@@ -33,6 +43,9 @@ class GoodsReceivedNoteWebTest extends TestCase
         $response = $this->actingAs($this->adminUser)->get('/goods-received-notes');
 
         $response->assertStatus(200);
+        $html = $response->getContent();
+        $this->assertLessThan(strpos($html, 'js/material-document.js'), strpos($html, 'vendor/jquery/jquery.min.js'));
+
         $response->assertSee('Goods Received Note Command Center');
         $response->assertSee('comm-entry-workspace', false);
         $response->assertSee('New Goods Received Note');

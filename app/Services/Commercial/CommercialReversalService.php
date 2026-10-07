@@ -68,6 +68,14 @@ class CommercialReversalService
         $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
         return DB::transaction(function () use ($document, $data, $key, $date, $reason, $context) {
             $kind = $document instanceof Sale ? 'sale' : 'purchase';
+            $document = $document::visibleIn($context)->whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if ($document->reversed_at) {
+                $retry = DB::table('idempotency_keys')->where('company_id', $context->companyId)->where('key', $key)
+                    ->where('response_type', $kind)->value('response_ref');
+                if (!$retry || !$document::visibleIn($context)->whereKey($retry)->where('replaces_id', $document->id)->exists()) {
+                    throw ValidationException::withMessages(['document' => 'This document has already been reversed. Edit its active replacement instead.']);
+                }
+            }
             // Include the source and reason in the retry contract to prevent reuse for another replacement.
             $data['replacement_reason'] = [$date, $reason];
             $this->reverse($document, $date, $reason, $context);

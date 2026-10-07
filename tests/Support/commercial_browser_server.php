@@ -25,7 +25,8 @@ $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $app->afterBootstrapping(Illuminate\Foundation\Bootstrap\LoadConfiguration::class, function () use ($fixture, $scratch) {
     config(['app.env' => 'testing', 'app.key' => 'base64:'.base64_encode(str_repeat('x', 32)),
         'database.default' => 'sqlite', 'database.connections.sqlite.database' => $fixture,
-        'session.driver' => 'file', 'session.files' => $scratch.'/browser-sessions', 'cache.default' => 'array', 'queue.default' => 'sync', 'commercial.enabled' => true]);
+        'session.driver' => 'file', 'session.files' => $scratch.'/browser-sessions', 'cache.default' => 'array', 'queue.default' => 'sync',
+        'commercial.enabled' => true, 'compliance.enabled' => false, 'operations.enabled' => false]);
 });
 $kernel->bootstrap();
 if (!is_dir($scratch.'/browser-sessions')) { mkdir($scratch.'/browser-sessions'); }
@@ -34,6 +35,13 @@ Carbon\CarbonImmutable::setTestNow('2026-10-03 06:00:00 UTC');
 // Test-only capability adapter. Production gates remain unchanged.
 $app->bind(App\Services\Platform\CapabilityService::class, fn () => new class extends App\Services\Platform\CapabilityService {
     public function enabled(string $key, App\Services\Platform\CompanyContext|int|null $company = null): bool { return true; }
+    public function forNavigation(App\Services\Platform\CompanyContext|int|null $company = null): array { return ['sales.fast_counter', 'purchases.fast_entry']; }
+});
+$app->bind(App\Http\Middleware\Common::class, fn () => new class extends App\Http\Middleware\Common {
+    public function handle(Illuminate\Http\Request $request, Closure $next) {
+        Tests\Support\CommandCenterViewFixture::share();
+        return $next($request);
+    }
 });
 Illuminate\Support\Facades\Auth::setUser(App\Models\User::findOrFail(1));
 $response = $kernel->handle($request);

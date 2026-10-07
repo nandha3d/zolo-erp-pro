@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 
 class DeliveryChallanController extends Controller
 {
-    use NumbersLegacyDocuments;
+    use NumbersLegacyDocuments, \App\Http\Controllers\Concerns\ValidatesMaterialDocuments;
 
     public function index(Request $request)
     {
@@ -83,12 +83,7 @@ class DeliveryChallanController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'customer_id' => 'required',
-            'warehouse_id' => 'required',
-            'challan_date' => 'required|date',
-            'product_id' => 'required|array|min:1',
-        ]);
+        $this->validateMaterialDocument($request, false);
 
         DB::beginTransaction();
         try {
@@ -211,22 +206,20 @@ class DeliveryChallanController extends Controller
             ]);
         }
 
-        return view('backend.delivery_challan.show', compact('challan'));
+        return redirect()->route('delivery-challans.index', ['edit' => $challan->id]);
     }
 
     public function update(Request $request, $id)
     {
         $challan = DeliveryChallan::findOrFail($id);
+        abort_unless($challan->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
 
-        $request->validate([
-            'customer_id' => 'required',
-            'warehouse_id' => 'required',
-            'challan_date' => 'required|date',
-            'product_id' => 'required|array|min:1',
-        ]);
+        $this->validateMaterialDocument($request, false);
 
         DB::beginTransaction();
         try {
+            $challan = DeliveryChallan::lockForUpdate()->findOrFail($id);
+            abort_unless($challan->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
             $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? 1;
 
             $challan->update([
@@ -302,10 +295,13 @@ class DeliveryChallanController extends Controller
 
     public function destroy($id)
     {
-        $challan = DeliveryChallan::findOrFail($id);
-        $challan->update(['status' => 'cancelled']);
-        DeliveryChallanItem::where('delivery_challan_id', $challan->id)->delete();
-        $challan->delete();
+        DB::transaction(function () use ($id) {
+            $challan = DeliveryChallan::lockForUpdate()->findOrFail($id);
+            abort_unless($challan->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
+            $challan->update(['status' => 'cancelled']);
+            DeliveryChallanItem::where('delivery_challan_id', $challan->id)->delete();
+            $challan->delete();
+        });
 
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Delivery Challan cancelled/deleted.']);

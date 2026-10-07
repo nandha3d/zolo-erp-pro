@@ -36,8 +36,8 @@ class CommercialPerformanceTest extends CommercialTestCase
                 $this->saleData(\App\Models\Product::findOrFail($lines[0]['product_id']), ['items' => $lines]), 'perf-'.$i, 1, $this->context())));
         }
         // Measure the HTML response separately from service calls; repeated kernel requests retain test state.
-        $this->get('/commercial/sale/entry')->assertOk();
-        for ($i = 0; $i < 30; $i++) $screens[] = $time(fn () => $this->get('/commercial/sale/entry')->assertOk());
+        $this->get('/sales?entry=fast')->assertOk();
+        for ($i = 0; $i < 30; $i++) $screens[] = $time(fn () => $this->get('/sales?entry=fast')->assertOk());
         $p95 = function (array $samples): float { sort($samples); return round($samples[(int) ceil(count($samples) * .95) - 1], 2); };
         $metrics = ['driver' => DB::connection()->getDriverName(), 'items' => 50000, 'parties' => 50000, 'samples' => 30,
             'product_search_p95_ms' => $p95($products), 'party_search_p95_ms' => $p95($parties), 'twenty_line_post_p95_ms' => $p95($postings), 'warm_screen_response_p95_ms' => $p95($screens)];

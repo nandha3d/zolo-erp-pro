@@ -1,18 +1,19 @@
 (() => {
     'use strict';
     const $ = id => document.getElementById(id);
-    const kind = document.body.dataset.kind;
-    const base = document.body.dataset.base;
+    const entryWorkspace = $('commercial-entry-workspace');
+    const kind = entryWorkspace.dataset.kind;
+    const base = entryWorkspace.dataset.base;
     const priceField = kind === 'sale' ? 'net_unit_price' : 'net_unit_cost';
     const unitField = kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id';
-    const quantityStep = String(10 ** -Number(document.body.dataset.quantityScale || 4));
+    const quantityStep = String(10 ** -Number(entryWorkspace.dataset.quantityScale || 4));
     let items = [], party = null, key = crypto.randomUUID(), draft = null, busy = false, dirty = false, revision = 0, previewTimer;
     let previewSequence = 0, searchSequence = {parties: 0, products: 0}, lastFocus = null, trackingIndex = null, inlineResource = null, inlineKey = null, inlineBusy = false;
     const text = (node, value) => { if (node) node.textContent = value; };
     const message = (value, error = false) => { text($('status'), value); $('status')?.classList.toggle('error', error); };
 
     async function api(path, data) {
-        const response = await fetch(path === '' && document.body.dataset.postUrl ? document.body.dataset.postUrl : base + path, {
+        const response = await fetch(path === '' && entryWorkspace.dataset.postUrl ? entryWorkspace.dataset.postUrl : base + path, {
             method: data ? 'POST' : 'GET',
             credentials: 'same-origin',
             headers: {
@@ -56,12 +57,12 @@
         if ($('agent')?.value) data.agent_id = Number($('agent').value);
         if ($('area')?.value) data.area_id = Number($('area').value);
         if (kind === 'sale' && $('override')?.value) data.credit_override_reason = $('override').value;
-        if (document.body.dataset.projectId) data.project_id = Number(document.body.dataset.projectId);
+        if (entryWorkspace.dataset.projectId) data.project_id = Number(entryWorkspace.dataset.projectId);
         
         for (const [id, field] of [['lr-date','lr_date'],['bale-count','bale_count'],['bundle-count','bundle_count']]) {
             if ($(id)?.value) data[field] = $(id).value;
         }
-        if (document.body.dataset.compliance === '1' && ($('reverse-charge')?.checked || $('place-of-supply')?.value)) {
+        if (entryWorkspace.dataset.compliance === '1' && ($('reverse-charge')?.checked || $('place-of-supply')?.value)) {
             data.gst = {reverse_charge: $('reverse-charge')?.checked || false};
             if ($('place-of-supply')?.value) data.gst.place_of_supply = $('place-of-supply').value;
         }
@@ -629,10 +630,6 @@
         $('side-search-input')?.focus();
     });
 
-    $('toggle-sidebar')?.addEventListener('click', () => {
-        $('desk-sidebar')?.classList.toggle('collapsed');
-    });
-
     // Cash / Credit Mode Toggles
     $('pill-mode-cash')?.addEventListener('click', () => {
         $('pill-mode-cash')?.classList.add('active');
@@ -980,7 +977,7 @@
             button.className = 'primary';
             text(button, 'Print invoice');
             button.addEventListener('click', () => window.open(
-                document.body.dataset.compliance === '1'
+                entryWorkspace.dataset.compliance === '1'
                     ? '/compliance/documents/' + kind + '/' + (result.replacement_sale_id || result.id)
                     : (kind === 'sale' ? '/sales/gen_invoice/' + result.id : '/purchases/' + result.id),
                 '_blank', 'noopener'
@@ -1011,13 +1008,7 @@
     document.addEventListener('keydown', event => {
         const input = /INPUT|TEXTAREA|SELECT/.test(event.target.tagName);
         if (document.querySelector('dialog[open]')) return;
-        if (event.key === 'F2') {
-            event.preventDefault();
-            location.href = '/commercial/sale/entry';
-        } else if (event.key === 'F12') {
-            event.preventDefault();
-            location.href = '/commercial/purchase/entry';
-        } else if (event.key === 'F6') {
+        if (event.key === 'F6') {
             event.preventDefault();
             openInline('products');
         } else if (event.altKey && event.key.toLowerCase() === 'c') {
@@ -1065,8 +1056,8 @@
     $('btn-show-shortcuts')?.addEventListener('click', () => {
         info('Keyboard Shortcuts', [
             {key: 'Space', desc: 'Jump to Party Search'},
-            {key: 'F2', desc: 'Open Fast Sales Entry'},
-            {key: 'F12', desc: 'Open Fast Purchase Entry'},
+            {key: 'F2', desc: 'Sales Command Center: Fast Entry'},
+            {key: 'F12', desc: 'Purchase Command Center: Fast Entry'},
             {key: 'F6', desc: 'Create New Item Inline'},
             {key: 'Alt + C', desc: 'Create New Customer / Supplier Inline'},
             {key: 'Alt + Y', desc: 'View Party Statement'},
@@ -1086,8 +1077,8 @@
     $('party-search')?.focus();
     refreshSideBillList();
 
-    if (document.body.dataset.projectCustomer) {
-        api('/party/' + document.body.dataset.projectCustomer)
+    if (entryWorkspace.dataset.projectCustomer) {
+        api('/party/' + entryWorkspace.dataset.projectCustomer)
             .then(result => selectParty(result.party)).catch(error => message(error.message, true));
     }
 })();

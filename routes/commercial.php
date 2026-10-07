@@ -4,12 +4,13 @@ use App\Http\Controllers\CommercialController;
 use App\Http\Middleware\RequireCapability;
 use App\Http\Middleware\RequireSharedCommercial;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 Route::prefix('commercial')->middleware(['auth', 'company.context', RequireSharedCommercial::class])
     ->where(['kind' => 'sale|purchase', 'resource' => 'parties|products|agents|areas|bill-sundries|sale-types|purchase-types|remarks|series', 'id' => '[0-9]+'])->group(function () {
-        Route::get('sale/entry', [CommercialController::class, 'entry'])->defaults('kind', 'sale')
+        Route::get('sale/entry', fn (Request $request) => redirect()->route('sales.index', array_merge($request->query(), ['entry' => 'fast'])))->defaults('kind', 'sale')
             ->middleware(RequireCapability::class.':sales.fast_counter')->name('commercial.sale.entry');
-        Route::get('purchase/entry', [CommercialController::class, 'entry'])->defaults('kind', 'purchase')
+        Route::get('purchase/entry', fn (Request $request) => redirect()->route('purchases.index', array_merge($request->query(), ['entry' => 'fast'])))->defaults('kind', 'purchase')
             ->middleware(RequireCapability::class.':purchases.fast_entry')->name('commercial.purchase.entry');
         Route::post('{kind}', [CommercialController::class, 'store']);
         Route::post('{kind}/preview', [CommercialController::class, 'preview']);

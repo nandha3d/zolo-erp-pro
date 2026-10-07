@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="{{ asset('css/compliance.css') }}">@stack('scripts')</head>
 <body><header class="topbar"><a href="{{ url('/dashboard') }}">zoloERP</a><span>Company {{ $context->companyId }} / Branch {{ $context->branchId }}</span>
 <nav aria-label="Compliance"><a href="{{ url('/compliance/returns') }}">Returns & notes</a><a href="{{ url('/compliance/gst/report') }}">GST review</a><a href="{{ url('/compliance/setup') }}">Settings</a></nav></header>
-<main><div class="heading"><div><p class="eyebrow">COMMERCIAL CONTROL</p><h1>@yield('title')</h1></div></div>
+<main><div class="heading"><div><p class="eyebrow">SALES &amp; PURCHASE CONTROL</p><h1>@yield('title')</h1></div></div>
 @if(session('message'))<p class="notice" role="status">{{ session('message') }}</p>@endif
 @if($errors->any())<div class="notice error" role="alert"><h2>Review these fields</h2><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 @yield('content')</main></body></html>

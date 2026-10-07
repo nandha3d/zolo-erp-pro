@@ -19,7 +19,8 @@ class LegacyCommercialCommand
         $items = [];
         foreach ($data['product_id'] ?? [] as $i => $id) {
             $unitName = $data[$purchase ? 'purchase_unit' : 'sale_unit'][$i] ?? null;
-            $unitId = $unitName ? Unit::where('company_id', $context->companyId)->where('unit_name', $unitName)->value('id') : null;
+            $unitId = $unitName ? Unit::where('company_id', $context->companyId)
+                ->where(fn ($query) => $query->where('unit_name', $unitName)->orWhere('unit_code', $unitName))->value('id') : null;
             if ($unitName && !$unitId) {
                 throw ValidationException::withMessages(['unit' => 'Select a company-owned unit.']);
             }
@@ -67,6 +68,15 @@ class LegacyCommercialCommand
         if (isset($data['created_at'])) {
             $data['business_date'] ??= substr(normalize_to_sql_datetime($data['created_at']), 0, 10);
             unset($data['created_at']);
+        }
+        if (isset($data['transporter_name'])) {
+            $data['transport_name'] = $data['transporter_name'];
+            unset($data['transporter_name']);
+        }
+        if (!empty($data['series_id'])) {
+            $data['series_code'] = \App\Models\DocumentSeries::forCompany($context)
+                ->where('branch_id', $context->branchId)->where('financial_year_id', $context->financialYearId)
+                ->where('document_type', $purchase ? 'purchase' : 'sale')->findOrFail($data['series_id'])->code;
         }
         $data['items'] = $items;
         return $data;

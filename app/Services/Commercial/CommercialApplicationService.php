@@ -49,6 +49,17 @@ class CommercialApplicationService
             if (isset($party->is_active) && !$party->is_active) {
                 throw ValidationException::withMessages(['party_id' => 'Select an active party.']);
             }
+            $materialField = $kind === 'sale' ? 'delivery_challan_id' : 'goods_received_note_id';
+            $material = null;
+            if (!empty($data[$materialField])) {
+                $materialClass = $kind === 'sale' ? \App\Models\DeliveryChallan::class : \App\Models\GoodsReceivedNote::class;
+                $material = $materialClass::forCompany($context)->whereKey($data[$materialField])->lockForUpdate()->firstOrFail();
+                if ($material->status !== 'pending'
+                    || (int) $material->{$kind === 'sale' ? 'customer_id' : 'supplier_id'} !== (int) $party->id
+                    || (int) $material->warehouse_id !== (int) $data['warehouse_id']) {
+                    throw ValidationException::withMessages([$materialField => 'Convert a pending document for the same party and warehouse.']);
+                }
+            }
             $products = [];
             validator($data, ['sale_note' => 'nullable|string|max:10000', 'note' => 'nullable|string|max:10000',
                 'update_item_cost' => 'sometimes|boolean', 'update_item_hsn' => 'sometimes|boolean'])->validate();
@@ -101,7 +112,7 @@ class CommercialApplicationService
                     $line['attributes']['stock_dimension'] = app(\App\Services\Inventory\DimensionCalculationService::class)->calculate($line['dimensions']);
                 }
                 $rate = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
-                    ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0;
+                    ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0.0;
                 if (!$product->tax_category_id && isset($line['tax_rate']) && (float) $line['tax_rate'] !== $rate) {
                     throw ValidationException::withMessages(['items.tax_rate' => 'Tax rate differs from the configured product rate.']);
                 }
@@ -174,6 +185,9 @@ class CommercialApplicationService
             }
             $document = $kind === 'sale' ? app(SalePostingService::class)->post($document, $context, $actor)
                 : app(PurchasePostingService::class)->post($document, $context, $actor);
+            if ($material) {
+                $material->update(['status' => $kind === 'sale' ? 'converted_to_sale' : 'converted_to_purchase', $kind.'_id' => $document->id]);
+            }
             DB::table('idempotency_keys')->insert(['company_id' => $context->companyId, 'key' => $key, 'request_hash' => $hash,
                 'response_type' => $kind, 'response_ref' => $document->id, 'created_at' => now(), 'updated_at' => now()]);
             if ($override) {
@@ -195,7 +209,8 @@ class CommercialApplicationService
 
     private function attributes(array $data): array
     {
-        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no']));
+        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no',
+            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id']));
         foreach (['bale_count', 'bundle_count'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
         foreach ($attributes as $key => $value) {
             if ($value === null) {

@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 
 class GoodsReceivedNoteController extends Controller
 {
-    use NumbersLegacyDocuments;
+    use NumbersLegacyDocuments, \App\Http\Controllers\Concerns\ValidatesMaterialDocuments;
 
     public function index(Request $request)
     {
@@ -80,12 +80,7 @@ class GoodsReceivedNoteController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'supplier_id' => 'required',
-            'warehouse_id' => 'required',
-            'grn_date' => 'required|date',
-            'product_id' => 'required|array|min:1',
-        ]);
+        $this->validateMaterialDocument($request, true);
 
         DB::beginTransaction();
         try {
@@ -205,22 +200,20 @@ class GoodsReceivedNoteController extends Controller
             ]);
         }
 
-        return view('backend.goods_received_note.show', compact('grn'));
+        return redirect()->route('goods-received-notes.index', ['edit' => $grn->id]);
     }
 
     public function update(Request $request, $id)
     {
         $grn = GoodsReceivedNote::findOrFail($id);
+        abort_unless($grn->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
 
-        $request->validate([
-            'supplier_id' => 'required',
-            'warehouse_id' => 'required',
-            'grn_date' => 'required|date',
-            'product_id' => 'required|array|min:1',
-        ]);
+        $this->validateMaterialDocument($request, true);
 
         DB::beginTransaction();
         try {
+            $grn = GoodsReceivedNote::lockForUpdate()->findOrFail($id);
+            abort_unless($grn->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
             $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? 1;
 
             $grn->update([
@@ -292,10 +285,13 @@ class GoodsReceivedNoteController extends Controller
 
     public function destroy($id)
     {
-        $grn = GoodsReceivedNote::findOrFail($id);
-        $grn->update(['status' => 'cancelled']);
-        GoodsReceivedNoteItem::where('goods_received_note_id', $grn->id)->delete();
-        $grn->delete();
+        DB::transaction(function () use ($id) {
+            $grn = GoodsReceivedNote::lockForUpdate()->findOrFail($id);
+            abort_unless($grn->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
+            $grn->update(['status' => 'cancelled']);
+            GoodsReceivedNoteItem::where('goods_received_note_id', $grn->id)->delete();
+            $grn->delete();
+        });
 
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'GRN cancelled/deleted.']);

@@ -208,10 +208,10 @@ class SaleController extends Controller
 
     public function productWithoutVariant()
     {
-        return Product::ActiveStandard()
+        return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->whereNull('is_variant')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
 
@@ -228,7 +228,7 @@ class SaleController extends Controller
 
     public function getSaleJson($id)
     {
-        $sale = Sale::with(['customer', 'warehouse', 'biller'])->find($id);
+        $sale = Sale::with(['customer', 'warehouse', 'biller', 'payments'])->find($id);
         if (!$sale) {
             return response()->json(['success' => false, 'message' => 'Sale not found'], 404);
         }
@@ -251,6 +251,9 @@ class SaleController extends Controller
                 'total' => (float)$ps->total,
                 'unit_code' => $unit->unit_code ?? ($unit->unit_name ?? 'Unit'),
                 'sale_unit_id' => $ps->sale_unit_id,
+                'return_qty' => (float) $ps->return_qty,
+                'product_batch_id' => $ps->product_batch_id,
+                'expired_date' => $ps->product_batch_id ? ProductBatch::where('id', $ps->product_batch_id)->value('expired_date') : null,
                 'batch_no' => $ps->product_batch_id ? (ProductBatch::where('id', $ps->product_batch_id)->value('batch_no') ?? '') : '',
                 'imei_number' => $ps->imei_number ?? '',
             ];

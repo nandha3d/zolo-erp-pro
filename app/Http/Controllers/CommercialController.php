@@ -112,7 +112,7 @@ class CommercialController extends Controller
             }
             return $document;
         });
-        if ($legacy && $request->filled('pos')) {
+        if ($legacy && $request->boolean('pos')) {
             return response()->json($document->id);
         }
         if ($legacy && !$request->expectsJson()) {
@@ -124,7 +124,9 @@ class CommercialController extends Controller
     public function preview(Request $request, string $kind)
     {
         app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $this->context($request), $request->user()->id);
-        return response()->json(['data' => app(CommercialPricing::class)->preview($request->all(), $kind === 'purchase', $this->context($request))]);
+        $data = $request->has('items') ? $request->all()
+            : app(LegacyCommercialCommand::class)->data($request, $kind === 'purchase', $this->context($request));
+        return response()->json(['data' => app(CommercialPricing::class)->preview($data, $kind === 'purchase', $this->context($request))]);
     }
 
     public function reverse(Request $request, string $kind, int $id)
@@ -165,8 +167,14 @@ class CommercialController extends Controller
         $context = $this->context($request);
         $data = app(LegacyCommercialCommand::class)->data($request, $kind === 'purchase', $context);
         $document = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)->findOrFail($id);
-        $replacement = app(CommercialReversalService::class)->replace($document, $data,
-            $this->idempotencyKey($request), $request->business_date, $request->reason, $context);
+        $replacement = DB::transaction(function () use ($document, $data, $request, $kind, $context) {
+            $replacement = app(CommercialReversalService::class)->replace($document, $data,
+                $this->idempotencyKey($request), $request->business_date, $request->reason, $context);
+            if ($request->filled('draft_id')) {
+                app(CommercialDraftService::class)->query($kind, $context, $request->user()->id)->where('id', $request->draft_id)->delete();
+            }
+            return $replacement;
+        });
         return $request->expectsJson() ? response()->json(['success' => true, 'data' => $replacement], 201)
             : redirect($kind === 'sale' ? '/sales' : '/purchases')->with('message', 'Replacement document posted successfully.');
     }
@@ -574,10 +582,12 @@ class CommercialController extends Controller
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'type' => $product->type,
                 'code' => $product->code,
                 'price' => (float)$product->price,
                 'cost' => (float)$product->cost,
                 'tax_rate' => $taxRate,
+                'unit_id' => $unitId,
                 'unit' => $unit ? ($unit->unit_code ?? $unit->unit_name) : 'Unit',
                 'value' => $product->code . '|' . $product->name,
                 'label' => $product->code . ' - ' . $product->name,

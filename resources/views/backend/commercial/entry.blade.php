@@ -1,167 +1,25 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $kind === 'sale' ? 'Sales Bills' : 'Purchase Bills' }} · {{ $company->trade_name ?? $company->legal_name ?? 'Zolo ERP' }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/zolo-erp-neo.css') }}">
+@extends('backend.layout.main')
+
+@section('navbar-center')
+    <span class="comm-title-badge">{{ $kind === 'sale' ? 'Sales Command Center' : 'Purchase Command Center' }}</span>
+    <span class="ml-2">Fast Entry</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="btn-new-bill">New Bill</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="btn-show-shortcuts">Shortcuts</button>
+@endsection
+
+@push('css')
     <link rel="stylesheet" href="{{ asset('css/commercial-entry.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/commercial-workspace.css') }}">
+@endpush
+@push('scripts')
     <script defer src="{{ asset('js/commercial-entry.js') }}"></script>
-</head>
-<body data-kind="{{ $kind }}" data-base="{{ url('/commercial/'.$kind) }}" data-quantity-scale="{{ $industry['settings']['quantity_scale'] }}" @if($project) data-project-id="{{ $project->id }}" data-project-customer="{{ $project->client_id }}" @endif data-compliance="{{ config('compliance.enabled') ? '1' : '0' }}" data-post-url="{{ isset($exchangeReturn) ? url('/compliance/exchange/'.$exchangeReturn->id) : '' }}">
+@endpush
 
+@section('content')
+@include('backend.partials.command-center-nav', ['kind' => $kind])
+<section class="command-center-fast" id="commercial-entry-workspace" data-kind="{{ $kind }}" data-base="{{ url('/commercial/'.$kind) }}" data-quantity-scale="{{ $industry['settings']['quantity_scale'] }}" @if($project) data-project-id="{{ $project->id }}" data-project-customer="{{ $project->client_id }}" @endif data-compliance="{{ config('compliance.enabled') ? '1' : '0' }}" data-post-url="{{ isset($exchangeReturn) ? url('/compliance/exchange/'.$exchangeReturn->id) : '' }}">
 <div class="desk-app">
-    <!-- LEFT DESK WORKSPACE SIDEBAR -->
-    <aside id="desk-sidebar" class="desk-sidebar" aria-label="Main Navigation">
-        <div class="desk-sidebar-header">
-            <div class="desk-brand-badge">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="#7c3aed" opacity="0.2"/>
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#8b5cf6"/>
-                    <path d="M2 17L12 22V12L2 7V17Z" fill="#7c3aed"/>
-                    <path d="M22 17L12 22V12L22 7V17Z" fill="#6d28d9"/>
-                </svg>
-            </div>
-            <div class="desk-brand-text">
-                <span class="desk-brand-title">Zolo ERP</span>
-                <span class="desk-brand-sub">Desk workspace</span>
-            </div>
-        </div>
-
-        <div class="desk-sidebar-search">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Find a menu item..." aria-label="Find menu item">
-        </div>
-
-        <nav class="desk-sidebar-nav">
-            <a href="{{ url('/dashboard') }}" class="desk-nav-item">
-                <span class="desk-nav-icon">⌂</span>
-                <span>Home</span>
-            </a>
-
-            <div class="desk-nav-section-title">MODULES</div>
-
-            <!-- Selling Module -->
-            <div class="desk-nav-group {{ $kind === 'sale' ? 'open active-group' : '' }}">
-                <a href="{{ url('/sales') }}" class="desk-nav-item {{ $kind === 'sale' ? 'active-parent' : '' }}">
-                    <span class="desk-nav-icon">🛒</span>
-                    <span>Selling</span>
-                    <span class="desk-chevron">▾</span>
-                </a>
-                <div class="desk-subnav">
-                    <div class="desk-subnav-label">ENTRY</div>
-                    <a href="{{ url('/commercial/sale/entry') }}" class="desk-subnav-item {{ $kind === 'sale' ? 'active-pill' : '' }}">Sales Bills</a>
-                    <a href="{{ url('/sales') }}" class="desk-subnav-item">Sales Orders</a>
-                    <a href="{{ url('/return-sale') }}" class="desk-subnav-item">Sales Returns</a>
-                    <a href="{{ url('/quotations') }}" class="desk-subnav-item">Quotations</a>
-                    
-                    <div class="desk-subnav-label">MASTERS</div>
-                    <a href="{{ url('/customer') }}" class="desk-subnav-item">Customer Group</a>
-                    <a href="{{ url('/agent') }}" class="desk-subnav-item">Sales Partner (Agents)</a>
-                    <a href="{{ url('/area') }}" class="desk-subnav-item">Territory (Routes)</a>
-                    <a href="{{ url('/products') }}" class="desk-subnav-item">Price List</a>
-                    <a href="{{ url('/products') }}" class="desk-subnav-item">Item Price</a>
-                    <a href="{{ url('/sale-type') }}" class="desk-subnav-item">Sales Type</a>
-
-                    <div class="desk-subnav-label">SETTINGS</div>
-                    <a href="{{ url('/general_setting') }}" class="desk-subnav-item">Selling Settings</a>
-                </div>
-            </div>
-
-            <!-- Buying Module -->
-            <div class="desk-nav-group {{ $kind === 'purchase' ? 'open active-group' : '' }}">
-                <a href="{{ url('/purchases') }}" class="desk-nav-item {{ $kind === 'purchase' ? 'active-parent' : '' }}">
-                    <span class="desk-nav-icon">🛍</span>
-                    <span>Buying</span>
-                    <span class="desk-chevron">▾</span>
-                </a>
-                <div class="desk-subnav">
-                    <div class="desk-subnav-label">ENTRY</div>
-                    <a href="{{ url('/commercial/purchase/entry') }}" class="desk-subnav-item {{ $kind === 'purchase' ? 'active-pill' : '' }}">Purchase Bills</a>
-                    <a href="{{ url('/purchases') }}" class="desk-subnav-item">Purchase Orders</a>
-                    <a href="{{ url('/return-purchase') }}" class="desk-subnav-item">Purchase Returns</a>
-
-                    <div class="desk-subnav-label">MASTERS</div>
-                    <a href="{{ url('/supplier') }}" class="desk-subnav-item">Suppliers</a>
-                    <a href="{{ url('/purchase-type') }}" class="desk-subnav-item">Purchase Types</a>
-                    <a href="{{ url('/bill-sundry') }}" class="desk-subnav-item">Bill Sundries</a>
-                    <a href="{{ url('/document-series') }}" class="desk-subnav-item">Series</a>
-                </div>
-            </div>
-
-            <a href="{{ url('/operations/stock') }}" class="desk-nav-item">
-                <span class="desk-nav-icon">📦</span>
-                <span>Stock</span>
-            </a>
-
-            <a href="{{ url('/accounting/vouchers') }}" class="desk-nav-item">
-                <span class="desk-nav-icon">💳</span>
-                <span>Accounts</span>
-            </a>
-
-            <a href="{{ url('/report/profit-loss') }}" class="desk-nav-item">
-                <span class="desk-nav-icon">📊</span>
-                <span>Reports</span>
-            </a>
-        </nav>
-
-        <div class="desk-sidebar-footer">
-            <button type="button" class="desk-btn-ghost" id="btn-show-shortcuts" title="Keyboard Shortcuts">
-                <span>?</span> Shortcuts
-            </button>
-        </div>
-    </aside>
-
-    <!-- MAIN APP WRAPPER -->
     <div class="desk-main">
-        <!-- TOP DESK NAVBAR -->
-        <header class="desk-topbar">
-            <div class="desk-topbar-left">
-                <button type="button" class="desk-icon-btn" id="toggle-sidebar" title="Toggle Sidebar" aria-label="Toggle Navigation">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                </button>
-                <div class="desk-breadcrumbs">
-                    <span class="breadcrumb-pill">{{ $kind === 'sale' ? 'Selling' : 'Buying' }}</span>
-                    <span class="breadcrumb-separator">/</span>
-                    <span class="breadcrumb-title">{{ $kind === 'sale' ? 'Sales Bills' : 'Purchase Bills' }}</span>
-                </div>
-            </div>
-
-            <div class="desk-topbar-center">
-                <div class="desk-omnisearch">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" placeholder="Search screens, actions, record" aria-label="Search">
-                    <kbd class="desk-kbd">⌘K</kbd>
-                </div>
-                <div class="desk-quick-pills">
-                    <button type="button" class="quick-pill primary" id="btn-new-bill">+ New Bill</button>
-                    <a href="{{ $kind === 'sale' ? url('/customer') : url('/supplier') }}" class="quick-pill">{{ $kind === 'sale' ? 'Customers' : 'Suppliers' }}</a>
-                    <a href="{{ $kind === 'sale' ? url('/sales') : url('/purchases') }}" class="quick-pill">{{ $kind === 'sale' ? 'Sales Orders' : 'Purchase Orders' }}</a>
-                    <a href="{{ url('/accounting/vouchers') }}" class="quick-pill">{{ $kind === 'sale' ? 'Receivables' : 'Payables' }}</a>
-                </div>
-            </div>
-
-            <div class="desk-topbar-right">
-                <div class="desk-company-badge" title="Active Legal Entity">
-                    <span class="pulse-dot"></span>
-                    <span class="company-name">{{ $company->trade_name ?? $company->legal_name ?? 'Sri Murugan Textiles' }}</span>
-                </div>
-                <div class="desk-user-badge">
-                    <div class="user-avatar" title="{{ Auth::user()->name ?? 'Administrator' }}">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
-                    </div>
-                    <div class="user-meta">
-                        <span class="user-name">{{ Auth::user()->name ?? 'Administrator' }}</span>
-                        <span class="user-status">Signed in</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <!-- MULTI-TAB DOCUMENT STRIP -->
         <div class="desk-tab-strip">
             <button type="button" class="desk-tab-btn" id="btn-browse-bills">
@@ -960,5 +818,5 @@
     </form>
 </dialog>
 
-</body>
-</html>
+</section>
+@endsection

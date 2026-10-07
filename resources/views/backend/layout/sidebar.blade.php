@@ -27,8 +27,8 @@
         </a>
     </li>
 
-    <!-- SECTION: COMMERCIAL & INVENTORY -->
-    <li class="sidebar-heading"><span>Commercial &amp; Inventory</span></li>
+    <!-- SECTION: SALES, PURCHASES & INVENTORY -->
+    <li class="sidebar-heading"><span>Sales, Purchases &amp; Inventory</span></li>
 
     {{-- Product Menu --}}
     @if($isAdmin || $canNavigate('sidebar_product'))
@@ -94,24 +94,29 @@
         <li>
             <a href="#purchase" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-card"></i>
-                <span>{{__('db.Purchase')}}</span>
+                <span>Purchase Command Center</span>
             </a>
             <ul id="purchase" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('purchases-index'))
-                    <li id="purchase-list-menu"><a href="{{route('purchases.index')}}">{{__('db.Purchase List')}}</a></li>
+                    <li id="purchase-list-menu"><a href="{{route('purchases.index')}}">Bills</a></li>
+                    <li><a href="{{route('purchases.index', ['view' => 'orders', 'purchase_status' => 4])}}">Orders</a></li>
                     <li id="grn-list-menu"><a href="{{route('goods-received-notes.index')}}">Goods Received Note (GRN)</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('purchases-add'))
-                    <li id="purchase-create-menu"><a href="{{route('purchases.create')}}">{{__('db.Add Purchase')}}</a></li>
                     @if(config('commercial.enabled') && in_array('purchases.fast_entry', $enabledCapabilities, true))
-                        <li><a data-commercial-shortcut="F12" href="{{route('commercial.purchase.entry')}}">Fast Purchase · F12</a></li>
+                        <li><a data-command-shortcut="F12" href="{{route('purchases.index', ['entry' => 'fast'])}}">Fast Entry · F12</a></li>
+                    @else
+                        <li id="purchase-create-menu"><a href="{{route('purchases.create')}}">New Bill</a></li>
                     @endif
                 @endif
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('purchase-return-index'))
-                    <li id="purchase-return-menu"><a href="{{route('return-purchase.index')}}">{{__('db.Purchase Return')}}</a></li>
+                    <li id="purchase-return-menu"><a href="{{route('return-purchase.index')}}">Returns</a></li>
+                @endif
+                @if($isAdmin || $canNavigate('suppliers-index'))
+                    <li><a href="{{route('supplier.index')}}">Suppliers</a></li>
                 @endif
             </ul>
         </li>
@@ -122,7 +127,7 @@
         <li>
             <a href="#sale" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-cart"></i>
-                <span>{{__('db.Sale')}}</span>
+                <span>Sales Command Center</span>
             </a>
             <ul id="sale" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('sales-index'))
@@ -131,13 +136,15 @@
                         @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li>@endif
                         @if($isAdmin)<li><a href="{{ url('/compliance/setup') }}">Tax & document settings</a></li>@endif
                     @endif
-                    <li id="sale-list-menu"><a href="{{route('sales.index')}}">{{__('db.Sale List')}}</a></li>
+                    <li id="sale-list-menu"><a href="{{route('sales.index')}}">Bills</a></li>
+                    <li><a href="{{route('sales.index', ['view' => 'orders', 'sale_status' => 2])}}">Orders</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('sales-add'))
                     <li><a href="{{route('sale.pos')}}">POS Terminal</a></li>
-                    <li id="sale-create-menu"><a href="{{route('sales.create')}}">{{__('db.Add Sale')}}</a></li>
                     @if(config('commercial.enabled') && in_array('sales.fast_counter', $enabledCapabilities, true))
-                        <li><a data-commercial-shortcut="F2" href="{{route('commercial.sale.entry')}}">Fast Sales · F2</a></li>
+                        <li><a data-command-shortcut="F2" href="{{route('sales.index', ['entry' => 'fast'])}}">Fast Entry · F2</a></li>
+                    @else
+                        <li id="sale-create-menu"><a href="{{route('sales.create')}}">New Bill</a></li>
                     @endif
                 @endif
                 @if($isAdmin || $canNavigate('sales-import'))
@@ -159,7 +166,10 @@
                 @endif
                 <li id="courier-menu"><a href="{{route('couriers.index')}}">{{__('db.Courier List')}}</a></li>
                 @if($isAdmin || $canNavigate('returns-index'))
-                    <li id="sale-return-menu"><a href="{{route('return-sale.index')}}">{{__('db.Sale Return')}}</a></li>
+                    <li id="sale-return-menu"><a href="{{route('return-sale.index')}}">Returns</a></li>
+                @endif
+                @if($isAdmin || $canNavigate('quotes-index'))
+                    <li><a href="{{route('quotations.index')}}">Quotations</a></li>
                 @endif
                 @if(in_array('sales.exchange', $enabledCapabilities, true))
                     <li id="sale-exchange-menu"><a href="{{route('exchange.index')}}">Product Exchange</a></li>
@@ -695,11 +705,7 @@
     @endif
 </ul>
 @if(config('commercial.enabled'))
-<script>
-document.addEventListener('keydown', function (event) {
-    if (event.key !== 'F2' && event.key !== 'F12') return;
-    const link = document.querySelector('[data-commercial-shortcut="' + event.key + '"]');
-    if (link) { event.preventDefault(); window.location.href = link.href; }
-});
-</script>
+@push('scripts')
+<script src="{{ asset('js/command-center.js') }}"></script>
+@endpush
 @endif

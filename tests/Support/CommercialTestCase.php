@@ -67,9 +67,12 @@ abstract class CommercialTestCase extends CompanyErpServiceTestCase
                 ->update(['account_id' => $account->id, 'is_active' => true]);
         }
         (require database_path('migrations/2026_10_05_000001_create_shared_commercial_contracts.php'))->up();
-        config(['commercial.enabled' => true]);
+        config(['commercial.enabled' => true, 'compliance.enabled' => false, 'operations.enabled' => false]);
+        (require database_path('migrations/2026_10_13_000001_create_optech_modern_master_tables.php'))->up();
+        (require database_path('migrations/2026_10_13_000002_add_optech_transport_and_addins_to_sales_table.php'))->up();
         $this->withoutMiddleware(\App\Http\Middleware\Common::class);
         $this->withoutMiddleware(\App\Http\Middleware\Active::class);
+        CommandCenterViewFixture::share();
     }
 
     protected function context(): CompanyContext

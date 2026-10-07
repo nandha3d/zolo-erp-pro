@@ -737,6 +737,45 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     display: none !important;
 }
 
+.material-document-workspace .comm-entry-workspace {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.material-document-workspace .comm-entry-workspace form {
+    overflow-y: auto !important;
+}
+
+.material-document-workspace #comm-drawer[hidden] {
+    display: none !important;
+}
+
+.material-document-workspace .items-grid-section {
+    flex: 1 0 auto;
+}
+
+.material-document-workspace .order-table-responsive {
+    overflow: auto !important;
+    max-height: 45vh;
+}
+
+.material-document-workspace .item-row td {
+    vertical-align: middle;
+}
+
+.material-document-workspace .item-row .row-item-name {
+    min-width: 160px;
+}
+
+.material-document-workspace .order-table {
+    min-width: 960px;
+}
+
+.material-document-workspace .item-row input[type="number"] {
+    min-width: 70px;
+    padding: 4px 6px;
+}
+
 /* Left Register Panel */
 .comm-register-card {
     background: #ffffff;
@@ -2513,10 +2552,12 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
  * Bottom Action & Summary Bar with Generous Spacing & Compact Buttons
  * ==================================================================== */
 .desk-summary-bottom-bar {
-    height: 38px !important;
+    height: auto !important;
     min-height: 38px !important;
-    max-height: 38px !important;
-    padding: 0 12px !important;
+    max-height: none !important;
+    padding: 6px 12px !important;
+    flex-wrap: wrap !important;
+    gap: 6px 12px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -2531,6 +2572,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 
 .desk-summary-bottom-bar .bottom-action-buttons {
     display: flex !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
     gap: 8px !important;
 }
@@ -3472,6 +3514,31 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control {
 body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focus {
     border-color: #a78bfa !important;
     box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25) !important;
+}
+
+@media (max-width: 991px) {
+    .commercial-workspace-view { height: auto !important; max-height: none !important; overflow: visible !important; }
+    .comm-split-grid, .comm-split-grid.dock-left, .comm-split-grid.drawer-collapsed { grid-template-columns: minmax(0, 1fr) !important; overflow: visible; flex: none; }
+    .comm-entry-workspace, .comm-entry-workspace form { height: auto !important; max-height: none !important; overflow: visible !important; }
+    .desk-card.items-container { flex: none !important; min-height: 220px !important; }
+    .desk-card.items-container .table-responsive { height: auto !important; max-height: 45vh !important; }
+    .desk-bill-list-panel { min-height: 420px; max-height: 70vh; }
+    .fields-compact-row, .desk-summary-bottom-bar, .bottom-summary-actions, .bottom-summary-totals { flex-wrap: wrap !important; }
+    .comm-split-grid.dock-left .comm-drawer-card { order: initial; }
+}
+
+@media print {
+    body.command-center-printing-document > :not(.command-center-print-document) { display: none !important; }
+    body.command-center-printing-document .command-center-print-document { position: static !important; display: block !important; overflow: visible !important; }
+    .command-center-print-document .modal-dialog { max-width: none !important; width: 100% !important; margin: 0 !important; transform: none !important; }
+    .command-center-print-document .modal-content { border: 0 !important; box-shadow: none !important; }
+    .command-center-print-document button { display: none !important; }
+    body.command-center-printing-list * { visibility: hidden !important; }
+    body.command-center-printing-list #side-bill-list,
+    body.command-center-printing-list #side-bill-list * { visibility: visible !important; }
+    body.command-center-printing-list #side-bill-list { position: absolute; inset: 0; height: auto; max-height: none; overflow: visible; }
+    body.command-center-printing-list .side-card-actions,
+    body.command-center-printing-list .command-center-drafts { display: none !important; }
 }
 
 

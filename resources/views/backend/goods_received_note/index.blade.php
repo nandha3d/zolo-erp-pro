@@ -20,7 +20,9 @@
 </script>
 <div id="comm-progress-bar"></div>
 
-<section class="commercial-workspace-view">
+<section class="commercial-workspace-view material-document-workspace">
+    <div class="alert alert-danger" id="material-document-error" role="alert" style="display:none"></div>
+    @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <!-- Top Command Bar -->
     <div class="comm-command-bar">
         <div class="comm-title-group">
@@ -28,7 +30,7 @@
             <span class="comm-title-badge"><i class="dripicons-import"></i> Inbound Material Receipt</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="javascript:void(0)"><i class="dripicons-list"></i> {{ __('All GRNs') }}</a></li>
+            <li><a class="nav-link active" href="#desk-bill-list-panel" id="material-list-link"><i class="dripicons-list"></i> {{ __('All GRNs') }}</a></li>
             <li><a class="nav-link" href="{{ route('purchases.index') }}"><i class="dripicons-card"></i> Purchase Bills</a></li>
         </ul>
         <div class="comm-actions">
@@ -234,7 +236,7 @@
                 </div>
 
                 <!-- Slide-over Drawer for Transport & Remarks -->
-                <div class="comm-drawer" id="comm-drawer">
+                <div class="comm-drawer" id="comm-drawer" hidden>
                     <div class="comm-drawer-header d-flex align-items-center justify-content-between p-3" style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
                         <h4 class="mb-0 font-weight-bold" style="font-size:14px; color:#0f172a;"><i class="dripicons-truck text-primary mr-1"></i> Inward Transport & Logistics Details</h4>
                         <button type="button" class="close" id="close-drawer-btn" style="font-size:18px;">&times;</button>
@@ -296,7 +298,7 @@
         </div>
 
         <!-- Side GRN List Panel -->
-        <div class="desk-bill-list-panel" id="desk-bill-list-panel">
+        <div class="comm-drawer-card desk-bill-list-panel" id="desk-bill-list-panel">
             <div class="side-panel-header d-flex align-items-center justify-content-between p-2" style="border-bottom:1px solid #e2e8f0; background:#f8fafc;">
                 <div class="d-flex align-items-center gap-2">
                     <span class="font-weight-bold text-dark" style="font-size:13px;"><i class="dripicons-download text-primary mr-1"></i> Goods Received Notes</span>
@@ -432,10 +434,10 @@
     </div>
 </div>
 
-<script type="text/javascript">
-    'use strict';
+@include('backend.partials.material-party-modal', ['partyType' => 'supplier'])
+@endsection
 
-    // --- Master Data Prepared in JSON ---
+@push('scripts')
     @php
         $jsProductList = [];
         foreach($lims_product_list_without_variant as $prod) {
@@ -451,6 +453,7 @@
                 'price' => (float)($prod->price ?? 0),
                 'cost' => (float)($prod->cost ?? 0),
                 'tax_rate' => $taxVal,
+                'unit_id' => (int)$prod->unit_id,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
                 'label' => (string)$prod->code . ' - ' . (string)$prod->name,
@@ -458,455 +461,20 @@
         }
     @endphp
 
-    var allProducts = @json($jsProductList);
-    var rowCounter = 0;
-    var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
-
-    // --- Table Density Switcher ---
-    $('.density-btn').on('click', function() {
-        $('.density-btn').removeClass('active');
-        $(this).addClass('active');
-        var density = $(this).data('density');
-        $('#order-table').removeClass('compact cozy large').addClass(density);
-        localStorage.setItem('zolo_grn_density', density);
-    });
-    var savedDensity = localStorage.getItem('zolo_grn_density') || 'cozy';
-    $('.density-btn[data-density="' + savedDensity + '"]').addClass('active').siblings().removeClass('active');
-    $('#order-table').removeClass('compact cozy large').addClass(savedDensity);
-
-    // --- Autocomplete Setup ---
-    var $productSearch = $('#lims_productcodeSearch');
-    $productSearch.autocomplete({
-        minLength: 1,
-        autoFocus: true,
-        source: function(request, response) {
-            var term = request.term.toLowerCase().trim();
-            var matches = allProducts.filter(function(p) {
-                return (p.name && p.name.toLowerCase().includes(term)) ||
-                       (p.code && p.code.toLowerCase().includes(term));
-            });
-            response(matches.slice(0, 20));
-        },
-        select: function(event, ui) {
-            if (ui && ui.item) {
-                addProductRow({
-                    product_id: ui.item.id,
-                    product_name: ui.item.name,
-                    product_code: ui.item.code,
-                    cost: ui.item.cost,
-                    price: ui.item.price,
-                    tax_rate: ui.item.tax_rate,
-                    unit: ui.item.unit,
-                    qty: 1
-                });
-            }
-            $(this).val('');
-            return false;
-        }
-    });
-
-    if ($productSearch.data('ui-autocomplete')) {
-        $productSearch.data('ui-autocomplete')._renderItem = function(ul, item) {
-            var costStr = '₹ ' + (parseFloat(item.cost || item.price || 0)).toFixed(decimalPlaces);
-            return $("<li>")
-                .append(`
-                    <div class="custom-ac-item d-flex align-items-center justify-content-between">
-                        <div style="flex:1;min-width:0;padding-right:8px;">
-                            <div class="custom-ac-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-size:12px;">${item.name}</div>
-                            <div class="custom-ac-sub" style="font-size:11px;color:#64748b;">
-                                <span class="badge badge-light" style="border:1px solid #cbd5e1;padding:1px 5px;font-family:monospace;">${item.code}</span>
-                                <span class="ml-1 text-muted">${item.unit}</span>
-                            </div>
-                        </div>
-                        <div class="text-right" style="white-space:nowrap;">
-                            <span class="custom-ac-rate" style="font-weight:700;color:#16a34a;font-size:12px;">${costStr}</span>
-                            <div style="font-size:10px;color:#7c3aed;font-weight:600;">+ Add</div>
-                        </div>
-                    </div>
-                `)
-                .appendTo(ul);
-        };
-    }
-
-    // --- Keyboard Shortcut F2 for Quick Search ---
-    $(document).on('keydown', function(e) {
-        if (e.key === 'F2') {
-            e.preventDefault();
-            $('#lims_productcodeSearch').focus().select();
-        }
-    });
-
-    // --- Add Product Row Function ---
-    window.addProductRow = function(itemData) {
-        $('#empty-row-placeholder').hide();
-
-        var existingRow = null;
-        $('#order-table-body tr.item-row').each(function() {
-            if ($(this).find('.row-product-id').val() == itemData.product_id) {
-                existingRow = $(this);
-                return false;
-            }
-        });
-
-        if (existingRow) {
-            var $qtyInput = existingRow.find('.row-qty');
-            var curQty = parseFloat($qtyInput.val()) || 0;
-            $qtyInput.val(curQty + (itemData.qty || 1));
-            recalculateRow(existingRow);
-            recalculateTotals();
-            return;
-        }
-
-        rowCounter++;
-        var cost = parseFloat(itemData.cost || itemData.price || 0);
-        var qty = parseFloat(itemData.qty || 1);
-        var taxRate = parseFloat(itemData.tax_rate || 0);
-        var amount = cost * qty;
-        var taxAmount = (amount * taxRate) / 100;
-        var total = amount + taxAmount;
-
-        var rowHtml = `
-            <tr class="item-row" data-row-idx="${rowCounter}">
-                <td style="text-align:center; vertical-align:middle;">
-                    <span class="row-num text-muted" style="font-size:11px;">${rowCounter}</span>
-                    <input type="hidden" name="product_id[]" class="row-product-id" value="${itemData.product_id || ''}">
-                    <input type="hidden" name="unit_id[]" class="row-unit-id" value="${itemData.unit_id || 1}">
-                    <input type="hidden" name="tax_amount[]" class="row-tax-amount" value="${taxAmount.toFixed(4)}">
-                    <input type="hidden" name="total[]" class="row-total" value="${total.toFixed(4)}">
-                </td>
-                <td style="vertical-align:middle;">
-                    <div class="font-weight-bold" style="font-size:12px;color:#0f172a;">${itemData.product_name}</div>
-                    <small class="text-muted" style="font-family:monospace;font-size:11px;">${itemData.product_code || ''}</small>
-                </td>
-                <td style="vertical-align:middle;">
-                    <select name="item_purchase_type_id[]" class="form-control form-control-xs row-purchase-type" style="font-size:11px; height:26px; padding:2px 4px;">
-                        <option value="">Standard</option>
-                        @foreach($purchaseTypes as $pt)
-                            <option value="{{ $pt->id }}">{{ $pt->name }}</option>
-                        @endforeach
-                    </select>
-                </td>
-                <td style="vertical-align:middle;">
-                    <span class="badge badge-light" style="border:1px solid #cbd5e1; font-size:11px;">${itemData.unit || 'Unit'}</span>
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="number" step="0.01" name="cost[]" class="form-control form-control-xs text-right row-cost" value="${cost.toFixed(decimalPlaces)}" style="font-size:12px; height:26px; padding:2px 4px;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="number" step="any" min="0.01" name="qty[]" class="form-control form-control-xs text-right row-qty font-weight-bold" value="${qty}" style="font-size:12px; height:26px; padding:2px 4px;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="text" readonly name="amount[]" class="form-control form-control-xs text-right row-amount" value="${amount.toFixed(decimalPlaces)}" style="font-size:12px; height:26px; padding:2px 4px; background:#f8fafc;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="number" step="0.01" name="tax_rate[]" class="form-control form-control-xs text-right row-tax-rate" value="${taxRate.toFixed(2)}" style="font-size:11px; height:26px; padding:2px 4px;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <span class="font-weight-bold row-total-disp" style="font-size:12px; color:#0f172a;">₹ ${total.toFixed(decimalPlaces)}</span>
-                </td>
-                <td style="text-align:center; vertical-align:middle;">
-                    <button type="button" class="btn btn-xs btn-link text-danger p-0 btn-remove-row" title="Remove Item"><i class="dripicons-trash"></i></button>
-                </td>
-            </tr>
-        `;
-
-        $('#order-table-body').append(rowHtml);
-        renumberRows();
-        recalculateTotals();
-    };
-
-    // --- Recalculate Row ---
-    function recalculateRow($row) {
-        var cost = parseFloat($row.find('.row-cost').val()) || 0;
-        var qty = parseFloat($row.find('.row-qty').val()) || 0;
-        var taxRate = parseFloat($row.find('.row-tax-rate').val()) || 0;
-
-        var amount = cost * qty;
-        var taxAmount = (amount * taxRate) / 100;
-        var total = amount + taxAmount;
-
-        $row.find('.row-amount').val(amount.toFixed(decimalPlaces));
-        $row.find('.row-tax-amount').val(taxAmount.toFixed(4));
-        $row.find('.row-total').val(total.toFixed(4));
-        $row.find('.row-total-disp').text('₹ ' + total.toFixed(decimalPlaces));
-    }
-
-    // --- Row Input Change Handlers ---
-    $('#order-table-body').on('input', '.row-cost, .row-qty, .row-tax-rate', function() {
-        var $row = $(this).closest('tr');
-        recalculateRow($row);
-        recalculateTotals();
-    });
-
-    // --- Remove Row ---
-    $('#order-table-body').on('click', '.btn-remove-row', function() {
-        $(this).closest('tr').remove();
-        if ($('#order-table-body tr.item-row').length === 0) {
-            $('#empty-row-placeholder').show();
-        }
-        renumberRows();
-        recalculateTotals();
-    });
-
-    function renumberRows() {
-        var count = 0;
-        $('#order-table-body tr.item-row').each(function(idx) {
-            count++;
-            $(this).find('.row-num').text(count);
-        });
-        $('#items-counter').text('ITEMS ' + count + ' line(s)');
-    }
-
-    // --- Recalculate Grand Totals ---
-    function recalculateTotals() {
-        var totalQty = 0;
-        var totalCost = 0;
-        var totalTax = 0;
-        var grandTotal = 0;
-
-        $('#order-table-body tr.item-row').each(function() {
-            var qty = parseFloat($(this).find('.row-qty').val()) || 0;
-            var amount = parseFloat($(this).find('.row-amount').val()) || 0;
-            var tax = parseFloat($(this).find('.row-tax-amount').val()) || 0;
-            var total = parseFloat($(this).find('.row-total').val()) || 0;
-
-            totalQty += qty;
-            totalCost += amount;
-            totalTax += tax;
-            grandTotal += total;
-        });
-
-        $('#input_total_qty').val(totalQty);
-        $('#input_total_cost').val(totalCost.toFixed(4));
-        $('#input_total_tax').val(totalTax.toFixed(4));
-        $('#input_grand_total').val(grandTotal.toFixed(4));
-
-        $('#disp-net').text('₹ ' + totalCost.toFixed(decimalPlaces));
-        $('#disp-tax').text('₹ ' + totalTax.toFixed(decimalPlaces));
-        $('#disp-grand').text('₹ ' + grandTotal.toFixed(decimalPlaces));
-    }
-
-    // --- + Add Row Manual Button ---
-    $('#btn-add-row').on('click', function() {
-        $('#empty-row-placeholder').hide();
-        rowCounter++;
-        var rowHtml = `
-            <tr class="item-row" data-row-idx="${rowCounter}">
-                <td style="text-align:center; vertical-align:middle;">
-                    <span class="row-num text-muted" style="font-size:11px;">${rowCounter}</span>
-                    <input type="hidden" name="product_id[]" class="row-product-id" value="1">
-                    <input type="hidden" name="unit_id[]" class="row-unit-id" value="1">
-                    <input type="hidden" name="tax_amount[]" class="row-tax-amount" value="0.0000">
-                    <input type="hidden" name="total[]" class="row-total" value="0.0000">
-                </td>
-                <td style="vertical-align:middle;">
-                    <input type="text" name="item_name_manual[]" class="form-control form-control-xs" placeholder="Type item name..." style="font-size:12px; height:26px; padding:2px 4px;" required>
-                </td>
-                <td style="vertical-align:middle;">
-                    <select name="item_purchase_type_id[]" class="form-control form-control-xs row-purchase-type" style="font-size:11px; height:26px; padding:2px 4px;">
-                        <option value="">Standard</option>
-                        @foreach($purchaseTypes as $pt)
-                            <option value="{{ $pt->id }}">{{ $pt->name }}</option>
-                        @endforeach
-                    </select>
-                </td>
-                <td style="vertical-align:middle;">
-                    <span class="badge badge-light" style="border:1px solid #cbd5e1; font-size:11px;">Unit</span>
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="number" step="0.01" name="cost[]" class="form-control form-control-xs text-right row-cost" value="0.00" style="font-size:12px; height:26px; padding:2px 4px;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="number" step="any" min="0.01" name="qty[]" class="form-control form-control-xs text-right row-qty font-weight-bold" value="1" style="font-size:12px; height:26px; padding:2px 4px;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="text" readonly name="amount[]" class="form-control form-control-xs text-right row-amount" value="0.00" style="font-size:12px; height:26px; padding:2px 4px; background:#f8fafc;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <input type="number" step="0.01" name="tax_rate[]" class="form-control form-control-xs text-right row-tax-rate" value="0.00" style="font-size:11px; height:26px; padding:2px 4px;">
-                </td>
-                <td style="text-align:right; vertical-align:middle;">
-                    <span class="font-weight-bold row-total-disp" style="font-size:12px; color:#0f172a;">₹ 0.00</span>
-                </td>
-                <td style="text-align:center; vertical-align:middle;">
-                    <button type="button" class="btn btn-xs btn-link text-danger p-0 btn-remove-row" title="Remove Item"><i class="dripicons-trash"></i></button>
-                </td>
-            </tr>
-        `;
-        $('#order-table-body').append(rowHtml);
-        renumberRows();
-        recalculateTotals();
-    });
-
-    // --- Fast Batch Picker Filter & Addition ---
-    $('#multi-item-search').on('input', function() {
-        var term = $(this).val().toLowerCase().trim();
-        $('#multi-item-tbody tr.multi-item-row').each(function() {
-            var name = ($(this).data('name') || '').toLowerCase();
-            var code = ($(this).data('code') || '').toLowerCase();
-            if (name.includes(term) || code.includes(term)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    });
-
-    $('#select-all-multi').on('change', function() {
-        var checked = $(this).is(':checked');
-        $('#multi-item-tbody tr.multi-item-row:visible .multi-item-cb').prop('checked', checked);
-    });
-
-    $('#btn-add-selected-items').on('click', function() {
-        $('#multi-item-tbody .multi-item-cb:checked').each(function() {
-            var $row = $(this).closest('tr');
-            addProductRow({
-                product_id: $row.data('id'),
-                product_name: $row.data('name'),
-                product_code: $row.data('code'),
-                cost: $row.data('cost'),
-                price: $row.data('price'),
-                tax_rate: 0,
-                unit: $row.data('unit'),
-                qty: 1
-            });
-        });
-        $('#multi-item-modal').modal('hide');
-        $('#multi-item-tbody .multi-item-cb').prop('checked', false);
-        $('#select-all-multi').prop('checked', false);
-    });
-
-    // --- Quick Create Item Modal Submission ---
-    $('#quick-create-item-form').on('submit', function(e) {
-        e.preventDefault();
-        var name = $('#quick-item-name').val().trim();
-        var code = $('#quick-item-code').val().trim() || ('ITM-' + Date.now().toString().slice(-6));
-        var cost = parseFloat($('#quick-item-cost').val()) || 0;
-        var price = parseFloat($('#quick-item-price').val()) || 0;
-
-        addProductRow({
-            product_id: 1,
-            product_name: name,
-            product_code: code,
-            cost: cost,
-            price: price,
-            tax_rate: 0,
-            unit: 'Unit',
-            qty: 1
-        });
-
-        $('#quick-create-item-modal').modal('hide');
-        this.reset();
-    });
-
-    // --- Slide-over Drawer Toggles ---
-    $('#open-transport-drawer-btn, #btn-bottom-transport').on('click', function() {
-        $('#comm-drawer').addClass('open');
-    });
-    $('#close-drawer-btn').on('click', function() {
-        $('#comm-drawer').removeClass('open');
-    });
-
-    // --- Side Panel Toggles & Docking ---
-    $('#toggle-drawer-btn, #reopen-panel-btn').on('click', function() {
-        $('#desk-bill-list-panel').toggle();
-    });
-    $('#btn-close-panel').on('click', function() {
-        $('#desk-bill-list-panel').hide();
-    });
-
-    $('#btn-dock-toggle').on('click', function() {
-        $('#comm-split-grid').toggleClass('dock-left');
-        var isLeft = $('#comm-split-grid').hasClass('dock-left');
-        localStorage.setItem('zolo_grn_dock', isLeft ? 'left' : 'right');
-    });
-    if (localStorage.getItem('zolo_grn_dock') === 'left') {
-        $('#comm-split-grid').addClass('dock-left');
-    }
-
-    // --- Side Panel Live Filter ---
-    $('#side-search-input').on('input', function() {
-        var term = $(this).val().toLowerCase().trim();
-        $('#side-grn-cards .bill-card').each(function() {
-            var no = ($(this).data('no') || '');
-            var sup = ($(this).data('supplier') || '');
-            if (no.includes(term) || sup.includes(term)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    });
-
-    // --- In-Place Edit Loading ---
-    $(document).on('click', '.btn-load-grn, .bill-card', function(e) {
-        if ($(e.target).is('a') || $(e.target).closest('a').length) return;
-        var id = $(this).data('id');
-        loadGrnToForm(id);
-    });
-
-    window.loadGrnToForm = function(id) {
-        $.getJSON('/goods-received-notes/' + id, function(res) {
-            if (!res || !res.grn) return;
-            var gn = res.grn;
-
-            $('#edit-grn-id').val(gn.id);
-            $('#form-method').val('PUT');
-            $('#grn-entry-form').attr('action', '/goods-received-notes/' + gn.id);
-
-            $('#entry-title-text').text('Edit Goods Received Note: ' + gn.grn_no);
-            $('#entry-breadcrumb').text('Home / Buying / Goods Received Notes / Edit: ' + gn.grn_no);
-            $('#status-pill').text(gn.status.toUpperCase().replace('_', ' '));
-
-            $('#grn_no').val(gn.grn_no);
-            $('#grn_date').val(gn.grn_date ? gn.grn_date.substring(0, 10) : '');
-            $('#supplier_id').val(gn.supplier_id);
-            $('#warehouse_id').val(gn.warehouse_id);
-            $('#purchase_type_id').val(gn.purchase_type_id || '');
-            $('#agent_id').val(gn.agent_id || '');
-            $('#order_no').val(gn.order_no || '');
-            $('#transport_name').val(gn.transport_name || '');
-            $('#lr_no').val(gn.lr_no || '');
-            $('#remarks').val(gn.remarks || '');
-
-            // Populate items
-            $('#order-table-body tr.item-row').remove();
-            if (res.items && res.items.length) {
-                $('#empty-row-placeholder').hide();
-                res.items.forEach(function(item) {
-                    addProductRow(item);
-                });
-            } else {
-                $('#empty-row-placeholder').show();
-            }
-
-            if (gn.status === 'pending') {
-                $('#btn-convert-purchase').show().off('click').on('click', function() {
-                    window.location.href = '/purchases?from_grn=' + gn.id;
-                });
-            } else {
-                $('#btn-convert-purchase').hide();
-            }
-
-            $('#side-grn-cards .bill-card').removeClass('active-editing');
-            $('#side-grn-cards .bill-card[data-id="' + gn.id + '"]').addClass('active-editing');
-        });
-    };
-
-    // --- Discard & Reset to New Form ---
-    $('#btn-discard, #btn-top-new').on('click', function() {
-        $('#edit-grn-id').val('');
-        $('#form-method').val('POST');
-        $('#grn-entry-form').attr('action', '{{ route("goods-received-notes.store") }}');
-        $('#entry-title-text').text('New Goods Received Note');
-        $('#entry-breadcrumb').text('Home / Buying / Goods Received Notes / New');
-        $('#status-pill').text('Draft GRN');
-        $('#grn-entry-form')[0].reset();
-        $('#order-table-body tr.item-row').remove();
-        $('#empty-row-placeholder').show();
-        $('#btn-convert-purchase').hide();
-        $('#side-grn-cards .bill-card').removeClass('active-editing');
-        recalculateTotals();
-    });
-</script>
-@endsection
+    @php
+        $materialConfig = [
+            'form' => 'grn-entry-form', 'documentKey' => 'grn', 'idField' => 'grn_id',
+            'numberField' => 'grn_no', 'totalField' => 'total_cost', 'rateField' => 'cost',
+            'purchase' => true, 'products' => $jsProductList, 'decimals' => $general_setting->decimal ?? 2,
+            'typeLabel' => 'Purchase', 'label' => 'Goods Received Note', 'title' => 'New Goods Received Note',
+            'breadcrumb' => 'Home / Buying / Goods Received Notes / New',
+            'storeUrl' => route('goods-received-notes.store'), 'productUrl' => route('products.quick-store'),
+            'partyUrl' => route('parties.quick-store'), 'token' => csrf_token(),
+            'partyType' => 'supplier', 'partySelect' => '#supplier_id', 'partyButton' => '#btn-quick-supplier',
+            'convertButton' => '#btn-convert-purchase', 'convertUrl' => route('purchases.index'), 'convertParam' => 'from_grn',
+            'editId' => request('edit'),
+        ];
+    @endphp
+    <script type="application/json" id="material-document-data">@json($materialConfig)</script>
+    <script src="{{ asset('js/material-document.js') }}?v={{ filemtime(public_path('js/material-document.js')) }}"></script>
+@endpush

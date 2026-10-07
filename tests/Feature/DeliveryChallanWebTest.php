@@ -26,6 +26,12 @@ class DeliveryChallanWebTest extends TestCase
         $_ENV['ERP_OPTIONAL_ACTIVATION_READY'] = 'true';
         \Illuminate\Support\Facades\Cache::flush();
         $this->adminUser = User::first();
+        if (!Product::first()) {
+            Product::forceCreate(['company_id' => 1, 'name' => 'Document fixture', 'code' => 'DOC-FIXTURE',
+                'type' => 'standard', 'barcode_symbology' => 'C128', 'category_id' => 1, 'unit_id' => 1,
+                'sale_unit_id' => 1, 'purchase_unit_id' => 1, 'price' => 10, 'cost' => 5, 'qty' => 0, 'is_active' => true]);
+        }
+
     }
 
     public function test_delivery_challan_command_center_renders_entry_workspace(): void
@@ -33,6 +39,9 @@ class DeliveryChallanWebTest extends TestCase
         $response = $this->actingAs($this->adminUser)->get('/delivery-challans');
 
         $response->assertStatus(200);
+        $html = $response->getContent();
+        $this->assertLessThan(strpos($html, 'js/material-document.js'), strpos($html, 'vendor/jquery/jquery.min.js'));
+
         $response->assertSee('Delivery Challan Command Center');
         $response->assertSee('comm-entry-workspace', false);
         $response->assertSee('New Delivery Challan');

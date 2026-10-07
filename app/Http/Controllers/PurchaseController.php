@@ -128,7 +128,7 @@ class PurchaseController extends Controller
 
     public function show($id)
     {
-        $purchase = Purchase::with(['supplier', 'warehouse'])->find($id);
+        $purchase = Purchase::with(['supplier', 'warehouse', 'payments'])->find($id);
         if (!$purchase) {
             return response()->json(['success' => false, 'message' => 'Purchase not found'], 404);
         }
@@ -151,6 +151,9 @@ class PurchaseController extends Controller
                 'total' => (float)$pp->total,
                 'unit_code' => $unit->unit_code ?? ($unit->unit_name ?? 'Unit'),
                 'purchase_unit_id' => $pp->purchase_unit_id,
+                'return_qty' => (float) $pp->return_qty,
+                'product_batch_id' => $pp->product_batch_id,
+                'expired_date' => $pp->product_batch_id ? ProductBatch::where('id', $pp->product_batch_id)->value('expired_date') : null,
                 'batch_no' => $pp->product_batch_id ? (ProductBatch::where('id', $pp->product_batch_id)->value('batch_no') ?? '') : '',
                 'imei_number' => $pp->imei_number ?? '',
             ];
@@ -1007,10 +1010,10 @@ class PurchaseController extends Controller
 
     public function productWithoutVariant()
     {
-        return Product::ActiveStandard()
+        return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->whereNull('is_variant')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
 
