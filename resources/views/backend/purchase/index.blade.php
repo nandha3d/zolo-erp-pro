@@ -1,52 +1,52 @@
 @extends('backend.layout.main') 
 
 @section('navbar-center')
-<div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100" style="gap:6px; min-width:0;">
+<div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100" style="min-width:0; gap:8px;">
     <!-- Left Title & Mode Toggles -->
-    <div class="d-flex align-items-center" style="gap:6px; min-width:0; flex-shrink:1; overflow:hidden;">
-        <span class="badge comm-title-badge" style="background:#0f172a;color:#38bdf8;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;position:static;">
+    <div class="d-flex align-items-center" style="gap:6px; min-width:0; flex-shrink:0;">
+        <span class="badge comm-title-badge">
             <i class="dripicons-download text-success"></i> Purchase Command Center
         </span>
-        <span style="color:#94a3b8;font-size:11px;">/</span>
-        <span id="doc-title-text" style="font-size:11.5px;font-weight:700;color:#7c3aed;white-space:nowrap;">New Purchase Bill</span>
-        <span id="doc-breadcrumb-mode" class="badge badge-primary doc-mode-pill" style="font-size:9px;padding:2px 5px;position:static;">New</span>
+        <span style="color:#cbd5e1;font-size:12px;font-weight:600;">/</span>
+        <span id="doc-title-text" class="comm-doc-title">New Purchase Bill</span>
+        <span id="doc-breadcrumb-mode" class="badge badge-primary doc-mode-pill">New</span>
 
         <!-- Segmented Mode Toggles -->
         <div class="pill-segmented-compact ml-1" role="group" aria-label="Payment Mode">
             <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
             <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
         </div>
-        <div class="pill-segmented-compact d-none d-lg-inline-flex" role="group" aria-label="Product Mode">
+        <div class="pill-segmented-compact ml-1" role="group" aria-label="Product Mode">
             <button type="button" class="segment-btn active" data-nature="product">Product</button>
             <button type="button" class="segment-btn" data-nature="service">Service</button>
             <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
         </div>
     </div>
 
-    <!-- Center Navigation Register Pills -->
-    <div class="d-none d-xl-flex align-items-center" style="gap:3px; flex-shrink:0;">
-        <a class="btn btn-sm btn-light py-0 px-2 active btn-register-tab" id="tab-all-purchases" href="javascript:void(0)" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;font-weight:600;"><i class="dripicons-list"></i> All</a>
-        <a class="btn btn-sm btn-light py-0 px-2 btn-register-tab" href="{{ route('goods-received-notes.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-box"></i> GRN</a>
-        <a class="btn btn-sm btn-light py-0 px-2 btn-register-tab" href="{{ route('transfers.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-swap"></i> Transfers</a>
-        <a class="btn btn-sm btn-light py-0 px-2 btn-register-tab" href="{{ route('return-purchase.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-return"></i> Returns</a>
+    <!-- Center Navigation Register Pills (Only on ultra-wide screens) -->
+    <div class="d-none d-xxl-flex align-items-center" style="gap:3px; flex-shrink:0;">
+        <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-purchases" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> GRN</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Transfers</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('return-purchase.index') }}"><i class="dripicons-return"></i> Returns</a>
     </div>
 
     <!-- Right Controls: Live Total, Details, Bill List, Add New, Hide Bar -->
     <div class="d-flex align-items-center" style="gap:5px; flex-shrink:0;">
-        <div class="header-grand-total-badge px-2" style="background:#fef3c7; border:1px solid #fde68a; border-radius:4px; font-size:11px; font-weight:800; color:#d97706; height:22px; display:inline-flex; align-items:center; gap:4px;">
+        <div class="header-grand-total-badge px-2">
             <span style="font-size:9px; color:#92400e; font-weight:700;">TOTAL:</span>
             <span id="header-grand-total-display">₹ 0.00</span>
         </div>
-        <button type="button" class="btn btn-outline-secondary py-0 px-2" id="btn-open-details" title="Open Charges & Transport Details" style="height:22px;font-size:10.5px;line-height:20px;">
-            ⚙ Details
+        <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-open-details" title="Open Charges & Transport Details">
+            <i class="dripicons-gear"></i> Details
         </button>
-        <button type="button" class="btn btn-outline-secondary py-0 px-2" id="btn-header-toggle-list" title="Toggle Purchase List Panel" style="height:22px;font-size:10.5px;line-height:20px;">
-            📖 Bill list
+        <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-header-toggle-list" title="Toggle Purchase List Panel">
+            <i class="dripicons-list"></i> Bill list
         </button>
-        <button type="button" class="btn btn-success py-0 px-2" id="btn-top-new" title="Add New Purchase" style="height:22px;font-size:10.5px;line-height:20px;background:#059669;border-color:#059669;color:#fff;">
+        <button type="button" class="comm-nav-btn comm-nav-btn-success" id="btn-top-new" title="Add New Purchase">
             <i class="dripicons-plus"></i> New
         </button>
-        <button type="button" class="btn btn-outline-secondary py-0 px-1 btn-toggle-topbar" id="btn-toggle-topbar" title="Hide top bar (Focus mode • Shortcut: Ctrl+Shift+F)" style="height:22px;font-size:10px;line-height:20px;color:#64748b;">
+        <button type="button" class="comm-nav-btn comm-nav-btn-secondary btn-toggle-topbar" id="btn-toggle-topbar" title="Hide top bar (Focus mode • Shortcut: Ctrl+Shift+F)">
             ▲ Hide
         </button>
     </div>
@@ -182,33 +182,26 @@
 
                 <!-- 3. ITEMS Section (Expanded to Fill All Available Viewport Space) -->
                 <div class="desk-card items-container mb-1" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
-                    <div class="items-section-header" style="padding:4px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;flex-shrink:0;">
+                    <div class="items-section-header">
                         <div class="items-counter-group" style="display:flex;align-items:center;gap:6px;">
                             <span class="items-title" style="font-weight:700;font-size:11.5px;color:#0f172a;">ITEMS</span>
                             <span class="items-meta-badge text-muted" id="items-meta-count" style="font-size:10.5px;">0 line(s)</span>
                         </div>
 
-                        <!-- Inlined Barcode Search in the Space -->
-                        <div class="item-quick-search-inline" style="position:relative;width:340px;max-width:40%;">
-                            <i class="fa fa-barcode text-muted" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;"></i>
-                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (F2)" style="padding-left:26px;padding-right:28px;height:26px;font-size:11.5px;border-radius:4px;" autocomplete="off">
-                            <span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:9.5px;background:#e2e8f0;padding:1px 4px;border-radius:3px;color:#475569;font-weight:700;">F2</span>
-                        </div>
-
-                        <div class="items-controls-group" style="display:flex;align-items:center;gap:5px;">
+                        <div class="items-controls-group">
                             <div class="density-segmented">
                                 <button type="button" class="density-btn" data-density="compact">Compact</button>
                                 <button type="button" class="density-btn active" data-density="cozy">Cozy</button>
                                 <button type="button" class="density-btn" data-density="large">Large</button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:11px;height:24px;" id="btn-multi-item" data-toggle="modal" data-target="#multi-item-modal">
+                            <button type="button" class="btn btn-sm btn-outline-secondary comm-items-btn" id="btn-multi-item" data-toggle="modal" data-target="#multi-item-modal">
                                 <i class="dripicons-menu"></i> Multi item
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px;height:24px;" id="btn-create-item-modal" data-toggle="modal" data-target="#quick-create-item-modal">
-                                + Create item
+                            <button type="button" class="btn btn-sm btn-outline-primary comm-items-btn" id="btn-create-item-modal" data-toggle="modal" data-target="#quick-create-item-modal">
+                                <i class="dripicons-plus"></i> Create item
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary py-0 px-2" style="font-size:11px;height:24px;background:#7c3aed;border-color:#7c3aed;" id="btn-add-item-row">
-                                + Add row
+                            <button type="button" class="btn btn-sm btn-primary comm-items-btn comm-items-btn-primary" id="btn-add-item-row">
+                                <i class="dripicons-plus"></i> Add row
                             </button>
                         </div>
                     </div>
@@ -219,7 +212,7 @@
                             <thead>
                                 <tr style="background:#7c3aed;color:#ffffff;font-size:11px;">
                                     <th style="width:36px;text-align:center;">#</th>
-                                    <th style="min-width:220px;">ITEM</th>
+                                    <th style="min-width:240px;">ITEM</th>
                                     <th style="width:110px;">PURCHASE TYPE</th>
                                     <th style="width:75px;">UNIT</th>
                                     <th style="width:95px;text-align:right;">RATE</th>
@@ -231,9 +224,25 @@
                                 </tr>
                             </thead>
                             <tbody id="order-table-body">
+                                <!-- Integrated In-Table Item Search Row -->
+                                <tr class="table-search-row" id="table-search-row">
+                                    <td style="text-align:center;vertical-align:middle;width:36px;">
+                                        <i class="fa fa-barcode" style="font-size:15px;color:#7c3aed;" title="Scan Barcode (F2)"></i>
+                                    </td>
+                                    <td style="vertical-align:middle;">
+                                        <div class="table-search-input-wrap">
+                                            <i class="fa fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:#7c3aed;pointer-events:none;"></i>
+                                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (F2)" autocomplete="off">
+                                            <span class="table-search-f2-badge">F2</span>
+                                        </div>
+                                    </td>
+                                    <td colspan="8" style="vertical-align:middle;font-size:11px;color:#6b21a8;font-style:italic;">
+                                        <span class="d-none d-md-inline">&larr; Scan barcode or type above to add item to voucher. Press Enter to add.</span>
+                                    </td>
+                                </tr>
                                 <tr class="empty-placeholder-row">
                                     <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
-                                        No items added yet. Search or scan above or click "+ Add row".
+                                        No items added yet. Scan barcode or search above, or click "+ Add row".
                                     </td>
                                 </tr>
                             </tbody>
@@ -243,34 +252,34 @@
 
 
                 <!-- 4. Fixed Bottom Action & Summary Bar (Matching Screenshot 3) -->
-                <div class="desk-summary-bottom-bar" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -2px 10px rgba(0,0,0,0.03);">
-                    <div class="d-flex align-items-center gap-3">
-                        <button type="button" class="btn btn-outline-secondary py-1 px-3 d-inline-flex align-items-center gap-2" id="btn-bottom-charges" style="font-size:11.5px;font-weight:600;">
+                <div class="desk-summary-bottom-bar">
+                    <div class="d-flex align-items-center" style="gap:10px;">
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-bottom-charges">
                             <span>Charges & remarks</span>
-                            <span class="badge badge-light" id="charges-badge-count">0</span>
+                            <span class="badge badge-light ml-1" id="charges-badge-count">0</span>
                         </button>
-                        <span class="text-muted" style="font-size:11px;" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
+                        <span class="text-muted d-none d-lg-inline" style="font-size:11px;" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-form-discard" style="font-size:12px;font-weight:600;">
+                    <div class="bottom-action-buttons">
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-form-discard">
                             <i class="dripicons-clockwise"></i> Discard
                         </button>
-                        <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-form-save-as" style="font-size:12px;font-weight:600;">
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-form-save-as">
                             <i class="dripicons-copy"></i> Save as
                         </button>
-                        <button type="submit" class="btn btn-primary py-1 px-3" id="btn-form-save" style="font-size:12px;font-weight:700;background:#7c3aed;border-color:#7c3aed;">
+                        <button type="submit" class="btn btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-form-save">
                             <i class="dripicons-document-edit"></i> Save
                         </button>
-                        <button type="button" class="btn btn-success py-1 px-3" id="btn-form-submit" style="font-size:12px;font-weight:700;background:#4338ca;border-color:#4338ca;">
+                        <button type="button" class="btn btn-success comm-bottom-btn comm-bottom-btn-success" id="btn-form-submit">
                             <i class="dripicons-checkmark"></i> Submit
                         </button>
-                        <button type="button" class="btn btn-outline-secondary py-1 px-2" id="btn-form-review" style="font-size:12px;">
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-form-review">
                             Review
                         </button>
                     </div>
 
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="bottom-summary-totals">
                         <div style="text-align:right;">
                             <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">NET</div>
                             <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-net-amount">₹ 0.00</div>
@@ -279,9 +288,9 @@
                             <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">GST / TAX</div>
                             <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-tax-amount">₹ 0.00</div>
                         </div>
-                        <div style="text-align:right;border-left:1px solid #cbd5e1;padding-left:12px;">
+                        <div style="text-align:right;border-left:1px solid #cbd5e1;padding-left:14px;">
                             <div style="font-size:9.5px;font-weight:800;color:#d97706;letter-spacing:0.04em;">GRAND TOTAL</div>
-                            <div style="font-size:16px;font-weight:800;color:#d97706;" id="display-grand-total">₹ 0.00</div>
+                            <div style="font-size:15px;font-weight:800;color:#d97706;" id="display-grand-total">₹ 0.00</div>
                         </div>
                     </div>
                 </div>
@@ -707,70 +716,232 @@
     </div>
 </div>
 
-<!-- Quick Create Item Modal -->
-<div id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
-    <div class="modal-dialog" style="max-width:520px;">
-        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-                <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
-                    <i class="fa fa-plus-circle" style="color:#7c3aed;"></i> Quick Create Item
-                </h5>
+<!-- Compact Add Product Modal (Screen 4 Form Embedded in Voucher) -->
+<div id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left compact-add-product-modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="modal-title" style="font-size:13.5px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px;margin:0;">
+                        <i class="fa fa-plus-circle" style="color:#7c3aed;"></i> Add Product
+                    </h5>
+                    <span style="font-size:10.5px;color:#64748b;">The field labels marked with * are required. Adds immediately to voucher.</span>
+                </div>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <form id="quick-create-item-form">
-                <div class="modal-body" style="padding:16px 18px;">
-                    <div class="form-group mb-2">
-                        <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Item Name *</label>
-                        <input type="text" id="quick-item-name" class="form-control form-control-sm" placeholder="e.g. Cotton Grey Yarn 40s" required style="height:32px;font-size:12px;">
+                <div class="modal-body">
+                    <!-- Section 1: Identification -->
+                    <div class="compact-modal-section-title">
+                        <i class="dripicons-information"></i> 1. Product Identification
                     </div>
-                    <div class="form-group mb-2">
-                        <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Item Code / Barcode *</label>
-                        <div class="input-group input-group-sm">
-                            <input type="text" id="quick-item-code" class="form-control form-control-sm" placeholder="e.g. ITM-1002" required style="height:32px;font-size:12px;">
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-outline-secondary" id="btn-quick-gen-code" style="font-size:11px;">⚡ Auto</button>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Product Type *</label>
+                                <select id="quick-item-type" name="type" class="form-control" required>
+                                    <option value="standard" selected>Standard</option>
+                                    <option value="combo">Combo</option>
+                                    <option value="digital">Digital</option>
+                                    <option value="service">Service</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="compact-field-block">
+                                <label>Product Name *</label>
+                                <input type="text" id="quick-item-name" name="name" class="form-control" placeholder="e.g. Cotton Grey Yarn 40s" required autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Product Code *</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="quick-item-code" name="code" class="form-control" placeholder="e.g. ITM-1002" required autocomplete="off">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-gen-code" title="Generate Random Code" style="height:26px;font-size:10.5px;padding:0 8px;line-height:1;"><i class="fa fa-refresh"></i> Auto</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-2">
-                        <div class="col-6">
-                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Cost / Purchase Rate (₹) *</label>
-                            <input type="number" id="quick-item-cost" class="form-control form-control-sm" placeholder="0.00" step="0.01" min="0" required style="height:32px;font-size:12px;">
+
+                    <!-- Section 2: Symbology & Organization -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Barcode Symbology *</label>
+                                <select id="quick-item-symbology" name="barcode_symbology" class="form-control" required>
+                                    <option value="C128" selected>Code 128</option>
+                                    <option value="C39">Code 39</option>
+                                    <option value="UPCA">UPC-A</option>
+                                    <option value="UPCE">UPC-E</option>
+                                    <option value="EAN8">EAN-8</option>
+                                    <option value="EAN13">EAN-13</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Unit</label>
-                            <select id="quick-item-unit" class="form-control form-control-sm" style="height:32px;font-size:12px;">
-                                <option value="Pc">Pc (Piece)</option>
-                                <option value="Kg">Kg (Kilogram)</option>
-                                <option value="Mtr">Mtr (Meter)</option>
-                                <option value="Box">Box</option>
-                                <option value="Unit">Unit</option>
-                            </select>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Brand</label>
+                                <select id="quick-item-brand" name="brand_id" class="form-control">
+                                    <option value="">Select Brand...</option>
+                                    @if(isset($lims_brand_list))
+                                        @foreach($lims_brand_list as $b)
+                                            <option value="{{ $b->id }}">{{ $b->title }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="compact-field-block">
+                                <label>Category *</label>
+                                <select id="quick-item-category" name="category_id" class="form-control" required>
+                                    <option value="" disabled selected>Select Category...</option>
+                                    @if(isset($lims_category_list))
+                                        @foreach($lims_category_list as $cat)
+                                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Section 3: Units of Measure -->
+                    <div class="compact-modal-section-title mt-2">
+                        <i class="dripicons-box"></i> 2. Units of Measure
+                    </div>
                     <div class="row">
-                        <div class="col-6">
-                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">GST Tax Rate</label>
-                            <select id="quick-item-tax" class="form-control form-control-sm" style="height:32px;font-size:12px;">
-                                <option value="0">0% (Nil)</option>
-                                <option value="5">5%</option>
-                                <option value="12">12%</option>
-                                <option value="18" selected>18%</option>
-                                <option value="28">28%</option>
-                            </select>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Product Unit *</label>
+                                <select id="quick-item-unit" name="unit_id" class="form-control" required>
+                                    @if(isset($lims_unit_list) && count($lims_unit_list))
+                                        @foreach($lims_unit_list as $u)
+                                            <option value="{{ $u->id }}" {{ $loop->first ? 'selected' : '' }}>{{ $u->unit_name }} ({{ $u->unit_code }})</option>
+                                        @endforeach
+                                    @else
+                                        <option value="1" selected>Piece (Pc)</option>
+                                        <option value="2">Kilogram (Kg)</option>
+                                        <option value="3">Meter (Mtr)</option>
+                                        <option value="4">Box (Box)</option>
+                                    @endif
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Type</label>
-                            <input type="text" class="form-control form-control-sm" value="Standard" readonly style="height:32px;font-size:12px;background:#f8fafc;">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Sale Unit</label>
+                                <select id="quick-item-sale-unit" name="sale_unit_id" class="form-control">
+                                    @if(isset($lims_unit_list) && count($lims_unit_list))
+                                        @foreach($lims_unit_list as $u)
+                                            <option value="{{ $u->id }}">{{ $u->unit_name }} ({{ $u->unit_code }})</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Purchase Unit</label>
+                                <select id="quick-item-purchase-unit" name="purchase_unit_id" class="form-control">
+                                    @if(isset($lims_unit_list) && count($lims_unit_list))
+                                        @foreach($lims_unit_list as $u)
+                                            <option value="{{ $u->id }}">{{ $u->unit_name }} ({{ $u->unit_code }})</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Cost, Pricing & Margins -->
+                    <div class="compact-modal-section-title mt-2">
+                        <i class="dripicons-tag"></i> 3. Cost, Pricing & Margins
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Product Cost (₹) *</label>
+                                <input type="number" id="quick-item-cost" name="cost" class="form-control" placeholder="0.00" step="any" min="0" required value="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Profit Margin (%)</label>
+                                <input type="number" id="quick-item-margin" name="profit_margin" class="form-control" placeholder="25.00" step="0.01" value="25.00">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Product Price (₹) *</label>
+                                <input type="number" id="quick-item-price" name="price" class="form-control" placeholder="0.00" step="any" min="0" required value="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Wholesale Price (₹)</label>
+                                <input type="number" id="quick-item-wholesale" name="wholesale_price" class="form-control" placeholder="0.00" step="any" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Tax, Inventory & Warranty -->
+                    <div class="compact-modal-section-title mt-2">
+                        <i class="dripicons-gear"></i> 4. Tax & Inventory
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Product Tax</label>
+                                <select id="quick-item-tax" name="tax_id" class="form-control">
+                                    <option value="" data-rate="0">No Tax (0%)</option>
+                                    @if(isset($lims_tax_list))
+                                        @foreach($lims_tax_list as $tax)
+                                            <option value="{{ $tax->id }}" data-rate="{{ $tax->rate }}" {{ $tax->rate == 18 ? 'selected' : '' }}>{{ $tax->name }} ({{ $tax->rate }}%)</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Tax Method</label>
+                                <select id="quick-item-tax-method" name="tax_method" class="form-control">
+                                    <option value="1" selected>Exclusive</option>
+                                    <option value="2">Inclusive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Alert Quantity</label>
+                                <input type="number" id="quick-item-alert-qty" name="alert_quantity" class="form-control" placeholder="10" step="any">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>Warranty</label>
+                                <div class="d-flex" style="gap:4px;">
+                                    <input type="number" id="quick-item-warranty" name="warranty" class="form-control" placeholder="1" style="width:50%;">
+                                    <select id="quick-item-warranty-type" name="warranty_type" class="form-control" style="width:50%;">
+                                        <option value="months" selected>Months</option>
+                                        <option value="years">Years</option>
+                                        <option value="days">Days</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
-                        💾 Save & Add to Voucher
+                <div class="modal-footer d-flex align-items-center justify-content-between">
+                    <button type="button" class="btn btn-sm btn-secondary comm-bottom-btn" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-quick-create-submit">
+                        <i class="dripicons-checkmark"></i> 💾 Save & Add to Voucher
                     </button>
                 </div>
             </form>
@@ -1197,7 +1368,23 @@
         $productSearch.focus();
     });
 
-    // Quick Create Item
+    // Quick Create Item - Full Compact Add Product Modal Handling
+    function calcQuickPrice() {
+        var c = parseFloat($('#quick-item-cost').val()) || 0;
+        var m = parseFloat($('#quick-item-margin').val()) || 0;
+        var p = c + (c * (m / 100));
+        $('#quick-item-price').val(p.toFixed(decimalPlaces));
+    }
+    $('#quick-item-cost, #quick-item-margin').on('input', calcQuickPrice);
+    $('#quick-item-price').on('input', function() {
+        var c = parseFloat($('#quick-item-cost').val()) || 0;
+        var p = parseFloat($(this).val()) || 0;
+        if (c > 0) {
+            var m = ((p - c) / c) * 100;
+            $('#quick-item-margin').val(m.toFixed(2));
+        }
+    });
+
     $('#btn-quick-gen-code').on('click', function() {
         $('#quick-item-code').val('ITM-' + Math.floor(100000 + Math.random() * 900000));
     });
@@ -1207,36 +1394,53 @@
         var name = $('#quick-item-name').val().trim();
         var code = $('#quick-item-code').val().trim();
         var cost = parseFloat($('#quick-item-cost').val()) || 0;
-        var unit = $('#quick-item-unit').val();
-        var taxRate = parseFloat($('#quick-item-tax').val()) || 0;
+        var price = parseFloat($('#quick-item-price').val()) || cost;
+        var unitId = $('#quick-item-unit').val();
+        var taxOption = $('#quick-item-tax option:selected');
+        var taxRate = parseFloat(taxOption.data('rate')) || 0;
 
         if (!name) return;
 
-        var btn = $(this).find('button[type="submit"]');
+        var btn = $('#btn-quick-create-submit');
         btn.prop('disabled', true).text('Saving...');
+
+        var postData = {
+            _token: '{{ csrf_token() }}',
+            name: name,
+            code: code,
+            type: $('#quick-item-type').val() || 'standard',
+            barcode_symbology: $('#quick-item-symbology').val() || 'C128',
+            brand_id: $('#quick-item-brand').val() || null,
+            category_id: $('#quick-item-category').val() || null,
+            unit_id: unitId,
+            sale_unit_id: $('#quick-item-sale-unit').val() || unitId,
+            purchase_unit_id: $('#quick-item-purchase-unit').val() || unitId,
+            cost: cost,
+            price: price,
+            profit_margin: parseFloat($('#quick-item-margin').val()) || null,
+            profit_margin_type: 'percentage',
+            wholesale_price: parseFloat($('#quick-item-wholesale').val()) || null,
+            alert_quantity: parseFloat($('#quick-item-alert-qty').val()) || null,
+            tax_id: $('#quick-item-tax').val() || null,
+            tax_method: $('#quick-item-tax-method').val() || 1,
+            warranty: $('#quick-item-warranty').val() || null,
+            warranty_type: $('#quick-item-warranty-type').val() || 'months',
+        };
 
         $.ajax({
             type: 'POST',
             url: '{{ route("products.quick-store") }}',
-            data: {
-                _token: '{{ csrf_token() }}',
-                name: name,
-                code: code,
-                price: cost,
-                cost: cost,
-                unit_id: unit,
-                tax_id: $('#quick-item-tax').data('tax-id') || null
-            },
+            data: postData,
             success: function(res) {
-                btn.prop('disabled', false).text('Save & Add to Voucher');
+                btn.prop('disabled', false).html('<i class="dripicons-checkmark"></i> 💾 Save & Add to Voucher');
                 var p = (res && res.product) ? res.product : {
                     id: 0,
                     name: name,
                     code: code || ('ITM-' + Math.floor(100000 + Math.random() * 900000)),
-                    price: cost,
+                    price: price,
                     cost: cost,
                     tax_rate: taxRate,
-                    unit: unit || 'Unit',
+                    unit: $('#quick-item-unit option:selected').text().split('(')[0].trim() || 'Unit',
                     value: (code || name) + '|' + name,
                     label: (code || name) + ' - ' + name
                 };
@@ -1257,30 +1461,26 @@
 
                 $('#quick-create-item-modal').modal('hide');
                 $('#quick-create-item-form')[0].reset();
+                $('#quick-item-code').val('ITM-' + Math.floor(100000 + Math.random() * 900000));
                 $productSearch.focus();
             },
-            error: function() {
-                btn.prop('disabled', false).text('Save & Add to Voucher');
-                var fallbackProduct = {
-                    id: 0,
-                    name: name,
-                    code: code || ('ITM-' + Math.floor(100000 + Math.random() * 900000)),
-                    price: cost,
-                    cost: cost,
-                    tax_rate: taxRate,
-                    unit: unit || 'Unit',
-                    value: (code || name) + '|' + name,
-                    label: (code || name) + ' - ' + name
-                };
-                allProducts.unshift(fallbackProduct);
-                lims_product_code.unshift(fallbackProduct.value);
-                addProductRow(fallbackProduct);
-                $('#quick-create-item-modal').modal('hide');
-                $('#quick-create-item-form')[0].reset();
-                $productSearch.focus();
+            error: function(err) {
+                btn.prop('disabled', false).html('<i class="dripicons-checkmark"></i> 💾 Save & Add to Voucher');
+                var msg = 'Failed to create product.';
+                if (err && err.responseJSON && err.responseJSON.message) {
+                    msg += ' ' + err.responseJSON.message;
+                }
+                alert(msg);
             }
         });
     });
+
+
+    function reindexRows() {
+        $('#order-table-body tr.order-item-row').each(function(idx) {
+            $(this).find('td:first').text(idx + 1);
+        });
+    }
 
     // Delete Row
     $(document).on('click', '.btn-delete-row', function() {

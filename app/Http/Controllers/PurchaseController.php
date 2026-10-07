@@ -7,6 +7,8 @@ use Stripe\Stripe;
 use App\Models\Tax;
 use App\Models\Sale;
 use App\Models\Unit;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\User;
 use App\Models\Account;
 use App\Models\Payment;
@@ -114,7 +116,10 @@ class PurchaseController extends Controller
             $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
             $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
             $pending_grns = class_exists(\App\Models\GoodsReceivedNote::class) ? \App\Models\GoodsReceivedNote::with(['supplier:id,name', 'items.product', 'items.unit'])->where('status', 'pending')->latest('id')->limit(30)->get() : collect();
-            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'pending_grns'));
+            $lims_brand_list = Brand::where('is_active', true)->get();
+            $lims_category_list = Category::where('is_active', true)->get();
+            $lims_unit_list = Unit::where('is_active', true)->get();
+            return view('backend.purchase.index', compact( 'lims_account_list', 'lims_warehouse_list', 'all_permission', 'lims_pos_setting_data', 'warehouse_id', 'starting_date', 'ending_date', 'purchase_status', 'payment_status', 'custom_fields', 'field_name', 'currency_list', 'todayPurchasesAmount', 'todayPurchasesCount', 'totalPaid', 'totalDue', 'lims_supplier_list', 'recent_bills', 'lims_tax_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'currency', 'purchaseTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'pending_grns', 'lims_brand_list', 'lims_category_list', 'lims_unit_list'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

@@ -475,16 +475,34 @@ class CommercialController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:100',
-            'price' => 'required|numeric|min:0',
-            'cost' => 'nullable|numeric|min:0',
+            'type' => 'nullable|string',
+            'barcode_symbology' => 'nullable|string',
+            'brand_id' => 'nullable',
+            'category_id' => 'nullable',
             'unit_id' => 'nullable',
+            'sale_unit_id' => 'nullable',
+            'purchase_unit_id' => 'nullable',
+            'cost' => 'nullable|numeric|min:0',
+            'price' => 'nullable|numeric|min:0',
+            'profit_margin_type' => 'nullable|string',
+            'profit_margin' => 'nullable|numeric',
+            'wholesale_price' => 'nullable|numeric',
+            'daily_sale_objective' => 'nullable|numeric',
+            'alert_quantity' => 'nullable|numeric',
             'tax_id' => 'nullable',
+            'tax_method' => 'nullable',
+            'warranty' => 'nullable',
+            'warranty_type' => 'nullable|string',
+            'guarantee' => 'nullable',
+            'guarantee_type' => 'nullable|string',
         ]);
 
         $name = trim($validated['name']);
         $code = !empty($validated['code']) ? trim($validated['code']) : ('ITM-' . mt_rand(100000, 999999));
-        $price = (float)$validated['price'];
-        $cost = isset($validated['cost']) ? (float)$validated['cost'] : $price;
+        $cost = isset($validated['cost']) ? (float)$validated['cost'] : 0;
+        $price = isset($validated['price']) && $validated['price'] !== '' ? (float)$validated['price'] : ($cost > 0 ? $cost : 0);
+        $type = !empty($validated['type']) ? strtolower(trim($validated['type'])) : 'standard';
+        $barcodeSymbology = !empty($validated['barcode_symbology']) ? trim($validated['barcode_symbology']) : 'C128';
 
         $unit = null;
         if (!empty($validated['unit_id'])) {
@@ -494,9 +512,17 @@ class CommercialController extends Controller
         if (!$unit) {
             $unit = \App\Models\Unit::first();
         }
+        $unitId = $unit ? $unit->id : 1;
+        $saleUnitId = !empty($validated['sale_unit_id']) ? $validated['sale_unit_id'] : $unitId;
+        $purchaseUnitId = !empty($validated['purchase_unit_id']) ? $validated['purchase_unit_id'] : $unitId;
 
-        $category = \App\Models\Category::where('is_active', true)->first();
-        $categoryId = $category ? $category->id : 1;
+        $categoryId = null;
+        if (!empty($validated['category_id'])) {
+            $categoryId = $validated['category_id'];
+        } else {
+            $cat = \App\Models\Category::where('is_active', true)->first();
+            $categoryId = $cat ? $cat->id : 1;
+        }
 
         $tax = null;
         if (!empty($validated['tax_id'])) {
@@ -507,16 +533,26 @@ class CommercialController extends Controller
         $product = \App\Models\Product::create([
             'name' => $name,
             'code' => $code,
-            'type' => 'standard',
-            'barcode_symbology' => 'code128',
+            'type' => $type,
+            'barcode_symbology' => $barcodeSymbology,
+            'brand_id' => !empty($validated['brand_id']) ? $validated['brand_id'] : null,
             'category_id' => $categoryId,
-            'unit_id' => $unit ? $unit->id : 1,
-            'purchase_unit_id' => $unit ? $unit->id : 1,
-            'sale_unit_id' => $unit ? $unit->id : 1,
+            'unit_id' => $unitId,
+            'purchase_unit_id' => $purchaseUnitId,
+            'sale_unit_id' => $saleUnitId,
             'cost' => $cost,
             'price' => $price,
+            'profit_margin_type' => $validated['profit_margin_type'] ?? 'percentage',
+            'profit_margin' => $validated['profit_margin'] ?? null,
+            'wholesale_price' => $validated['wholesale_price'] ?? null,
+            'daily_sale_objective' => $validated['daily_sale_objective'] ?? null,
+            'alert_quantity' => $validated['alert_quantity'] ?? null,
             'tax_id' => $tax ? $tax->id : null,
-            'tax_method' => 1,
+            'tax_method' => $validated['tax_method'] ?? 1,
+            'warranty' => $validated['warranty'] ?? null,
+            'warranty_type' => $validated['warranty_type'] ?? 'months',
+            'guarantee' => $validated['guarantee'] ?? null,
+            'guarantee_type' => $validated['guarantee_type'] ?? 'months',
             'qty' => 0,
             'is_active' => 1,
         ]);

@@ -336,21 +336,57 @@ Implemented backend tables, models, controllers, and inline creation ([+] / Alt+
   7. Formatted autocomplete dropdown in `commercial-workspace.css` with `z-index: 999999 !important` and soft drop-shadow.
 - **Test Evidence:** All 25 feature tests passing (100%).
 
+
 ---
 
-## 3. Verification & Testing Evidence
+## 3. In-Table Search, Barcode Realignment, Bottom Bar Spacing & Compact Add Product Modal (Oct 2026)
+
+Addressed user feedback:
+> "this item search must be comes in the table, barcode is not aligned properly.. also the buttons are not aligned properlygive some spacing in the bottom bar make the buttons smaller. gpa between each button. this add product must be comes in the purchase and sales item creation. make a compact one."
+
+1. **Integrated In-Table Item Search Row (`#table-search-row`):**
+   - Relocated the standalone search input from above the table directly into the first row of `#order-table` under `<tbody>`.
+   - **Barcode Realignment:** In `#` column (`width: 36px`), vertically and horizontally centered a dedicated purple barcode icon (`<i class="fa fa-barcode"></i>`).
+   - In `ITEM` column, placed `#lims_productcodeSearch` with an embedded magnifying glass icon (`<i class="fa fa-search"></i>`) on the left (`padding-left: 28px`), zero overlap with placeholder text, and shortcut badge `F2` pinned to the right.
+   - Retained global keyboard listener (`F2`) to instantly focus the in-table search input from anywhere on the voucher.
+
+2. **Items Toolbar Alignment & Clean Labels:**
+   - Standardized button heights to 24px and normalized baseline alignment across `.items-controls-group`.
+   - Removed duplicate `+` prefixes on `<i class="dripicons-plus"></i> Create item` and `<i class="dripicons-plus"></i> Add row`.
+   - Ensured clean 6px spacing between `.density-segmented`, `Multi item`, `Create item`, and `Add row`.
+
+3. **Bottom Action & Summary Bar Compaction & Spacing:**
+   - Made bottom bar action buttons smaller and sleeker (`height: 24px !important; font-size: 10.5px !important; padding: 0 9px !important; border-radius: 4px !important;`).
+   - Added explicit 8px gap between each button (`.desk-summary-bottom-bar .bottom-action-buttons .comm-bottom-btn + .comm-bottom-btn { margin-left: 8px !important; }`), completely resolving button collision in Bootstrap 4.
+   - Added 8px separation between `Charges & remarks` and the inline remarks preview.
+   - Re-architected `.comm-entry-workspace`, `form`, and `.desk-card.items-container .table-responsive` with `min-height: 0 !important; flex: 1 1 0% !important;`, preventing any vertical viewport overflow so the bottom summary bar is 100% visible and never clipped.
+
+4. **Full Catalog Compact "Add Product" Modal (Embedded in Purchases & Sales):**
+   - Replaced basic 5-field quick modal with the full 5-section catalog product creation workflow from `backend.product.create`:
+     1. **Product Identification:** Product Type (Standard, Combo, Digital, Service), Product Name, Auto-generated Product Code with `⚡ Auto` button, Barcode Symbology (Code 128, Code 39, EAN-8, EAN-13, UPC-A, UPC-E), Brand (dynamic dropdown), and Category (dynamic dropdown).
+     2. **Units of Measure:** Product Unit, Sale Unit, and Purchase Unit.
+     3. **Cost, Pricing & Margins:** Product Cost (₹), Profit Margin (%), Product Price (₹), Wholesale Price (₹) with reactive two-way calculation (`Price = Cost + (Cost * Margin%)`).
+     4. **Tax & Inventory:** Product Tax (dynamic tax dropdown with rates), Tax Method (Exclusive/Inclusive), Alert Quantity, Warranty Period & Type (Months/Years).
+   - Styled with compact 24-26px form inputs and 9.5px uppercase labels in a neat 820px modal dialog (`.compact-add-product-modal`).
+   - Connected via AJAX to `POST /products/quick-store`, validating and saving all catalog fields via `CommercialController::quickStoreProduct()`, dynamically prepending the new item to the active voucher grid and autocomplete memory.
+
+5. **Row Index Integrity on Deletion:**
+   - Implemented `reindexRows()` in both `purchase/index.blade.php` and `sale/index.blade.php` to guarantee sequential row numbering (1, 2, 3...) when removing rows via the trash button.
+
+---
+
+## 4. Verification & Testing Evidence
 - Automated feature tests executed and passed:
-  - `vendor/bin/phpunit tests/Feature/OptechMasterWebTest.php tests/Feature/OptechVoucherWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: 25 passed (125 assertions, 100%), Duration: 11.47s
+  - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
+  - Results: **33 passed (167 assertions, 100%)**, Duration: ~18s
 
 ---
 
-## 4. Crash Recovery Protocol for Any Agent
+## 5. Crash Recovery Protocol for Any Agent
 1. **Never start from scratch:** When reopened after a crash or system reboot, inspect SESSION_MEMORY.md first.
 2. **Check Git Status:** Verify branch is enhanced-ui (git status and git branch -vv).
 3. **Verify Database & Dependencies:** Check migrations are up to date.
 4. **Continue Next Steps:**
    - Review pending screens in documents/zolo_erp_implementation_docs/32_OPTECH_SCREENS_AUDIT_AND_BACKEND_GAP_REPORT.md.
-   - Implement Delivery Challan (DC) and Goods Received Note (GRN) web management and entry UIs.
    - Continue audit and modernization of remaining modules (Job Work, Production, GST).
 
