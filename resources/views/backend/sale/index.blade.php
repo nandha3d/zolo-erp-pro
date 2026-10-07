@@ -1144,13 +1144,166 @@
         });
     }
 
+    // --- Apply Selected Product to an Existing Table Row ---
+    function applyProductToRow(tr, p) {
+        tr.attr('data-product-id', p.id);
+        tr.find('.row-product-id').val(p.id);
+        tr.find('.row-product-code').val(p.code);
+        tr.find('.row-item-name').val(p.name).attr('title', p.code ? 'Code: ' + p.code : '');
+
+        var rate = parseFloat(p.price || p.cost || 0);
+        tr.find('.row-rate').val(rate.toFixed(decimalPlaces));
+
+        // Match or add Unit
+        if (p.unit) {
+            var uSel = tr.find('.row-unit-select');
+            var matched = false;
+            uSel.find('option').each(function() {
+                if ($(this).val().toLowerCase() === p.unit.toLowerCase() || $(this).text().toLowerCase() === p.unit.toLowerCase()) {
+                    uSel.val($(this).val());
+                    matched = true;
+                    return false;
+                }
+            });
+            if (!matched) {
+                uSel.append(`<option value="${p.unit}" selected>${p.unit}</option>`);
+            }
+        }
+
+        // Match Tax Rate
+        if (p.tax_rate !== undefined && p.tax_rate !== null) {
+            var tSel = tr.find('.row-tax-rate');
+            var tVal = parseFloat(p.tax_rate);
+            tSel.find('option').each(function() {
+                if (parseFloat($(this).val()) === tVal) {
+                    tSel.val($(this).val());
+                    return false;
+                }
+            });
+        }
+
+        // Recalculate Row Totals
+        var qty = parseFloat(tr.find('.row-qty').val()) || 1;
+        var taxRate = parseFloat(tr.find('.row-tax-rate').val()) || 0;
+        var amount = rate * qty;
+        var taxAmount = amount * (taxRate / 100);
+        var lineTotal = amount + taxAmount;
+
+        tr.find('.row-amount').val(amount.toFixed(decimalPlaces));
+        tr.find('.row-subtotal-input').val(lineTotal.toFixed(decimalPlaces));
+        tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
+        tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
+
+        recalcTableSummary();
+    }
+
+    // --- Searchable Item Name in Table Rows ---
+    function initRowItemAutocomplete($input) {
+        if (!$input || !$input.length) return;
+
+        if ($input.data('ui-autocomplete')) {
+            $input.autocomplete('destroy');
+        }
+
+        $input.autocomplete({
+            minLength: 1,
+            autoFocus: true,
+            source: function(request, response) {
+                var term = request.term.toLowerCase().trim();
+                var matches = allProducts.filter(function(p) {
+                    return (p.name && p.name.toLowerCase().includes(term)) ||
+                           (p.code && p.code.toLowerCase().includes(term));
+                });
+                response(matches.slice(0, 20));
+            },
+            select: function(event, ui) {
+                if (ui && ui.item) {
+                    var tr = $(this).closest('tr');
+                    applyProductToRow(tr, ui.item);
+                    setTimeout(function() {
+                        tr.find('.row-qty').focus().select();
+                    }, 50);
+                }
+                return false;
+            }
+        });
+
+        if ($input.data('ui-autocomplete')) {
+            $input.data('ui-autocomplete')._renderItem = function(ul, item) {
+                var rateStr = '₹ ' + (parseFloat(item.price || item.cost || 0)).toFixed(decimalPlaces);
+                return $("<li>")
+                    .append(`
+                        <div class="custom-ac-item d-flex align-items-center justify-content-between">
+                            <div style="flex:1;min-width:0;padding-right:8px;">
+                                <div class="item-title">${item.name}</div>
+                                <div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px;">
+                                    <span class="item-code-badge">${item.code}</span>
+                                    <span>•</span>
+                                    <span class="item-rate">${rateStr}</span>
+                                    <span>•</span>
+                                    <span>${item.unit || 'Unit'}</span>
+                                </div>
+                            </div>
+                            <div style="flex-shrink:0;">
+                                <span class="badge" style="background:#f3e8ff;color:#7c3aed;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">Select</span>
+                            </div>
+                        </div>
+                    `)
+                    .appendTo(ul);
+            };
+        }
+
+        $input.on('keydown', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                var val = $(this).val().trim();
+                var tr = $(this).closest('tr');
+                if (val) {
+                    var exact = allProducts.find(function(p) {
+                        return (p.code && p.code.toLowerCase() === val.toLowerCase()) ||
+                               (p.name && p.name.toLowerCase() === val.toLowerCase());
+                    });
+                    if (exact) {
+                        applyProductToRow(tr, exact);
+                        tr.find('.row-qty').focus().select();
+                    } else {
+                        $.ajax({
+                            type: 'GET',
+                            url: '{{ route("product_sale.search") }}',
+                            data: { data: val },
+                            success: function(data) {
+                                if (data && data.length) {
+                                    applyProductToRow(tr, {
+                                        id: data[9],
+                                        name: data[0],
+                                        code: data[1],
+                                        price: parseFloat(data[2]) || 0,
+                                        cost: parseFloat(data[2]) || 0,
+                                        tax_rate: parseFloat(data[3]) || 0,
+                                        unit: data[6] ? data[6].split(',')[0] : 'Unit'
+                                    });
+                                }
+                                tr.find('.row-qty').focus().select();
+                            },
+                            error: function() {
+                                tr.find('.row-qty').focus().select();
+                            }
+                        });
+                    }
+                } else {
+                    tr.find('.row-qty').focus().select();
+                }
+            }
+        });
+    }
+
     // --- Add Row to Items Grid Table ---
     function addProductRow(item) {
         // Remove empty placeholder row if exists
         $('#order-table-body .empty-placeholder-row').remove();
 
-        // If product already in grid, increment qty
-        if (item.product_id && item.product_id > 0) {
+        // If product already in grid and not manual edit, increment qty
+        if (item.product_id && item.product_id > 0 && !item.is_manual) {
             var existing = $('#order-table-body tr.order-item-row[data-product-id="' + item.product_id + '"]');
             if (existing.length) {
                 var qtyInput = existing.find('.row-qty');
@@ -1175,7 +1328,7 @@
             <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}">
                 <td style="text-align:center;font-weight:600;color:#64748b;vertical-align:middle;">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
-                    <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${item.product_name || ''}" placeholder="Type item name..." title="${item.product_code ? 'Code: ' + item.product_code : ''}">
+                    <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${item.product_name || ''}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
                     <input type="hidden" name="product_id[]" class="row-product-id" value="${item.product_id || 0}">
                     <input type="hidden" name="product_code[]" class="row-product-code" value="${item.product_code || ''}">
                 </td>
@@ -1243,6 +1396,7 @@
         `);
 
         $('#order-table-body').append(tr);
+        initRowItemAutocomplete(tr.find('.row-item-name'));
         if (item.is_manual) {
             tr.find('.row-item-name').focus();
         }
@@ -1689,13 +1843,23 @@
 
     // --- Auto-retract all dropdowns when clicking anywhere outside ---
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('.bootstrap-select, .dropdown, .ui-autocomplete, #lims_productcodeSearch').length) {
+        if (!$(e.target).closest('.bootstrap-select, .dropdown, .ui-autocomplete, #lims_productcodeSearch, .row-item-name').length) {
             $('.bootstrap-select.open, .bootstrap-select.show, .dropdown.show').removeClass('open show');
             $('.bootstrap-select .dropdown-menu.show, .dropdown-menu.show').removeClass('show');
             if ($productSearch.data('ui-autocomplete')) {
                 $productSearch.autocomplete('close');
             }
+            $('.row-item-name').each(function() {
+                if ($(this).data('ui-autocomplete')) {
+                    $(this).autocomplete('close');
+                }
+            });
         }
+    });
+
+    // Initialize row autocompletes for any pre-existing rows
+    $('#order-table-body tr.order-item-row .row-item-name').each(function() {
+        initRowItemAutocomplete($(this));
     });
 
     $(document).on('show.bs.dropdown show.bs.select', function(e) {

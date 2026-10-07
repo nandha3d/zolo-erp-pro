@@ -370,15 +370,23 @@ Addressed user feedback:
    - Styled with compact 24-26px form inputs and 9.5px uppercase labels in a neat 820px modal dialog (`.compact-add-product-modal`).
    - Connected via AJAX to `POST /products/quick-store`, validating and saving all catalog fields via `CommercialController::quickStoreProduct()`, dynamically prepending the new item to the active voucher grid and autocomplete memory.
 
-5. **Row Index Integrity on Deletion:**
-   - Implemented `reindexRows()` in both `purchase/index.blade.php` and `sale/index.blade.php` to guarantee sequential row numbering (1, 2, 3...) when removing rows via the trash button.
+6. **In-Place Searchable Item Rows (Table Grid Autocomplete):**
+   - Implemented `initRowItemAutocomplete($input)` and `applyProductToRow(tr, product)` in both `purchase/index.blade.php` and `sale/index.blade.php`.
+   - Bound autocomplete directly to every `.row-item-name` input in the table grid.
+   - When editing or typing directly inside any row's ITEM cell (e.g. typing "as"):
+     - Autocomplete dropdown pops up immediately under that specific row with product name, code, rate, unit, and "Select" badge.
+     - Selecting a product (or pressing Enter on exact/AJAX match) immediately updates that row's product ID, code, name, rate (cost for purchases, price for sales), matching unit, and tax rate.
+     - Recalculates amount, line total, and voucher net/tax/grand totals reactively.
+     - Automatically advances focus to the Qty field for rapid keyboard voucher entry.
+   - Initialized autocomplete for all dynamic row additions (`addProductRow`, `+ Add row`), loaded vouchers (`loadPurchaseToForm`, `loadSaleToForm`), and initial page load rows.
+   - Added subtle purple focus state (`.desk-grid-table input.row-item-name:focus`) in `commercial-workspace.css`.
 
 ---
 
 ## 4. Verification & Testing Evidence
 - Automated feature tests executed and passed:
   - `vendor/bin/phpunit tests/Feature/OptechVoucherWebTest.php tests/Feature/OptechMasterWebTest.php tests/Feature/DeliveryChallanWebTest.php tests/Feature/GoodsReceivedNoteWebTest.php tests/Feature/AccountingWebTest.php`
-  - Results: **33 passed (167 assertions, 100%)**, Duration: ~18s
+  - Results: **33 passed (167 assertions, 100%)**, Duration: ~13s
 
 ---
 
