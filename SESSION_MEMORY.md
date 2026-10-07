@@ -8,15 +8,17 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 14:15:00 (+05:30)
-- **Active Git Branch:** enhanced-ui (synchronized with nandha-origin/enhanced-ui and origin/enhanced-ui)
-- **Upstream Remote:** nandha-origin/enhanced-ui & origin/enhanced-ui
+- **Last Updated:** 2026-10-07 15:38:00 (+05:30)
+- **Active Git Branch:** enhanced-ui & ui (synchronized across nandha-origin and origin)
+- **Upstream Remotes:**
+  - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`enhanced-ui`, `ui`)
+  - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`enhanced-ui`, `ui`)
 - **Latest Commits:**
-  - 39b1540 — "feat(commercial): expand primary document field widths, add 3px padding and compact terms strip"
-  - 213e88c — "feat(commercial): make table item inputs searchable in-place with autocomplete and reactive row auto-population"
-  - 4f5d9d3 — "feat(commercial): integrate in-table search, realign barcode, space bottom bar buttons, and embed compact Add Product modal"
-- **Working Tree State:** All automated feature suites passing (100%), preparing commit for section colors, dark mode, and reactive tax linking
-- **Test Suite Status:** 33/33 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
+  - `88cbb22` — "feat(commercial): add explicit Split View buttons in navbar and fullwidth strip with smart auto-return"
+  - `3e9a40d` — "feat(commercial): eliminate double boxes, align auto button, add inline category/brand creation, standardize GST slabs, and restore fullwidth register view"
+  - `df10fbb` — "feat(commercial): add section color differentiation, left-sidebar thead color, reactive gst classification, and dark theme support"
+- **Working Tree State:** Clean, all automated feature test suites passing 100% (36/36 tests, 184 assertions)
+- **Test Suite Status:** 36/36 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
 
 ---
 
