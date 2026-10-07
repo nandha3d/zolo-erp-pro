@@ -4,12 +4,12 @@
 <div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100" style="gap:6px; min-width:0;">
     <!-- Left Title & Mode Toggles -->
     <div class="d-flex align-items-center" style="gap:6px; min-width:0; flex-shrink:1; overflow:hidden;">
-        <span class="badge" style="background:#0f172a;color:#38bdf8;font-size:10.5px;font-weight:700;padding:3px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;">
+        <span class="badge comm-title-badge" style="background:#0f172a;color:#38bdf8;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;position:static;">
             <i class="dripicons-download text-success"></i> Purchase Command Center
         </span>
         <span style="color:#94a3b8;font-size:11px;">/</span>
         <span id="doc-title-text" style="font-size:11.5px;font-weight:700;color:#7c3aed;white-space:nowrap;">New Purchase Bill</span>
-        <span id="doc-breadcrumb-mode" class="badge badge-primary" style="font-size:9px;padding:1px 5px;">New</span>
+        <span id="doc-breadcrumb-mode" class="badge badge-primary doc-mode-pill" style="font-size:9px;padding:2px 5px;position:static;">New</span>
 
         <!-- Segmented Mode Toggles -->
         <div class="pill-segmented-compact ml-1" role="group" aria-label="Payment Mode">
@@ -25,13 +25,13 @@
 
     <!-- Center Navigation Register Pills -->
     <div class="d-none d-xl-flex align-items-center" style="gap:3px; flex-shrink:0;">
-        <a class="btn btn-sm btn-light py-0 px-2 active" id="tab-all-purchases" href="javascript:void(0)" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;font-weight:600;"><i class="dripicons-list"></i> All</a>
-        <a class="btn btn-sm btn-light py-0 px-2" href="{{ route('goods-received-notes.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-box"></i> GRN</a>
-        <a class="btn btn-sm btn-light py-0 px-2" href="{{ route('transfers.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-swap"></i> Transfers</a>
-        <a class="btn btn-sm btn-light py-0 px-2" href="{{ route('return-purchase.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-return"></i> Returns</a>
+        <a class="btn btn-sm btn-light py-0 px-2 active btn-register-tab" id="tab-all-purchases" href="javascript:void(0)" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;font-weight:600;"><i class="dripicons-list"></i> All</a>
+        <a class="btn btn-sm btn-light py-0 px-2 btn-register-tab" href="{{ route('goods-received-notes.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-box"></i> GRN</a>
+        <a class="btn btn-sm btn-light py-0 px-2 btn-register-tab" href="{{ route('transfers.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-swap"></i> Transfers</a>
+        <a class="btn btn-sm btn-light py-0 px-2 btn-register-tab" href="{{ route('return-purchase.index') }}" style="font-size:10.5px;height:22px;line-height:20px;border:1px solid #cbd5e1;"><i class="dripicons-return"></i> Returns</a>
     </div>
 
-    <!-- Right Controls: Live Total, Details, Bill List, Add New -->
+    <!-- Right Controls: Live Total, Details, Bill List, Add New, Hide Bar -->
     <div class="d-flex align-items-center" style="gap:5px; flex-shrink:0;">
         <div class="header-grand-total-badge px-2" style="background:#fef3c7; border:1px solid #fde68a; border-radius:4px; font-size:11px; font-weight:800; color:#d97706; height:22px; display:inline-flex; align-items:center; gap:4px;">
             <span style="font-size:9px; color:#92400e; font-weight:700;">TOTAL:</span>
@@ -45,6 +45,9 @@
         </button>
         <button type="button" class="btn btn-success py-0 px-2" id="btn-top-new" title="Add New Purchase" style="height:22px;font-size:10.5px;line-height:20px;background:#059669;border-color:#059669;color:#fff;">
             <i class="dripicons-plus"></i> New
+        </button>
+        <button type="button" class="btn btn-outline-secondary py-0 px-1 btn-toggle-topbar" id="btn-toggle-topbar" title="Hide top bar (Focus mode • Shortcut: Ctrl+Shift+F)" style="height:22px;font-size:10px;line-height:20px;color:#64748b;">
+            ▲ Hide
         </button>
     </div>
 </div>

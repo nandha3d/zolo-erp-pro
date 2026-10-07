@@ -272,11 +272,17 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
           var s = localStorage.getItem('zolo_sidebar_state');
           if (s === 'icon-only') document.currentScript.parentElement.classList.add('sidebar-icon-only');
           else if (s === 'full-hide') document.currentScript.parentElement.classList.add('sidebar-full-hide', 'active');
+          if (localStorage.getItem('zolo_topbar_hidden') === '1') {
+            document.documentElement.classList.add('topbar-hidden');
+          }
         } catch(e) {}
       })();
     </script>
     <!-- navbar-->
     @if(Route::currentRouteName() != 'sale.pos')
+    <div id="reveal-topbar-strip" class="reveal-topbar-strip" title="Click to show top bar (Shortcut: Ctrl+Shift+F)">
+      <i class="dripicons-chevron-down"></i> Show Top Bar (Ctrl+Shift+F)
+    </div>
     <header class="container-fluid">
       <nav class="navbar">
         <a id="toggle-btn" href="#" class="menu-btn zolo-sidebar-toggle" title="Collapse to icons (1st tap)" data-state="expanded" aria-label="Toggle sidebar navigation" role="button">
@@ -1688,6 +1694,31 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
             $("#expense-type").html('<option value="">Select Type</option>')
                 .prop("disabled", true)
                 .selectpicker('refresh');
+        }
+    });
+
+    // Top Bar Toggle & Focus Mode Handler
+    $(document).on('click', '#btn-toggle-topbar', function(e) {
+        e.preventDefault();
+        $('html, body').addClass('topbar-hidden');
+        try { localStorage.setItem('zolo_topbar_hidden', '1'); } catch(e) {}
+    });
+    $(document).on('click', '#reveal-topbar-strip', function(e) {
+        e.preventDefault();
+        $('html, body').removeClass('topbar-hidden');
+        try { localStorage.setItem('zolo_topbar_hidden', '0'); } catch(e) {}
+    });
+    $(document).on('keydown', function(e) {
+        if ((e.ctrlKey && e.shiftKey && (e.key === 'F' || e.key === 'f')) || (e.altKey && (e.key === 't' || e.key === 'T'))) {
+            e.preventDefault();
+            var isHidden = $('html').hasClass('topbar-hidden') || $('body').hasClass('topbar-hidden');
+            if (isHidden) {
+                $('html, body').removeClass('topbar-hidden');
+                try { localStorage.setItem('zolo_topbar_hidden', '0'); } catch(e) {}
+            } else {
+                $('html, body').addClass('topbar-hidden');
+                try { localStorage.setItem('zolo_topbar_hidden', '1'); } catch(e) {}
+            }
         }
     });
 

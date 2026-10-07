@@ -8,18 +8,44 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-07 11:15:00 (+05:30)
+- **Last Updated:** 2026-10-07 11:32:00 (+05:30)
 - **Active Git Branch:** enhanced-ui
 - **Upstream Remote:** nandha-origin/enhanced-ui
 - **Latest Commits:**
   - 26ce97f — "fix(commercial): address 12 stacked UI feedback items for sales and purchase command centers"
-  - In-progress: Vertical space compaction (navbar consolidation, 52px primary fields, 100% editable table, modal fixes)
+  - In-progress: Top bar clipping & overlap fix, Focus mode (hide/show top bar toggle)
 - **Working Tree State:** All automated feature suites passing (100%)
 - **Test Suite Status:** 33/33 tests passing (DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechMasterWebTest, OptechVoucherWebTest, AccountingWebTest)
 
 ---
 
-## 2. Vertical Space Compaction, In-Cell Table Editing & Modal Activation (Oct 2026)
+## 2. Top Bar Box Model Normalization & Focus Mode (Oct 2026)
+
+Addressed user feedback `"hiding the top bar"` where the top navigation bar was vertically clipped/overlapped by the primary fields card:
+
+1. **Root Cause Analysis of Top Bar Clipping & Overlap:**
+   - Legacy `custom-default.css` and `style.default.css` enforced `line-height: 60px` on `nav.navbar` and `nav.navbar a`.
+   - `style.default.css` set `nav.navbar .badge` to `position: absolute; right: 0; top: 7px; border-radius: 50%; width: 20px; height: 20px;`, transforming `#doc-breadcrumb-mode` into a circular purple bubble in the top-right corner.
+   - `commercial-workspace.css` constrained `header` to `38px` while child navbar elements were 42-60px high, overflowing downwards.
+   - `#content` was placed at `calc(100vh - 38px)` immediately below, causing `.doc-primary-fields` (white background) to sit directly on top of the bottom half of the top bar.
+
+2. **Box Model & Alignment Fix:**
+   - Normalized `header.container-fluid` and `.navbar` to `height: 40px !important; line-height: normal !important; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap;`.
+   - Constrained `#toggle-btn` to 28x28px, `.nav-menu` items to 26px height, `.btn-pos` to 26px, and segmented pills to 20px height.
+   - Neutralized legacy `nav.navbar .badge` absolute positioning: enforced `position: static !important; width: auto !important; height: auto !important; border-radius: 4px !important;`.
+   - Aligned `#content` to `height: calc(100vh - 40px) !important;` so there is zero overlap between the header and the form card.
+
+3. **Focus / Distraction-Free Mode (Hide Top Bar Toggle):**
+   - Added `▲ Hide` toggle button (`#btn-toggle-topbar`) to the top command bar in `purchase/index.blade.php` and `sale/index.blade.php`.
+   - When clicked (or via shortcut `Ctrl + Shift + F` / `Alt + T`), applies `.topbar-hidden` to `<html>` and `<body>`:
+     - Top header collapses smoothly (`display: none !important; height: 0;`).
+     - `#content` expands to full `100vh`.
+     - Floating reveal strip (`#reveal-topbar-strip`) appears at top center: `▼ Show Top Bar (Ctrl+Shift+F)`.
+     - Preference persisted in `localStorage` (`zolo_topbar_hidden`).
+
+---
+
+## 3. Vertical Space Compaction, In-Cell Table Editing & Modal Activation (Oct 2026)
 
 Addressed user feedback regarding vertical space occupation, bill fields height reduction by >50%, table editability, and modal activation:
 

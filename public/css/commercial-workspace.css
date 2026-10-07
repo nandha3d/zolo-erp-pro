@@ -22,28 +22,166 @@ body.commercial-screen-lock .main-footer {
     display: none !important;
 }
 
+/* Header & Navbar Box Model in Commercial Lock (Zero Clipping & Zero Overlap) */
 body.commercial-screen-lock header.container-fluid,
 body.commercial-screen-lock header {
-    height: 38px !important;
-    min-height: 38px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
     padding: 0 10px !important;
-    margin-bottom: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+    z-index: 1020 !important;
+    position: relative !important;
+    overflow: visible !important;
+    line-height: normal !important;
 }
 
-body.commercial-screen-lock .navbar {
-    height: 38px !important;
-    min-height: 38px !important;
+body.commercial-screen-lock nav.navbar {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    width: 100% !important;
     padding: 0 !important;
-    margin-bottom: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+}
+
+body.commercial-screen-lock nav.navbar * {
+    line-height: normal;
+}
+
+/* Sidebar Hamburger Toggle in Commercial Mode */
+body.commercial-screen-lock nav.navbar a.menu-btn,
+body.commercial-screen-lock nav.navbar #toggle-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+    margin: 0 4px 0 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    line-height: 28px !important;
+}
+
+body.commercial-screen-lock nav.navbar a.menu-btn .toggle-icon-bars {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.commercial-screen-lock nav.navbar a.menu-btn .toggle-icon-bars .bar {
+    width: 14px !important;
+    height: 2px !important;
+    background: #475569 !important;
+    border-radius: 1px !important;
+    margin: 0 !important;
+}
+
+/* Fix Badge Positioning: Neutralize legacy nav.navbar .badge absolute positioning */
+body.commercial-screen-lock nav.navbar .badge,
+.comm-navbar-center-wrap .badge,
+.navbar-center-area .badge,
+.navbar-center-area span.badge {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 2px 6px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    text-transform: none !important;
+}
+
+/* Right Nav Menu items in Commercial Mode */
+body.commercial-screen-lock nav.navbar .nav-menu {
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    list-style: none !important;
+}
+
+body.commercial-screen-lock nav.navbar .nav-item {
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 1px !important;
+    padding: 0 !important;
+}
+
+body.commercial-screen-lock nav.navbar .nav-item > a:not(.btn-pos),
+body.commercial-screen-lock nav.navbar .nav-item a.nav-link:not(.btn-pos) {
+    height: 26px !important;
+    line-height: 26px !important;
+    padding: 0 5px !important;
+    font-size: 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 5px !important;
+    color: #64748b !important;
+}
+
+body.commercial-screen-lock nav.navbar .nav-item > a:not(.btn-pos):hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+body.commercial-screen-lock nav.navbar .btn-pos {
+    height: 26px !important;
+    line-height: 24px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    border-radius: 5px !important;
+    background: #7c3aed !important;
+    border: 1px solid #6d28d9 !important;
+    color: #ffffff !important;
 }
 
 body.commercial-screen-lock #content {
-    flex: 1 !important;
+    flex: 1 1 auto !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     padding: 0 !important;
-    height: calc(100vh - 38px) !important;
+    height: calc(100vh - 40px) !important;
+    min-height: calc(100vh - 40px) !important;
+    position: relative !important;
 }
 
 body.commercial-screen-lock section {
@@ -53,6 +191,64 @@ body.commercial-screen-lock section {
     flex-direction: column !important;
     overflow: hidden !important;
     margin: 0 !important;
+    position: relative !important;
+}
+
+/* ====================================================================
+ * Top Bar Hidden (Focus / Distraction-Free Mode)
+ * ==================================================================== */
+html.topbar-hidden body.commercial-screen-lock header.container-fluid,
+body.commercial-screen-lock.topbar-hidden header.container-fluid,
+html.topbar-hidden body.commercial-screen-lock header,
+body.commercial-screen-lock.topbar-hidden header {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+html.topbar-hidden body.commercial-screen-lock #content,
+body.commercial-screen-lock.topbar-hidden #content {
+    height: 100vh !important;
+    min-height: 100vh !important;
+}
+
+/* Floating Reveal Tab when Top Bar is Hidden */
+.reveal-topbar-strip {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #38bdf8;
+    border: 1px solid #1e293b;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 2px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 999999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.reveal-topbar-strip:hover {
+    background: #1e293b;
+    color: #ffffff;
+    padding-top: 4px;
+}
+
+html.topbar-hidden .reveal-topbar-strip,
+body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
 }
 
 /* Progress bar for SPA transitions */
