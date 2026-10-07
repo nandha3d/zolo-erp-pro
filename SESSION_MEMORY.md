@@ -9,17 +9,17 @@
 
 ## 1. Active Session Metadata
 - **Last Updated:** 2026-10-07 19:27:00 (+05:30)
-- **Active Git Branch:** ui (synchronized with enhanced-ui, origin/ui, and origin/enhanced-ui)
+- **Active Git Branch:** ui
 - **Upstream Remotes:**
-  - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`enhanced-ui`, `ui`)
-  - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`enhanced-ui`, `ui`)
+  - `upstream`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`)
+  - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`)
 - **Latest Commits:**
   - `855f02d` — "docs(backup): create chat session dialogue history and raw transcript backup"
   - `38a4f02` — "docs(memory): update session memory with commit 45b0749"
   - `45b0749` — "feat(gst): support external live GST provider with high free limits and fallback to statutory engine"
   - `1346775` — "feat(gst): implement 100% free professional GSTIN engine with statutory auto-fill, Luhn validation, and cross-party memory"
   - `f5e3e42` — "feat(commercial): add in-place quick create party modal and execute database fresh slate wipe"
-- **Working Tree State:** Clean, all automated feature test suites passing 100% (41/41 tests, 207 assertions)
+- **Working Tree State:** Uncommitted command center navigation and entry mode changes are in progress on `ui`. Previous validation: 41/41 tests, 207 assertions; current work has its own validation below.
 - **Database & Server State:**
   - Database: MariaDB (Ubuntu WSL daemon) running on port 3307 with all 179 tables and Optech master migrations applied and seeded (`sale_types`, `purchase_types`, `dc`, `grn`).
   - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`).
@@ -591,9 +591,18 @@ Addressed user inquiry & requirement:
 
 ## 10. Crash Recovery Protocol for Any Agent
 1. **Never start from scratch:** When reopened after a crash or system reboot, inspect SESSION_MEMORY.md first.
-2. **Check Git Status:** Verify branch is enhanced-ui (git status and git branch -vv).
+2. **Check Git Status:** Verify branch is `ui` (git status and git branch -vv). The user explicitly reaffirmed `ui` on 2026-10-07; do not switch to `enhanced-ui`.
 3. **Verify Database & Dependencies:** Check migrations are up to date.
 4. **Continue Next Steps:**
    - Review pending screens in documents/zolo_erp_implementation_docs/32_OPTECH_SCREENS_AUDIT_AND_BACKEND_GAP_REPORT.md.
    - Continue audit and modernization of remaining modules (Job Work, Production, GST).
+
+## 11. Active Command Center Consolidation (2026-10-07)
+
+- Work on `ui`, as explicitly required by the user. Preserve all current uncommitted edits.
+- Keep `App\Services\Commercial` and its shared pricing, posting, draft, reversal, and permission services.
+- Sales and Purchase Command Centers own operator navigation. Fast Entry is a mode at `/sales?entry=fast` or `/purchases?entry=fast`, using the common application shell. Old `/commercial/{kind}/entry` links redirect while preserving query context.
+- Orders reuse pending sales (status 2) and ordered purchases (status 4); no new order posting engine is introduced.
+- Validation so far: canonical entry master rendering passes (2 tests, 29 assertions); isolated entry rendering, redirects, feature/capability gates, and company role permission checks pass (4 tests, 24 assertions).
+- Remaining: complete browser checks for both modes and shortcuts, validate order filtering and normal command centers, review the diff, and record final results. Bootstrap's closed-dialog display conflict is fixed in the command center stylesheet.
 
