@@ -8,17 +8,23 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-08 (+05:30) — document entry consolidation complete (section 13)
-- **Active Git Branch:** ui
+- **Last Updated:** 2026-10-08 17:45:00 (+05:30)
+- **Active Git Branch:** ui (synchronized with origin/ui at `0fdc3e7`)
 - **Upstream Remotes:**
-  - `upstream`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`)
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
-- **Latest Commits:** see `git log` on `ui`; the document-entry series is `test(commercial) fixture` → `feat(ui) shortcuts + ?new=1` → `feat(ui) fast-entry aids + server draft tabs` → `refactor(ui) remove duplicate entry UI + capabilities` → `test(docs) verification + documentation`. Prior synchronized commits: `e6d7583` — "Wire command center UI and material workflows", `b1dbcc3` — "docs(memory): reflect removal of enhanced-ui branch and sync ui", `02054cd` — "docs(memory): update session memory metadata for branch ui and single host state", `855f02d` — "docs(backup): create chat session dialogue history and raw transcript backup".
-- **Working Tree State:** clean after the series above (commits are local until pushed; the user approved pushing once complete).
-- **Test Suite Status:** 46/46 tests passing (CommercialUiWiringTest, DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechVoucherWebTest, OptechMasterWebTest)
+- **Latest Commits:**
+  - `0fdc3e7` — "Merge branch 'ui' of https://github.com/vigneshsinna/zolo-erp-pro into ui"
+  - `d076ecb` — "test(docs): verify unified document entry and update navigation documentation"
+  - `be476d8` — "refactor(ui): remove duplicate commercial entry UI and obsolete fast-entry capabilities"
+  - `312a1a5` — "docs(memory): update session memory after pulling commit e6d7583 on ui"
+  - `e736849` — "feat(ui): port fast-entry aids and server draft tabs to normal sales and purchases"
+  - `bcef4f6` — "feat(ui): add document shortcuts and normal-page new-document modes"
+  - `2daddd8` — "test(commercial): align fixture tables with Optech master migrations"
+- **Working Tree State:** Clean, all automated feature test suites passing 100% (53/53 tests, 303 assertions)
+- **Test Suite Status:** 53/53 tests passing (CommercialUiWiringTest, DeliveryChallanWebTest, GoodsReceivedNoteWebTest, OptechVoucherWebTest, OptechMasterWebTest, DocumentEntryWebTest)
 - **Database & Server State:**
-  - Database: MariaDB running with all 179 tables and Optech master migrations applied and seeded (`sale_types`, `purchase_types`, `dc`, `grn`).
+  - Database: MariaDB running with all migrations applied including `2026_10_14_000001_add_navigation_metadata_to_sale_drafts` and `2026_10_14_000002_retire_fast_entry_capabilities`.
   - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`).
 - **Chat & Transcript Backups:**
   - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
