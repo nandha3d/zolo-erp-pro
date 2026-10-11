@@ -539,6 +539,7 @@ class ReturnPurchaseController extends Controller
                 $message = 'Return created successfully. Please setup your <a href="setting/mail_setting">mail setting</a> to send mail.';
             }
         }
+        app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('preturn', $request->integer('draft_id'), (int) Auth::id());
         return redirect('return-purchase')->with('message', $message);
     }
 
@@ -654,7 +655,7 @@ class ReturnPurchaseController extends Controller
             $lims_warehouse_list = Warehouse::where('is_active',true)->get();
             $lims_account_list = Account::where('is_active',true)->get();
             $lims_tax_list = Tax::where('is_active',true)->get();
-            $lims_return_data = ReturnPurchase::find($id);
+            $lims_return_data = ReturnPurchase::findOrFail($id);
             $lims_product_return_data = PurchaseProductReturn::where('return_id', $id)->get();
             return view('backend.return_purchase.edit',compact('lims_supplier_list', 'lims_warehouse_list', 'lims_tax_list', 'lims_account_list', 'lims_return_data','lims_product_return_data'));
         }

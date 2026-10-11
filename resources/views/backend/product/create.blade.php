@@ -1,3 +1,5 @@
+@section('rich-editor', '1')
+@section('image-upload', '1')
 @extends('backend.layout.main')
 
 @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))

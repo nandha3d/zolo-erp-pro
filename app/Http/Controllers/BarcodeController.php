@@ -185,7 +185,7 @@ class BarcodeController extends Controller
                 ->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
 
-        $barcode = Barcode::where('is_custom',true)->find($id);
+        $barcode = Barcode::where('is_custom',true)->findOrFail($id); // only custom label layouts are editable
 
         return view('backend.barcode.edit',compact('barcode'));
     }

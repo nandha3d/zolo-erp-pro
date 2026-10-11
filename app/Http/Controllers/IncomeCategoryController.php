@@ -75,7 +75,7 @@ class IncomeCategoryController extends Controller
 
     public function destroy(string $id)
     {
-        $lims_income_category_data = IncomeCategory::find($id);
+        $lims_income_category_data = IncomeCategory::findOrFail($id);
         $lims_income_category_data->is_active = false;
         $lims_income_category_data->save();
         return redirect('income_categories')->with('not_permitted', __('db.Data deleted successfully'));

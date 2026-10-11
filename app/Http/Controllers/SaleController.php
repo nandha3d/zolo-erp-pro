@@ -1413,7 +1413,7 @@ class SaleController extends Controller
 
     public function getSoldItem($id)
     {
-        $sale = Sale::select('warehouse_id')->find($id);
+        $sale = Sale::select('warehouse_id')->findOrFail($id);
         $product_sale_data = Product_Sale::where('sale_id', $id)->get();
         $data = [];
         $data['amount'] = $sale->shipping_cost - $sale->sale_discount;
@@ -1688,7 +1688,7 @@ class SaleController extends Controller
 
     public function paypalPaymentSuccess(Request $request, $id)
     {
-        $lims_payment_data = Payment::find($id);
+        $lims_payment_data = Payment::findOrFail($id);
         $provider = new ExpressCheckout;
         $token = $request->token;
         $payerID = $request->PayerID;
@@ -2031,7 +2031,7 @@ class SaleController extends Controller
             $lims_account_list = Account::select('id', 'name','is_default')->where('is_active', true)->get();
 
             if(!empty($id)){
-                $lims_sale_data = Sale::find($id);
+                $lims_sale_data = Sale::findOrFail($id);
                 $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
                 $variables[] = 'lims_sale_data';
                 $variables[] = 'lims_product_sale_data';
@@ -2172,7 +2172,7 @@ class SaleController extends Controller
             $lims_customer_group_all = CustomerGroup::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::findOrFail($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             $lims_product_list = Product::where([
                                     ['featured', 1],
@@ -2300,7 +2300,7 @@ class SaleController extends Controller
 
     public function getCustomerGroup($id)
     {
-         $lims_customer_data = Customer::find($id);
+         $lims_customer_data = Customer::findOrFail($id);
          $lims_customer_group_data = CustomerGroup::find($lims_customer_data->customer_group_id);
          return $lims_customer_group_data->percentage;
     }
@@ -2497,7 +2497,7 @@ class SaleController extends Controller
         $customer_id = $request->input('customer_id');
         $warehouse_id = $request->input('warehouse_id');
         $productDiscount = 0;
-        $lims_product_data = Product::select('id', 'price', 'promotion', 'promotion_price', 'last_date')->find($request->input('product_id'));
+        $lims_product_data = Product::select('id', 'price', 'promotion', 'promotion_price', 'last_date')->findOrFail($request->input("product_id"));
         $lims_product_warehouse_data = Product_Warehouse::where([
             ['product_id', $request->input('product_id')],
             ['warehouse_id', $warehouse_id]
@@ -2558,6 +2558,7 @@ class SaleController extends Controller
     public function productSaleData($id)
     {
         $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
+        $product_sale = []; // a document without lines answers an empty list
         foreach ($lims_product_sale_data as $key => $product_sale_data) {
             $product = Product::find($product_sale_data->product_id);
             if($product_sale_data->variant_id) {
@@ -2895,7 +2896,7 @@ class SaleController extends Controller
             $lims_biller_list = Biller::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $numberOfInvoice = Sale::whereNull('deleted_at')->count();
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::findOrFail($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             if($lims_sale_data->exchange_rate)
                 $currency_exchange_rate = $lims_sale_data->exchange_rate;

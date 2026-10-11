@@ -208,7 +208,7 @@ class IncomeController extends Controller
     {
         $role = Role::firstOrCreate(['id' => Auth::user()->role_id]);
         if ($role->hasPermissionTo('incomes-edit')) {
-            $lims_income_data = Income::find($id);
+            $lims_income_data = Income::findOrFail($id);
             $lims_income_data->date = date('d-m-Y', strtotime($lims_income_data->created_at->toDateString()));
             return $lims_income_data;
         }
@@ -241,7 +241,7 @@ class IncomeController extends Controller
 
     public function destroy(string $id)
     {
-        $lims_income_data = Income::find($id);
+        $lims_income_data = Income::findOrFail($id);
         $lims_income_data->delete();
         return redirect('incomes')->with('not_permitted', __('db.Data deleted successfully'));
     }

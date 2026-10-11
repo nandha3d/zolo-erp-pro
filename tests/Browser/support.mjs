@@ -36,14 +36,16 @@ export async function openKind(page, kind, query = '') {
     await page.goto(BASE + (kind === 'sale' ? '/sales' : '/purchases') + query, { waitUntil: 'domcontentloaded' });
     await ready(page);
 }
-export const api = (page, kind, method, urlPath, body) => page.evaluate(async ({ kind, method, urlPath, body }) => {
+// Sales / Purchase drafts live under /commercial, every other document page's under /documents.
+export const draftBase = kind => (['sale', 'purchase'].includes(kind) ? '/commercial/' : '/documents/') + kind;
+export const api = (page, kind, method, urlPath, body) => page.evaluate(async ({ base, method, urlPath, body }) => {
     const token = document.querySelector('meta[name="csrf-token"]').content;
-    const response = await fetch('/commercial/' + kind + urlPath, { method, credentials: 'same-origin',
+    const response = await fetch(base + urlPath, { method, credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' },
         body: body === undefined ? undefined : JSON.stringify(body) });
     let json = null; try { json = await response.json(); } catch (e) { /* empty */ }
     return { status: response.status, json };
-}, { kind, method, urlPath, body });
+}, { base: draftBase(kind), method, urlPath, body });
 export async function resetDrafts(page, kind) {
     const list = await api(page, kind, 'GET', '/drafts');
     for (const draft of (list.json && list.json.data) || []) await api(page, kind, 'DELETE', '/drafts/' + draft.id);
@@ -75,10 +77,16 @@ export const setPayment = (page, amount) => page.evaluate(amount => {
     $('#drawer-paying-method').selectpicker && $('#drawer-paying-method').selectpicker('refresh');
 }, amount);
 export const draftCount = async (page, kind) => ((await api(page, kind, 'GET', '/drafts')).json || {}).open;
-export const waitDrafts = (page, kind, count) => page.waitForFunction(async ({ kind, count }) => {
-    const response = await fetch('/commercial/' + kind + '/drafts', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
-    return (await response.json()).open === count;
-}, { kind, count }, { timeout: SLOW });
+// Polls from Node: page.waitForFunction treats an async predicate's Promise as truthy and would return at once.
+export async function waitUntil(predicate, what, timeout = SLOW) {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+        if (await predicate()) return;
+        await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    throw new Error('timed out waiting for ' + what);
+}
+export const waitDrafts = (page, kind, count) => waitUntil(async () => ((await api(page, kind, 'GET', '/drafts')).json || {}).open === count, count + ' ' + kind + ' drafts');
 export const snap = page => page.evaluate(() => window.zoloDocumentWorkspace.snapshot());
 export const settled = page => page.waitForFunction(() => !window.zoloDocumentWorkspace.isDirty() && window.zoloDocumentWorkspace.tabs.every(tab => !tab.conflict), null, { timeout: SLOW });
 export const tabsOf = page => page.evaluate(() => window.zoloDocumentWorkspace.tabs.map(tab => ({ id: tab.id, draftId: tab.draftId, title: tab.title, party: tab.partyName })));

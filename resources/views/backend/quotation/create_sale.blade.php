@@ -1,4 +1,5 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 @push('css')
 <style>
     @media print {
@@ -12,7 +13,7 @@
 <x-error-message key="not_permitted" />
 <x-error-message key="error" />
 
-<section id="pos-layout" class="forms hidden-print">
+<section id="pos-layout" class="forms hidden-print classic-document-workspace document-edit-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -25,7 +26,7 @@
                         {!! Form::open(['route' => 'sales.store', 'method' => 'post', 'files' => true, 'class' => 'sale-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>
@@ -38,7 +39,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.customer')}} *</label>
                                             <input type="hidden" name="customer_id_hidden" value="{{ $lims_quotation_data->customer_id }}" />
-                                            <select required name="customer_id" class="selectpicker form-control" data-live-search="true" id="customer_id" title="Select customer...">
+                                            <select required name="customer_id" class="selectpicker form-control" data-live-search="true" id="customer_id" title="Select customer..." data-container="body">
                                                 @foreach($lims_customer_list as $customer)
                                                 <?php $deposit[$customer->id] = $customer->deposit - $customer->expense; ?>
                                                 <option value="{{$customer->id}}">{{$customer->name . ' (' . $customer->phone_number . ')'}}</option>
@@ -50,7 +51,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Warehouse')}} *</label>
                                             <input type="hidden" name="warehouse_id_hidden" value="{{$lims_quotation_data->warehouse_id}}" />
-                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse...">
+                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -61,7 +62,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Biller')}} *</label>
                                             <input type="hidden" name="biller_id_hidden" value="{{$lims_quotation_data->biller_id}}" />
-                                            <select required name="biller_id" id="biller_id" class="selectpicker form-control" data-live-search="true" title="Select Biller...">
+                                            <select required name="biller_id" id="biller_id" class="selectpicker form-control" data-live-search="true" title="Select Biller..." data-container="body">
                                                 @foreach($lims_biller_list as $biller)
                                                 <option value="{{$biller->id}}">{{$biller->name . ' (' . $biller->company_name . ')'}}</option>
                                                 @endforeach
@@ -69,7 +70,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-search-row">
                                     <div class="col-md-12 mt-3">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
@@ -78,7 +79,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-5">
+                                <div class="row mt-5 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -210,7 +211,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" value="{{$lims_quotation_data->total_qty}}" />
@@ -245,7 +246,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <details class="document-secondary-fields"><summary>Charges, payment &amp; notes</summary>
+                                <div class="row mt-3 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <input type="hidden" name="order_tax_rate_hidden" value="{{$lims_quotation_data->order_tax_rate}}">
@@ -362,7 +364,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label> {{__('db.Gift Card')}} *</label>
-                                                <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" title="Select Gift Card..."></select>
+                                                <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" title="Select Gift Card..." data-container="body"></select>
                                             </div>
                                         </div>
                                     </div>
@@ -381,7 +383,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-2">
+                                <div class="row mt-2 document-details-row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{__('db.Sale Note')}}</label>
@@ -395,7 +397,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                </details>
+                                <div class="form-group document-actions-row">
                                     <input type="hidden" name="draft" value="0" />
                                     <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
                                 </div>
@@ -461,7 +464,7 @@
                             ?>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Tax Rate')}}</label>
-                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                <select name="edit_tax_rate" class="form-control selectpicker" data-container="body">
                                     @foreach($tax_name_all as $key => $name)
                                     <option value="{{$key}}">{{$name}}</option>
                                     @endforeach
@@ -469,7 +472,7 @@
                             </div>
                             <div id="edit_unit" class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                         </div>
@@ -1179,26 +1182,7 @@
         calculateGrandTotal();
     });
 
-    $(window).keydown(function(e){
-        if (e.which == 13) {
-            var $targ = $(e.target);
-            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-                var focusNext = false;
-                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                    if (this === e.target) {
-                        focusNext = true;
-                    }
-                    else if (focusNext){
-                        $(this).focus();
-                        return false;
-                    }
-                });
-                return false;
-            }
-        }
-    });
-
-    $(document).on('submit', '.sale-form', function(e) {
+$(document).on('submit', '.sale-form', function(e) {
         var rownumber = $('table.order-list tbody tr:last').index();
         if ( rownumber < 0 ) {
             alert("Please insert product to order table!")

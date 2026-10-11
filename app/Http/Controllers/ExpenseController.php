@@ -261,7 +261,7 @@ class ExpenseController extends Controller
     {
         $role = Role::firstOrCreate(['id' => Auth::user()->role_id]);
         if ($role->hasPermissionTo('expenses-edit')) {
-            $lims_expense_data = Expense::find($id);
+            $lims_expense_data = Expense::findOrFail($id);
             $lims_expense_data->date = date('d-m-Y', strtotime($lims_expense_data->created_at->toDateString()));
             return $lims_expense_data;
         }
@@ -329,7 +329,7 @@ class ExpenseController extends Controller
 
     public function destroy($id)
     {
-        $lims_expense_data = Expense::find($id);
+        $lims_expense_data = Expense::findOrFail($id);
         $lims_expense_data->delete();
         return redirect('expenses')->with('not_permitted', __('db.Data deleted successfully'));
     }

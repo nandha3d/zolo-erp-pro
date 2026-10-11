@@ -65,7 +65,7 @@ class HolidayController extends Controller
 
     public function approveHoliday($id)
     {
-        $holiday = Holiday::find($id);
+        $holiday = Holiday::findOrFail($id);
         $holiday->is_approved = true;
         $holiday->save();
         //collecting mail data

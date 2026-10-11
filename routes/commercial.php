@@ -4,6 +4,14 @@ use App\Http\Controllers\CommercialController;
 use App\Http\Middleware\RequireSharedCommercial;
 use Illuminate\Support\Facades\Route;
 
+// Draft tabs of the document pages that post through their own controllers (returns, challans, goods receipts, quotations).
+Route::prefix('documents')->middleware(['auth', 'company.context'])->where(['kind' => 'sreturn|preturn|dc|grn|quotation', 'id' => '[0-9]+'])->group(function () {
+    Route::get('{kind}/drafts', [CommercialController::class, 'drafts']);
+    Route::post('{kind}/drafts', [CommercialController::class, 'draft']);
+    Route::get('{kind}/drafts/{id}', [CommercialController::class, 'showDraft']);
+    Route::delete('{kind}/drafts/{id}', [CommercialController::class, 'destroyDraft']);
+});
+
 Route::prefix('commercial')->middleware(['auth', 'company.context', RequireSharedCommercial::class])
     ->where(['kind' => 'sale|purchase', 'resource' => 'parties|products|agents|areas|bill-sundries|sale-types|purchase-types|remarks|series', 'id' => '[0-9]+'])->group(function () {
         Route::post('{kind}', [CommercialController::class, 'store']);

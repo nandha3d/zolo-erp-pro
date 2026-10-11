@@ -154,7 +154,7 @@ class TableController extends Controller
 
     public function destroy($id)
     {
-        $table = Table::find($id);
+        $table = Table::findOrFail($id);
         $table->update(['is_active'=>false]);
 
         $general_setting = GeneralSetting::latest()->first();

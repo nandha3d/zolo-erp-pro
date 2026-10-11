@@ -14,6 +14,7 @@
 
 <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
 <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+@include('backend.partials.document-entry-layout')
 <script>
     document.documentElement.classList.add('commercial-screen-lock');
     document.body.classList.add('commercial-screen-lock');
@@ -34,14 +35,13 @@
             <li><a class="nav-link" href="{{ route('purchases.index') }}"><i class="dripicons-card"></i> Purchase Bills</a></li>
         </ul>
         <div class="comm-actions">
-            <button type="button" class="btn btn-outline-secondary py-1 px-3" id="btn-top-new" title="Add New GRN">
-                <i class="dripicons-plus"></i> {{ __('New GRN') }}
-            </button>
             <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle GRN List Panel" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
                 <i class="dripicons-view-list"></i> GRN list
             </button>
         </div>
     </div>
+
+    @include('backend.partials.document-draft-tabs', ['draftLabel' => 'goods receipt', 'draftKey' => 'Alt+F12'])
 
     <!-- 2-Column Command Center Grid: Main Entry Workspace + Side GRN List Panel -->
     <div class="comm-split-grid" id="comm-split-grid">
@@ -60,12 +60,6 @@
                             <span class="badge badge-light-primary px-2 py-1 ml-2" id="status-pill" style="font-weight:600;font-size:11px;background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe;border-radius:4px;">Draft GRN</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-compact" id="open-transport-drawer-btn">
-                                <i class="dripicons-truck"></i> Transport Details
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-compact" id="reopen-panel-btn">
-                                <i class="dripicons-view-list"></i> GRN list
-                            </button>
                         </div>
                     </div>
 
@@ -473,8 +467,10 @@
             'partyType' => 'supplier', 'partySelect' => '#supplier_id', 'partyButton' => '#btn-quick-supplier',
             'convertButton' => '#btn-convert-purchase', 'convertUrl' => route('purchases.index'), 'convertParam' => 'from_grn',
             'editId' => request('edit'),
+            'draftKind' => 'grn', 'draftUrl' => url('documents/grn'), 'shortcut' => 'grn',
         ];
     @endphp
     <script type="application/json" id="material-document-data">@json($materialConfig)</script>
+    <script src="{{ asset('js/document-drafts.js') }}?v={{ filemtime(public_path('js/document-drafts.js')) }}"></script>
     <script src="{{ asset('js/material-document.js') }}?v={{ filemtime(public_path('js/material-document.js')) }}"></script>
 @endpush

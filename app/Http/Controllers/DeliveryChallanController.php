@@ -159,6 +159,7 @@ class DeliveryChallanController extends Controller
             }
 
             DB::commit();
+            app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('dc', $request->integer('draft_id'), (int) Auth::id());
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -274,6 +275,7 @@ class DeliveryChallanController extends Controller
             }
 
             DB::commit();
+            app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('dc', $request->integer('draft_id'), (int) Auth::id());
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([

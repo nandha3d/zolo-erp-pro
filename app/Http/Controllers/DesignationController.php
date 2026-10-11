@@ -72,7 +72,7 @@ class DesignationController extends Controller
 
     public function destroy($id)
     {
-        $lims_designation_data = Designation::find($id);
+        $lims_designation_data = Designation::findOrFail($id);
         $lims_designation_data->is_active = false;
         $lims_designation_data->save();
         return redirect('designations')->with('message', __('db.Designation deleted successfully'));

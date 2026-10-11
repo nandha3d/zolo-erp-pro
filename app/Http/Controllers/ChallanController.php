@@ -315,13 +315,13 @@ class ChallanController extends Controller
 
     public function genInvoice($id)
     {
-        $challan = Challan::with('courier')->find($id);
+        $challan = Challan::with('courier')->findOrFail($id);
         return view('backend.challan.invoice', compact('challan'));
     }
 
     public function finalize($id)
     {
-        $challan = Challan::find($id);
+        $challan = Challan::findOrFail($id);
         return view('backend.challan.finalize', compact('challan'));
     }
 
@@ -335,7 +335,7 @@ class ChallanController extends Controller
         $total_price = $request->amount;
         DB::beginTransaction();
         try {
-            $challan = Challan::find($id);
+            $challan = Challan::findOrFail($id);
             foreach ($data['cash_list'] as $key => $cash) {
                 if(!$cash && !$data['cheque_list'][$key] && !$data['online_payment_list'][$key])
                     $data['status_list'][$key] = 'Failed';
@@ -493,7 +493,7 @@ class ChallanController extends Controller
 
     public function moneyReciept($id)
     {
-        $challan = Challan::find($id);
+        $challan = Challan::findOrFail($id);
         return view('backend.challan.money_reciept', compact('challan'));
     }
 }

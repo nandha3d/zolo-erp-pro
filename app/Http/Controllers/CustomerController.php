@@ -665,7 +665,7 @@ class CustomerController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('customers-edit')){
-            $lims_customer_data = Customer::find($id);
+            $lims_customer_data = Customer::findOrFail($id);
             $lims_customer_group_all = CustomerGroup::where('is_active',true)->get();
             $custom_fields = CustomField::where('belongs_to', 'customer')->get();
             return view('backend.customer.edit', compact('lims_customer_data','lims_customer_group_all', 'custom_fields'));
@@ -687,7 +687,7 @@ class CustomerController extends Controller
         ]);
 
         $input = $request->all();
-        $lims_customer_data = Customer::find($id);
+        $lims_customer_data = Customer::findOrFail($id);
 
         if(isset($input['user'])) {
             $this->validate($request, [
@@ -1026,7 +1026,7 @@ class CustomerController extends Controller
 
     public function destroy($id)
     {
-        $lims_customer_data = Customer::find($id);
+        $lims_customer_data = Customer::findOrFail($id);
 
         $lims_discount_plan_data = DiscountPlan::where([
             'is_active' => true,

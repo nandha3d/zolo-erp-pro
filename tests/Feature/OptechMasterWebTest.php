@@ -630,6 +630,15 @@ class OptechMasterWebTest extends TestCase
             ],
         ]);
     }
+
+    public function test_supplier_saves_with_only_name_and_phone(): void
+    {
+        $this->actingAs($this->adminUser)->post('/supplier', [
+            'name' => 'Minimal Supplier', 'phone_number' => '9000000001',
+        ])->assertRedirect('supplier');
+
+        $this->assertDatabaseHas('suppliers', ['name' => 'Minimal Supplier', 'address' => null, 'city' => null]);
+    }
 }
 
 

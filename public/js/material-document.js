@@ -109,10 +109,16 @@
     $('#btn-add-row').on('click', () => addRow().find('.row-item-name').focus());
     $body.on('input', '.row-rate, .row-qty, .row-tax-rate', totals);
     $body.on('click', '.btn-remove-row', function () { $(this).closest('tr').remove(); totals(); });
-    $(document).on('keydown', event => {
-        // Alt+I focuses item search; F2/F12 belong to the global document shortcut registry.
-        if (event.altKey && !event.ctrlKey && event.key.toLowerCase() === 'i') { event.preventDefault(); $('#lims_productcodeSearch').focus().select(); }
-    });
+    // Capture Alt+I before bootstrap-select treats I as option search; F2/F12 start document drafts.
+    document.addEventListener('keydown', event => {
+        if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey && event.key.toLowerCase() === 'i'
+            && !event.defaultPrevented && !event.isComposing && $('#lims_productcodeSearch').is(':visible')
+            && !document.querySelector('dialog[open], .modal.show, [data-owns-keys]')) {
+            event.preventDefault();
+            event.stopPropagation();
+            $('#lims_productcodeSearch').focus().select();
+        }
+    }, true);
     $('.density-btn').on('click', function () {
         $('.density-btn').removeClass('active'); $(this).addClass('active');
         $('#order-table').removeClass('compact cozy large').addClass($(this).data('density'));
@@ -178,10 +184,12 @@
         $('#comm-drawer').prop('hidden', true); $('#material-document-error').hide();
         refresh($(form).find('select')); totals();
     }
-    $('#btn-discard, #btn-top-new').on('click', reset);
-    $(document).on('click', '.btn-load-challan, .btn-load-grn, .bill-card', function (event) {
+    $(document).on('click', '.btn-load-challan, .btn-load-grn, .bill-card', async function (event) {
         if ($(event.target).closest('a').length) return;
         event.stopPropagation();
+        // Opening a saved document must not silently replace unsaved work: keep it as a draft first.
+        if (drafts && !(await drafts.leaveActive())) return;
+        drafts?.detachNow();
         loadRequest?.abort(); loading = true;
         loadRequest = $.getJSON(config.storeUrl + '/' + $(this).data('id')).done(result => {
             const doc = result[config.documentKey];
@@ -205,6 +213,7 @@
             });
             $('.bill-card').removeClass('active-editing').filter('[data-id="' + doc.id + '"]').addClass('active-editing');
             refresh($(form).find('select'));
+            drafts?.detach();
         }).fail(xhr => { if (xhr.statusText !== 'abort') error(xhr); }).always(() => { loading = false; });
     });
     $(form).on('submit', function (event) {
@@ -213,9 +222,54 @@
             event.preventDefault(); $('#material-document-error').text('Select a catalog product for every row. Use Create item for a new product.').show();
         } else { totals(); }
     });
+    /* ------------------------------------------------------------- draft tabs */
+    // Every edit is kept as a server draft; the shortcut key or "New" opens one more draft (document-drafts.js).
+    const SKIP = new Set(['_token', 'draft_id']);
+    const fieldControls = () => Array.from(form.querySelectorAll('input[name], select[name], textarea[name]'))
+        .filter(element => !SKIP.has(element.name) && element.type !== 'file' && !element.closest('#order-table-body'));
+    function snapshot() {
+        const fields = {};
+        fieldControls().forEach(element => { fields[element.name] = element.value; });
+        const lines = $body.find('.item-row').toArray().map(row => {
+            const $row = $(row);
+            return {product_id: $row.find('.row-product-id').val(), unit_id: $row.find('.row-unit-id').val(), product_name: $row.find('.row-item-name').val(),
+                product_code: $row.find('.row-product-code').text(), unit: $row.find('.row-unit').text(), remarks: $row.find('.row-remarks').val(),
+                [config.rateField]: $row.find('.row-rate').val(), qty: $row.find('.row-qty').val(), tax_rate: $row.find('.row-tax-rate').val()};
+        });
+        const ui = {action: form.getAttribute('action') || '', title: $('#entry-title-text').text(), status: $('#status-pill').text()};
+        return {schema_version: 1, document_kind: config.draftKind, form: {fields, lines, ui, context: {}}};
+    }
+    function restore(payload) {
+        const state = payload.form || {};
+        reset();
+        fieldControls().forEach(element => {
+            if (Object.prototype.hasOwnProperty.call(state.fields || {}, element.name)) element.value = state.fields[element.name] ?? '';
+        });
+        const ui = state.ui || {};
+        if (ui.action) form.action = ui.action;
+        if (ui.title) $('#entry-title-text').text(ui.title);
+        if (ui.status) $('#status-pill').text(ui.status);
+        (state.lines || []).forEach(line => addRow(line, false));
+        refresh($(form).find('select')); totals();
+    }
+    function party() {
+        const select = document.querySelector(config.partySelect);
+        const option = select && select.selectedOptions[0];
+        return select && select.value && option ? {party_id: Number(select.value), party_name: option.textContent.replace(/\s*\(.*\)\s*$/, '').trim()} : {};
+    }
+    const drafts = config.draftUrl && window.ZoloDocumentDrafts ? window.ZoloDocumentDrafts.attach({
+        kind: config.draftKind, label: config.label, baseUrl: config.draftUrl, form, snapshot, restore, reset, party,
+        focus: () => $('#lims_productcodeSearch').trigger('focus'),
+        inDocument: target => !!target.closest && !!target.closest('#' + config.form) && target.id !== 'lims_productcodeSearch',
+        rows: $body[0], handles: entry => entry.id === config.shortcut,
+        localShortcuts: [{key: 'Alt+I', label: 'Focus item search'}],
+    }) : null;
+    $('#btn-top-new').on('click', () => (drafts ? drafts.newDocument() : reset()));
+    $('#btn-discard').on('click', () => (drafts ? drafts.discardActive() : reset()));
+
     // ?new=1 is a one-shot instruction from a document shortcut: start blank, then drop only that parameter.
     const query = new URLSearchParams(window.location.search);
-    if (query.get('new') === '1' && !config.editId) {
+    if (!drafts && query.get('new') === '1' && !config.editId) {
         reset(); $('#lims_productcodeSearch').trigger('focus');
         query.delete('new');
         window.history.replaceState(null, '', window.location.pathname + (query.toString() ? '?' + query : '') + window.location.hash);

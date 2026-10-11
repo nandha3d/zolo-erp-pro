@@ -86,7 +86,7 @@ class ShiftController extends Controller
 
     public function destroy($id)
     {
-        $lims_shift_data = Shift::find($id);
+        $lims_shift_data = Shift::findOrFail($id);
         $lims_shift_data->is_active = false;
         $lims_shift_data->save();
         return redirect('shift')->with('message', __('db.Shift deleted successfully'));

@@ -153,6 +153,7 @@ class GoodsReceivedNoteController extends Controller
             }
 
             DB::commit();
+            app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('grn', $request->integer('draft_id'), (int) Auth::id());
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -264,6 +265,7 @@ class GoodsReceivedNoteController extends Controller
             }
 
             DB::commit();
+            app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('grn', $request->integer('draft_id'), (int) Auth::id());
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([

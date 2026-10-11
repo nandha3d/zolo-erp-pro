@@ -197,7 +197,7 @@ class PayrollController extends Controller
 
     public function destroy($id)
     {
-        $lims_payroll_data = Payroll::find($id);
+        $lims_payroll_data = Payroll::findOrFail($id);
         $lims_payroll_data->delete();
         return redirect('payroll')->with('not_permitted', __('db.Payroll deleted succesfully'));
     }

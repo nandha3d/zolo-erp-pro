@@ -761,7 +761,7 @@ class ProductController extends Controller
                 $ending_date = date("Y-m-d");
             }
             $product_id = $request->input('product_id');
-            $product_data = Product::select('name', 'code')->find($product_id);
+            $product_data = Product::select('name', 'code')->findOrFail($product_id);
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             return view('backend.product.history',compact('starting_date', 'ending_date', 'warehouse_id', 'product_id', 'product_data', 'lims_warehouse_list'));
         }
@@ -1545,7 +1545,7 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $product_code = explode(" (", $request['data']);
-        $lims_product_data = Product::where('code', $product_code[0])->first();
+        $lims_product_data = Product::where('code', $product_code[0])->firstOrFail();
 
         $product[] = $lims_product_data->name;
         $product[] = $lims_product_data->code;
@@ -1574,11 +1574,11 @@ class ProductController extends Controller
                 ->where([
                     ['products.id', $id],
                     ['product_variants.variant_id', $variant_id]
-                ])->first();
+                ])->firstOrFail();
             $data->code = $data->item_code;
         }
         else
-            $data = Product::select('name', 'code')->find($id);
+            $data = Product::select('name', 'code')->findOrFail($id);
         return $data;
     }
 
@@ -1716,6 +1716,7 @@ class ProductController extends Controller
                 ->where('product_variants.product_id', $lims_product_list[0]->id)
                 ->get();
         }
+        $products = []; // no matching product or variant: an empty list
         foreach($lims_product_list as $lims_product_data) {
             $product = [];
             $product[] = $lims_product_data->name;

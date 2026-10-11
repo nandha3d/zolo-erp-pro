@@ -67,7 +67,7 @@ class RoleController extends Controller
     public function permission($id)
     {
         if(Auth::user()->role_id <= 2) {
-            $lims_role_data = Roles::find($id);
+            $lims_role_data = Roles::findOrFail($id);
             $permissions = Role::findByName($lims_role_data->name)->permissions;
             foreach ($permissions as $permission)
                 $all_permission[] = $permission->name;
@@ -122,7 +122,7 @@ class RoleController extends Controller
     {
         if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
-        $lims_role_data = Roles::find($id);
+        $lims_role_data = Roles::findOrFail($id);
         $lims_role_data->is_active = false;
         $lims_role_data->save();
         return redirect('role')->with('not_permitted', __('db.Data deleted successfully'));

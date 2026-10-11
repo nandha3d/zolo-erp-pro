@@ -241,6 +241,11 @@ nav.navbar a#toggle-btn.menu-btn:active {
 
 /* Sidebar States */
 .side-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
   background: var(--neo-sidebar-bg) !important;
   background-color: var(--neo-sidebar-bg) !important;
   border-right: 1px solid var(--neo-sidebar-border) !important;
@@ -250,6 +255,8 @@ nav.navbar a#toggle-btn.menu-btn:active {
   z-index: 999;
 }
 
+html[dir="rtl"] .side-navbar { left: auto; right: 0; }
+
 .page {
   position: relative;
   margin-left: 256px !important;
@@ -258,6 +265,8 @@ nav.navbar a#toggle-btn.menu-btn:active {
   padding-bottom: 60px;
   transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
+
+html[dir="rtl"] .page { margin-left: 0 !important; margin-right: 256px !important; }
 
 /* State 1: Icon-Only (Compact 72px) */
 nav.side-navbar.icon-only {
@@ -406,6 +415,12 @@ html[dir="rtl"] nav.side-navbar.shrink {
   width: 100% !important;
 }
 
+html[dir="rtl"] .page.sidebar-full-hide,
+html[dir="rtl"] .page.active,
+html[dir="rtl"] .side-navbar.full-hide ~ .page,
+html[dir="rtl"] .side-navbar.shrink ~ .page,
+html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
+
 @media (max-width: 1199px) {
   nav.side-navbar:not(.icon-only):not(.full-visible) {
     transform: translateX(-100%) !important;
@@ -417,6 +432,7 @@ html[dir="rtl"] nav.side-navbar.shrink {
     margin-left: 0 !important;
     width: 100% !important;
   }
+  html[dir="rtl"] .page { margin-right: 0 !important; }
 }
 
 .side-navbar .brand-big {
@@ -3018,13 +3034,27 @@ nav.side-navbar:not(.icon-only):not(.full-hide):not(.shrink) {
 /* Shared workspace navigation and accessible skip link. */
 .workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}.workspace-card{display:flex;flex-direction:column;gap:12px;padding:20px;border:1px solid var(--neo-border,#dbe3ed);border-radius:8px;text-decoration:none;font-size:18px;font-weight:700}.workspace-card span{font-size:13px;font-weight:400}.workspace-skip{position:absolute;left:12px;top:-80px;background:var(--neo-surface,#fff);padding:12px;z-index:100}.workspace-skip:focus{top:8px}
 
-/* Top-bar company switch: group › company · year, opens the company picker. */
-nav.navbar .company-switch{list-style:none;margin-right:8px}
-nav.navbar .company-switch a{display:flex;align-items:center;gap:6px;height:26px;max-width:340px;padding:0 10px;border:1px solid var(--neo-border);border-radius:999px;background:var(--neo-surface);color:var(--neo-text-primary);font-size:12px;line-height:1;text-decoration:none;white-space:nowrap;overflow:hidden}
-nav.navbar .company-switch a:hover{border-color:var(--neo-primary);color:var(--neo-primary)}
+/* Top-bar company switch: group › company · year, opens the company picker. `html body` outranks the
+   compact icon-button rules (fixed 28px width) that commercial screens apply to every nav anchor. */
+html body nav.navbar .nav-item.company-switch{flex-shrink:0;margin:0 6px 0 0 !important;height:auto !important}
+html body nav.navbar .nav-item.company-switch > a.company-switch-link{display:inline-flex !important;align-items:center !important;gap:8px;width:auto !important;min-width:0 !important;max-width:460px;height:32px !important;padding:0 12px 0 4px !important;border:1px solid var(--neo-border) !important;border-radius:10px !important;background:var(--neo-surface) !important;color:var(--neo-text-primary) !important;font-size:13px !important;line-height:1 !important;text-decoration:none !important;white-space:nowrap;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+html body nav.navbar .nav-item.company-switch > a.company-switch-link:hover{border-color:var(--neo-primary) !important;box-shadow:0 0 0 3px var(--neo-primary-light)}
+html body nav.navbar .company-switch-link .company-switch-mark{display:grid !important;place-items:center;flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--neo-primary-gradient) !important;color:#fff !important;font-size:10.5px !important;font-weight:800 !important;letter-spacing:.02em}
 nav.navbar .company-switch-group{color:var(--neo-text-muted);font-weight:500}
 nav.navbar .company-switch-group::after{content:"\203A";margin-left:6px}
 nav.navbar .company-switch-name{font-weight:700;overflow:hidden;text-overflow:ellipsis}
-nav.navbar .company-switch-year{padding:2px 6px;border-radius:999px;background:var(--neo-primary-light);color:var(--neo-primary);font-family:var(--neo-mono);font-size:10.5px}
-nav.navbar .company-switch-caret{color:var(--neo-text-muted)}
-@media(max-width:768px){nav.navbar .company-switch-group,nav.navbar .company-switch-year{display:none}nav.navbar .company-switch a{max-width:150px}}
+nav.navbar .company-switch-year{flex-shrink:0;padding:3px 7px;border-radius:999px;background:var(--neo-primary-light);color:var(--neo-primary);font-family:var(--neo-mono);font-size:11px}
+nav.navbar .company-switch-caret{flex-shrink:0;color:var(--neo-text-muted);font-size:12px}
+@media(max-width:1100px){nav.navbar .company-switch-group{display:none}}
+@media(max-width:768px){nav.navbar .company-switch-year{display:none}html body nav.navbar .nav-item.company-switch > a.company-switch-link{max-width:170px}}
+
+/* Global keyboard-shortcut help button (every page; "?" opens the same list). */
+nav.navbar .topbar-shortcuts{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 8px 0 10px;border:1px solid var(--neo-border);border-radius:9px;background:var(--neo-surface);color:var(--neo-text-secondary);font:inherit;font-size:12.5px;font-weight:600;line-height:1;cursor:pointer;white-space:nowrap}
+nav.navbar .topbar-shortcuts:hover,nav.navbar .topbar-shortcuts:focus-visible{border-color:var(--neo-primary);color:var(--neo-primary);outline:none}
+nav.navbar .topbar-shortcuts i{font-size:13px;line-height:1}
+nav.navbar .topbar-shortcuts kbd{padding:2px 5px;border:1px solid var(--neo-border);border-radius:4px;background:var(--neo-bg);color:var(--neo-text-muted);font-family:var(--neo-mono);font-size:10.5px;box-shadow:none}
+@media(max-width:1100px){nav.navbar .topbar-shortcuts span{display:none}}
+
+/* bootstrap-select 1.13 (Bootstrap 4): the option list inside an open picker is always shown; its outer menu controls
+   visibility. Several pages strip `.show` from every dropdown menu to close the others, which hid the open list. */
+.bootstrap-select .dropdown-menu.inner{display:block !important}

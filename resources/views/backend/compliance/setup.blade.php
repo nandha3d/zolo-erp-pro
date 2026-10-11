@@ -1,6 +1,6 @@
 @extends('backend.compliance.layout')
 @section('title','Tax & document settings')
-@section('content')
+@section('compliance_body')
 <p>Use reviewed registration and rate data. GSTIN format checks do not establish active registration.</p>
 <section class="panel"><h2>GSTIN lookup</h2><form id="gst-lookup-form" class="fields">
 <label for="lookup-gstin">GSTIN to verify<input id="lookup-gstin" name="gstin" required minlength="15" maxlength="15"></label><button type="submit">Check registration</button></form>

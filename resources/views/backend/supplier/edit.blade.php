@@ -33,8 +33,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('db.Company Name')}} *</label>
-                                    <input type="text" name="company_name" value="{{$lims_supplier_data->company_name}}" required class="form-control">
+                                    <label>{{__('db.Company Name')}}</label>
+                                    <input type="text" name="company_name" value="{{$lims_supplier_data->company_name}}" class="form-control">
                                     @if($errors->has('company_name'))
                                    <span>
                                        <strong>{{ $errors->first('company_name') }}</strong>
@@ -50,8 +50,8 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('db.Email')}} *</label>
-                                    <input type="email" name="email" value="{{$lims_supplier_data->email}}" required class="form-control">
+                                    <label>{{__('db.Email')}}</label>
+                                    <input type="email" name="email" value="{{$lims_supplier_data->email}}" class="form-control">
                                     @if($errors->has('email'))
                                    <span>
                                        <strong>{{ $errors->first('email') }}</strong>
@@ -67,14 +67,14 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('db.Address')}} *</label>
-                                    <input type="text" name="address" value="{{$lims_supplier_data->address}}" required class="form-control">
+                                    <label>{{__('db.Address')}}</label>
+                                    <input type="text" name="address" value="{{$lims_supplier_data->address}}" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('db.City')}} *</label>
-                                    <input type="text" name="city"  value="{{$lims_supplier_data->city}}" required class="form-control">
+                                    <label>{{__('db.City')}}</label>
+                                    <input type="text" name="city"  value="{{$lims_supplier_data->city}}" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">

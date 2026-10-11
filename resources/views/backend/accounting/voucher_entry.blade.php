@@ -1,6 +1,7 @@
 @extends('backend.layout.main')
 
 @section('content')
+@include('backend.partials.document-entry-layout')
 <style>
     .optech-voucher-wrapper {
         background-color: #e8e4dc;

@@ -8,7 +8,7 @@
  * Point BASE at an application instance wired to a disposable database (see tests/Browser/README.md). The spec cleans up
  * the drafts it creates and posts exactly one purchase bill.
  */
-import { check, watch, login, ready, openKind, api, resetDrafts, pickParty, addRow, setTracking, setPayment, draftCount, waitDrafts, snap, settled, tabsOf, dialogButtons, errors, context, browser, BASE, SLOW, fail, finish } from './support.mjs';
+import { check, watch, login, ready, openKind, api, resetDrafts, pickParty, addRow, setTracking, setPayment, draftCount, waitDrafts, snap, settled, tabsOf, waitUntil, errors, context, browser, BASE, SLOW, fail, finish } from './support.mjs';
 
 const page = await context.newPage();
 watch(page);
@@ -51,37 +51,31 @@ try {
         check(`${key} does not navigate away from the purchase page`, page.url() === before);
     }
 
-    /* ----------------------------------------------- visible New Bill fallback */
+    /* ------------------------------- keys are accelerators only: no duplicate menus */
     await openKind(page, 'purchase');
     await resetDrafts(page, 'purchase');
     await openKind(page, 'purchase');
-    await page.click('.command-center-new');
-    check('visible "+ New Bill" works without any key', (await tabsOf(page)).length === 1);
+    check('no sidebar or toolbar entry duplicates a shortcut key', (await page.locator('[data-document-shortcut], .command-center-new, .sidebar-action').count()) === 0);
+    await page.click('#document-tab-add');
+    check('the + draft tab button starts a bill without any key', (await tabsOf(page)).length === 1);
 
-    /* ------------------------------------------------------------ dirty dialog */
+    /* ------------------------------------ the key again = one more draft, no dialog */
     await openKind(page, 'purchase', '?new=1');
     await pickParty(page, 'purchase', '1');
-    await addRow(page, 'ITEM-DIRTY', 2, 5);
+    await addRow(page, 'ITEM-FIRST', 2, 5);
     await page.keyboard.press('F12');
-    await page.waitForSelector('dialog[open]', { timeout: SLOW });
-    const buttons = await dialogButtons(page);
-    check('dirty F12 offers Save draft / Discard / Cancel', ['Save draft', 'Discard', 'Cancel'].every(label => buttons.includes(label)), buttons.join(','));
-    await page.click('dialog[open] >> text=Cancel');
-    check('Cancel keeps the same bill', (await snap(page)).form.fields.supplier_id === '1' && (await tabsOf(page)).length === 1);
+    await page.waitForFunction(() => window.zoloDocumentWorkspace.tabs.length === 2, null, { timeout: SLOW });
+    check('F12 on an edited bill asks nothing', (await page.locator('dialog[open]').count()) === 0);
+    const afterFirst = await tabsOf(page);
+    check('F12 again keeps the edited bill as a draft and opens a new blank one', afterFirst[0].draftId !== null && afterFirst[1].draftId === null && (await snap(page)).form.fields.supplier_id === '', JSON.stringify(afterFirst));
+    check('the kept draft is labelled with its title and party', /^Draft \d+/.test(afterFirst[0].title) && /John Doe/.test(afterFirst[0].party), JSON.stringify(afterFirst[0]));
     await page.keyboard.press('F12');
-    await page.waitForSelector('dialog[open]');
-    await page.click('dialog[open] >> text=Discard');
-    await page.waitForFunction(() => window.zoloDocumentWorkspace.tabs.length === 1 && window.zoloDocumentWorkspace.tabs[0].draftId === null);
-    check('Discard replaces the bill with a blank one and keeps no server draft', (await snap(page)).form.fields.supplier_id === '' && (await draftCount(page, 'purchase')) === 0);
+    check('F12 on an untouched blank draft reuses it instead of piling up empty tabs', (await tabsOf(page)).length === 2);
     await pickParty(page, 'purchase', '1');
-    await addRow(page, 'ITEM-SAVED', 4, 7);
+    await addRow(page, 'ITEM-SECOND', 4, 7);
     await page.keyboard.press('F12');
-    await page.waitForSelector('dialog[open]');
-    await page.click('dialog[open] >> text=Save draft');
-    await waitDrafts(page, 'purchase', 1);
-    const afterSave = await tabsOf(page);
-    check('Save draft persists the bill, then opens a new tab', afterSave.length === 2 && afterSave[0].draftId !== null && afterSave[1].draftId === null, JSON.stringify(afterSave));
-    check('the saved tab is labelled with its title and party', /^Draft \d+/.test(afterSave[0].title) && /John Doe/.test(afterSave[0].party), JSON.stringify(afterSave[0]));
+    await page.waitForFunction(() => window.zoloDocumentWorkspace.tabs.length === 3, null, { timeout: SLOW });
+    check('each press with edits adds one more server draft', (await draftCount(page, 'purchase')) === 2);
     await resetDrafts(page, 'purchase');
 
     /* ---------------------------------------------- autosave + two-tab isolation */
@@ -131,13 +125,15 @@ try {
 
     /* --------------------------------------------------- 409: two windows */
     const draftA = (await tabsOf(page))[0].draftId;
+    const versionOf = async () => (((await api(page, 'purchase', 'GET', '/drafts')).json.data || []).find(d => d.id === draftA) || {}).version || 0;
+    let before = await versionOf();
     const second = await context.newPage(); watch(second);
     await openKind(second, 'purchase');
     await second.locator('.document-tab-open').first().click();
     await second.waitForFunction(() => window.zoloDocumentWorkspace.snapshot().form.lines.length === 1);
     await second.fill('#order-table-body tr.order-item-row .row-qty', '8');
     await second.locator('#order-table-body tr.order-item-row .row-qty').dispatchEvent('input');
-    await second.waitForFunction(async id => { const r = await fetch('/commercial/purchase/drafts', { headers: { Accept: 'application/json' } }); return (await r.json()).data.some(d => d.id === id && d.version >= 3); }, draftA, { timeout: SLOW });
+    await waitUntil(async () => (await versionOf()) > before, 'the other window to save a newer version');
     await page.fill('#order-table-body tr.order-item-row .row-qty', '5');
     await page.locator('#order-table-body tr.order-item-row .row-qty').dispatchEvent('input');
     await page.waitForSelector('#document-draft-banner:not([hidden])', { timeout: SLOW });
@@ -150,9 +146,10 @@ try {
     check('Load latest replaces the form with the other window\'s version', loaded, JSON.stringify(await page.evaluate(() => ({ lines: window.zoloDocumentWorkspace.snapshot().form.lines.map(l => l.controls.filter(c => c.name === 'qty[]').map(c => c.value)), banner: document.getElementById('document-draft-banner').textContent, tabs: window.zoloDocumentWorkspace.tabs.map(t => [t.draftId, t.version, t.conflict]) }))));
     if (!loaded) throw new Error('Load latest did not restore the latest version');
     // conflict again, this time keep mine
+    before = await versionOf();
     await second.fill('#order-table-body tr.order-item-row .row-qty', '9');
     await second.locator('#order-table-body tr.order-item-row .row-qty').dispatchEvent('input');
-    await second.waitForFunction(async id => { const r = await fetch('/commercial/purchase/drafts', { headers: { Accept: 'application/json' } }); return (await r.json()).data.some(d => d.id === id && d.version >= 4); }, draftA, { timeout: SLOW });
+    await waitUntil(async () => (await versionOf()) > before, 'the other window to save a newer version');
     await page.fill('#order-table-body tr.order-item-row .row-qty', '6');
     await page.locator('#order-table-body tr.order-item-row .row-qty').dispatchEvent('input');
     await page.waitForSelector('#document-draft-banner:not([hidden]) >> text=Keep mine as a new tab', { timeout: SLOW });
@@ -197,7 +194,7 @@ try {
     check('a draft exists before posting', !!draftId);
     const productId = await row.locator('.row-product-id').inputValue();
     if (productId && productId !== '0') {
-        await page.click('#btn-form-submit');
+        await page.click('#btn-form-save');
         // Either the post is accepted (page navigates to the register) or the server refuses it and the page reports why.
         const outcome = await page.waitForFunction(() => {
             if (!document.querySelector('#purchase-entry-form')) return 'navigating';
@@ -215,6 +212,69 @@ try {
     } else {
         check('catalog item could be chosen for the posting check', false, 'autocomplete did not resolve a product');
     }
+
+    /* ------------------------- the other document pages autosave into their own drafts */
+    for (const [kind, path, key] of [['dc', '/delivery-challans', 'Alt+F2'], ['grn', '/goods-received-notes', 'Alt+F12']]) {
+        await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+        await ready(page);
+        await resetDrafts(page, kind);
+        await page.goto(BASE + path + '?new=1', { waitUntil: 'domcontentloaded' });
+        await ready(page);
+        await page.fill('#transport_name', 'Draft Transport ' + kind);
+        await page.locator('#transport_name').dispatchEvent('input');
+        await page.click('#btn-add-row');
+        await page.locator('#order-table-body .item-row .row-qty').last().fill('3');
+        await page.locator('#order-table-body .item-row .row-qty').last().dispatchEvent('input');
+        await waitDrafts(page, kind, 1);
+        await settled(page);
+        check(`${kind}: an edit is autosaved as a draft`, (await draftCount(page, kind)) === 1);
+        await page.keyboard.press(key);
+        await page.waitForFunction(() => window.zoloDocumentWorkspace.tabs.length === 2, null, { timeout: SLOW });
+        check(`${kind}: ${key} again opens one more, blank draft`, (await page.inputValue('#transport_name')) === '' && (await page.locator('#order-table-body .item-row').count()) === 0);
+        await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+        await ready(page);
+        await page.locator('.document-tab-open').first().click();
+        await page.waitForFunction(kind => document.getElementById('transport_name').value === 'Draft Transport ' + kind, kind, { timeout: SLOW });
+        check(`${kind}: the draft reopens after reload with its fields and lines`, (await page.locator('#order-table-body .item-row').count()) === 1
+            && (await page.locator('#order-table-body .item-row .row-qty').inputValue()) === '3');
+        await resetDrafts(page, kind);
+    }
+
+    await page.goto(BASE + '/quotations/create', { waitUntil: 'domcontentloaded' });
+    await ready(page);
+    await resetDrafts(page, 'quotation');
+    await page.goto(BASE + '/quotations/create', { waitUntil: 'domcontentloaded' });
+    await ready(page);
+    await page.fill('textarea[name="note"]', 'Quotation draft note');
+    await page.locator('textarea[name="note"]').dispatchEvent('input');
+    await waitDrafts(page, 'quotation', 1);
+    check('quotation: an edit is autosaved as a draft', (await draftCount(page, 'quotation')) === 1);
+    await page.goto(BASE + '/quotations/create', { waitUntil: 'domcontentloaded' });
+    await ready(page);
+    await page.locator('.document-tab-open').first().click();
+    await page.waitForFunction(() => document.querySelector('textarea[name="note"]').value === 'Quotation draft note', null, { timeout: SLOW })
+        .then(() => check('quotation: the draft reopens after reload', true), () => check('quotation: the draft reopens after reload', false));
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    check('quotation: opening a draft right after load creates no extra blank draft', (await draftCount(page, 'quotation')) === 1);
+    await resetDrafts(page, 'quotation');
+
+    /* ------------------- closing a tab while its autosave is still on the way (slow server) */
+    await openKind(page, 'purchase');
+    await resetDrafts(page, 'purchase');
+    const slowSave = async route => { if (route.request().method() === 'POST') await new Promise(resolve => setTimeout(resolve, 3000)); route.continue(); };
+    await page.route('**/commercial/purchase/drafts', slowSave);
+    await openKind(page, 'purchase', '?new=1');
+    await addRow(page, 'ITEM-CLOSED', 1, 1);
+    await page.waitForFunction(() => document.querySelectorAll('.document-tab').length === 1);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // the autosave POST is now in flight
+    await page.click('.document-tab.is-active .document-tab-close');
+    await page.waitForSelector('dialog[open]');
+    await page.click('dialog[open] button:text-is("Discard")');
+    await waitUntil(async () => (await tabsOf(page)).length === 0, 'the closed tab to go');
+    await page.unroute('**/commercial/purchase/drafts', slowSave);
+    await openKind(page, 'purchase');
+    check('a tab closed while its save was in flight stays closed (no draft comes back)', (await tabsOf(page)).length === 0 && (await draftCount(page, 'purchase')) === 0, JSON.stringify(await tabsOf(page)));
+    await resetDrafts(page, 'purchase');
 
     check('no JavaScript errors on any exercised page', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (error) {

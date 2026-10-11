@@ -1,8 +1,9 @@
 /*
  * Central document shortcut registry (one keydown listener for the authenticated ERP).
  * A shortcut only opens the existing document page in its new-document state. When the current page already is that
- * document, it asks the page's lifecycle API (window.zoloDocumentWorkspace) to start a new document instead of
- * navigating, so this file never serializes or clears form state itself.
+ * document, it asks the page's draft workspace (window.zoloDocumentWorkspace, document-drafts.js) to start one more
+ * draft instead of navigating, so pressing the key again always opens another draft. This file never serializes or
+ * clears form state itself.
  */
 (() => {
     'use strict';
@@ -22,12 +23,14 @@
     // Another dialog owning the keyboard (a Bootstrap modal, a native <dialog>, or anything marked data-owns-keys) wins.
     const dialogOwnsKeys = () => !!document.querySelector('dialog[open], .modal.show, [data-owns-keys]');
 
-    function open(entry) {
+    async function open(entry) {
         const workspace = window.zoloDocumentWorkspace;
         if (workspace && workspace.handles && workspace.handles(entry)) {
             workspace.newDocument({shortcut: entry.id, url: entry.url});
             return;
         }
+        // Another document page: keep what is on screen as a draft before leaving.
+        if (workspace && workspace.flush && await workspace.flush()) workspace.leave();
         window.location.href = entry.url;
     }
 
@@ -77,6 +80,9 @@
         };
         registry.forEach(entry => add(entry.key, entry.label));
         local.forEach(item => add(item.key, item.label));
+        add('Enter / Tab', 'Move to the next field');
+        add('Shift+Tab', 'Move to the previous field');
+        add('Enter on Save', 'Save the document');
         add('?', 'Show / hide this list');
         dialog.appendChild(table);
         const close = document.createElement('button');

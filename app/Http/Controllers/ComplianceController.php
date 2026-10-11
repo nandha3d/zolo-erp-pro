@@ -88,9 +88,10 @@ class ComplianceController extends Controller
 
     public function createNote(Request $request, string $kind, int $id)
     {
-        $data = $request->except('_token', 'idempotency_key');
+        $data = $request->except('_token', 'idempotency_key', 'draft_id');
         if (!$request->isJson()) $data['items'] = array_values(array_filter($data['items'] ?? [], fn ($line) => !empty($line['selected'])));
         $note = app(ReturnService::class)->create($kind, $id, $data, $request->header('Idempotency-Key', $request->input('idempotency_key', '')), $this->context($request), $request->user()->id);
+        app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted($kind === 'sale' ? 'sreturn' : 'preturn', $request->integer('draft_id'), $request->user()->id);
         return $request->expectsJson() ? response()->json(['data' => $note], 201) : redirect('/compliance/returns')->with('message', 'Note '.$note->reference_no.' is '.$note->status.'.');
     }
 

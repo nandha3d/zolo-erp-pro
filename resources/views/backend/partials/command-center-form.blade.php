@@ -14,6 +14,7 @@ $commandCenterFormConfig = [
 @endphp
 <script type="application/json" id="command-center-form-data">@json($commandCenterFormConfig)</script>
 <script src="{{ asset('js/command-center-form.js') }}?v={{ filemtime(public_path('js/command-center-form.js')) }}"></script>
+<script src="{{ asset('js/document-drafts.js') }}?v={{ filemtime(public_path('js/document-drafts.js')) }}"></script>
 <script src="{{ asset('js/document-workspace.js') }}?v={{ filemtime(public_path('js/document-workspace.js')) }}"></script>
 <script src="{{ asset('js/document-aids.js') }}?v={{ filemtime(public_path('js/document-aids.js')) }}"></script>
 @endpush

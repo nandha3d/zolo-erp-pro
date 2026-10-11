@@ -1,7 +1,9 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
     <x-error-message key="not_permitted" />
 
-    <section class="forms">
+@include('backend.partials.document-draft-tabs', ['draftLabel' => 'sales return', 'draftKey' => 'Shift+F2'])
+    <section class="forms classic-document-workspace">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
@@ -20,7 +22,7 @@
                             ]) !!}
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="row">
+                                    <div class="row document-lines-row">
                                         <div class="col-md-12">
                                             <input type="hidden" name="sale_id" value="{{ $lims_sale_data->id }}">
                                             <h5>{{ __('db.Order Table') }} *</h5>
@@ -174,7 +176,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row">
+                                    <div class="row" hidden>
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <input type="hidden" name="total_qty" />
@@ -208,7 +210,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row mt-3">
+                                    <div class="row document-details-row">
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label>{{ __('db.Order Tax') }}</label>
@@ -490,25 +492,6 @@
             $('input[name="grand_total"]').val(grand_total.toFixed({{ $general_setting->decimal }}));
         }
 
-        //Enter key navigation
-        $(window).keydown(function(e) {
-            if (e.which == 13) {
-                var $targ = $(e.target);
-                if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-                    var focusNext = false;
-                    $(this).find(":input:visible:not([disabled],[readonly]), a").each(function() {
-                        if (this === e.target) {
-                            focusNext = true;
-                        } else if (focusNext) {
-                            $(this).focus();
-                            return false;
-                        }
-                    });
-                    return false;
-                }
-            }
-        });
-
         //Prevent empty order table submission
         $('.sale-return-form').on('submit', function(e) {
             var rownumber = $('table.order-list tbody tr:last').index();
@@ -521,4 +504,9 @@
         //Initial calculation
         calculateTotal();
     </script>
+@include('backend.partials.form-drafts', ['draft' => [
+    'kind' => 'sreturn', 'label' => 'Sales Return', 'shortcut' => 'sale-return',
+    'form' => '.sale-return-form', 'source' => ['id' => $lims_sale_data->id, 'reference' => request('reference_no')], 'party' => 'Ref ' . request('reference_no'),
+    'createUrl' => route('return-sale.create'), 'newUrl' => route('return-sale.index', ['new' => 1]),
+]])
 @endpush

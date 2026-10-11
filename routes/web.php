@@ -400,7 +400,6 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('sales/getpayment/{id}', 'getPayment')->name('sale.get-payment');
         Route::post('sales/updatepayment', 'updatePayment')->name('sale.update-payment');
         Route::post('sales/deletepayment', 'deletePayment')->name('sale.delete-payment');
-        Route::get('sales/{id}/create', 'createSale')->name('sale.draft');
         Route::post('sales/deletebyselection', 'deleteBySelection');
         Route::get('customer-display', 'customerDisplay')->name('sales.customerDisplay');
         Route::get('sales/print-last-reciept', 'printLastReciept')->name('sales.printLastReciept');
@@ -914,7 +913,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::controller(\App\Http\Controllers\CatalogueQrController::class)->group(function () {
         Route::get('qr', 'index')->name('qr.index');
         Route::post('qr', 'store')->name('qr.store');
-        Route::get('menu/{slug}', 'viewCatalogue')->name('qr.menu');
+        Route::get('menu/{slug}', 'showPublicMenu')->name('qr.menu');
     });
 
     // Module: Bookings & Appointments Calendar

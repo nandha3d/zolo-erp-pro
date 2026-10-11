@@ -1,12 +1,10 @@
-/* Document accelerators: visible New-bill actions, help dialog, unsaved-bill guard. */
-.sidebar-action a { font-weight: 600; }
-.side-menu kbd, .command-center-nav kbd {
+/* Document accelerators: shortcut help button and dialog, draft dialogs. */
+.command-center-nav kbd {
     margin-left: 6px; padding: 0 5px; border-radius: 3px; font-size: 10px; line-height: 16px;
     background: rgba(148, 163, 184, .25); color: inherit; border: 1px solid rgba(148, 163, 184, .45); box-shadow: none;
 }
-.command-center-nav .command-center-new { background: #15803d; color: #fff; margin-left: auto; }
-.command-center-nav .command-center-new:hover { background: #166534; }
 .command-center-nav .command-center-help {
+    margin-left: auto;
     padding: 3px 9px; border: 0; border-radius: 4px; background: transparent; color: #334155; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 .command-center-nav .command-center-help:hover, .command-center-nav .command-center-help:focus-visible { background: #6d28d9; color: #fff; outline: none; }

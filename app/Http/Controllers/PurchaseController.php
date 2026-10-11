@@ -100,7 +100,7 @@ class PurchaseController extends Controller
             $todayPurchasesCount = Purchase::whereDate('created_at', date('Y-m-d'))->count();
             $totalPaid = Purchase::sum('paid_amount');
             $totalDue = Purchase::selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
-            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number', 'tax_no', 'address', 'city', 'state', 'postal_code', 'credit_days')->limit(200)->get();
+            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number', 'tax_no', 'vat_number', 'address', 'city', 'state', 'postal_code', 'credit_days')->limit(200)->get();
             $recent_bills = Purchase::with('supplier:id,name,company_name,phone_number')
                 ->latest('id')
                 ->limit(50)
@@ -1041,6 +1041,7 @@ class PurchaseController extends Controller
 
     public function limsProductSearch(Request $request)
     {
+        abort_unless($request->filled('data'), 404); // autocomplete endpoint: always called with the picked item
         // dd($request->all());
         $product_code = explode("|", $request['data']);
         $product_code[0] = rtrim($product_code[0], " ");
@@ -1140,7 +1141,7 @@ class PurchaseController extends Controller
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_product_list_without_variant = $this->productWithoutVariant();
             $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_purchase_data = Purchase::find($id);
+            $lims_purchase_data = Purchase::findOrFail($id);
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
             foreach ($lims_product_purchase_data as $purchase) {
                 $lims_product_data = Product::select('cost', 'profit_margin', 'profit_margin_type', 'price')->where('id', $purchase->product_id)->first();
@@ -1178,7 +1179,7 @@ class PurchaseController extends Controller
 
     public function update(UpdatePurchaseRequest $request, $id)
     {
-        $lims_purchase_data = Purchase::find($id);
+        $lims_purchase_data = Purchase::findOrFail($id);
         $data = $request->except('document');
         $document = $request->document;
         if ($document) {
@@ -1410,7 +1411,7 @@ class PurchaseController extends Controller
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_product_list_without_variant = $this->productWithoutVariant();
             $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_purchase_data = Purchase::find($id);
+            $lims_purchase_data = Purchase::findOrFail($id);
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
             if($lims_purchase_data->exchange_rate)
                 $currency_exchange_rate = $lims_purchase_data->exchange_rate;

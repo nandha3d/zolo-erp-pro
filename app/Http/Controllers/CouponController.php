@@ -82,7 +82,7 @@ class CouponController extends Controller
 
     public function destroy($id)
     {
-        $lims_coupon_data = Coupon::find($id);
+        $lims_coupon_data = Coupon::findOrFail($id);
         $lims_coupon_data->is_active = false;
         $lims_coupon_data->save();
         $this->cacheForget('coupon_list');

@@ -13,6 +13,7 @@ body.commercial-screen-lock {
 
 body.commercial-screen-lock .page {
     height: 100vh !important;
+    padding-bottom: 0 !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
@@ -28,9 +29,10 @@ body.commercial-screen-lock .main-footer {
  * ==================================================================== */
 body.commercial-screen-lock header.container-fluid,
 body.commercial-screen-lock header {
-    height: 40px !important;
+    height: auto !important;
     min-height: 40px !important;
-    max-height: 40px !important;
+    max-height: none !important;
+    flex-shrink: 0;
     padding: 0 10px !important;
     margin: 0 !important;
     display: flex !important;
@@ -45,9 +47,9 @@ body.commercial-screen-lock header {
 }
 
 body.commercial-screen-lock nav.navbar {
-    height: 40px !important;
+    height: auto !important;
     min-height: 40px !important;
-    max-height: 40px !important;
+    max-height: none !important;
     width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -143,24 +145,38 @@ body.commercial-screen-lock nav.navbar .badge,
 
 /* Navbar Center Command Area */
 .navbar-center-area {
-    height: 40px !important;
+    height: auto !important;
     display: flex !important;
     align-items: center !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
     margin: 0 8px !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 .comm-navbar-center-wrap {
-    height: 40px !important;
+    min-height: 40px;
+    height: auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     width: 100% !important;
     min-width: 0 !important;
     gap: 8px !important;
+    flex-wrap: wrap;
+    padding: 4px 0;
 }
+
+.comm-navbar-title-group,
+.comm-navbar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+}
+
+.comm-navbar-actions { margin-left: auto; }
 
 /* Title & Breadcrumb Styling */
 .comm-navbar-center-wrap .comm-title-badge {
@@ -429,13 +445,13 @@ body.commercial-screen-lock nav.navbar .nav-item:last-child > a i {
 }
 
 body.commercial-screen-lock #content {
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     padding: 0 !important;
-    height: calc(100vh - 40px) !important;
-    min-height: calc(100vh - 40px) !important;
+    height: auto !important;
+    min-height: 0 !important;
     position: relative !important;
 }
 
@@ -467,8 +483,8 @@ body.commercial-screen-lock.topbar-hidden header {
 
 html.topbar-hidden body.commercial-screen-lock #content,
 body.commercial-screen-lock.topbar-hidden #content {
-    height: 100vh !important;
-    min-height: 100vh !important;
+    height: auto !important;
+    min-height: 0 !important;
 }
 
 /* Floating Reveal Tab when Top Bar is Hidden */
@@ -712,7 +728,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 /* Split-Pane Command Grid (Toggleable & Dockable Left or Right) */
 .comm-split-grid {
     display: grid;
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: minmax(0, 1fr) 320px;
     gap: 10px;
     flex: 1;
     min-height: 0;
@@ -721,7 +737,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 }
 
 .comm-split-grid.dock-left {
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 320px minmax(0, 1fr);
 }
 
 .comm-split-grid.dock-left .comm-drawer-card {
@@ -729,7 +745,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 }
 
 .comm-split-grid.drawer-collapsed {
-    grid-template-columns: 1fr 0px !important;
+    grid-template-columns: minmax(0, 1fr) 0px !important;
     gap: 0 !important;
 }
 
@@ -1780,8 +1796,9 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 /* Responsive adjustments */
 @media (max-width: 1200px) {
     .comm-split-grid {
-        grid-template-columns: 1fr 340px;
+        grid-template-columns: minmax(0, 1fr) 280px;
     }
+    .comm-split-grid.dock-left { grid-template-columns: 280px minmax(0, 1fr); }
 }
 
 @media (max-width: 991px) {
@@ -1877,7 +1894,22 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 .desk-grid-table {
     border-collapse: separate !important;
     border-spacing: 0 !important;
+    table-layout: fixed;
 }
+
+.desk-grid-table thead th { min-width: 0 !important; white-space: normal; overflow-wrap: anywhere; }
+.desk-grid-table thead th:nth-child(1) { width: 3% !important; }
+.desk-grid-table thead th:nth-child(2) { width: 24% !important; }
+.desk-grid-table thead th:nth-child(3) { width: 10% !important; }
+.desk-grid-table thead th:nth-child(4) { width: 7% !important; }
+.desk-grid-table thead th:nth-child(5) { width: 9% !important; }
+.desk-grid-table thead th:nth-child(6) { width: 6% !important; }
+.desk-grid-table thead th:nth-child(7) { width: 11% !important; }
+.desk-grid-table thead th:nth-child(8) { width: 8% !important; }
+.desk-grid-table thead th:nth-child(9) { width: 12% !important; }
+.desk-grid-table thead th:nth-child(10) { width: 10% !important; }
+.desk-grid-table td input,
+.desk-grid-table td select { min-width: 0; max-width: 100%; }
 
 /* Table Header Matching Left Sidebar (#0f172a) */
 .desk-grid-table thead tr,
@@ -2159,7 +2191,8 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 }
 
 .fields-compact-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
     align-items: center;
     gap: 9px;
     margin-bottom: 2px;
@@ -2169,6 +2202,8 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     display: flex;
     flex-direction: column;
     margin-bottom: 0 !important;
+    width: auto !important;
+    min-width: 0;
 }
 
 .field-compact-item label {
@@ -2210,6 +2245,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 }
 
 .party-info-compact-inline {
+    grid-column: 1 / -1;
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
@@ -2233,6 +2269,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 }
 
 .terms-compact-inline {
+    grid-column: 1 / -1;
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
@@ -2247,8 +2284,8 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     overflow: hidden !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
-    width: 335px !important;
-    margin-left: auto !important;
+    width: auto !important;
+    margin-left: 0 !important;
 }
 
 .terms-compact-inline span,
@@ -2443,7 +2480,10 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
  * ==================================================================== */
 .items-section-header {
     padding: 3px 10px !important;
-    height: 32px !important;
+    min-height: 32px;
+    height: auto !important;
+    flex-wrap: wrap;
+    gap: 4px;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -2456,6 +2496,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     display: inline-flex !important;
     align-items: center !important;
     gap: 6px !important;
+    flex-wrap: wrap;
 }
 
 .items-controls-group .comm-items-btn {
@@ -2911,6 +2952,8 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .comm-fullwidth-header-strip {
@@ -2920,6 +2963,9 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     padding: 8px 16px;
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .comm-fullwidth-register .comm-kpi-strip {
@@ -2954,7 +3000,8 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 .comm-fullwidth-register .comm-table-viewport {
     padding: 12px 14px;
     flex: 1 1 auto;
-    overflow-x: auto;
+    min-height: 0;
+    overflow: auto;
 }
 
 body.dark-mode .comm-fullwidth-register {
@@ -3517,6 +3564,9 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focu
 }
 
 @media (max-width: 991px) {
+    html.commercial-screen-lock, body.commercial-screen-lock { height: auto !important; overflow: auto !important; }
+    body.commercial-screen-lock .page { height: auto !important; min-height: 100vh; overflow: visible !important; }
+    body.commercial-screen-lock #content { flex: none !important; height: auto !important; overflow: visible !important; }
     .commercial-workspace-view { height: auto !important; max-height: none !important; overflow: visible !important; }
     .comm-split-grid, .comm-split-grid.dock-left, .comm-split-grid.drawer-collapsed { grid-template-columns: minmax(0, 1fr) !important; overflow: visible; flex: none; }
     .comm-entry-workspace, .comm-entry-workspace form { height: auto !important; max-height: none !important; overflow: visible !important; }
@@ -3524,6 +3574,8 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focu
     .desk-card.items-container .table-responsive { height: auto !important; max-height: 45vh !important; }
     .desk-bill-list-panel { min-height: 420px; max-height: 70vh; }
     .fields-compact-row, .desk-summary-bottom-bar, .bottom-summary-actions, .bottom-summary-totals { flex-wrap: wrap !important; }
+    .fields-compact-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .desk-grid-table { min-width: 650px !important; }
     .comm-split-grid.dock-left .comm-drawer-card { order: initial; }
 }
 
@@ -3543,3 +3595,100 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focu
 
 
 
+
+/* ====================================================================
+ * Bill header: two aligned rows (2026-10-09)
+ * Row A: bill numbers, dates, party, party details. Row B: payment and item mode beside tax classification,
+ * series, warehouse (biller), terms. Every control shares one height so the rows line up and fit one screen.
+ * ==================================================================== */
+.doc-primary-fields.compact-fields { --doc-h: 30px; padding: 8px 14px 9px !important; background: #f8fafc !important; border-color: #e2e8f0 !important; border-radius: 8px !important; }
+.doc-primary-fields .fields-compact-row.doc-row-a,
+.doc-primary-fields .fields-compact-row.doc-row-b { align-items: end; gap: 8px 12px; margin: 0; }
+.doc-primary-fields .fields-compact-row.doc-row-a { margin-bottom: 8px; }
+.doc-primary-fields .field-compact-item label { margin-bottom: 4px !important; font-size: 10px !important; color: #64748b !important; }
+.doc-primary-fields .field-compact-item input.form-control,
+.doc-primary-fields .field-compact-item select.form-control,
+.doc-primary-fields .field-compact-item .bootstrap-select > .btn.dropdown-toggle {
+    height: var(--doc-h) !important; min-height: var(--doc-h) !important; line-height: calc(var(--doc-h) - 2px) !important;
+    padding: 0 10px !important; font-size: 12.5px !important; border-radius: 6px !important; box-shadow: none !important;
+}
+.doc-primary-fields .doc-party-details .party-info-compact-inline,
+.doc-primary-fields .doc-terms .terms-compact-inline {
+    grid-column: auto; height: var(--doc-h) !important; line-height: calc(var(--doc-h) - 2px) !important;
+    padding: 0 10px !important; gap: 10px !important; border-color: #e2e8f0 !important; border-radius: 6px !important; background: #fff !important;
+    font-size: 11.5px !important;
+}
+.doc-primary-fields .doc-party-details .party-info-compact-inline > * { line-height: 1.2 !important; }
+.doc-primary-fields .doc-party-details { min-width: 0; }
+
+/* Payment / item mode as light segmented controls in the form (the top bar keeps the dark variant elsewhere). */
+.doc-primary-fields .pill-segmented-compact.doc-segment {
+    display: inline-flex; height: var(--doc-h); padding: 2px; gap: 2px; border-radius: 6px;
+    background: #fff; border: 1px solid #e2e8f0; width: max-content;
+}
+.doc-primary-fields .doc-segment .segment-btn {
+    height: calc(var(--doc-h) - 6px); line-height: calc(var(--doc-h) - 6px); padding: 0 11px; border-radius: 4px;
+    color: #475569; font-size: 12px; font-weight: 600;
+}
+.doc-primary-fields .doc-segment .segment-btn:hover { color: #0f172a; background: #f1f5f9; }
+.doc-primary-fields .doc-segment .segment-btn.active { background: #7c3aed; color: #fff; box-shadow: 0 1px 2px rgba(124, 58, 237, .35); }
+.doc-primary-fields .doc-segment .segment-btn:focus-visible { outline: 2px solid #7c3aed; outline-offset: 1px; }
+
+@media (min-width: 992px) {
+    .doc-primary-fields .fields-compact-row.doc-row-a {
+        grid-template-columns: minmax(100px, .8fr) minmax(112px, .9fr) minmax(128px, 136px) minmax(128px, 136px) minmax(180px, 1.5fr) minmax(220px, 2.4fr);
+    }
+    .doc-primary-fields .fields-compact-row.doc-row-b {
+        grid-template-columns: max-content max-content minmax(160px, 1.4fr) minmax(100px, .8fr) minmax(130px, 1.1fr) minmax(200px, 1.8fr);
+    }
+    .doc-primary-fields .fields-compact-row.doc-row-b.has-biller {
+        grid-template-columns: max-content max-content minmax(150px, 1.3fr) minmax(95px, .7fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(190px, 1.6fr);
+    }
+}
+
+body.dark-mode .doc-primary-fields.compact-fields { background: #111827 !important; border-color: #1e293b !important; }
+body.dark-mode .doc-primary-fields .pill-segmented-compact.doc-segment,
+body.dark-mode .doc-primary-fields .doc-party-details .party-info-compact-inline,
+body.dark-mode .doc-primary-fields .doc-terms .terms-compact-inline { background: #0f172a !important; border-color: #334155 !important; }
+body.dark-mode .doc-primary-fields .doc-segment .segment-btn { color: #94a3b8; }
+body.dark-mode .doc-primary-fields .doc-segment .segment-btn:hover { background: #1e293b; color: #f8fafc; }
+body.dark-mode .doc-primary-fields .doc-segment .segment-btn.active { background: #7c3aed; color: #fff; }
+/* The legacy strip used flex:1 in a row; inside a labelled column cell that collapses its height. */
+.doc-primary-fields .doc-party-details .party-info-compact-inline,
+.doc-primary-fields .doc-terms .terms-compact-inline { flex: none !important; }
+/* "+ New Party" shares the label line without making it taller than its neighbours. */
+.doc-primary-fields .field-compact-item > .d-flex { height: 10px; margin-bottom: 4px; align-items: center !important; }
+.doc-primary-fields .field-compact-item > .d-flex > label { margin-bottom: 0 !important; }
+.doc-primary-fields .field-compact-item > .d-flex .btn-link { height: auto !important; min-height: 0 !important; padding: 0 !important; line-height: 1 !important; font-size: 10.5px !important; }
+/* Narrow form (small screens, or the bill list docked beside it): keep every control whole; party details and
+   terms take their own full-width line instead of being clipped. Sized by the form, not the window. */
+.doc-primary-fields.compact-fields { container-type: inline-size; container-name: billhead; }
+@container billhead (max-width: 1180px) {
+    .doc-primary-fields .fields-compact-row.doc-row-a,
+    .doc-primary-fields .fields-compact-row.doc-row-b { display: flex !important; flex-wrap: wrap; align-items: flex-end; }
+    .doc-primary-fields .fields-compact-row > .field-compact-item { flex: 1 1 120px; }
+    .doc-primary-fields .fields-compact-row > .field-compact-item:has(input[type="date"]) { flex: 0 0 132px; }
+    .doc-primary-fields .doc-row-a > .field-compact-item:has(.bootstrap-select) { flex: 1.6 1 180px; }
+    .doc-primary-fields .doc-row-b > .field-compact-item:not(.doc-seg-item) { flex: 1 1 100px; }
+    .doc-primary-fields .doc-segment .segment-btn { padding: 0 8px; }
+    .doc-primary-fields .fields-compact-row > .doc-seg-item { flex: 0 0 auto; }
+    .doc-primary-fields .doc-row-b > .field-compact-item:not(.doc-seg-item):not(.doc-terms) { max-width: 260px; }
+    .doc-primary-fields .doc-party-details,
+    .doc-primary-fields .doc-terms { flex: 1 1 100% !important; display: grid !important; grid-template-columns: 84px minmax(0, 1fr); align-items: center; }
+    .doc-primary-fields .doc-terms { flex: 1 1 340px !important; }
+    .doc-primary-fields .doc-party-details > label,
+    .doc-primary-fields .doc-terms > label { margin: 0 !important; }
+    .doc-primary-fields .doc-party-details .party-info-compact-inline,
+    .doc-primary-fields .doc-terms .terms-compact-inline { --doc-h: 26px; }
+}
+/* Top bar on laptop widths: drop the module badge and button words so the bar stays one line. */
+@media (max-width: 1500px) {
+    html body nav.navbar .comm-navbar-title-group .comm-title-badge, html body nav.navbar .comm-navbar-title-group .comm-title-badge + span { display: none !important; }
+    #nav-mode-text { display: none; }
+}
+@media (max-width: 1400px) {
+    html body nav.navbar .nav-item.company-switch > a.company-switch-link { max-width: 260px; }
+    nav.navbar .company-switch-group { display: none; }
+}
+/* Document mode pill (New / Edit) beside the title: legacy !important text colours made it purple on purple. */
+#doc-breadcrumb-mode { color: #fff !important; }

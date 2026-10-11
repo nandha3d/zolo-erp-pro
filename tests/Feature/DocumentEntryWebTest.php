@@ -25,14 +25,18 @@ class DocumentEntryWebTest extends TestCase
     public static function kinds(): array { return [['sale', '/sales', 'F2'], ['purchase', '/purchases', 'F12']]; }
 
     #[DataProvider('kinds')]
-    public function test_normal_page_offers_the_new_bill_action_and_loads_the_registry(string $kind, string $path, string $key): void
+    public function test_normal_page_loads_the_registry_and_draft_tabs_without_separate_shortcut_menus(string $kind, string $path, string $key): void
     {
         $html = $this->get($path.'?new=1')->assertOk()->getContent();
         $this->assertStringContainsString('id="document-shortcut-data"', $html);
         $this->assertStringContainsString('js/document-shortcuts.js', $html);
+        $this->assertStringContainsString('js/document-drafts.js', $html);
         $this->assertStringContainsString('js/document-workspace.js', $html);
-        $this->assertStringContainsString('data-document-shortcut="'.$kind.'"', $html);
-        $this->assertStringContainsString('<kbd>'.$key.'</kbd>', $html);
+        $this->assertStringContainsString('id="document-tab-add"', $html);
+        $this->assertStringContainsString('title="New draft ('.$key.')"', $html);
+        // The keys are accelerators only: no sidebar or toolbar entry duplicates them.
+        $this->assertStringNotContainsString('data-document-shortcut=', $html);
+        $this->assertStringNotContainsString('<kbd>'.$key.'</kbd>', $html);
         $this->assertStringNotContainsString('Fast Entry', $html);
         $this->assertStringNotContainsString('/commercial/'.$kind.'/entry', $html);
         $json = explode('</script>', explode('id="document-shortcut-data">', $html)[1])[0];
@@ -54,10 +58,40 @@ class DocumentEntryWebTest extends TestCase
         $this->get($path.'?new=1&exchange_return_id=999999')->assertStatus(404);
     }
 
-    public function test_challan_grn_return_and_quotation_pages_open_in_their_new_state(): void
+    public function test_challan_grn_return_and_quotation_pages_open_in_their_new_state_with_draft_tabs(): void
     {
-        foreach (['/delivery-challans?new=1', '/goods-received-notes?new=1', '/return-sale?new=1', '/return-purchase?new=1', '/quotations/create'] as $path) {
-            $this->get($path)->assertOk();
+        $pages = ['/delivery-challans?new=1' => 'documents/dc', '/goods-received-notes?new=1' => 'documents/grn', '/return-sale?new=1' => 'documents/sreturn',
+            '/return-purchase?new=1' => 'documents/preturn', '/quotations/create' => 'documents/quotation'];
+        foreach ($pages as $path => $drafts) {
+            $html = $this->get($path)->assertOk()->getContent();
+            $this->assertStringContainsString('id="document-tabs"', $html, $path);
+            $this->assertStringContainsString('js/document-drafts.js', $html, $path);
+            $this->assertStringContainsString(str_replace('/', '\/', $drafts), $html, $path);
+        }
+    }
+
+    public function test_classic_return_forms_keep_their_posting_fields_and_share_the_entry_layout(): void
+    {
+        // Populate the normal shell data, then render source-bound forms without posting business records.
+        $this->get('/sales')->assertOk();
+        $source = (object) ['id' => 999999, 'reference_no' => 'LAYOUT-TEST', 'order_discount' => 0];
+        foreach (['return', 'return_purchase'] as $kind) {
+            $html = view('backend.'.$kind.'.create', [
+                'lims_sale_data' => $source, 'lims_purchase_data' => $source,
+                'lims_product_sale_data' => collect(), 'lims_product_purchase_data' => collect(),
+                'lims_tax_list' => collect(), 'lims_warehouse_list' => collect(),
+                'lims_account_list' => collect(), 'lims_product_purchase_payment_acc_id' => null,
+            ])->render();
+            $this->assertStringContainsString('css/document-entry-layout.css', $html);
+            $this->assertStringContainsString('js/document-keyboard.js', $html);
+            $this->assertStringContainsString('document-lines-row', $html);
+            $this->assertStringContainsString('name="return_note"', $html);
+            $this->assertStringContainsString('name="staff_note"', $html);
+            $this->assertStringContainsString('id="submit-button"', $html);
+            if (getenv('ERP_EXPORT_DOCUMENT_LAYOUT') === '1') {
+                if (!is_dir(base_path('scratch'))) mkdir(base_path('scratch'), 0777, true);
+                file_put_contents(base_path('scratch/document-'.$kind.'-fixture.html'), $html);
+            }
         }
     }
 }

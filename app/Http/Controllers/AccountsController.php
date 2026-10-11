@@ -137,7 +137,7 @@ class AccountsController extends Controller
         $lims_account_data->is_default = false;
         $lims_account_data->save();
 
-        $lims_account_data = Account::find($id);
+        $lims_account_data = Account::findOrFail($id);
         $lims_account_data->is_default = true;
         $lims_account_data->save();
 

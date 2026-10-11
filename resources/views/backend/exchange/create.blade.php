@@ -1,7 +1,8 @@
 @extends('backend.layout.main')
 @section('content')
+@include('backend.partials.document-entry-layout')
 
-<section class="forms">
+<section class="forms exchange-document-workspace">
     <div class="container-fluid">
         <div class="row align-items-center mb-3">
             <div class="col-md-8">
@@ -27,7 +28,7 @@
                     <div class="row">
                         <div class="col-md-4 form-group">
                             <label class="font-weight-600 small">Warehouse *</label>
-                            <select name="warehouse_id" class="form-control selectpicker" required>
+                            <select name="warehouse_id" class="form-control selectpicker" required data-container="body">
                                 @foreach($warehouses as $wh)
                                     <option value="{{ $wh->id }}" {{ ($sale && $sale->warehouse_id == $wh->id) ? 'selected' : '' }}>{{ $wh->name }}</option>
                                 @endforeach
@@ -35,7 +36,7 @@
                         </div>
                         <div class="col-md-4 form-group">
                             <label class="font-weight-600 small">Customer *</label>
-                            <select name="customer_id" class="form-control selectpicker" data-live-search="true" required>
+                            <select name="customer_id" class="form-control selectpicker" data-live-search="true" required data-container="body">
                                 @foreach($customers as $c)
                                     <option value="{{ $c->id }}" {{ ($sale && $sale->customer_id == $c->id) ? 'selected' : '' }}>{{ $c->name }} ({{ $c->phone_number }})</option>
                                 @endforeach

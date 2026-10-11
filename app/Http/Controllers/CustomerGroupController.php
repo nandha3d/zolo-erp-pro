@@ -146,7 +146,7 @@ class CustomerGroupController extends Controller
 
     public function destroy($id)
     {
-        $lims_customer_group_data = CustomerGroup::find($id);
+        $lims_customer_group_data = CustomerGroup::findOrFail($id);
         $lims_customer_group_data->is_active = false;
         $lims_customer_group_data->save();
 

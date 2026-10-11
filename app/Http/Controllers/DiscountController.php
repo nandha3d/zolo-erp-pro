@@ -34,7 +34,7 @@ class DiscountController extends Controller
         $lims_product_data = Product::where([
             ['code', $code],
             ['is_active', true]
-        ])->select('id', 'name', 'code')->first();
+        ])->select('id', 'name', 'code')->firstOrFail();
 
         $product[] = $lims_product_data->id;
         $product[] = $lims_product_data->name;

@@ -29,6 +29,14 @@ class Handler extends ExceptionHandler
 
     public function register(): void
     {
+        // Route::resource() also registers create/show/edit where a screen uses a modal instead; with no such controller
+        // action that URL is simply not a page (404), not a server error.
+        $this->map(function (\BadMethodCallException $error) {
+            return str_ends_with(str_replace('\\', '/', $error->getFile()), 'Illuminate/Routing/Controller.php')
+                ? new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('This page does not exist.', $error)
+                : $error;
+        });
+
         // A rejected stock posting wrote nothing; tell the operator why instead of failing with a server error.
         $this->renderable(function (\App\Services\Inventory\StockPolicyException $error, $request) {
             if ($request->expectsJson()) {

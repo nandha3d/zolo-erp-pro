@@ -1,6 +1,6 @@
 @extends('backend.compliance.layout')
 @section('title', $document['title'].' '.$document['number'])
-@section('content')
+@section('compliance_body')
 <section class="panel"><p>{{ $document['party_name'] }} · {{ $document['date'] }}</p><p class="document-total">{{ $document['currency'] }} {{ number_format($document['grand_total'],4,'.','') }}</p>
 <nav class="actions" aria-label="Print formats">
 <a href="{{ url('/compliance/documents/'.$kind.'/'.$id.'/print?format=a4') }}">A4 preview</a>

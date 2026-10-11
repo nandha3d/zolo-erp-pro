@@ -3,7 +3,7 @@
 @section('navbar-center')
 <div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100" style="min-width:0; gap:8px;">
     <!-- Left Title & Mode Toggles -->
-    <div class="d-flex align-items-center" style="gap:6px; min-width:0; flex-shrink:0;">
+    <div class="comm-navbar-title-group">
         <span class="badge comm-title-badge">
             <i class="dripicons-cart text-primary"></i> Sales Command Center
         </span>
@@ -11,16 +11,6 @@
         <span id="doc-title-text" class="comm-doc-title">New Sales Bill</span>
         <span id="doc-breadcrumb-mode" class="badge badge-primary doc-mode-pill">New</span>
 
-        <!-- Segmented Mode Toggles -->
-        <div class="pill-segmented-compact ml-1" role="group" aria-label="Payment Mode">
-            <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
-            <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
-        </div>
-        <div class="pill-segmented-compact ml-1" role="group" aria-label="Product Mode">
-            <button type="button" class="segment-btn active" data-nature="product">Product</button>
-            <button type="button" class="segment-btn" data-nature="service">Service</button>
-            <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
-        </div>
     </div>
 
     <!-- Center Navigation Register Pills (Only on ultra-wide screens) -->
@@ -32,23 +22,22 @@
     </div>
 
     <!-- Right Controls: Live Total, Details, Bill List, Add New, Hide Bar -->
-    <div class="d-flex align-items-center" style="gap:5px; flex-shrink:0;">
+    <div class="comm-navbar-actions">
         <div class="header-grand-total-badge px-2">
             <span style="font-size:9px; color:#92400e; font-weight:700;">TOTAL:</span>
             <span id="header-grand-total-display">₹ 0.00</span>
         </div>
-        <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-open-details" title="Open Charges & Transport Details">
-            <i class="dripicons-gear"></i> Details
-        </button>
         <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-navbar-workspace-toggle" title="Toggle between Split View (Voucher + List) and Full Width Register">
             <span id="nav-mode-icon">⛶</span> <span id="nav-mode-text">Full Width</span>
         </button>
         <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-header-toggle-list" title="Toggle Bill List Panel">
             <i class="dripicons-list"></i> Bill list
         </button>
+        @unless(config('commercial.enabled'))
         <button type="button" class="comm-nav-btn comm-nav-btn-primary" id="btn-top-new" title="Add New Sale">
             <i class="dripicons-plus"></i> New
         </button>
+        @endunless
         <button type="button" class="comm-nav-btn comm-nav-btn-secondary btn-toggle-topbar" id="btn-toggle-topbar" title="Hide top bar (Focus mode • Shortcut: Ctrl+Shift+F)">
             ▲ Hide
         </button>
@@ -104,7 +93,7 @@
                 <!-- 2. Primary Document Fields (Ultra-Compact 2-Row Layout, ~52px height, >60% reduced) -->
                 <div class="desk-card doc-primary-fields compact-fields mb-1">
                     <!-- Compact Row 1: Bill No, Customer PO, Dates, Party & Inline Info -->
-                    <div class="fields-compact-row">
+                    <div class="fields-compact-row doc-row-a">
                         <div class="field-compact-item" style="width:140px;flex-shrink:0;">
                             <label for="reference_no">Our Bill No</label>
                             <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Auto series" autocomplete="off">
@@ -126,7 +115,7 @@
                                 <label for="customer_id">Party *</label>
                                 <button type="button" class="btn btn-link p-0 btn-open-party-modal" id="btn-quick-new-party" data-party-type="customer" style="font-size:9.5px;color:#7c3aed;font-weight:700;text-decoration:none;border:none;background:none;cursor:pointer;">+ New Party</button>
                             </div>
-                            <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" title="Select Customer" required>
+                            <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" data-container="body" title="Select Customer" required>
                                 @foreach($lims_customer_list as $customer)
                                     <option value="{{ $customer->id }}"
                                         data-tax-no="{{ $customer->tax_no ?? '' }}"
@@ -140,15 +129,33 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="field-compact-item doc-party-details">
+                        <label>Party details</label>
                         <div class="party-info-compact-inline" id="party-info-card" style="display:flex;">
                             <span style="font-size:10px;font-weight:700;color:#475569;white-space:nowrap;">GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span></span>
-                            <span style="font-size:10.5px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" id="party-address-text">Party address loads on select</span>
+                            <span style="font-size:10.5px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" id="party-address-text">Select a party to see GSTIN and address</span>
                             <span class="badge" id="party-credit-badge" style="background:#e0f2fe;color:#0369a1;font-size:9.5px;font-weight:600;white-space:nowrap;">Credit: 0 days</span>
+                        </div>
                         </div>
                     </div>
 
                     <!-- Compact Row 2: Tax Classification, Series, Warehouse, Biller, Logistics Note -->
-                    <div class="fields-compact-row">
+                    <div class="fields-compact-row doc-row-b has-biller">
+                        <div class="field-compact-item doc-seg-item">
+                            <label>Payment</label>
+                            <div class="pill-segmented-compact doc-segment" role="group" aria-label="Payment Mode">
+                                <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
+                                <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
+                            </div>
+                        </div>
+                        <div class="field-compact-item doc-seg-item">
+                            <label>Items</label>
+                            <div class="pill-segmented-compact doc-segment" role="group" aria-label="Product Mode">
+                                <button type="button" class="segment-btn active" data-nature="product">Product</button>
+                                <button type="button" class="segment-btn" data-nature="service">Service</button>
+                                <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
+                            </div>
+                        </div>
                         <div class="field-compact-item" style="width:205px;flex-shrink:0;">
                             <label for="sale_type_id">Tax Classification *</label>
                             <select id="sale_type_id" name="sale_type_id" class="form-control">
@@ -188,12 +195,15 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="field-compact-item doc-terms">
+                        <label>Terms</label>
                         <div class="terms-compact-inline">
-                            <span>Terms: <strong style="color:#0f172a;">Standard</strong></span>
-                            <span class="d-none d-md-inline">Credit Days: <strong id="header-credit-days" style="color:#0f172a;">—</strong></span>
+                            <span><strong style="color:#0f172a;">Standard</strong></span>
+                            <span>Credit: <strong id="header-credit-days" style="color:#0f172a;">—</strong></span>
                             <a href="javascript:void(0)" id="btn-quick-logistics" style="color:#7c3aed;font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">
                                 + Transport &amp; Remarks &rarr;
                             </a>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -290,9 +300,6 @@
                         <button type="submit" class="btn btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-form-save">
                             <i class="dripicons-document-edit"></i> Save
                         </button>
-                        <button type="button" class="btn btn-success comm-bottom-btn comm-bottom-btn-success" id="btn-form-submit">
-                            <i class="dripicons-checkmark"></i> Submit
-                        </button>
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-form-review">
                             Review
                         </button>
@@ -342,9 +349,6 @@
                     <h3 class="comm-drawer-title"><i class="dripicons-view-list text-primary"></i> Bill list</h3>
                 </div>
                 <div class="comm-drawer-tools">
-                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btn-side-new" style="font-size:11px; height:24px; display:inline-flex; align-items:center;" title="Create New Sale (Clear Form)">
-                        <i class="dripicons-plus"></i> New Bill
-                    </button>
                     <button type="button" class="side-icon-btn" id="btn-panel-fullscreen" title="Toggle Full Width Register View">
                         <span id="fullscreen-icon">⛶</span>
                         <span class="dock-tooltip" id="fullscreen-tooltip">Full Width</span>
@@ -473,8 +477,6 @@
             </div>
         </aside>
     </div>
-</section>
-
     <!-- Full Width Register View (Initial Setup Before Changing to New UI) -->
     <div class="comm-fullwidth-register" id="fullwidth-register-view" style="display: none;">
         <!-- Top Return & Action Bar -->
@@ -640,6 +642,8 @@
             </div>
         </div>
     </div>
+
+</section>
 
 <!-- Slide-Over Drawer: Charges, Transport & Remarks Modal -->
 <div class="modal fade right" id="charges-drawer" tabindex="-1" role="dialog" aria-labelledby="chargesDrawerLabel" aria-hidden="true">
@@ -1343,7 +1347,7 @@
                             <div class="compact-field-block">
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <label class="mb-0">Tax Number (GSTIN)</label>
-                                    <span id="party-gst-badge" class="badge" style="display:none;font-size:10px;padding:2px 6px;"></span>
+                                    <span id="party-modal-gst-badge" class="badge" style="display:none;font-size:10px;padding:2px 6px;"></span>
                                 </div>
                                 <div class="input-group">
                                     <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase" placeholder="e.g. 33AIUPN6412D1ZA" maxlength="15" autocomplete="off" style="height:34px;font-size:12px;font-family:monospace;font-weight:700;letter-spacing:0.5px;">
@@ -2011,13 +2015,16 @@
         }
     });
 
-    // Item search shortcut; F2 belongs to the command center entry mode.
-    $(document).on('keydown', function(e) {
-        if (e.altKey && e.key.toLowerCase() === 'i') { // Item search
+    // Capture Alt+I before bootstrap-select treats I as option search; F2 starts a sales draft.
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && !e.ctrlKey && !e.shiftKey && !e.metaKey && e.key.toLowerCase() === 'i'
+            && !e.defaultPrevented && !e.isComposing && $productSearch.is(':visible')
+            && !document.querySelector('dialog[open], .modal.show, [data-owns-keys]')) {
             e.preventDefault();
+            e.stopPropagation();
             $productSearch.focus();
         }
-    });
+    }, true);
 
     // --- Fetch Product via AJAX & Add Row ---
     function fetchProductAndAddRow(searchTerm) {
@@ -2656,7 +2663,7 @@
     function updateGstClientInsight(gstin) {
         gstin = (gstin || '').trim().toUpperCase();
         if (gstin.length < 2) {
-            $('#party-gst-badge').hide();
+            $('#party-modal-gst-badge').hide();
             $('#party-gst-preview-strip').hide();
             return;
         }
@@ -2686,14 +2693,14 @@
         if (gstin.length === 15) {
             var isValid = validateGstinChecksum(gstin);
             if (isValid) {
-                $('#party-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
+                $('#party-modal-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
                 $('#gst-strip-msg').html('<span class="text-success font-weight-bold">✔ Luhn Mod-36 Checksum verified.</span> Click Fetch to auto-populate existing records.');
             } else {
-                $('#party-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
+                $('#party-modal-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
                 $('#gst-strip-msg').html('<span class="text-danger">GSTIN checksum does not match official statutory algorithm.</span>');
             }
         } else {
-            $('#party-gst-badge').removeClass('badge-success badge-danger').addClass('badge-secondary').text(gstin.length + '/15').show();
+            $('#party-modal-gst-badge').removeClass('badge-success badge-danger').addClass('badge-secondary').text(gstin.length + '/15').show();
             $('#gst-strip-msg').text('Enter all 15 characters to verify official checksum.');
         }
     }
@@ -2731,9 +2738,9 @@
                         $('#party-state').val(res.state_name);
                     }
                     if (res.is_valid) {
-                        $('#party-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
+                        $('#party-modal-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
                     } else if (res.error) {
-                        $('#party-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
+                        $('#party-modal-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
                     }
 
                     $('#gst-strip-state').text(res.state_code + ' - ' + res.state_name).show();
@@ -2939,12 +2946,6 @@
         });
     });
 
-    function reindexRows() {
-        $('#order-table-body tr.order-item-row').each(function(idx) {
-            $(this).find('td:first').text(idx + 1);
-        });
-    }
-
     // Delete Row
     $(document).on('click', '.btn-delete-row', function() {
         $(this).closest('tr').remove();
@@ -3126,8 +3127,9 @@
 
     function reindexRows() {
         var rows = $('#order-table-body tr.order-item-row');
+        $('#order-table-body .empty-placeholder-row').remove();
         if (rows.length === 0) {
-            $('#order-table-body').html(`
+            $('#order-table-body').append(`
                 <tr class="empty-placeholder-row">
                     <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
                         No items added yet. Search or scan above or click "+ Add row".
@@ -3199,11 +3201,15 @@
             $('#party-info-card').slideDown(150);
             $('#header-credit-days').text(credit ? (credit + ' days') : 'Standard');
         } else {
-            $('#party-info-card').slideUp(150);
+            $('#party-gst-badge').text('—');
+            $('#party-address-text').text('Select a party to see GSTIN and address');
+            $('#party-credit-badge').text('Credit: — days');
             $('#header-credit-days').text('—');
         }
     }
     $('#customer_id').on('change', updatePartyCard);
+    // No party is preselected: drop the browser's implicit first-option pick so the strip matches the "Select Customer" title.
+    if (!$('#customer_id option[selected]').length) $('#customer_id').prop('selectedIndex', -1);
     updatePartyCard();
 
     // --- Workspace Mode Switching (Split View vs Full Width Register) ---
@@ -3501,7 +3507,7 @@
                 $('.side-bill-card[data-bill-id="' + id + '"]').addClass('active-editing');
 
                 // Populate Items
-                $('#order-table-body').empty();
+                $('#order-table-body .order-item-row, #order-table-body .empty-placeholder-row').remove();
                 rowCounter = 0;
                 if (res.items && res.items.length) {
                     res.items.forEach(function(item) {
@@ -3556,7 +3562,8 @@
         $('#sale_type_id').val('0');
 
         $('.side-bill-card').removeClass('active-editing');
-        $('#order-table-body').empty();
+        $('#order-table-body .order-item-row, #order-table-body .empty-placeholder-row').remove();
+        $productSearch.val('');
         rowCounter = 0;
         reindexRows();
         syncTaxClassificationToRows();
@@ -3585,7 +3592,7 @@
     });
 
     // --- Slideover Drawer Handlers ---
-    $('#btn-open-details, #btn-bottom-charges').on('click', function() {
+    $('#btn-open-details, #btn-bottom-charges, #btn-quick-logistics').on('click', function() {
         $('#charges-drawer').modal('show');
     });
 

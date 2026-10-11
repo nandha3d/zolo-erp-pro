@@ -1,3 +1,4 @@
+@section('charts', '1')
 @extends('backend.layout.main')
 @section('content')
 

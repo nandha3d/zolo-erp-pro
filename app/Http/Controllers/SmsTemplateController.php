@@ -63,7 +63,7 @@ class SmsTemplateController extends Controller
 
     public function destroy(string $id)
     {
-        $template = SmsTemplate::find($id);
+        $template = SmsTemplate::findOrFail($id);
         $template->delete();
         return redirect()->back();
     }

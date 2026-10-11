@@ -119,6 +119,7 @@ class AdjustmentController extends Controller
 
     public function limsProductSearch(Request $request)
     {
+        abort_unless($request->filled('data'), 404); // autocomplete endpoint: always called with the picked item
         $product_code = explode("(", $request['data']);
         $product_info = explode("|", $request['data']);
         $product_code[0] = rtrim($product_code[0], " ");
@@ -137,6 +138,7 @@ class AdjustmentController extends Controller
                 ])->first();
         }
 
+        abort_unless($lims_product_data, 404);
         $product[] = $lims_product_data->name;
         $product_variant_id = null;
         if($lims_product_data->is_variant) {
@@ -276,7 +278,7 @@ class AdjustmentController extends Controller
 
     public function edit($id)
     {
-        $lims_adjustment_data = Adjustment::find($id);
+        $lims_adjustment_data = Adjustment::findOrFail($id);
         $lims_product_adjustment_data = ProductAdjustment::where('adjustment_id', $id)->get();
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
         return view('backend.adjustment.edit', compact('lims_adjustment_data', 'lims_warehouse_list', 'lims_product_adjustment_data'));

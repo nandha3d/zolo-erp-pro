@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Revalidate public code and fonts instead of downloading them on every page switch.
+<IfModule mod_headers.c>
+    <IfModule mod_setenvif.c>
+        SetEnvIf Request_URI "^/(css|js|vendor|fonts)/.*\.(css|js|woff2?|ttf|eot)$" zolo_static_asset
+        Header set Cache-Control "public, max-age=0, must-revalidate" env=zolo_static_asset
+    </IfModule>
+</IfModule>

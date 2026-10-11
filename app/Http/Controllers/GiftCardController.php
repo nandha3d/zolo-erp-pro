@@ -183,7 +183,7 @@ class GiftCardController extends Controller
 
     public function destroy($id)
     {
-        $lims_gift_card_data = GiftCard::find($id);
+        $lims_gift_card_data = GiftCard::findOrFail($id);
         $lims_gift_card_data->is_active = false;
         $lims_gift_card_data->save();
         return redirect('gift_cards')->with('not_permitted', __('db.Data deleted successfully'));

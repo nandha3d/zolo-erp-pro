@@ -235,7 +235,7 @@ class CommercialController extends Controller
     public function drafts(Request $request, string $kind)
     {
         $context = $this->context($request);
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $request->user()->id);
+        app(CommercialPermission::class)->assert(CommercialDraftService::permission($kind), $context, $request->user()->id);
         $drafts = app(CommercialDraftService::class);
         $drafts->prune($kind, $context, $request->user()->id);
         return response()->json(['data' => $drafts->meta($drafts->query($kind, $context, $request->user()->id)),
@@ -245,7 +245,7 @@ class CommercialController extends Controller
     public function showDraft(Request $request, string $kind, int $id)
     {
         $context = $this->context($request);
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $request->user()->id);
+        app(CommercialPermission::class)->assert(CommercialDraftService::permission($kind), $context, $request->user()->id);
         return response()->json(['data' => app(CommercialDraftService::class)->load($kind, $id, $context, $request->user()->id)]);
     }
 

@@ -16,7 +16,6 @@
     };
     $shortcutRegistry = app(\App\Services\Platform\DocumentShortcutRegistry::class);
     $documentShortcuts = $shortcutRegistry->forUser($canNavigate, $isAdmin);
-    $shortcutFor = fn (string $id) => $shortcutRegistry->find($documentShortcuts, $id);
 @endphp
 
 <ul id="side-main-menu" class="side-menu list-unstyled d-print-none">
@@ -105,9 +104,6 @@
                     <li><a href="{{route('purchases.index', ['view' => 'orders', 'purchase_status' => 4])}}">Orders</a></li>
                     <li id="grn-list-menu"><a href="{{route('goods-received-notes.index')}}">Goods Received Note (GRN)</a></li>
                 @endif
-                @if($shortcutFor('purchase'))
-                    <li id="purchase-create-menu" class="sidebar-action"><a data-document-shortcut="purchase" href="{{ $shortcutFor('purchase')['url'] }}">+ New Purchase Bill <kbd>F12</kbd></a></li>
-                @endif
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
                 @endif
@@ -140,9 +136,6 @@
                 @endif
                 @if($isAdmin || $canNavigate('sales-add'))
                     <li><a href="{{route('sale.pos')}}">POS Terminal</a></li>
-                    @if($shortcutFor('sale'))
-                        <li id="sale-create-menu" class="sidebar-action"><a data-document-shortcut="sale" href="{{ $shortcutFor('sale')['url'] }}">+ New Sales Bill <kbd>F2</kbd></a></li>
-                    @endif
                 @endif
                 @if($isAdmin || $canNavigate('sales-import'))
                     <li id="sale-import-menu"><a href="{{url('sales/sale_by_csv')}}">{{__('db.Import Sale By CSV')}}</a></li>
@@ -188,9 +181,6 @@
             <ul id="quotation" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('quotes-index'))
                     <li id="quotation-list-menu"><a href="{{route('quotations.index')}}">{{__('db.Quotation List')}}</a></li>
-                @endif
-                @if($isAdmin || $canNavigate('quotes-add'))
-                    <li id="quotation-create-menu" class="sidebar-action"><a data-document-shortcut="quotation" href="{{route('quotations.create')}}">+ {{__('db.Add Quotation')}} <kbd>Alt+F10</kbd></a></li>
                 @endif
             </ul>
         </li>

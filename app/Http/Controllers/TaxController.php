@@ -49,7 +49,7 @@ class TaxController extends Controller
 
     public function limsTaxSearch()
     {
-        $lims_tax_name = $_GET['lims_taxNameSearch'];
+        $lims_tax_name = request('lims_taxNameSearch', '');
         $lims_tax_all = tax::where('name', $lims_tax_name)->paginate(5);
         $lims_tax_list = tax::all();
         return view('backend.tax.create', compact('lims_tax_all','lims_tax_list'));

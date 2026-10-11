@@ -171,7 +171,7 @@ class SupplierController extends Controller
             $message .= ' and Customer';
         }
         $mail_setting = MailSetting::latest()->first();
-        if($lims_supplier_data['email'] && $mail_setting) {
+        if(!empty($lims_supplier_data['email']) && $mail_setting) {
             $this->setMailInfo($mail_setting);
             try {
                 Mail::to($lims_supplier_data['email'])->send(new SupplierCreate($lims_supplier_data));
