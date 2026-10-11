@@ -742,6 +742,37 @@ class CommercialController extends Controller
         ]);
     }
 
+    /** Company name -> candidate GSTINs: parties already in the ERP first, then Masters India legal-name search. */
+    public function gstSearchByName(Request $request)
+    {
+        $name = trim((string) $request->input('name', ''));
+        if (mb_strlen($name) < 3) {
+            return response()->json(['success' => false, 'message' => 'Enter at least 3 characters of the company name.'], 422);
+        }
+
+        $matches = [];
+        foreach ([[Supplier::class, 'vat_number'], [Customer::class, 'tax_no']] as [$model, $column]) {
+            $model::query()->whereNotNull($column)->where($column, '!=', '')
+                ->where(fn ($q) => $q->where('company_name', 'like', "%{$name}%")->orWhere('name', 'like', "%{$name}%"))
+                ->limit(5)->get()
+                ->each(function ($party) use (&$matches, $column) {
+                    $gstin = strtoupper($party->{$column});
+                    $matches[$gstin] ??= ['gstin' => $gstin, 'legal_name' => $party->company_name ?: $party->name,
+                        'trade_name' => '', 'status' => '', 'city' => $party->city ?? '', 'state' => $party->state ?? '', 'source' => 'local_database'];
+                });
+        }
+
+        $mastersIndia = app(\App\Services\Tax\MastersIndiaGstClient::class);
+        if ($mastersIndia->configured()) {
+            foreach (array_slice($mastersIndia->searchLegalName($name), 0, 10) as $reg) {
+                $matches[$reg['gstin']] ??= ['gstin' => $reg['gstin'], 'legal_name' => $reg['legal_name'], 'trade_name' => $reg['trade_name'],
+                    'status' => $reg['status'], 'city' => $reg['city'], 'state' => $reg['state'], 'source' => 'live_api'];
+            }
+        }
+
+        return response()->json(['success' => true, 'provider' => $mastersIndia->configured(), 'matches' => array_values($matches)]);
+    }
+
     public function gstLookup(Request $request)
     {
         $gstin = strtoupper(trim($request->input('gstin', '')));
@@ -787,7 +818,8 @@ class CommercialController extends Controller
             }
         }
 
-        if ($existing) {
+        // A match without an address (e.g. the party being edited) still lets the provider fill the gaps.
+        if ($existing && trim((string) $existing->address) !== '') {
             $partyData = [
                 'name' => $existing->name ?? '',
                 'company_name' => $existing->company_name ?? ($existing->name ?? ''),
@@ -802,20 +834,45 @@ class CommercialController extends Controller
             ];
         }
 
-        // 2. If not found locally, query live external provider if configured in .env (e.g. gstin_lookup or Sandbox)
-        if (!$partyData && $parsed['is_valid']) {
+        // 2. If not found locally, query Masters India when configured, else the generic provider URL below.
+        $mastersIndia = app(\App\Services\Tax\MastersIndiaGstClient::class);
+        if (!$partyData && $parsed['is_valid'] && $mastersIndia->configured()) {
+            if ($reg = $mastersIndia->searchGstin($gstin)) {
+                $partyData = [
+                    'name' => $reg['legal_name'] ?: $reg['trade_name'],
+                    'company_name' => $reg['trade_name'] ?: $reg['legal_name'],
+                    'address' => $reg['address'],
+                    'city' => $reg['city'],
+                    'state' => $reg['state'] ?: $parsed['state_name'],
+                    'postal_code' => $reg['postal_code'],
+                    'phone_number' => '',
+                    'email' => '',
+                    'party_type' => 'registered_business',
+                    'registration_status' => $reg['status'],
+                    'source' => 'live_api',
+                ];
+            }
+        } elseif (!$partyData && $parsed['is_valid']) {
             $lookupUrl = config('compliance.gst_lookup_url') ?: env('GST_LOOKUP_URL');
             if ($lookupUrl) {
                 try {
                     $url = rtrim($lookupUrl, '/') . '/' . $gstin;
                     $token = config('compliance.gst_lookup_token') ?: env('GST_LOOKUP_TOKEN');
-                    $client = \Illuminate\Support\Facades\Http::timeout(5);
-                    if ($token) {
-                        $client = $client->withToken($token);
+                    $header = config('compliance.gst_lookup_header');
+                    // Providers charge per lookup, so a successful response is reused for 30 days.
+                    $ext = \Illuminate\Support\Facades\Cache::get('gst-provider:' . $gstin);
+                    if (!$ext) {
+                        $client = \Illuminate\Support\Facades\Http::timeout(5)->acceptJson();
+                        if ($token) {
+                            $client = $header ? $client->withHeaders([$header => $token]) : $client->withToken($token);
+                        }
+                        $response = $client->get($url);
+                        if ($response->successful()) {
+                            $ext = $response->json();
+                            \Illuminate\Support\Facades\Cache::put('gst-provider:' . $gstin, $ext, now()->addDays(30));
+                        }
                     }
-                    $response = $client->get($url);
-                    if ($response->successful()) {
-                        $ext = $response->json();
+                    if ($ext) {
                         // Normalize across gstin_lookup, sandbox, or standard GSP schemas
                         $data = $ext['data'] ?? $ext;
                         $legalName = $data['legalName'] ?? ($data['legal_name'] ?? ($data['lgnm'] ?? ''));
@@ -843,6 +900,7 @@ class CommercialController extends Controller
                                 'phone_number' => $data['phone_number'] ?? '',
                                 'email' => $data['email'] ?? '',
                                 'party_type' => 'registered_business',
+                                'registration_status' => $data['status'] ?? ($data['sts'] ?? ''),
                                 'source' => 'live_api',
                             ];
                         }

@@ -60,7 +60,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.VAT Number')}} / {{__('db.Tax Number')}}</label>
+                                    <label>GSTIN / {{__('db.VAT Number')}}</label>
                                     <input type="text" name="vat_number" class="form-control">
                                 </div>
                             </div>
@@ -157,4 +157,5 @@
         }
     });
 </script>
+@include('backend.partials.gstin-autofill', ['gstinField' => 'vat_number', 'nameField' => 'name'])
 @endpush

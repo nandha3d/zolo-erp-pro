@@ -44,7 +44,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label>{{__('db.VAT Number')}}</label>
+                                    <label>GSTIN / {{__('db.VAT Number')}}</label>
                                     <input type="text" name="vat_number" value="{{$lims_supplier_data->vat_number}}" class="form-control">
                                 </div>
                             </div>
@@ -117,4 +117,5 @@
     $("ul#people").siblings('a').attr('aria-expanded','true');
     $("ul#people").addClass("show");
 </script>
+@include('backend.partials.gstin-autofill', ['gstinField' => 'vat_number', 'nameField' => 'name'])
 @endpush
