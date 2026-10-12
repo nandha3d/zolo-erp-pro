@@ -1,0 +1,87 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Services\Documents\DocumentRenderingService;
+use App\Services\Platform\CompanyProfileService;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\{DB, File, Schema};
+use Illuminate\Validation\ValidationException;
+use Tests\Support\ReturnsDocumentTestCase;
+
+class CompanyProfileTest extends ReturnsDocumentTestCase
+{
+    private array $logos = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        (require database_path('migrations/2026_10_16_000001_add_profile_to_companies.php'))->up();
+        if (!Schema::hasColumn('currencies', 'name')) Schema::table('currencies', fn (Blueprint $t) => $t->string('name')->nullable());
+        DB::table('currencies')->update(['name' => 'Indian Rupee']);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->logos as $logo) File::delete(public_path($logo));
+        parent::tearDown();
+    }
+
+    private function profile(array $input = [], ?UploadedFile $logo = null)
+    {
+        $company = app(CompanyProfileService::class)->save($this->company->fresh(), $input + ['legal_name' => 'Motumo Foods Private Limited',
+            'trade_name' => 'Motumo FMCG', 'address' => 'No. 4, Mill Road', 'city' => 'Coimbatore', 'state_code' => '33', 'postal_code' => '641001',
+            'phone' => '+91 422 400 1000', 'email' => 'accounts@motumo.example', 'gstin' => $this->gstin('33')], $logo, $this->context(), 1);
+        if ($company->logo) $this->logos[] = $company->logo;
+        return $company;
+    }
+
+    public function test_profile_names_address_and_logo_print_on_the_invoice_and_follow_into_gst_registration(): void
+    {
+        $company = $this->profile([], UploadedFile::fake()->image('logo.png', 120, 60));
+
+        $this->assertSame(substr($this->gstin('33'), 2, 10), $company->pan, 'PAN defaults from the GSTIN.');
+        $this->assertFileExists(public_path($company->logo));
+        $registration = DB::table('tax_registrations')->where('company_id', $this->company->id)->whereNull('effective_to')->first();
+        $this->assertSame(['Motumo Foods Private Limited', 'Motumo FMCG', 'No. 4, Mill Road, Coimbatore, Tamil Nadu 641001'],
+            [$registration->legal_name, $registration->trade_name, $registration->address]);
+        $this->assertSame(1, DB::table('tax_registrations')->where('company_id', $this->company->id)->count(), 'Same GSTIN updates, never duplicates.');
+
+        $sale = $this->gstSale(); $renderer = app(DocumentRenderingService::class);
+        $html = $renderer->html($renderer->dto('sale', $sale->id, $this->context()), $renderer->profile('sale', $this->context(), null, 'a4'));
+        foreach (['Motumo FMCG', 'Motumo Foods Private Limited', 'Coimbatore, Tamil Nadu 641001', 'Ph: +91 422 400 1000', 'PAN: '.$company->pan,
+            'data:image/png;base64,', 'Rupees Only'] as $text) {
+            $this->assertStringContainsString($text, $html);
+        }
+
+        $this->profile(['trade_name' => 'Motumo Foods'], UploadedFile::fake()->image('new.png', 80, 40));
+        $again = $renderer->html($renderer->dto('sale', $sale->id, $this->context()), $renderer->profile('sale', $this->context(), null, 'a4'));
+        $this->assertStringContainsString('Motumo FMCG', $again, 'A posted bill keeps the name it was posted with.');
+        $this->assertFileExists(public_path($this->logos[0]), 'A new logo never removes the one older bills print.');
+    }
+
+    public function test_pan_must_match_gstin_and_a_gstin_needs_an_address(): void
+    {
+        foreach ([['pan' => 'ZZZZZ9999Z'], ['address' => '']] as $input) {
+            try {
+                $this->profile($input);
+                $this->fail('Profile must be refused: '.json_encode($input));
+            } catch (ValidationException $error) {
+                $this->assertArrayHasKey(array_key_first($input), $error->errors());
+            }
+        }
+        $this->assertNull($this->company->fresh()->address, 'A refused profile changes nothing.');
+    }
+
+    public function test_profile_page_saves_the_company_and_a_logo(): void
+    {
+        $this->get('/settings/company')->assertOk()->assertSee('Company profile')->assertSee('Base currency');
+        $this->post('/settings/company', ['legal_name' => 'Motumo Foods Private Limited', 'trade_name' => 'Motumo FMCG', 'state_code' => '33',
+            'city' => 'Coimbatore', 'base_currency_id' => 1, 'logo' => UploadedFile::fake()->image('logo.jpg', 100, 50)])
+            ->assertSessionHasNoErrors()->assertRedirect('/settings/company');
+        $company = $this->company->fresh(); $this->logos[] = $company->logo;
+        $this->assertSame(['Motumo FMCG', 'Coimbatore', 1], [$company->trade_name, $company->city, (int) $company->base_currency_id]);
+        $this->assertStringStartsWith(CompanyProfileService::LOGO_DIR.'/company-'.$company->id.'-', $company->logo);
+    }
+}

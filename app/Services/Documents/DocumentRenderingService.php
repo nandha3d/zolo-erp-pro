@@ -30,11 +30,13 @@ class DocumentRenderingService
             ->findOrFail($source->{$sale ? 'customer_id' : 'supplier_id'});
         $tax = $source->tax_snapshot_json ?? [];
         $lines = $note ? $source->products : ($sale ? $source->productSales : $source->productPurchases);
+        $units = DB::table('units')->whereIn('id', $lines->pluck($sale ? 'sale_unit_id' : 'purchase_unit_id')->filter())->pluck('unit_code', 'id');
         $rows = [];
         foreach ($lines as $line) {
             if ((int) $line->company_id !== $context->companyId) throw new \LogicException('Document contains a foreign line.');
             $product = Product::forCompany($context)->findOrFail($line->product_id); $snapshot = $line->tax_snapshot_json ?? [];
             $rows[] = ['name' => $snapshot['product_name'] ?? $product->name, 'code' => $snapshot['product_code'] ?? $product->code,
+                'unit' => $units[$line->{$sale ? 'sale_unit_id' : 'purchase_unit_id'}] ?? '', 'discount' => (float) ($snapshot['discount'] ?? $line->discount ?? 0),
                 'qty' => (float) $line->qty, 'price' => (float) $line->{$sale ? 'net_unit_price' : 'net_unit_cost'},
                 'dimensions' => $line->stock_details_json['attributes']['stock_dimension'] ?? null,
                 'taxable_value' => $snapshot['taxable_value'] ?? (float) $line->total - (float) $line->tax,
@@ -43,11 +45,27 @@ class DocumentRenderingService
                 'cgst' => $snapshot['cgst'] ?? 0, 'sgst' => $snapshot['sgst'] ?? 0, 'igst' => $snapshot['igst'] ?? 0, 'cess' => $snapshot['cess'] ?? 0];
         }
         $currency = DB::table('currencies')->where('id', $company->base_currency_id)->first();
-        return ['kind' => $kind, 'title' => $note ? ucfirst($source->note_type).' note' : ($sale ? ($tax ? ($tax['registration_type'] === 'composition' ? 'Bill of supply' : 'Tax invoice') : 'Invoice') : 'Purchase bill'),
+        $partyGstin = $tax[$sale ? 'buyer_gstin' : 'seller_gstin'] ?? '';
+        $attributes = $source->attributes_json ?? [];
+        $shipTo = $sale && !$note && trim((string) ($source->shipping_address ?? '')) !== '' ? ['name' => $source->shipping_name ?: $party->name,
+            'address' => implode(', ', array_filter([$source->shipping_address, $source->shipping_city, $source->shipping_state, $source->shipping_zip])),
+            'phone' => $source->shipping_phone] : null;
+        return ['kind' => $kind,
+            'company_trade_name' => DB::table('tax_registrations')->where('company_id', $context->companyId)->where('gstin', $tax['registration_gstin'] ?? '')->value('trade_name') ?: $company->trade_name,
+            'company_state' => isset($tax['registration_gstin']) ? substr($tax['registration_gstin'], 0, 2) : ($company->state_code ?? ''),
+            'party_state' => $partyGstin ? substr($partyGstin, 0, 2) : (string) DB::table('party_tax_profiles')->where('company_id', $context->companyId)
+                ->where('party_type', $sale ? 'customer' : 'supplier')->where('party_id', $party->id)->value('state_code'),
+            'party_contact' => ['company' => $party->company_name ?? null, 'phone' => $party->phone_number ?? null, 'email' => $party->email ?? null,
+                'city' => $party->city ?? null, 'postal_code' => $party->postal_code ?? null],
+            'ship_to' => $shipTo, 'round_off' => (float) ($attributes['round_off'] ?? 0),
+            'due_date' => $attributes['due_date'] ?? null, 'paid_amount' => $note ? null : (float) ($source->paid_amount ?? 0),
+            'references' => array_intersect_key($attributes, array_flip(['order_no', 'lr_no', 'station_to', 'credit_days'])),
+            'note' => $note ? null : ($source->{$sale ? 'sale_note' : 'note'} ?? null),
+            'print' => $this->printSettings($context), 'title' => $note ? ucfirst($source->note_type).' note' : ($sale ? ($tax ? ($tax['registration_type'] === 'composition' ? 'Bill of supply' : 'Tax invoice') : 'Invoice') : 'Purchase bill'),
             'number' => $source->reference_no, 'date' => $source->created_at->toDateString(),
             'company_name' => $tax[$sale ? 'seller_name' : 'buyer_name'] ?? $company->legal_name,
             'party_name' => $tax[$sale ? 'buyer_name' : 'seller_name'] ?? $party->name,
-            'company_address' => $tax['company_address'] ?? '', 'party_address' => $tax['party_address'] ?? $party->address ?? '', 'company_gstin' => $tax['registration_gstin'] ?? '',
+            'company_address' => ($tax['company_address'] ?? '') ?: app(\App\Services\Platform\CompanyProfileService::class)->fullAddress($company),'party_address' => $tax['party_address'] ?? $party->address ?? '', 'company_gstin' => $tax['registration_gstin'] ?? '',
             'party_gstin' => $tax[$sale ? 'buyer_gstin' : 'seller_gstin'] ?? '', 'place_of_supply' => $tax['place_of_supply'] ?? '',
             'reverse_charge' => $tax['reverse_charge'] ?? false, 'currency' => $currency->code ?? 'INR',
             'lines' => $rows, 'total_tax' => (float) $source->total_tax + (float) $source->order_tax,
@@ -63,7 +81,28 @@ class DocumentRenderingService
     {
         $source = $this->source($kind, $id, $context);
         if (!$source->document_snapshot_json) throw ValidationException::withMessages(['document' => 'Retained document needs reviewed print-snapshot migration.']);
-        return $source->document_snapshot_json + ['reversed_at' => $source->reversed_at?->toDateString()];
+        // Documents posted before print details existed show the current company print details.
+        return $source->document_snapshot_json + ['reversed_at' => $source->reversed_at?->toDateString(), 'print' => $this->printSettings($context)];
+    }
+
+    /** Letterhead for printed documents: contact and logo from Company profile, bank and terms from Settings › GST › Registration. */
+    public function printSettings(CompanyContext $context): array
+    {
+        $company = Company::findOrFail($context->companyId);
+        $filled = fn (array $values) => array_filter($values, fn ($value) => $value !== null && $value !== '');
+        // Contact typed in the GST print form before Company profile existed still prints until the profile has it.
+        return $filled(['phone' => $company->phone, 'email' => $company->email, 'website' => $company->website, 'pan' => $company->pan, 'logo' => $company->logo])
+            + $filled($company->settings_json['invoice_print'] ?? []);
+    }
+
+    /** The logo as a data URI, so the HTML page and the DomPDF output show it the same way; null when the file is gone. */
+    public static function logo(?string $path): ?string
+    {
+        if (!$path || !str_starts_with($path, \App\Services\Platform\CompanyProfileService::LOGO_DIR.'/')) return null;
+        $file = realpath(public_path($path)); $root = realpath(public_path(\App\Services\Platform\CompanyProfileService::LOGO_DIR));
+        if (!$file || !$root || !str_starts_with($file, $root.DIRECTORY_SEPARATOR) || !is_file($file)) return null;
+        $type = match (strtolower(pathinfo($file, PATHINFO_EXTENSION))) { 'png' => 'image/png', 'jpg', 'jpeg' => 'image/jpeg', default => null };
+        return $type ? 'data:'.$type.';base64,'.base64_encode(file_get_contents($file)) : null;
     }
 
     public function profile(string $kind, CompanyContext $context, ?int $id, string $format): array
@@ -84,7 +123,40 @@ class DocumentRenderingService
 
     public function html(array $document, array $profile): string
     {
-        return view('backend.compliance.print', compact('document', 'profile'))->render();
+        return view($profile['format'] === 'a4' ? 'backend.compliance.tax-invoice' : 'backend.compliance.print', compact('document', 'profile'))->render();
+    }
+
+    /** 1234567.5 → 12,34,567.50 (Indian digit grouping). */
+    public static function inr(float $value): string
+    {
+        $value = round($value, 2);
+        [$whole, $fraction] = explode('.', number_format(abs($value), 2, '.', ''));
+        if (strlen($whole) > 3) $whole = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', substr($whole, 0, -3)).','.substr($whole, -3);
+        return ($value < 0 ? '-' : '').$whole.'.'.$fraction;
+    }
+
+    /** 9878 → "Nine Thousand Eight Hundred Seventy Eight Rupees Only" (lakh/crore system). */
+    public static function rupeesInWords(float $amount): string
+    {
+        $paise = (int) round(abs($amount) * 100);
+        $rupees = intdiv($paise, 100); $paise %= 100;
+        return self::indianWords($rupees).' Rupees'.($paise ? ' and '.self::indianWords($paise).' Paise' : '').' Only';
+    }
+
+    private static function indianWords(int $number): string
+    {
+        $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen',
+            'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        $two = fn (int $n) => $n < 20 ? $ones[$n] : trim($tens[intdiv($n, 10)].' '.$ones[$n % 10]);
+        if ($number === 0) return 'Zero';
+        $parts = [];
+        if ($number >= 10000000) { $parts[] = self::indianWords(intdiv($number, 10000000)).' Crore'; $number %= 10000000; }
+        foreach ([100000 => 'Lakh', 1000 => 'Thousand', 100 => 'Hundred'] as $size => $name) {
+            if ($number >= $size) { $parts[] = $two(intdiv($number, $size)).' '.$name; $number %= $size; }
+        }
+        if ($number) $parts[] = $two($number);
+        return implode(' ', $parts);
     }
 
     public function fixedWidth(array $document, array $profile): string

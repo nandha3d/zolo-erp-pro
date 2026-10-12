@@ -41,7 +41,7 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         ]), 'grey-sale', 1, $this->context()));
         app(\App\Services\ERP\PaymentService::class)->addPayment($sale, ['amount' => 200, 'account_id' => 1,
             'paying_method' => 'Cash', 'business_date' => '2026-10-03', 'idempotency_key' => 'grey-payment'], 1, $this->context());
-        $this->assertEquals(1499.2, DB::table('account_open_items')->where('source_type', 'sale')->where('source_id', $sale->id)->sum('open_amount'));
+        $this->assertEquals(1499, DB::table('account_open_items')->where('source_type', 'sale')->where('source_id', $sale->id)->sum('open_amount'));
         $this->assertEquals(0, $fabric->fresh()->qty); $this->assertSame([], $job->pending($this->context(), 1));
         $print = app(DocumentRenderingService::class); $document = $print->dto('sale', $sale->id, $this->context());
         $text = $print->fixedWidth($document, $print->profile('sale', $this->context(), null, 'dot_matrix'));
@@ -68,7 +68,7 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         $sale = app(SaleApplicationService::class)->create(new SaleCommand($this->saleData($product, ['items' => [[
             'product_id' => $product->id, 'qty' => 1, 'sale_unit_id' => 2, 'net_unit_price' => 24, 'quantity_scheme_id' => $scheme,
         ]]]), 'box-sale', 1, $this->context()));
-        $this->assertEquals(28.32, $sale->grand_total); $this->assertEquals(131, $product->fresh()->qty);
+        $this->assertEquals(28, $sale->grand_total); $this->assertEquals(131, $product->fresh()->qty);
         $this->assertEquals(5, DB::table('product_batches')->value('mrp'));
         $this->assertSame([], app(InventoryReconciliationService::class)->differences());
     }

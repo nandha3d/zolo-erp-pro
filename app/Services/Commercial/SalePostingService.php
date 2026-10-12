@@ -82,6 +82,10 @@ class SalePostingService
                 $add('tax_payable', 0, (float) $sale->total_tax + (float) $sale->order_tax);
             }
             $add('shipping_income', 0, (float) $sale->shipping_cost);
+            if ($roundOff = (float) ($sale->attributes_json['round_off'] ?? 0)) {
+                app(\App\Services\Tax\GstSetupService::class)->ensureLedgers($context->companyId, ['rounding']);
+                $add('rounding', max(-$roundOff, 0), max($roundOff, 0));
+            }
             $add('cogs', $cost, 0);
             $add('inventory', 0, $cost);
             if ($lines !== []) {

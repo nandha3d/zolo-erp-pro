@@ -75,6 +75,10 @@ class ComplianceHttpTest extends ReturnsDocumentTestCase
         for ($i = 0; $i < 3; $i++) $this->postedReturn($sale, [], 'part-'.$i);
         $this->assertEqualsWithDelta($sale->grand_total, DB::table('returns')->sum('grand_total'), .000001);
         $this->assertEquals(0, DB::table('account_open_items')->sum('open_amount'));
+        // The invoice rounded 1.1798 down to 1; the note that returns the last unit reverses that round-off.
+        $this->assertEquals(-.1798, $sale->attributes_json['round_off']);
+        $rounding = DB::table('journal_items')->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_items.chart_of_account_id')->where('sub_type', 'rounding');
+        $this->assertEqualsWithDelta(0, (clone $rounding)->sum('debit') - (clone $rounding)->sum('credit'), .000001);
         $this->assertEquals(20, $p->fresh()->qty);
         $this->expectException(\LogicException::class);
         ProductReturn::forceCreate(['return_id' => DB::table('returns')->value('id')]);

@@ -62,7 +62,9 @@ class ReturnService
             $note->save();
             $this->buildLines($note, $source, $kind, $data, $context, $actor);
             $amount = $note->products->sum('total'); $tax = $note->products->sum('tax'); $qty = $note->products->sum('qty');
-            $note->forceFill(['total_qty' => $qty, 'total_tax' => $tax, $kind === 'sale' ? 'total_price' : 'total_cost' => $amount, 'grand_total' => $amount])->save();
+            $roundOff = $kind === 'sale' && $reduction && $data['adjustment_type'] === 'quantity' ? $this->roundOffReturned($source, $note, $context) : 0.0;
+            $note->forceFill(['total_qty' => $qty, 'total_tax' => $tax, $kind === 'sale' ? 'total_price' : 'total_cost' => $amount,
+                'grand_total' => round($amount + $roundOff, 4)] + ($roundOff ? ['attributes_json' => $note->attributes_json + ['round_off' => $roundOff]] : []))->save();
             $policy = \App\Models\Company::findOrFail($context->companyId)->settings_json['return_policy'] ?? null;
             $late = \Carbon\CarbonImmutable::parse($source->created_at)->diffInDays($data['business_date']) > ($policy['days'] ?? 0);
             $approval = !$policy || $amount > ($policy['amount'] ?? 0) || $late;
@@ -89,6 +91,18 @@ class ReturnService
             $note->forceFill(['approved_by' => $actor, 'approved_at' => now()])->save();
             return $this->post($note, $kind, $context, $actor);
         });
+    }
+
+    /** The note that returns the last of every sold quantity also reverses the invoice round-off, so the notes add up to the invoice. */
+    private function roundOffReturned(Sale $source, Returns $note, CompanyContext $context): float
+    {
+        $roundOff = (float) ($source->attributes_json['round_off'] ?? 0);
+        if (!$roundOff) return 0.0;
+        $returned = ProductReturn::forCompany($context)->whereIn('return_id', Returns::forCompany($context)->where('sale_id', $source->id)
+            ->where('note_type', 'credit')->where(fn ($q) => $q->whereNotNull('posted_at')->orWhere('id', $note->id))->select('id'))
+            ->groupBy('source_line_id')->selectRaw('source_line_id, SUM(qty) as qty')->pluck('qty', 'source_line_id');
+        $complete = $source->productSales()->forCompany($context)->get()->every(fn ($line) => abs((float) ($returned[$line->id] ?? 0) - (float) $line->qty) < 0.00005);
+        return $complete ? $roundOff : 0.0;
     }
 
     private function source(string $kind, int $id, CompanyContext $context): Sale|Purchase
@@ -293,7 +307,9 @@ class ReturnService
         };
         $grand = LedgerAmount::units((float) $note->grand_total); $tax = LedgerAmount::units((float) $note->total_tax);
         if ($kind === 'sale') {
-            $add('sales_returns', $grand - $tax, 0); $add('accounts_receivable', 0, $grand, true);
+            $roundOff = LedgerAmount::units((float) ($note->attributes_json['round_off'] ?? 0));
+            if ($roundOff) app(\App\Services\Tax\GstSetupService::class)->ensureLedgers($context->companyId, ['rounding']);
+            $add('sales_returns', $grand - $roundOff - $tax, 0); $add('rounding', $roundOff, 0); $add('accounts_receivable', 0, $grand, true);
             $add('inventory', $stockValue, 0); $add('cogs', 0, $stockValue);
         } else {
             $add('accounts_payable', $grand, 0, true);

@@ -140,7 +140,7 @@ class CompanyDirectoryService
      * Opens a new legal company with its MAIN branch, first financial year, main warehouse, chart of accounts and
      * industry profile. The actor and the group's admins become members of every branch.
      */
-    public function createCompany(int $actor, array $input): Company
+    public function createCompany(int $actor, array $input, ?IlluminateHttpUploadedFile $logo = null): Company
     {
         $groupId = isset($input['company_group_id']) && $input['company_group_id'] !== '' ? (int) $input['company_group_id'] : null;
         if (!$this->canManageGroup($actor, $groupId)) {
@@ -164,11 +164,12 @@ class CompanyDirectoryService
             throw ValidationException::withMessages(['subtype' => 'Select a business type for this industry.']);
         }
 
-        return DB::transaction(function () use ($actor, $groupId, $data) {
+        return DB::transaction(function () use ($actor, $groupId, $data, $input, $logo) {
             $company = Company::create([
                 'company_group_id' => $groupId, 'code' => $data['code'], 'legal_name' => $data['legal_name'],
                 'trade_name' => $data['trade_name'] ?? null, 'country_code' => 'IN', 'state_code' => $data['state_code'] ?? null,
-                'base_currency_id' => $data['base_currency_id'] ?? null, 'timezone' => $data['timezone'],
+                'base_currency_id' => $data['base_currency_id']
+                    ?? (Schema::hasTable('currencies') ? DB::table('currencies')->where('code', 'INR')->value('id') : null), 'timezone' => $data['timezone'],
             ]);
             $branch = $company->branches()->create(['code' => 'MAIN', 'name' => 'Main branch']);
             $year = $company->fiscalYears()->create(['name' => $this->yearName($data['fy_start'], $data['fy_end']),
@@ -183,6 +184,13 @@ class CompanyDirectoryService
 
             $context = new CompanyContext($company->id, $branch->id, $year->id);
             $this->applyIndustry($data['industry'], $data['subtype'], $context, $actor);
+            // Address, contact, PAN, GSTIN and logo given at creation go through the same path as Settings › Company profile.
+            $profile = array_filter(array_intersect_key($input, array_flip(['address', 'city', 'postal_code', 'phone', 'email', 'website', 'pan', 'gstin', 'registration_type'])),
+                fn ($value) => $value !== null && $value !== '');
+            if ($logo || $profile) {
+                app(CompanyProfileService::class)->save($company, $profile + ['legal_name' => $company->legal_name, 'trade_name' => $company->trade_name,
+                    'state_code' => $company->state_code, 'gst_effective_from' => $data['fy_start']], $logo, $context, $actor);
+            }
             DB::table('company_setup_audits')->insert(['company_id' => $company->id, 'actor_id' => $actor,
                 'action' => 'company_created', 'before_json' => '[]',
                 'after_json' => json_encode(['group_id' => $groupId, 'code' => $company->code, 'industry' => $data['industry'],

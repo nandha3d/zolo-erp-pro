@@ -161,6 +161,12 @@ Route::middleware('auth')->group(function () {
     Route::post('company-picker/companies', [\App\Http\Controllers\CompanySelectorController::class, 'storeCompany'])->name('company.companies.store');
 });
 
+// Settings › Company profile: names, address, GSTIN, logo, currency and industry of the current company.
+Route::middleware(['auth', 'company.context', 'common'])->group(function () {
+    Route::get('settings/company', [\App\Http\Controllers\CompanyProfileController::class, 'edit'])->name('settings.company');
+    Route::post('settings/company', [\App\Http\Controllers\CompanyProfileController::class, 'update'])->name('settings.company.update');
+});
+
 Route::group(['middleware' => 'auth'], function () {
     Route::controller(HomeController::class)->group(function () {
         Route::get('home', 'home');

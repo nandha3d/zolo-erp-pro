@@ -68,7 +68,8 @@ class ReturnsDocumentsTest extends ReturnsDocumentTestCase
         $this->assertEquals(18, $note->products->first()->tax_snapshot_json['rate']);
         $this->assertSame($note->id, $service->create('sale', $sale->id, $data, 'return', $this->context(), 1)->id);
         $this->assertSame($note->id, $service->approve('sale', $note->id, $this->context(), 1)->id);
-        $this->assertEquals(11.8, DB::table('account_open_items')->sum('open_amount'));
+        // Invoice 24.00 (23.60 rounded) less the 11.80 partial credit; only the final return reverses the round-off.
+        $this->assertEquals(12.2, DB::table('account_open_items')->sum('open_amount'));
         $this->assertSame(2, DB::table('stock_movements')->count()); $this->assertSame(2, DB::table('gst_transaction_projections')->count());
         $this->assertEquals(1.8, $note->total_tax);
         $this->assertLessThanOrEqual(16, strlen($note->reference_no));
@@ -148,9 +149,11 @@ class ReturnsDocumentsTest extends ReturnsDocumentTestCase
         DB::table('products')->update(['name' => 'Changed item']); $this->company->update(['legal_name' => 'Changed company']);
         $this->assertEquals($dto, $renderer->dto('sale', $sale->id, $this->context()));
         $reservations = DB::table('document_number_reservations')->count();
-        foreach (['a4','thermal'] as $format) $this->assertStringContainsString('23.6000', $renderer->html($dto, $renderer->profile('sale', $this->context(), null, $format)));
+        $a4 = $renderer->html($dto, $renderer->profile('sale', $this->context(), null, 'a4'));
+        foreach (['24.00', '+0.40', 'Twenty Four Rupees Only', '1001', 'CGST @ 9%'] as $text) $this->assertStringContainsString($text, $a4);
+        $this->assertStringContainsString('24.0000', $renderer->html($dto, $renderer->profile('sale', $this->context(), null, 'thermal')));
         $profile = $renderer->profile('sale', $this->context(), null, 'dot_matrix'); $text = $renderer->fixedWidth($dto, $profile);
-        $this->assertStringContainsString('23.6000', $text); $this->assertCount(68, explode("\r\n", $text));
+        $this->assertStringContainsString('24.0000', $text); $this->assertCount(68, explode("\r\n", $text));
         $this->assertSame($reservations, DB::table('document_number_reservations')->count());
     }
 
@@ -175,12 +178,14 @@ class ReturnsDocumentsTest extends ReturnsDocumentTestCase
 
     public function test_exchange_uses_return_new_sale_and_open_item_allocation(): void
     {
-        $sale = $this->gstSale(['paid_amount' => 23.6]);
+        $sale = $this->gstSale(['paid_amount' => 24]);
         $return = $this->postedReturn($sale); $p = $sale->productSales->first()->product;
         $data = $this->saleData($p, ['business_date' => '2026-10-04', 'items' => [['product_id' => $p->id, 'qty' => 1, 'net_unit_price' => 10]]]);
         $exchange = app(ExchangeService::class)->create($return->id, $data, 'exchange', $this->context(), 1);
         $this->assertNotNull($exchange->replacement_sale_id); $this->assertSame($return->id, $exchange->return_id);
-        $this->assertEquals(0, DB::table('account_open_items')->sum('open_amount')); $this->assertSame(2, DB::table('sales')->count());
+        // The 11.80 credit settles the replacement invoice, which GST round-off billed at 12.00; 0.20 stays due.
+        $this->assertEquals(.2, DB::table('account_open_items')->sum('open_amount')); $this->assertEquals(.2, $exchange->difference_amount);
+        $this->assertSame(2, DB::table('sales')->count());
         $this->assertSame(3, DB::table('stock_movements')->count());
         $this->assertSame($exchange->id, app(ExchangeService::class)->create($return->id, $data, 'exchange', $this->context(), 1)->id);
     }
