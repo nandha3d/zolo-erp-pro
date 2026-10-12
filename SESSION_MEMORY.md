@@ -8,12 +8,13 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-12 11:48:00 (+05:30)
-- **Active Git Branch:** ui (synchronized with origin/ui at `da95658`)
+- **Last Updated:** 2026-10-12 11:50:00 (+05:30)
+- **Active Git Branch:** ui (synchronized with origin/ui at `799424f`)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
 - **Latest Commits:**
+  - `799424f` — "Merge branch 'origin/ui' into ui"
   - `da95658` — "Unify GST setup and entry workflows"
   - `8d4268b` — "feat(party): GSTIN autofill via gstinapi.in with optional Masters India"
   - `ab146c2` — "feat(ui): document layout, keyboard, drafts, party details and page performance"
@@ -23,7 +24,7 @@
 - **Working Tree State:** Clean, synchronized with origin/ui
 - **Test Suite Status:** Documented in sections 13-22
 - **Database & Server State:**
-  - Database: MariaDB running with all migrations applied.
+  - Database: MariaDB running with all migrations applied (including `2026_10_13_000001_create_company_groups` and `2026_10_15_000001_make_supplier_contact_fields_nullable`).
   - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`).
 - **Chat & Transcript Backups:**
   - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
