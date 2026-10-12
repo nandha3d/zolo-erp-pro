@@ -897,3 +897,10 @@ User report (screenshot): picker shows "Select Supplier" but Party details strip
 - **Tests:** `tests/Feature/GstSetupTest.php` (8) in phpunit.compliance.xml.
 - **Also this session:** business profile subtype dropdown shows saved subtype + status text + dark mode (operations); sidebar scroll/open menus persist (`public/js/sidebar-state.js`).
 - **Next:** start MariaDB, open Settings › GST: save GSTIN → Install standard GST setup → set product rates/HSN.
+
+## 23. Blade @json ParseError Fix in gst-entry.blade.php (2026-10-12)
+
+- **Issue:** Accessing `/purchases` or `/sales` threw `ParseError: Unclosed '[' does not match ')'` at `resources/views/backend/partials/gst-entry.blade.php:5`.
+- **Root Cause:** In `gst-entry.blade.php`, `@json($gstEntry + ['kind' => $kind, ...])` spanned multiple lines with nested calls (`url()`, `csrf_token()`). Laravel Blade's `@json(...)` regex matched the closing parenthesis of `csrf_token()`, cutting off the array expression and omitting `]` before `)`.
+- **Fix:** Computed `$gstEntryConfig` cleanly inside the `@php` block beforehand, passing a single variable `@json($gstEntryConfig)`. Cleared compiled views via `php artisan view:clear`.
+- **Verification:** `tests/Feature/DocumentEntryWebTest.php`, `tests/Feature/GstSetupTest.php`, and `tests/Feature/OptechVoucherWebTest.php` all passing 100% (28 tests, 168 assertions).
