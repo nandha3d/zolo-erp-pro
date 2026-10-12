@@ -315,6 +315,10 @@
                                         <input type="number" name="alert_quantity" value="{{$lims_product_data->alert_quantity}}" class="form-control" step="any">
                                     </div>
                                 </div>
+                                @if(\App\Services\Tax\GstSetupService::usesGst())
+                                <input type="hidden" name="tax" value="{{$lims_product_data->tax_id}}">
+                                @include('backend.product.partials.gst-fields', ['product' => $lims_product_data])
+                                @else
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <input type="hidden" name="tax" value="{{$lims_product_data->tax_id}}">
@@ -327,6 +331,7 @@
                                         </select>
                                     </div>
                                 </div>
+                                @endif
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <input type="hidden" name="tax_method_id" value="{{$lims_product_data->tax_method}}">

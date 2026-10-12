@@ -475,6 +475,8 @@ class CommercialController extends Controller
             'daily_sale_objective' => 'nullable|numeric',
             'alert_quantity' => 'nullable|numeric',
             'tax_id' => 'nullable',
+            'tax_category_id' => 'nullable|integer|min:1',
+            'hsn_code' => 'nullable|string|max:8',
             'tax_method' => 'nullable',
             'warranty' => 'nullable',
             'warranty_type' => 'nullable|string',
@@ -495,6 +497,10 @@ class CommercialController extends Controller
         $price = isset($validated['price']) && $validated['price'] !== '' ? (float)$validated['price'] : ($cost > 0 ? $cost : 0);
         $type = !empty($validated['type']) ? strtolower(trim($validated['type'])) : 'standard';
         $barcodeSymbology = !empty($validated['barcode_symbology']) ? trim($validated['barcode_symbology']) : 'C128';
+        if (!empty($validated['hsn_code'])) {
+            $gst = app(\App\Services\Tax\GstSetupService::class);
+            $gst->validateCode(preg_replace('/\s+/', '', $validated['hsn_code']), $gst->kindFor($type));
+        }
 
         $unit = null;
         if (!empty($validated['unit_id'])) {
@@ -553,6 +559,14 @@ class CommercialController extends Controller
             'qty' => 0,
             'is_active' => 1,
         ]);
+        if (!empty($validated['tax_category_id']) || !empty($validated['hsn_code'])) {
+            $gst = app(\App\Services\Tax\GstSetupService::class);
+            $hsn = !empty($validated['hsn_code']) ? preg_replace('/\s+/', '', $validated['hsn_code']) : null;
+            $categoryId = !empty($validated['tax_category_id']) && \Illuminate\Support\Facades\DB::table('tax_categories')
+                ->where('company_id', $product->company_id)->where('id', $validated['tax_category_id'])->exists() ? (int) $validated['tax_category_id'] : null;
+            $product->forceFill(['tax_category_id' => $categoryId, 'hsn_code' => $hsn])->save();
+            if ($rate = $gst->rateFor($product)) $taxRate = $rate['rate'];
+        }
 
         return response()->json([
             'success' => true,
@@ -782,15 +796,15 @@ class CommercialController extends Controller
 
         $parsed = \App\Services\Tax\Gstin::parse($gstin);
 
-        // Fetch company state code to determine intra vs inter-state tax rule (default Tamil Nadu: 33)
-        $companyStateCode = '33';
-        $company = \App\Models\Company::first();
-        if ($company && !empty($company->vat_number) && strlen($company->vat_number) >= 2) {
-            $companyStateCode = substr($company->vat_number, 0, 2);
-        }
+        // Intra vs inter-state follows the branch GST registration; without one the rule is unknown.
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $registration = $context ? app(\App\Services\Tax\GstSetupService::class)->registration($context) : null;
+        $companyStateCode = $registration->state_code
+            ?? ($context ? \App\Models\Company::whereKey($context->companyId)->value('state_code') : null);
 
-        $isLocal = ($parsed['state_code'] === $companyStateCode);
-        $taxRule = $isLocal ? 'Local Intra-State (CGST + SGST)' : 'Inter-State (IGST)';
+        $isLocal = $companyStateCode !== null && $parsed['state_code'] === $companyStateCode;
+        $taxRule = $companyStateCode === null ? 'Set your GSTIN in Settings › GST to decide CGST/SGST or IGST'
+            : ($isLocal ? 'Local Intra-State (CGST + SGST)' : 'Inter-State (IGST)');
 
         // 1. Search internal ERP database for matching supplier or customer (zero cost, instant recall)
         $partyData = null;

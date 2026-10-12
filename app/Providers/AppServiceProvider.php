@@ -77,6 +77,22 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
+    /** Party GSTIN/state and product HSN follow their masters, whichever screen or import saved them. */
+    private function bootGstMasterSync(): void
+    {
+        $gst = fn () => $this->app->make(\App\Services\Tax\GstSetupService::class);
+        foreach ([\App\Models\Supplier::class => 'supplier', \App\Models\Customer::class => 'customer'] as $model => $type) {
+            $model::saved(function ($party) use ($gst, $type) {
+                if ($party->wasRecentlyCreated || $party->wasChanged(['vat_number', 'tax_no', 'state'])) $gst()->syncParty($type, $party);
+            });
+        }
+        \App\Models\Product::saved(function ($product) use ($gst) {
+            if ($product->hsn_code && $product->company_id && ($product->wasChanged('hsn_code') || $product->wasRecentlyCreated)) {
+                $gst()->ensureCode((int) $product->company_id, $product->hsn_code, $gst()->kindFor($product->type), $product->name);
+            }
+        });
+    }
+
     public function boot()
     {
         Schema::defaultStringLength(191);
@@ -92,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
             }
         });
         $this->bootLegacyStockShadow();
+        $this->bootGstMasterSync();
 
         Blade::if('can', function ($permission) {
             $user = Auth::user();

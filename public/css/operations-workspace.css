@@ -330,3 +330,46 @@
     opacity: 0;
     width: 100%;
 }
+
+/* Profile cards and attribute box (light) */
+.ops-profile-card { background: #ffffff; border-color: #e2e8f0 !important; transition: border-color 0.15s, background 0.15s; }
+.ops-profile-card.is-current { background: #eef2ff; border-color: #6366f1 !important; }
+.ops-attribute-box { background: #f8fafc; }
+.ops-attribute-box label { display: block; margin-bottom: 8px; }
+
+/* ====================================================================
+ * Dark mode (body.dark-mode), same palette as the commercial workspace
+ * ==================================================================== */
+body.dark-mode .ops-command-bar,
+body.dark-mode .ops-kpi-box,
+body.dark-mode .ops-subcard,
+body.dark-mode .ops-subcard-header {
+    background: #0f172a;
+    border-color: #1e293b;
+    box-shadow: none;
+}
+body.dark-mode .ops-command-title h1,
+body.dark-mode .ops-kpi-box .ops-kpi-value,
+body.dark-mode .ops-subcard .text-dark,
+body.dark-mode .ops-profile-card h5 { color: #f8fafc !important; }
+body.dark-mode .ops-kpi-box .ops-kpi-title,
+body.dark-mode .ops-tab-strip .nav-link,
+body.dark-mode .ops-nav-pills .nav-link,
+body.dark-mode .ops-form-compact label { color: #94a3b8; }
+body.dark-mode .ops-nav-pills .nav-link:hover { background: #1e293b; color: #f8fafc; }
+body.dark-mode .ops-kpi-box .ops-kpi-icon.bg-light { background: #1e293b !important; }
+body.dark-mode .ops-tab-strip .nav-link.active,
+body.dark-mode .ops-tab-strip .nav-link:hover { color: #a5b4fc; border-bottom-color: #818cf8; }
+body.dark-mode .ops-table-responsive thead th { background: #111827; border-bottom-color: #1e293b; color: #94a3b8; }
+body.dark-mode .ops-table-responsive tbody td { border-bottom-color: #1e293b; color: #e2e8f0; }
+body.dark-mode .ops-table-responsive tbody tr:hover { background-color: #1e293b; }
+body.dark-mode .ops-form-compact .form-control,
+body.dark-mode .ops-form-compact input,
+body.dark-mode .ops-form-compact select,
+body.dark-mode .ops-form-compact textarea { background: #111827; border-color: #334155; color: #f8fafc; }
+body.dark-mode .ops-form-compact .bg-light,
+body.dark-mode .ops-attribute-box { background: #111827 !important; border-color: #334155 !important; }
+body.dark-mode .ops-profile-card { background: #0f172a; border-color: #1e293b !important; }
+body.dark-mode .ops-profile-card.is-current { background: #1e1b4b; border-color: #6366f1 !important; }
+body.dark-mode .ops-profile-card .form-control { background: #111827; border-color: #334155; color: #f8fafc; }
+body.dark-mode .ops-profile-card .btn-outline-secondary { color: #cbd5e1; border-color: #475569; }

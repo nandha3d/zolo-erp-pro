@@ -49,7 +49,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" data-toggle="tab" href="#tab-outside" role="tab">
-                            <i class="dripicons-export mr-1"></i> Material Outside ({{ count($pending) }})
+                            <i class="dripicons-export mr-1"></i> Material outside ({{ count($pending) }})
                         </a>
                     </li>
                     <li class="nav-item">
@@ -848,33 +848,39 @@
         <div class="ops-subcard">
             <div class="ops-subcard-header">
                 <span class="font-weight-bold font-13 text-dark"><i class="dripicons-gear mr-1"></i> Industry Business Profiles</span>
-                <span class="badge badge-primary px-2 py-1 font-11">Current: {{ strtoupper($profile['profile'] ?? 'GENERAL TRADING') }}</span>
+                <span class="badge badge-primary px-2 py-1 font-11">Current: {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$profile['profile']][0] ?? $profile['profile'] }}@if(!empty($profile['subtype'])) &bull; {{ ucwords(str_replace('_',' ',$profile['subtype'])) }}@endif</span>
             </div>
             <div class="ops-subcard-body">
                 <div class="row" style="gap: 12px; margin: 0;">
                     @foreach(\App\Services\Industry\IndustryCatalog::SUBTYPES as $key=>$subtypes)
+                        @php $isCurrent = ($profile['profile'] ?? null) === $key; @endphp
                         <div class="col-12 p-0">
-                            <div class="card border rounded-lg p-3 {{ $profile['profile'] === $key ? 'border-primary bg-light' : 'border-light' }}" style="transition: all 0.15s;">
-                                <div class="d-flex align-items-center justify-content-between">
+                            <div class="card ops-profile-card border rounded-lg p-3 {{ $isCurrent ? 'is-current' : '' }}">
+                                <div class="d-flex align-items-center justify-content-between" style="gap: 12px;">
                                     <div>
-                                        <h5 class="mb-1 font-14 font-weight-bold text-dark">
+                                        <h5 class="mb-1 font-14 font-weight-bold">
                                             {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$key][0] }}
-                                            @if($profile['profile'] === $key)
+                                            @if($isCurrent)
                                                 <span class="badge badge-success ml-2 font-11"><i class="fa fa-check"></i> Active</span>
                                             @endif
                                         </h5>
-                                        <p class="text-muted small mb-2">Units: {{ implode(' &bull; ', \App\Services\Industry\IndustryCatalog::SETTINGS[$key]['units']) }}</p>
+                                        <p class="text-muted small mb-1">Units: {!! implode(' &bull; ', array_map('e', \App\Services\Industry\IndustryCatalog::SETTINGS[$key]['units'])) !!}</p>
+                                        @foreach($subtypes as $subtype=>$features)
+                                            @if($features)
+                                                <p class="text-muted small mb-0">{{ ucwords(str_replace('_',' ',$subtype)) }} adds: {{ collect($features)->map(fn ($f) => \App\Services\Platform\CapabilityCatalog::DEFINITIONS[$f][0] ?? $f)->implode(', ') }}</p>
+                                            @endif
+                                        @endforeach
                                     </div>
                                     <div>
                                         @include('backend.operations.form_start', ['formId'=>'profile-'.$key, 'action'=>'configure/profile'])
                                         <input type="hidden" name="profile" value="{{ $key }}">
                                         <div class="d-flex align-items-center" style="gap: 6px;">
-                                            <select name="subtype" class="form-control form-control-sm" style="width: 140px; height: 32px; font-size: 12px;">
+                                            <select name="subtype" aria-label="Business subtype for {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$key][0] }}" class="form-control form-control-sm" style="width: 150px; height: 32px; font-size: 12px;">
                                                 @foreach($subtypes as $subtype=>$features)
-                                                    <option value="{{ $subtype }}">{{ ucwords(str_replace('_',' ',$subtype)) }}</option>
+                                                    <option value="{{ $subtype }}" @selected($isCurrent && ($profile['subtype'] ?? null) === $subtype)>{{ ucwords(str_replace('_',' ',$subtype)) }}</option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="btn btn-sm {{ $profile['profile'] === $key ? 'btn-primary' : 'btn-outline-secondary' }}" style="font-size: 12px; height: 32px; font-weight: 600;">
+                                            <button type="submit" class="btn btn-sm {{ $isCurrent ? 'btn-primary' : 'btn-outline-secondary' }}" style="font-size: 12px; height: 32px; font-weight: 600;">
                                                 Apply
                                             </button>
                                         </div>
@@ -906,10 +912,8 @@
                     </div>
 
                     <form id="attribute-form">
-                        <div id="attribute-fields" class="border rounded p-3 mb-3 bg-light min-h-120">
-                            <!-- Dynamically loaded via operations.js -->
-                            <p id="attribute-status" class="text-muted small mb-0 text-center py-3">Select a product to view enabled profile attributes.</p>
-                        </div>
+                        <div id="attribute-fields" class="ops-attribute-box border rounded p-3 mb-2 min-h-120"></div>
+                        <p id="attribute-status" role="status" aria-live="polite" class="text-muted small mb-3">Select a product to view enabled profile attributes.</p>
                         <button type="submit" class="btn-ops-submit" disabled>
                             <i class="fa fa-save mr-1"></i> Save Attributes
                         </button>

@@ -111,8 +111,8 @@ class CommercialApplicationService
                 if ($kind === 'purchase' && !empty($line['dimensions']) && \Illuminate\Support\Facades\Schema::hasColumn('stock_dimensions', 'computed_cbm')) {
                     $line['attributes']['stock_dimension'] = app(\App\Services\Inventory\DimensionCalculationService::class)->calculate($line['dimensions']);
                 }
-                $rate = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
-                    ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0.0;
+                // GST-rated products are priced by TaxDeterminationService below; the legacy VAT rate applies otherwise.
+                $rate = $product->tax_category_id ? 0.0 : app(CommercialPricing::class)->legacyRate($product, $context);
                 if (!$product->tax_category_id && isset($line['tax_rate']) && (float) $line['tax_rate'] !== $rate) {
                     throw ValidationException::withMessages(['items.tax_rate' => 'Tax rate differs from the configured product rate.']);
                 }

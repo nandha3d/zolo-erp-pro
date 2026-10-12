@@ -212,7 +212,7 @@ class SaleController extends Controller
     {
         return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
@@ -223,7 +223,7 @@ class SaleController extends Controller
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
-            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->orderBy('position')
             ->get();
     }
@@ -2350,10 +2350,10 @@ class SaleController extends Controller
         }
         if ($general_setting && in_array('restaurant', explode(',', $general_setting->modules))) {
             // Try to find base product
-            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_method','type','unit_id','sale_unit_id','extras')->where('code', $code)->where('is_active', true)->first();
+            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id','extras')->where('code', $code)->where('is_active', true)->first();
         } else {
             // Try to find base product
-            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_method','type','unit_id','sale_unit_id')->where('code', $code)->where('is_active', true)->first();
+            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id')->where('code', $code)->where('is_active', true)->first();
         }
 
         // Try to find variant if base product not found
@@ -2420,7 +2420,10 @@ class SaleController extends Controller
         // Tax info
         $taxRate = 0;
         $taxName = 'No Tax';
-        if ($product->tax_id) {
+        if ($gst = app(\App\Services\Tax\GstSetupService::class)->rateFor($product)) {
+            $taxRate = $gst['rate'];
+            $taxName = $gst['name'];
+        } elseif ($product->tax_id) {
             $tax = Tax::find($product->tax_id);
             if ($tax) {
                 $taxRate = $tax->rate;

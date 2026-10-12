@@ -625,7 +625,11 @@
                     <li id="currency-menu"><a href="{{route('currency.index')}}">{{__('db.Currency')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('tax'))
+                    @if(\App\Services\Tax\GstSetupService::usesGst())
+                    <li id="tax-menu"><a href="{{ route('settings.gst') }}">GST &amp; Tax</a></li>
+                    @else
                     <li id="tax-menu"><a href="{{route('tax.index')}}">{{__('db.Tax')}}</a></li>
+                    @endif
                 @endif
                 <li id="user-menu"><a href="{{route('user.profile', ['id' => Auth::id()])}}">{{__('db.User Profile')}}</a></li>
                 @if($isAdmin || $canNavigate('create_sms'))

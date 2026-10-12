@@ -1014,7 +1014,7 @@ class PurchaseController extends Controller
     {
         return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
@@ -1025,7 +1025,7 @@ class PurchaseController extends Controller
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
-            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->orderBy('position')
             ->get();
     }
@@ -1094,8 +1094,10 @@ class PurchaseController extends Controller
             $product['profit_margin'] = $calculatedMargin;
         }
 
-        if ($lims_product_data->tax_id) {
-            $lims_tax_data = Tax::find($lims_product_data->tax_id);
+        if ($gst = app(\App\Services\Tax\GstSetupService::class)->rateFor($lims_product_data)) {
+            $product[] = $gst['rate'];
+            $product[] = $gst['name'];
+        } elseif ($lims_product_data->tax_id && ($lims_tax_data = Tax::find($lims_product_data->tax_id))) {
             $product[] = $lims_tax_data->rate;
             $product[] = $lims_tax_data->name;
         } else {

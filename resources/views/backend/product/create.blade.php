@@ -245,6 +245,9 @@
                                         <input type="number" name="alert_quantity" class="form-control" step="any">
                                     </div>
                                 </div>
+                                @if(\App\Services\Tax\GstSetupService::usesGst())
+                                @include('backend.product.partials.gst-fields', ['product' => null])
+                                @else
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Product Tax')}}</label>
@@ -260,6 +263,7 @@
                                     </div>
                                     </div>
                                 </div>
+                                @endif
 
                                 <div class="col-md-4">
                                     <div class="form-group">

@@ -15,6 +15,10 @@ class TaxController extends Controller
 
     public function index()
     {
+        // Indian companies keep GST in Settings › GST; this list stays for VAT companies (`?legacy=1` still opens it).
+        if (\App\Services\Tax\GstSetupService::usesGst() && !request()->boolean('legacy')) {
+            return redirect()->route('settings.gst');
+        }
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('tax')) {
             $lims_tax_all = Tax::where('is_active', true)->get();

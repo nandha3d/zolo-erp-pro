@@ -1744,6 +1744,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     });
 
   </script>
+  <script type="text/javascript" src="<?php echo asset('js/sidebar-state.js') . '?v=' . filemtime(public_path('js/sidebar-state.js')) ?>"></script>
 </body>
 
 </html>

@@ -584,6 +584,7 @@ class ProductController extends Controller
             //return $data;
 
             $lims_product_data = Product::create($data);
+            $this->applyGst($lims_product_data, $request);
 
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'product')->select('name', 'type')->get();
@@ -1224,8 +1225,32 @@ class ProductController extends Controller
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
     }
 
+    /** GST rate and HSN/SAC from the product form; only present when the company bills under GST. */
+    private function validateGst(Request $request): void
+    {
+        if (!$request->has('tax_category_id')) return;
+        $request->validate(['tax_category_id' => 'nullable|integer|min:1', 'hsn_code' => 'nullable|string|max:8']);
+        $companyId = \App\Services\Tax\GstSetupService::usesGst() ? app(\App\Services\Platform\CompanyContextResolver::class)->forActor()->companyId : null;
+        if ($request->filled('tax_category_id') && !DB::table('tax_categories')->where('company_id', $companyId)->where('id', $request->tax_category_id)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['tax_category_id' => 'Select a GST rate of this company.']);
+        }
+        if ($request->filled('hsn_code')) {
+            $gst = app(\App\Services\Tax\GstSetupService::class);
+            $gst->validateCode(preg_replace('/\s+/', '', $request->hsn_code), $gst->kindFor($request->input('type')));
+        }
+    }
+
+    private function applyGst(Product $product, Request $request): void
+    {
+        if (!$request->has('tax_category_id')) return;
+        $this->validateGst($request);
+        $product->forceFill(['tax_category_id' => $request->filled('tax_category_id') ? (int) $request->tax_category_id : null,
+            'hsn_code' => $request->filled('hsn_code') ? preg_replace('/\s+/', '', $request->hsn_code) : null])->save();
+    }
+
     public function updateProduct(Request $request)
     {
+        $this->validateGst($request);
 
         if(!env('USER_VERIFIED')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
@@ -1510,6 +1535,7 @@ class ProductController extends Controller
                 $data['guarantee_type'] = null;
             }
             $lims_product_data->update($data);
+            $this->applyGst($lims_product_data, $request);
             //inserting data for custom fields
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'product')->select('name', 'type')->get();

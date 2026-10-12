@@ -1112,9 +1112,18 @@
                                 <input type="number" id="quick-item-alert-qty" name="alert_quantity" class="form-control" placeholder="10" step="any">
                             </div>
                         </div>
+                        @php $quickGstRates = \App\Services\Tax\GstSetupService::usesGst() ? app(\App\Services\Tax\GstSetupService::class)->currentRates() : null; @endphp
                         <div class="col-md-3">
                             <div class="compact-field-block">
-                                <label>Product Tax</label>
+                                <label>{{ $quickGstRates !== null ? 'GST Rate' : 'Product Tax' }}</label>
+                                @if($quickGstRates !== null)
+                                <select id="quick-item-tax" name="tax_category_id" class="form-control" data-gst="1">
+                                    <option value="" data-rate="0">Not set</option>
+                                    @foreach($quickGstRates as $rateId => $gstRate)
+                                        <option value="{{ $rateId }}" data-rate="{{ $gstRate['rate'] }}" {{ $gstRate['name'] === 'GST 18%' ? 'selected' : '' }}>{{ $gstRate['name'] }}</option>
+                                    @endforeach
+                                </select>
+                                @else
                                 <select id="quick-item-tax" name="tax_id" class="form-control">
                                     <option value="" data-rate="0">No Tax (0%)</option>
                                     @if(isset($lims_tax_list))
@@ -1123,8 +1132,17 @@
                                         @endforeach
                                     @endif
                                 </select>
+                                @endif
                             </div>
                         </div>
+                        @if($quickGstRates !== null)
+                        <div class="col-md-3">
+                            <div class="compact-field-block">
+                                <label>HSN / SAC</label>
+                                <input type="text" id="quick-item-hsn" name="hsn_code" class="form-control" maxlength="8" inputmode="numeric" placeholder="e.g. 3004 or 998313">
+                            </div>
+                        </div>
+                        @endif
                         <div class="col-md-3">
                             <div class="compact-field-block">
                                 <label>Tax Method</label>
@@ -1858,10 +1876,13 @@
 
     // --- Product List Autocomplete & Item Master Data ---
     @php
+        $gstRates = app(\App\Services\Tax\GstSetupService::class)->currentRates();
         $jsProductList = [];
         foreach($lims_product_list_without_variant as $prod) {
             $taxVal = 0;
-            if (!empty($prod->tax_id)) {
+            if (!empty($prod->tax_category_id) && isset($gstRates[$prod->tax_category_id])) {
+                $taxVal = $gstRates[$prod->tax_category_id]['rate'];
+            } elseif (!empty($prod->tax_id)) {
                 $taxObj = collect($lims_tax_list)->firstWhere('id', $prod->tax_id);
                 $taxVal = $taxObj ? (float)$taxObj->rate : 0;
             }
@@ -1880,7 +1901,9 @@
         }
         foreach($lims_product_list_with_variant as $prod) {
             $taxVal = 0;
-            if (!empty($prod->tax_id)) {
+            if (!empty($prod->tax_category_id) && isset($gstRates[$prod->tax_category_id])) {
+                $taxVal = $gstRates[$prod->tax_category_id]['rate'];
+            } elseif (!empty($prod->tax_id)) {
                 $taxObj = collect($lims_tax_list)->firstWhere('id', $prod->tax_id);
                 $taxVal = $taxObj ? (float)$taxObj->rate : 0;
             }
@@ -2883,7 +2906,9 @@
             wholesale_price: parseFloat($('#quick-item-wholesale').val()) || null,
             daily_sale_objective: parseFloat($('#quick-item-daily-sale').val()) || null,
             alert_quantity: parseFloat($('#quick-item-alert-qty').val()) || null,
-            tax_id: $('#quick-item-tax').val() || null,
+            tax_id: $('#quick-item-tax').data('gst') ? null : ($('#quick-item-tax').val() || null),
+            tax_category_id: $('#quick-item-tax').data('gst') ? ($('#quick-item-tax').val() || null) : undefined,
+            hsn_code: $('#quick-item-hsn').val() || undefined,
             tax_method: $('#quick-item-tax-method').val() || 1,
             warranty: $('#quick-item-warranty').val() || null,
             warranty_type: $('#quick-item-warranty-type').val() || 'months',
@@ -3811,6 +3836,7 @@
     window.commandCenterGrid = {addProductRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts};
 })();
 </script>
+@include('backend.partials.gst-entry', ['kind' => 'sale'])
 @endpush
 
 @include('backend.partials.command-center-form', ['kind' => 'sale'])
