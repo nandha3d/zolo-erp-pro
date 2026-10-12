@@ -86,6 +86,43 @@ class WorkspaceDraftTest extends CommercialTestCase
         $this->assertSame(1, DB::table('sale_drafts')->count());
     }
 
+    public function test_every_document_page_keeps_its_own_drafts_under_its_own_permission(): void
+    {
+        $ids = [];
+        foreach (['sreturn', 'preturn', 'dc', 'grn', 'quotation'] as $kind) {
+            $ids[$kind] = $this->postJson('/documents/'.$kind.'/drafts', ['payload' => $this->snapshot($kind, ['note' => $kind]), 'version' => 0])
+                ->assertOk()->assertJsonPath('data.title', 'Draft 1')->json('data.id');
+            $this->getJson('/documents/'.$kind.'/drafts')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $ids[$kind]);
+        }
+        $this->getJson('/commercial/sale/drafts')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/documents/dc/drafts/'.$ids['grn'])->assertNotFound();
+        $this->postJson('/documents/dc/drafts', ['payload' => $this->snapshot('grn'), 'version' => 0])->assertStatus(422);
+        $this->postJson('/documents/sale/drafts', ['payload' => $this->snapshot('sale'), 'version' => 0])->assertNotFound();
+
+        Schema::create('permissions', function (Blueprint $t) { $t->increments('id'); $t->string('name'); });
+        Schema::create('role_has_permissions', function (Blueprint $t) { $t->unsignedInteger('role_id'); $t->unsignedInteger('permission_id'); });
+        DB::table('permissions')->insert(['id' => 1, 'name' => 'quotes-add']);
+        DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => 1]);
+        DB::table('company_user')->where('company_id', $this->company->id)->where('user_id', 1)->update(['role_id_override' => 4]);
+        $this->getJson('/documents/quotation/drafts')->assertOk();
+        $this->getJson('/documents/dc/drafts')->assertForbidden();
+        $this->deleteJson('/documents/dc/drafts/'.$ids['dc'])->assertForbidden();
+    }
+
+    public function test_a_page_that_posts_through_its_own_controller_drops_only_its_own_draft(): void
+    {
+        $mine = $this->insertDraft(['kind' => 'dc']);
+        $otherKind = $this->insertDraft(['kind' => 'grn']);
+        $otherUser = $this->insertDraft(['kind' => 'dc', 'user_id' => 2]);
+        $drafts = app(CommercialDraftService::class);
+        $drafts->forgetPosted('dc', $otherKind, 1);
+        $drafts->forgetPosted('dc', $otherUser, 1);
+        $drafts->forgetPosted('dc', null, 1);
+        $this->assertSame(3, DB::table('sale_drafts')->count());
+        $drafts->forgetPosted('dc', $mine, 1);
+        $this->assertDatabaseMissing('sale_drafts', ['id' => $mine]);
+    }
+
     public function test_a_stale_version_is_a_409_that_names_the_current_version_and_never_overwrites(): void
     {
         $id = $this->save('sale', ['note' => 'one'])->json('data.id');

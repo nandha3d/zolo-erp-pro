@@ -15,6 +15,10 @@ class TaxController extends Controller
 
     public function index()
     {
+        // Indian companies keep GST in Settings › GST; this list stays for VAT companies (`?legacy=1` still opens it).
+        if (\App\Services\Tax\GstSetupService::usesGst() && !request()->boolean('legacy')) {
+            return redirect()->route('settings.gst');
+        }
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('tax')) {
             $lims_tax_all = Tax::where('is_active', true)->get();
@@ -49,7 +53,7 @@ class TaxController extends Controller
 
     public function limsTaxSearch()
     {
-        $lims_tax_name = $_GET['lims_taxNameSearch'];
+        $lims_tax_name = request('lims_taxNameSearch', '');
         $lims_tax_all = tax::where('name', $lims_tax_name)->paginate(5);
         $lims_tax_list = tax::all();
         return view('backend.tax.create', compact('lims_tax_all','lims_tax_list'));

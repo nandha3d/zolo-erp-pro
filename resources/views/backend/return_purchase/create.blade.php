@@ -1,8 +1,10 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-error-message key="not_permitted" />
 
-<section class="forms">
+@include('backend.partials.document-draft-tabs', ['draftLabel' => 'purchase return', 'draftKey' => 'Shift+F12'])
+<section class="forms classic-document-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -15,7 +17,7 @@
                         {!! Form::open(['route' => 'return-purchase.store', 'method' => 'post', 'files' => true, 'class' => 'payment-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-lines-row">
                                     <div class="col-md-12">
                                         <input type="hidden" name="purchase_id" value="{{$lims_purchase_data->id}}">
                                         <h5>{{__('db.Order Table')}} *</h5>
@@ -113,7 +115,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row" hidden>
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" />
@@ -146,13 +148,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Account')}}</label>
                                             <select class="form-control" name="account_id">
                                                 @foreach($lims_account_list as $account)
-                                                <option value="{{$account->id}}" {{ $lims_product_purchase_payment_acc_id->account_id == $account->id ? 'selected' : ''}}>{{$account->name}}</option>
+                                                <option value="{{$account->id}}" {{ $lims_product_purchase_payment_acc_id?->account_id == $account->id ? 'selected' : ''}}>{{$account->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -431,25 +433,6 @@ function calculateGrandTotal() {
     $('input[name="grand_total"]').val(grand_total.toFixed({{$general_setting->decimal}}));
 }
 
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
-});
-
 $('.payment-form').on('submit',function(e){
     var rownumber = $('table.order-list tbody tr:last').index();
     if (rownumber < 0) {
@@ -459,4 +442,9 @@ $('.payment-form').on('submit',function(e){
 });
 
 </script>
+@include('backend.partials.form-drafts', ['draft' => [
+    'kind' => 'preturn', 'label' => 'Purchase Return', 'shortcut' => 'purchase-return',
+    'form' => '.payment-form', 'source' => ['id' => $lims_purchase_data->id, 'reference' => request('reference_no')], 'party' => 'Ref ' . request('reference_no'),
+    'createUrl' => route('return-purchase.create'), 'newUrl' => route('return-purchase.index', ['new' => 1]),
+]])
 @endpush

@@ -33,6 +33,21 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(LegacyStockShadow::class);
+        // Company / branch scoping consults these on almost every query; both are dropped as soon as what they hold can change.
+        $this->app->singleton(\App\Support\Database\SchemaCache::class);
+        $this->app->singleton(\App\Services\Platform\BranchAccess::class);
+        Event::listen(\Illuminate\Database\Events\QueryExecuted::class, function ($query) {
+            if (preg_match('/^\s*(create|alter|drop|rename|truncate)\b/i', $query->sql)) {
+                $this->app->make(\App\Support\Database\SchemaCache::class)->flush();
+            }
+            if (preg_match('/^\s*(insert|update|delete|replace)\b.*\bcompany_(user_branches|branches|user)\b/is', $query->sql)) {
+                $this->app->make(\App\Services\Platform\BranchAccess::class)->forget();
+            }
+        });
+        Event::listen(TenancyBootstrapped::class, function () {
+            $this->app->make(\App\Support\Database\SchemaCache::class)->flush();
+            $this->app->make(\App\Services\Platform\BranchAccess::class)->forget();
+        });
         // Raw DB::table() reads/writes of company-owned tables follow the same request-company scope as Eloquent.
         \Illuminate\Database\Connection::resolverFor('mysql', fn ($pdo, $database, $prefix, $config) =>
             new \App\Support\Database\CompanyScopedConnection($pdo, $database, $prefix, $config));
@@ -62,6 +77,22 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
+    /** Party GSTIN/state and product HSN follow their masters, whichever screen or import saved them. */
+    private function bootGstMasterSync(): void
+    {
+        $gst = fn () => $this->app->make(\App\Services\Tax\GstSetupService::class);
+        foreach ([\App\Models\Supplier::class => 'supplier', \App\Models\Customer::class => 'customer'] as $model => $type) {
+            $model::saved(function ($party) use ($gst, $type) {
+                if ($party->wasRecentlyCreated || $party->wasChanged(['vat_number', 'tax_no', 'state'])) $gst()->syncParty($type, $party);
+            });
+        }
+        \App\Models\Product::saved(function ($product) use ($gst) {
+            if ($product->hsn_code && $product->company_id && ($product->wasChanged('hsn_code') || $product->wasRecentlyCreated)) {
+                $gst()->ensureCode((int) $product->company_id, $product->hsn_code, $gst()->kindFor($product->type), $product->name);
+            }
+        });
+    }
+
     public function boot()
     {
         Schema::defaultStringLength(191);
@@ -77,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
             }
         });
         $this->bootLegacyStockShadow();
+        $this->bootGstMasterSync();
 
         Blade::if('can', function ($permission) {
             $user = Auth::user();

@@ -73,7 +73,7 @@ class DepartmentController extends Controller
 
     public function destroy($id)
     {
-        $lims_department_data = Department::find($id);
+        $lims_department_data = Department::findOrFail($id);
         $lims_department_data->is_active = false;
         $lims_department_data->save();
         return redirect('departments')->with('message', __('db.Department deleted successfully'));

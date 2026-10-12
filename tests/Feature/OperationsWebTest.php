@@ -41,6 +41,8 @@ class OperationsWebTest extends OperationsTestCase
         DB::table('job_work_orders')->where('id', $order->id)->update(['company_id' => $this->other->id]);
         $this->getJson('/operations/job-work/'.$order->id)->assertNotFound();
         $this->getJson('/operations/dispatch/'.$dispatch->id.'/print')->assertNotFound();
+        app(IndustryProfileService::class)->apply('fmcg', 'manufacturer', $this->context(), 1);
+        $this->get('/operations/profiles')->assertOk()->assertSee('<option value="manufacturer" selected>', false)->assertSee('Current: FMCG');
     }
 
     public function test_industry_profiles_configure_the_entry_aids_of_the_shared_sales_and_purchase_pages(): void

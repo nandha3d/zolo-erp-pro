@@ -3,4 +3,5 @@
 <script type="application/json" id="document-shortcut-data">@json($documentShortcuts)</script>
 @push('scripts')
 <script src="{{ asset('js/document-shortcuts.js') }}?v={{ filemtime(public_path('js/document-shortcuts.js')) }}"></script>
+<script src="{{ asset('js/document-keyboard.js') }}?v={{ filemtime(public_path('js/document-keyboard.js')) }}"></script>
 @endpush

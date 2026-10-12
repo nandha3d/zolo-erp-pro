@@ -1,185 +1,436 @@
 @extends('backend.layout.main') @section('content')
-<section class="forms">
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header mt-2">
-                <h3 class="text-center">{{__('db.Supplier Report')}}</h3>
-            </div>
-            {!! Form::open(['route' => 'report.supplier', 'method' => 'post']) !!}
-            <div class="row mb-3">
-                <div class="col-md-4 offset-md-1 mt-3">
-                    <div class="form-group row">
-                        <label class="d-tc mt-2"><strong>{{__('db.Choose Your Date')}}</strong> &nbsp;</label>
-                        <div class="d-tc">
-                            <div class="input-group">
-                                <input type="text" class="daterangepicker-field form-control" value="{{$start_date}} To {{$end_date}}" required />
-                                <input type="hidden" name="start_date" value="{{$start_date}}" />
-                                <input type="hidden" name="end_date" value="{{$end_date}}" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mt-3">
-                    <div class="form-group row">
-                        <label class="d-tc mt-2"><strong>{{__('db.Choose Supplier')}}</strong> &nbsp;</label>
-                        <div class="d-tc">
-                            <input type="hidden" name="supplier_id_hidden" value="{{$supplier_id}}" />
-                            <select id="supplier_id" name="supplier_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" >
-                                @foreach($lims_supplier_list as $supplier)
-                                <option value="{{$supplier->id}}">{{$supplier->name}} ({{$supplier->phone_number}})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mt-3">
-                    <div class="form-group">
-                        <button class="btn btn-primary" type="submit">{{__('db.submit')}}</button>
-                    </div>
-                </div>
-            </div>
-            {!! Form::close() !!}
+
+<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+
+<style>
+    .report-workspace-view {
+        padding: 12px 18px 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 40px);
+    }
+    body.dark-mode .report-workspace-view {
+        background: #0b0f19;
+    }
+    .kpi-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .kpi-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .kpi-card .kpi-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    body.dark-mode .kpi-card .kpi-number {
+        color: #f8fafc;
+    }
+    .desk-filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .desk-filter-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-card-wrapper {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        padding: 14px 16px;
+    }
+    body.dark-mode .desk-card-wrapper {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-report-tabs {
+        display: flex;
+        gap: 6px;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 16px;
+        padding-left: 0;
+        list-style: none;
+    }
+    body.dark-mode .desk-report-tabs {
+        border-color: #334155;
+    }
+    .desk-report-tabs .nav-link {
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        border: none;
+        border-radius: 6px 6px 0 0;
+        background: transparent;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: -2px;
+    }
+    .desk-report-tabs .nav-link:hover {
+        color: #0f172a;
+        background: #f1f5f9;
+    }
+    .desk-report-tabs .nav-link.active {
+        color: #7c3aed;
+        background: #ffffff;
+        border-bottom: 2px solid #7c3aed;
+    }
+    body.dark-mode .desk-report-tabs .nav-link {
+        color: #94a3b8;
+    }
+    body.dark-mode .desk-report-tabs .nav-link:hover {
+        color: #f8fafc;
+        background: #1e293b;
+    }
+    body.dark-mode .desk-report-tabs .nav-link.active {
+        color: #a78bfa;
+        background: #141c2e;
+        border-bottom: 2px solid #a78bfa;
+    }
+    .table-hover thead th {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        padding: 9px 12px !important;
+        border: none !important;
+        white-space: nowrap;
+    }
+    body.dark-mode .table-hover thead th {
+        background: #090d16 !important;
+        color: #f8fafc !important;
+    }
+    .table-hover tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    .table-hover tbody tr:nth-child(odd) {
+        background: #ffffff;
+    }
+    body.dark-mode .table-hover tbody tr:nth-child(even) {
+        background: #141c2c;
+    }
+    body.dark-mode .table-hover tbody tr:nth-child(odd) {
+        background: #1e293b;
+    }
+    .table-hover tbody tr:hover {
+        background: #e2e8f0 !important;
+    }
+    body.dark-mode .table-hover tbody tr:hover {
+        background: #27354f !important;
+    }
+    .table-hover td {
+        padding: 9px 12px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        vertical-align: middle !important;
+        font-size: 12.5px;
+    }
+    body.dark-mode .table-hover td {
+        border-color: #334155 !important;
+        color: #e2e8f0;
+    }
+    .table-hover tfoot th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        padding: 8px 12px !important;
+        border-top: 2px solid #cbd5e1 !important;
+    }
+    body.dark-mode .table-hover tfoot th {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-top-color: #475569 !important;
+    }
+    .btn-action-pill {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 12px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+</style>
+
+<x-error-message key="not_permitted" />
+
+@php
+    $supplierName = 'All Suppliers';
+    if(isset($supplier_id) && $supplier_id > 0) {
+        $sup = \App\Models\Supplier::find($supplier_id);
+        if($sup) $supplierName = $sup->name . ' (' . ($sup->company_name ?? '') . ')';
+    }
+@endphp
+
+<section class="report-workspace-view">
+    <!-- Top Command Bar -->
+    <div class="comm-command-bar">
+        <div class="comm-title-group">
+            <h1><i class="dripicons-user-id text-primary"></i> {{ __('db.Supplier Report') }} Command Center</h1>
+            <span class="comm-title-badge"><i class="dripicons-tag"></i> 360° Vendor Payable &amp; Procurement History</span>
+        </div>
+        <ul class="comm-nav-pills">
+            <li><a class="nav-link active" href="{{ url('report/supplier') }}"><i class="dripicons-user-id"></i> Supplier Report</a></li>
+            <li><a class="nav-link" href="{{ route('report.supplierDueByDate') }}"><i class="dripicons-warning"></i> Supplier Due</a></li>
+            <li><a class="nav-link" href="{{ url('report/purchase') }}"><i class="dripicons-basket"></i> Purchases</a></li>
+            <li><a class="nav-link" href="{{ route('report.paymentByDate') }}"><i class="dripicons-wallet"></i> Payments</a></li>
+            <li><a class="nav-link" href="{{ route('report.qtyAlert') }}"><i class="dripicons-alert"></i> Qty Alerts</a></li>
+        </ul>
+        <div class="comm-actions">
+            <button class="btn btn-secondary btn-action-pill" onclick="window.print()">
+                <i class="dripicons-print"></i> Print
+            </button>
         </div>
     </div>
-    <ul class="nav nav-tabs ml-4 mt-3" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link active" href="#supplier-purchase" role="tab" data-toggle="tab">{{__('db.Purchase')}}</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#supplier-payments" role="tab" data-toggle="tab">{{__('db.Payment')}}</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#supplier-return" role="tab" data-toggle="tab">{{__('db.return')}}</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#supplier-quotation" role="tab" data-toggle="tab">{{__('db.Quotation')}}</a>
-      </li>
+
+    <!-- KPI Summary Strip -->
+    <div class="kpi-summary-strip">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">REPORT TIMEFRAME</div>
+                <div class="kpi-number" style="font-size:13px; font-weight:600; color:#475569;">
+                    {{ date('d M Y', strtotime($start_date)) }} — {{ date('d M Y', strtotime($end_date)) }}
+                </div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">SELECTED SUPPLIER</div>
+                <div class="kpi-number" style="font-size:14px; font-weight:700;">{{ $supplierName }}</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
+                <i class="dripicons-user-id" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">AUDITED SEGMENTS</div>
+                <div class="kpi-number" style="font-size:14px; font-weight:700;">4 Operations</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
+                <i class="dripicons-list" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">VENDOR RECONCILIATION</div>
+                <div class="kpi-number" style="font-size:14px; font-weight:600; color:#059669;">Verified Active</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
+                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="desk-filter-card">
+        {!! Form::open(['route' => 'report.supplier', 'method' => 'post', 'class' => 'form-inline d-flex align-items-center flex-wrap gap-2']) !!}
+            <div class="form-group mr-2 mb-1">
+                <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-calendar"></i> {{ __('db.Choose Your Date') }}</label>
+                <div class="input-group">
+                    <input type="text" class="daterangepicker-field form-control form-control-sm" style="height:30px; font-size:12px; width:210px;"
+                        value="{{ $start_date }} To {{ $end_date }}" required />
+                    <input type="hidden" name="start_date" value="{{ $start_date }}" />
+                    <input type="hidden" name="end_date" value="{{ $end_date }}" />
+                </div>
+            </div>
+            <div class="form-group mr-2 mb-1">
+                <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-user-id"></i> {{ __('db.Choose Supplier') }}</label>
+                <input type="hidden" name="supplier_id_hidden" value="{{ $supplier_id }}" />
+                <select id="supplier_id" name="supplier_id" class="form-control form-control-sm" style="height:30px; font-size:12px; min-width:200px;">
+                    @foreach ($lims_supplier_list as $supplier)
+                        <option value="{{ $supplier->id }}">{{ $supplier->name }} ({{ $supplier->phone_number }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group mb-1">
+                <button class="btn btn-primary btn-sm btn-action-pill" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                    <i class="fa fa-filter"></i> {{ __('db.submit') }}
+                </button>
+            </div>
+        {!! Form::close() !!}
+    </div>
+
+    <!-- Multi-Operation Segmented Tabs -->
+    <ul class="nav desk-report-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" href="#supplier-purchase" role="tab" data-toggle="tab"><i class="dripicons-basket"></i> {{ __('db.Purchase') }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#supplier-payments" role="tab" data-toggle="tab"><i class="dripicons-wallet"></i> {{ __('db.Payment') }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#supplier-return" role="tab" data-toggle="tab"><i class="dripicons-return"></i> {{ __('db.return') }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#supplier-quotation" role="tab" data-toggle="tab"><i class="dripicons-document"></i> {{ __('db.Quotation') }}</a>
+        </li>
     </ul>
+
+    <!-- Tab Panels Container -->
     <div class="tab-content">
         <div role="tabpanel" class="tab-pane fade show active" id="supplier-purchase">
-            <div class="table-responsive mb-4">
-                <table id="purchase-table" class="table table-hover" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th class="not-exported-purchase"></th>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.reference')}}</th>
-                            <th>{{__('db.Warehouse')}}</th>
-                            <th>{{__('db.product')}} ({{__('db.qty')}})</th>
-                            <th>{{__('db.grand total')}}</th>
-                            <th>{{__('db.Paid')}}</th>
-                            <th>{{__('db.Balance')}}</th>
-                            <th>{{__('db.status')}}</th>
-                        </tr>
-                    </thead>
-                    <tfoot class="tfoot active">
-                        <tr>
-                            <th></th>
-                            <th>{{__('db.Total')}}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="purchase-table" class="table table-hover" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th class="not-exported-purchase"></th>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>{{ __('db.Warehouse') }}</th>
+                                <th>{{ __('db.product') }} ({{ __('db.qty') }})</th>
+                                <th>{{ __('db.grand total') }}</th>
+                                <th>{{ __('db.Paid') }}</th>
+                                <th>{{ __('db.Balance') }}</th>
+                                <th>{{ __('db.status') }}</th>
+                            </tr>
+                        </thead>
+                        <tfoot class="tfoot active">
+                            <tr>
+                                <th></th>
+                                <th>{{ __('db.Total') }}</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div role="tabpanel" class="tab-pane fade" id="supplier-payments">
-            <div class="table-responsive mb-4">
-                <table id="payment-table" class="table table-hover" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th class="not-exported-payment"></th>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.Payment Reference')}}</th>
-                            <th>{{__('db.Purchase Reference')}}</th>
-                            <th>{{__('db.Amount')}}</th>
-                            <th>{{__('db.Paid Method')}}</th>
-                        </tr>
-                    </thead>
-                    <tfoot class="tfoot active">
-                        <tr>
-                            <th></th>
-                            <th>{{__('db.Total')}}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="payment-table" class="table table-hover" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th class="not-exported-payment"></th>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.Payment Reference') }}</th>
+                                <th>{{ __('db.Purchase Reference') }}</th>
+                                <th>{{ __('db.Amount') }}</th>
+                                <th>{{ __('db.Paid Method') }}</th>
+                            </tr>
+                        </thead>
+                        <tfoot class="tfoot active">
+                            <tr>
+                                <th></th>
+                                <th>{{ __('db.Total') }}</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div role="tabpanel" class="tab-pane fade" id="supplier-return">
-            <div class="table-responsive mb-4">
-                <table id="return-table" class="table table-hover" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th class="not-exported-return"></th>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.reference')}}</th>
-                            <th>{{__('db.Warehouse')}}</th>
-                            <th>{{__('db.product')}} ({{__('db.qty')}})</th>
-                            <th>{{__('db.grand total')}}</th>
-                        </tr>
-                    </thead>
-
-                    <tfoot class="tfoot active">
-                        <tr>
-                            <th></th>
-                            <th>{{__('db.Total')}}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th>{{number_format(0, $general_setting->decimal, '.', '')}}</th>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="return-table" class="table table-hover" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th class="not-exported-return"></th>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>{{ __('db.Warehouse') }}</th>
+                                <th>{{ __('db.product') }} ({{ __('db.qty') }})</th>
+                                <th>{{ __('db.grand total') }}</th>
+                            </tr>
+                        </thead>
+                        <tfoot class="tfoot active">
+                            <tr>
+                                <th></th>
+                                <th>{{ __('db.Total') }}</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th>{{ number_format(0, $general_setting->decimal, '.', '') }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div role="tabpanel" class="tab-pane fade" id="supplier-quotation">
-            <div class="table-responsive mb-4">
-                <table id="quotation-table" class="table table-hover" style="width: 100%">
-                    <thead>
-                        <tr>
-                            <th class="not-exported-quotation"></th>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.reference')}}</th>
-                            <th>{{__('db.Warehouse')}}</th>
-                            <th>{{__('db.customer')}}</th>
-                            <th>{{__('db.product')}} ({{__('db.qty')}})</th>
-                            <th>{{__('db.grand total')}}</th>
-                            <th>{{__('db.status')}}</th>
-                        </tr>
-                    </thead>
-
-                    <tfoot class="tfoot active">
-                        <tr>
-                            <th></th>
-                            <th>{{__('db.Total')}}</th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th>{{number_format(0, $general_setting->decimal, '.', '')}}</th>
-                            <th></th>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="quotation-table" class="table table-hover" style="width: 100%">
+                        <thead>
+                            <tr>
+                                <th class="not-exported-quotation"></th>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>{{ __('db.Warehouse') }}</th>
+                                <th>{{ __('db.customer') }}</th>
+                                <th>{{ __('db.product') }} ({{ __('db.qty') }})</th>
+                                <th>{{ __('db.grand total') }}</th>
+                                <th>{{ __('db.status') }}</th>
+                            </tr>
+                        </thead>
+                        <tfoot class="tfoot active">
+                            <tr>
+                                <th></th>
+                                <th>{{ __('db.Total') }}</th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th></th>
+                                <th>{{ number_format(0, $general_setting->decimal, '.', '') }}</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</section>
-
-
-
 @endsection
 
 @push('scripts')

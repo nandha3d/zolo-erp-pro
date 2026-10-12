@@ -4,7 +4,14 @@ use App\Http\Controllers\ComplianceController;
 use App\Http\Middleware\{RequireCompliance, RequireSharedCommercial};
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('compliance')->middleware(['auth', 'company.context', RequireSharedCommercial::class, RequireCompliance::class])
+// Settings › GST: the one place for registration, rate slabs, HSN/SAC, product and party tax.
+Route::prefix('settings/gst')->middleware(['auth', 'company.context', RequireCompliance::class, 'common'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\GstSettingsController::class, 'index'])->name('settings.gst');
+    Route::post('{action}', [\App\Http\Controllers\GstSettingsController::class, 'save'])
+        ->where('action', 'registration|install|category|rename|rate|code|products|parties|party')->name('settings.gst.save');
+});
+
+Route::prefix('compliance')->middleware(['auth', 'company.context', RequireSharedCommercial::class, RequireCompliance::class, 'common'])
     ->where(['kind' => 'sale|purchase', 'documentKind' => 'sale|purchase|sale_note|purchase_note', 'id' => '[0-9]+'])->group(function () {
         Route::get('setup', [ComplianceController::class, 'setup']);
         Route::post('setup/{resource}', [ComplianceController::class, 'saveSetup']);

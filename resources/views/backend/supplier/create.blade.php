@@ -49,8 +49,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.Company Name')}} *</label>
-                                    <input type="text" name="company_name" required class="form-control">
+                                    <label>{{__('db.Company Name')}}</label>
+                                    <input type="text" name="company_name" class="form-control">
                                     @if($errors->has('company_name'))
                                    <span>
                                        <strong>{{ $errors->first('company_name') }}</strong>
@@ -60,7 +60,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.VAT Number')}} / {{__('db.Tax Number')}}</label>
+                                    <label>GSTIN / {{__('db.VAT Number')}}</label>
                                     <input type="text" name="vat_number" class="form-control">
                                 </div>
                             </div>
@@ -72,8 +72,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.Email')}} *</label>
-                                    <input type="email" name="email" placeholder="example@example.com" required class="form-control">
+                                    <label>{{__('db.Email')}}</label>
+                                    <input type="email" name="email" placeholder="example@example.com" class="form-control">
                                     @if($errors->has('email'))
                                    <span>
                                        <strong>{{ $errors->first('email') }}</strong>
@@ -95,14 +95,14 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.Address')}} *</label>
-                                    <input type="text" name="address" required class="form-control">
+                                    <label>{{__('db.Address')}}</label>
+                                    <input type="text" name="address" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.City')}} *</label>
-                                    <input type="text" name="city" required class="form-control">
+                                    <label>{{__('db.City')}}</label>
+                                    <input type="text" name="city" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -157,4 +157,5 @@
         }
     });
 </script>
+@include('backend.partials.gstin-autofill', ['gstinField' => 'vat_number', 'nameField' => 'name'])
 @endpush

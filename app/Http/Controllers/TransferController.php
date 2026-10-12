@@ -657,6 +657,7 @@ class TransferController extends Controller
 
     public function limsProductSearch(Request $request)
     {
+        abort_unless($request->filled('data'), 404); // autocomplete endpoint: always called with the picked item
         $todayDate = date('Y-m-d');
         $product_data = explode("|", $request['data']);
         // $product_code = explode("(", $request['data']);
@@ -807,6 +808,7 @@ class TransferController extends Controller
     public function productTransferData($id)
     {
         $lims_product_transfer_data = ProductTransfer::where('transfer_id', $id)->get();
+        $product_transfer = []; // a document without lines answers an empty list
 
         foreach ($lims_product_transfer_data as $key => $product_transfer_data) {
             $product = Product::find($product_transfer_data->product_id);
@@ -992,7 +994,7 @@ class TransferController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('transfers-edit')){
             $lims_warehouse_list = Warehouse::where('is_active',true)->get();
-            $lims_transfer_data = Transfer::find($id);
+            $lims_transfer_data = Transfer::findOrFail($id);
             $lims_product_transfer_data = ProductTransfer::where('transfer_id', $id)->get();
             return view('backend.transfer.edit', compact('lims_warehouse_list', 'lims_transfer_data', 'lims_product_transfer_data'));
         }

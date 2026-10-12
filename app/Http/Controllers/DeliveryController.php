@@ -169,6 +169,7 @@ class DeliveryController extends Controller
     }
 
     public function create($id){
+        abort_unless(DB::table('sales')->where('id', $id)->whereNull('deleted_at')->exists(), 404);
         $lims_delivery_data = Delivery::where('sale_id', $id)->first();
         if($lims_delivery_data){
             $customer_sale = DB::table('sales')->join('customers', 'sales.customer_id', '=', 'customers.id')->where('sales.id', $id)->whereNull('sales.deleted_at')->select('sales.reference_no','customers.name')->get();
@@ -271,7 +272,7 @@ class DeliveryController extends Controller
 
     public function productDeliveryData($id)
     {
-        $lims_delivery_data = Delivery::find($id);
+        $lims_delivery_data = Delivery::findOrFail($id);
         
         $lims_product_sale_data = Product_Sale::where('sale_id', $lims_delivery_data->sale->id)->get();
 
@@ -358,7 +359,7 @@ class DeliveryController extends Controller
 
     public function edit($id)
     {
-        $lims_delivery_data = Delivery::find($id);
+        $lims_delivery_data = Delivery::findOrFail($id);
         $customer_sale = DB::table('sales')->join('customers', 'sales.customer_id', '=', 'customers.id')->where('sales.id', $lims_delivery_data->sale_id)->whereNull('sales.deleted_at')->select('sales.reference_no','customers.name')->get();
 
         $delivery_data[] = $lims_delivery_data->reference_no;
@@ -423,7 +424,7 @@ class DeliveryController extends Controller
 
     public function delete($id)
     {
-        $lims_delivery_data = Delivery::find($id);
+        $lims_delivery_data = Delivery::findOrFail($id);
         $this->fileDelete(public_path('documents/delivery/'), $lims_delivery_data->file);
         $lims_delivery_data->delete();
 

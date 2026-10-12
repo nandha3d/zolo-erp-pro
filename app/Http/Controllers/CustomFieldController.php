@@ -109,7 +109,7 @@ class CustomFieldController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('custom_field')) {
-            $custom_field_data = CustomField::find($id);
+            $custom_field_data = CustomField::findOrFail($id);
             return view('backend.custom_field.edit', compact('custom_field_data'));
         }
         else

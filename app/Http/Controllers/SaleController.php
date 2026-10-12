@@ -212,7 +212,7 @@ class SaleController extends Controller
     {
         return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
@@ -223,7 +223,7 @@ class SaleController extends Controller
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
-            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->orderBy('position')
             ->get();
     }
@@ -1413,7 +1413,7 @@ class SaleController extends Controller
 
     public function getSoldItem($id)
     {
-        $sale = Sale::select('warehouse_id')->find($id);
+        $sale = Sale::select('warehouse_id')->findOrFail($id);
         $product_sale_data = Product_Sale::where('sale_id', $id)->get();
         $data = [];
         $data['amount'] = $sale->shipping_cost - $sale->sale_discount;
@@ -1688,7 +1688,7 @@ class SaleController extends Controller
 
     public function paypalPaymentSuccess(Request $request, $id)
     {
-        $lims_payment_data = Payment::find($id);
+        $lims_payment_data = Payment::findOrFail($id);
         $provider = new ExpressCheckout;
         $token = $request->token;
         $payerID = $request->PayerID;
@@ -2031,7 +2031,7 @@ class SaleController extends Controller
             $lims_account_list = Account::select('id', 'name','is_default')->where('is_active', true)->get();
 
             if(!empty($id)){
-                $lims_sale_data = Sale::find($id);
+                $lims_sale_data = Sale::findOrFail($id);
                 $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
                 $variables[] = 'lims_sale_data';
                 $variables[] = 'lims_product_sale_data';
@@ -2172,7 +2172,7 @@ class SaleController extends Controller
             $lims_customer_group_all = CustomerGroup::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::findOrFail($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             $lims_product_list = Product::where([
                                     ['featured', 1],
@@ -2300,7 +2300,7 @@ class SaleController extends Controller
 
     public function getCustomerGroup($id)
     {
-         $lims_customer_data = Customer::find($id);
+         $lims_customer_data = Customer::findOrFail($id);
          $lims_customer_group_data = CustomerGroup::find($lims_customer_data->customer_group_id);
          return $lims_customer_group_data->percentage;
     }
@@ -2350,10 +2350,10 @@ class SaleController extends Controller
         }
         if ($general_setting && in_array('restaurant', explode(',', $general_setting->modules))) {
             // Try to find base product
-            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_method','type','unit_id','sale_unit_id','extras')->where('code', $code)->where('is_active', true)->first();
+            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id','extras')->where('code', $code)->where('is_active', true)->first();
         } else {
             // Try to find base product
-            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_method','type','unit_id','sale_unit_id')->where('code', $code)->where('is_active', true)->first();
+            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id')->where('code', $code)->where('is_active', true)->first();
         }
 
         // Try to find variant if base product not found
@@ -2420,7 +2420,10 @@ class SaleController extends Controller
         // Tax info
         $taxRate = 0;
         $taxName = 'No Tax';
-        if ($product->tax_id) {
+        if ($gst = app(\App\Services\Tax\GstSetupService::class)->rateFor($product)) {
+            $taxRate = $gst['rate'];
+            $taxName = $gst['name'];
+        } elseif ($product->tax_id) {
             $tax = Tax::find($product->tax_id);
             if ($tax) {
                 $taxRate = $tax->rate;
@@ -2497,7 +2500,7 @@ class SaleController extends Controller
         $customer_id = $request->input('customer_id');
         $warehouse_id = $request->input('warehouse_id');
         $productDiscount = 0;
-        $lims_product_data = Product::select('id', 'price', 'promotion', 'promotion_price', 'last_date')->find($request->input('product_id'));
+        $lims_product_data = Product::select('id', 'price', 'promotion', 'promotion_price', 'last_date')->findOrFail($request->input("product_id"));
         $lims_product_warehouse_data = Product_Warehouse::where([
             ['product_id', $request->input('product_id')],
             ['warehouse_id', $warehouse_id]
@@ -2558,6 +2561,7 @@ class SaleController extends Controller
     public function productSaleData($id)
     {
         $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
+        $product_sale = []; // a document without lines answers an empty list
         foreach ($lims_product_sale_data as $key => $product_sale_data) {
             $product = Product::find($product_sale_data->product_id);
             if($product_sale_data->variant_id) {
@@ -2895,7 +2899,7 @@ class SaleController extends Controller
             $lims_biller_list = Biller::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $numberOfInvoice = Sale::whereNull('deleted_at')->count();
-            $lims_sale_data = Sale::find($id);
+            $lims_sale_data = Sale::findOrFail($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
             if($lims_sale_data->exchange_rate)
                 $currency_exchange_rate = $lims_sale_data->exchange_rate;

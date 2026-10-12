@@ -1,4 +1,5 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 @push('css')
 <style>
     @media print {
@@ -17,7 +18,7 @@
 
 <?php $authUser = Auth::user()->role_id; ?>
 
-<section id="pos-layout" class="forms hidden-print">
+<section id="pos-layout" class="forms hidden-print classic-document-workspace document-edit-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -31,7 +32,7 @@
                         @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">@endif
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.date')}}</label>
@@ -72,7 +73,7 @@
                                                     }
                                                 @endphp
                                                 @if($customer_active)
-                                                <select required name="customer_id" id="customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer..." style="width: 100px">
+                                                <select required name="customer_id" id="customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer..." style="width: 100px" data-container="body">
                                                 @foreach($lims_customer_list as $customer)
                                                     @php
                                                       $deposit[$customer->id] = $customer->deposit - $customer->expense;
@@ -84,7 +85,7 @@
                                                 </select>
                                                 <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addCustomer"><i class="dripicons-plus"></i></button>
                                                 @else
-                                                <select required name="customer_id" id="customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer...">
+                                                <select required name="customer_id" id="customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer..." data-container="body">
                                                 @foreach($lims_customer_list as $customer)
                                                     @php
                                                       $deposit[$customer->id] = $customer->deposit - $customer->expense;
@@ -113,7 +114,7 @@
                                                 $warehouse_id = $lims_warehouse_list[0]->id;
                                             }
                                             @endphp
-                                            <select required name="warehouse_id" id="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse...">
+                                            <select required name="warehouse_id" id="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}" @if($warehouse->id == $warehouse_id) selected @endif>{{$warehouse->name}}</option>
                                                 @endforeach
@@ -136,7 +137,7 @@
                                                 $biller_id = $lims_biller_list[0]->id;
                                             }
                                             @endphp
-                                            <select required id="biller_id" name="biller_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Biller...">
+                                            <select required id="biller_id" name="biller_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Biller..." data-container="body">
                                                 @foreach($lims_biller_list as $biller)
                                                 <option value="{{$biller->id}}" @if($biller->id == $biller_id) selected @endif>{{$biller->name . ' (' . $biller->company_name . ')'}}</option>
                                                 @endforeach
@@ -147,7 +148,7 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label>{{__('db.Currency')}} *</label>
-                                            <select name="currency_id" id="currency" class="form-control selectpicker" data-toggle="tooltip" title="" data-original-title="Sale currency">
+                                            <select name="currency_id" id="currency" class="form-control selectpicker" data-toggle="tooltip" title="" data-original-title="Sale currency" data-container="body">
                                                 @foreach($currency_list as $currency_data)
                                                 <option value="{{$currency_data->id}}" data-rate="{{$currency_data->exchange_rate}}">{{$currency_data->code}}</option>
                                                 @endforeach
@@ -171,7 +172,7 @@
                                             <label>{{__('db.Service')}}</label>
                                             @if(!empty($service_id))
                                             <div class="input-group pos">
-                                                <select required id="service_id" name="service_id" class="selectpicker form-control" title="Select service...">
+                                                <select required id="service_id" name="service_id" class="selectpicker form-control" title="Select service..." data-container="body">
                                                     <option value="1" @if($service_id == 1) selected @endif>{{__('db.Dine In')}}</option>
                                                     <option value="2" @if($service_id == 2) selected @endif>{{__('db.Take Away')}}</option>
                                                     <option value="3" @if($service_id == 3) selected @endif>{{__('db.Delivery')}}</option>
@@ -179,7 +180,7 @@
                                             </div>
                                             @else
                                             <div class="input-group pos">
-                                                <select required id="service_id" name="service_id" class="selectpicker form-control" title="Select service...">
+                                                <select required id="service_id" name="service_id" class="selectpicker form-control" title="Select service..." data-container="body">
                                                     <option value="1" selected>{{__('db.Dine In')}}</option>
                                                     <option value="2">{{__('db.Take Away')}}</option>
                                                     <option value="3">{{__('db.Delivery')}}</option>
@@ -192,7 +193,7 @@
                                         <div class="form-group top-fields">
                                             <label>{{__('db.table')}}</label>
                                             <div class="input-group pos">
-                                                <select required id="table_id" name="table_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select table...">
+                                                <select required id="table_id" name="table_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select table..." data-container="body">
                                                     @foreach($lims_table_list as $table)
                                                     <option value="{{$table->id}}" @if(!empty($table_id) && $table->id == $table_id) selected @endif>
                                                         {{$table->name}} at {{$table->floor}} ( ðŸ‘¤ {{$table->number_of_person}})
@@ -207,7 +208,7 @@
                                         <div class="form-group top-fields">
                                             <label>{{__('db.Waiter')}}</label>
                                             <div class="input-group pos">
-                                                <select required id="waiter_id" name="waiter_id" class="selectpicker form-control" title="Select waiter...">
+                                                <select required id="waiter_id" name="waiter_id" class="selectpicker form-control" title="Select waiter..." data-container="body">
                                                     @if(auth()->user()->service_staff == 1)
                                                     <option value="{{auth()->user()->id}}" selected >{{auth()->user()->name}}</option>
                                                     @else
@@ -223,7 +224,7 @@
                                     </div>
                                     @endif
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row mt-3 document-search-row">
                                     <div class="col-md-12">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box form-group mb-2" style="position:relative">
@@ -238,7 +239,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-5">
+                                <div class="row mt-5 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -269,7 +270,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" />
@@ -305,7 +306,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <details class="document-secondary-fields" @if($errors->any()) open @endif>
+                                <summary>Charges, payment &amp; notes</summary>
+                                <div class="row mt-3 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Order Tax')}}</label>
@@ -437,7 +440,7 @@
                                         <div id="account-list" class="col-md-3 col-6" hidden>
                                             <div class="form-group top-fields">
                                                 <label>{{__('db.Account')}}</label>
-                                                <select required name="account_id" id="account_id" class="selectpicker form-control" data-live-search="true">
+                                                <select required name="account_id" id="account_id" class="selectpicker form-control" data-live-search="true" data-container="body">
                                                     <option value="0" style="color: #A7B49E;">Select an Account</option>
                                                     @foreach($lims_account_list as $account)
                                                         <option @if($account->is_default == 1) selected @endif value="{{$account->id}}">{{$account->name}}</option>
@@ -527,7 +530,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label> {{__('db.Gift Card')}} *</label>
-                                                <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card..."></select>
+                                                <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card..." data-container="body"></select>
                                             </div>
                                         </div>
                                     </div>
@@ -560,7 +563,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                </details>
+                                <div class="row document-actions-row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <input type="hidden" name="draft" value="0" />
@@ -628,7 +632,7 @@
                                 <div class="form-group">
                                     <label>{{__('db.Price Option')}}</strong> </label>
                                     <div class="input-group">
-                                      <select class="form-control selectpicker" name="price_option" class="price-option">
+                                      <select class="form-control selectpicker" name="price_option" class="price-option" data-container="body">
                                       </select>
                                   </div>
                                 </div>
@@ -647,7 +651,7 @@
                             ?>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Tax Rate')}}</label>
-                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                <select name="edit_tax_rate" class="form-control selectpicker" data-container="body">
                                     @foreach($tax_name_all as $key => $name)
                                     <option value="{{$key}}">{{$name}}</option>
                                     @endforeach
@@ -655,7 +659,7 @@
                             </div>
                             <div id="edit_unit" class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                             <div class="col-md-4 form-group">
@@ -684,7 +688,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>{{__('db.Customer Group')}} *</strong> </label>
-                            <select required class="form-control selectpicker" name="customer_group_id">
+                            <select required class="form-control selectpicker" name="customer_group_id" data-container="body">
                                 @foreach($lims_customer_group_all as $customer_group)
                                 <option value="{{$customer_group->id}}">{{$customer_group->name}}</option>
                                 @endforeach
@@ -2366,25 +2370,6 @@ $('input[name="paid_amount[]"]').on("input", function() {
 
 $('input[name="paying_amount[]"]').on("input", function() {
     $("#change").text( parseFloat( $(this).val() - $("#paid-amount").val()).toFixed({{$general_setting->decimal}}));
-});
-
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
 });
 
 $("#submit-button").on("click", function (e) {

@@ -1,6 +1,6 @@
 @extends('backend.compliance.layout')
 @section('title','GST review')
-@section('content')
+@section('compliance_body')
 <p>Review posted snapshots and notes before filing. This export is not a GST portal filing file.</p>
 <form method="GET" class="panel fields"><label for="report-from">From<input id="report-from" name="from" type="date" value="{{ $from }}" required></label><label for="report-to">To<input id="report-to" name="to" type="date" value="{{ $to }}" required></label><button type="submit">Review period</button>
 <a href="{{ url('/compliance/gst/export?'.http_build_query(['from'=>$from,'to'=>$to,'version'=>'zolo-gst-review-v1'])) }}">Download review JSON</a></form>

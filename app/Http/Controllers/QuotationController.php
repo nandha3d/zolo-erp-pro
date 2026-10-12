@@ -509,6 +509,7 @@ class QuotationController extends Controller
                 $message = 'Quotation created successfully. Please setup your <a href="setting/mail_setting">mail setting</a> to send mail.';
             }
         }
+        app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('quotation', $request->integer('draft_id'), (int) Auth::id());
         return redirect('quotations')->with('message', $message);
     }
 
@@ -570,7 +571,7 @@ class QuotationController extends Controller
 
     public function getCustomerGroup($id)
     {
-         $lims_customer_data = Customer::find($id);
+         $lims_customer_data = Customer::findOrFail($id);
          $lims_customer_group_data = CustomerGroup::find($lims_customer_data->customer_group_id);
          return $lims_customer_group_data->percentage;
     }
@@ -745,6 +746,7 @@ class QuotationController extends Controller
 
     public function limsProductSearch(Request $request)
     {
+        abort_unless($request->filled('data'), 404); // autocomplete endpoint: always called with the picked item
         //return $request['data'];
         $todayDate = date('Y-m-d');
         $product_data = explode("|", $request['data']);
@@ -889,6 +891,7 @@ class QuotationController extends Controller
     public function productQuotationData($id)
     {
         $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
+        $product_quotation = []; // a document without lines answers an empty list
         foreach ($lims_product_quotation_data as $key => $product_quotation_data) {
             $product = Product::find($product_quotation_data->product_id);
             if($product_quotation_data->variant_id) {
@@ -928,7 +931,7 @@ class QuotationController extends Controller
             $lims_biller_list = Biller::where('is_active', true)->get();
             $lims_supplier_list = Supplier::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_quotation_data = Quotation::find($id);
+            $lims_quotation_data = Quotation::findOrFail($id);
             $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
             return view('backend.quotation.edit',compact('lims_customer_list', 'lims_warehouse_list', 'lims_biller_list', 'lims_tax_list', 'lims_quotation_data','lims_product_quotation_data', 'lims_supplier_list'));
         }
@@ -941,7 +944,7 @@ class QuotationController extends Controller
         $data = $request->except('document');
         //return dd($data);
         $document = $request->document;
-        $lims_quotation_data = Quotation::find($id);
+        $lims_quotation_data = Quotation::findOrFail($id);
 
         if($document) {
             $v = Validator::make(
@@ -1106,7 +1109,7 @@ class QuotationController extends Controller
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
         $lims_biller_list = Biller::where('is_active', true)->get();
         $lims_tax_list = Tax::where('is_active', true)->get();
-        $lims_quotation_data = Quotation::find($id);
+        $lims_quotation_data = Quotation::findOrFail($id);
         $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
         $lims_pos_setting_data = PosSetting::latest()->first();
         return view('backend.quotation.create_sale',compact('lims_customer_list', 'lims_warehouse_list', 'lims_biller_list', 'lims_tax_list', 'lims_quotation_data','lims_product_quotation_data', 'lims_pos_setting_data'));
@@ -1117,7 +1120,7 @@ class QuotationController extends Controller
         $lims_supplier_list = Supplier::where('is_active', true)->get();
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
         $lims_tax_list = Tax::where('is_active', true)->get();
-        $lims_quotation_data = Quotation::find($id);
+        $lims_quotation_data = Quotation::findOrFail($id);
         $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
         $lims_product_list_without_variant = $this->productWithoutVariant();
         $lims_product_list_with_variant = $this->productWithVariant();
@@ -1157,7 +1160,7 @@ class QuotationController extends Controller
 
     public function destroy($id)
     {
-        $lims_quotation_data = Quotation::find($id);
+        $lims_quotation_data = Quotation::findOrFail($id);
         $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
         $log_data['item_description'] = '';
         foreach ($lims_product_quotation_data as $product_quotation_data) {

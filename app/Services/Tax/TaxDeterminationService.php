@@ -42,7 +42,9 @@ class TaxDeterminationService
             'gst.reverse_charge' => 'sometimes|boolean', 'gst.special_supply' => 'nullable|in:domestic'])->validate();
         $profile = DB::table('party_tax_profiles')->where('company_id', $context->companyId)
             ->where('party_type', $kind === 'sale' ? 'customer' : 'supplier')->where('party_id', $party->id)->first();
-        if (!$profile) $this->invalid('party', 'Configure party registration and state before GST posting.');
+        // A party without a saved profile gets one from its master GSTIN/state, as the party form would.
+        $profile ??= app(GstSetupService::class)->syncParty($kind === 'sale' ? 'customer' : 'supplier', $party);
+        if (!$profile) $this->invalid('party', 'Enter the GSTIN or state of '.$party->name.' before GST billing.');
         $partyState = Gstin::state($profile->state_code);
         if ($profile->gstin && substr(Gstin::normalize($profile->gstin), 0, 2) !== $partyState) {
             $this->invalid('party', 'Party GSTIN state differs from its address state.');
@@ -80,18 +82,18 @@ class TaxDeterminationService
         foreach ($data['items'] as $i => &$line) {
             $product = $products[$line['product_id']];
             $category = DB::table('tax_categories')->where('company_id', $context->companyId)->where('id', $product->tax_category_id)->first();
-            if (!$category) $this->invalid('tax_category_id', 'Every GST item needs a company-owned tax category.');
+            if (!$category) $this->invalid('tax_category_id', 'Set a GST rate for '.$product->name.' (Product or Settings › GST).');
             if (!in_array($category->supply_type, ['taxable', 'exempt', 'nil_rated', 'non_gst'], true)) $this->invalid('tax_category_id', 'Invalid supply classification.');
             $code = (string) ($product->hsn_code ?? '');
             $service = in_array($product->type, ['service', 'digital'], true);
             if (!preg_match($service ? '/^99[0-9]{4}$/D' : '/^[0-9]{4}(?:[0-9]{2})?(?:[0-9]{2})?$/D', $code)
                 || !DB::table('hsn_sac_codes')->where('company_id', $context->companyId)->where('code', $code)
                     ->where('kind', $service ? 'sac' : 'hsn')->exists()) {
-                $this->invalid('hsn_sac', 'Configure the item HSN/SAC in this company reference catalog.');
+                $this->invalid('hsn_sac', 'Set a valid '.($service ? 'SAC' : 'HSN').' code for '.$product->name.' (Product or Settings › GST).');
             }
             $rates = DB::table('tax_rates')->where('company_id', $context->companyId)->where('tax_category_id', $category->id)
                 ->where('effective_from', '<=', $date)->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))->get();
-            if ($rates->count() !== 1) $this->invalid('tax_rate', 'Configure one effective tax rate for every category and date.');
+            if ($rates->count() !== 1) $this->invalid('tax_rate', $category->name.' has no single GST rate effective on '.$date.'.');
             $rate = $rates->sole();
             $taxable = $basis[$i] - $discounts[$i];
             $chargeable = $category->supply_type === 'taxable' && ($sellerRegistered || $reverse);

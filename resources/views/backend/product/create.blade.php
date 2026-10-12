@@ -1,3 +1,5 @@
+@section('rich-editor', '1')
+@section('image-upload', '1')
 @extends('backend.layout.main')
 
 @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
@@ -243,6 +245,9 @@
                                         <input type="number" name="alert_quantity" class="form-control" step="any">
                                     </div>
                                 </div>
+                                @if(\App\Services\Tax\GstSetupService::usesGst())
+                                @include('backend.product.partials.gst-fields', ['product' => null])
+                                @else
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Product Tax')}}</label>
@@ -258,6 +263,7 @@
                                     </div>
                                     </div>
                                 </div>
+                                @endif
 
                                 <div class="col-md-4">
                                     <div class="form-group">

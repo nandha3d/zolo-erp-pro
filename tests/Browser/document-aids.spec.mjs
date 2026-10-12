@@ -40,7 +40,7 @@ try {
         check(`${kind}: ? opens a help dialog listing the document keys and the form keys`, ['F2', 'F12', 'Shift+F2', 'Alt+F12', 'F6', 'Alt+I'].every(k => help.includes(k)) && !help.includes('Ctrl+F2'), help.slice(0, 200));
         await page.keyboard.press('Escape');
         check(`${kind}: Escape closes the help dialog`, (await page.$('dialog#document-shortcut-help')) === null);
-        await page.click('.command-center-help');
+        await page.click('.topbar-shortcuts');
         check(`${kind}: the visible Shortcuts button opens it too`, await page.isVisible('dialog#document-shortcut-help'));
         await page.keyboard.press('Escape');
 

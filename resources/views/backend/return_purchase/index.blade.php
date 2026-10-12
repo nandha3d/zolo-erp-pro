@@ -1,110 +1,311 @@
 @extends('backend.layout.main') @section('content')
 
+<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+
+<style>
+    .return-workspace-view {
+        padding: 12px 18px 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 40px);
+    }
+    body.dark-mode .return-workspace-view {
+        background: #0b0f19;
+    }
+    .kpi-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .kpi-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .kpi-card .kpi-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-number {
+        font-size: 19px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    body.dark-mode .kpi-card .kpi-number {
+        color: #f8fafc;
+    }
+    .desk-filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .desk-filter-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-card-wrapper {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        padding: 14px 16px;
+    }
+    body.dark-mode .desk-card-wrapper {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    #return-table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    #return-table thead th {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        padding: 9px 12px !important;
+        border: none !important;
+        white-space: nowrap;
+    }
+    body.dark-mode #return-table thead th {
+        background: #090d16 !important;
+        color: #f8fafc !important;
+    }
+    #return-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    #return-table tbody tr:nth-child(odd) {
+        background: #ffffff;
+    }
+    body.dark-mode #return-table tbody tr:nth-child(even) {
+        background: #141c2c;
+    }
+    body.dark-mode #return-table tbody tr:nth-child(odd) {
+        background: #1e293b;
+    }
+    #return-table tbody tr:hover {
+        background: #e2e8f0 !important;
+    }
+    body.dark-mode #return-table tbody tr:hover {
+        background: #27354f !important;
+    }
+    #return-table td {
+        padding: 9px 12px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        vertical-align: middle !important;
+        font-size: 12.5px;
+    }
+    body.dark-mode #return-table td {
+        border-color: #334155 !important;
+        color: #e2e8f0;
+    }
+    #return-table tfoot th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        padding: 8px 12px !important;
+        border-top: 2px solid #cbd5e1 !important;
+    }
+    body.dark-mode #return-table tfoot th {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-top-color: #475569 !important;
+    }
+    .btn-action-pill {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 12px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+</style>
+
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header mt-2">
-                <h3 class="text-center">{{__('db.Purchase Return List')}}</h3>
-            </div>
-            {!! Form::open(['route' => 'return-purchase.index', 'method' => 'get']) !!}
-            <div class="row mb-3">
-                <div class="col-md-4 offset-md-2 mt-3">
-                    <div class="d-flex">
-                        <label class="">{{__('db.date')}} &nbsp;</label>
-                        <div class="">
-                            <div class="input-group">
-                                <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
-                                <input type="hidden" name="starting_date" value="{{$starting_date}}" />
-                                <input type="hidden" name="ending_date" value="{{$ending_date}}" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mt-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                    <div class="d-flex">
-                        <label class="">{{__('db.Warehouse')}} &nbsp;</label>
-                        <div class="">
-                            <select id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" >
-                                <option value="0">{{__('db.All Warehouse')}}</option>
-                                @foreach($lims_warehouse_list as $warehouse)
-                                    @if($warehouse->id == $warehouse_id)
-                                        <option selected value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                    @else
-                                        <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-2 mt-3">
-                    <div class="form-group">
-                        <button class="btn btn-primary" id="filter-btn" type="submit">{{__('db.submit')}}</button>
-                    </div>
-                </div>
-            </div>
-            {!! Form::close() !!}
-        </div>
-        @if(in_array("purchase-return-add", $all_permission))
-            <a href="#" data-new-document data-toggle="modal" data-target="#add-purchase-return" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Return')}}</a>
-        @endif
-    </div>
-    <div class="table-responsive">
-        <table id="return-table" class="table return-list" style="width: 100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th>{{__('db.date')}}</th>
-                    <th>{{__('db.reference')}}</th>
-                    <th>{{__('db.Purchase Reference')}}</th>
-                    <th>{{__('db.Warehouse')}}</th>
-                    <th>{{__('db.Supplier')}}</th>
-                    <th>{{__('db.grand total')}}</th>
-                    <th class="not-exported">{{__('db.action')}}</th>
-                </tr>
-            </thead>
+@php
+    $totalReturnsCount = \App\Models\ReturnPurchase::count();
+    $totalReturnsSum = \App\Models\ReturnPurchase::sum('grand_total');
+    $activeWarehousesCount = $lims_warehouse_list->count();
+    $currencyCode = $currency->code ?? '₹';
+@endphp
 
-            <tfoot class="tfoot active">
-                <th></th>
-                <th>{{__('db.Total')}}</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-            </tfoot>
-        </table>
+<section class="return-workspace-view">
+    <!-- Top Command Bar -->
+    <div class="comm-command-bar">
+        <div class="comm-title-group">
+            <h1><i class="dripicons-return text-primary"></i> {{ __('db.Purchase Return List') }} Command Center</h1>
+            <span class="comm-title-badge"><i class="dripicons-archive"></i> Inward Debit Notes</span>
+        </div>
+        <ul class="comm-nav-pills">
+            <li><a class="nav-link active" href="{{ route('return-purchase.index') }}"><i class="dripicons-list"></i> Returns</a></li>
+            <li><a class="nav-link" href="{{ route('purchases.index') }}"><i class="dripicons-card"></i> Bills</a></li>
+            <li><a class="nav-link" href="{{ route('purchases.index', ['view' => 'orders', 'purchase_status' => 4]) }}"><i class="dripicons-clipboard"></i> Orders</a></li>
+            <li><a class="nav-link" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-download"></i> GRN</a></li>
+            <li><a class="nav-link" href="{{ route('supplier.index') }}"><i class="dripicons-user"></i> Suppliers</a></li>
+        </ul>
+        <div class="comm-actions">
+            @if(in_array("purchase-return-add", $all_permission))
+                <a href="#" data-new-document data-toggle="modal" data-target="#add-purchase-return" class="btn btn-primary btn-action-pill" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+                    <i class="dripicons-plus"></i> {{ __('db.Add Return') }}
+                </a>
+            @endif
+        </div>
+    </div>
+
+    @include('backend.partials.document-draft-tabs', ['draftLabel' => 'purchase return', 'draftKey' => 'Shift+F12'])
+
+    <!-- KPI Summary Strip -->
+    <div class="kpi-summary-strip">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">TOTAL PURCHASE RETURNS</div>
+                <div class="kpi-number">{{ number_format($totalReturnsCount) }}</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+                <i class="dripicons-return" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">TOTAL RETURN VALUE</div>
+                <div class="kpi-number">{{ $currencyCode }} {{ number_format($totalReturnsSum, 2) }}</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;">
+                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">ACTIVE WAREHOUSES</div>
+                <div class="kpi-number">{{ $activeWarehousesCount }}</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
+                <i class="dripicons-store" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">DATE WINDOW</div>
+                <div class="kpi-number" style="font-size:13px; font-weight:600; color:#475569;">
+                    {{ date('d M Y', strtotime($starting_date)) }} — {{ date('d M Y', strtotime($ending_date)) }}
+                </div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
+                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Date Range Bar -->
+    <div class="desk-filter-card">
+        {!! Form::open(['route' => 'return-purchase.index', 'method' => 'get', 'class' => 'form-inline d-flex align-items-center flex-wrap gap-2']) !!}
+            <div class="form-group mr-2 mb-1">
+                <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-calendar"></i> {{__('db.date')}}</label>
+                <div class="input-group">
+                    <input type="text" class="daterangepicker-field form-control form-control-sm" style="height:30px; font-size:12px; width:210px;" value="{{$starting_date}} To {{$ending_date}}" required />
+                    <input type="hidden" name="starting_date" value="{{$starting_date}}" />
+                    <input type="hidden" name="ending_date" value="{{$ending_date}}" />
+                </div>
+            </div>
+            <div class="form-group mr-2 mb-1 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
+                <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-store"></i> {{__('db.Warehouse')}}</label>
+                <select id="warehouse_id" name="warehouse_id" class="form-control form-control-sm" style="height:30px; font-size:12px; min-width:160px;">
+                    <option value="0">{{__('db.All Warehouse')}}</option>
+                    @foreach($lims_warehouse_list as $warehouse)
+                        @if($warehouse->id == $warehouse_id)
+                            <option selected value="{{$warehouse->id}}">{{$warehouse->name}}</option>
+                        @else
+                            <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group mb-1">
+                <button class="btn btn-primary btn-sm btn-action-pill" id="filter-btn" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                    <i class="fa fa-filter"></i> {{__('db.submit')}}
+                </button>
+            </div>
+        {!! Form::close() !!}
+    </div>
+
+    <!-- Main Table Container -->
+    <div class="desk-card-wrapper">
+        <div class="table-responsive">
+            <table id="return-table" class="table return-list" style="width: 100%">
+                <thead>
+                    <tr>
+                        <th class="not-exported"></th>
+                        <th>{{__('db.date')}}</th>
+                        <th>{{__('db.reference')}}</th>
+                        <th>{{__('db.Purchase Reference')}}</th>
+                        <th>{{__('db.Warehouse')}}</th>
+                        <th>{{__('db.Supplier')}}</th>
+                        <th>{{__('db.grand total')}}</th>
+                        <th class="not-exported">{{__('db.action')}}</th>
+                    </tr>
+                </thead>
+
+                <tfoot class="tfoot active">
+                    <th></th>
+                    <th>{{__('db.Total')}}</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tfoot>
+            </table>
+        </div>
     </div>
 </section>
 
 <div id="return-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-      <div class="modal-content">
+    <div role="document" class="modal-dialog modal-lg">
+      <div class="modal-content" style="border-radius:8px; border:1px solid #cbd5e1; overflow:hidden;">
         <div class="container mt-3 pb-2 border-bottom">
-        <div class="row">
-            <div class="col-md-6 d-print-none">
-                <button id="print-btn" type="button" class="btn btn-default btn-sm"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
-            </div>
-            <div class="col-md-6 d-print-none">
-                <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="col-md-12">
-                <h3 id="exampleModalLabel" class="modal-title text-center container-fluid">{{$general_setting->site_title}}</h3>
-            </div>
-            <div class="col-md-12 text-center">
-                <i style="font-size: 15px;">{{__('db.Purchase Return Details')}}</i>
+            <div class="row align-items-center">
+                <div class="col-md-6 d-print-none">
+                    <button id="print-btn" type="button" class="btn btn-outline-secondary btn-sm"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
+                </div>
+                <div class="col-md-6 text-right d-print-none">
+                    <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+                </div>
+                <div class="col-md-12 text-center mt-2">
+                    <h4 id="exampleModalLabel" class="modal-title font-weight-bold" style="color:#0f172a;">{{$general_setting->site_title}}</h4>
+                    <span class="badge badge-secondary" style="font-size:11px; text-transform:uppercase;">{{__('db.Purchase Return Details')}}</span>
+                </div>
             </div>
         </div>
-    </div>
-            <div id="return-content" class="modal-body">
-            </div>
-            <br>
-            <table class="table table-bordered product-return-list">
-                <thead>
+        <div id="return-content" class="modal-body">
+        </div>
+        <div class="px-3">
+            <table class="table table-bordered product-return-list" style="font-size:12px;">
+                <thead style="background:#0f172a; color:#ffffff;">
                     <th>#</th>
                     <th>{{__('db.product')}}</th>
                     <th>{{__('db.Batch No')}}</th>
@@ -117,7 +318,8 @@
                 <tbody>
                 </tbody>
             </table>
-            <div id="return-footer" class="modal-body"></div>
+        </div>
+        <div id="return-footer" class="modal-body border-top pt-2" style="font-size:12px;"></div>
       </div>
     </div>
 </div>
@@ -200,7 +402,6 @@
             type:"post"
         },
         "createdRow": function( row, data, dataIndex ) {
-            //alert(data);
             $(row).addClass('return-link');
             $(row).attr('data-return', data['return']);
         },
@@ -215,7 +416,6 @@
             {"data": "options"},
         ],
         'language': {
-
             'lengthMenu': '_MENU_ {{__("db.records per page")}}',
              "info":      '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
             "search":  '{{__("db.Search")}}',
@@ -235,7 +435,6 @@
                     if(type === 'display'){
                         data = '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>';
                     }
-
                    return data;
                 },
                 'checkboxes': {
@@ -247,12 +446,12 @@
         ],
         'select': { style: 'multi',  selector: 'td:first-child'},
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        dom: '<"row"lfB>rtip',
+        dom: '<"row align-items-center mb-2"<"col-md-4"l><"col-md-4 text-center"B><"col-md-4"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6"p>>',
         rowId: 'ObjectID',
         buttons: [
             {
                 extend: 'pdf',
-                text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                text: '<i title="export to pdf" class="fa fa-file-pdf-o text-danger"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -266,7 +465,7 @@
             },
             {
                 extend: 'excel',
-                text: '<i title="export to excel" class="dripicons-document-new"></i>',
+                text: '<i title="export to excel" class="fa fa-file-excel-o text-success"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -280,7 +479,7 @@
             },
             {
                 extend: 'csv',
-                text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                text: '<i title="export to csv" class="fa fa-file-text-o text-info"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -294,7 +493,7 @@
             },
             {
                 extend: 'print',
-                text: '<i title="print" class="fa fa-print"></i>',
+                text: '<i title="print" class="fa fa-print text-primary"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -307,7 +506,7 @@
                 footer:true
             },
             {
-                text: '<i title="delete" class="dripicons-cross"></i>',
+                text: '<i title="delete" class="dripicons-cross text-danger"></i>',
                 className: 'buttons-delete',
                 action: function ( e, dt, node, config ) {
                     if(user_verified == '1') {
@@ -329,7 +528,6 @@
                                 },
                                 success:function(data){
                                     alert(data);
-                                    //dt.rows({ page: 'current', selected: true }).deselect();
                                     dt.rows({ page: 'current', selected: true }).remove().draw(false);
                                 }
                             });
@@ -356,7 +554,6 @@
     function datatable_sum(dt_selector, is_calling_first) {
         if (dt_selector.rows( '.selected' ).any() && is_calling_first) {
             var rows = dt_selector.rows( '.selected' ).indexes();
-
             $( dt_selector.column( 6 ).footer() ).html(dt_selector.cells( rows, 6, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
         }
         else {
@@ -436,4 +633,8 @@
 
 </script>
 <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+@include('backend.partials.form-drafts', ['draft' => [
+    'kind' => 'preturn', 'label' => 'Purchase Return', 'shortcut' => 'purchase-return',
+    'createUrl' => route('return-purchase.create'), 'newUrl' => route('return-purchase.index', ['new' => 1]),
+]])
 @endpush

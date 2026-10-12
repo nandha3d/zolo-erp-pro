@@ -21,7 +21,7 @@
                 <i class="fa fa-cogs mr-1"></i> Operations
             </span>
             <span class="text-muted small d-none d-md-inline">
-                <strong>{{ ($profileData['profile'] ?? 'general_trading') === 'general_trading' ? 'General Trading' : ucwords(str_replace('_', ' ', $profileData['profile'] ?? '')) }}</strong> &bull; Co. {{ $context->companyId }} &bull; Br. {{ $context->branchId }} &bull; FY {{ $context->financialYearId }}
+                <strong>{{ \App\Services\Platform\CapabilityCatalog::PROFILES[$profileData['profile'] ?? 'general_trading'][0] ?? ucwords(str_replace('_', ' ', $profileData['profile'] ?? '')) }}@if(!empty($profileData['subtype'])) &bull; {{ ucwords(str_replace('_', ' ', $profileData['subtype'])) }}@endif</strong> &bull; Co. {{ $context->companyId }} &bull; Br. {{ $context->branchId }} &bull; FY {{ $context->financialYearId }}
             </span>
         </div>
 

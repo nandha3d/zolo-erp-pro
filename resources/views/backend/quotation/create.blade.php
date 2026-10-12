@@ -1,8 +1,10 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-error-message key="not_permitted" />
 
-<section class="forms">
+@include('backend.partials.document-draft-tabs', ['draftLabel' => 'quotation', 'draftKey' => 'Alt+F10'])
+<section class="forms classic-document-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -15,7 +17,7 @@
                         {!! Form::open(['route' => 'quotations.store', 'method' => 'post', 'files' => true, 'id' => 'quotation-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{__('db.Biller')}} *</label>
@@ -37,11 +39,11 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{__('db.customer')}} *</label>
-                                            <select id="customer_id" name="customer_id" required class="selectpicker form-control" data-live-search="true" id="customer-id" title="Select customer...">
+                                            <select id="customer_id" name="customer_id" required class="selectpicker form-control" data-live-search="true" title="Select customer...">
                                                 @foreach($lims_customer_list as $customer)
                                                 <option value="{{$customer->id}}">{{$customer->name . ' (' . $customer->phone_number . ')'}}</option>
                                                 @endforeach
@@ -61,12 +63,12 @@
                                     <div class="col-md-12 mt-2">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
-                                            <button class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
+                                            <span class="btn btn-secondary" aria-hidden="true"><i class="fa fa-barcode"></i></span>
                                             <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="{{__('db.Please type product code and select')}}" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
-		                        <div class="row mt-5">
+		                        <div class="row document-lines-row">
 		                            <div class="col-md-12">
 		                                <h5>{{__('db.Order Table')}} *</h5>
 		                                <div class="table-responsive mt-3">
@@ -100,7 +102,7 @@
 		                                </div>
 		                            </div>
 		                        </div>
-		                        <div class="row">
+		                        <div class="row" hidden>
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" />
@@ -189,7 +191,7 @@
                                 		</div>
                                 	</div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group document-actions-row">
                                     <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
                                 </div>
                             </div>
@@ -513,25 +515,6 @@ $('button[name="update_btn"]').on("click", function() {
     }
     product_discount[rowindex] = $('input[name="edit_discount"]').val();
     checkQuantity(edit_qty, false);
-});
-
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
 });
 
 $('#quotation-form').on('submit',function(e){
@@ -899,5 +882,52 @@ function calculateGrandTotal() {
     $('input[name="grand_total"]').val(grand_total.toFixed({{$general_setting->decimal}}));
 }
 
+// Draft tabs (form-drafts.js): order lines are built in the browser, so a draft keeps each line's product and the
+// per-line pricing state, and replays the normal product search to rebuild it.
+window.zoloFormDraftHooks = (() => {
+    const $rows = $('table.order-list tbody');
+    const lineState = [product_price, product_discount, tax_rate, tax_name, tax_method, unit_name, unit_operator, unit_operation_value, is_imei];
+    const idle = () => new Promise(resolve => { const check = () => ($.active ? setTimeout(check, 50) : resolve()); setTimeout(check, 0); });
+    return {
+        rows: $rows[0],
+        ownsControl: element => element.id === 'lims_productcodeSearch' || !!element.closest('table.order-list tbody'),
+        party: () => {
+            const option = $('#customer_id option:selected');
+            return option.val() ? {party_id: Number(option.val()), party_name: option.text().replace(/\s*\(.*\)\s*$/, '').trim()} : {};
+        },
+        captureLines: () => $rows.find('tr').toArray().map((row, i) => ({
+            code: $(row).find('.product-code').val(), name: $(row).find('td:first').clone().children().remove().end().text().trim(),
+            qty: $(row).find('.qty').val(), batch_no: $(row).find('.batch-no').val(), product_batch_id: $(row).find('.product-batch-id').val(),
+            imei: $(row).find('.imei-number').val(), sale_unit: $(row).find('.sale-unit').val(),
+            state: lineState.map(values => values[i] ?? null),
+        })),
+        restoreLines: async lines => {
+            await idle(); // warehouse stock list and customer group rate
+            // Lines are prepended by the product search, so replay them bottom-up to keep their order.
+            for (const line of lines.slice().reverse()) {
+                productSearch(line.code + '|' + line.name + '|null|0');
+                await idle();
+                const $row = $rows.find('tr').first();
+                if ($row.find('.product-code').val() !== line.code) continue;
+                lineState.forEach((values, index) => { if (line.state[index] !== null) values[0] = line.state[index]; });
+                $row.find('.qty').val(line.qty); $row.find('.batch-no').val(line.batch_no); $row.find('.product-batch-id').val(line.product_batch_id);
+                $row.find('.imei-number').val(line.imei); $row.find('.sale-unit').val(line.sale_unit);
+                rowindex = 0; pos = product_code.indexOf(line.code);
+                calculateRowProductData(line.qty);
+            }
+        },
+        reset: () => {
+            document.getElementById('quotation-form').reset();
+            $rows.empty();
+            lineState.forEach(values => { values.length = 0; });
+            $('.selectpicker').selectpicker('refresh');
+            calculateTotal();
+        },
+    };
+})();
 </script>
+@include('backend.partials.form-drafts', ['draft' => [
+    'kind' => 'quotation', 'label' => 'Quotation', 'shortcut' => 'quotation',
+    'form' => '#quotation-form',
+]])
 @endpush

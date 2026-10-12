@@ -1,11 +1,12 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 <x-validation-error fieldName="product_code" />
 <x-validation-error fieldName="qty" />
 
-<section class="forms">
+<section class="forms classic-document-workspace document-edit-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -18,17 +19,19 @@
                         {!! Form::open(['route' => ['purchases.update', $lims_purchase_data->id], 'method' => 'put', 'files' => true, 'id' => 'purchase-form']) !!}
                         @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">@endif
                         @if(config('commercial.enabled'))
-                            <p>Saving creates a replacement supplier bill and preserves the reversed original.</p>
-                            <label for="replacement-date">Replacement date</label><input id="replacement-date" type="date" name="business_date" required value="{{ old('business_date', now()->toDateString()) }}">
-                            <label for="replacement-reason">Reason</label><input id="replacement-reason" name="reason" required minlength="3" maxlength="500" value="{{ old('reason') }}">
+                            <p class="document-replacement-notice">Saving creates a replacement supplier bill and preserves the reversed original.</p>
+                            <div class="row document-replacement-fields">
+                                <div class="col-md-4 form-group"><label for="replacement-date">Replacement date</label><input class="form-control" id="replacement-date" type="date" name="business_date" required value="{{ old('business_date', now()->toDateString()) }}"></div>
+                                <div class="col-md-8 form-group"><label for="replacement-reason">Reason</label><input class="form-control" id="replacement-reason" name="reason" required minlength="3" maxlength="500" value="{{ old('reason') }}"></div>
+                            </div>
                         @endif
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.date')}}</label>
-                                            <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime($lims_purchase_data->created_at->toDateString()))}}" />
+                                            <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime(($lims_purchase_data->created_at ?? now())->toDateString()))}}" />
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -42,7 +45,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Warehouse')}} *</label>
                                             <input type="hidden" name="warehouse_id_hidden" value="{{$lims_purchase_data->warehouse_id}}" />
-                                            <select required name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse..." required>
+                                            <select required name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse..." required data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -54,7 +57,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Supplier')}}</label>
                                             <input type="hidden" name="supplier_id_hidden" value="{{ $lims_purchase_data->supplier_id }}" />
-                                            <select name="supplier_id" class="selectpicker form-control" data-live-search="true" id="supplier-id" title="Select supplier...">
+                                            <select name="supplier_id" class="selectpicker form-control" data-live-search="true" id="supplier-id" title="Select supplier..." data-container="body">
                                                 @foreach($lims_supplier_list as $supplier)
                                                 <option value="{{$supplier->id}}">{{$supplier->name .' ('. $supplier->company_name .')'}}</option>
                                                 @endforeach
@@ -89,7 +92,7 @@
                                         <div class="col-md-2">
                                             <div class="form-group">
                                                 <label>{{__('db.Currency')}} *</label>
-                                                <select name="currency_id" id="currency-id" class="form-control selectpicker" data-toggle="tooltip" title="">
+                                                <select name="currency_id" id="currency-id" class="form-control selectpicker" data-toggle="tooltip" title="" data-container="body">
                                                     @foreach($currency_list as $currency_data)
                                                         @if ($currency_data->id == $lims_purchase_data->currency_id)
                                                             <option value="{{$currency_data->id}}" data-rate="{{$currency_data->exchange_rate}}" @if($currency_data->exchange_rate == 1){{'checked'}}@endif>{{$currency_data->code}}</option>
@@ -171,7 +174,7 @@
                                             </div>
                                         @endif
                                     @endforeach
-                                    <div class="col-md-12 mt-3">
+                                    <div class="col-md-12 mt-3 document-search-row">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
                                             <button type="button" class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
@@ -179,7 +182,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-5">
+                                <div class="row mt-5 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -352,7 +355,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" value="{{$lims_purchase_data->total_qty}}" />
@@ -386,7 +389,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-5">
+                                <details class="document-secondary-fields" @if($errors->any()) open @endif>
+                                <summary>Charges &amp; notes</summary>
+                                <div class="row mt-5 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Order Tax')}}</label>
@@ -416,7 +421,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-details-row">
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>{{__('db.Note')}}</label>
@@ -424,7 +429,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                </details>
+                                <div class="form-group document-actions-row">
                                     <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
                                 </div>
                             </div>
@@ -504,7 +510,7 @@
                             ?>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Tax Rate')}}</label>
-                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                <select name="edit_tax_rate" class="form-control selectpicker" data-container="body">
                                     @foreach($tax_name_all as $key => $name)
                                     <option value="{{$key}}">{{$name}}</option>
                                     @endforeach
@@ -512,7 +518,7 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                         </div>
@@ -1266,25 +1272,6 @@ $('input[name="shipping_cost"]').on("blur", function() {
 
 $('select[name="order_tax_rate"]').on("change", function() {
     calculateGrandTotal();
-});
-
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
 });
 
 $('#purchase-form').on('submit',function(e){

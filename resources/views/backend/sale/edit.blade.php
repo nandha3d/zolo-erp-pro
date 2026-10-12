@@ -1,4 +1,5 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 @push('css')
 <style>
     @media print {
@@ -17,7 +18,7 @@
 
 <?php $authUser = Auth::user()->role_id; ?>
 
-<section id="pos-layout" class="forms hidden-print">
+<section id="pos-layout" class="forms hidden-print classic-document-workspace document-edit-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -30,20 +31,22 @@
                         {!! Form::open(['route' => ['sales.update', $lims_sale_data->id], 'method' => 'put', 'files' => true, 'id' => 'payment-form']) !!}
                         @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">@endif
                         @if(config('commercial.enabled'))
-                            <p>Saving creates a replacement invoice and preserves the reversed original.</p>
-                            <label for="replacement-date">Replacement date</label><input id="replacement-date" type="date" name="business_date" required value="{{ old('business_date', now()->toDateString()) }}">
-                            <label for="replacement-reason">Reason</label><input id="replacement-reason" name="reason" required minlength="3" maxlength="500" value="{{ old('reason') }}">
+                            <p class="document-replacement-notice">Saving creates a replacement invoice and preserves the reversed original.</p>
+                            <div class="row document-replacement-fields">
+                                <div class="col-md-4 form-group"><label for="replacement-date">Replacement date</label><input class="form-control" id="replacement-date" type="date" name="business_date" required value="{{ old('business_date', now()->toDateString()) }}"></div>
+                                <div class="col-md-8 form-group"><label for="replacement-reason">Reason</label><input class="form-control" id="replacement-reason" name="reason" required minlength="3" maxlength="500" value="{{ old('reason') }}"></div>
+                            </div>
                         @endif
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.date')}}</label>
                                             @can('change_sale_date')
-                                                <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime($lims_sale_data->created_at->toDateString()))}}" />
+                                                <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime(($lims_sale_data->created_at ?? now())->toDateString()))}}" />
                                             @else
-                                                <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime($lims_sale_data->created_at->toDateString()))}}" readonly/>
+                                                <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime(($lims_sale_data->created_at ?? now())->toDateString()))}}" readonly/>
                                             @endcan
                                         </div>
                                     </div>
@@ -57,7 +60,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.customer')}} *</label>
                                             <input type="hidden" name="customer_id_hidden" value="{{ $lims_sale_data->customer_id }}" />
-                                            <select required name="customer_id" class="selectpicker form-control" data-live-search="true" id="customer_id" title="Select customer...">
+                                            <select required name="customer_id" class="selectpicker form-control" data-live-search="true" id="customer_id" title="Select customer..." data-container="body">
                                                 @foreach($lims_customer_list as $customer)
                                                 <option value="{{$customer->id}}">{{$customer->name . ' (' . $customer->phone_number . ')'}}</option>
                                                 @endforeach
@@ -69,7 +72,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Warehouse')}} *</label>
                                             <input type="hidden" name="warehouse_id_hidden" value="{{$lims_sale_data->warehouse_id}}" />
-                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse...">
+                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -81,7 +84,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Biller')}} *</label>
                                             <input type="hidden" name="biller_id_hidden" value="{{$lims_sale_data->biller_id}}" />
-                                            <select required name="biller_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Biller...">
+                                            <select required name="biller_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Biller..." data-container="body">
                                                 @foreach($lims_biller_list as $biller)
                                                 <option value="{{$biller->id}}">{{$biller->name . ' (' . $biller->company_name . ')'}}</option>
                                                 @endforeach
@@ -89,7 +92,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row mt-3 document-search-row">
                                     <div class="col-md-12">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box form-group mb-2" style="position:relative">
@@ -104,7 +107,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-5">
+                                <div class="row mt-5 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -309,7 +312,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" value="{{$lims_sale_data->total_qty}}" />
@@ -356,7 +359,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <details class="document-secondary-fields" @if($errors->any()) open @endif>
+                                <summary>Charges, status &amp; notes</summary>
+                                <div class="row mt-3 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <input type="hidden" name="order_tax_rate_hidden" value="{{$lims_sale_data->order_tax_rate}}">
@@ -512,7 +517,8 @@
                                         <x-validation-error fieldName="payment_status" />
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                </details>
+                                <div class="form-group document-actions-row">
                                     <input type="hidden" name="draft" value="0" />
                                     <button id="submit-button" type="submit" class="btn btn-primary">{{__('db.submit')}}</button>
                                 </div>
@@ -569,7 +575,7 @@
                                 <div class="form-group">
                                     <label>{{__('db.Price Option')}}</strong> </label>
                                     <div class="input-group">
-                                      <select class="form-control selectpicker" name="price_option" class="price-option">
+                                      <select class="form-control selectpicker" name="price_option" class="price-option" data-container="body">
                                       </select>
                                   </div>
                                 </div>
@@ -588,7 +594,7 @@
                             ?>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Tax Rate')}}</label>
-                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                <select name="edit_tax_rate" class="form-control selectpicker" data-container="body">
                                     @foreach($tax_name_all as $key => $name)
                                     <option value="{{$key}}">{{$name}}</option>
                                     @endforeach
@@ -596,7 +602,7 @@
                             </div>
                             <div id="edit_unit" class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                         </div>
@@ -1913,25 +1919,6 @@ $('input[name="shipping_cost"]').on("blur", function() {
 
 $('select[name="order_tax_rate"]').on("change", function() {
     calculateGrandTotal();
-});
-
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
 });
 
 $('#payment-form').on('submit',function(e){

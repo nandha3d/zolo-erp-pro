@@ -1,6 +1,7 @@
 @extends('backend.layout.main')
 @section('content')
-<section class="forms">
+@include('backend.partials.document-entry-layout')
+<section class="forms classic-document-workspace document-compact-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -13,7 +14,7 @@
                         {!! Form::open(['route' => ['qty_adjustment.update', $lims_adjustment_data->id], 'method' => 'put', 'files' => true, 'id' => 'adjustment-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.reference')}}</label>
@@ -23,7 +24,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Warehouse')}} *</label>
-                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse...">
+                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -38,7 +39,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row mt-3 document-search-row">
                                     <div class="col-md-12">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
@@ -47,7 +48,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-5">
+                                <div class="row mt-5 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -115,7 +116,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" />
@@ -123,7 +124,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-details-row">
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>{{__('db.Note')}}</label>
@@ -131,7 +132,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group document-actions-row">
                                     <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
                                 </div>
                             </div>
@@ -249,26 +250,7 @@ for(rowindex  =0; rowindex <= rownumber; rowindex++){
 	    calculateTotal();
 	});
 
-    $(window).keydown(function(e){
-        if (e.which == 13) {
-            var $targ = $(e.target);
-            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-                var focusNext = false;
-                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                    if (this === e.target) {
-                        focusNext = true;
-                    }
-                    else if (focusNext){
-                        $(this).focus();
-                        return false;
-                    }
-                });
-                return false;
-            }
-        }
-    });
-
-    $('#adjustment-form').on('submit',function(e){
+$('#adjustment-form').on('submit',function(e){
         var rownumber = $('table.order-list tbody tr:last').index();
         if (rownumber < 0) {
             alert("Please insert product to order table!")

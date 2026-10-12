@@ -913,9 +913,10 @@ class ReportController extends Controller
     public function productReport(Request $request)
     {
         $data = $request->all();
-        $start_date = $data['start_date'];
-        $end_date = $data['end_date'];
-        $warehouse_id = $data['warehouse_id'];
+        // Opened from a plain link (no filter submitted yet): this month, all warehouses.
+        $start_date = $data['start_date'] ?? date('Y-m').'-01';
+        $end_date = $data['end_date'] ?? date('Y-m-d');
+        $warehouse_id = $data['warehouse_id'] ?? 0;
         $category_id = $data['category_id'] ?? 0;
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
         return view('backend.report.product_report',compact('start_date', 'end_date', 'warehouse_id', 'category_id', 'lims_warehouse_list'));

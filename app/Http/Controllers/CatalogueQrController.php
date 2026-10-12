@@ -47,9 +47,10 @@ class CatalogueQrController extends Controller
 
     public function showPublicMenu($slug)
     {
-        $qr = DB::table('catalogue_qrs')->where('slug', $slug)->first();
-        $categories = Category::where('is_active', true)->get();
-        $products = Product::where('is_active', true)->where('is_online', true)->get();
+        $qr = DB::table('catalogue_qrs')->where('slug', $slug)->where('is_active', true)->first();
+        abort_unless($qr, 404);
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $products = Product::where('is_active', true)->where('is_online', true)->orderBy('name')->get();
 
         return view('backend.qr.public_menu', compact('qr', 'categories', 'products'));
     }

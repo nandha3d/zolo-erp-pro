@@ -1,10 +1,11 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-error-message key="not_permitted" />
 <x-validation-error fieldName="product_code" />
 <x-validation-error fieldName="qty" />
 
-<section class="forms">
+<section class="forms classic-document-workspace document-edit-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -18,7 +19,7 @@
                         @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', (string) Illuminate\Support\Str::uuid()) }}">@endif
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.date')}}</label>
@@ -37,7 +38,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Warehouse')}} *</label>
-                                            <select name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse..." required>
+                                            <select name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse..." required data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -48,7 +49,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Supplier')}}</label>
-                                            <select name="supplier_id" class="selectpicker form-control" data-live-search="true" title="Select supplier...">
+                                            <select name="supplier_id" class="selectpicker form-control" data-live-search="true" title="Select supplier..." data-container="body">
                                                 @foreach($lims_supplier_list as $supplier)
                                                 <option value="{{$supplier->id}}">{{$supplier->name .' ('. $supplier->company_name .')'}}</option>
                                                 @endforeach
@@ -81,7 +82,7 @@
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <label>{{__('db.Currency')}} *</label>
-                                            <select name="currency_id" id="currency-id" class="form-control selectpicker" data-toggle="tooltip" title="">
+                                            <select name="currency_id" id="currency-id" class="form-control selectpicker" data-toggle="tooltip" title="" data-container="body">
                                                 @foreach($currency_list as $currency_data)
                                                 <option value="{{$currency_data->id}}" data-rate="{{$currency_data->exchange_rate}}" @if($currency_data->exchange_rate == 1){{'checked'}}@endif>{{$currency_data->code}}</option>
                                                 @endforeach
@@ -151,7 +152,7 @@
                                             </div>
                                         @endif
                                     @endforeach
-                                    <div class="col-md-12 mt-3">
+                                    <div class="col-md-12 mt-3 document-search-row">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
                                             <button class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
@@ -160,7 +161,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-4">
+                                <div class="row mt-4 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -199,7 +200,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" />
@@ -247,7 +248,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <details class="document-secondary-fields" @if($errors->any()) open @endif>
+                                <summary>Charges, payment &amp; notes</summary>
+                                <div class="row mt-3 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Order Tax')}}</label>
@@ -296,7 +299,7 @@
                                     <div id="account-list" class="col-md-3 col-6" hidden>
                                         <div class="form-group top-fields">
                                             <label>{{__('db.Account')}}</label>
-                                            <select required name="account_id" id="account_id" class="selectpicker form-control" data-live-search="true">
+                                            <select required name="account_id" id="account_id" class="selectpicker form-control" data-live-search="true" data-container="body">
                                                 @if ($accountSelection)
                                                     @foreach($lims_account_list as $account)
                                                         @if($account->is_default)
@@ -394,7 +397,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                </details>
+                                <div class="form-group document-actions-row">
                                     <button type="submit" class="btn btn-primary" id="submit-btn">{{__('db.submit')}}</button>
                                 </div>
                             </div>
@@ -474,7 +478,7 @@
                             ?>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Tax Rate')}}</label>
-                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                <select name="edit_tax_rate" class="form-control selectpicker" data-container="body">
                                     @foreach($tax_name_all as $key => $name)
                                     <option value="{{$key}}">{{$name}}</option>
                                     @endforeach
@@ -482,7 +486,7 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                         </div>
@@ -1304,25 +1308,6 @@
         let paidAmount   = parseFloat($('input[name="amount[]"]').val()) || 0;
 
         $("#change").text((payingAmount - paidAmount).toFixed({{$general_setting->decimal}}));
-    });
-
-    $(window).keydown(function(e){
-        if (e.which == 13) {
-            var $targ = $(e.target);
-            if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-                var focusNext = false;
-                $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                    if (this === e.target) {
-                        focusNext = true;
-                    }
-                    else if (focusNext){
-                        $(this).focus();
-                        return false;
-                    }
-                });
-                return false;
-            }
-        }
     });
 
     $('#purchase-form').on('submit',function(e){

@@ -630,6 +630,86 @@ class OptechMasterWebTest extends TestCase
             ],
         ]);
     }
+
+    public function test_party_forms_offer_gstin_autofill(): void
+    {
+        foreach (['/supplier/create', '/supplier/1/edit', '/customer/create'] as $url) {
+            $this->actingAs($this->adminUser)->get($url)
+                ->assertStatus(200)
+                ->assertSee('GSTIN / ', false)
+                ->assertSee(route('parties.gst-lookup'), false);
+        }
+    }
+
+    public function test_supplier_saves_with_only_name_and_phone(): void
+    {
+        $this->actingAs($this->adminUser)->post('/supplier', [
+            'name' => 'Minimal Supplier', 'phone_number' => '9000000001',
+        ])->assertRedirect('supplier');
+
+        $this->assertDatabaseHas('suppliers', ['name' => 'Minimal Supplier', 'address' => null, 'city' => null]);
+    }
+
+    public function test_gst_lookup_fills_from_provider_when_local_match_has_no_address(): void
+    {
+        config(['compliance.gst_lookup_url' => 'https://provider.test/v1/gstin', 'compliance.gst_lookup_token' => 'gak_test',
+            'compliance.gst_lookup_header' => 'x-api-key']);
+        \Illuminate\Support\Facades\Http::fake(['provider.test/*' => \Illuminate\Support\Facades\Http::response(['success' => true, 'data' => [
+            'gstin' => '33AAACC1206D1ZN', 'legal_name' => 'CENTRAL WAREHOUSING CORPORATION', 'trade_name' => 'CWC',
+            'address' => '12 MOUNT ROAD, CHENNAI', 'city' => 'CHENNAI', 'pincode' => '600002', 'status' => 'Active',
+        ]])]);
+        Supplier::where('id', 1)->update(['vat_number' => '33AAACC1206D1ZN', 'address' => null]);
+
+        $this->actingAs($this->adminUser)->postJson(route('parties.gst-lookup'), ['gstin' => '33AAACC1206D1ZN'])
+            ->assertOk()
+            ->assertJsonPath('party.source', 'live_api')
+            ->assertJsonPath('party.company_name', 'CWC')
+            ->assertJsonPath('party.address', '12 MOUNT ROAD, CHENNAI')
+            ->assertJsonPath('party.postal_code', '600002')
+            ->assertJsonPath('party.state', 'Tamil Nadu')
+            ->assertJsonPath('party.registration_status', 'Active');
+        \Illuminate\Support\Facades\Http::assertSent(fn ($request) => $request->hasHeader('x-api-key', 'gak_test')
+            && $request->url() === 'https://provider.test/v1/gstin/33AAACC1206D1ZN');
+    }
+
+    private function fakeMastersIndia(): void
+    {
+        config(['compliance.mastersindia' => ['username' => 'u@test', 'password' => 'p', 'client_id' => 'cid', 'client_secret' => 'sec']]);
+        $registration = ['gstin' => '33AAACC1206D1ZN', 'lgnm' => 'CENTRAL WAREHOUSING CORPORATION', 'tradeNam' => 'CWC CHENNAI', 'sts' => 'Active',
+            'pradr' => ['addr' => ['bno' => '12', 'st' => 'MOUNT ROAD', 'loc' => 'GUINDY', 'dst' => 'Chennai', 'city' => '', 'stcd' => 'Tamil Nadu', 'pncd' => '600032']]];
+        \Illuminate\Support\Facades\Http::fake([
+            'commonapi.mastersindia.co/oauth/access_token' => \Illuminate\Support\Facades\Http::response(['access_token' => 'tok', 'expires_in' => 21600]),
+            'commonapi.mastersindia.co/commonapis/searchgstin*' => \Illuminate\Support\Facades\Http::response(['error' => false, 'data' => $registration]),
+            'commonapi.mastersindia.co/commonapis/searchlegalname*' => \Illuminate\Support\Facades\Http::response(['error' => false, 'data' => [$registration]]),
+        ]);
+    }
+
+    public function test_masters_india_fills_party_from_gstin(): void
+    {
+        $this->fakeMastersIndia();
+
+        $this->actingAs($this->adminUser)->postJson(route('parties.gst-lookup'), ['gstin' => '33AAACC1206D1ZN'])
+            ->assertOk()
+            ->assertJsonPath('party.source', 'live_api')
+            ->assertJsonPath('party.name', 'CENTRAL WAREHOUSING CORPORATION')
+            ->assertJsonPath('party.company_name', 'CWC CHENNAI')
+            ->assertJsonPath('party.address', '12, MOUNT ROAD, GUINDY')
+            ->assertJsonPath('party.city', 'Chennai')
+            ->assertJsonPath('party.postal_code', '600032');
+        \Illuminate\Support\Facades\Http::assertSent(fn ($r) => str_contains($r->url(), 'searchgstin?gstin=33AAACC1206D1ZN')
+            && $r->hasHeader('client_id', 'cid') && $r->hasHeader('Authorization', 'Bearer tok'));
+    }
+
+    public function test_company_name_search_returns_gstin_candidates(): void
+    {
+        $this->fakeMastersIndia();
+
+        $this->actingAs($this->adminUser)->postJson(route('parties.gst-search-name'), ['name' => 'Central Warehousing'])
+            ->assertOk()
+            ->assertJsonPath('provider', true)
+            ->assertJsonPath('matches.0.gstin', '33AAACC1206D1ZN')
+            ->assertJsonPath('matches.0.status', 'Active');
+
+        $this->actingAs($this->adminUser)->postJson(route('parties.gst-search-name'), ['name' => 'ab'])->assertStatus(422);
+    }
 }
-
-

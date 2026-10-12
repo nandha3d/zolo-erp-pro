@@ -65,7 +65,11 @@
         document.querySelectorAll('form:not(#attribute-form)').forEach(form => {
             if (form.dataset.bound) return;
             form.dataset.bound = 'true';
-            form.addEventListener('submit', () => { 
+            form.addEventListener('submit', event => {
+                if (form.id.startsWith('profile-') && !confirm('Apply this profile and subtype? Optional modules and product attributes reset to the profile preset. Existing products, stock and accounting values stay unchanged.')) {
+                    event.preventDefault();
+                    return;
+                }
                 form.querySelectorAll('button[type="submit"], button:not([type])').forEach(button => { button.disabled = true; }); 
             });
             form.addEventListener('keydown', event => {

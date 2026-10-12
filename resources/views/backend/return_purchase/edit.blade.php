@@ -1,8 +1,9 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-error-message key="not_permitted" />
 
-<section class="forms">
+<section class="forms classic-document-workspace document-compact-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -15,7 +16,7 @@
                         {!! Form::open(['route' => ['return-purchase.update', $lims_return_data->id], 'method' => 'put', 'files' => true, 'class' => 'payment-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.reference')}}</label>
@@ -26,7 +27,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Warehouse')}} *</label>
                                             <input type="hidden" name="warehouse_id_hidden" value="{{$lims_return_data->warehouse_id}}">
-                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse...">
+                                            <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -37,7 +38,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Supplier')}}</label>
                                             <input type="hidden" name="supplier_id_hidden" value="{{$lims_return_data->supplier_id}}">
-                                            <select name="supplier_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select supplier...">
+                                            <select name="supplier_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select supplier..." data-container="body">
                                                 @foreach($lims_supplier_list as $supplier)
                                                 <option value="{{$supplier->id}}">{{$supplier->name . ' (' . $supplier->company_name . ')'}}</option>
                                                 @endforeach
@@ -47,7 +48,7 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Account')}} *</label>
-                                            <select required id="account_id" name="account_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select account...">
+                                            <select required id="account_id" name="account_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select account..." data-container="body">
                                                 @foreach($lims_account_list as $account)
                                                     @if($account->id == $lims_return_data->account_id)
                                                     <option selected value="{{$account->id}}">{{$account->name}}</option>
@@ -59,7 +60,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-12 mt-3">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
@@ -68,7 +69,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-4">
+                                <div class="row mt-4 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -202,7 +203,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" value="{{$lims_return_data->total_qty}}" />
@@ -235,7 +236,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row mt-3 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Order Tax')}}</label>
@@ -261,7 +262,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-details-row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{__('db.Return Note')}}</label>
@@ -275,7 +276,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group document-actions-row">
                                     <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
                                 </div>
                             </div>
@@ -335,7 +336,7 @@
                             ?>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Tax Rate')}}</label>
-                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                <select name="edit_tax_rate" class="form-control selectpicker" data-container="body">
                                     @foreach($tax_name_all as $key => $name)
                                     <option value="{{$key}}">{{$name}}</option>
                                     @endforeach
@@ -343,7 +344,7 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                         </div>
@@ -839,25 +840,6 @@ function calculateGrandTotal() {
     $('#grand_total').text(grand_total.toFixed({{$general_setting->decimal}}));
     $('input[name="grand_total"]').val(grand_total.toFixed({{$general_setting->decimal}}));
 }
-
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
-});
 
 $('.payment-form').on('submit',function(e){
     var rownumber = $('table.order-list tbody tr:last').index();

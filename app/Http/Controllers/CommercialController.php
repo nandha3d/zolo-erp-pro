@@ -235,7 +235,7 @@ class CommercialController extends Controller
     public function drafts(Request $request, string $kind)
     {
         $context = $this->context($request);
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $request->user()->id);
+        app(CommercialPermission::class)->assert(CommercialDraftService::permission($kind), $context, $request->user()->id);
         $drafts = app(CommercialDraftService::class);
         $drafts->prune($kind, $context, $request->user()->id);
         return response()->json(['data' => $drafts->meta($drafts->query($kind, $context, $request->user()->id)),
@@ -245,7 +245,7 @@ class CommercialController extends Controller
     public function showDraft(Request $request, string $kind, int $id)
     {
         $context = $this->context($request);
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $request->user()->id);
+        app(CommercialPermission::class)->assert(CommercialDraftService::permission($kind), $context, $request->user()->id);
         return response()->json(['data' => app(CommercialDraftService::class)->load($kind, $id, $context, $request->user()->id)]);
     }
 
@@ -475,6 +475,8 @@ class CommercialController extends Controller
             'daily_sale_objective' => 'nullable|numeric',
             'alert_quantity' => 'nullable|numeric',
             'tax_id' => 'nullable',
+            'tax_category_id' => 'nullable|integer|min:1',
+            'hsn_code' => 'nullable|string|max:8',
             'tax_method' => 'nullable',
             'warranty' => 'nullable',
             'warranty_type' => 'nullable|string',
@@ -495,6 +497,10 @@ class CommercialController extends Controller
         $price = isset($validated['price']) && $validated['price'] !== '' ? (float)$validated['price'] : ($cost > 0 ? $cost : 0);
         $type = !empty($validated['type']) ? strtolower(trim($validated['type'])) : 'standard';
         $barcodeSymbology = !empty($validated['barcode_symbology']) ? trim($validated['barcode_symbology']) : 'C128';
+        if (!empty($validated['hsn_code'])) {
+            $gst = app(\App\Services\Tax\GstSetupService::class);
+            $gst->validateCode(preg_replace('/\s+/', '', $validated['hsn_code']), $gst->kindFor($type));
+        }
 
         $unit = null;
         if (!empty($validated['unit_id'])) {
@@ -553,6 +559,14 @@ class CommercialController extends Controller
             'qty' => 0,
             'is_active' => 1,
         ]);
+        if (!empty($validated['tax_category_id']) || !empty($validated['hsn_code'])) {
+            $gst = app(\App\Services\Tax\GstSetupService::class);
+            $hsn = !empty($validated['hsn_code']) ? preg_replace('/\s+/', '', $validated['hsn_code']) : null;
+            $categoryId = !empty($validated['tax_category_id']) && \Illuminate\Support\Facades\DB::table('tax_categories')
+                ->where('company_id', $product->company_id)->where('id', $validated['tax_category_id'])->exists() ? (int) $validated['tax_category_id'] : null;
+            $product->forceFill(['tax_category_id' => $categoryId, 'hsn_code' => $hsn])->save();
+            if ($rate = $gst->rateFor($product)) $taxRate = $rate['rate'];
+        }
 
         return response()->json([
             'success' => true,
@@ -742,6 +756,37 @@ class CommercialController extends Controller
         ]);
     }
 
+    /** Company name -> candidate GSTINs: parties already in the ERP first, then Masters India legal-name search. */
+    public function gstSearchByName(Request $request)
+    {
+        $name = trim((string) $request->input('name', ''));
+        if (mb_strlen($name) < 3) {
+            return response()->json(['success' => false, 'message' => 'Enter at least 3 characters of the company name.'], 422);
+        }
+
+        $matches = [];
+        foreach ([[Supplier::class, 'vat_number'], [Customer::class, 'tax_no']] as [$model, $column]) {
+            $model::query()->whereNotNull($column)->where($column, '!=', '')
+                ->where(fn ($q) => $q->where('company_name', 'like', "%{$name}%")->orWhere('name', 'like', "%{$name}%"))
+                ->limit(5)->get()
+                ->each(function ($party) use (&$matches, $column) {
+                    $gstin = strtoupper($party->{$column});
+                    $matches[$gstin] ??= ['gstin' => $gstin, 'legal_name' => $party->company_name ?: $party->name,
+                        'trade_name' => '', 'status' => '', 'city' => $party->city ?? '', 'state' => $party->state ?? '', 'source' => 'local_database'];
+                });
+        }
+
+        $mastersIndia = app(\App\Services\Tax\MastersIndiaGstClient::class);
+        if ($mastersIndia->configured()) {
+            foreach (array_slice($mastersIndia->searchLegalName($name), 0, 10) as $reg) {
+                $matches[$reg['gstin']] ??= ['gstin' => $reg['gstin'], 'legal_name' => $reg['legal_name'], 'trade_name' => $reg['trade_name'],
+                    'status' => $reg['status'], 'city' => $reg['city'], 'state' => $reg['state'], 'source' => 'live_api'];
+            }
+        }
+
+        return response()->json(['success' => true, 'provider' => $mastersIndia->configured(), 'matches' => array_values($matches)]);
+    }
+
     public function gstLookup(Request $request)
     {
         $gstin = strtoupper(trim($request->input('gstin', '')));
@@ -751,15 +796,15 @@ class CommercialController extends Controller
 
         $parsed = \App\Services\Tax\Gstin::parse($gstin);
 
-        // Fetch company state code to determine intra vs inter-state tax rule (default Tamil Nadu: 33)
-        $companyStateCode = '33';
-        $company = \App\Models\Company::first();
-        if ($company && !empty($company->vat_number) && strlen($company->vat_number) >= 2) {
-            $companyStateCode = substr($company->vat_number, 0, 2);
-        }
+        // Intra vs inter-state follows the branch GST registration; without one the rule is unknown.
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $registration = $context ? app(\App\Services\Tax\GstSetupService::class)->registration($context) : null;
+        $companyStateCode = $registration->state_code
+            ?? ($context ? \App\Models\Company::whereKey($context->companyId)->value('state_code') : null);
 
-        $isLocal = ($parsed['state_code'] === $companyStateCode);
-        $taxRule = $isLocal ? 'Local Intra-State (CGST + SGST)' : 'Inter-State (IGST)';
+        $isLocal = $companyStateCode !== null && $parsed['state_code'] === $companyStateCode;
+        $taxRule = $companyStateCode === null ? 'Set your GSTIN in Settings › GST to decide CGST/SGST or IGST'
+            : ($isLocal ? 'Local Intra-State (CGST + SGST)' : 'Inter-State (IGST)');
 
         // 1. Search internal ERP database for matching supplier or customer (zero cost, instant recall)
         $partyData = null;
@@ -787,7 +832,8 @@ class CommercialController extends Controller
             }
         }
 
-        if ($existing) {
+        // A match without an address (e.g. the party being edited) still lets the provider fill the gaps.
+        if ($existing && trim((string) $existing->address) !== '') {
             $partyData = [
                 'name' => $existing->name ?? '',
                 'company_name' => $existing->company_name ?? ($existing->name ?? ''),
@@ -802,20 +848,45 @@ class CommercialController extends Controller
             ];
         }
 
-        // 2. If not found locally, query live external provider if configured in .env (e.g. gstin_lookup or Sandbox)
-        if (!$partyData && $parsed['is_valid']) {
+        // 2. If not found locally, query Masters India when configured, else the generic provider URL below.
+        $mastersIndia = app(\App\Services\Tax\MastersIndiaGstClient::class);
+        if (!$partyData && $parsed['is_valid'] && $mastersIndia->configured()) {
+            if ($reg = $mastersIndia->searchGstin($gstin)) {
+                $partyData = [
+                    'name' => $reg['legal_name'] ?: $reg['trade_name'],
+                    'company_name' => $reg['trade_name'] ?: $reg['legal_name'],
+                    'address' => $reg['address'],
+                    'city' => $reg['city'],
+                    'state' => $reg['state'] ?: $parsed['state_name'],
+                    'postal_code' => $reg['postal_code'],
+                    'phone_number' => '',
+                    'email' => '',
+                    'party_type' => 'registered_business',
+                    'registration_status' => $reg['status'],
+                    'source' => 'live_api',
+                ];
+            }
+        } elseif (!$partyData && $parsed['is_valid']) {
             $lookupUrl = config('compliance.gst_lookup_url') ?: env('GST_LOOKUP_URL');
             if ($lookupUrl) {
                 try {
                     $url = rtrim($lookupUrl, '/') . '/' . $gstin;
                     $token = config('compliance.gst_lookup_token') ?: env('GST_LOOKUP_TOKEN');
-                    $client = \Illuminate\Support\Facades\Http::timeout(5);
-                    if ($token) {
-                        $client = $client->withToken($token);
+                    $header = config('compliance.gst_lookup_header');
+                    // Providers charge per lookup, so a successful response is reused for 30 days.
+                    $ext = \Illuminate\Support\Facades\Cache::get('gst-provider:' . $gstin);
+                    if (!$ext) {
+                        $client = \Illuminate\Support\Facades\Http::timeout(5)->acceptJson();
+                        if ($token) {
+                            $client = $header ? $client->withHeaders([$header => $token]) : $client->withToken($token);
+                        }
+                        $response = $client->get($url);
+                        if ($response->successful()) {
+                            $ext = $response->json();
+                            \Illuminate\Support\Facades\Cache::put('gst-provider:' . $gstin, $ext, now()->addDays(30));
+                        }
                     }
-                    $response = $client->get($url);
-                    if ($response->successful()) {
-                        $ext = $response->json();
+                    if ($ext) {
                         // Normalize across gstin_lookup, sandbox, or standard GSP schemas
                         $data = $ext['data'] ?? $ext;
                         $legalName = $data['legalName'] ?? ($data['legal_name'] ?? ($data['lgnm'] ?? ''));
@@ -843,6 +914,7 @@ class CommercialController extends Controller
                                 'phone_number' => $data['phone_number'] ?? '',
                                 'email' => $data['email'] ?? '',
                                 'party_type' => 'registered_business',
+                                'registration_status' => $data['status'] ?? ($data['sts'] ?? ''),
                                 'source' => 'live_api',
                             ];
                         }

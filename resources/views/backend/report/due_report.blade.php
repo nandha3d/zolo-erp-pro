@@ -1,56 +1,258 @@
 @extends('backend.layout.main') @section('content')
 
-<section class="forms">
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header mt-2">
-                <h4 class="text-center">{{__('db.Customer Due Report')}}</h4>
-            </div>
-            {!! Form::open(['route' => 'report.customerDueByDate', 'method' => 'post']) !!}
-            <div class="col-md-6 offset-md-3 mt-4 mb-3">
-                <div class="form-group row">
-                    <label class="d-tc mt-2"><strong>{{__('db.Choose Your Date')}}</strong> &nbsp;</label>
-                    <div class="d-tc">
-                        <div class="input-group">
-                            <input type="text" class="daterangepicker-field form-control" value="{{$start_date}} To {{$end_date}}" required />
-                            <input type="hidden" name="start_date" value="{{$start_date}}" />
-                            <input type="hidden" name="end_date" value="{{$end_date}}" />
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="submit">{{__('db.submit')}}</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {!! Form::close() !!}
+<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+
+<style>
+    .report-workspace-view {
+        padding: 12px 18px 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 40px);
+    }
+    body.dark-mode .report-workspace-view {
+        background: #0b0f19;
+    }
+    .kpi-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .kpi-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .kpi-card .kpi-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    body.dark-mode .kpi-card .kpi-number {
+        color: #f8fafc;
+    }
+    .desk-filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .desk-filter-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-card-wrapper {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        padding: 14px 16px;
+    }
+    body.dark-mode .desk-card-wrapper {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    #report-table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    #report-table thead th {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        padding: 9px 12px !important;
+        border: none !important;
+        white-space: nowrap;
+    }
+    body.dark-mode #report-table thead th {
+        background: #090d16 !important;
+        color: #f8fafc !important;
+    }
+    #report-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    #report-table tbody tr:nth-child(odd) {
+        background: #ffffff;
+    }
+    body.dark-mode #report-table tbody tr:nth-child(even) {
+        background: #141c2c;
+    }
+    body.dark-mode #report-table tbody tr:nth-child(odd) {
+        background: #1e293b;
+    }
+    #report-table tbody tr:hover {
+        background: #e2e8f0 !important;
+    }
+    body.dark-mode #report-table tbody tr:hover {
+        background: #27354f !important;
+    }
+    #report-table td {
+        padding: 9px 12px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        vertical-align: middle !important;
+        font-size: 12.5px;
+    }
+    body.dark-mode #report-table td {
+        border-color: #334155 !important;
+        color: #e2e8f0;
+    }
+    #report-table tfoot th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        padding: 8px 12px !important;
+        border-top: 2px solid #cbd5e1 !important;
+    }
+    body.dark-mode #report-table tfoot th {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-top-color: #475569 !important;
+    }
+    .btn-action-pill {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 12px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+</style>
+
+<section class="report-workspace-view">
+    <!-- Top Command Bar -->
+    <div class="comm-command-bar">
+        <div class="comm-title-group">
+            <h1><i class="dripicons-user text-primary"></i> {{ __('db.Customer Due Report') }} Command Center</h1>
+            <span class="comm-title-badge"><i class="dripicons-tag"></i> Receivables &amp; Outstanding Invoices</span>
+        </div>
+        <ul class="comm-nav-pills">
+            <li><a class="nav-link active" href="{{ route('report.customerDueByDate') }}"><i class="dripicons-user"></i> Customer Due</a></li>
+            <li><a class="nav-link" href="{{ route('report.supplierDueByDate') }}"><i class="dripicons-user-id"></i> Supplier Due</a></li>
+            <li><a class="nav-link" href="{{ route('accounting.ageing') }}"><i class="dripicons-clock"></i> Ageing Ledger</a></li>
+            <li><a class="nav-link" href="{{ url('report/sale_report') }}"><i class="dripicons-cart"></i> Sales Report</a></li>
+        </ul>
+        <div class="comm-actions">
+            <button class="btn btn-secondary btn-action-pill" onclick="window.print()">
+                <i class="dripicons-print"></i> Print
+            </button>
         </div>
     </div>
-    <div class="table-responsive mb-4">
-        <table id="report-table" class="table table-hover" style="width:100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th>{{__('db.date')}}</th>
-                    <th>{{__('db.reference')}}</th>
-                    <th>{{__('db.Customer Details')}}</th>
-                    <th>{{__('db.grand total')}}</th>
-                    <th>{{__('db.Returned Amount')}}</th>
-                    <th>{{__('db.Paid')}}</th>
-                    <th>{{__('db.Due')}}</th>
-                </tr>
-            </thead>
 
-            <tfoot class="tfoot active">
-                <th></th>
-                <th>{{__('db.Total')}}:</th>
-                <th></th>
-                <th></th>
-                <th>{{number_format(0, $general_setting->decimal, '.', '')}}</th>
-                <th>{{number_format(0, $general_setting->decimal, '.', '')}}</th>
-                <th>{{number_format(0, $general_setting->decimal, '.', '')}}</th>
-                <th>{{number_format(0, $general_setting->decimal, '.', '')}}</th>
-            </tfoot>
-        </table>
+    <!-- KPI Summary Strip -->
+    <div class="kpi-summary-strip">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">AUDIT WINDOW</div>
+                <div class="kpi-number" style="font-size:13px; font-weight:600; color:#475569;">
+                    {{ date('d M Y', strtotime($start_date)) }} — {{ date('d M Y', strtotime($end_date)) }}
+                </div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">LEDGER STATUS</div>
+                <div class="kpi-number" style="font-size:14px; font-weight:600; color:#b91c1c;">Outstanding Receivables</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#b91c1c;">
+                <i class="dripicons-arrow-down" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">SCOPE</div>
+                <div class="kpi-number" style="font-size:14px; font-weight:700;">Customer Invoices</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
+                <i class="dripicons-document" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">FEED</div>
+                <div class="kpi-number" style="font-size:14px; font-weight:600; color:#059669;">Real-Time Sync</div>
+            </div>
+            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
+                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="desk-filter-card">
+        {!! Form::open(['route' => 'report.customerDueByDate', 'method' => 'post', 'id' => 'customer-due-report-form', 'class' => 'form-inline d-flex align-items-center flex-wrap gap-2']) !!}
+            <div class="form-group mr-2 mb-1">
+                <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-calendar"></i> {{ __('db.Choose Your Date') }}</label>
+                <div class="input-group">
+                    <input type="text" class="daterangepicker-field form-control form-control-sm" style="height:30px; font-size:12px; width:210px;"
+                        value="{{ $start_date }} To {{ $end_date }}" required />
+                    <input type="hidden" name="start_date" value="{{ $start_date }}" />
+                    <input type="hidden" name="end_date" value="{{ $end_date }}" />
+                </div>
+            </div>
+            <div class="form-group mb-1">
+                <button class="btn btn-primary btn-sm btn-action-pill" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                    <i class="fa fa-filter"></i> {{ __('db.submit') }}
+                </button>
+            </div>
+        {!! Form::close() !!}
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="desk-card-wrapper">
+        <div class="table-responsive">
+            <table id="report-table" class="table table-hover" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="not-exported"></th>
+                        <th>{{ __('db.date') }}</th>
+                        <th>{{ __('db.reference') }}</th>
+                        <th>{{ __('db.Customer Details') }}</th>
+                        <th>{{ __('db.grand total') }}</th>
+                        <th>{{ __('db.Returned Amount') }}</th>
+                        <th>{{ __('db.Paid') }}</th>
+                        <th>{{ __('db.Due') }}</th>
+                    </tr>
+                </thead>
+                <tfoot class="tfoot active">
+                    <th></th>
+                    <th>{{ __('db.Total') }}:</th>
+                    <th></th>
+                    <th></th>
+                    <th>{{ number_format(0, $general_setting->decimal, '.', '') }}</th>
+                    <th>{{ number_format(0, $general_setting->decimal, '.', '') }}</th>
+                    <th>{{ number_format(0, $general_setting->decimal, '.', '') }}</th>
+                    <th>{{ number_format(0, $general_setting->decimal, '.', '') }}</th>
+                </tfoot>
+            </table>
+        </div>
     </div>
 </section>
 
@@ -58,7 +260,6 @@
 
 @push('scripts')
 <script type="text/javascript">
-
     $("ul#report").siblings('a').attr('aria-expanded','true');
     $("ul#report").addClass("show");
     $("ul#report #due-report-menu").addClass("active");
@@ -76,15 +277,15 @@
     $('#report-table').DataTable({
         "processing": true,
         "serverSide": true,
-        "ajax":{
-            url:"customer-due-report-data",
-            data:{
+        "ajax": {
+            url: "customer-due-report-data",
+            data: {
                 start_date: start_date,
                 end_date: end_date,
                 customer_id: customer_id,
             },
             dataType: "json",
-            type:"post"
+            type: "post"
         },
         "columns": [
             {"data": "key"},
@@ -97,44 +298,42 @@
             {"data": "due"}
         ],
         'language': {
-
-            'lengthMenu': '_MENU_ {{__("db.records per page")}}',
-             "info":      '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
-            "search":  '{{__("db.Search")}}',
+            'lengthMenu': '_MENU_ {{ __('db.records per page') }}',
+            "info": '<small>{{ __('db.Showing') }} _START_ - _END_ (_TOTAL_)</small>',
+            "search": '{{ __('db.Search') }}',
             'paginate': {
-                    'previous': '<i class="dripicons-chevron-left"></i>',
-                    'next': '<i class="dripicons-chevron-right"></i>'
+                'previous': '<i class="dripicons-chevron-left"></i>',
+                'next': '<i class="dripicons-chevron-right"></i>'
             }
         },
-        order:[['1', 'desc']],
+        order: [['1', 'desc']],
         'columnDefs': [
             {
                 "orderable": false,
                 'targets': [0, 2, 3]
             },
             {
-                'render': function(data, type, row, meta){
-                    if(type === 'display'){
+                'render': function(data, type, row, meta) {
+                    if (type === 'display') {
                         data = '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>';
                     }
-
-                   return data;
+                    return data;
                 },
                 'checkboxes': {
-                   'selectRow': true,
-                   'selectAllRender': '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>'
+                    'selectRow': true,
+                    'selectAllRender': '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>'
                 },
                 'targets': [0]
             }
         ],
-        'select': { style: 'multi',  selector: 'td:first-child'},
+        'select': { style: 'multi', selector: 'td:first-child' },
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        dom: '<"row"lfB>rtip',
+        dom: '<"row align-items-center mb-2"<"col-md-6 d-flex align-items-center gap-2"lB><"col-md-6 d-flex justify-content-end"f>r>t<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>',
         rowId: 'ObjectID',
         buttons: [
             {
                 extend: 'pdf',
-                text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                text: '<i title="export to pdf" class="fa fa-file-pdf-o text-danger"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported-sale)',
                     rows: ':visible'
@@ -144,11 +343,11 @@
                     $.fn.dataTable.ext.buttons.pdfHtml5.action.call(this, e, dt, button, config);
                     datatable_sum_due(dt, false);
                 },
-                footer:true
+                footer: true
             },
             {
                 extend: 'csv',
-                text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                text: '<i title="export to csv" class="fa fa-file-text-o text-info"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported-sale)',
                     rows: ':visible'
@@ -158,11 +357,11 @@
                     $.fn.dataTable.ext.buttons.csvHtml5.action.call(this, e, dt, button, config);
                     datatable_sum_due(dt, false);
                 },
-                footer:true
+                footer: true
             },
             {
                 extend: 'print',
-                text: '<i title="print" class="fa fa-print"></i>',
+                text: '<i title="print" class="fa fa-print text-primary"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported-sale)',
                     rows: ':visible'
@@ -172,7 +371,7 @@
                     $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
                     datatable_sum_due(dt, false);
                 },
-                footer:true
+                footer: true
             },
             {
                 extend: 'colvis',
@@ -180,39 +379,36 @@
                 columns: ':gt(0)'
             },
         ],
-        drawCallback: function () {
+        drawCallback: function() {
             var api = this.api();
             datatable_sum_due(api, false);
         }
     });
 
     function datatable_sum_due(dt_selector, is_calling_first) {
-        if (dt_selector.rows( '.selected' ).any() && is_calling_first) {
-            var rows = dt_selector.rows( '.selected' ).indexes();
-
-            $( dt_selector.column( 4 ).footer() ).html(dt_selector.cells( rows, 4, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            $( dt_selector.column( 5 ).footer() ).html(dt_selector.cells( rows, 5, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            $( dt_selector.column( 6 ).footer() ).html(dt_selector.cells( rows, 6, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-            $( dt_selector.column( 7 ).footer() ).html(dt_selector.cells( rows, 7, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
-        }
-        else {
-            $( dt_selector.column( 4 ).footer() ).html(dt_selector.column( 4, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-            $( dt_selector.column( 5 ).footer() ).html(dt_selector.column( 5, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-            $( dt_selector.column( 6 ).footer() ).html(dt_selector.column( 6, {page:'current'} ).data().sum().toFixed({{$general_setting->decimal}}));
-            $( dt_selector.column( 7 ).footer() ).html(dt_selector.column( 7, { page: 'current' } ).data().sum().toFixed({{$general_setting->decimal}}));
+        if (dt_selector.rows('.selected').any() && is_calling_first) {
+            var rows = dt_selector.rows('.selected').indexes();
+            $(dt_selector.column(4).footer()).html(dt_selector.cells(rows, 4, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+            $(dt_selector.column(5).footer()).html(dt_selector.cells(rows, 5, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+            $(dt_selector.column(6).footer()).html(dt_selector.cells(rows, 6, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+            $(dt_selector.column(7).footer()).html(dt_selector.cells(rows, 7, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+        } else {
+            $(dt_selector.column(4).footer()).html(dt_selector.column(4, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+            $(dt_selector.column(5).footer()).html(dt_selector.column(5, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+            $(dt_selector.column(6).footer()).html(dt_selector.column(6, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+            $(dt_selector.column(7).footer()).html(dt_selector.column(7, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
         }
     }
 
-$(".daterangepicker-field").daterangepicker({
-  callback: function(startDate, endDate, period){
-    var start_date = startDate.format('YYYY-MM-DD');
-    var end_date = endDate.format('YYYY-MM-DD');
-    var title = start_date + ' To ' + end_date;
-    $(this).val(title);
-    $('input[name="start_date"]').val(start_date);
-    $('input[name="end_date"]').val(end_date);
-  }
-});
-
+    $(".daterangepicker-field").daterangepicker({
+        callback: function(startDate, endDate, period) {
+            var start_date = startDate.format('YYYY-MM-DD');
+            var end_date = endDate.format('YYYY-MM-DD');
+            var title = start_date + ' To ' + end_date;
+            $(this).val(title);
+            $('input[name="start_date"]').val(start_date);
+            $('input[name="end_date"]').val(end_date);
+        }
+    });
 </script>
 @endpush

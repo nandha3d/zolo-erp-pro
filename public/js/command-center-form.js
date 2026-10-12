@@ -84,10 +84,6 @@
         try { preview(payload()).done(data => show('Reviewed by server. Grand total: ₹ ' + Number(data.grand_total).toFixed(2))).fail(failure); }
         catch (error) { failure(error); }
     });
-    $('#btn-form-submit').on('click', () => {
-        $(form).find('[name="' + (purchase ? 'status' : 'sale_status') + '"]').val(1);
-        form.requestSubmit();
-    });
     // Shared mode: document-workspace.js turns this into Save draft (server draft tabs). Legacy mode posts a status-3 draft bill.
     $('#btn-form-save-as').text(config.shared ? 'Save draft' : 'Save as draft').on('click', () => {
         if (config.shared) return;
@@ -102,7 +98,7 @@
             $(form).find('[type="submit"]').prop('disabled', true);
             preview(data).then(checked => $.ajax({url: config.context?.post_url || form.action, method: $('#entry-form-method').val() === 'PUT' ? 'PUT' : 'POST',
                 dataType: 'json', data: {...checked, _token: token()}}))
-                .done(() => { window.location.href = config.listUrl; }).fail(failure)
+                .done(() => { window.zoloDocumentWorkspace?.leave?.(); window.location.href = config.listUrl; }).fail(failure)
                 .always(() => { busy = false; $(form).find('[type="submit"]').prop('disabled', false); });
         } catch (error) { busy = false; $(form).find('[type="submit"]').prop('disabled', false); failure(error); }
     });

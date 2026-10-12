@@ -1,5 +1,7 @@
 @php
 $companyContext = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+$activeCompany = $companyContext ? \App\Models\Company::with('group')->find($companyContext->companyId) : null;
+$activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_years')->where('id', $companyContext->financialYearId)->value('name') : null;
 @endphp
 <!DOCTYPE html>
 <html dir="@if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl){{'rtl'}}@endif">
@@ -78,9 +80,9 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <noscript>
     <link href="<?php echo asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('vendor/bootstrap/css/bootstrap-select.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo asset('vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/bootstrap/css/bootstrap-select.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo asset('vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" rel="stylesheet">
   </noscript>
   <!-- Font Awesome CSS-->
   <link rel="preload" href="<?php echo asset('vendor/font-awesome/css/font-awesome.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -115,13 +117,13 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <noscript>
     <link href="<?php echo asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="https://cdn.datatables.net/fixedheader/3.1.6/css/fixedHeader.bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="https://cdn.datatables.net/fixedheader/3.1.6/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
   @endif
 
@@ -160,9 +162,9 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <noscript>
     <link href="<?php echo asset('../../vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-select.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-select.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" rel="stylesheet">
   </noscript>
   <!-- Font Awesome CSS-->
   <link rel="preload" href="<?php echo asset('../../vendor/font-awesome/css/font-awesome.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -197,13 +199,13 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <noscript>
     <link href="<?php echo asset('../../vendor/datatable/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="https://cdn.datatables.net/fixedheader/3.1.6/css/fixedHeader.bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="https://cdn.datatables.net/fixedheader/3.1.6/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
   @endif
 
@@ -237,7 +239,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   {!! $general_setting->custom_css !!}
 </head>
 
-<body class="@if($theme == 'dark')dark-mode dripicons-brightness-low @endif  @if(Route::currentRouteName() == 'sale.pos') pos-page @endif" onload="myFunction()">
+<body class="@if($theme == 'dark')dark-mode dripicons-brightness-low @endif  @if(Route::currentRouteName() == 'sale.pos') pos-page @endif">
   <div id="loader"></div>
   <!-- Side Navbar -->
   <nav class="side-navbar d-print-none">
@@ -305,6 +307,14 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
         @endif
 
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
+          @if($activeCompany)
+          <li class="nav-item company-switch"><a class="company-switch-link" href="{{ route('company.select', ['manage' => 1]) }}" title="Switch company" aria-label="Switch company: {{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
+            <span class="company-switch-mark" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+            @if($activeCompany->group)<span class="company-switch-group">{{ $activeCompany->group->name }}</span>@endif
+            <span class="company-switch-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>
+            @if($activeYear)<span class="company-switch-year">{{ $activeYear }}</span>@endif
+            <span class="company-switch-caret" aria-hidden="true">&#8645;</span></a></li>
+          @endif
           @unless($companyContext)
           <div class="dropdown">
 
@@ -405,16 +415,21 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
           $language_setting_active = $role_has_permissions_list->where('name', 'language_setting')->first();
 
           ?>
+          {{-- POS button hidden for now (2026-10-09).
           @if($sale_add_permission_active)
           <li class="nav-item"><a class="btn-pos btn-sm" href="{{route('sale.pos') }}"><i class="dripicons-shopping-bag"></i><span> POS</span></a></li>
           @endif
+          --}}
+          <li class="nav-item"><button type="button" class="topbar-shortcuts" data-shortcut-help title="Keyboard shortcuts (?)"><i class="dripicons-information" aria-hidden="true"></i><span>Shortcuts</span><kbd>?</kbd></button></li>
           <li class="nav-item d-none d-lg-block"><a id="switch-theme" data-toggle="tooltip" title="{{ __('Switch Theme') }}"><i class="dripicons-brightness-max"></i></a></li>
           @if(config('database.connections.zoloerp_landlord'))
           <li class="nav-item"><a target="_blank" href="{{'https://'.env('CENTRAL_DOMAIN').'/contact-for-renewal?id='.$subdomain}}" data-toggle="tooltip" title="{{ __('Renew Subscription') }}"><i class="dripicons-clockwise"></i></a></li>
           @endif
           <li class="nav-item d-none d-lg-block"><a id="btnFullscreen" data-toggle="tooltip" title="{{ __('Full Screen') }}"><i class="dripicons-expand"></i></a></li>
+          {{-- Cash register list hidden for now (2026-10-09).
           @if(\Auth::user()->role_id <= 2) <li class="nav-item"><a href="{{route('cashRegister.index') }}" data-toggle="tooltip" title="{{ __('Cash Register List') }}"><i class="dripicons-archive"></i></a></li>
             @endif
+          --}}
             @unless($companyContext)
             @php
             $total_notifications = $alert_product + $dso_alert_product_no + $expire_alert_products + Auth::user()->unreadNotifications->where('data.reminder_date', date('Y-m-d'))->count();
@@ -484,6 +499,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
                 </ul>
             </li>
             @endunless
+            {{-- Language menu hidden for now (2026-10-09).
             <li class="nav-item">
               <a rel="nofollow" title="{{ __('db.language') }}" data-toggle="tooltip" class="nav-link dropdown-item"><i class="dripicons-web"></i></a>
               <ul class="right-sidebar">
@@ -502,6 +518,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
                 @endif
               </ul>
             </li>
+            --}}
             <li class="nav-item">
               <a rel="nofollow" data-toggle="tooltip" class="nav-link dropdown-item"><i class="dripicons-user"></i> <span>{{ucfirst(Auth::user()->name)}}</span> <i class="fa fa-angle-down"></i>
               </a>
@@ -695,11 +712,13 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
 
     <!-- expense modal -->
     <div id="expense-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-      <div role="document" class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 id="exampleModalLabel" class="modal-title">{{ __('Add Expense') }}</h5>
-            <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+      <div role="document" class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
+          <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px; border-bottom: none;">
+            <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+              <i class="dripicons-wallet mr-1"></i> {{ __('Add Expense') }}
+            </h5>
+            <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
             <p class="italic"><small>{{ __('The field labels marked with * are required input fields') }}.</small></p>
@@ -808,11 +827,13 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
     <!-- end expense modal -->
     <!-- income modal start -->
     <div id="income-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-      <div role="document" class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 id="exampleModalLabel" class="modal-title">{{ __('Add Income') }}</h5>
-            <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+      <div role="document" class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
+          <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px; border-bottom: none;">
+            <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+              <i class="dripicons-rocket mr-1"></i> {{ __('Add Income') }}
+            </h5>
+            <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
             <p class="italic"><small>{{ __('The field labels marked with * are required input fields') }}.</small></p>
@@ -1242,15 +1263,17 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   </script>
   <script type="text/javascript" src="<?php echo asset('vendor/bootstrap/js/bootstrap.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/bootstrap-toggle/js/bootstrap-toggle.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/bootstrap/js/bootstrap-select.min.js') ?>"></script>
-  @if(Route::currentRouteName() == 'sale.pos')
+  <script type="text/javascript" src="<?php echo asset('vendor/bootstrap/js/bootstrap-select.min.js') . '?v=1.13.18' ?>"></script>
+  @if(Route::currentRouteName() == 'sale.pos' || View::hasSection('virtual-keyboard'))
   <script type="text/javascript" src="<?php echo asset('vendor/keyboard/js/jquery.keyboard.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/keyboard/js/jquery.keyboard.extension-autocomplete.js') ?>"></script>
   @endif
   <script type="text/javascript" src="<?php echo asset('js/grasp_mobile_progress_circle-1.0.0.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/jquery.cookie/jquery.cookie.js') ?>"></script>
+  @hasSection('charts')
   <script type="text/javascript" src="<?php echo asset('vendor/chart.js/Chart.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('js/charts-custom.js') ?>?v={{ time() }}"></script>
+  <script type="text/javascript" src="{{ asset('js/charts-custom.js') }}?v={{ filemtime(public_path('js/charts-custom.js')) }}"></script>
+  @endif
   <script type="text/javascript" src="<?php echo asset('vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
@@ -1263,31 +1286,28 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <script type="text/javascript" src="<?php echo asset('vendor/daterange/js/moment.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/daterange/js/knockout-3.4.2.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/daterange/js/daterangepicker.min.js') ?>"></script>
+  @hasSection('rich-editor')
   <script type="text/javascript" src="<?php echo asset('vendor/tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+  @endif
+  @hasSection('image-upload')
   <script type="text/javascript" src="<?php echo asset('js/dropzone.js') ?>"></script>
+  @endif
 
   <!-- table sorter js-->
-  @if( Config::get('app.locale') == 'ar')
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/pdfmake_arabic.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/vfs_fonts_arabic.js') ?>"></script>
-  @else
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/pdfmake.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/vfs_fonts.js') ?>"></script>
-  @endif
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/jquery.dataTables.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/dataTables.bootstrap4.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/dataTables.buttons.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/jszip.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.bootstrap4.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.colVis.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.html5.min.js') ?>"></script>
+  <script src="{{ asset('js/table-exports.js') }}?v={{ filemtime(public_path('js/table-exports.js')) }}" data-base="{{ asset('vendor/datatable') }}" data-arabic="{{ Config::get('app.locale') == 'ar' ? '1' : '0' }}"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.printnew.js') ?>"></script>
 
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/sum().js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('vendor/datatable/dataTables.checkboxes.min.js') ?>"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.6/js/dataTables.fixedHeader.min.js"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
   @endif
   @else
   <script type="text/javascript" src="<?php echo asset('../../vendor/jquery/jquery.min.js') ?>"></script>
@@ -1298,12 +1318,18 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   </script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap/js/bootstrap.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap-toggle/js/bootstrap-toggle.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap/js/bootstrap-select.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap/js/bootstrap-select.min.js') . '?v=1.13.18' ?>"></script>
+  @if(Route::currentRouteName() == 'sale.pos' || View::hasSection('virtual-keyboard'))
+  <script type="text/javascript" src="{{ asset('vendor/keyboard/js/jquery.keyboard.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('vendor/keyboard/js/jquery.keyboard.extension-autocomplete.js') }}"></script>
+  @endif
 
   <script type="text/javascript" src="<?php echo asset('../../js/grasp_mobile_progress_circle-1.0.0.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/jquery.cookie/jquery.cookie.js') ?>"></script>
+  @hasSection('charts')
   <script type="text/javascript" src="<?php echo asset('../../vendor/chart.js/Chart.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../js/charts-custom.js') ?>"></script>
+  <script type="text/javascript" src="{{ asset('js/charts-custom.js') }}?v={{ filemtime(public_path('js/charts-custom.js')) }}"></script>
+  @endif
   <script type="text/javascript" src="<?php echo asset('../../vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
@@ -1316,31 +1342,28 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
   <script type="text/javascript" src="<?php echo asset('../../vendor/daterange/js/moment.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/daterange/js/knockout-3.4.2.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/daterange/js/daterangepicker.min.js') ?>"></script>
+  @hasSection('rich-editor')
   <script type="text/javascript" src="<?php echo asset('../../vendor/tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+  @endif
+  @hasSection('image-upload')
   <script type="text/javascript" src="<?php echo asset('../../js/dropzone.js') ?>"></script>
+  @endif
 
   <!-- table sorter js-->
-  @if( Config::get('app.locale') == 'ar')
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/pdfmake_arabic.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/vfs_fonts_arabic.js') ?>"></script>
-  @else
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/pdfmake.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/vfs_fonts.js') ?>"></script>
-  @endif
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/jquery.dataTables.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/dataTables.bootstrap4.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/dataTables.buttons.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/jszip.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.bootstrap4.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.colVis.min.js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.html5.min.js') ?>"></script>
+  <script src="{{ asset('js/table-exports.js') }}?v={{ filemtime(public_path('js/table-exports.js')) }}" data-base="{{ asset('vendor/datatable') }}" data-arabic="{{ Config::get('app.locale') == 'ar' ? '1' : '0' }}"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.printnew.js') ?>"></script>
 
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/sum().js') ?>"></script>
   <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/dataTables.checkboxes.min.js') ?>"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.6/js/dataTables.fixedHeader.min.js"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
-  <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
+  <script type="text/javascript" src="{{ asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
 
   <script type="text/javascript" src="{{ asset('js/barcode-qrcode-scanner_plugin.js') }}"></script>
 
@@ -1386,10 +1409,6 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
       $('nav.side-navbar').removeClass('shrink');
     }
 
-    function myFunction() {
-      setTimeout(showPage, 100);
-    }
-
     function showPage() {
       document.getElementById("loader").style.display = "none";
       document.getElementById("content").style.display = "block";
@@ -1397,6 +1416,8 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
         window.dispatchEvent(new Event('resize'));
       }, 50);
     }
+
+    $(showPage);
 
     var user_verified = <?php echo json_encode(env('USER_VERIFIED', '1') ?: '1'); ?>;
     window.user_verified = user_verified;
@@ -1723,6 +1744,7 @@ $companyContext = request()->attributes->get(\App\Services\Platform\CompanyConte
     });
 
   </script>
+  <script type="text/javascript" src="<?php echo asset('js/sidebar-state.js') . '?v=' . filemtime(public_path('js/sidebar-state.js')) ?>"></script>
 </body>
 
 </html>

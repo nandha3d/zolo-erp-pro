@@ -232,7 +232,7 @@ class PackingSlipController extends Controller
     }
     public function genInvoice($id)
     {
-        $packing_slip = PackingSlip::with('sale.customer', 'sale.warehouse')->find($id);
+        $packing_slip = PackingSlip::with('sale.customer', 'sale.warehouse')->findOrFail($id);
         $sale = $packing_slip->sale;
         $packing_slip_product_data = PackingSlipProduct::where('packing_slip_id', $id)->get();
         return view('backend.packing_slip.invoice', compact('sale', 'packing_slip_product_data'));

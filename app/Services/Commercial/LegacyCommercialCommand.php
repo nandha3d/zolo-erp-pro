@@ -78,6 +78,11 @@ class LegacyCommercialCommand
                 ->where('branch_id', $context->branchId)->where('financial_year_id', $context->financialYearId)
                 ->where('document_type', $purchase ? 'purchase' : 'sale')->findOrFail($data['series_id'])->code;
         }
+        // Under GST the server determines every line's tax; browser estimates must not block the post.
+        if (app(\App\Services\Tax\GstSetupService::class)->enabled($context, $data['business_date'] ?? null)) {
+            foreach ($items as &$item) unset($item['tax'], $item['total']);
+            unset($item, $data['grand_total'], $data['order_tax'], $data['total_tax']);
+        }
         $data['items'] = $items;
         return $data;
     }

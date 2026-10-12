@@ -1,6 +1,7 @@
 @extends('backend.layout.main')
 @section('content')
-<section class="forms">
+@include('backend.partials.document-entry-layout')
+<section class="forms classic-document-workspace document-challan-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -15,25 +16,25 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <div class="form-group">
-                                        <label><strong>Date</strong> </label>
-                                        <input type="text" name="created_at" class="form-control date" autocomplete="false">
+                                        <label for="challan-date"><strong>Date</strong> </label>
+                                        <input id="challan-date" type="text" name="created_at" class="form-control date" autocomplete="off">
                                     </div>
                                 </div>
 
                                 <div class="col-md-4 courier-section">
                                     <div class="form-group">
-                                        <label><strong>Courier *</strong></label>
-                                        <select name="courier_id" required id="courier-id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select courier...">
+                                        <label for="courier-id"><strong>Courier *</strong></label>
+                                        <select name="courier_id" required id="courier-id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select courier..." data-container="body">
                                             @foreach($courier_list as $courier)
                                             <option value="{{$courier->id}}">{{$courier->name.' ['.$courier->phone_number.']'}}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-9 mt-3">
+                                <div class="col-md-12 mt-3 document-lines-row">
                                     <h5>Order List</h5>
                                     <div class="table-responsive">
-                                        <table class="table table-hover" id="flat-type-table">
+                                        <table class="table table-hover order-list" id="flat-type-table">
                                             <thead>
                                                 <tr>
                                                     <th>sale Reference</th>
@@ -56,8 +57,8 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-12">
-                                    <div class="form-group mt-4">
+                                <div class="col-md-12 document-actions-row">
+                                    <div class="form-group mt-1">
                                         <input type="submit" value="Submit" class="btn btn-primary submit-btn">
                                     </div>
                                 </div>

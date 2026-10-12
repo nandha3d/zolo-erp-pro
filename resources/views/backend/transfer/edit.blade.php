@@ -1,8 +1,9 @@
 @extends('backend.layout.main') @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-error-message key="not_permitted" />
 
-<section class="forms">
+<section class="forms classic-document-workspace document-compact-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -15,7 +16,7 @@
                         {!! Form::open(['route' => ['transfers.update', $lims_transfer_data->id], 'method' => 'put', 'files' => true, 'id' => 'transfer-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="row">
+                                <div class="row document-header-fields">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.reference')}}</label>
@@ -26,7 +27,7 @@
                                         <div class="form-group">
                                             <label>{{__("db.status")}}</label>
                                             <input type="hidden" name="status_hidden" value="{{ $lims_transfer_data->status }}">
-                                            <select name="status" class="form-control selectpicker">
+                                            <select name="status" class="form-control selectpicker" data-container="body">
                                                 @if (auth()->user()->role_id < 3)
                                                     <option value="1" {{ $lims_transfer_data->status == 1 ? 'selected' : '' }}>
                                                         {{ __('db.Completed') }}
@@ -54,14 +55,14 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.date')}}</label>
-                                            <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime($lims_transfer_data->created_at->toDateString()))}}" />
+                                            <input type="text" name="created_at" class="form-control date" value="{{date($general_setting->date_format, strtotime(($lims_transfer_data->created_at ?? now())->toDateString()))}}" />
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.From Warehouse')}} *</label>
                                             <input type="hidden" name="from_warehouse_id_hidden" value="{{ $lims_transfer_data->from_warehouse_id }}" />
-                                            <select id="from-warehouse-id" required name="from_warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse...">
+                                            <select id="from-warehouse-id" required name="from_warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -72,7 +73,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.To Warehouse')}} *</label>
                                             <input type="hidden" name="to_warehouse_id_hidden" value="{{ $lims_transfer_data->to_warehouse_id }}" />
-                                            <select required name="to_warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse...">
+                                            <select required name="to_warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select warehouse..." data-container="body">
                                                 @foreach($lims_warehouse_list as $warehouse)
                                                 <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
                                                 @endforeach
@@ -80,7 +81,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-3">
+                                <div class="row mt-3 document-search-row">
                                     <div class="col-md-12">
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box input-group">
@@ -89,7 +90,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-4">
+                                <div class="row mt-4 document-lines-row">
                                     <div class="col-md-12">
                                         <h5>{{__('db.Order Table')}} *</h5>
                                         <div class="table-responsive mt-3">
@@ -208,7 +209,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-hidden-fields">
                                     <div class="col-md-2">
                                         <div class="form-group">
                                             <input type="hidden" name="total_qty" value="{{$lims_transfer_data->total_qty}}" />
@@ -237,7 +238,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-2">
+                                <div class="row mt-2 document-details-row">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Shipping Cost')}}</label>
@@ -257,7 +258,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row document-details-row">
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>{{__('db.Note')}}</label>
@@ -270,7 +271,7 @@
                                         <strong>This transfer is Completed. If you need, please contact the Admin for updates!</strong>
                                     </p>
                                 @else
-                                    <div class="form-group">
+                                    <div class="form-group document-actions-row">
                                         <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
                                     </div>
                                 @endif
@@ -319,7 +320,7 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>{{__('db.Product Unit')}}</label>
-                                <select name="edit_unit" class="form-control selectpicker">
+                                <select name="edit_unit" class="form-control selectpicker" data-container="body">
                                 </select>
                             </div>
                         </div>
@@ -842,25 +843,6 @@ function calculateGrandTotal() {
 
 $('input[name="shipping_cost"]').on("input", function() {
     calculateGrandTotal();
-});
-
-$(window).keydown(function(e){
-    if (e.which == 13) {
-        var $targ = $(e.target);
-        if (!$targ.is("textarea") && !$targ.is(":button,:submit")) {
-            var focusNext = false;
-            $(this).find(":input:visible:not([disabled],[readonly]), a").each(function(){
-                if (this === e.target) {
-                    focusNext = true;
-                }
-                else if (focusNext){
-                    $(this).focus();
-                    return false;
-                }
-            });
-            return false;
-        }
-    }
 });
 
 $('#transfer-form').on('submit',function(e){

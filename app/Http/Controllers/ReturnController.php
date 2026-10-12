@@ -491,6 +491,7 @@ class ReturnController extends Controller
                 }
             }
             DB::commit();
+            app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('sreturn', $request->integer('draft_id'), (int) Auth::id());
             return redirect('return-sale')->with('message', $message);
 
         } catch (\Throwable $e) {
@@ -519,7 +520,7 @@ class ReturnController extends Controller
 
     public function getCustomerGroup($id)
     {
-         $lims_customer_data = Customer::find($id);
+         $lims_customer_data = Customer::findOrFail($id);
          $lims_customer_group_data = CustomerGroup::find($lims_customer_data->customer_group_id);
          return $lims_customer_group_data->percentage;
     }
@@ -787,7 +788,7 @@ class ReturnController extends Controller
             $lims_warehouse_list = Warehouse::where('is_active',true)->get();
             $lims_biller_list = Biller::where('is_active',true)->get();
             $lims_tax_list = Tax::where('is_active',true)->get();
-            $lims_return_data = Returns::find($id);
+            $lims_return_data = Returns::findOrFail($id);
             $lims_product_return_data = ProductReturn::where('return_id', $id)->get();
             return view('backend.return.edit',compact('lims_customer_list', 'lims_warehouse_list', 'lims_biller_list', 'lims_tax_list', 'lims_return_data','lims_product_return_data'));
         }

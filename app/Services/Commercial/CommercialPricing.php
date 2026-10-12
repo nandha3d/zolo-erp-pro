@@ -22,8 +22,7 @@ class CommercialPricing
             }
             $product = app(\App\Services\ERP\CompanyWriteGuard::class)->product($line, $context, $purchase ? 'purchase_unit_id' : 'sale_unit_id');
             $products[$product->id] = $product;
-            $line['tax_rate'] = $product->tax_id ? (float) \App\Models\Tax::where('company_id', $context->companyId)
-                ->where('is_active', true)->findOrFail($product->tax_id)->rate : 0;
+            $line['tax_rate'] = $product->tax_category_id ? 0 : $this->legacyRate($product, $context);
             unset($line['tax'], $line['total'], $line['_tax_snapshot'], $line['recoverable_tax']);
         }
         unset($line, $data['grand_total'], $data['order_tax']);
@@ -40,6 +39,15 @@ class CommercialPricing
         $data = $this->calculate($data, $purchase);
         return ['grand_total' => $data['grand_total'], 'total_tax' => array_sum(array_column($data['items'], 'tax')),
             'total_price' => array_sum(array_column($data['items'], 'total')), 'items' => $data['items']];
+    }
+
+    /** Legacy VAT rate of a product without a GST rate; a deleted or inactive tax is a named error, not a 404. */
+    public function legacyRate(object $product, \App\Services\Platform\CompanyContext $context): float
+    {
+        if (!$product->tax_id) return 0.0;
+        $tax = \App\Models\Tax::where('company_id', $context->companyId)->where('is_active', true)->find($product->tax_id);
+        if (!$tax) $this->invalid('items.tax_rate', 'The tax set on '.$product->name.' no longer exists. Edit the product and choose its tax again.');
+        return (float) $tax->rate;
     }
 
     public function calculate(array $data, bool $purchase): array

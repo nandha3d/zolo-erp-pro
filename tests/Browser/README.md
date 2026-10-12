@@ -5,8 +5,10 @@ They never use a standalone entry screen, so they are what certifies the consoli
 
 | Spec | Proves |
 |---|---|
-| `document-entry.spec.mjs` | F2/F12 from an unrelated page, one-shot `?new=1`, focus, visible "+ New Bill" fallback, dirty dialog (Save draft / Discard / Cancel), autosave, two-tab isolation (party, lines, serial/batch tracking, payment), reload restores draft tabs, 409 *Load latest* and *Keep mine as a new tab*, the 10-tab limit, a refused post keeps its draft |
+| `document-entry.spec.mjs` | F2/F12 from an unrelated page, one-shot `?new=1`, focus, no sidebar/toolbar entry duplicating a key, `+` draft tab, the key again keeps the bill as a draft and opens one more (blank tab reused), autosave, two-tab isolation (party, lines, serial/batch tracking, payment), reload restores draft tabs, 409 *Load latest* and *Keep mine as a new tab*, the 10-tab limit, a refused post keeps its draft, DC / GRN / Quotation autosave and reopen their own drafts |
 | `document-aids.spec.mjs` | `?` shortcut help, F6 new item, previous rates, party outstanding / pending bills, copy bill, extended stock tracking per tab |
+| `party-details.spec.mjs` | Party details strip (GSTIN, address, credit) always matches the party picker: fresh page, real pick, `+` tab, tab switch, reload, `?new=1`; the New Party modal GSTIN check uses its own badge |
+| `document-layout.spec.mjs` | Desktop viewport fit at 1366×768 and 1280×720, visible Save/actions with growing item lists and expanded details, Enter/Tab/Shift+Tab, modal focus return, item search after new/reset, and register placement. Optional rendered fixtures cover source-bound returns, edit forms, quotation conversions, packing challans, and legacy exchange entry. |
 
 ## Running them
 
@@ -38,6 +40,17 @@ They never use a standalone entry screen, so they are what certifies the consoli
    ```
 
    Set `HEADED=1` to watch, `BROWSER_CHANNEL=msedge` for Edge.
+
+For layout verification, run `node tests/Browser/document-layout.spec.mjs` against the same disposable server.
+Set `ERP_EXPORT_DOCUMENT_LAYOUT=1` when running `DocumentEntryWebTest` and `DocumentLayoutFixtureTest` with `phpunit.documents-web.xml`
+and `ComplianceBrowserFixtureTest` with the default PHPUnit configuration to export source-bound returns, edit forms,
+quotation conversions, packing challan creation, and exchange pages
+under `scratch`. Then set `DOCUMENT_LAYOUT_FIXTURES` to that absolute directory when running the layout spec.
+The browser serves these rendered Blade pages through intercepted local routes; it does not post their source records.
+Set `DOCUMENT_KIND` to one entry kind for a focused rerun. Screenshots are written beside the optional fixtures.
+The layout spec also checks the cloned database's existing purchase at `/purchases/1/edit`; use a seeded clone containing that record.
+Packing challan finalization is exported only when an existing packing slip linked to a sale is available;
+the current clone has none, so that populated workflow has no browser proof.
 
 ## Known limits of the cloned database
 

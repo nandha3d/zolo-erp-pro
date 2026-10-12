@@ -3,6 +3,7 @@
 namespace App\Services\Platform;
 
 use App\Services\ERP\CompanyWriteGuard;
+use App\Support\Database\SchemaCache;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -32,13 +33,22 @@ class BranchAccess
 
     private const PAYMENT_PARENTS = ['sales' => 'sale_id', 'purchases' => 'purchase_id', 'cash_registers' => 'cash_register_id'];
 
+    /** @var array<string, list<int>> "company:actor" => branch ids; the scoping asks this on almost every query */
+    private array $authorized = [];
+
+    /** Branch access changed (a write to company_user, company_branches or company_user_branches). */
+    public function forget(): void
+    {
+        $this->authorized = [];
+    }
+
     public function authorizedBranchIds(CompanyContext $context, ?int $actorId = null): array
     {
         $actorId ??= auth()->id();
         if (!$actorId) {
             return [];
         }
-        return DB::table('company_user_branches as access')
+        return $this->authorized[$context->companyId.':'.$actorId] ??= DB::table('company_user_branches as access')
             ->join('company_branches as branch', 'branch.id', '=', 'access.branch_id')
             ->join('company_user as member', function ($join) {
                 $join->on('member.company_id', '=', 'access.company_id')->on('member.user_id', '=', 'access.user_id');
@@ -57,12 +67,14 @@ class BranchAccess
 
     public function scope(Builder $query, string $table, string $alias, CompanyContext $context): void
     {
-        $schema = $query->getConnection()->getSchemaBuilder();
-        if ($table === 'warehouses' && $schema->hasColumn($table, 'branch_id')) {
+        $cache = app(SchemaCache::class);
+        $connection = $query->getConnection();
+        $has = fn (string $table, string $column) => $cache->hasColumn($connection, $table, $column);
+        if ($table === 'warehouses' && $has($table, 'branch_id')) {
             $query->whereIntegerInRaw($alias.'.branch_id', $this->authorizedBranchIds($context));
         }
         foreach (self::WAREHOUSE_COLUMNS[$table] ?? [] as $column) {
-            if (!$schema->hasColumn($table, $column)) {
+            if (!$has($table, $column)) {
                 continue;
             }
             $query->where(function ($nested) use ($query, $column, $alias, $context, $table) {
@@ -76,9 +88,9 @@ class BranchAccess
         }
         if (isset(self::PARENTS[$table])) {
             [$parent, $column] = self::PARENTS[$table];
-            if ($schema->hasColumn($table, $column)) {
+            if ($has($table, $column)) {
                 $parents = $this->plain($query)->from($parent)->select($parent.'.id');
-                if ($schema->hasColumn($parent, 'company_id')) {
+                if ($has($parent, 'company_id')) {
                     $parents->whereRaw($parents->getGrammar()->wrap($parent.'.company_id').' = '.(int) $context->companyId);
                 }
                 $this->scope($parents, $parent, $parent, $context);
@@ -87,10 +99,10 @@ class BranchAccess
         }
         if ($table === 'payments') {
             foreach (self::PAYMENT_PARENTS as $parent => $column) {
-                if (!$schema->hasColumn($table, $column) || !$schema->hasTable($parent)) continue;
-                $query->where(function ($nested) use ($query, $context, $alias, $schema, $parent, $column) {
+                if (!$has($table, $column) || !$cache->hasTable($connection, $parent)) continue;
+                $query->where(function ($nested) use ($query, $context, $alias, $has, $parent, $column) {
                     $parents = $this->plain($query)->from($parent)->select($parent.'.id');
-                    if ($schema->hasColumn($parent, 'company_id')) {
+                    if ($has($parent, 'company_id')) {
                         $parents->whereRaw($parents->getGrammar()->wrap($parent.'.company_id').' = '.(int) $context->companyId);
                     }
                     $this->scope($parents, $parent, $parent, $context);

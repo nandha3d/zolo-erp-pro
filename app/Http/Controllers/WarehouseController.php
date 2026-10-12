@@ -123,7 +123,7 @@ class WarehouseController extends Controller
 
     public function destroy($id)
     {
-        $lims_warehouse_data = Warehouse::find($id);
+        $lims_warehouse_data = Warehouse::findOrFail($id);
         $lims_warehouse_data->deactivate();
         $this->cacheForget('warehouse_list');
         return redirect('warehouse')->with('not_permitted', __('db.Data deleted successfully'));

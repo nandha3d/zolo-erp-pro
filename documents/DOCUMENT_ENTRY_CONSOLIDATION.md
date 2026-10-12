@@ -43,9 +43,35 @@ POS ───────────────────────┘    
 
 Rules: one listener in the authenticated layout; permission-filtered for UX only (the target page authorises on the
 server); skipped while a modal/dialog owns the keyboard; POS uses a different layout and is unaffected; F-keys work from
-form fields; `preventDefault()` is called for recognised F-keys but **every action also has a visible button** because
-browsers/OSes can reserve F12. Pressing F2/F12 on the same module calls `window.zoloDocumentWorkspace.newDocument()`; if
-the bill is dirty a dialog offers *Save draft / Discard / Cancel*.
+form fields; `preventDefault()` is called for recognised F-keys. The keys are accelerators only: **no sidebar or toolbar
+entry repeats them** (user decision, 2026-10-08); the visible path is each page's own New button and the `+` of its draft
+tab strip (whose tooltip names the key), and `?` lists every key.
+
+Pressing a key **again on its own page opens one more draft**: whatever is on screen is saved as a draft first (no
+dialog), then a blank draft tab starts; an untouched blank tab is reused rather than piling up empty tabs. Only when the
+draft cannot be saved (10-draft limit, a blocking reference, drafts unavailable) does a *Discard / Cancel* dialog appear.
+A key for another page saves the current draft before navigating.
+
+## Draft tabs on every document page (`public/js/document-drafts.js`)
+
+One engine, one adapter per page. Every edit is autosaved (1.5 s after the last change) into a server draft of the
+page's kind; the page posts through its own controller, which drops the draft (`CommercialDraftService::forgetPosted`)
+only after a successful post.
+
+| Page | Kind | Adapter | Drafts API |
+|---|---|---|---|
+| Sales / Purchase bills | `sale` / `purchase` | `document-workspace.js` | `/commercial/{kind}/drafts` |
+| Delivery Challan / GRN | `dc` / `grn` | `material-document.js` | `/documents/{kind}/drafts` |
+| Sales / Purchase Return (legacy and compliance forms) | `sreturn` / `preturn` | `form-drafts.js` | `/documents/{kind}/drafts` |
+| Quotation | `quotation` | `form-drafts.js` + page hooks (lines replayed through the product search) | `/documents/quotation/drafts` |
+
+Only a real user edit makes a form worth saving (typing, picking or clicking inside the form, rows the user adds or
+removes, or the app's own copy action); fields a page fills by itself after loading never create a draft. Closing a tab
+is final: an autosave still on its way is awaited and whatever it created is deleted; a blank untouched tab closes
+without asking.
+
+A return draft belongs to the bill it returns: from the return register its tab opens that bill's return page
+(`create?reference_no=…&draft=ID`). Permissions per kind: `CommercialDraftService::KINDS`.
 
 ## Normal-page workspace (`public/js/document-workspace.js`, `document-aids.js`)
 
@@ -61,8 +87,10 @@ the bill is dirty a dialog offers *Save draft / Discard / Cancel*.
   shown on a bill is a preview; `DocumentNumberService` allocates it inside the posting transaction.
 * `?new=1` opens a client-only blank tab (no server row until the first meaningful edit) and then removes only `new=1`
   from the URL. A plain `/sales` or `/purchases` shows the register plus the restored tab strip and never auto-opens a bill.
-* Autosave 2 s after the last meaningful change, on tab switch and on *Save draft*; unload uses `fetch(keepalive)` and is
-  best-effort only (the UI never claims it saved). A 409 offers *Load latest* or *Keep mine as a new tab*.
+* Autosave 1.5 s after the last meaningful change, on tab switch, on a new-document key and on *Save draft*; unload uses
+  `fetch(keepalive)` and is best-effort only (the UI never claims it saved), and is skipped once a post has left the
+  page. A 409 offers *Load latest* or *Keep mine as a new tab*. The page's own New / Discard buttons go through the tabs,
+  so clearing the form never overwrites the active draft.
 * **References** `project_id`, `exchange_return_id`, `purchase_order_id` are references, not trusted state. They are
   validated against the trusted company/branch context when `?new=1` is processed, when a draft is saved, when it is
   loaded and again when posting (`DocumentContextResolver`). An optional stale reference is removed with a notice; a

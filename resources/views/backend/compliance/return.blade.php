@@ -1,6 +1,8 @@
 @extends('backend.compliance.layout')
 @section('title','Return / note against '.$source->reference_no)
-@section('content')
+@section('compliance_body')
+@include('backend.partials.document-entry-layout')
+@include('backend.partials.document-draft-tabs', ['draftLabel' => $kind === 'sale' ? 'sales return' : 'purchase return', 'draftKey' => $kind === 'sale' ? 'Shift+F2' : 'Shift+F12'])
 <p>Choose original lines. Quantity returns move stock; financial notes only change value. Tax uses the original snapshot.</p>
 <form method="POST" action="{{ url('/compliance/'.$kind.'/'.$source->id.'/notes') }}" id="return-form">@csrf
 <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key',(string) Illuminate\Support\Str::uuid()) }}">
@@ -20,3 +22,13 @@
 <label class="identity-choice" for="stock-{{ $movement->id }}"><input type="checkbox" id="stock-{{ $movement->id }}" name="items[{{ $i }}][stock_line_ids][]" value="{{ $movement->id }}"> {{ $movement->identity->identity_no }} · {{ $movement->identity->identity_type }}</label>@endforeach
 </fieldset>@endforeach</div></section><button type="submit" class="primary">Submit note</button><p>High-value or late notes await approval. Until approval, stock and accounts stay unchanged.</p></form>
 @endsection
+
+@push('scripts')
+@include('backend.partials.form-drafts', ['draft' => [
+    'kind' => $kind === 'sale' ? 'sreturn' : 'preturn', 'label' => $kind === 'sale' ? 'Sales Return' : 'Purchase Return',
+    'shortcut' => $kind === 'sale' ? 'sale-return' : 'purchase-return', 'form' => '#return-form',
+    'source' => ['id' => $source->id, 'reference' => $source->reference_no], 'party' => 'Ref '.$source->reference_no,
+    'createUrl' => route($kind === 'sale' ? 'return-sale.create' : 'return-purchase.create'),
+    'newUrl' => route($kind === 'sale' ? 'return-sale.index' : 'return-purchase.index', ['new' => 1]),
+]])
+@endpush

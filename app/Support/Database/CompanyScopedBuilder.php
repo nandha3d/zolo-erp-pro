@@ -193,7 +193,7 @@ class CompanyScopedBuilder extends Builder
         if (!in_array($table, self::TABLES, true)) {
             return false;
         }
-        return $this->connection->getSchemaBuilder()->hasColumn($table, 'company_id');
+        return app(SchemaCache::class)->hasColumn($this->connection, $table, 'company_id');
     }
 
     private function scopeSubqueries(?Builder $builder = null): void

@@ -140,7 +140,7 @@ class UserController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('users-edit')){
-            $lims_user_data = User::find($id);
+            $lims_user_data = User::findOrFail($id);
             $lims_role_list = Roles::where('is_active', true)->get();
             $lims_biller_list = Biller::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
@@ -176,7 +176,7 @@ class UserController extends Controller
             $input['is_active'] = false;
         if(!empty($request['password']))
             $input['password'] = bcrypt($request['password']);
-        $lims_user_data = User::find($id);
+        $lims_user_data = User::findOrFail($id);
         $lims_user_data->update($input);
 
         cache()->forget('user_role');
@@ -202,13 +202,13 @@ class UserController extends Controller
 
     public function superadminProfile($id)
     {
-        $lims_user_data = User::find($id);
+        $lims_user_data = User::findOrFail($id);
         return view('landlord.profile', compact('lims_user_data'));
     }
 
     public function profile($id)
     {
-        $lims_user_data = User::find($id);
+        $lims_user_data = User::findOrFail($id);
         return view('backend.user.profile', compact('lims_user_data'));
     }
 
@@ -218,7 +218,7 @@ class UserController extends Controller
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $input = $request->all();
-        $lims_user_data = User::find($id);
+        $lims_user_data = User::findOrFail($id);
         $lims_user_data->update($input);
         return redirect()->back()->with('message3', __('db.Data updated successfullly'));
     }
@@ -229,7 +229,7 @@ class UserController extends Controller
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $input = $request->all();
-        $lims_user_data = User::find($id);
+        $lims_user_data = User::findOrFail($id);
         if($input['new_pass'] != $input['confirm_pass'])
             return redirect("user/" .  "profile/" . $id )->with('message2', __("db.Please Confirm your new password"));
 
@@ -262,7 +262,7 @@ class UserController extends Controller
         if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
-        $lims_user_data = User::find($id);
+        $lims_user_data = User::findOrFail($id);
         $lims_user_data->is_deleted = true;
         $lims_user_data->is_active = false;
         $lims_user_data->save();

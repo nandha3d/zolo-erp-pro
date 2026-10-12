@@ -247,7 +247,7 @@ class SaleAgentController extends Controller
 
     public function destroy($id)
     {
-        $lims_employee_data = Employee::find($id);
+        $lims_employee_data = Employee::findOrFail($id);
         if($lims_employee_data->user_id){
             $lims_user_data = User::find($lims_employee_data->user_id);
             $lims_user_data->is_deleted = true;

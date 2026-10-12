@@ -107,7 +107,7 @@ class StockCountController extends Controller
 
     public function stockDif($id)
     {
-        $lims_stock_count_data = StockCount::find($id);
+        $lims_stock_count_data = StockCount::findOrFail($id);
         $file_handle = fopen(public_path('stock_count/').$lims_stock_count_data->final_file, 'r');
         $i = 0;
         $temp_dif = -1000000;
@@ -154,7 +154,7 @@ class StockCountController extends Controller
     public function qtyAdjustment($id)
     {
         $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-        $lims_stock_count_data = StockCount::find($id);
+        $lims_stock_count_data = StockCount::findOrFail($id);
         $warehouse_id = $lims_stock_count_data->warehouse_id;
         $file_handle = fopen(public_path('stock_count/').$lims_stock_count_data->final_file, 'r');
         $i = 0;

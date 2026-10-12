@@ -1,51 +1,253 @@
+@section('virtual-keyboard', '1')
 @extends('backend.layout.main') @section('content')
+
+<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+
+<style>
+    .customer-workspace-view {
+        padding: 12px 18px 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 40px);
+    }
+    body.dark-mode .customer-workspace-view {
+        background: #0b0f19;
+    }
+    .kpi-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .kpi-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .kpi-card .kpi-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-number {
+        font-size: 19px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    body.dark-mode .kpi-card .kpi-number {
+        color: #f8fafc;
+    }
+    .desk-card-wrapper {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        padding: 14px 16px;
+    }
+    body.dark-mode .desk-card-wrapper {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    #customer-table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    #customer-table thead th {
+        background: #0f172a !important;
+        color: #ffffff !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        padding: 9px 12px !important;
+        border: none !important;
+        white-space: nowrap;
+    }
+    body.dark-mode #customer-table thead th {
+        background: #090d16 !important;
+        color: #f8fafc !important;
+    }
+    #customer-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    #customer-table tbody tr:nth-child(odd) {
+        background: #ffffff;
+    }
+    body.dark-mode #customer-table tbody tr:nth-child(even) {
+        background: #141c2c;
+    }
+    body.dark-mode #customer-table tbody tr:nth-child(odd) {
+        background: #1e293b;
+    }
+    #customer-table tbody tr:hover {
+        background: #e2e8f0 !important;
+    }
+    body.dark-mode #customer-table tbody tr:hover {
+        background: #27354f !important;
+    }
+    #customer-table td {
+        padding: 9px 12px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        vertical-align: middle !important;
+        font-size: 12.5px;
+    }
+    body.dark-mode #customer-table td {
+        border-color: #334155 !important;
+        color: #e2e8f0;
+    }
+    /* DataTables Single-Box Normalization */
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        height: 28px !important;
+        font-size: 12px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 5px !important;
+        padding: 2px 8px !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+    }
+    body.dark-mode .dataTables_wrapper .dataTables_length select,
+    body.dark-mode .dataTables_wrapper .dataTables_filter input {
+        background: #0f172a !important;
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+    .dt-buttons .dt-button {
+        height: 28px !important;
+        line-height: 26px !important;
+        padding: 0 10px !important;
+        font-size: 11.5px !important;
+        border-radius: 5px !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        color: #334155 !important;
+        margin-right: 4px !important;
+    }
+    body.dark-mode .dt-buttons .dt-button {
+        background: #1e293b !important;
+        color: #f8fafc !important;
+        border-color: #475569 !important;
+    }
+</style>
 
 <x-success-message key="create_message" />
 <x-success-message key="edit_message" />
 <x-success-message key="import_message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
+<!-- Top Command Bar -->
+<div class="comm-command-bar">
+    <div class="comm-title-group">
+        <h1><i class="dripicons-user-group text-primary"></i> {{ __('db.customer') }} Command Center</h1>
+        <span class="comm-title-badge"><i class="dripicons-cart"></i> Client Accounts &amp; Receivables Directory</span>
+    </div>
+    <ul class="comm-nav-pills">
+        <li><a class="nav-link active" href="{{ route('customer.index') }}"><i class="dripicons-list"></i> All Customers</a></li>
+        <li><a class="nav-link" href="{{ route('sales.index') }}"><i class="dripicons-cart"></i> Sales Bills</a></li>
+        <li><a class="nav-link" href="{{ route('sales.index', ['view' => 'orders', 'sale_status' => 2]) }}"><i class="dripicons-clipboard"></i> Sales Orders</a></li>
+        <li><a class="nav-link" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> Delivery Challans (DC)</a></li>
+        <li><a class="nav-link" href="{{ route('return-sale.index') }}"><i class="dripicons-return"></i> Returns</a></li>
+    </ul>
+    <div class="comm-actions">
         @can('customers-add')
-            <a href="{{route('customer.create')}}" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Customer')}}</a>&nbsp;
+            <a href="{{route('customer.create')}}" class="btn btn-primary py-1 px-3" style="background:#7c3aed; border-color:#7c3aed; font-size:11.5px; border-radius:4px;">
+                <i class="dripicons-plus"></i> {{__('db.Add Customer')}}
+            </a>
         @endcan
         @can('customers-import')
-            <a href="#" data-toggle="modal" data-target="#importCustomer" class="btn btn-primary"><i class="dripicons-copy"></i> {{__('db.Import Customer')}}</a>
+            <a href="#" data-toggle="modal" data-target="#importCustomer" class="btn btn-outline-secondary py-1 px-3" style="font-size:11.5px; border-radius:4px;">
+                <i class="dripicons-upload"></i> {{__('db.Import Customer')}}
+            </a>
         @endcan
     </div>
-    <div class="table-responsive">
-        <table id="customer-table" class="table customer-list" style="width: 100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th>{{__('db.Customer Group')}}</th>
-                    <th>{{__('db.Customer Details')}}</th>
-                    <th>{{__('db.Discount Plan')}}</th>
-                    <th>{{__('db.Reward Points')}}</th>
-                    <th>{{__('db.Deposited Balance')}}</th>
-                    <th>{{__('db.Total Due')}}</th>
-                    @foreach($custom_fields as $fieldName)
-                    <th>{{$fieldName}}</th>
-                    @endforeach
-                    <th class="not-exported">{{__('db.action')}}</th>
-                </tr>
-            </thead>
-        </table>
+</div>
+
+<div class="customer-workspace-view">
+    @php
+        $totalCustCount = \App\Models\Customer::where('is_active', true)->count();
+        $totalDepositSum = \App\Models\Customer::where('is_active', true)->sum('deposit');
+        $totalPointsSum = \App\Models\Customer::where('is_active', true)->sum('points');
+    @endphp
+
+    <!-- KPI Summary Strip -->
+    <div class="kpi-summary-strip">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Total Active Customers</div>
+                <div class="kpi-number">{{ $totalCustCount }}</div>
+            </div>
+            <div style="background:#ede9fe; color:#7c3aed; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                <i class="dripicons-user-group" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Customer Deposits Balance</div>
+                <div class="kpi-number" style="color:#0284c7;">₹ {{ number_format($totalDepositSum, 2) }}</div>
+            </div>
+            <div style="background:#e0f2fe; color:#0284c7; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa fa-money" style="font-size:18px;"></i>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Reward Points Balance</div>
+                <div class="kpi-number" style="color:#d97706;">{{ number_format($totalPointsSum, 0) }} pts</div>
+            </div>
+            <div style="background:#fef3c7; color:#d97706; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                <i class="dripicons-trophy" style="font-size:18px;"></i>
+            </div>
+        </div>
     </div>
-</section>
+
+    <!-- Desk Table Card -->
+    <div class="desk-card-wrapper">
+        <div class="table-responsive">
+            <table id="customer-table" class="table customer-list" style="width: 100%">
+                <thead>
+                    <tr>
+                        <th class="not-exported" style="width:30px;"></th>
+                        <th>{{__('db.Customer Group')}}</th>
+                        <th>{{__('db.Customer Details')}}</th>
+                        <th>{{__('db.Discount Plan')}}</th>
+                        <th>{{__('db.Reward Points')}}</th>
+                        <th>{{__('db.Deposited Balance')}}</th>
+                        <th>{{__('db.Total Due')}}</th>
+                        @foreach($custom_fields as $fieldName)
+                        <th>{{$fieldName}}</th>
+                        @endforeach
+                        <th class="not-exported" style="width:100px; text-align:center;">{{__('db.action')}}</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
 
 <div id="importCustomer" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
       <div class="modal-content">
         {!! Form::open(['route' => 'customer.import', 'method' => 'post', 'files' => true]) !!}
         <div class="modal-header">
-          <h5 id="exampleModalLabel" class="modal-title">{{__('db.Import Customer')}}</h5>
+          <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.Import Customer')}}</h5>
           <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
         </div>
         <div class="modal-body">
-          <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-           <p>{{__('db.The correct column order is')}} (customer_group*, name*, company_name, email, phone_number*, address*, city*, state, postal_code, country, deposit) {{__('db.and you must follow this')}}.</p>
+          <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
+           <p style="font-size:12px; color:#64748b;">{{__('db.The correct column order is')}} (customer_group*, name*, company_name, email, phone_number*, address*, city*, state, postal_code, country, deposit) {{__('db.and you must follow this')}}.</p>
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -60,7 +262,7 @@
                     </div>
                 </div>
             </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
@@ -72,13 +274,11 @@
       <div class="modal-content">
         {!! Form::open(['route' => 'customer.clearDue', 'method' => 'post', 'class' => 'clear-due-form']) !!}
         <div class="modal-header">
-          <h5 id="exampleModalLabel" class="modal-title">{{__('db.Clear Due')}}</h5>
+          <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.Clear Due')}}</h5>
           <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
         </div>
         <div class="modal-body">
-            <p class="italic">
-                <small>{{__('db.The field labels marked with * are required input fields')}}.</small>
-            </p>
+            <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
             <div class="row">
                 <input type="hidden" name="customer_id">
                 <input type="hidden" name="balance">
@@ -120,159 +320,39 @@
                         @endif
                     </select>
                 </div>
-                <div class="col-md-6">
-                    <label>{{__('db.Payment Receiver')}}</label>
-                    <input type="text" name="payment_receiver" class="form-control">
+                <div class="form-group col-md-12 mt-2">
+                    <label>{{__('db.Payment Note')}}</label>
+                    <textarea name="payment_note" rows="2" class="form-control"></textarea>
                 </div>
             </div>
-            <div class="gift-card form-group">
-                <label> {{__('db.Gift Card')}} *</label>
-                <select id="gift_card_id" name="gift_card_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card...">
-                    @php
-                        $balance = [];
-                        $expired_date = [];
-                    @endphp
-                    @foreach($lims_gift_card_list as $gift_card)
-                    <?php
-                        $balance[$gift_card->id] = $gift_card->amount - $gift_card->expense;
-                        $expired_date[$gift_card->id] = $gift_card->expired_date;
-                    ?>
-                        <option value="{{$gift_card->id}}">{{$gift_card->card_no}}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="form-group mt-2">
-                <div class="card-element" class="form-control">
-                </div>
-                <div class="card-errors" role="alert"></div>
-            </div>
-            <div id="cheque">
-                <div class="form-group">
-                    <label>{{__('db.Cheque Number')}} *</label>
-                    <input type="text" name="cheque_no" class="form-control">
-                </div>
-            </div>
-            <div class="form-group">
-                <label> {{__('db.Account')}}</label>
-                <select class="form-control selectpicker" name="account_id">
-                @foreach($lims_account_list as $account)
-                    @if($account->is_default)
-                    <option selected value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                    @else
-                    <option value="{{$account->id}}">{{$account->name}} [{{$account->account_no}}]</option>
-                    @endif
-                @endforeach
-                </select>
-            </div>
-            <div class="form-group">
-                <label>{{__('db.Payment Note')}}</label>
-                <textarea rows="3" class="form-control" name="payment_note"></textarea>
-            </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
     </div>
 </div>
 
-<div id="depositModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-      <div class="modal-content">
-        {!! Form::open(['route' => 'customer.addDeposit', 'method' => 'post']) !!}
-        <div class="modal-header">
-          <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Deposit')}}</h5>
-          <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-        </div>
-        <div class="modal-body">
-          <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-            <div class="form-group">
-                <input type="hidden" name="customer_id">
-                <label>{{__('db.Amount')}} *</label>
-                <input type="number" name="amount" step="any" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>{{__('db.Note')}}</label>
-                <textarea name="note" rows="4" class="form-control"></textarea>
-            </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
-        </div>
-        {!! Form::close() !!}
-      </div>
-    </div>
-</div>
-
-<div id="pointModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-      <div class="modal-content">
-        {!! Form::open(['route' => 'customer.addPoint', 'method' => 'post']) !!}
-        <div class="modal-header">
-          <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Point')}}</h5>
-          <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-        </div>
-        <div class="modal-body">
-          <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-            <div class="form-group">
-                <input type="hidden" name="customer_id">
-                <label>{{__('db.Points')}} *</label>
-                <input type="number" name="points" step="any" class="form-control" required>
-                <label>{{__('db.Note')}}</label>
-                <textarea name="note" id="" cols="30" rows="3" class="form-control"></textarea>
-            </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary" id="submit-button">
-        </div>
-        {!! Form::close() !!}
-      </div>
-    </div>
-</div>
-
-<div id="view-points" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+<div id="deposit-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Points')}}</h5>
+                <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.Add Deposit')}}</h5>
                 <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
             </div>
             <div class="modal-body">
-                <table class="table table-hover points-list">
-                    <thead>
-                        <tr>
-                            <th>{{__('db.date')}}</th>
-                            <th>{{__('db.Earn Points')}}</th>
-                            <th>{{__('db.Redeem Points')}}</th>
-                            <th>{{__('db.Note')}}</th>
-                            <th>{{__('db.Created By')}}</th>
-                            <th>{{__('db.Type')}}</th>
-                            <th>{{__('db.action')}}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="edit-point" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Update Point')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-                {!! Form::open(['route' => 'customer.updatePoint', 'method' => 'post']) !!}
+                <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
+                {!! Form::open(['route' => 'customer.addDeposit', 'method' => 'post']) !!}
                     <div class="form-group">
-                        <label>{{__('db.Points')}} *</label>
-                        <input type="number" name="points" step="any" class="form-control" required>
+                        <input type="hidden" name="customer_id">
+                        <label>{{__('db.Amount')}} *</label>
+                        <input type="number" name="amount" step="any" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>{{__('db.Note')}}</label>
-                        <textarea name="note" rows="4" class="form-control"></textarea>
+                        <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
-                    <input type="hidden" name="point_id">
-                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
-                {{ Form::close() }}
+                    <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;" id="submit-button">
+                {!! Form::close() !!}
             </div>
         </div>
     </div>
@@ -282,7 +362,7 @@
     <div role="document" class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.All Deposit')}}</h5>
+                <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.View Deposit')}}</h5>
                 <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
             </div>
             <div class="modal-body">
@@ -308,27 +388,81 @@
     <div role="document" class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Update Deposit')}}</h5>
+                <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.Update Deposit')}}</h5>
                 <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
             </div>
             <div class="modal-body">
+                <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                 {!! Form::open(['route' => 'customer.updateDeposit', 'method' => 'post']) !!}
                     <div class="form-group">
                         <label>{{__('db.Amount')}} *</label>
-                        <input type="number" name="amount" step="any" class="form-control" required>
+                        <input type="text" name="amount" step="any" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>{{__('db.Note')}}</label>
-                        <textarea name="note" rows="4" class="form-control"></textarea>
+                        <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
                     <input type="hidden" name="deposit_id">
-                    <button type="submit" class="btn btn-primary">{{__('db.update')}}</button>
+                    <button type="submit" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;">{{__('db.update')}}</button>
                 {{ Form::close() }}
             </div>
         </div>
     </div>
 </div>
 
+<div id="view-points" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.View Point History')}}</h5>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover points-list">
+                    <thead>
+                        <tr>
+                            <th>{{__('db.date')}}</th>
+                            <th>{{__('db.Points')}}</th>
+                            <th>{{__('db.action')}}</th>
+                            <th>{{__('db.Reference No')}}</th>
+                            <th>{{__('db.Created By')}}</th>
+                            <th>{{__('db.Note')}}</th>
+                            <th>{{__('db.action')}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="edit-point" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="exampleModalLabel" class="modal-title font-weight-bold">{{__('db.Update Point')}}</h5>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+            </div>
+            <div class="modal-body">
+                <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
+                {!! Form::open(['route' => 'customer.updatePoint', 'method' => 'post']) !!}
+                    <div class="form-group">
+                        <label>{{__('db.Points')}} *</label>
+                        <input type="text" name="points" step="any" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>{{__('db.Note')}}</label>
+                        <textarea name="note" rows="3" class="form-control"></textarea>
+                    </div>
+                    <input type="hidden" name="point_id">
+                    <button type="submit" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;">{{__('db.update')}}</button>
+                {{ Form::close() }}
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
@@ -345,12 +479,9 @@
       return false;
     }
 
+    var all_permission = <?php echo json_encode($all_permission) ?>;
     var customer_id = [];
     var user_verified = <?php echo json_encode(env('USER_VERIFIED')) ?>;
-    var all_permission = <?php echo json_encode($all_permission) ?>;
-    @if($lims_reward_point_setting_data)
-        var reward_point_setting = <?php echo json_encode($lims_reward_point_setting_data) ?>;
-    @endif
 
     $.ajaxSetup({
         headers: {
@@ -358,168 +489,60 @@
         }
     });
 
+  $(".clear-due").on("click", function() {
+        var id = $(this).data('id').toString();
+        $("#clearDueModal input[name='customer_id']").val(id);
+        $("#clearDueModal input[name='balance']").val($(this).data('balance'));
+        $("#clearDueModal input[name='amount']").val($(this).data('balance'));
+        $("#clearDueModal input[name='paying_amount']").val($(this).data('balance'));
+  });
+
+  $('.numkey').keyboard({
+        layout: 'custom',
+        customLayout: {
+          'normal': ['1 2 3', '4 5 6', '7 8 9','0 . {b}']
+        },
+        usePreview: false,
+        restrictInput: true,
+        accepted: function(e, keyboard, el) {
+          $('input[name="paying_amount"]').trigger('input');
+        }
+  });
+
+  $('input[name="paying_amount"]').on("input", function() {
+        var p_amount = parseFloat($('input[name="paying_amount"]').val());
+        var amount = parseFloat($('input[name="amount"]').val());
+        var balance = parseFloat($('input[name="balance"]').val());
+        if(p_amount > amount){
+          alert('Paying amount cannot be bigger than due amount');
+          $('input[name="paying_amount"]').val(amount);
+          p_amount = amount;
+        }
+        $('input[name="amount"]').val(p_amount);
+        $('input[name="paying_amount"]').val(p_amount);
+        $('.change').text(parseFloat(p_amount - amount).toFixed({{$general_setting->decimal}}));
+  });
+
+  $('input[name="amount"]').on("input", function() {
+        var p_amount = parseFloat($('input[name="paying_amount"]').val());
+        var amount = parseFloat($('input[name="amount"]').val());
+        var balance = parseFloat($('input[name="balance"]').val());
+        if(amount > balance){
+          alert('Paying amount cannot be bigger than due amount');
+          $('input[name="amount"]').val(balance);
+          amount = balance;
+        }
+        $('input[name="paying_amount"]').val(amount);
+        $('.change').text(parseFloat(p_amount - amount).toFixed({{$general_setting->decimal}}));
+  });
+
   $(document).on("click", ".deposit", function() {
         var id = $(this).data('id').toString();
-        $("#depositModal input[name='customer_id']").val(id);
+        $("#deposit-modal input[name='customer_id']").val(id);
   });
 
-  $(document).on("click", ".point", function() {
-        var id = $(this).data('id').toString();
-        $("#pointModal input[name='customer_id']").val(id);
-  });
-
-  $(document).on("click", ".clear-due", function() {
-        var id = $(this).data('id').toString();
-        // console.log(id);
-        $("#clearDueModal input[name='customer_id']").val(id);
-        $("#cheque").hide();
-        $(".gift-card").hide();
-        $(".card-element").hide();
-        $('select[name="paid_by_id"]').val(1);
-        $('.selectpicker').selectpicker('refresh');
-        rowindex = $(this).closest('tr').index();
-        // deposit = $('table.customer-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.deposit').text();
-        deposit = $('table.customer-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(6)').text();
-        var sale_id = $(this).data('id').toString();
-        var balance = $('table.customer-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(7)').text();
-        balance = parseFloat(balance.replace(/,/g, ''));
-        $('input[name="paying_amount"]').val(balance);
-        $('#clearDueModal input[name="balance"]').val(balance);
-        $('#p_amount').val(balance);
-        // $('input[name="sale_id"]').val(sale_id);
-  });
-
-    $('select[name="paid_by_id"]').on("change", function() {
-        var id = $(this).val();
-
-        // Hide received amount and change if paid_by_id is not 1 (Cash)
-        if (id != 1) {
-            $('input[name="paying_amount"]').val($('#p_amount').val());
-            $('input[name="paying_amount"]').closest('.col-md-6').hide();
-            $('.change').closest('.col-md-6').hide();
-        } else {
-            $('input[name="paying_amount"]').closest('.col-md-6').show();
-            $('.change').closest('.col-md-6').show();
-        }
-
-        $('input[name="cheque_no"]').attr('required', false);
-        $('#clearDueModal select[name="gift_card_id"]').attr('required', false);
-        $(".clear-due-form").off("submit");
-        // console.log($('select[name="paid_by_id"]').val(), id);
-        if(id == 2){
-            $(".gift-card").show();
-            $(".card-element").hide();
-            $("#cheque").hide();
-            $('#clearDueModal select[name="gift_card_id"]').attr('required', true);
-        }
-        else if (id == 3) {
-            @if($lims_pos_setting_data && (strlen($lims_pos_setting_data->stripe_public_key)>0) && (strlen($lims_pos_setting_data->stripe_secret_key )>0))
-                $.getScript( "vendor/stripe/checkout.js" );
-                $(".card-element").show();
-            @endif
-            $(".gift-card").hide();
-            $("#cheque").hide();
-        } else if (id == 4) {
-            $("#cheque").show();
-            $(".gift-card").hide();
-            $(".card-element").hide();
-            $('input[name="cheque_no"]').attr('required', true);
-        } else if (id == 5) {
-            $(".card-element").hide();
-            $(".gift-card").hide();
-            $("#cheque").hide();
-        } else {
-            $(".card-element").hide();
-            $(".gift-card").hide();
-            $("#cheque").hide();
-            if(id == 6){
-                if($('#p_amount').val() > parseFloat(deposit))
-                    alert('Amount exceeds customer deposit! Customer deposit : ' + deposit);
-            }
-            else if(id==7) {
-                pointCalculation($('#p_amount').val());
-            }
-        }
-    });
-
-    $(document).ready(function() {
-        $('select[name="paid_by_id"]').trigger("change");
-    });
-
-    $('input#p_amount').on("input", function () {
-        var paidBy = $('select[name="paid_by_id"]').val(); // Get the selected payment method
-        if (paidBy != 1) { // Check if paid_by_id is NOT 1 (Cash)
-            $('input[name="paying_amount"]').val($(this).val());
-        }
-    });
-
-
-
-    $('#clearDueModal select[name="gift_card_id"]').on("change", function() {
-        var id = $(this).val();
-        if(expired_date[id] < current_date)
-            alert('This card is expired!');
-        else if($('#clearDueModal input[name="amount"]').val() > balance[id]){
-            alert('Amount exceeds card balance! Gift Card balance: '+ balance[id]);
-        }
-    });
-
-    $('input[name="paying_amount"]').on("input", function() {
-        $(".change").text(parseFloat( $(this).val() - $('input[name="amount"]').val() ).toFixed({{$general_setting->decimal}}));
-    });
-
-    $('#p_amount').on("input", function() {
-        if( $(this).val() > parseFloat($('input[name="paying_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $(this).val('');
-        }
-        else if( $(this).val() > parseFloat($('input[name="balance"]').val()) ) {
-            alert('Paying amount cannot be bigger than due amount');
-            $(this).val('');
-        }
-        $(".change").text(parseFloat($('input[name="paying_amount"]').val() - $(this).val()).toFixed({{$general_setting->decimal}}));
-        var id = $('#clearDueModal select[name="paid_by_id"]').val();
-        var amount = $(this).val();
-        if(id == 2){
-            id = $('#clearDueModal select[name="gift_card_id"]').val();
-            if(amount > balance[id])
-                alert('Amount exceeds card balance! Gift Card balance: '+ balance[id]);
-        }
-        else if(id == 6){
-            if(amount > parseFloat(deposit))
-                alert('Amount exceeds customer deposit! Customer deposit : ' + deposit);
-        }
-        else if(id==7) {
-            pointCalculation(amount);
-        }
-    });
-
-    function pointCalculation(amount) {
-        availablePoints = $('table.customer-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.points').val();
-        required_point = Math.ceil(amount / reward_point_setting['per_point_amount']);
-        if(required_point > availablePoints) {
-          alert('Customer does not have sufficient points. Available points: '+availablePoints+'. Required points: '+required_point);
-        }
-    }
-
-    $(document).on('submit', '.clear-due-form', function(e) {
-        if( $('input[name="paying_amount"]').val() < parseFloat($('#amount').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $('#p_amount').val('');
-            $(".change").text(parseFloat( $('input[name="paying_amount"]').val() - $('#p_amount').val() ).toFixed({{$general_setting->decimal}}));
-            e.preventDefault();
-        }
-        else if( $('input[name="edit_paying_amount"]').val() < parseFloat($('input[name="edit_amount"]').val()) ) {
-            alert('Paying amount cannot be bigger than recieved amount');
-            $('input[name="edit_amount"]').val('');
-            $(".change").text(parseFloat( $('input[name="edit_paying_amount"]').val() - $('input[name="edit_amount"]').val() ).toFixed({{$general_setting->decimal}}));
-            e.preventDefault();
-        }
-
-        $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
-    });
-
-  $(document).on("click", ".getDeposit", function() {
+  $(document).on("click", ".get-deposit", function(e) {
+        e.preventDefault();
         var id = $(this).data('id').toString();
         $.get('customer/getDeposit/' + id, function(data) {
             $(".deposit-list tbody").remove();
@@ -527,7 +550,6 @@
             $.each(data[0], function(index){
                 var newRow = $("<tr>");
                 var cols = '';
-
                 cols += '<td>' + data[1][index] + '</td>';
                 cols += '<td>' + data[2][index] + '</td>';
                 if(data[3][index])
@@ -535,7 +557,7 @@
                 else
                     cols += '<td>N/A</td>';
                 cols += '<td>' + data[4][index] + '<br>' + data[5][index] + '</td>';
-                cols += '<td><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__("db.action")}}<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu"><li><button type="button" class="btn btn-link edit-btn" data-id="' + data[0][index] +'" data-toggle="modal" data-target="#edit-deposit"><i class="dripicons-document-edit"></i> {{__("db.edit")}}</button></li><li class="divider"></li>{{ Form::open(['route' => 'customer.deleteDeposit', 'method' => 'post'] ) }}<li><input type="hidden" name="id" value="' + data[0][index] + '" /> <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="dripicons-trash"></i> {{__("db.delete")}}</button></li>{{ Form::close() }}</ul></div></td>'
+                cols += '<td><div class="btn-group"><button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__("db.action")}}<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" role="menu"><li><button type="button" class="btn btn-link edit-btn" data-id="' + data[0][index] +'" data-toggle="modal" data-target="#edit-deposit"><i class="dripicons-document-edit"></i> {{__("db.edit")}}</button></li><li class="divider"></li>{{ Form::open(["route" => "customer.deleteDeposit", "method" => "post"] ) }}<li><input type="hidden" name="id" value="' + data[0][index] + '" /> <button type="submit" class="btn btn-link text-danger" onclick="return confirmDelete()"><i class="dripicons-trash"></i> {{__("db.delete")}}</button></li>{{ Form::close() }}</ul></div></td>';
                 newRow.append(cols);
                 newBody.append(newRow);
                 $("table.deposit-list").append(newBody);
@@ -544,7 +566,8 @@
         });
   });
 
-  $(document).on("click", ".getPoints", function() {
+  $(document).on("click", ".get-points", function(e) {
+        e.preventDefault();
         var id = $(this).data('id').toString();
         $.get('customer/getPoints/' + id, function(data) {
             $(".points-list tbody").remove();
@@ -552,7 +575,6 @@
             $.each(data[0], function(index){
                 var newRow = $("<tr>");
                 var cols = '';
-
                 cols += '<td>' + data[1][index] + '</td>';
                 cols += '<td>' + data[2][index] + '</td>';
                 cols += '<td>' + data[7][index] + '</td>';
@@ -562,8 +584,7 @@
                     cols += '<td>N/A</td>';
                 cols += '<td>' + data[4][index] + '<br>' + data[5][index] + '</td>';
                 cols += '<td>' + data[6][index] + '</td>';
-
-                cols += '<td><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__("db.action")}}<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu"><li><button type="button" class="btn btn-link edit-btn" data-id="' + data[0][index] +'" data-toggle="modal" data-target="#edit-point"><i class="dripicons-document-edit"></i> {{__("db.edit")}}</button></li><li class="divider"></li>{{ Form::open(['route' => 'customer.deletePoints', 'method' => 'post'] ) }}<li><input type="hidden" name="id" value="' + data[0][index] + '" /> <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="dripicons-trash"></i> {{__("db.delete")}}</button></li>{{ Form::close() }}</ul></div></td>'
+                cols += '<td><div class="btn-group"><button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__("db.action")}}<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" role="menu"><li><button type="button" class="btn btn-link edit-btn" data-id="' + data[0][index] +'" data-toggle="modal" data-target="#edit-point"><i class="dripicons-document-edit"></i> {{__("db.edit")}}</button></li><li class="divider"></li>{{ Form::open(["route" => "customer.deletePoints", "method" => "post"] ) }}<li><input type="hidden" name="id" value="' + data[0][index] + '" /> <button type="submit" class="btn btn-link text-danger" onclick="return confirmDelete()"><i class="dripicons-trash"></i> {{__("db.delete")}}</button></li>{{ Form::close() }}</ul></div></td>';
                 newRow.append(cols);
                 newBody.append(newRow);
                 $("table.points-list").append(newBody);
@@ -577,23 +598,19 @@
         var rowindex = $(this).closest('tr').index();
         var amount = $('table.deposit-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(2)').text();
         var note = $('table.deposit-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(3)').text();
-        if(note == 'N/A')
-            note = '';
-
+        if(note == 'N/A') note = '';
         $('#edit-deposit input[name="deposit_id"]').val(id);
         $('#edit-deposit input[name="amount"]').val(amount);
         $('#edit-deposit textarea[name="note"]').val(note);
         $('#view-deposit').modal('hide');
     });
 
-     $(document).on("click", "table.points-list .edit-btn", function(event) {
+  $(document).on("click", "table.points-list .edit-btn", function(event) {
         var id = $(this).data('id');
         var rowindex = $(this).closest('tr').index();
         var amount = $('table.points-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(2)').text();
         var note = $('table.points-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(3)').text();
-        if(note == 'N/A')
-            note = '';
-
+        if(note == 'N/A') note = '';
         $('#edit-point input[name="point_id"]').val(id);
         $('#edit-point input[name="points"]').val(amount);
         $('#edit-point textarea[name="note"]').val(note);
@@ -610,10 +627,10 @@
     let buttons = [];
 
     @can('customer_export')
-        buttons.push([
+        buttons.push(
             {
                 extend: 'pdf',
-                text: '<i title="export to pdf" class="fa fa-file-pdf-o"></i>',
+                text: '<i title="export to pdf" class="fa fa-file-pdf-o text-danger"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -621,7 +638,7 @@
             },
             {
                 extend: 'excel',
-                text: '<i title="export to excel" class="dripicons-document-new"></i>',
+                text: '<i title="export to excel" class="fa fa-file-excel-o text-success"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -629,7 +646,7 @@
             },
             {
                 extend: 'csv',
-                text: '<i title="export to csv" class="fa fa-file-text-o"></i>',
+                text: '<i title="export to csv" class="fa fa-file-text-o text-info"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
@@ -637,18 +654,18 @@
             },
             {
                 extend: 'print',
-                text: '<i title="print" class="fa fa-print"></i>',
+                text: '<i title="print" class="fa fa-print text-primary"></i>',
                 exportOptions: {
                     columns: ':visible:Not(.not-exported)',
                     rows: ':visible'
                 }
-            },
-        ]);
+            }
+        );
     @endcan
 
-    buttons.push([
+    buttons.push(
         {
-            text: '<i title="delete" class="dripicons-cross"></i>',
+            text: '<i title="delete" class="dripicons-cross text-danger"></i>',
             className: 'buttons-delete',
             action: function ( e, dt, node, config ) {
                 var customer_id = [];
@@ -679,8 +696,8 @@
                                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
                                 '<i class="dripicons-checkmark mr-1"></i> ' + (data || 'Customer deleted successfully!') +
                                 '</div>';
-                            $('section > .container-fluid:first').prepend(alertHtml);
-                            setTimeout(function() { $('section .alert').fadeOut(600, function() { $(this).remove(); }); }, 4000);
+                            $('.customer-workspace-view').prepend(alertHtml);
+                            setTimeout(function() { $('.alert').fadeOut(600, function() { $(this).remove(); }); }, 4000);
                         },
                         error: function(xhr) {
                             alert(xhr.responseText || 'Error deleting selected customers.');
@@ -695,8 +712,8 @@
             extend: 'colvis',
             text: '<i title="column visibility" class="fa fa-eye"></i>',
             columns: ':gt(0)'
-        },
-    ]);
+        }
+    );
 
     $('#customer-table').DataTable( {
         "processing": true,
@@ -711,11 +728,9 @@
         },
          "createdRow": function( row, data, dataIndex ) {
              $(row).attr('data-customer', data['id']);
-            //  console.log(data);
         },
         "columns": columns,
         'language': {
-
             'lengthMenu': '_MENU_ {{__("db.records per page")}}',
              "info":      '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
             "search":  '{{__("db.Search")}}',
@@ -735,7 +750,6 @@
                     if(type === 'display'){
                         data = '<div class="checkbox"><input type="checkbox" class="dt-checkboxes"><label></label></div>';
                     }
-
                    return data;
                 },
                 'checkboxes': {
@@ -747,7 +761,7 @@
         ],
         'select': { style: 'multi',  selector: 'td:first-child'},
         'lengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
-        dom: '<"row"lfB>rtip',
+        dom: '<"row align-items-center mb-2"<"col-md-4"l><"col-md-4 text-center"B><"col-md-4"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6"p>>',
         rowId: 'ObjectID',
         buttons: buttons
     } );

@@ -1,9 +1,10 @@
 @extends('backend.layout.main')
 @section('content')
+@include('backend.partials.document-entry-layout')
 
 <x-error-message key="message" />
 
-<section class="forms">
+<section class="forms classic-document-workspace document-challan-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -13,7 +14,7 @@
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>The field labels marked with * are required input fields.</small></p>
-                        <form action="{{route('challan.update', $challan->id)}}" method="post">
+                        <form action="{{route('challan.update', $challan->id)}}" method="post" id="challan-finalize-form">
                         @csrf
                             <div class="row">
                                 <div class="col-md-4">
@@ -34,14 +35,14 @@
                                         <p>{{$challan->courier->name.' ['.$challan->courier->phone_number.']'}}</p>
                                     </div>
                                 </div>
-                                <div class="col-md-12 mt-3">
+                                <div class="col-md-12 mt-3 document-lines-row">
                                     <h5>Order List</h5>
                                     <?php
                                         $packing_slip_list = explode(",", $challan->packing_slip_list);
                                         $amount_list = explode(",", $challan->amount_list);
                                     ?>
                                     <div class="table-responsive">
-                                        <table class="table table-hover" id="flat-type-table">
+                                        <table class="table table-hover order-list" id="flat-type-table">
                                             <thead>
                                                 <tr>
                                                     <th>PS Reference</th>
@@ -78,8 +79,8 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-12">
-                                    <div class="form-group mt-4">
+                                <div class="col-md-12 document-actions-row">
+                                    <div class="form-group mt-1">
                                         <input type="submit" value="Submit" class="btn btn-primary">
                                     </div>
                                 </div>

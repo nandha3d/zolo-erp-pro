@@ -1,3 +1,4 @@
+@section('rich-editor', '1')
 @extends('backend.layout.main')
 @push('css')
 @endpush

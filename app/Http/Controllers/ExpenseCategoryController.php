@@ -121,7 +121,7 @@ class ExpenseCategoryController extends Controller
 
     public function destroy($id)
     {
-        $lims_expense_category_data = ExpenseCategory::find($id);
+        $lims_expense_category_data = ExpenseCategory::findOrFail($id);
         $lims_expense_category_data->is_active = false;
         $lims_expense_category_data->save();
         return redirect('expense_categories')->with('not_permitted', __('db.Data deleted successfully'));

@@ -229,7 +229,7 @@ class BillerController extends Controller
 
     public function destroy($id)
     {
-        $lims_biller_data = Biller::find($id);
+        $lims_biller_data = Biller::findOrFail($id);
         $this->fileDelete(public_path('images/biller'),$lims_biller_data->image);
 
         $lims_biller_data->is_active = false;

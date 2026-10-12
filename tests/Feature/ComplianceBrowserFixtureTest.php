@@ -17,6 +17,11 @@ class ComplianceBrowserFixtureTest extends ReturnsDocumentTestCase
             '/compliance/documents/sale/'.$sale->id.'/print?format=a4', '/compliance/documents/sale/'.$sale->id.'/print?format=thermal'] as $url) {
             $this->get($url)->assertOk();
         }
+        if (getenv('ERP_EXPORT_DOCUMENT_LAYOUT') === '1') {
+            if (!is_dir(base_path('scratch'))) mkdir(base_path('scratch'), 0777, true);
+            file_put_contents(base_path('scratch/document-compliance-return-fixture.html'),
+                $this->get('/compliance/sale/'.$sale->id.'/return')->assertOk()->getContent());
+        }
         if (getenv('ERP_EXPORT_COMPLIANCE_BROWSER') === '1') {
             $this->assertSame('sqlite', DB::connection()->getDriverName());
             $directory = base_path('scratch'); if (!is_dir($directory)) mkdir($directory, 0777, true);

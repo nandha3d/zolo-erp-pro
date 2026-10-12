@@ -88,7 +88,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.Tax Number')}}</label>
+                                    <label>GSTIN / {{__('db.Tax Number')}}</label>
                                     <input type="text" name="tax_no" class="form-control" value="{{$lims_customer_data->tax_no}}">
                                 </div>
                             </div>
@@ -277,4 +277,5 @@
     var customer_group = $("input[name='customer_group']").val();
     $('select[name=customer_group_id]').val(customer_group);
 </script>
+@include('backend.partials.gstin-autofill', ['gstinField' => 'tax_no', 'nameField' => 'customer_name'])
 @endpush

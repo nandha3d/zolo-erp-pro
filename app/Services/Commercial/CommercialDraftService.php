@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Server-side workspace drafts for the normal Sales and Purchase pages.
+ * Server-side workspace drafts for every document entry page (bills, returns, challans, goods receipts, quotations).
  *
- * A draft is an unfinished workspace state: a versioned snapshot of the legacy form. It never reserves stock, posts
+ * A draft is an unfinished workspace state: a versioned snapshot of the page's form. It never reserves stock, posts
  * accounting, opens items, takes payment, consumes a document number or creates a posted document. The table is
- * called sale_drafts for historical reasons and holds both kinds.
+ * called sale_drafts for historical reasons and holds every kind.
  */
 class CommercialDraftService
 {
@@ -20,6 +20,23 @@ class CommercialDraftService
     public const MAX_BYTES = 2097152;
     public const RETENTION_DAYS = 30;
     public const SCHEMA_VERSION = 1;
+
+    /** Draft kind => the permission that may keep drafts of it and the label used in messages. Keys fit sale_drafts.kind (10 chars). */
+    public const KINDS = [
+        'sale' => ['permission' => 'sales-add', 'label' => 'Sales'],
+        'purchase' => ['permission' => 'purchases-add', 'label' => 'Purchase'],
+        'sreturn' => ['permission' => 'returns-add', 'label' => 'Sales Return'],
+        'preturn' => ['permission' => 'purchase-return-add', 'label' => 'Purchase Return'],
+        'dc' => ['permission' => 'delivery-challans-index', 'label' => 'Delivery Challan'],
+        'grn' => ['permission' => 'grn-index', 'label' => 'Goods Receipt'],
+        'quotation' => ['permission' => 'quotes-add', 'label' => 'Quotation'],
+    ];
+
+    public static function permission(string $kind): string
+    {
+        abort_unless(isset(self::KINDS[$kind]), 404);
+        return self::KINDS[$kind]['permission'];
+    }
 
     /** Drafts of this user in this company for one kind, across branches and years (the quota is not per branch). */
     public function owned(string $kind, CompanyContext $context, int $actor): \Illuminate\Database\Query\Builder
@@ -40,7 +57,7 @@ class CommercialDraftService
 
     public function save(string $kind, array $payload, ?int $id, int $version, CompanyContext $context, int $actor, array $meta = []): array
     {
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $actor);
+        app(CommercialPermission::class)->assert(self::permission($kind), $context, $actor);
         [$payload, $warnings] = $this->checked($kind, $payload, $context, $actor);
         $json = json_encode($payload, JSON_THROW_ON_ERROR);
         if (strlen($json) > self::MAX_BYTES) {
@@ -66,7 +83,7 @@ class CommercialDraftService
             }
             $this->prune($kind, $context, $actor);
             if ($this->owned($kind, $context, $actor)->count() >= self::MAX_OPEN) {
-                throw ValidationException::withMessages(['draft' => 'You already have '.self::MAX_OPEN.' open '.($kind === 'sale' ? 'Sales' : 'Purchase')
+                throw ValidationException::withMessages(['draft' => 'You already have '.self::MAX_OPEN.' open '.self::KINDS[$kind]['label']
                     .' drafts. Close or post one before starting another.'])->status(422);
             }
             return DB::table('sale_drafts')->insertGetId($party + ['company_id' => $context->companyId, 'branch_id' => $context->branchId,
@@ -107,8 +124,14 @@ class CommercialDraftService
 
     public function delete(string $kind, int $id, CompanyContext $context, int $actor): void
     {
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $context, $actor);
+        app(CommercialPermission::class)->assert(self::permission($kind), $context, $actor);
         abort_unless($this->query($kind, $context, $actor)->where('id', $id)->delete(), 404, 'This draft no longer exists.');
+    }
+
+    /** A posted document no longer needs the draft it was entered in. Pages that post through their own controllers call this. */
+    public function forgetPosted(string $kind, ?int $id, int $actor): void
+    {
+        if ($id) DB::table('sale_drafts')->where('id', $id)->where('user_id', $actor)->where('kind', $kind)->delete();
     }
 
     /** Lazy prune for one owner/kind. Age is measured from the last edit, never from creation. */

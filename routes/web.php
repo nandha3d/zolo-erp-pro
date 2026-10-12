@@ -154,6 +154,11 @@ Auth::routes();
 Route::middleware('auth')->group(function () {
     Route::get('company/financial-years/setup', [\App\Http\Controllers\CompanyFinancialYearController::class, 'index'])->name('company.financial-years.setup');
     Route::post('company/financial-years/setup', [\App\Http\Controllers\CompanyFinancialYearController::class, 'store'])->name('company.financial-years.store');
+    // Post-login group/company picker; it chooses the context, so it runs before company middleware.
+    Route::get('select-company', [\App\Http\Controllers\CompanySelectorController::class, 'index'])->name('company.select');
+    Route::post('select-company', [\App\Http\Controllers\CompanySelectorController::class, 'choose'])->name('company.choose');
+    Route::post('company-picker/groups', [\App\Http\Controllers\CompanySelectorController::class, 'storeGroup'])->name('company.groups.store');
+    Route::post('company-picker/companies', [\App\Http\Controllers\CompanySelectorController::class, 'storeCompany'])->name('company.companies.store');
 });
 
 Route::group(['middleware' => 'auth'], function () {
@@ -233,6 +238,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::post('brands/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreBrand'])->name('brands.quick-store');
     Route::post('parties/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreParty'])->name('parties.quick-store');
     Route::post('parties/gst-lookup', [App\Http\Controllers\CommercialController::class, 'gstLookup'])->name('parties.gst-lookup');
+    Route::post('parties/gst-search-name', [App\Http\Controllers\CommercialController::class, 'gstSearchByName'])->name('parties.gst-search-name');
 
 
 
@@ -395,7 +401,6 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('sales/getpayment/{id}', 'getPayment')->name('sale.get-payment');
         Route::post('sales/updatepayment', 'updatePayment')->name('sale.update-payment');
         Route::post('sales/deletepayment', 'deletePayment')->name('sale.delete-payment');
-        Route::get('sales/{id}/create', 'createSale')->name('sale.draft');
         Route::post('sales/deletebyselection', 'deleteBySelection');
         Route::get('customer-display', 'customerDisplay')->name('sales.customerDisplay');
         Route::get('sales/print-last-reciept', 'printLastReciept')->name('sales.printLastReciept');
@@ -909,7 +914,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::controller(\App\Http\Controllers\CatalogueQrController::class)->group(function () {
         Route::get('qr', 'index')->name('qr.index');
         Route::post('qr', 'store')->name('qr.store');
-        Route::get('menu/{slug}', 'viewCatalogue')->name('qr.menu');
+        Route::get('menu/{slug}', 'showPublicMenu')->name('qr.menu');
     });
 
     // Module: Bookings & Appointments Calendar
