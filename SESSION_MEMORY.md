@@ -8,7 +8,7 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-09 (+05:30) — completed document layout and keyboard repair (section 19); party details strip fix (section 20), uncommitted
+- **Last Updated:** 2026-10-12 (+05:30) — GST round-off + A4 tax invoice (section 23), uncommitted
 - **Active Git Branch:** ui
 - **Upstream Remotes:**
   - `upstream`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`)
@@ -891,3 +891,27 @@ User report (screenshot): picker shows "Select Supplier" but Party details strip
 - **Tests:** `tests/Feature/GstSetupTest.php` (8) in phpunit.compliance.xml.
 - **Also this session:** business profile subtype dropdown shows saved subtype + status text + dark mode (operations); sidebar scroll/open menus persist (`public/js/sidebar-state.js`).
 - **Next:** start MariaDB, open Settings › GST: save GSTIN → Install standard GST setup → set product rates/HSN.
+
+## 23. GST Round-Off + A4 Tax Invoice (2026-10-12, uncommitted)
+
+- **Trigger:** user's FMCG sample bill (MSS Native Foods INV2627-403): taxable 9,568.30 + CGST 155 + SGST 155 = 9,878.30, round off -0.30, grand 9,878, words, HSN, rate incl. GST, bank/terms/declaration.
+- **Round-off:** `CommercialPricing::calculate` rounds a GST *sale* (data has `_tax_snapshot`) to whole rupees; `round_off` returned by preview, checked if submitted, stored in `sales.attributes_json.round_off` (no migration). Purchases and non-GST sales unchanged. `SalePostingService` posts the difference to role `rounding` (ledger 6095 "Round Off", added to `GstSetupService::LEDGERS`; `ensureLedgers($companyId, ['rounding'])` auto-creates it). `ReturnService`: the credit note that returns the last of every sold quantity carries the sale round-off (posted to rounding), so notes total the invoice and AR closes. `gst-entry.js` shows "Round off ±x" in the GST breakdown.
+- **Tax invoice print:** new `resources/views/backend/compliance/tax-invoice.blade.php` (A4, table layout, DomPDF-safe) used by `DocumentRenderingService::html` for format a4; thermal keeps `compliance/print.blade.php`. Snapshot adds unit, discount, trade name, states, party contact, ship-to, round_off, due date, paid, references, note, `print` (company letterhead/bank/terms). `dto()` falls back to live print details for older snapshots. Helpers `inr()` (Indian grouping) and `rupeesInWords()` (lakh/crore).
+- **Settings › GST › Registration:** "Invoice print details" form → `companies.settings_json.invoice_print` (action `print`).
+- **Sales/purchase page Print:** `command-center-form.js` opens `/compliance/documents/{kind}/{id}/print?format=a4` for posted documents with a snapshot (`printUrl` in command-center-form partial); otherwise the old modal print.
+- **Tests:** compliance suite 72/73 (+1 skipped) after updates (23.6→24, 21.24→21, partial return leaves 12.20 open, exchange leaves 0.20 due, final-return rounding nets to 0, print text assertions); IndustryFlowIntegrationTest updated (1499, 28) and green; `CommercialPricingTest` adds sample-invoice round-off. DC/GRN/Optech/DocumentEntry web tests need the MySQL dev DB (was down) — not run. Pre-existing failure before this work: `ComplianceHttpTest::test_web_and_api_note_posting_share_retry_and_approval_contracts` (500).
+
+## 24. Sample GST Sales Bill on Dev DB + Draft Restore Fix (2026-10-12, uncommitted)
+
+- **Doc:** `documents/sample-sales-bill/SAMPLE_SALES_BILL.md` (+ screenshots, `tax-invoice-MJ-00001.pdf`) — full walkthrough done in the real UI via Playwright on `localhost:8080` (user chose dev DB).
+- **Dev DB data added (company 1):** standard COA (32 rows, tinker, same as `CompanyDirectoryService::installChart`) + `seedCompany` mappings; GST registration `33ABCDE1234F1Z7` (synthetic); invoice print details; products 36/37 → GST 18%, HSN 8542/8473; customer 1 GSTIN `33PQRSX5678K1Z5`; purchase PUR-00001 (stock 10 each); sale MJ-00001 id 56 ₹15,104 posted (journal 106).
+- **Bug fixed:** `public/js/document-workspace.js` `restoreLines()` — `setAttribute(name, null)` stored `"null"` → reopened drafts posted `product_batch_id: "null"` → "The reference must belong to the selected product." Now null removes the attribute.
+- **Also fixed earlier this day:** `resources/views/backend/partials/gst-entry.blade.php` multi-line `@json(...)` ParseError → array built in `@php`.
+- **Open findings:** invoice prints USD (only currency row is USD; words only for INR); register action menu lacks Print; no UI to install COA on existing company; leftover dry-run sale draft id 19.
+
+## 25. Company Profile + INR + Logo (2026-10-12)
+
+- **User asks:** USD→INR; bills under company name (zoloERP Pro); logo upload; full company details at creation (group or independent). Chose: FMCG·Manufacturer for company 1, INR added as base (USD kept), picker dialog + Settings › Company profile, push all to origin + upstream `ui`.
+- **Code:** migration `2026_10_16_000001_add_profile_to_companies` (address, city, postal_code, phone, email, website, pan, logo + INR currency row); `App\Services\Platform\CompanyProfileService` (single save path, validates, logo → `public/images/company/` new file per upload, GSTIN → `GstSetupService::registerCompany` so registration legal/trade name + address follow the company; PAN defaults from GSTIN); `CompanyProfileController` + `settings/company` routes + `backend/company/profile.blade.php` (also currency → app default, industry change via `IndustryProfileService::apply`); picker `New company` dialog has all fields (`createCompany(..., $logo)`, default INR); `DocumentRenderingService::printSettings` merges profile contact/PAN/logo over GST print details, `logo()` data URI (HTML + DomPDF); tax-invoice letterhead shows logo/PAN; GST print form lost phone/email/website (legacy values kept as fallback); sidebar Settings › Company profile.
+- **Tests:** `tests/Feature/CompanyProfileTest.php` (3 tests) added to `phpunit.compliance.xml`.
+- **Dev DB:** company 1 profile filled via UI, INR (id 2) base + general_settings.currency, industry fmcg/manufacturer, sale MJ-00002 printed with logo. Doc section 11 in `documents/sample-sales-bill/SAMPLE_SALES_BILL.md`.
