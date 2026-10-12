@@ -140,7 +140,7 @@ class CompanyDirectoryService
      * Opens a new legal company with its MAIN branch, first financial year, main warehouse, chart of accounts and
      * industry profile. The actor and the group's admins become members of every branch.
      */
-    public function createCompany(int $actor, array $input, ?IlluminateHttpUploadedFile $logo = null): Company
+    public function createCompany(int $actor, array $input, ?\Illuminate\Http\UploadedFile $logo = null): Company
     {
         $groupId = isset($input['company_group_id']) && $input['company_group_id'] !== '' ? (int) $input['company_group_id'] : null;
         if (!$this->canManageGroup($actor, $groupId)) {

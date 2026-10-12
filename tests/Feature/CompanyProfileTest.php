@@ -74,6 +74,25 @@ class CompanyProfileTest extends ReturnsDocumentTestCase
         $this->assertNull($this->company->fresh()->address, 'A refused profile changes nothing.');
     }
 
+    public function test_new_company_dialog_saves_profile_logo_and_gst_registration(): void
+    {
+        if (!Schema::hasTable('company_setup_audits')) (require database_path('migrations/2026_10_09_000001_create_company_setup_audits.php'))->up();
+        if (!Schema::hasTable('company_groups')) (require database_path('migrations/2026_10_13_000001_create_company_groups.php'))->up();
+        foreach (['address' => fn (Blueprint $t) => $t->text('address')->nullable(), 'is_active' => fn (Blueprint $t) => $t->boolean('is_active')->nullable()] as $column => $add) {
+            if (!Schema::hasColumn('warehouses', $column)) Schema::table('warehouses', $add);
+        }
+        $gstin = $this->gstin('29');
+        $this->post('/company-picker/companies', ['company_group_id' => '', 'trade_name' => 'Weave Mills', 'legal_name' => 'Weave Mills LLP',
+            'code' => 'WEAVE', 'industry' => 'textile', 'subtype' => 'in_house_processing', 'address' => '7, Mill Street', 'city' => 'Bengaluru',
+            'state_code' => '29', 'postal_code' => '560001', 'gstin' => $gstin, 'timezone' => 'Asia/Kolkata', 'fy_start' => '2026-04-01',
+            'fy_end' => '2027-03-31', 'logo' => UploadedFile::fake()->image('logo.png', 100, 50)])->assertSessionHasNoErrors()->assertRedirect();
+
+        $company = \App\Models\Company::where('code', 'WEAVE')->firstOrFail(); $this->logos[] = $company->logo;
+        $this->assertSame(['Bengaluru', substr($gstin, 2, 10), '29'], [$company->city, $company->pan, $company->state_code]);
+        $this->assertFileExists(public_path($company->logo));
+        $this->assertSame('Weave Mills LLP', DB::table('tax_registrations')->where('company_id', $company->id)->where('gstin', $gstin)->value('legal_name'));
+    }
+
     public function test_profile_page_saves_the_company_and_a_logo(): void
     {
         $this->get('/settings/company')->assertOk()->assertSee('Company profile')->assertSee('Base currency');
