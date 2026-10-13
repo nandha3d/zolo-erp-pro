@@ -1,0 +1,160 @@
+Print 3 copies
+GSTIN: 33ZOLOT1234K1Z5	DELIVERY CHALLAN	Original for consignee (job worker)
+Goods sent for job work · Rule 55(1)(c) of the CGST Rules, 2017 · Section 143 of the CGST Act
+	
+ZOLOERP TEXTILES
+
+No. 45, Avinashi Road, Kumar Nagar, Tiruppur, Tamil Nadu 641603
+
+State: Tamil Nadu (33) · Ph: +91 421 400 2000 · textiles@zoloerp.example
+
+	
+
+
+Consignee (Job worker)
+BLUEWAVE DYEING WORKS
+5, Dyeing Unit Street, Tiruppur, Tamil Nadu 641604
+State: Tamil Nadu (33)
+Ph: 9840022222
+GSTIN: 33BWDYE2222K1ZI
+	
+Challan No.	:	JWDC-00002
+Challan Date	:	13-10-2026
+Job work order	:	JWO-00002
+Process	:	Dyeing - grey to dyed fabric
+Expected return	:	25-10-2026
+Place of supply	:	Tamil Nadu (33)
+Vehicle No.	:	TN39 CD 5678
+Transporter	:	Sri Murugan Transport
+E-way bill No.	:	1810 5566 7788
+
+Purpose: Sent for job work - Dyeing - grey to dyed fabric. The goods remain the property of zoloERP Textiles and are to be returned after processing.
+S.No	Description of goods	HSN	Quantity	Rate	Taxable value	GST %
+1	Grey Cotton Fabric 60s GREY-60
+Lot / batch: GREY-L02
+	5208	600 MTR	82.00	49,200.00	5%
+Total	600		49,200.00	
+
+Value of goods (in words): Forty Nine Thousand Two Hundred Rupees Only
+
+Tax: Goods sent for job work without payment of tax under Section 143 of the CGST Act; not a supply. Applicable GST rate on these goods: 5%.
+
+Instructions: Shade RB-07, soft finish, return in rolls of ~50 m
+
+Order note: Dye lot GREY-L02 to Royal Blue, shade card RB-07
+
+Inputs sent for job work must be received back within one year (capital goods within three years) of this challan, failing which they are treated as supplied on the date of dispatch.
+
+Received the above goods in good condition.
+
+Receiver's signature, name & date
+for Bluewave Dyeing Works	For zoloERP Textiles
+
+
+Authorised Signatory
+GSTIN: 33ZOLOT1234K1Z5	DELIVERY CHALLAN	Duplicate for transporter
+Goods sent for job work · Rule 55(1)(c) of the CGST Rules, 2017 · Section 143 of the CGST Act
+	
+ZOLOERP TEXTILES
+
+No. 45, Avinashi Road, Kumar Nagar, Tiruppur, Tamil Nadu 641603
+
+State: Tamil Nadu (33) · Ph: +91 421 400 2000 · textiles@zoloerp.example
+
+	
+
+
+Consignee (Job worker)
+BLUEWAVE DYEING WORKS
+5, Dyeing Unit Street, Tiruppur, Tamil Nadu 641604
+State: Tamil Nadu (33)
+Ph: 9840022222
+GSTIN: 33BWDYE2222K1ZI
+	
+Challan No.	:	JWDC-00002
+Challan Date	:	13-10-2026
+Job work order	:	JWO-00002
+Process	:	Dyeing - grey to dyed fabric
+Expected return	:	25-10-2026
+Place of supply	:	Tamil Nadu (33)
+Vehicle No.	:	TN39 CD 5678
+Transporter	:	Sri Murugan Transport
+E-way bill No.	:	1810 5566 7788
+
+Purpose: Sent for job work - Dyeing - grey to dyed fabric. The goods remain the property of zoloERP Textiles and are to be returned after processing.
+S.No	Description of goods	HSN	Quantity	Rate	Taxable value	GST %
+1	Grey Cotton Fabric 60s GREY-60
+Lot / batch: GREY-L02
+	5208	600 MTR	82.00	49,200.00	5%
+Total	600		49,200.00	
+
+Value of goods (in words): Forty Nine Thousand Two Hundred Rupees Only
+
+Tax: Goods sent for job work without payment of tax under Section 143 of the CGST Act; not a supply. Applicable GST rate on these goods: 5%.
+
+Instructions: Shade RB-07, soft finish, return in rolls of ~50 m
+
+Order note: Dye lot GREY-L02 to Royal Blue, shade card RB-07
+
+Inputs sent for job work must be received back within one year (capital goods within three years) of this challan, failing which they are treated as supplied on the date of dispatch.
+
+Received the above goods in good condition.
+
+Receiver's signature, name & date
+for Bluewave Dyeing Works	For zoloERP Textiles
+
+
+Authorised Signatory
+GSTIN: 33ZOLOT1234K1Z5	DELIVERY CHALLAN	Triplicate for consignor
+Goods sent for job work · Rule 55(1)(c) of the CGST Rules, 2017 · Section 143 of the CGST Act
+	
+ZOLOERP TEXTILES
+
+No. 45, Avinashi Road, Kumar Nagar, Tiruppur, Tamil Nadu 641603
+
+State: Tamil Nadu (33) · Ph: +91 421 400 2000 · textiles@zoloerp.example
+
+	
+
+
+Consignee (Job worker)
+BLUEWAVE DYEING WORKS
+5, Dyeing Unit Street, Tiruppur, Tamil Nadu 641604
+State: Tamil Nadu (33)
+Ph: 9840022222
+GSTIN: 33BWDYE2222K1ZI
+	
+Challan No.	:	JWDC-00002
+Challan Date	:	13-10-2026
+Job work order	:	JWO-00002
+Process	:	Dyeing - grey to dyed fabric
+Expected return	:	25-10-2026
+Place of supply	:	Tamil Nadu (33)
+Vehicle No.	:	TN39 CD 5678
+Transporter	:	Sri Murugan Transport
+E-way bill No.	:	1810 5566 7788
+
+Purpose: Sent for job work - Dyeing - grey to dyed fabric. The goods remain the property of zoloERP Textiles and are to be returned after processing.
+S.No	Description of goods	HSN	Quantity	Rate	Taxable value	GST %
+1	Grey Cotton Fabric 60s GREY-60
+Lot / batch: GREY-L02
+	5208	600 MTR	82.00	49,200.00	5%
+Total	600		49,200.00	
+
+Value of goods (in words): Forty Nine Thousand Two Hundred Rupees Only
+
+Tax: Goods sent for job work without payment of tax under Section 143 of the CGST Act; not a supply. Applicable GST rate on these goods: 5%.
+
+Instructions: Shade RB-07, soft finish, return in rolls of ~50 m
+
+Order note: Dye lot GREY-L02 to Royal Blue, shade card RB-07
+
+Inputs sent for job work must be received back within one year (capital goods within three years) of this challan, failing which they are treated as supplied on the date of dispatch.
+
+Received the above goods in good condition.
+
+Receiver's signature, name & date
+for Bluewave Dyeing Works	For zoloERP Textiles
+
+
+Authorised Signatory

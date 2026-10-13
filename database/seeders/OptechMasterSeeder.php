@@ -139,6 +139,16 @@ class OptechMasterSeeder extends Seeder
                     ['document_type' => 'grn', 'code' => 'GOODS RECEIVED NOTE', 'prefix' => 'GRN-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
                 ];
 
+                // Job work documents: short, readable numbers (a job work challan number travels with the goods).
+                // Added only when the company has no series of that type, so existing numbering is never doubled.
+                foreach ([['job_work_order', 'JOB WORK ORDER', 'JWO-'], ['job_work_dispatch', 'JOB WORK DC', 'JWDC-'], ['job_work_receipt', 'JOB WORK GRN', 'JWGRN-']] as [$type, $code, $prefix]) {
+                    if (!DB::table('document_series')->where(['company_id' => $companyId, 'branch_id' => $branch->id, 'financial_year_id' => $fy->id, 'document_type' => $type])->exists()) {
+                        DB::table('document_series')->insert(['document_type' => $type, 'code' => $code, 'prefix' => $prefix, 'suffix' => '', 'next_number' => 1,
+                            'padding' => 5, 'is_default' => 1, 'company_id' => $companyId, 'branch_id' => $branch->id, 'financial_year_id' => $fy->id,
+                            'reset_policy' => 'financial_year', 'created_at' => now(), 'updated_at' => now()]);
+                    }
+                }
+
                 foreach ($seriesList as $ser) {
                     $exists = DB::table('document_series')->where([
                         'company_id' => $companyId,

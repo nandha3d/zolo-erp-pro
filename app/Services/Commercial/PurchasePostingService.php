@@ -69,6 +69,12 @@ class PurchasePostingService
                     throw \Illuminate\Validation\ValidationException::withMessages(['landed_cost' => 'Received valuation exceeds stock ledger precision. Adjust the allocation.']);
                 }
             }
+            // A job worker's processing charge becomes part of the processed stock's cost (rest to COGS if already used).
+            $capitalised = ['inventory' => 0, 'cogs' => 0];
+            if ($expense > 0 && !empty($purchase->attributes_json['job_work_receipt_id'])) {
+                $capitalised = app(\App\Services\JobWork\JobWorkCosting::class)->capitalise($purchase, $expense, $date, $context, $actor);
+                $expense -= $capitalised['inventory'] + $capitalised['cogs'];
+            }
             $accounts = app(PostingAccounts::class);
             $lines = [];
             $add = function (string|int $role, float $debit, float $credit, bool $party = false) use (&$lines, $accounts, $context, $purchase, $actor) {
@@ -80,7 +86,8 @@ class PurchasePostingService
                     'partner_type' => $party && $purchase->supplier_id ? 'supplier' : null,
                     'partner_id' => $party ? $purchase->supplier_id : null];
             };
-            $add('inventory', $inventory / 10000, 0);
+            $add('inventory', ($inventory + $capitalised['inventory']) / 10000, 0);
+            $add('cogs', $capitalised['cogs'] / 10000, 0);
             $add('goods_in_transit', $transit / 10000, 0);
             $add('operating_expense', $expense / 10000, 0);
             if ($purchase->tax_snapshot_json) {

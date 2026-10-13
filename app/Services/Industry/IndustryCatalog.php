@@ -42,7 +42,8 @@ final class IndustryCatalog
 
     // Process thresholds are explicit presets. Users configure their actual process before dispatch.
     public const PROCESSES = [
-        'textile' => [['DYEING', 'Dyeing', 4, false], ['PRINTING', 'Printing', 4, false], ['FINISHING', 'Finishing', 4, false]],
+        // Grey → dyed fabric is a conversion (a new item comes back); the others return the same material.
+        'textile' => [['GREY-DYE', 'Dyeing - grey to dyed fabric', 5, true], ['DYEING', 'Dyeing', 4, false], ['PRINTING', 'Printing', 4, false], ['FINISHING', 'Finishing', 4, false]],
         'timber' => [['SAWING', 'External sawing', 30, true]],
         'fmcg' => [['REPACKING', 'Outsourced repacking', 5, true]],
     ];

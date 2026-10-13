@@ -20,5 +20,6 @@ Route::prefix($api ? 'v1/operations' : 'operations')->name($api ? 'api.operation
         Route::match(['GET', 'POST'], 'product/{id}/attributes', [OperationsController::class, 'attributes'])->whereNumber('id');
         Route::get('inventory/fefo', [OperationsController::class, 'fefo']);
         Route::get('inventory/pieces', [OperationsController::class, 'pieces']);
+        Route::get('inventory/lots', [OperationsController::class, 'lots']);
         Route::get('dispatch/{id}/print', [OperationsController::class, 'materialDocument'])->whereNumber('id');
     });

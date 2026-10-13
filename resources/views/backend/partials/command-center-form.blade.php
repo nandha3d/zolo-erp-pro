@@ -9,6 +9,7 @@ $commandCenterFormConfig = [
     'context' => $documentContext ?? [],
     'aids' => $entryAids['aids'], 'tracking' => $entryAids['tracking'],
     'piecesUrl' => config('operations.enabled') ? url('operations/inventory/pieces') : null,
+    'lotsUrl' => config('operations.enabled') ? url('operations/inventory/lots') : null,
     'printUrl' => config('compliance.enabled') && config('commercial.enabled') ? url('compliance/documents/'.$kind) : null,
     'purchaseOrders' => $kind === 'purchase' && config('documents.purchase_order_shortcut'),
 ];

@@ -214,7 +214,8 @@ class CommercialApplicationService
     private function attributes(array $data): array
     {
         $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no',
-            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id']));
+            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id']));
+        if (isset($attributes['job_work_receipt_id'])) validator($attributes, ['job_work_receipt_id' => 'integer|min:1'])->validate();
         foreach (['bale_count', 'bundle_count', 'no_of_bales'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
         foreach ($attributes as $key => $value) {
             if ($value === null) {

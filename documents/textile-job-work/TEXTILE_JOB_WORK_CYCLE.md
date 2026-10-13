@@ -12,7 +12,7 @@ Party names, GSTINs and numbers are made up.
 
 The books balance: total debits = total credits = ₹99,435.
 
-Eight bugs stopped or broke the cycle and were fixed along the way (section 3). Three design gaps are left for a decision (section 4).
+Eight bugs stopped or broke the cycle and were fixed along the way (section 3). The three design gaps found were then decided and implemented (section 4), and the route was run again end to end (section 5).
 
 ---
 
@@ -80,14 +80,36 @@ The bank is ₹20,685 overdrawn because the test entered no opening capital.
 
 ---
 
-## 4. Open design gaps (need your decision)
+## 4. Design gaps: decided and implemented (13-10-2026)
 
-| # | Gap | Effect | Option |
+| # | Gap | Decision | What changed |
 |---|---|---|---|
-| A | The **dyeing charge is not part of the dyed fabric's cost**. The ₹14,700 went to General & Misc. Expense; the dyed fabric is valued at ₹80/m (grey cost only). | COGS for the 500 m sold was ₹40,000 instead of ₹47,500 (₹95/m). The 480 m in stock is undervalued by ₹7,200 at period end. Accounting standards (AS 2 / Ind AS 2) count conversion costs as part of inventory cost. | (1) Add the service bill to the cost of that receipt's output (best). (2) At least book it to a dedicated "Job Work / Processing Charges" account instead of General & Misc. |
-| B | The **Material DC print is not a full GST job-work challan**. It shows "Job worker #70" (no name, address or GSTIN), and has no company GSTIN, HSN, value or purpose. The number looks like `ERP-JWD-14-2-2-000001`. | Can't legally travel with the goods (GST Rule 55; job-work stock is also reported in ITC-04) | Print the job worker's name/GSTIN/address, HSN, quantity, taxable value, "sent for job work" purpose and signature; use a DC series |
-| C | The ready-made textile processes (Dyeing / Printing / Finishing) return the **same item** | Grey → dyed (a new item) needs a custom process (step 4) | Decide whether textile defaults should include conversion processes |
+| A | The dyeing charge was booked as General & Misc. Expense; the dyed fabric stayed at grey cost (₹80/m). | **Add it to the stock cost** (option 1) | When the job worker's bill is posted, its processing charge (before GST) is spread over what came back on that receipt. The part still in stock goes to **Inventory**; any part already sold goes to **Cost of Goods Sold**. Nothing is left in expense. A value-only stock-ledger entry raises the item's average cost. The bill, the inventory/COGS split and the revaluation are one journal, so reversing the bill undoes all of it. The receipt shows "material ₹X + processing ₹Y = ₹Z per unit". |
+| B | The Material DC print was not a GST job-work challan (it showed "Job worker #70"). | **Make it GST-compliant** | New **Delivery Challan for job work** (Rule 55(1)(c), Section 143): company GSTIN and address; job worker's **name, address, state, GSTIN**; challan no./date; job work order; process and purpose; expected return; place of supply; item, **HSN**, lot, quantity + unit, rate, **taxable value**; value in words; tax note; vehicle, transporter, **e-way bill no.**; instructions; one-year return note; receiver and authorised signatures. Prints **3 copies** (consignee / transporter / consignor), plus a matching 80-column dot-matrix version. New numbering is `JWO-`, `JWDC-`, `JWGRN-`; numbers already issued stay as they were. |
+| C | The textile presets only returned the same item. | **Configurable grey → dyed process** | New textile preset **GREY-DYE "Dyeing - grey to dyed fabric"**: converts to a new item, 5% loss limit. Every process can now store a **default output item, processing-charge item and rate**, which pre-fill the receipt and the bill (each stays editable). You can load and edit any process from Process Policy. Once a process has been used, its loss limit and conversion are locked, but its defaults can still change. Stock lines take a **lot / batch no.** (dyed lots need no expiry date), the receipt records **lots sent → lots received**, and Sales lines choose the lot from a list of lots in that godown. More processes (printing, finishing, knitting…) are added the same way. |
+
+## 5. Run 2: the configured route end to end
+
+Same company and parties, using the GREY-DYE route with defaults: output Dyed Cotton Fabric Royal Blue, charge item Dyeing Charges, ₹15/m.
+Screenshots are in [run2/](run2/).
+
+| Step | What happened | Result |
+|---|---|---|
+| 1 | Process Policy › edit GREY-DYE › defaults set | `01-grey-dye-route-defaults.png` |
+| 2 | Purchase 600 m grey @ ₹82 from Kumaran as **lot GREY-L02** (no expiry) | PUR-00003 ₹51,660 |
+| 3 | Job work order on GREY-DYE to Bluewave, return by 25-10-2026 | **JWO-00002** |
+| 4 | Send 600 m, lot GREY-L02, vehicle TN39 CD 5678, transporter, e-way bill 1810 5566 7788, shade instructions | **JWDC-00002**: GST challan, 3 copies (`05-…`, `05b-…`) |
+| 5 | Receive 588 m accepted + 12 m loss (2% ≤ 5%); output item pre-filled; **lot RB-L02** | JWGRN-00002; loss ₹984 to Inventory Shrinkage; lots GREY-L02 → RB-L02 |
+| 6 | Job worker bill: item, qty 588 and rate ₹15 pre-filled | **PUR-00004** ₹9,261 → **Dr Inventory ₹8,820** (not expense) + input GST. Receipt shows *material ₹82.00 + processing ₹15.00 = ₹97.00 per unit* |
+| 7 | Sale 300 m to Trendline @ ₹160, lot RB-L02 chosen from the list ("RB-L02 · 588") | MJ-00002 ₹50,400; COGS ₹26,807.87 |
+
+**Why COGS in step 7 is ₹89.36/m and not ₹97/m:** zoloERP values stock at the **weighted average per item**, not per lot.
+The item also held 480 m from run 1 at ₹80, because run 1's dyeing bill was posted before this change and stayed in expense.
+The average is (480 × 80 + 588 × 97) ÷ 1,068 = ₹89.36. In a fresh company, or for any bill from now on, the processing charge is always inside the average.
+Run 1's ₹14,700 is historical. To move it into stock, reverse PUR-00002 and its payment, then book the bill again from the receipt.
+
+The books balance after run 2: inventory ₹68,628.13 equals 768 m × ₹89.36 on hand.
 
 Smaller notes:
 - A reprinted invoice still shows "Balance due" from posting time, even after payment.
-- The dyed fabric's product master cost shows 0, although the stock value in the books is correct.
+- The product master "cost" field is not the stock value; the books use the stock-ledger average.

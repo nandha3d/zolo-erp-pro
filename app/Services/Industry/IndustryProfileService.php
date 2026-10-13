@@ -42,16 +42,23 @@ class IndustryProfileService
         DB::table('product_attribute_definitions')->where('company_id', $context->companyId)->update(['enabled' => false]);
         foreach (IndustryCatalog::ATTRIBUTES[$profile] as $key => [$label, $type]) DB::table('product_attribute_definitions')->updateOrInsert([
             'company_id' => $context->companyId, 'key' => $key], ['label' => $label, 'type' => $type, 'profile_key' => $profile, 'enabled' => true]);
+        self::ensureProcesses($context->companyId, $profile);
+        self::alignProcesses($context->companyId, $profile);
+        self::ensureUnits($context->companyId, $profile);
+        // Presets never change existing unit factors, stock flags, product values or company valuation policies.
+    }
+
+    /** Adds the industry's preset processes the company does not have yet; existing ones (and their edits) are kept. */
+    public static function ensureProcesses(int $companyId, string $profile): void
+    {
+        if (!Schema::hasTable('process_types')) return;
         foreach (IndustryCatalog::PROCESSES[$profile] ?? [] as [$code, $name, $loss, $conversion]) {
-            if (!DB::table('process_types')->where('company_id', $context->companyId)->where('code', $code)->exists()) {
-                DB::table('process_types')->insert(['company_id' => $context->companyId, 'code' => $code, 'name' => $name,
+            if (!DB::table('process_types')->where('company_id', $companyId)->where('code', $code)->exists()) {
+                DB::table('process_types')->insert(['company_id' => $companyId, 'code' => $code, 'name' => $name,
                     'max_loss_percent' => $loss, 'conversion' => $conversion, 'quantity_basis' => $profile === 'timber' ? 'volume_cbm' : 'base_qty',
                     'created_at' => now(), 'updated_at' => now()]);
             }
         }
-        self::alignProcesses($context->companyId, $profile);
-        self::ensureUnits($context->companyId, $profile);
-        // Presets never change existing unit factors, stock flags, product values or company valuation policies.
     }
 
     /**
