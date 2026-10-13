@@ -2367,7 +2367,12 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 #row-detail-modal,
 #charges-drawer,
 #purchase-details,
-#sale-details {
+#sale-details,
+#add-payment,
+#view-payment,
+#edit-payment,
+#add-delivery,
+#send-sms {
     z-index: 1055 !important;
 }
 

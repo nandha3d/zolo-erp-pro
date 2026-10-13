@@ -460,28 +460,13 @@ class CustomerController extends Controller
     {
         $request->validate(['credit_days' => 'nullable|integer|min:0|max:3650', 'search_alias' => 'nullable|string|max:100']);
         $this->validate($request, [
-            'phone_number' => [
-                'max:255',
-                Rule::unique('customers')->where(function ($query) {
-                    return $query->where('is_active', 1);
-                }),
-            ],
+            'phone_number' => \App\Support\CompanyUnique::rules('customers'),
         ]);
         //validation for supplier if create both user and supplier
         if(isset($request->both)) {
             $this->validate($request, [
-                'company_name' => [
-                    'max:255',
-                    Rule::unique('suppliers')->where(function ($query) {
-                        return $query->where('is_active', 1);
-                    }),
-                ],
-                'email' => [
-                    'max:255',
-                    Rule::unique('suppliers')->where(function ($query) {
-                        return $query->where('is_active', 1);
-                    }),
-                ],
+                'company_name' => \App\Support\CompanyUnique::rules('suppliers'),
+                'email' => \App\Support\CompanyUnique::rules('suppliers'),
             ]);
         }
         //validation for user if given user access
@@ -678,12 +663,7 @@ class CustomerController extends Controller
     {
         $request->validate(['credit_days' => 'nullable|integer|min:0|max:3650', 'search_alias' => 'nullable|string|max:100']);
         $this->validate($request, [
-            'phone_number' => [
-                'max:255',
-                    Rule::unique('customers')->ignore($id)->where(function ($query) {
-                    return $query->where('is_active', 1);
-                }),
-            ],
+            'phone_number' => \App\Support\CompanyUnique::rules('customers', (int) $id),
         ]);
 
         $input = $request->all();

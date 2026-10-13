@@ -917,6 +917,7 @@ class PurchaseController extends Controller
                                 type="button"
                                 class="add-payment btn btn-link"
                                 data-id="'.$purchase->id.'"
+                                data-due="'.round(max(0, ($purchase->grand_total - $returned_amount - $purchase->paid_amount) / $purchase->exchange_rate), 4).'"
                                 data-currency_id="'.$purchase->currency_id.'"
                                 data-currency_name="'.$currency_code_name.'"
                                 data-exchange_rate="'.$purchase->exchange_rate.'"

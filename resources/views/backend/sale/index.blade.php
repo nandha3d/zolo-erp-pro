@@ -1944,6 +1944,14 @@
     // Append modals directly to body to avoid container clipping
     $(function() {
         $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #sale-details, #view-payment, #add-payment, #edit-payment, #add-delivery, #send-sms, #quick-create-category-modal, #quick-create-brand-modal, #quick-create-party-modal').appendTo('body');
+        // Register "Add Payment": the bill's id and due amount (restored after the command-center redesign dropped it).
+        $(document).on('click', 'table.sale-list tbody .add-payment, #sale-table tbody .add-payment', function () {
+            var due = parseFloat($(this).data('due')) || 0, $form = $('#add-payment');
+            $form.find('input[name="sale_id"]').val(String($(this).data('id')));
+            $form.find('input[name="balance"], input[name="amount"], input[name="paying_amount"]').val(due.toFixed(2));
+            $form.find('.change').text('0.00');
+            $('#currency_id').val($(this).data('currency_id')); $('#exchange_rate').val(parseFloat($(this).data('exchange_rate')) || 1);
+        });
     });
 
     // --- State variables ---

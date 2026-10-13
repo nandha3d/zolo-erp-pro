@@ -119,7 +119,28 @@ class OperationsController extends Controller
     public function action(Request $request, string $action, ?int $id = null)
     {
         $context = $this->context($request); $actor = $request->user()->id; $data = $request->all(); $key = $this->key($request);
-        $record = match ($action) {
+        try {
+            $record = $this->perform($action, $id, $request, $data, $key, $context, $actor);
+        } catch (\InvalidArgumentException $error) {
+            // Setup gaps (e.g. an unmapped posting account) come back to the form as a message, not an error page.
+            throw \Illuminate\Validation\ValidationException::withMessages(['operation' => $error->getMessage()]);
+        }
+        $url = match (true) {
+            $record instanceof ProductionOrder => url('/operations/production/'.$record->id),
+            $record instanceof JobWorkOrder => url('/operations/job-work/'.$record->id),
+            $record instanceof JobWorkDispatch => url('/operations/job-work/'.$record->job_work_order_id),
+            $record instanceof JobWorkReceipt => url('/operations/job-work/'.JobWorkDispatch::visibleIn($context)->findOrFail($record->dispatch_id)->job_work_order_id),
+            $record instanceof Project => url('/operations/project/'.$record->id),
+            $record instanceof \App\Models\Operations\SerialReservation || $record instanceof \App\Models\Operations\ProjectInstallation => url('/operations/project/'.$record->project_id),
+            $record instanceof Bom => url('/operations/manufacturing'), default => url('/operations/stock'),
+        };
+        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $record, 'redirect' => $url], 201)
+            : redirect($url)->with('message', 'Operation saved.');
+    }
+
+    private function perform(string $action, ?int $id, Request $request, array $data, string $key, CompanyContext $context, int $actor)
+    {
+        return match ($action) {
             'bom' => app(BomService::class)->create($data, $key, $context, $actor),
             'production-plan' => app(ProductionService::class)->plan($data, $key, $context, $actor),
             'production-complete' => app(ProductionService::class)->complete($id, $data, $key, $context, $actor),
@@ -141,17 +162,6 @@ class OperationsController extends Controller
             'expiry-writeoff' => app(FmcgInventoryService::class)->writeOff($data, $key, $context, $actor),
             default => abort(404),
         };
-        $url = match (true) {
-            $record instanceof ProductionOrder => url('/operations/production/'.$record->id),
-            $record instanceof JobWorkOrder => url('/operations/job-work/'.$record->id),
-            $record instanceof JobWorkDispatch => url('/operations/job-work/'.$record->job_work_order_id),
-            $record instanceof JobWorkReceipt => url('/operations/job-work/'.JobWorkDispatch::visibleIn($context)->findOrFail($record->dispatch_id)->job_work_order_id),
-            $record instanceof Project => url('/operations/project/'.$record->id),
-            $record instanceof \App\Models\Operations\SerialReservation || $record instanceof \App\Models\Operations\ProjectInstallation => url('/operations/project/'.$record->project_id),
-            $record instanceof Bom => url('/operations/manufacturing'), default => url('/operations/stock'),
-        };
-        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $record, 'redirect' => $url], 201)
-            : redirect($url)->with('message', 'Operation saved.');
     }
 
     public function configure(Request $request, string $action)

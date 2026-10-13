@@ -1443,6 +1443,35 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
       return $el.parents('.table-responsive, .card-body, .card, .dataTables_wrapper, .modal-body, .modal-content, section');
     };
 
+    // Register row menus sit in a scrolling viewport inside clipped cards: pin the open menu to the screen next to its
+    // button (it stays in the row, so delegated item handlers still match) and close it when the table scrolls.
+    var pinnedMenu = ['position', 'transform', 'top', 'left', 'bottom', 'right', 'z-index', 'max-height', 'overflow-y'];
+    $(document).on('shown.bs.dropdown', '.comm-table-viewport', function (e) {
+      var $menu = $(e.target).children('.dropdown-menu'), $toggle = $(e.target).children('.dropdown-toggle');
+      if (!$menu.length || !$toggle.length) return;
+      // Popper would re-apply its absolute placement over ours; Bootstrap recreates it on the next open.
+      var dropdown = $toggle.data('bs.dropdown');
+      if (dropdown && dropdown._popper) { dropdown._popper.destroy(); dropdown._popper = null; }
+      var rect = $toggle[0].getBoundingClientRect(), height = $menu.outerHeight(), width = $menu.outerWidth();
+      var below = window.innerHeight - rect.bottom - 4, above = rect.top - 4;
+      var top = height <= below || below >= above ? rect.bottom + 2 : Math.max(4, rect.top - height - 2);
+      var values = {position: 'fixed', transform: 'none', top: top + 'px', left: Math.max(4, rect.right - width) + 'px', bottom: 'auto', right: 'auto',
+        'z-index': '1060', 'max-height': Math.max(below, above) + 'px', 'overflow-y': 'auto'};
+      $.each(values, function (name, value) { $menu[0].style.setProperty(name, value, 'important'); });
+      $menu.attr('data-pinned-menu', '1');
+    });
+    $(document).on('hidden.bs.dropdown', '.comm-table-viewport', function (e) {
+      var menu = $(e.target).children('.dropdown-menu[data-pinned-menu]')[0];
+      if (!menu) return;
+      pinnedMenu.forEach(function (name) { menu.style.removeProperty(name); });
+      menu.removeAttribute('data-pinned-menu');
+    });
+    document.addEventListener('scroll', function (e) {
+      if (e.target.classList && e.target.classList.contains('comm-table-viewport')) {
+        $(e.target).find('.dropdown-menu[data-pinned-menu]').siblings('.dropdown-toggle').dropdown('toggle');
+      }
+    }, true);
+
     $(document).on('show.bs.dropdown', function (e) {
       var $target = $(e.target);
       var $toggle = $target.find('.dropdown-toggle');

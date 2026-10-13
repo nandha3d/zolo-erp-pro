@@ -651,6 +651,7 @@ class SaleController extends Controller
                                     type="button"
                                     class="add-payment btn btn-link"
                                     data-id="'.$sale->id.'"
+                                    data-due="'.round(max(0, ($sale->grand_total - $returned_amount - $sale->paid_amount) / $sale->exchange_rate), 4).'"
                                     data-currency_id="'.$sale->currency_id.'"
                                     data-currency_name="'.$currency_code_name.'"
                                     data-exchange_rate="'.$sale->exchange_rate.'"

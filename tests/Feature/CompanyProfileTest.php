@@ -101,6 +101,28 @@ class CompanyProfileTest extends ReturnsDocumentTestCase
         $this->assertSame(['Bengaluru', substr($gstin, 2, 10), '29'], [$company->city, $company->pan, $company->state_code]);
         $this->assertFileExists(public_path($company->logo));
         $this->assertSame('Weave Mills LLP', DB::table('tax_registrations')->where('company_id', $company->id)->where('gstin', $gstin)->value('legal_name'));
+
+        // Ready to trade: every posting role has an account (job work loss posts to shrinkage), and the starter masters exist.
+        $this->assertSame([], DB::table('semantic_account_mappings')->where('company_id', $company->id)->whereNull('account_id')->pluck('semantic_role')->all());
+        $this->assertSame('5020', DB::table('semantic_account_mappings')->where('company_id', $company->id)->where('semantic_role', 'damage')->value('account_code'));
+        $this->assertSame(1, DB::table('customer_groups')->where('company_id', $company->id)->count());
+        $this->assertSame(['Bank', 'Cash'], DB::table('accounts')->where('company_id', $company->id)->orderBy('name')->pluck('name')->all());
+        if (Schema::hasTable('billers')) $this->assertSame(1, DB::table('billers')->where('company_id', $company->id)->count());
+        app(\App\Services\Platform\CompanyDirectoryService::class)->installStarterMasters($company);
+        $this->assertSame(2, DB::table('accounts')->where('company_id', $company->id)->count(), 'Starter masters are added once.');
+    }
+
+    public function test_party_uniqueness_is_per_company_and_ignores_blank_values(): void
+    {
+        DB::table('suppliers')->update(['email' => null, 'is_active' => 1]);
+        $rules = fn () => ['email' => \App\Support\CompanyUnique::rules('suppliers'), 'company_name' => \App\Support\CompanyUnique::rules('suppliers')];
+        request()->attributes->set(\App\Services\Platform\CompanyContext::class, $this->context());
+        $this->assertTrue(validator(['email' => null, 'company_name' => null], $rules())->passes(), 'Blank email is never a duplicate.');
+        $name = DB::table('suppliers')->where('company_id', $this->company->id)->value('company_name') ?? 'Owned supplier';
+        DB::table('suppliers')->where('company_id', $this->company->id)->limit(1)->update(['company_name' => $name]);
+        $this->assertTrue(validator(['company_name' => $name], $rules())->fails(), 'Same name in the same company is refused.');
+        request()->attributes->set(\App\Services\Platform\CompanyContext::class, new \App\Services\Platform\CompanyContext($this->company->id + 1000, $this->branch->id, $this->year->id));
+        $this->assertTrue(validator(['company_name' => $name], $rules())->passes(), 'Another company may use the same name.');
     }
 
     public function test_profile_page_saves_the_company_and_a_logo(): void

@@ -541,7 +541,9 @@ class CommercialController extends Controller
             'cost' => $cost,
             'price' => $price,
             'profit_margin_type' => $validated['profit_margin_type'] ?? 'percentage',
-            'profit_margin' => $validated['profit_margin'] ?? null,
+            // products.profit_margin is NOT NULL; the form leaves it blank when the margin field is hidden (services).
+            'profit_margin' => $validated['profit_margin'] ?? (($validated['profit_margin_type'] ?? 'percentage') === 'percentage'
+                ? ((float) $cost > 0 ? round(((float) $price - (float) $cost) / (float) $cost * 100, 2) : 0) : round((float) $price - (float) $cost, 4)),
             'wholesale_price' => $validated['wholesale_price'] ?? null,
             'daily_sale_objective' => $validated['daily_sale_objective'] ?? null,
             'alert_quantity' => $validated['alert_quantity'] ?? null,

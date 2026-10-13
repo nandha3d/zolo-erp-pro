@@ -16,9 +16,18 @@ class OptechMasterSeeder extends Seeder
 {
     public function run(): void
     {
-        $companies = Company::all();
+        foreach (Company::all() as $company) {
+            self::seedCompany($company);
+        }
+    }
 
-        foreach ($companies as $company) {
+    /** Idempotent starter masters for one company; also run when a company is created from the picker. */
+    public static function seedCompany(Company $company): void
+    {
+        foreach (['agents', 'areas', 'sale_types', 'purchase_types', 'bill_sundries', 'standard_remarks', 'document_series'] as $table) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) return;
+        }
+        {
             $companyId = $company->id;
 
             // 1. Default Agent: DIRECT

@@ -106,6 +106,8 @@ class GstSetupService
                     'effective_from' => $data['effective_from'], 'created_at' => now()]);
             }
             Company::whereKey($context->companyId)->update(['country_code' => 'IN', 'state_code' => substr($gstin, 0, 2)]);
+            // A registered company bills GST from its first document: make sure the GST and round-off ledgers are mapped.
+            $this->ensureLedgers($context->companyId);
         });
     }
 
