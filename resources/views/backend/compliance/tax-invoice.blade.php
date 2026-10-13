@@ -41,7 +41,10 @@
         'LR No.' => ($d['transport']['lr_number'] ?? null) ?: ($d['references']['lr_no'] ?? null),
         'LR Date' => $d['transport']['lr_date'] ?? null,
         'Destination' => $d['references']['station_to'] ?? null,
-        'Bales / Bundles' => trim(($d['transport']['bale_count'] ?? '').(isset($d['transport']['bundle_count']) ? ' / '.$d['transport']['bundle_count'] : ''), ' /') ?: null,
+        // The Transport & Remarks drawer saves bale_no / no_of_bales; API callers may send bale_count.
+        'Bale No.' => $d['transport']['bale_no'] ?? null,
+        'Bales' => ($d['transport']['bale_count'] ?? null) ?: ($d['transport']['no_of_bales'] ?? null),
+        'Bundles' => $d['transport']['bundle_count'] ?? null,
     ], fn ($value) => $value !== null && $value !== '');
     $columns = 8 + ($discounted ? 1 : 0);
 @endphp

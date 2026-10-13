@@ -21,6 +21,13 @@ final class IndustryCatalog
             'document_fields' => ['project_id', 'site_address'], 'reports' => ['project_margin', 'installed_serials', 'warranty_due']],
     ];
 
+    /** Preset unit code => [name, other spellings that already count as this unit]. */
+    public const UNITS = [
+        'PCS' => ['Pieces', ['pc', 'piece', 'nos', 'no', 'unit']], 'BOX' => ['Box', ['bx']], 'CASE' => ['Case', ['cs']],
+        'MTR' => ['Meter', ['m', 'mt', 'metre', 'meters', 'metres']], 'CFT' => ['Cubic feet', ['cu ft']],
+        'CBM' => ['Cubic meter', ['m3', 'cubic metre']], 'KW' => ['Kilowatt', ['kilowatts']],
+    ];
+
     public const ATTRIBUTES = [
         'general_trading' => [],
         'fmcg' => ['mrp' => ['MRP', 'number'], 'shelf_life_days' => ['Shelf life (days)', 'integer'], 'reorder_level' => ['Reorder level', 'number']],

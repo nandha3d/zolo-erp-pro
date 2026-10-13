@@ -82,17 +82,20 @@ Industry settings page (Operations › Business Profile): `fmcg-profiles.png` an
 
 ---
 
-## 4. Gaps found in the textile preset
+## 4. Gaps found in the textile preset, and how they were fixed
 
-| # | Gap | Effect |
+| # | Gap | Fix |
 |---|---|---|
-| 1 | The preset lists unit **MTR**, but no unit is created. Units belong to each company, and the new textile company has **no units at all**. | A product can't be added until a unit (e.g. Meter) is created under Product › Unit. |
-| 2 | Bale count, bundle count and LR fields are in the preset and print on the invoice, but there are **no input boxes** for them on the Sales/Purchase screens. Only the transporter name is in Transport & Remarks. | Bales/bundles can't be typed on a bill. |
-| 3 | The "Job Work GRN" and "Godown" labels in the preset are **not used** anywhere. Only "Material DC" is used, on the job work dispatch print. | Screens still say GRN / Warehouse. |
-| 4 | zoloERP Pro still has Dyeing / Printing / Finishing process types left over from when it was Textile. Switching industry adds the new presets but never removes old ones. | Harmless; they can be deactivated. |
-| 5 | Sidebar items such as "Product Expiry Report" show in every industry (old menus that the modules don't control). | Some cleanup is possible. |
+| 1 | The preset lists unit **MTR**, but no unit was created, so the new textile company had **no units at all** and no product could be added. | **Fixed.** Applying an industry now adds its units when the company doesn't already have them (Textile: MTR Meter; FMCG: PCS, BOX, CASE; Timber: PCS, CFT, CBM; Solar: PCS, KW). Existing spellings count, so "Pc / piece" already counts as PCS. A migration added them to existing companies: zoloERP Textiles now has **MTR Meter**, and zoloERP Pro gained BOX and CASE. |
+| 2 | The invoice expects bale and bundle counts, but the Transport & Remarks box saves **Bale No / No. of Bales** under other names, so they **never printed**. There was also no box for **bundles** or **vehicle number**. (Correction: section 3 above said there were no bale boxes. Bale No and No. of Bales did exist.) | **Fixed.** Sales and Purchase Transport & Remarks now also have **No. of Bundles** and **Vehicle No.** The invoice prints Bale No., Bales, Bundles, Vehicle No. and LR No. from what is saved. The bale and bundle counts must be whole numbers, and all of these fields clear on a new bill and reload when a bill is edited. |
+| 3 | The "Godown", "Material DC" and "Job Work GRN" labels in the preset were **not used** on screens. | **Fixed.** One helper, `IndustryProfileService::label()`, reads the industry's labels. In zoloERP Textiles, the Sales, Purchase, DC, GRN and Job Work screens say **Godown**; the job work "Send material" heading reads **Material DC** and "Receive material" reads **Job Work GRN**. Other industries keep Warehouse / Send material / Receive material. |
+| 4 | Switching industry kept the old industry's process types active (zoloERP Pro still offered Dyeing / Printing / Finishing). | **Fixed.** Switching industry turns off the old industry's ready-made process types and turns this industry's back on. Process types you created yourself, or renamed, are never touched, and job work orders already using a process keep it. zoloERP Pro now offers only Outsourced repacking. |
+| 5 | Sidebar items such as "Product Expiry Report" show in every industry (old menus that the modules don't control). | Open. Not part of this fix. |
 
-These fit the rule of one shared engine with presets: fixing 1–3 means filling the presets, not building textile screens.
+All four fixes only fill in the industry presets on the shared screens. No textile-only screen was added.
+
+![Transport & Remarks with bundles and vehicle no.](21-textile-sales-transport-drawer.png)
+![Textile units](22-textile-units.png)
 
 ---
 

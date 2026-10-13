@@ -921,3 +921,12 @@ User report (screenshot): picker shows "Select Supplier" but Party details strip
 - **Bug fixed:** `CompanyDirectoryService::createCompany` type hint had lost backslashes (`?IlluminateHttpUploadedFile`) in 8b4661e → New company with logo crashed. Regression test `CompanyProfileTest::test_new_company_dialog_saves_profile_logo_and_gst_registration` (4/4).
 - **Dev DB:** company 14 `ZTEX` zoloERP Textiles (Textile · in_house_processing, GSTIN 33ZOLOT1234K1Z5 synthetic, INR, logo) created via picker UI.
 - **Doc:** `documents/textile-company/TEXTILE_COMPANY.md` — purchase/sales/GRN/DC identical across industries; textile adds Job Work + dot-matrix, attributes, process types, qty scale 3. Gaps: MTR unit not created (new company has no units), no bale/bundle/LR inputs on entry screens, receipt/warehouse labels unused, old process types linger after industry switch.
+
+## 27. Textile Preset Gaps Fixed (2026-10-12, committed locally)
+
+- Units: `IndustryCatalog::UNITS` + `IndustryProfileService::ensureUnits()` (called from `installDefaults`) add preset units with alias matching; migration `2026_10_16_000002_align_industry_units_and_processes` backfilled (company 14 MTR, company 1 BOX/CASE).
+- Transport: Sales/Purchase drawer + hidden inputs `bundle_count`, `vehicle_number`; snapshot transport now also keeps `bale_no`, `no_of_bales`; invoice shows Bale No./Bales/Bundles; `no_of_bales` validated integer; reset clears bale/bundle counts.
+- Labels: `IndustryProfileService::label(key, default)` (request-cached) used on sales/purchase/DC/GRN warehouse labels and job work send/receive headings + receipt column.
+- Processes: `IndustryProfileService::alignProcesses()` deactivates untouched other-industry presets (same code+name), reactivates own.
+- Tests: IndustryFlowIntegrationTest `test_presets_add_units_switch_process_types_and_name_shared_screens` (+ FMCG BOX/CASE test now uses preset units); CompanyProfileTest `test_transport_drawer_fields_print_on_the_invoice`.
+- Lesson: in this Git Bash, `node -e '...'` strips backslashes from PHP class names; edit via Edit tool or a PHP script file.

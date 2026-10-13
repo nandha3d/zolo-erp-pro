@@ -107,7 +107,7 @@
 
                         <div class="col-md-2 col-sm-6">
                             <div class="comm-field">
-                                <label for="warehouse_id">Warehouse <span class="text-danger">*</span></label>
+                                <label for="warehouse_id">{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} <span class="text-danger">*</span></label>
                                 <select name="warehouse_id" id="warehouse_id" class="form-control form-control-sm" required>
                                     @foreach($lims_warehouse_list as $wh)
                                         <option value="{{ $wh->id }}">{{ $wh->name }}</option>

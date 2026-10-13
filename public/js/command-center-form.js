@@ -185,7 +185,7 @@
         $(form).find('[name="idempotency_key"]').val(crypto.randomUUID());
         $(form).find('[name="status"], [name="sale_status"]').val(1);
         $('#charges-drawer').find('input, textarea').val('');
-        $(form).find('[id^="hidden-"][type="text"], [id^="hidden-"][type="date"]').val('');
+        $(form).find('[id^="hidden-"][type="text"], [id^="hidden-"][type="date"], #hidden-no-of-bales, #hidden-bundle-count').val('');
         $('#drawer-paid-amount, #hidden-paid-amount').val(0);
         $('#hidden-shipping-cost, #hidden-order-discount, #drawer-shipping-cost, #drawer-order-discount').val(0);
         $('#input-paying-method, #drawer-paying-method').val('Credit'); $('[data-mode]').removeClass('active').filter('[data-mode="Credit"]').addClass('active');
@@ -196,7 +196,7 @@
     $(document).on('command-center-loaded', (event, doc) => {
         $(document).trigger('command-center-reset');
         if (config.shared) $reason.prop('hidden', false).find('input').prop('required', true);
-        for (const field of ['bale_no', 'no_of_bales', 'lr_no', 'lr_date', 'station_to', 'order_no', 'credit_days']) {
+        for (const field of ['bale_no', 'no_of_bales', 'bundle_count', 'vehicle_number', 'lr_no', 'lr_date', 'station_to', 'order_no', 'credit_days']) {
             const value = doc[field] || doc.attributes_json?.[field] || '';
             $('#hidden-' + field.replaceAll('_', '-') + ', #drawer-' + field.replaceAll('_', '-')).val(field.endsWith('date') ? String(value).slice(0, 10) : value);
         }

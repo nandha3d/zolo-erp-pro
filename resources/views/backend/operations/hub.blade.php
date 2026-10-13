@@ -136,7 +136,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Receipt</th>
+                                    <th>{{ \App\Services\Industry\IndustryProfileService::label('receipt', 'Receipt') }}</th>
                                     <th>Date</th>
                                     <th>Received</th>
                                     <th>Loss</th>
@@ -452,7 +452,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Warehouse *</label>
+                                <label>{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                                 <select name="warehouse_id" required>
                                     <option value="">Select warehouse</option>
                                     @foreach($warehouses as $warehouse)
@@ -769,7 +769,7 @@
                         @include('backend.operations.form_start', ['formId'=>'expiry-form', 'action'=>'expiry-writeoff'])
                         <div class="ops-form-compact">
                             <div class="form-group">
-                                <label>Warehouse *</label>
+                                <label>{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                                 <select name="warehouse_id" required>
                                     @foreach($warehouses as $warehouse)
                                         <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>

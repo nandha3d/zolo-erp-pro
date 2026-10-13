@@ -8,7 +8,7 @@ use App\Services\Operations\OperationPosting;
 use App\Services\Platform\CapabilityService;
 use App\Services\Platform\CompanyContext;
 use App\Services\Platform\CompanyContextResolver;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Schema};
 use Illuminate\Validation\ValidationException;
 
 class IndustryProfileService
@@ -49,7 +49,59 @@ class IndustryProfileService
                     'created_at' => now(), 'updated_at' => now()]);
             }
         }
+        self::alignProcesses($context->companyId, $profile);
+        self::ensureUnits($context->companyId, $profile);
         // Presets never change existing unit factors, stock flags, product values or company valuation policies.
+    }
+
+    /**
+     * Offers only this industry's preset processes: untouched presets of other industries (same code and name) are
+     * deactivated, this industry's are reactivated. Orders already using a process keep it; custom processes are never touched.
+     */
+    public static function alignProcesses(int $companyId, string $profile): void
+    {
+        if (!Schema::hasTable('process_types')) return;
+        $own = array_column(IndustryCatalog::PROCESSES[$profile] ?? [], 1, 0);
+        foreach (IndustryCatalog::PROCESSES as $processes) {
+            foreach ($processes as [$code, $name]) {
+                DB::table('process_types')->where('company_id', $companyId)->where('code', $code)->where('name', $name)
+                    ->update(['is_active' => ($own[$code] ?? null) === $name, 'updated_at' => now()]);
+            }
+        }
+    }
+
+    /** Adds the industry's base units (e.g. MTR for textile) to the company when no unit with that code or name exists. */
+    public static function ensureUnits(int $companyId, string $profile): int
+    {
+        if (!Schema::hasTable('units') || !Schema::hasColumn('units', 'company_id') || !Schema::hasColumn('units', 'unit_code')) return 0;
+        $columns = array_flip(Schema::getColumnListing('units')); $added = 0;
+        foreach (IndustryCatalog::SETTINGS[$profile]['units'] ?? [] as $code) {
+            [$name, $aliases] = IndustryCatalog::UNITS[$code] ?? [ucfirst(strtolower($code)), []];
+            $known = array_map('strtolower', [$code, $name, ...$aliases]);
+            $exists = DB::table('units')->where('company_id', $companyId)->get(['unit_code', 'unit_name'])
+                ->contains(fn ($unit) => in_array(strtolower((string) $unit->unit_code), $known, true) || in_array(strtolower((string) ($unit->unit_name ?? '')), $known, true));
+            if ($exists) continue;
+            DB::table('units')->insert(array_intersect_key(['company_id' => $companyId, 'unit_code' => $code, 'unit_name' => $name, 'name' => $name, 'base_unit' => null,
+                'operator' => '*', 'operation_value' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()], $columns));
+            $added++;
+        }
+        return $added;
+    }
+
+    /** Industry wording on shared screens (textile: Godown, Material DC, Job Work GRN); $default when the industry has none. */
+    public static function label(string $key, string $default): string
+    {
+        try {
+            $request = request();
+            if (!$request->attributes->has('industry_labels')) {
+                $context = $request->attributes->get(CompanyContext::class) ?? app(CompanyContextResolver::class)->forActor();
+                $request->attributes->set('industry_labels', Schema::hasTable('company_industry_settings')
+                    ? (app(self::class)->settings($context)['settings']['labels'] ?? []) : []);
+            }
+            return $request->attributes->get('industry_labels')[$key] ?? $default;
+        } catch (\Throwable) {
+            return $default;
+        }
     }
 
     public function settings(CompanyContext $context): array

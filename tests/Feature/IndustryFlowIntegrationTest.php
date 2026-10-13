@@ -52,21 +52,44 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         $this->assertSame([], app(InventoryReconciliationService::class)->differences());
     }
 
+    public function test_presets_add_units_switch_process_types_and_name_shared_screens(): void
+    {
+        $profiles = app(IndustryProfileService::class);
+        $active = fn () => DB::table('process_types')->where('company_id', $this->company->id)->where('is_active', true)->orderBy('code')->pluck('code')->all();
+        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $this->assertTrue(DB::table('units')->where('company_id', $this->company->id)->where('unit_code', 'MTR')->exists(), 'Textile adds its meter unit.');
+        $this->assertSame(['DYEING', 'FINISHING', 'PRINTING'], $active());
+        request()->attributes->set(\App\Services\Platform\CompanyContext::class, $this->context());
+        $this->assertSame(['Godown', 'Material DC', 'Job Work GRN'], [IndustryProfileService::label('warehouse', 'Warehouse'),
+            IndustryProfileService::label('dispatch', 'Send material'), IndustryProfileService::label('receipt', 'Receive material')]);
+
+        $profiles->apply('fmcg', 'distribution', $this->context(), 1);
+        $this->assertSame(['REPACKING'], $active(), 'Textile presets stop being offered after the switch.');
+        request()->attributes->remove('industry_labels');
+        $this->assertSame('Warehouse', IndustryProfileService::label('warehouse', 'Warehouse'));
+
+        $units = DB::table('units')->where('company_id', $this->company->id)->count();
+        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $this->assertSame(['DYEING', 'FINISHING', 'PRINTING'], $active(), 'Switching back offers them again.');
+        $this->assertSame($units, DB::table('units')->where('company_id', $this->company->id)->count(), 'Preset units are added once.');
+    }
+
     public function test_case_purchase_box_sale_free_scheme_and_mrp_use_normalized_base_quantities(): void
     {
         app(IndustryProfileService::class)->apply('fmcg', 'distribution', $this->context(), 1);
-        foreach ([2 => 'BOX', 3 => 'CASE'] as $id => $name) DB::table('units')->insert(['id' => $id, 'name' => $name, 'unit_name' => $name, 'company_id' => $this->company->id]);
+        $units = DB::table('units')->where('company_id', $this->company->id)->whereIn('unit_code', ['BOX', 'CASE'])->pluck('id', 'unit_code');
+        $this->assertCount(2, $units, 'The FMCG preset adds its BOX and CASE units.');
         $product = $this->material(0, 1, ['is_batch' => true, 'tax_category_id' => DB::table('tax_categories')->value('id'), 'hsn_code' => '1001']);
-        foreach ([2 => 12, 3 => 144] as $id => $factor) ProductUomConversion::create(['company_id' => $this->company->id,
+        foreach ([$units['BOX'] => 12, $units['CASE'] => 144] as $id => $factor) ProductUomConversion::create(['company_id' => $this->company->id,
             'product_id' => $product->id, 'from_uom_id' => $id, 'to_uom_id' => 1, 'factor' => $factor, 'rounding_scale' => 4]);
         app(PurchaseApplicationService::class)->create(new PurchaseCommand($this->purchaseData($product, ['items' => [[
-            'product_id' => $product->id, 'qty' => 1, 'purchase_unit_id' => 3, 'net_unit_cost' => 144,
+            'product_id' => $product->id, 'qty' => 1, 'purchase_unit_id' => $units['CASE'], 'net_unit_cost' => 144,
             'batch' => ['batch_no' => 'CASE-A', 'mfg_date' => '2026-09-01', 'expired_date' => '2027-09-01', 'mrp' => 5],
         ]]]), 'case-purchase', 1, $this->context()));
         $scheme = app(FmcgInventoryService::class)->configureScheme(['product_id' => $product->id, 'name' => '12+1',
             'buy_qty' => 12, 'free_qty' => 1, 'valid_from' => '2026-10-01', 'valid_to' => '2026-12-31'], $this->context(), 1);
         $sale = app(SaleApplicationService::class)->create(new SaleCommand($this->saleData($product, ['items' => [[
-            'product_id' => $product->id, 'qty' => 1, 'sale_unit_id' => 2, 'net_unit_price' => 24, 'quantity_scheme_id' => $scheme,
+            'product_id' => $product->id, 'qty' => 1, 'sale_unit_id' => $units['BOX'], 'net_unit_price' => 24, 'quantity_scheme_id' => $scheme,
         ]]]), 'box-sale', 1, $this->context()));
         $this->assertEquals(28, $sale->grand_total); $this->assertEquals(131, $product->fresh()->qty);
         $this->assertEquals(5, DB::table('product_batches')->value('mrp'));

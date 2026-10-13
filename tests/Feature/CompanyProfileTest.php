@@ -61,6 +61,16 @@ class CompanyProfileTest extends ReturnsDocumentTestCase
         $this->assertFileExists(public_path($this->logos[0]), 'A new logo never removes the one older bills print.');
     }
 
+    public function test_transport_drawer_fields_print_on_the_invoice(): void
+    {
+        $sale = $this->gstSale(['bale_no' => 'BL-7', 'no_of_bales' => 3, 'bundle_count' => 9, 'vehicle_number' => 'TN39 AB 1234', 'lr_no' => 'LR-55']);
+        $renderer = app(DocumentRenderingService::class);
+        $html = $renderer->html($renderer->dto('sale', $sale->id, $this->context()), $renderer->profile('sale', $this->context(), null, 'a4'));
+        foreach (['Bale No.', 'BL-7', 'Bales', 'Bundles', 'TN39 AB 1234', 'LR-55'] as $text) $this->assertStringContainsString($text, $html);
+        $this->expectException(ValidationException::class);
+        $this->gstSale(['no_of_bales' => 'many'], 'bad-bales');
+    }
+
     public function test_pan_must_match_gstin_and_a_gstin_needs_an_address(): void
     {
         foreach ([['pan' => 'ZZZZZ9999Z'], ['address' => '']] as $input) {
