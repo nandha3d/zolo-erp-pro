@@ -1,6 +1,11 @@
 /node_modules
 /public/hot
 /public/images/*
+# default product placeholder ships with the app
+!/public/images/zummXD2dvAtI.png
+!/public/images/product/
+/public/images/product/*
+!/public/images/product/zummXD2dvAtI.png
 /public/invoices/*
 /public/frontend/images/*
 
@@ -28,3 +33,5 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /public/stock_count
+# Local database dumps never belong in the repository
+/database/backups/

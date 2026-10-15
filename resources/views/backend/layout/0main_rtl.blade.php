@@ -992,7 +992,7 @@
                         @endforeach
                       </ul>
 
-                      @if (!env('USER_VERIFIED'))
+                      @if (!config('app.user_verified'))
                         @if ($language_setting_active)
                             <li id="languages" style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
                                 <a href="{{route('languages')}}"> {{__('db.Languages')}} <span style="font-size: 16px;">→</span></i></a>

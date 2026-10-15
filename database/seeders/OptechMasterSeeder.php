@@ -119,56 +119,58 @@ class OptechMasterSeeder extends Seeder
                 );
             }
 
-            // 7. Standard Document Series (SERIES_04)
-            $branch = DB::table('company_branches')->where('company_id', $companyId)->first();
-            $fy = DB::table('fiscal_years')->where('company_id', $companyId)->first();
-
+            // 7. Standard Document Series (SERIES_04) for the first branch and financial year
+            $branch = DB::table('company_branches')->where('company_id', $companyId)->orderBy('id')->first();
+            $fy = DB::table('fiscal_years')->where('company_id', $companyId)->orderBy('start_date')->first();
             if ($branch && $fy) {
-                $seriesList = [
-                    ['document_type' => 'sale', 'code' => 'SALES', 'prefix' => 'MJ-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'sale', 'code' => 'Service', 'prefix' => 'MJC-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 0],
-                    ['document_type' => 'purchase', 'code' => 'PURCHASE', 'prefix' => 'PUR-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'purchase', 'code' => 'SERVICE PURCHASE', 'prefix' => 'SPUR-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 0],
-                    ['document_type' => 'sale_payment', 'code' => 'RECEIPT', 'prefix' => 'REC-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'purchase_payment', 'code' => 'PAYMENT', 'prefix' => 'PAY-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'journal', 'code' => 'JOURNAL', 'prefix' => 'JE-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'quotation', 'code' => 'QUOTATION', 'prefix' => 'QUO-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'sale_credit_note', 'code' => 'SALES RETURN', 'prefix' => 'SR-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'purchase_debit_note', 'code' => 'PURCHASE RETURN', 'prefix' => 'PR-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'delivery_challan', 'code' => 'DELIVERY CHALLAN', 'prefix' => 'DC-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                    ['document_type' => 'grn', 'code' => 'GOODS RECEIVED NOTE', 'prefix' => 'GRN-', 'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => 1],
-                ];
-
-                // Job work documents: short, readable numbers (a job work challan number travels with the goods).
-                // Added only when the company has no series of that type, so existing numbering is never doubled.
-                foreach ([['job_work_order', 'JOB WORK ORDER', 'JWO-'], ['job_work_dispatch', 'JOB WORK DC', 'JWDC-'], ['job_work_receipt', 'JOB WORK GRN', 'JWGRN-']] as [$type, $code, $prefix]) {
-                    if (!DB::table('document_series')->where(['company_id' => $companyId, 'branch_id' => $branch->id, 'financial_year_id' => $fy->id, 'document_type' => $type])->exists()) {
-                        DB::table('document_series')->insert(['document_type' => $type, 'code' => $code, 'prefix' => $prefix, 'suffix' => '', 'next_number' => 1,
-                            'padding' => 5, 'is_default' => 1, 'company_id' => $companyId, 'branch_id' => $branch->id, 'financial_year_id' => $fy->id,
-                            'reset_policy' => 'financial_year', 'created_at' => now(), 'updated_at' => now()]);
-                    }
-                }
-
-                foreach ($seriesList as $ser) {
-                    $exists = DB::table('document_series')->where([
-                        'company_id' => $companyId,
-                        'branch_id' => $branch->id,
-                        'financial_year_id' => $fy->id,
-                        'code' => $ser['code'],
-                    ])->exists();
-
-                    if (!$exists) {
-                        DB::table('document_series')->insert($ser + [
-                            'company_id' => $companyId,
-                            'branch_id' => $branch->id,
-                            'financial_year_id' => $fy->id,
-                            'reset_policy' => 'financial_year',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
-                }
+                self::seedSeries($companyId, (int) $branch->id, (int) $fy->id);
             }
+        }
+    }
+
+    /**
+     * Readable default numbering for one branch and financial year. Idempotent; existing series are never changed.
+     * Numbers are unique across the whole company, so a later branch adds its code and a later financial year its
+     * starting year (MJ-00001, MJ-CBE-00001, MJ-27-00001) - at most 16 characters for GST invoices.
+     */
+    public static function seedSeries(int $companyId, int $branchId, int $fyId): void
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('document_series')) return;
+        // Tag only when the plain prefix is already used elsewhere in the company (another branch / another year).
+        $elsewhere = DB::table('document_series')->where('company_id', $companyId)
+            ->where(fn ($q) => $q->where('branch_id', '<>', $branchId)->orWhere('financial_year_id', '<>', $fyId));
+        $tag = '';
+        $firstBranch = (int) DB::table('company_branches')->where('company_id', $companyId)->orderBy('id')->value('id');
+        if ($firstBranch !== $branchId && (clone $elsewhere)->where('branch_id', '<>', $branchId)->exists()) {
+            $code = substr(preg_replace('/[^A-Z0-9]/', '', strtoupper((string) DB::table('company_branches')->where('id', $branchId)->value('code'))), 0, 4);
+            $tag .= ($code !== '' ? $code : 'B'.$branchId).'-';
+        }
+        if ((clone $elsewhere)->where('branch_id', $branchId)->where('financial_year_id', '<>', $fyId)->exists()
+            || ($tag !== '' && (clone $elsewhere)->where('prefix', 'like', '%-'.$tag)->exists())) {
+            $tag .= substr((string) DB::table('fiscal_years')->where('id', $fyId)->value('start_date'), 2, 2).'-';
+        }
+        $series = [
+            ['sale', 'SALES', 'MJ-', 1], ['sale', 'Service', 'MJC-', 0], ['purchase', 'PURCHASE', 'PUR-', 1],
+            ['purchase', 'SERVICE PURCHASE', 'SPUR-', 0], ['purchase_order', 'PURCHASE ORDER', 'PO-', 1], ['sale_payment', 'RECEIPT', 'REC-', 1], ['purchase_payment', 'PAYMENT', 'PAY-', 1],
+            ['journal', 'JOURNAL', 'JE-', 1], ['quotation', 'QUOTATION', 'QUO-', 1], ['sale_credit_note', 'SALES RETURN', 'SR-', 1],
+            ['purchase_debit_note', 'PURCHASE RETURN', 'PR-', 1], ['delivery_challan', 'DELIVERY CHALLAN', 'DC-', 1],
+            ['grn', 'GOODS RECEIVED NOTE', 'GRN-', 1], ['production', 'PRODUCTION', 'PRD-', 1],
+            ['adjustment', 'STOCK ADJUSTMENT', 'ADJ-', 1], ['transfer', 'STOCK TRANSFER', 'TRF-', 1],
+            ['damage', 'STOCK LOSS', 'LOSS-', 1], ['expense', 'EXPENSE', 'EXP-', 1],
+            // Job work numbers travel with the goods, so they stay short.
+            ['job_work_order', 'JOB WORK ORDER', 'JWO-', 1], ['job_work_dispatch', 'JOB WORK DC', 'JWDC-', 1], ['job_work_receipt', 'JOB WORK GRN', 'JWGRN-', 1],
+        ];
+        $scope = ['company_id' => $companyId, 'branch_id' => $branchId, 'financial_year_id' => $fyId];
+        foreach ($series as [$type, $code, $prefix, $default]) {
+            if (DB::table('document_series')->where($scope)->where('code', $code)->exists()) continue;
+            // Job work and production keep a company's existing numbering of that type.
+            if (in_array($type, ['production', 'job_work_order', 'job_work_dispatch', 'job_work_receipt'], true)
+                && DB::table('document_series')->where($scope)->where('document_type', $type)->exists()) continue;
+            // One default per document type: an existing default (for example an automatic series) stays the default.
+            $default = $default && !DB::table('document_series')->where($scope)->where('document_type', $type)->where('is_default', true)->exists();
+            DB::table('document_series')->insert($scope + ['document_type' => $type, 'code' => $code, 'prefix' => $prefix.$tag,
+                'suffix' => '', 'next_number' => 1, 'padding' => 5, 'is_default' => $default, 'reset_policy' => 'financial_year',
+                'created_at' => now(), 'updated_at' => now()]);
         }
     }
 }

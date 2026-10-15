@@ -1890,6 +1890,8 @@
     @php
         $gstRates = app(\App\Services\Tax\GstSetupService::class)->currentRates();
         $jsProductList = [];
+        // Rates on the bill are before tax; a product priced tax-inclusive is shown at its pre-tax rate.
+        $exclusive = fn ($amount, $prod, $rate) => (int) ($prod->tax_method ?? 1) === 2 && $rate > 0 ? round($amount * 100 / (100 + $rate), 4) : $amount;
         foreach($lims_product_list_without_variant as $prod) {
             $taxVal = 0;
             if (!empty($prod->tax_category_id) && isset($gstRates[$prod->tax_category_id])) {
@@ -1903,8 +1905,8 @@
                 'type' => (string)($prod->type ?? 'standard'),
                 'name' => (string)$prod->name,
                 'code' => (string)$prod->code,
-                'price' => (float)($prod->price ?? 0),
-                'cost' => (float)($prod->cost ?? 0),
+                'price' => $exclusive((float)($prod->price ?? 0), $prod, $taxVal),
+                'cost' => $exclusive((float)($prod->cost ?? 0), $prod, $taxVal),
                 'tax_rate' => $taxVal,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
@@ -1924,8 +1926,8 @@
                 'type' => (string)($prod->type ?? 'standard'),
                 'name' => (string)$prod->name,
                 'code' => (string)($prod->item_code ?? $prod->code),
-                'price' => (float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)),
-                'cost' => (float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)),
+                'price' => $exclusive((float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)), $prod, $taxVal),
+                'cost' => $exclusive((float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)), $prod, $taxVal),
                 'tax_rate' => $taxVal,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
@@ -3849,8 +3851,29 @@
         });
     }
 
+    // --- Convert a quotation: same entry engine, the posted bill marks the quotation converted ---
+    var fromQuotationId = urlParams.get('from_quotation');
+    if (fromQuotationId) {
+        switchWorkspaceMode('voucher');
+        $.getJSON('/quotations/' + fromQuotationId + '/conversion', function(res) {
+            if (!res || !res.quotation) return;
+            var q = res.quotation;
+            $('#customer_id').val(q.customer_id).trigger('change');
+            if (q.warehouse_id) $('#form_warehouse_id').val(q.warehouse_id).trigger('change');
+            if (q.biller_id) $('#form_biller_id').val(q.biller_id).trigger('change');
+            if (q.note) $('#hidden-note, #drawer-note').val(q.note);
+            $('#quotation_id_input').remove();
+            $('#sale-entry-form').append('<input type="hidden" name="quotation_id" id="quotation_id_input" value="' + q.id + '">');
+            $('#order-table-body tr.order-item-row').remove();
+            (res.items || []).forEach(function(item) { addProductRow(item); });
+            $('.selectpicker').selectpicker('refresh');
+            recalcTableSummary();
+            $('#doc-title-text').text('New Sales Bill (from Quotation ' + q.reference_no + ')');
+        });
+    }
+
     var savedMode = @json(request('view') === 'orders') ? 'register' : localStorage.getItem('zolo_sale_workspace_mode');
-    if (savedMode === 'register' && !fromDcId) {
+    if (savedMode === 'register' && !fromDcId && !fromQuotationId) {
         switchWorkspaceMode('register');
     }
 

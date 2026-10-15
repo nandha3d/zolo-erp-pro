@@ -8,7 +8,7 @@ return [
     'backup_disk' => env('ERP_BACKUP_OFFSITE_DISK'),
     'backup_retention_days' => 14,
     'backup_max_age_hours' => 26,
-    'upload_roots' => [public_path('uploads'), storage_path('app/public'), storage_path('app/documents')],
+    'upload_roots' => [public_path('uploads'), public_path('images'), public_path('documents'), storage_path('app/public'), storage_path('app/documents')],
     'mysql_dump_binary' => env('ERP_MYSQLDUMP_BINARY', 'mysqldump'),
     'mysql_binary' => env('ERP_MYSQL_BINARY', 'mysql'),
     'restore_root' => storage_path('app/private/restore-rehearsals'),

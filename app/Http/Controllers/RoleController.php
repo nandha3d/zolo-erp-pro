@@ -74,7 +74,7 @@ class RoleController extends Controller
             if(empty($all_permission))
                 $all_permission[] = 'dummy text';
             return view('backend.role.permission', ['lims_role_data' => $lims_role_data, 'all_permission' => $all_permission, 'operation_permissions' => Permission::where(function ($query) {
-                foreach (['manufacturing.%', 'job_work.%', 'profiles.%', 'projects.%'] as $prefix) $query->orWhere('name', 'like', $prefix);
+                foreach (['accounting.%', 'manufacturing.%', 'job_work.%', 'profiles.%', 'projects.%'] as $prefix) $query->orWhere('name', 'like', $prefix);
             })->orderBy('name')->pluck('name')]);
         }
         else
@@ -84,7 +84,7 @@ class RoleController extends Controller
     public function setPermission(Request $request)
     {
         abort_unless(Auth::user()->role_id <= 2, 403);
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         
         $lims_permissions = Permission::pluck('name')->toArray();
@@ -120,7 +120,7 @@ class RoleController extends Controller
 
     public function destroy($id)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         $lims_role_data = Roles::findOrFail($id);
         $lims_role_data->is_active = false;

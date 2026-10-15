@@ -181,7 +181,7 @@
 
     $(document).on('command-center-reset', () => {
         paymentError = ''; $message.hide(); $reason.prop('hidden', true).find('input').prop('required', false).val('');
-        $(form).find('[name="delivery_challan_id"], [name="goods_received_note_id"], [name="draft_id"]').remove();
+        $(form).find('[name="delivery_challan_id"], [name="goods_received_note_id"], [name="quotation_id"], [name="draft_id"]').remove();
         $(form).find('[name="idempotency_key"]').val(crypto.randomUUID());
         $(form).find('[name="status"], [name="sale_status"]').val(1);
         $('#charges-drawer').find('input, textarea').val('');

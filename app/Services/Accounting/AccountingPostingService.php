@@ -178,6 +178,7 @@ class AccountingPostingService
             'sale_credit_note', 'sale_debit_note' => \App\Models\Returns::class,
             'purchase_credit_note', 'purchase_debit_note' => \App\Models\ReturnPurchase::class,
             'damage' => \App\Models\DamageStock::class,
+            'adjustment' => \App\Models\Adjustment::class,
             default => throw new InvalidArgumentException('This source requires its company-owned accounting path.'),
         };
         if (empty($header['reference_id'])) {

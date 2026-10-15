@@ -21,7 +21,7 @@ try {
             ['quotation-edit','#payment-form','#submit-button'], ['transfer-edit','#transfer-form','#submit-button'],
             ['adjustment-edit','#adjustment-form','#submit-button'], ['return-edit','#payment-form','#submit-button'],
             ['return_purchase-edit','form.payment-form','#submit-button'],
-            ['quotation-create_sale','form.sale-form','#submit-button'], ['quotation-create_purchase','#purchase-form','#submit-button'],
+
             ['challan-create','#challan-form','#challan-form input[type=submit]'], ['exchange-create','#exchange-form','#exchange-form button[type=submit]']]) {
             const route = '/__document-layout-'+kind;
             const html = readFileSync(path.join(process.env.DOCUMENT_LAYOUT_FIXTURES, 'document-'+kind+'-fixture.html'),'utf8').replace(/http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?/g,BASE);

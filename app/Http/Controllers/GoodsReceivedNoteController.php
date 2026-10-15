@@ -84,7 +84,7 @@ class GoodsReceivedNoteController extends Controller
 
         DB::beginTransaction();
         try {
-            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? 1;
+            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? abort(409, 'Choose a company first.');
             $reservation = null;
 
             // Generate atomic document number or use provided
@@ -215,7 +215,7 @@ class GoodsReceivedNoteController extends Controller
         try {
             $grn = GoodsReceivedNote::lockForUpdate()->findOrFail($id);
             abort_unless($grn->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
-            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? 1;
+            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? abort(409, 'Choose a company first.');
 
             $grn->update([
                 'grn_date' => $request->input('grn_date'),

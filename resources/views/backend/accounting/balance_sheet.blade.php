@@ -135,6 +135,7 @@
                     <input type="date" name="as_of_date" class="form-control form-control-sm" value="{{ $asOfDate }}" style="height:32px; font-size:12px;">
                 </div>
                 <div class="col-md-6 d-flex" style="padding: 0 6px;">
+                    @include('backend.accounting.partials.branch_scope')
                     <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2" style="height:32px; font-size:12px; font-weight:600;">
                         <i class="dripicons-search"></i> Update Statement
                     </button>

@@ -96,6 +96,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Schema::defaultStringLength(191);
+        // A label with no row in the translations table shows its readable text ("Stock"), never the raw key ("db.Stock").
+        $this->app['translator']->handleMissingKeysUsing(fn ($key) => is_string($key) && str_starts_with($key, 'db.') ? substr($key, 3) : $key);
         $this->app->bind(\App\ViewModels\ISmsModel::class, \App\ViewModels\SmsModel::class);
         $this->app->booted(function () {
             foreach ($this->app['router']->getRoutes() as $route) {

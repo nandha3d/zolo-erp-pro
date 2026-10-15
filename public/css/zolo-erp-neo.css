@@ -3058,3 +3058,10 @@ nav.navbar .topbar-shortcuts kbd{padding:2px 5px;border:1px solid var(--neo-bord
 /* bootstrap-select 1.13 (Bootstrap 4): the option list inside an open picker is always shown; its outer menu controls
    visibility. Several pages strip `.show` from every dropdown menu to close the others, which hid the open list. */
 .bootstrap-select .dropdown-menu.inner{display:block !important}
+
+/* Dark mode: floating field labels and register filter bars kept light backgrounds, leaving light text unreadable (matrix B40). */
+body.dark-mode .top-fields label { background: #111827; color: #e2e8f0; }
+body.dark-mode .comm-table-filter-bar, body.dark-mode #filter-card { background: #111827; color: #e2e8f0; }
+body.dark-mode .comm-table-filter-bar label, body.dark-mode #filter-card label { color: #cbd5e1; }
+body.dark-mode .side-dropdown-filters { background: #111827; border-color: #334155; }
+body.dark-mode .side-dropdown-filters label { color: #cbd5e1; }

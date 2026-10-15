@@ -31,7 +31,10 @@ class UserController extends Controller
             $permissions = Role::findByName($role->name)->permissions;
             foreach ($permissions as $permission)
                 $all_permission[] = $permission->name;
-            $lims_user_list = User::where('is_deleted', false)->get();
+            // Only the active company's users; other companies' staff stay private.
+            $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+            $lims_user_list = User::where('is_deleted', false)
+                ->when($context && \Illuminate\Support\Facades\Schema::hasTable('company_user'), fn ($q) => $q->whereIn('id', \Illuminate\Support\Facades\DB::table('company_user')->where('company_id', $context->companyId)->select('user_id')))->get();
             $numberOfUserAccount = User::where('is_active', true)->count();
             return view('backend.user.index', compact('lims_user_list', 'all_permission', 'numberOfUserAccount'));
         }
@@ -140,11 +143,12 @@ class UserController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('users-edit')){
-            $lims_user_data = User::findOrFail($id);
+            $lims_user_data = $this->companyUser($id);
             $lims_role_list = Roles::where('is_active', true)->get();
             $lims_biller_list = Biller::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            return view('backend.user.edit', compact('lims_user_data', 'lims_role_list', 'lims_biller_list', 'lims_warehouse_list'));
+            [$company_branches, $user_branch_ids] = $this->branchAccess($lims_user_data->id);
+            return view('backend.user.edit', compact('lims_user_data', 'lims_role_list', 'lims_biller_list', 'lims_warehouse_list', 'company_branches', 'user_branch_ids'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -152,7 +156,7 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $this->validate($request, [
@@ -171,13 +175,16 @@ class UserController extends Controller
             ],
         ]);
 
-        $input = $request->except('password');
+        $lims_user_data = $this->companyUser($id);
+        $input = $request->except('password', 'branch_ids', 'branch_access');
         if(!isset($input['is_active']))
             $input['is_active'] = false;
         if(!empty($request['password']))
             $input['password'] = bcrypt($request['password']);
-        $lims_user_data = User::findOrFail($id);
-        $lims_user_data->update($input);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $lims_user_data, $input) {
+            $lims_user_data->update($input);
+            if ($request->boolean('branch_access')) $this->syncBranchAccess($lims_user_data->id, (array) $request->input('branch_ids', []));
+        });
 
         cache()->forget('user_role');
         return redirect('user')->with('message2', __('db.Data updated successfullly'));
@@ -185,7 +192,7 @@ class UserController extends Controller
 
     public function toggleStatus(Request $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         
         $user = User::find($request->id);
@@ -214,7 +221,7 @@ class UserController extends Controller
 
     public function profileUpdate(Request $request, $id)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $input = $request->all();
@@ -225,7 +232,7 @@ class UserController extends Controller
 
     public function changePassword(Request $request, $id)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $input = $request->all();
@@ -259,7 +266,7 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $lims_user_data = User::findOrFail($id);
@@ -300,5 +307,42 @@ class UserController extends Controller
         }
 
         return response()->json($html);
+    }
+    /** A user can be viewed or changed only from a company the user belongs to. */
+    private function companyUser($id): User
+    {
+        $user = User::findOrFail($id);
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        if ($context && \Illuminate\Support\Facades\Schema::hasTable('company_user')) {
+            abort_unless(\Illuminate\Support\Facades\DB::table('company_user')->where('company_id', $context->companyId)->where('user_id', $user->id)->exists(), 404);
+        }
+        return $user;
+    }
+
+    /** @return array{0: \Illuminate\Support\Collection, 1: list<int>} the active company's branches and the user's grants */
+    private function branchAccess(int $userId): array
+    {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        if (!$context || !\Illuminate\Support\Facades\Schema::hasTable('company_user_branches')) return [collect(), []];
+        return [\Illuminate\Support\Facades\DB::table('company_branches')->where('company_id', $context->companyId)->where('is_active', true)->orderBy('id')->get(['id', 'code', 'name']),
+            \Illuminate\Support\Facades\DB::table('company_user_branches')->where('company_id', $context->companyId)->where('user_id', $userId)->pluck('branch_id')->map(fn ($id) => (int) $id)->all()];
+    }
+
+    /** Branch grants in the active company; only a company administrator may change them and at least one must remain. */
+    private function syncBranchAccess(int $userId, array $branchIds): void
+    {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        if (!$context) return;
+        abort_unless(app(\App\Services\Platform\CompanyContextResolver::class)->canManageFinancialYears(Auth::id(), $context->companyId), 403, 'Company administrator required to change branch access.');
+        $valid = \Illuminate\Support\Facades\DB::table('company_branches')->where('company_id', $context->companyId)->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id);
+        $chosen = collect($branchIds)->map(fn ($id) => (int) $id)->unique()->values();
+        if ($chosen->isEmpty() || $chosen->diff($valid)->isNotEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['branch_ids' => 'Tick at least one branch of this company.']);
+        }
+        $table = \Illuminate\Support\Facades\DB::table('company_user_branches');
+        (clone $table)->where('company_id', $context->companyId)->where('user_id', $userId)->whereNotIn('branch_id', $chosen)->delete();
+        foreach ($chosen as $branchId) {
+            (clone $table)->updateOrInsert(['company_id' => $context->companyId, 'user_id' => $userId, 'branch_id' => $branchId], ['updated_at' => now(), 'created_at' => now()]);
+        }
     }
 }

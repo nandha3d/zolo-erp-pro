@@ -35,7 +35,7 @@ class CustomFieldController extends Controller
 
     public function store(Request $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $data = $request->all();
@@ -217,7 +217,7 @@ class CustomFieldController extends Controller
 
     public function destroy($id)
     {
-        if (!env('USER_VERIFIED')) {
+        if (!config('app.user_verified')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disabled for demo!'));
         }
 

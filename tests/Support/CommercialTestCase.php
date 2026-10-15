@@ -70,7 +70,7 @@ abstract class CommercialTestCase extends CompanyErpServiceTestCase
         config(['commercial.enabled' => true, 'compliance.enabled' => false, 'operations.enabled' => false]);
         // The Optech master migration positions new columns with after(); the minimal fixture tables need those legacy columns.
         foreach (['customers' => ['postal_code', 'tax_no', 'credit_days'], 'suppliers' => ['postal_code', 'vat_number', 'opening_balance'],
-            'products' => ['alert_quantity', 'tax_category_id'], 'sales' => ['sale_type'], 'purchases' => ['purchase_type', 'reference_no', 'note']] as $table => $legacyColumns) {
+            'products' => ['alert_quantity', 'tax_category_id', 'tax_method'], 'sales' => ['sale_type'], 'purchases' => ['purchase_type', 'reference_no', 'note']] as $table => $legacyColumns) {
             Schema::table($table, function (Blueprint $t) use ($table, $legacyColumns) {
                 foreach ($legacyColumns as $column) {
                     if (!Schema::hasColumn($table, $column)) $t->string($column)->nullable();

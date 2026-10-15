@@ -103,7 +103,7 @@ class LanguageSettingController extends Controller
                 ->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
 
-        if (!env('USER_VERIFIED')) {
+        if (!config('app.user_verified')) {
             return redirect()->back()->with(['error' => __('db.This feature is disabled for demo!')]);
         }
 
@@ -128,7 +128,7 @@ class LanguageSettingController extends Controller
                 ->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
         
-        if (!env('USER_VERIFIED')) {
+        if (!config('app.user_verified')) {
             session()->flash('message', 'This feature is disabled for demo!');
             session()->flash('type', 'danger');
             return response()->json('error');

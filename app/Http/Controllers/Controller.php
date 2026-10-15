@@ -31,6 +31,8 @@ class Controller extends BaseController
 
 	public function createActivityLog($log_data)
 	{
+		$log_data['company_id'] ??= request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? session('company_id');
+		if (!\Illuminate\Support\Facades\Schema::hasColumn('activity_logs', 'company_id')) unset($log_data['company_id']);
 		ActivityLog::create($log_data);
 		if(isset($log_data['mail_setting']) && isset($log_data['admin_email'])) {
 			$this->setMailInfo($log_data['mail_setting']);

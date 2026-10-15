@@ -236,7 +236,8 @@
                     const current = value === undefined || value === null ? '' : String(value);
                     lots.empty().append(new Option('Loading lots…', current)).val(current);
                     $.getJSON(config.lotsUrl, {product_id: row.find('.row-product-id').val(), warehouse_id: $('#form_warehouse_id').val()}).done(result => {
-                        lots.empty().append(new Option((result.data || []).length ? 'No lot' : 'No lots in this godown', ''));
+                        // FMCG issues the earliest-expiring stock when no lot is chosen (server-side FEFO).
+                        lots.empty().append(new Option((result.data || []).length ? (tracking.profile === 'fmcg' ? 'Auto · earliest expiry first (FEFO)' : 'No lot') : 'No lots in this godown', ''));
                         (result.data || []).forEach(lot => lots.append(new Option(lot.batch_no + ' · ' + Number(lot.qty).toLocaleString() + (lot.expired_date ? ' · exp ' + String(lot.expired_date).slice(0, 10) : ''), lot.id)));
                         lots.val(current);
                     }).fail(() => lots.empty().append(new Option('Lots unavailable', current)).val(current));

@@ -8,7 +8,7 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-12 (+05:30) — GST round-off + A4 tax invoice (section 23), uncommitted
+- **Last Updated:** 2026-10-15 (+05:30) — production test matrix + fixes (section 30)
 - **Active Git Branch:** ui
 - **Upstream Remotes:**
   - `upstream`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`)
@@ -946,3 +946,11 @@ User report (screenshot): picker shows "Select Supplier" but Party details strip
 - **Dev DB run 2 (ZTEX):** PUR-00003 lot GREY-L02 → JWO-00002/JWDC-00002/JWGRN-00002 → PUR-00004 Dr Inventory 8,820 (₹97/m) → MJ-00002 300 m lot RB-L02. Doc section 4–5 in `documents/textile-job-work/TEXTILE_JOB_WORK_CYCLE.md`.
 - **Valuation note:** weighted average per item (not per lot).
 - **Blade gotcha:** `word@endif`/`word@if` is not a directive — use `{{ '' }}@if` or a space.
+
+## 30. Production-Completion Test Matrix + Fixes (2026-10-15)
+
+- **Report:** `documents/PRODUCTION_TEST_MATRIX_REPORT.md` (28 gates, findings B1–B44, fix status, evidence). Real-browser harness lives outside the repo (session scratchpad `e2e/*.mjs`): fresh install on disposable MySQL `127.0.0.1:33084` (DBs `zolo_test_completion_uat`, `zolo_test_uat2`), app on `php -S :8091/:8092`, Playwright via `V:/pers/Freelance/loanapp/node_modules/playwright-core`.
+- **Critical/high fixed:** B23 journal screens/posting need `accounting.*` permissions; B21 empty-database refused with >1 company; B28 stock adjustments post Dr/Cr Inventory vs Variance (5030) and keep `erp:health` inventory value green; B29 transfer/POS lists include `is_imei=0` items; B11 quotation → unified `/sales|/purchases?from_quotation=` (legacy `quotation/create_sale|create_purchase` views removed), bill marks quotation converted; B20 accounting permissions created + on Role page; B10 tax-inclusive master price shown as pre-tax rate; B12 GRN/DC stamped with branch/FY and branch-scoped; B35 starter series replay-safe; B42 `USER_VERIFIED`/`ERP_OPTIONAL_ACTIVATION_READY` read via `config('app.*')`.
+- **Also fixed:** B1 picker redirect on fresh install; B2 demo catalog only with `SEED_DEMO_DATA=true` (legacy suite sets it); B3 GST slabs at creation; B4 quick party uses company group; B5/B24 `OptechMasterSeeder::seedSeries()` for every branch/FY (tags MJ-CBE-, MJ-27-; called on new branch + new FY; migration 2026_10_17_000005); B6/B7/B9/B18 quotation fixes; B13 conversion links keep entry visible; B14 placeholder image shipped; B17 findOrFail; B19 branch access on user edit; B22 activity log company column; B25 `?branch_scope=all` company-wide reports; B27 ageing as of today; B30 FEFO label; B31 FMCG damage capability; B32 backups include `public/images`, `public/documents`; B33 backup errors shown/logged; B36 `/operations` lands on enabled area; B37 report/list overflow CSS; B39 root `.htaccess` deny rules; B41 phpunit pins ERP_* flags (suites no longer read dev `.env` flags); B43/B44 notification/user lists scoped to company.
+- **Second pass (user: "fix all the issues and merge it to ui"):** PO lifecycle (`PO-` series via `purchase_order` document type, receipts limited to open quantity, `attributes_json.fulfilled_at` + register shows Fulfilled); negative cash payment warning; dark-mode filter labels; missing `db.*` translations fall back to readable text (AppServiceProvider); CORS only on `api/*` (`API_CORS_ORIGIN`); StockPolicyException not reported; ComplianceHttpTest stand-in layout (`tests/Support/views`); old demo dump untracked (copy in `storage/app/private/db-backups/`).
+- **Still needs people/servers:** physical printing, real off-site backup disk, production server (HTTPS/nginx/workers), real-data reconciliation, operator/accountant sign-off, agreed p95 budgets. Ctrl+F12 purchase-order shortcut stays unassigned (user decision).

@@ -256,7 +256,7 @@ class SupplierController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('suppliers-edit')){
-            $lims_supplier_data = Supplier::where('id',$id)->first();
+            $lims_supplier_data = Supplier::findOrFail($id);
             return view('backend.supplier.edit',compact('lims_supplier_data'));
         }
         else

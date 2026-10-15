@@ -270,8 +270,20 @@ class CommercialController extends Controller
         } catch (\InvalidArgumentException $error) {
             throw \Illuminate\Validation\ValidationException::withMessages(['payment' => $error->getMessage()]);
         }
-        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $payment], 201)
-            : redirect($kind === 'sale' ? '/sales' : '/purchases')->with('message', 'Payment recorded successfully.');
+        $warning = $this->negativeCashWarning($payment, $context);
+        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $payment] + ($warning ? ['warning' => $warning] : []), 201)
+            : redirect($kind === 'sale' ? '/sales' : '/purchases')->with('message', trim('Payment recorded successfully. '.$warning));
+    }
+
+    /** Cash cannot really go below zero: a payment that leaves the cash ledger negative is recorded but flagged (matrix B38). */
+    private function negativeCashWarning($payment, CompanyContext $context): ?string
+    {
+        $ledger = DB::table('accounts')->where('company_id', $context->companyId)->where('id', $payment->account_id ?? 0)->value('chart_of_account_id');
+        if (!$ledger || DB::table('chart_of_accounts')->where('id', $ledger)->value('control_type') !== 'cash') return null;
+        $balance = (float) DB::table('journal_items as i')->join('journal_entries as e', 'e.id', '=', 'i.journal_entry_id')
+            ->where('e.company_id', $context->companyId)->where('e.status', 'posted')->where('i.chart_of_account_id', $ledger)
+            ->sum(DB::raw('i.debit - i.credit'));
+        return $balance < -0.005 ? 'Warning: the cash ledger is now negative ('.number_format($balance, 2).'). Check that every cash receipt was entered.' : null;
     }
 
     public function receive(Request $request, int $id)
@@ -661,10 +673,9 @@ class CommercialController extends Controller
             'credit_days' => 'nullable|integer|min:0|max:3650',
         ]);
 
-        $companyId = session('company_id') ?? 1;
-        if (auth()->check() && auth()->user()->company_id) {
-            $companyId = auth()->user()->company_id;
-        }
+        // The active company, never a guessed default: parties must land in the company the user is working in.
+        $companyId = $request->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? session('company_id');
+        abort_unless($companyId, 409, 'Choose a company first.');
 
         $partyType = $validated['party_type'] ?? 'supplier';
         if (!empty($request->both) || $request->both == '1') {
@@ -676,7 +687,13 @@ class CommercialController extends Controller
         $country = !empty($validated['country']) ? trim($validated['country']) : 'India';
         $creditDays = isset($validated['credit_days']) && $validated['credit_days'] !== '' ? (int)$validated['credit_days'] : 30;
         $openingBalance = isset($validated['opening_balance']) && $validated['opening_balance'] !== '' ? (float)$validated['opening_balance'] : 0;
-        $customerGroupId = !empty($validated['customer_group_id']) ? (int)$validated['customer_group_id'] : 1;
+        // Default to the company's own first active group (customer groups are company scoped).
+        $customerGroupId = \App\Models\CustomerGroup::where('company_id', $companyId)->where('is_active', true)
+            ->when(!empty($validated['customer_group_id']), fn ($q) => $q->whereKey((int) $validated['customer_group_id']))
+            ->orderBy('id')->value('id');
+        if (!$customerGroupId && in_array($partyType, ['customer', 'both'], true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['customer_group_id' => 'Select a customer group of this company.']);
+        }
 
         $supplier = null;
         $customer = null;

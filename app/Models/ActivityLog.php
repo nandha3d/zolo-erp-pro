@@ -9,5 +9,5 @@ class ActivityLog extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['date', 'user_id', 'action', 'reference_no', 'item_description'];
+    protected $fillable = ['date', 'user_id', 'company_id', 'action', 'reference_no', 'item_description'];
 }

@@ -22,11 +22,12 @@ class FinancialReportService
     /** Carry prior posted activity into the selected period without changing historical FY dates. */
     public function openingBalance(ChartOfAccount $account, CompanyContext $context, string $start): float
     {
-        $main = \App\Models\CompanyBranch::whereKey($context->branchId)->value('code') === 'MAIN';
+        $all = $this->allBranches($context);
+        $main = $all || \App\Models\CompanyBranch::whereKey($context->branchId)->value('code') === 'MAIN';
         $amount = $main ? LedgerAmount::units($account->opening_balance) : 0;
         foreach (JournalItem::forCompany($context)->where('chart_of_account_id', $account->id)
             ->whereHas('journalEntry', fn ($q) => $q->forCompany($context)->where('status', 'posted')
-                ->where(fn ($q) => $q->where('branch_id', $context->branchId)->when($main, fn ($q) => $q->orWhereNull('branch_id')))
+                ->when(!$all, fn ($q) => $q->where(fn ($q) => $q->where('branch_id', $context->branchId)->when($main, fn ($q) => $q->orWhereNull('branch_id'))))
                 ->where(fn ($q) => $q->whereNull('financial_year_id')->orWhereIn('financial_year_id', FiscalYear::where('company_id', $context->companyId)->select('id')))
                 ->whereDate('entry_date', '<', $start))->cursor() as $item) {
             $change = LedgerAmount::units($item->debit) - LedgerAmount::units($item->credit);
@@ -51,10 +52,25 @@ class FinancialReportService
     /** Undated legacy headers belong to MAIN only, until reviewed opening/history migration. */
     public function scopeEntries(Builder $query, CompanyContext $context): Builder
     {
-        $main = \App\Models\CompanyBranch::whereKey($context->branchId)->value('code') === 'MAIN';
-        return $query->forCompany($context)->where('status', 'posted')
-            ->where(fn ($q) => $q->where('branch_id', $context->branchId)->when($main, fn ($q) => $q->orWhereNull('branch_id')))
+        $query->forCompany($context)->where('status', 'posted')
             ->where(fn ($q) => $q->where('financial_year_id', $context->financialYearId)->orWhereNull('financial_year_id'));
+        // The legal entity's statements: every branch, for a user who holds every branch of the company.
+        if ($this->allBranches($context)) {
+            return $query;
+        }
+        $main = \App\Models\CompanyBranch::whereKey($context->branchId)->value('code') === 'MAIN';
+        return $query->where(fn ($q) => $q->where('branch_id', $context->branchId)->when($main, fn ($q) => $q->orWhereNull('branch_id')));
+    }
+
+    /** True when the request asks for the whole company (?branch_scope=all) and the user is authorised for every active branch. */
+    public function allBranches(CompanyContext $context): bool
+    {
+        if (!app()->bound('request') || request()->query('branch_scope') !== 'all') {
+            return false;
+        }
+        $active = \App\Models\CompanyBranch::where('company_id', $context->companyId)->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id);
+        $granted = collect(app(\App\Services\Platform\BranchAccess::class)->authorizedBranchIds($context))->map(fn ($id) => (int) $id);
+        return $active->isNotEmpty() && $active->diff($granted)->isEmpty();
     }
 
     public function lines(CompanyContext $context, string $start, string $end): Builder
@@ -94,6 +110,12 @@ class FinancialReportService
         $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
         if (!in_array($partyType, ['customer', 'supplier'], true)) {
             throw new \InvalidArgumentException('Ageing requires customers or suppliers.');
+        }
+        if ($asOf === null) {
+            // Ageing is "as of today" unless asked otherwise; kept inside the selected financial year.
+            $year = FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
+            $timezone = \App\Models\Company::whereKey($context->companyId)->value('timezone') ?: config('app.timezone');
+            $asOf = max($year->start_date->toDateString(), min($year->end_date->toDateString(), now($timezone)->toDateString()));
         }
         [, $asOf] = $this->range($context, null, $asOf);
         $items = AccountOpenItem::forCompany($context)->where('branch_id', $context->branchId)

@@ -59,7 +59,7 @@ class CurrencyController extends Controller
 
     public function destroy($id)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         Currency::find($id)->update(['is_active' => false]);
         cache()->forget('currency');

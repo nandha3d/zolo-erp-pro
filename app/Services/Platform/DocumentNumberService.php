@@ -23,6 +23,7 @@ class DocumentNumberService
         'job_work_receipt' => [\App\Models\Operations\JobWorkReceipt::class, 'reference_no', 'JWR'],
         'sale' => [Sale::class, 'reference_no', 'SAL'],
         'purchase' => [Purchase::class, 'reference_no', 'PUR'],
+        'purchase_order' => [Purchase::class, 'reference_no', 'PO'],
         'transfer' => [Transfer::class, 'reference_no', 'TRF'],
         'sale_payment' => [Payment::class, 'payment_reference', 'REC'],
         'purchase_payment' => [Payment::class, 'payment_reference', 'PAY'],

@@ -87,7 +87,7 @@ class DeliveryChallanController extends Controller
 
         DB::beginTransaction();
         try {
-            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? 1;
+            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? abort(409, 'Choose a company first.');
             $reservation = null;
 
             // Generate atomic document number or use provided
@@ -221,7 +221,7 @@ class DeliveryChallanController extends Controller
         try {
             $challan = DeliveryChallan::lockForUpdate()->findOrFail($id);
             abort_unless($challan->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
-            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? 1;
+            $companyId = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? abort(409, 'Choose a company first.');
 
             $challan->update([
                 'challan_date' => $request->input('challan_date'),

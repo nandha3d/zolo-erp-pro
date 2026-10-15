@@ -16,7 +16,7 @@ class OperationsWebTest extends OperationsTestCase
         $this->postJson('/operations/production-plan', ['idempotency_key' => []])->assertUnprocessable();
         $this->withoutExceptionHandling();
         $input = $this->material(100); $output = $this->material(0); $bom = $this->bom($input, $output);
-        $this->get('/operations/manufacturing')->assertOk()->assertSee('Create BOM version')->assertSee('Publish BOM');
+        $this->get('/operations/manufacturing')->assertOk()->assertSee('+ New BOM')->assertSee('Publish BOM Version');
         $posted = $this->postJson('/operations/production-plan', ['bom_id' => $bom->id, 'warehouse_id' => 1,
             'planned_qty' => 10, 'business_date' => '2026-10-03', 'idempotency_key' => 'web-plan'])->assertCreated()->json('data');
         $this->get('/operations/production/'.$posted['id'])->assertOk()->assertSee('Actual consumption');

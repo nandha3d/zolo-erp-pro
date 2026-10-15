@@ -272,6 +272,7 @@ class AdjustmentController extends Controller
             $adjustment = Adjustment::create($data);
             $this->assignNumber($numberReservation, $adjustment);
             $this->persistLines($adjustment, $request);
+            $this->syncJournal($adjustment);
             return redirect('qty_adjustment')->with('message', __('db.Data inserted successfully'));
         });
     }
@@ -298,6 +299,7 @@ class AdjustmentController extends Controller
             }
             $adjustment->update($data);
             $this->persistLines($adjustment, $request);
+            $this->syncJournal($adjustment);
             return redirect('qty_adjustment')->with('message', __('db.Data updated successfully'));
         });
     }
@@ -375,8 +377,46 @@ class AdjustmentController extends Controller
     {
         $adjustment = Adjustment::whereKey($id)->lockForUpdate()->firstOrFail();
         $this->reverseStock($adjustment);
+        $this->syncJournal($adjustment);
         ProductAdjustment::where('adjustment_id', $id)->delete();
         $adjustment->delete();
         DB::afterCommit(fn () => $this->fileDelete(public_path('documents/adjustment/'), $adjustment->document));
+    }
+
+    /**
+     * Keep the ledger equal to the stock value an adjustment moved: Dr/Cr Inventory against Inventory Variance for the
+     * difference between the adjustment's net movement value and what is already booked (edits and deletes post the change).
+     */
+    private function syncJournal(Adjustment $adjustment): void
+    {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        if (!$context) {
+            return;
+        }
+        $units = fn ($value) => \App\Support\LedgerAmount::units(is_string($value) ? $value : (float) ($value ?? 0));
+        $value = $units(DB::table('stock_movement_lines as l')->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+            ->where('m.company_id', $context->companyId)->where('m.source_type', 'legacy:adjustments')
+            ->where('m.source_id', $adjustment->id)->where('m.status', 'posted')->sum('l.value'));
+        $accounts = app(\App\Services\Commercial\PostingAccounts::class);
+        $inventory = $accounts->account('inventory', $context, Auth::id());
+        $entries = DB::table('journal_entries')->where('company_id', $context->companyId)
+            ->where('reference_type', 'adjustment')->where('reference_id', $adjustment->id);
+        $booked = $units(DB::table('journal_items')->whereIn('journal_entry_id', (clone $entries)->where('status', 'posted')->select('id'))
+            ->where('chart_of_account_id', $inventory)->sum(DB::raw('debit - credit')));
+        $difference = $value - $booked;
+        if ($difference === 0) {
+            return;
+        }
+        $variance = $accounts->account('variance', $context, Auth::id());
+        $amount = \App\Support\LedgerAmount::decimal(abs($difference));
+        app(\App\Services\Accounting\AccountingService::class)->postJournalEntry([
+            'entry_date' => ($adjustment->created_at ?? now())->toDateString(), 'reference_type' => 'adjustment',
+            'reference_id' => $adjustment->id, 'reference_no' => $adjustment->reference_no,
+            'posting_key' => 'adjustment:'.$adjustment->id.':'.((clone $entries)->count() + 1), 'created_by' => Auth::id(),
+            'description' => 'Stock adjustment '.$adjustment->reference_no,
+        ], [
+            ['chart_of_account_id' => $difference > 0 ? $inventory : $variance, 'debit' => $amount, 'credit' => 0],
+            ['chart_of_account_id' => $difference > 0 ? $variance : $inventory, 'debit' => 0, 'credit' => $amount],
+        ], $context);
     }
 }

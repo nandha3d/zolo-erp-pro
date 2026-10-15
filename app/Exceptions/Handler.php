@@ -13,7 +13,8 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        //
+        // Stock refusals ("insufficient stock", "specify the batch") are answers to the user, not application errors.
+        \App\Services\Inventory\StockPolicyException::class,
     ];
 
     /**

@@ -509,7 +509,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                 </li>
                 @endforeach
 
-                @if (!env('USER_VERIFIED'))
+                @if (!config('app.user_verified'))
                   @if ($language_setting_active)
                       <li id="languages" style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
                           <a href="{{route('languages')}}"> {{__('db.Languages')}} <span style="font-size: 16px;">→</span></i></a>
@@ -590,17 +590,20 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
             {!! Form::open(['route' => 'notifications.store', 'method' => 'post', 'files'=> true]) !!}
             <div class="row">
               <?php
+              // Only colleagues of the active company: other companies' users and emails stay private.
+              $notifyCompany = request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? session('company_id');
               $lims_user_list = DB::table('users')->where([
                 ['is_active', true],
                 ['id', '!=', \Auth::user()->id]
-              ])->get();
+              ])->when(\Illuminate\Support\Facades\Schema::hasTable('company_user'), fn ($query) => $query->whereIn('id',
+                  DB::table('company_user')->where('company_id', $notifyCompany ?? 0)->select('user_id')))->get();
               ?>
               <div class="col-md-4 form-group">
                 <input type="hidden" name="sender_id" value="{{\Auth::id()}}">
                 <label>{{ __('User') }} *</label>
                 <select name="receiver_id" class="selectpicker form-control" required data-live-search="true" data-live-search-style="begins" title="Select user...">
                   @foreach($lims_user_list as $user)
-                  <option value="{{$user->id}}">{{$user->name . ' (' . $user->email. ')'}}</option>
+                  <option value="{{$user->id}}">{{$user->name . ' (' . ($user->email ?? ''). ')'}}</option>
                   @endforeach
                 </select>
               </div>
@@ -653,7 +656,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                 <label>{{ __('Parent Category') }}</label>
                 <select name="parent_id" class="form-control selectpicker" id="parent">
                   <option value="">No {{ __('parent') }}</option>
-                  @foreach($categories_list as $category)
+                  @foreach(($categories_list ?? []) as $category)
                   <option value="{{$category->id}}">{{$category->name}}</option>
                   @endforeach
                 </select>
@@ -1419,7 +1422,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
 
     $(showPage);
 
-    var user_verified = <?php echo json_encode(env('USER_VERIFIED', '1') ?: '1'); ?>;
+    var user_verified = <?php echo json_encode(config('app.user_verified') ? '1' : '0'); ?>;
     window.user_verified = user_verified;
 
     $("div.alert").delay(4000);

@@ -12,6 +12,11 @@ class ErpBackup extends Command
     public function handle(BackupService $backups): int
     {
         try { $this->line(json_encode($backups->create((bool) $this->option('local-only')), JSON_THROW_ON_ERROR)); return self::SUCCESS; }
-        catch (\Throwable $error) { $this->error('Backup failed. Check private storage, encryption, database tools and off-site configuration.'); return self::FAILURE; }
+        catch (\Throwable $error) {
+            // The reason is shown to the operator and logged; secrets are never part of these messages.
+            \Illuminate\Support\Facades\Log::error('erp.backup_failed', ['error' => $error->getMessage(), 'class' => get_class($error)]);
+            $this->error('Backup failed: '.$error->getMessage());
+            return self::FAILURE;
+        }
     }
 }

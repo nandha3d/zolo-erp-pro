@@ -1176,7 +1176,7 @@ class ProductController extends Controller
             $lims_category_list = Category::where('is_active', true)->get();
             $lims_unit_list = Unit::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_product_data = Product::where('id', $id)->first();
+            $lims_product_data = Product::findOrFail($id);
 
             $cost  = (float) $lims_product_data->cost;
             $price = (float) $lims_product_data->price;
@@ -1252,7 +1252,7 @@ class ProductController extends Controller
     {
         $this->validateGst($request);
 
-        if(!env('USER_VERIFIED')) {
+        if(!config('app.user_verified')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         }
 
@@ -2151,7 +2151,7 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        if(!env('USER_VERIFIED')) {
+        if(!config('app.user_verified')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         }
         else {

@@ -44,7 +44,13 @@ class CompanyFinancialYearController extends Controller
                 throw ValidationException::withMessages(['start_date' => 'Financial year dates overlap an existing company year.']);
             }
 
-            return $company->fiscalYears()->create($data + ['status' => 'open', 'is_closed' => false]);
+            $year = $company->fiscalYears()->create($data + ['status' => 'open', 'is_closed' => false]);
+            // Every branch gets the year's numbering (MJ-27-00001 ...) so numbers never collide with last year's.
+            foreach ($company->branches()->where('is_active', true)->pluck('id') as $branchId) {
+                \Database\Seeders\OptechMasterSeeder::seedSeries($company->id, (int) $branchId, (int) $year->id);
+            }
+
+            return $year;
         });
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json(['financial_year' => $year], 201);

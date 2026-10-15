@@ -380,6 +380,7 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
+        $this->validateAmounts($request);
         $data = $request->except('document');
         //return dd($data);
         $data['user_id'] = Auth::id();
@@ -573,7 +574,8 @@ class QuotationController extends Controller
     {
          $lims_customer_data = Customer::findOrFail($id);
          $lims_customer_group_data = CustomerGroup::find($lims_customer_data->customer_group_id);
-         return $lims_customer_group_data->percentage;
+         // A customer without a visible group gets no group discount rather than a broken price list.
+         return $lims_customer_group_data->percentage ?? 0;
     }
 
     public function getProduct($id)
@@ -583,6 +585,10 @@ class QuotationController extends Controller
         $product_qty = [];
         $product_price = [];
         $product_data = [];
+        $product_type = [];
+        $product_id = [];
+        $product_list = [];
+        $qty_list = [];
         $batch_no = [];
         $product_batch_id = [];
         $expired_date = [];
@@ -836,8 +842,12 @@ class QuotationController extends Controller
         elseif($no_discount)
             $product[] = $lims_product_data->price;
 
-        if($lims_product_data->tax_id) {
-            $lims_tax_data = Tax::find($lims_product_data->tax_id);
+        // GST slab first (same rule as the sales search), then the legacy tax.
+        if ($gst = app(\App\Services\Tax\GstSetupService::class)->rateFor($lims_product_data)) {
+            $product[] = $gst['rate'];
+            $product[] = $gst['name'];
+        }
+        elseif($lims_product_data->tax_id && ($lims_tax_data = Tax::find($lims_product_data->tax_id))) {
             $product[] = $lims_tax_data->rate;
             $product[] = $lims_tax_data->name;
         }
@@ -941,6 +951,7 @@ class QuotationController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->validateAmounts($request);
         $data = $request->except('document');
         //return dd($data);
         $document = $request->document;
@@ -1103,29 +1114,39 @@ class QuotationController extends Controller
         return redirect('quotations')->with('message', $message);
     }
 
+    /** A quotation becomes a bill on the normal Sales page (one entry engine); the bill marks the quotation converted. */
     public function createSale($id)
     {
-        $lims_customer_list = Customer::where('is_active', true)->get();
-        $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-        $lims_biller_list = Biller::where('is_active', true)->get();
-        $lims_tax_list = Tax::where('is_active', true)->get();
-        $lims_quotation_data = Quotation::findOrFail($id);
-        $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
-        $lims_pos_setting_data = PosSetting::latest()->first();
-        return view('backend.quotation.create_sale',compact('lims_customer_list', 'lims_warehouse_list', 'lims_biller_list', 'lims_tax_list', 'lims_quotation_data','lims_product_quotation_data', 'lims_pos_setting_data'));
+        return $this->convert($id, 'sales.index');
     }
 
     public function createPurchase($id)
     {
-        $lims_supplier_list = Supplier::where('is_active', true)->get();
-        $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-        $lims_tax_list = Tax::where('is_active', true)->get();
-        $lims_quotation_data = Quotation::findOrFail($id);
-        $lims_product_quotation_data = ProductQuotation::where('quotation_id', $id)->get();
-        $lims_product_list_without_variant = $this->productWithoutVariant();
-        $lims_product_list_with_variant = $this->productWithVariant();
+        return $this->convert($id, 'purchases.index');
+    }
 
-        return view('backend.quotation.create_purchase',compact('lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_supplier_list', 'lims_warehouse_list', 'lims_tax_list', 'lims_quotation_data','lims_product_quotation_data'));
+    private function convert($id, string $route)
+    {
+        $quotation = Quotation::findOrFail($id);
+        if ((int) $quotation->quotation_status !== 1) {
+            return redirect('quotations')->with('not_permitted', 'Quotation '.$quotation->reference_no.' has already been converted.');
+        }
+        return redirect()->route($route, ['from_quotation' => $quotation->id]);
+    }
+
+    /** Header and lines that prefill the Sales / Purchase page for a conversion. */
+    public function conversionData($id)
+    {
+        $quotation = Quotation::findOrFail($id);
+        $units = Unit::pluck('unit_name', 'id');
+        return response()->json(['quotation' => $quotation->only(['id', 'reference_no', 'customer_id', 'supplier_id', 'warehouse_id', 'biller_id', 'note', 'quotation_status']),
+            'items' => ProductQuotation::where('quotation_id', $quotation->id)->get()->map(function ($line) use ($units) {
+                $product = Product::find($line->product_id);
+                return ['product_id' => $line->product_id, 'product_name' => $product->name ?? 'Item #'.$line->product_id, 'product_code' => $product->code ?? '',
+                    'qty' => (float) $line->qty, 'price' => (float) $line->net_unit_price, 'cost' => (float) $line->net_unit_price, 'rate' => (float) $line->net_unit_price,
+                    'tax_rate' => (float) $line->tax_rate, 'discount' => (float) $line->discount, 'product_batch_id' => $line->product_batch_id,
+                    'unit' => $units[$line->sale_unit_id] ?? ($product ? ($units[$product->unit_id] ?? 'Unit') : 'Unit')];
+            })->values()]);
     }
 
     public function productWithoutVariant()
@@ -1192,5 +1213,19 @@ class QuotationController extends Controller
         $lims_quotation_data->delete();
         $this->fileDelete(public_path('documents/quotation/'), $lims_quotation_data->document);
         return redirect('quotations')->with('not_permitted', __('db.Quotation deleted successfully'));
+    }
+
+    /** Totals come from the browser; reject NaN/blank amounts instead of failing in the database. */
+    private function validateAmounts(Request $request): void
+    {
+        $request->validate([
+            'customer_id' => 'required|integer', 'warehouse_id' => 'required|integer',
+            'product_id' => 'required|array|min:1', 'qty' => 'required|array', 'qty.*' => 'required|numeric|gt:0',
+            'net_unit_price' => 'required|array', 'net_unit_price.*' => 'required|numeric|min:0',
+            'tax.*' => 'nullable|numeric', 'subtotal.*' => 'nullable|numeric',
+            'total_qty' => 'required|numeric', 'total_discount' => 'nullable|numeric', 'total_tax' => 'required|numeric',
+            'total_price' => 'required|numeric', 'grand_total' => 'required|numeric|min:0', 'order_tax' => 'nullable|numeric',
+            'order_discount' => 'nullable|numeric|min:0', 'shipping_cost' => 'nullable|numeric|min:0',
+        ], ['*.numeric' => 'The quotation has an invalid amount. Re-enter the item prices and try again.']);
     }
 }
