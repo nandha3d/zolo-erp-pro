@@ -3065,3 +3065,6 @@ body.dark-mode .comm-table-filter-bar, body.dark-mode #filter-card { background:
 body.dark-mode .comm-table-filter-bar label, body.dark-mode #filter-card label { color: #cbd5e1; }
 body.dark-mode .side-dropdown-filters { background: #111827; border-color: #334155; }
 body.dark-mode .side-dropdown-filters label { color: #cbd5e1; }
+
+/* Top-bar reveal strip exists in every main-layout page but is styled (and shown) only by the commercial screens. */
+.reveal-topbar-strip { display: none; }

@@ -17,7 +17,7 @@
     <div class="d-none d-xxl-flex align-items-center" style="gap:3px; flex-shrink:0;">
         <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-sales" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('sale.pos') }}"><i class="dripicons-shopping-bag"></i> POS</a>
-        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> Challans</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> Customer DC</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('quotations.index') }}"><i class="dripicons-document-edit"></i> Quotations</a>
     </div>
 

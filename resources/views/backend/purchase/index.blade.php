@@ -16,7 +16,7 @@
     <!-- Center Navigation Register Pills (Only on ultra-wide screens) -->
     <div class="d-none d-xxl-flex align-items-center" style="gap:3px; flex-shrink:0;">
         <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-purchases" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
-        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> GRN</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> Supplier GRN</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Transfers</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('return-purchase.index') }}"><i class="dripicons-return"></i> Returns</a>
     </div>

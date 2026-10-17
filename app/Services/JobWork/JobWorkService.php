@@ -85,23 +85,48 @@ class JobWorkService
             });
     }
 
+    /** Material DC: first send of material for the order's process. */
     public function dispatch(int $orderId, array $data, string $key, CompanyContext $context, int $actor): JobWorkDispatch
     {
+        unset($data['rework_of_receipt_id']);
+        return $this->send($orderId, null, $data, $key, $context, $actor);
+    }
+
+    /** GRN "Return / Send for rework": a new Material DC under the same order that references the GRN it reworks. */
+    public function rework(int $receiptId, array $data, string $key, CompanyContext $context, int $actor): JobWorkDispatch
+    {
+        if (!self::supports('job_work_dispatches', 'rework_of_receipt_id')) throw ValidationException::withMessages(['receipt' => 'Run the job work rework migration first.']);
+        $receipt = JobWorkReceipt::visibleIn($context)->findOrFail($receiptId);
+        $orderId = (int) JobWorkDispatch::visibleIn($context)->findOrFail($receipt->dispatch_id)->job_work_order_id;
+        return $this->send($orderId, $receiptId, $data, $key, $context, $actor);
+    }
+
+    private function send(int $orderId, ?int $reworkOf, array $data, string $key, CompanyContext $context, int $actor): JobWorkDispatch
+    {
         $data['order_id'] = $orderId;
+        if ($reworkOf) $data['rework_of_receipt_id'] = $reworkOf;
         return app(OperationPosting::class)->run('job_work_dispatch', JobWorkDispatch::class, 'operations.job_work', 'job_work.dispatch',
-            $data, $key, $context, $actor, function ($data, $date) use ($orderId, $context, $actor) {
+            $data, $key, $context, $actor, function ($data, $date) use ($orderId, $reworkOf, $context, $actor) {
                 validator($data, ['warehouse_id' => 'required|integer|min:1', 'lines' => 'required|array|min:1|max:500',
                     'transport' => 'nullable|array', 'transport.vehicle_number' => 'nullable|string|max:30', 'transport.transporter_name' => 'nullable|string|max:100',
                     'transport.eway_bill_no' => 'nullable|string|max:30', 'transport.notes' => 'nullable|string|max:500'])->validate();
                 $order = JobWorkOrder::visibleIn($context)->lockForUpdate()->findOrFail($orderId);
                 if ($date < $order->business_date) throw ValidationException::withMessages(['business_date' => 'Dispatch cannot precede the order.']);
+                if ($reworkOf) {
+                    $source = JobWorkReceipt::visibleIn($context)->lockForUpdate()->findOrFail($reworkOf);
+                    if ($source->reversed_at || ($source->receipt_kind ?? 'process') === 'material_return') {
+                        throw ValidationException::withMessages(['receipt' => 'Send an active processed GRN for rework.']);
+                    }
+                    if ($date < $source->business_date) throw ValidationException::withMessages(['business_date' => 'Rework cannot precede the GRN.']);
+                }
                 $warehouse = app(CompanyWriteGuard::class)->warehouse($data['warehouse_id'], $context, $actor);
                 if ($warehouse->external_job_order_id) throw ValidationException::withMessages(['warehouse_id' => 'Dispatch from an internal warehouse.']);
                 $number = app(DocumentNumberService::class)->reserve('job_work_dispatch', $context, $date, $actor);
                 $dispatch = JobWorkDispatch::create(app(OperationPosting::class)->header($context, $actor) + [
                     'job_work_order_id' => $orderId, 'warehouse_id' => $warehouse->id, 'reference_no' => $number->formatted_number, 'business_date' => $date,
-                ] + (\Illuminate\Support\Facades\Schema::hasColumn('job_work_dispatches', 'details_json')
-                    ? ['details_json' => ['transport' => array_filter($data['transport'] ?? [], fn ($value) => $value !== null && $value !== '')]] : []));
+                ] + (self::supports('job_work_dispatches', 'details_json')
+                    ? ['details_json' => ['transport' => array_filter($data['transport'] ?? [], fn ($value) => $value !== null && $value !== '')]] : [])
+                  + ($reworkOf ? ['purpose' => 'rework', 'rework_of_receipt_id' => $reworkOf] : []));
                 $stock = app(OperationStock::class);
                 $lines = array_map(fn ($line) => $stock->line(array_diff_key($line, array_flip(['unit_cost'])), $context), $data['lines']);
                 $movement = app(InventoryMovementService::class)->transfer($stock->command($dispatch, $date, $lines, $warehouse->id,
@@ -120,11 +145,29 @@ class JobWorkService
             });
     }
 
+    /** Job Work GRN: processed material back (accepted / rejected at receipt / loss). */
     public function receive(int $dispatchId, array $data, string $key, CompanyContext $context, int $actor): JobWorkReceipt
     {
+        return $this->settle($dispatchId, $data, 'process', $key, $context, $actor);
+    }
+
+    /** Material DC "Return material": the job worker sends material back unprocessed, as the same item, with no loss. */
+    public function returnMaterial(int $dispatchId, array $data, string $key, CompanyContext $context, int $actor): JobWorkReceipt
+    {
+        if (!self::supports('job_work_receipts', 'receipt_kind')) throw ValidationException::withMessages(['dispatch' => 'Run the job work rework migration first.']);
+        validator($data, ['lines' => 'required|array|min:1|max:500', 'lines.*.dispatch_line_id' => 'required|integer|min:1|distinct',
+            'lines.*.returned_qty' => 'required|numeric|min:0'])->validate();
+        $data['lines'] = array_map(fn ($line) => ['dispatch_line_id' => $line['dispatch_line_id'], 'accepted_qty' => $line['returned_qty'],
+            'rejected_qty' => 0, 'loss_qty' => 0], $data['lines']);
+        unset($data['outputs'], $data['rejected_warehouse_id']);
+        return $this->settle($dispatchId, $data, 'material_return', $key, $context, $actor);
+    }
+
+    private function settle(int $dispatchId, array $data, string $kind, string $key, CompanyContext $context, int $actor): JobWorkReceipt
+    {
         $data['dispatch_id'] = $dispatchId;
-        return app(OperationPosting::class)->run('job_work_receipt', JobWorkReceipt::class, 'operations.job_work', 'job_work.receive',
-            $data, $key, $context, $actor, function ($data, $date) use ($dispatchId, $context, $actor) {
+        return app(OperationPosting::class)->run($kind === 'process' ? 'job_work_receipt' : 'job_work_material_return', JobWorkReceipt::class,
+            'operations.job_work', 'job_work.receive', $data, $key, $context, $actor, function ($data, $date) use ($dispatchId, $kind, $context, $actor) {
                 validator($data, ['warehouse_id' => 'required|integer|min:1', 'lines' => 'required|array|min:1|max:500',
                     'lines.*.dispatch_line_id' => 'required|integer|min:1|distinct', 'lines.*.accepted_qty' => 'required|numeric|min:0',
                     'lines.*.rejected_qty' => 'required|numeric|min:0', 'lines.*.loss_qty' => 'required|numeric|min:0',
@@ -138,13 +181,16 @@ class JobWorkService
                 $warehouse = $guard->warehouse($data['warehouse_id'], $context, $actor);
                 if ($warehouse->external_job_order_id) throw ValidationException::withMessages(['warehouse_id' => 'Receive into an internal warehouse.']);
                 $policy = $order->details_json['process'];
-                $conversion = (bool) $policy['conversion'];
-                if (!$conversion && isset($data['outputs'])) throw ValidationException::withMessages(['outputs' => 'This process returns the dispatched material.']);
+                // Unprocessed returns bring back the item that was sent. A rework GRN converts only when outputs are entered
+                // (rejected grey re-dyed), otherwise the reworked item comes back as itself (dyed fabric re-finished).
+                $rework = ($dispatch->purpose ?? 'process') === 'rework';
+                $conversion = (bool) $policy['conversion'] && $kind === 'process' && (!$rework || !empty($data['outputs']));
+                if (!$conversion && isset($data['outputs'])) throw ValidationException::withMessages(['outputs' => 'This receipt returns the dispatched material.']);
                 $number = app(DocumentNumberService::class)->reserve('job_work_receipt', $context, $date, $actor);
                 $receipt = JobWorkReceipt::create(app(OperationPosting::class)->header($context, $actor) + [
                     'dispatch_id' => $dispatchId, 'warehouse_id' => $warehouse->id, 'reference_no' => $number->formatted_number,
                     'business_date' => $date, 'details_json' => [],
-                ]);
+                ] + (self::supports('job_work_receipts', 'receipt_kind') ? ['receipt_kind' => $kind] : []));
                 $stock = app(OperationStock::class); $returns = []; $rejects = []; $losses = []; $consumes = []; $saved = [];
                 $received = $lost = $settled = 0;
                 foreach ($data['lines'] as $input) {
@@ -221,6 +267,7 @@ class JobWorkService
                     'loss_movement_id' => $lossMovement?->id, 'journal_entry_id' => $journal?->id,
                     'details_json' => ['received_qty' => $received, 'loss_qty' => $lost, 'settled_qty' => $settled,
                         'loss_percent' => round($lost / $settled * 100, 4), 'rejected_movement_id' => $rejectedMovement?->id,
+                        'rejected_warehouse_id' => $rejectedMovement ? (int) $data['rejected_warehouse_id'] : null,
                         'process' => $policy, 'lots' => $lots], 'posted_at' => now()])->save();
                 app(DocumentNumberService::class)->assign($number, $receipt);
                 return $receipt;
@@ -255,6 +302,9 @@ class JobWorkService
                 $order = JobWorkOrder::visibleIn($context)->findOrFail($dispatch->job_work_order_id);
                 if ($receipt->reversed_at || $receipt->service_purchase_id || $date < $receipt->business_date) {
                     throw ValidationException::withMessages(['receipt' => 'Bill an active, unbilled receipt on or after its date.']);
+                }
+                if (($receipt->receipt_kind ?? 'process') === 'material_return') {
+                    throw ValidationException::withMessages(['receipt' => 'Material returned unprocessed carries no processing charge.']);
                 }
                 validator($data, ['items' => 'required|array|min:1|max:500'])->validate();
                 foreach ($data['items'] as $line) {
@@ -299,6 +349,10 @@ class JobWorkService
             if ($kind === 'dispatch' && JobWorkReceipt::where('dispatch_id', $id)->whereNull('reversed_at')->exists()) {
                 throw ValidationException::withMessages(['dispatch' => 'Reverse every receipt before reversing its dispatch.']);
             }
+            if ($kind === 'receipt' && self::supports('job_work_dispatches', 'rework_of_receipt_id')
+                && JobWorkDispatch::where('rework_of_receipt_id', $id)->whereNull('reversed_at')->exists()) {
+                throw ValidationException::withMessages(['receipt' => 'Reverse the rework DC sent against this GRN first.']);
+            }
             if ($kind === 'receipt' && $record->service_purchase_id) {
                 $purchase = \App\Models\Purchase::visibleIn($context)->findOrFail($record->service_purchase_id);
                 if (!$purchase->reversed_at) throw ValidationException::withMessages(['service_bill' => 'Reverse the linked service purchase first.']);
@@ -311,5 +365,11 @@ class JobWorkService
             app(OperationPosting::class)->audit('job_work_'.$kind.'_reverse', $id, $context, $actor, compact('date', 'reason'));
             return $record->fresh();
         }, 3);
+    }
+
+    /** Columns added by later migrations; older installs keep working without them. */
+    public static function supports(string $table, string $column): bool
+    {
+        return \Illuminate\Support\Facades\Schema::hasColumn($table, $column);
     }
 }

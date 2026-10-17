@@ -148,8 +148,44 @@
                 }
             });
         }
+        // A failed job work action comes back with its panel open, so the operator sees the form and the error together.
+        const workspace = document.querySelector('.jw-workspace[data-open-form]');
+        if (workspace && !workspace.dataset.opened) {
+            workspace.dataset.opened = 'true';
+            const panel = document.getElementById(workspace.dataset.openForm)?.closest('.jw-panel');
+            if (panel) togglePanel(panel.id, true);
+        }
         document.querySelector('.ops-errors')?.focus();
     };
+
+    // Job work actions (Receive, Return material, Send for rework, Service bill, Reverse) open their form in place, one at a time per document.
+    function togglePanel(id, open) {
+        const panel = document.getElementById(id);
+        if (!panel) return;
+        const show = open ?? panel.hidden;
+        const scope = panel.parentElement;
+        scope.querySelectorAll(':scope > .jw-panel').forEach(other => { if (other !== panel) other.hidden = true; });
+        panel.hidden = !show;
+        document.querySelectorAll('[data-jw-toggle]').forEach(button => {
+            const target = document.getElementById(button.dataset.jwToggle);
+            button.setAttribute('aria-expanded', target && !target.hidden ? 'true' : 'false');
+        });
+        if (show) {
+            panel.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+            panel.querySelector('input:not([type="hidden"]), select')?.focus({preventScroll: true});
+        }
+    }
+    document.addEventListener('click', event => {
+        const toggle = event.target.closest('[data-jw-toggle]');
+        if (toggle) { event.preventDefault(); togglePanel(toggle.dataset.jwToggle); }
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        const panel = event.target.closest?.('.jw-panel');
+        if (!panel || panel.hidden) return;
+        togglePanel(panel.id, false);
+        document.querySelector(`[data-jw-toggle="${panel.id}"]`)?.focus();
+    });
 
     // Auto-init on load
     if (document.readyState === 'loading') {

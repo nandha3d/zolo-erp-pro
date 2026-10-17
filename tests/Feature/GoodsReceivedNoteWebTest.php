@@ -48,7 +48,7 @@ class GoodsReceivedNoteWebTest extends TestCase
 
         $response->assertSee('Goods Received Note Command Center');
         $response->assertSee('comm-entry-workspace', false);
-        $response->assertSee('New Goods Received Note');
+        $response->assertSee('New Supplier GRN');
         $response->assertSee('order-table', false);
         $response->assertSee('comm-drawer', false);
         $response->assertSee('desk-bill-list-panel', false);

@@ -105,6 +105,7 @@ class CompanySelectorController extends Controller
         $request->session()->put(['company_id' => $context->companyId, 'branch_id' => $context->branchId,
             'financial_year_id' => $context->financialYearId]);
 
-        return redirect()->intended('/dashboard');
+        // A switch started from the workspace lands on the new company's workspace.
+        return $request->input('return') === 'workspace' ? redirect('/workspace') : redirect()->intended('/dashboard');
     }
 }

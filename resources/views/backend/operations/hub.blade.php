@@ -4,6 +4,10 @@
 @section('operations_content')
 
 @if($area === 'job-work')
+    @php
+        $jwDc = \App\Services\Industry\IndustryProfileService::label('dispatch', 'Material DC');
+        $jwGrn = \App\Services\Industry\IndustryProfileService::label('receipt', 'Job Work GRN');
+    @endphp
     <!-- KPI Strip -->
     <div class="ops-kpi-strip">
         <div class="ops-kpi-box">
@@ -48,6 +52,16 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-dc" role="tab">
+                            <i class="dripicons-export mr-1"></i> {{ $jwDc }} ({{ count($dispatchRegister) }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#tab-grn" role="tab">
+                            <i class="dripicons-download mr-1"></i> {{ $jwGrn }} ({{ count($receiptRegister) }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" data-toggle="tab" href="#tab-outside" role="tab">
                             <i class="dripicons-export mr-1"></i> Material outside ({{ count($pending) }})
                         </a>
@@ -66,9 +80,11 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Document</th>
-                                    <th>Status</th>
+                                    <th>Job Work Order</th>
+                                    <th>Job worker</th>
+                                    <th>Process</th>
                                     <th>Date</th>
+                                    <th>{{ $jwDc }} / GRN</th>
                                     <th class="text-right">Action</th>
                                 </tr>
                             </thead>
@@ -76,8 +92,10 @@
                                 @forelse($records as $record)
                                     <tr>
                                         <td><strong>{{ $record->reference_no ?? $record->title }}</strong></td>
-                                        <td><span class="badge badge-secondary px-2 py-1">{{ $record->status }}</span></td>
+                                        <td>{{ $orderInfo[$record->id]->worker ?? '' }}</td>
+                                        <td>{{ $orderInfo[$record->id]->process ?? ($record->details_json['process']['name'] ?? '') }}</td>
                                         <td>{{ $record->business_date ?? $record->start_date }}</td>
+                                        <td>{{ $orderCounts['dc'][$record->id] ?? 0 }} / {{ $orderCounts['grn'][$record->id] ?? 0 }}</td>
                                         <td class="text-right">
                                             <a class="btn btn-outline-primary btn-sm py-0 px-2" href="{{ url('/operations/job-work/'.$record->id) }}">
                                                 Open &rarr;
@@ -86,11 +104,60 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted py-4">
+                                        <td colspan="6" class="text-center text-muted py-4">
                                             <i class="dripicons-document-edit d-block mb-1 font-24"></i>
                                             No job work orders yet. Create your first order on the right.
                                         </td>
                                     </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab: Material DC register -->
+                <div class="tab-pane fade h-100" id="tab-dc" role="tabpanel">
+                    <div class="ops-table-responsive">
+                        <table>
+                            <thead><tr><th>{{ $jwDc }}</th><th>Date</th><th>Order</th><th>Job worker</th><th>Type</th><th>Sent</th><th class="text-right">Action</th></tr></thead>
+                            <tbody>
+                                @forelse($dispatchRegister as $dc)
+                                    <tr class="{{ $dc->reversed_at ? 'text-muted' : '' }}">
+                                        <td><strong>{{ $dc->reference_no }}</strong>@if($dc->reversed_at) <span class="badge badge-light">reversed</span>@endif</td>
+                                        <td>{{ $dc->business_date }}</td>
+                                        <td>{{ $orderInfo[$dc->job_work_order_id]->reference_no ?? '' }}</td>
+                                        <td>{{ $orderInfo[$dc->job_work_order_id]->worker ?? '' }}</td>
+                                        <td>{{ ($dc->purpose ?? 'process') === 'rework' ? 'Rework' : 'Process' }}</td>
+                                        <td>{{ (float) ($dispatchSent[$dc->id] ?? 0) }}</td>
+                                        <td class="text-right"><a class="btn btn-outline-primary btn-sm py-0 px-2" href="{{ url('/operations/job-work/'.$dc->job_work_order_id) }}">Open order &rarr;</a></td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="7" class="text-center text-muted py-4">No {{ $jwDc }} yet. Open an order to send material.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab: Job Work GRN register -->
+                <div class="tab-pane fade h-100" id="tab-grn" role="tabpanel">
+                    <div class="ops-table-responsive">
+                        <table>
+                            <thead><tr><th>{{ $jwGrn }}</th><th>Date</th><th>Against</th><th>Type</th><th>Received</th><th>Loss</th><th class="text-right">Action</th></tr></thead>
+                            <tbody>
+                                @forelse($receiptRegister as $grn)
+                                    @php $grnDc = $receiptDc[$grn->dispatch_id] ?? null; @endphp
+                                    <tr class="{{ $grn->reversed_at ? 'text-muted' : '' }}">
+                                        <td><strong>{{ $grn->reference_no }}</strong>@if($grn->reversed_at) <span class="badge badge-light">reversed</span>@endif</td>
+                                        <td>{{ $grn->business_date }}</td>
+                                        <td>{{ $grnDc->reference_no ?? '' }}</td>
+                                        <td>{{ ($grn->receipt_kind ?? 'process') === 'material_return' ? 'Returned unprocessed' : 'Processed' }}</td>
+                                        <td>{{ $grn->details_json['received_qty'] ?? 0 }}</td>
+                                        <td>{{ $grn->details_json['loss_qty'] ?? 0 }}</td>
+                                        <td class="text-right">@if($grnDc)<a class="btn btn-outline-primary btn-sm py-0 px-2" href="{{ url('/operations/job-work/'.$grnDc->job_work_order_id) }}">Open order &rarr;</a>@endif</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="7" class="text-center text-muted py-4">Nothing received from job workers yet.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>

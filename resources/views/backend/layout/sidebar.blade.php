@@ -102,7 +102,7 @@
                 @if($isAdmin || $canNavigate('purchases-index'))
                     <li id="purchase-list-menu"><a href="{{route('purchases.index')}}">Bills</a></li>
                     <li><a href="{{route('purchases.index', ['view' => 'orders', 'purchase_status' => 4])}}">Orders</a></li>
-                    <li id="grn-list-menu"><a href="{{route('goods-received-notes.index')}}">Goods Received Note (GRN)</a></li>
+                    <li id="grn-list-menu"><a href="{{route('goods-received-notes.index')}}">Supplier GRN (goods before bill)</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
@@ -143,7 +143,7 @@
                 @if($isAdmin || $canNavigate('packing_slip_challan'))
                     <li id="packing-list-menu"><a href="{{route('packingSlip.index')}}">{{__('db.Packing Slip List')}}</a></li>
                     <li id="challan-list-menu"><a href="{{route('challan.index')}}">{{__('db.Challan List')}}</a></li>
-                    <li id="delivery-challan-menu"><a href="{{route('delivery-challans.index')}}">Delivery Challan (DC)</a></li>
+                    <li id="delivery-challan-menu"><a href="{{route('delivery-challans.index')}}">Customer DC (goods before invoice)</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('delivery'))
                     <li id="delivery-menu"><a href="{{route('delivery.index')}}">{{__('db.Delivery List')}}</a></li>
@@ -427,7 +427,7 @@
 
     {{-- Manufacturing --}}
     @if(config('operations.enabled') && in_array('operations.job_work', $enabledCapabilities, true))
-        <li><a href="{{ url('/operations/job-work') }}"><i class="dripicons-network-3"></i><span>Subcontracting / Job work</span></a></li>
+        <li><a href="{{ url('/operations/job-work') }}"><i class="dripicons-network-3"></i><span>Job Work (Material DC / GRN)</span></a></li>
     @endif
     @if(config('operations.enabled') && auth()->user()->role_id <= 2)
         <li><a href="{{ url('/operations/profiles') }}"><i class="dripicons-gear"></i><span>Business profile</span></a></li>

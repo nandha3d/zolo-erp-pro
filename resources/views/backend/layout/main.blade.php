@@ -308,7 +308,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
 
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
           @if($activeCompany)
-          <li class="nav-item company-switch"><a class="company-switch-link" href="{{ route('company.select', ['manage' => 1]) }}" title="Switch company" aria-label="Switch company: {{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
+          <li class="nav-item company-switch"><a class="company-switch-link" href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" title="Switch company" aria-label="Switch company: {{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
             <span class="company-switch-mark" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
             @if($activeCompany->group)<span class="company-switch-group">{{ $activeCompany->group->name }}</span>@endif
             <span class="company-switch-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>

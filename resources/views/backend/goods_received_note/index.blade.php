@@ -27,12 +27,15 @@
     <!-- Top Command Bar -->
     <div class="comm-command-bar">
         <div class="comm-title-group">
-            <h1><i class="dripicons-download text-primary"></i> {{ __('Goods Received Note') }} Command Center</h1>
+            <h1><i class="dripicons-download text-primary"></i> Supplier GRN <small class="text-muted" style="font-size:60%;font-weight:500;">{{ __('Goods Received Note') }} Command Center · goods from supplier before bill</small></h1>
             <span class="comm-title-badge"><i class="dripicons-import"></i> Inbound Material Receipt</span>
         </div>
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" href="#desk-bill-list-panel" id="material-list-link"><i class="dripicons-list"></i> {{ __('All GRNs') }}</a></li>
             <li><a class="nav-link" href="{{ route('purchases.index') }}"><i class="dripicons-card"></i> Purchase Bills</a></li>
+            @if(config('operations.enabled') && in_array('operations.job_work', app(\App\Services\Platform\CapabilityService::class)->forNavigation(), true))
+            <li><a class="nav-link" href="{{ url('/operations/job-work') }}" title="Material coming back from a job worker is received as a Job Work GRN on its Material DC, not here."><i class="dripicons-network-3"></i> From a job worker? Job Work</a></li>
+            @endif
         </ul>
         <div class="comm-actions">
             <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle GRN List Panel" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
@@ -56,7 +59,7 @@
                 <div class="entry-header-card">
                     <div class="entry-header-top d-flex align-items-center justify-content-between mb-2">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="entry-breadcrumb" id="entry-breadcrumb">Home / Buying / Goods Received Notes / New</span>
+                            <span class="entry-breadcrumb" id="entry-breadcrumb">Home / Buying / Supplier GRN / New</span>
                             <span class="badge badge-light-primary px-2 py-1 ml-2" id="status-pill" style="font-weight:600;font-size:11px;background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe;border-radius:4px;">Draft GRN</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
@@ -66,7 +69,7 @@
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
                             <div class="entry-doc-icon"><i class="dripicons-download" style="color:#7c3aed;font-size:20px;"></i></div>
-                            <h2 class="entry-title mb-0" id="entry-title-text" style="font-size:17px;font-weight:700;color:#0f172a;">New Goods Received Note</h2>
+                            <h2 class="entry-title mb-0" id="entry-title-text" style="font-size:17px;font-weight:700;color:#0f172a;">New Supplier GRN</h2>
                         </div>
                     </div>
                 </div>
@@ -295,7 +298,7 @@
         <div class="comm-drawer-card desk-bill-list-panel" id="desk-bill-list-panel">
             <div class="side-panel-header d-flex align-items-center justify-content-between p-2" style="border-bottom:1px solid #e2e8f0; background:#f8fafc;">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="font-weight-bold text-dark" style="font-size:13px;"><i class="dripicons-download text-primary mr-1"></i> Goods Received Notes</span>
+                    <span class="font-weight-bold text-dark" style="font-size:13px;"><i class="dripicons-download text-primary mr-1"></i> Supplier GRN list</span>
                     <span class="badge badge-secondary" style="font-size:10px;">{{ count($recent_grns) }}</span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
@@ -460,8 +463,8 @@
             'form' => 'grn-entry-form', 'documentKey' => 'grn', 'idField' => 'grn_id',
             'numberField' => 'grn_no', 'totalField' => 'total_cost', 'rateField' => 'cost',
             'purchase' => true, 'products' => $jsProductList, 'decimals' => $general_setting->decimal ?? 2,
-            'typeLabel' => 'Purchase', 'label' => 'Goods Received Note', 'title' => 'New Goods Received Note',
-            'breadcrumb' => 'Home / Buying / Goods Received Notes / New',
+            'typeLabel' => 'Purchase', 'label' => 'Supplier GRN', 'title' => 'New Supplier GRN',
+            'breadcrumb' => 'Home / Buying / Supplier GRN / New',
             'storeUrl' => route('goods-received-notes.store'), 'productUrl' => route('products.quick-store'),
             'partyUrl' => route('parties.quick-store'), 'token' => csrf_token(),
             'partyType' => 'supplier', 'partySelect' => '#supplier_id', 'partyButton' => '#btn-quick-supplier',

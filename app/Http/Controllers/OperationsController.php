@@ -53,10 +53,35 @@ class OperationsController extends Controller
         $data['pending'] = $area === 'job-work' ? app(JobWorkService::class)->pending($context, $actor) : [];
         $data['batchBalances'] = $area === 'stock' && in_array('inventory.batch_expiry', $data['navigation'])
             ? app(\App\Services\Industry\IndustryStockQueries::class)->batchBalances($context, $actor) : [];
-        $data['shrinkage'] = $area === 'job-work' ? JobWorkReceipt::visibleIn($context)->whereNull('reversed_at')->orderByDesc('id')->limit(100)->get() : collect();
+        $data['shrinkage'] = $area === 'job-work' ? JobWorkReceipt::visibleIn($context)->whereNull('reversed_at')
+            ->when(JobWorkService::supports('job_work_receipts', 'receipt_kind'), fn ($q) => $q->where('receipt_kind', '!=', 'material_return'))
+            ->orderByDesc('id')->limit(100)->get() : collect();
+        if ($area === 'job-work') $data += $this->jobWorkRegisters($context);
         $data['legacyProductions'] = $area === 'manufacturing' && \Illuminate\Support\Facades\Schema::hasTable('productions')
             ? DB::table('productions')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)->orderByDesc('id')->limit(100)->get() : collect();
         return $request->expectsJson() ? response()->json(['data' => $data]) : view('backend.operations.hub', $data);
+    }
+
+    /** Material DC and Job Work GRN registers across orders, so an operator can find a document by its own number. */
+    private function jobWorkRegisters(CompanyContext $context): array
+    {
+        $orders = DB::table('job_work_orders as o')->leftJoin('suppliers as s', 's.id', '=', 'o.job_worker_party_id')
+            ->leftJoin('process_types as p', 'p.id', '=', 'o.process_type_id')
+            ->where('o.company_id', $context->companyId)->where('o.branch_id', $context->branchId)
+            ->select('o.id', 'o.reference_no', 's.name as worker', 'p.name as process')->get()->keyBy('id');
+        $dispatches = JobWorkDispatch::visibleIn($context)->orderByDesc('id')->limit(100)->get();
+        $receipts = JobWorkReceipt::visibleIn($context)->orderByDesc('id')->limit(100)->get();
+        $dcOf = JobWorkDispatch::visibleIn($context)->whereIn('id', $receipts->pluck('dispatch_id'))->get(['id', 'reference_no', 'job_work_order_id'])->keyBy('id');
+        $sent = DB::table('job_work_dispatch_lines')->whereIn('dispatch_id', $dispatches->pluck('id'))->groupBy('dispatch_id')
+            ->selectRaw('dispatch_id, SUM(qty_base) AS qty')->pluck('qty', 'dispatch_id');
+        return ['orderInfo' => $orders, 'dispatchRegister' => $dispatches, 'receiptRegister' => $receipts, 'receiptDc' => $dcOf, 'dispatchSent' => $sent,
+            'orderCounts' => [
+                'dc' => DB::table('job_work_dispatches')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                    ->whereNull('reversed_at')->groupBy('job_work_order_id')->selectRaw('job_work_order_id, COUNT(*) AS n')->pluck('n', 'job_work_order_id'),
+                'grn' => DB::table('job_work_receipts as r')->join('job_work_dispatches as d', 'd.id', '=', 'r.dispatch_id')
+                    ->where('r.company_id', $context->companyId)->where('r.branch_id', $context->branchId)->whereNull('r.reversed_at')
+                    ->groupBy('d.job_work_order_id')->selectRaw('d.job_work_order_id, COUNT(*) AS n')->pluck('n', 'job_work_order_id'),
+            ]];
     }
 
     private function lookups(CompanyContext $context): array
@@ -99,6 +124,19 @@ class OperationsController extends Controller
             $data['jobWorker'] = DB::table('suppliers')->where('company_id', $context->companyId)->find($record->job_worker_party_id);
             $data['acceptedQty'] = DB::table('job_work_receipt_lines')->whereIn('receipt_id', $data['receipts']->pluck('id'))
                 ->groupBy('receipt_id')->selectRaw('receipt_id, SUM(accepted_qty) AS qty')->pluck('qty', 'receipt_id');
+            // What each DC line still has outside: sent minus every active GRN / return settled against it.
+            $data['settledQty'] = DB::table('job_work_receipt_lines as l')->join('job_work_receipts as r', 'r.id', '=', 'l.receipt_id')
+                ->whereIn('r.id', $data['receipts']->whereNull('reversed_at')->pluck('id'))->groupBy('l.dispatch_line_id')
+                ->selectRaw('l.dispatch_line_id, SUM(l.received_qty + l.loss_qty) AS qty')->pluck('qty', 'dispatch_line_id');
+            $data['receiptLines'] = DB::table('job_work_receipt_lines as l')->join('job_work_dispatch_lines as d', 'd.id', '=', 'l.dispatch_line_id')
+                ->join('products as p', 'p.id', '=', 'd.product_id')->where('p.company_id', $context->companyId)
+                ->whereIn('l.receipt_id', $data['receipts']->pluck('id'))->select('l.*', 'd.product_id', 'p.name')->get()->groupBy('receipt_id');
+            $data['receiptOutputs'] = DB::table('stock_movement_lines as l')->join('products as p', 'p.id', '=', 'l.product_id')
+                ->where('l.company_id', $context->companyId)->where('l.qty_base', '>', 0)
+                ->whereIn('l.stock_movement_id', $data['receipts']->pluck('output_movement_id')->filter())
+                ->select('l.stock_movement_id', 'l.qty_base', 'p.name')->get()->groupBy('stock_movement_id');
+            $data['billNumbers'] = DB::table('purchases')->where('company_id', $context->companyId)
+                ->whereIn('id', $data['receipts']->pluck('service_purchase_id')->filter())->pluck('reference_no', 'id');
         } else {
             $data['serials'] = DB::table('stock_identities as i')->join('products as p', 'p.id', '=', 'i.product_id')
                 ->join('warehouses as w', 'w.id', '=', 'i.warehouse_id')->where('i.company_id', $context->companyId)
@@ -153,6 +191,8 @@ class OperationsController extends Controller
             'job-order' => app(JobWorkService::class)->order($data, $key, $context, $actor),
             'job-dispatch' => app(JobWorkService::class)->dispatch($id, $data, $key, $context, $actor),
             'job-receive' => app(JobWorkService::class)->receive($id, $data, $key, $context, $actor),
+            'job-return' => app(JobWorkService::class)->returnMaterial($id, $data, $key, $context, $actor),
+            'job-rework' => app(JobWorkService::class)->rework($id, $data, $key, $context, $actor),
             'job-bill' => app(JobWorkService::class)->serviceBill($id, $data, $key, $context, $actor),
             'job-reverse-dispatch' => app(JobWorkService::class)->reverse('dispatch', $id, $request->string('business_date')->toString(), $request->string('reason')->toString(), $context, $actor),
             'job-reverse-receipt' => app(JobWorkService::class)->reverse('receipt', $id, $request->string('business_date')->toString(), $request->string('reason')->toString(), $context, $actor),

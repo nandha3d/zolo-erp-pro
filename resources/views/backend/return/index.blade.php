@@ -164,7 +164,7 @@
             <li><a class="nav-link active" href="{{ route('return-sale.index') }}"><i class="dripicons-list"></i> Returns</a></li>
             <li><a class="nav-link" href="{{ route('sales.index') }}"><i class="dripicons-cart"></i> Bills</a></li>
             <li><a class="nav-link" href="{{ route('sales.index', ['view' => 'orders', 'sale_status' => 2]) }}"><i class="dripicons-clipboard"></i> Orders</a></li>
-            <li><a class="nav-link" href="{{ route('delivery-challans.index') }}"><i class="dripicons-truck"></i> DC</a></li>
+            <li><a class="nav-link" href="{{ route('delivery-challans.index') }}"><i class="dripicons-truck"></i> Customer DC</a></li>
             <li><a class="nav-link" href="{{ route('customer.index') }}"><i class="dripicons-user"></i> Customers</a></li>
             <li><a class="nav-link" href="{{ route('quotations.index') }}"><i class="dripicons-document"></i> Quotations</a></li>
         </ul>

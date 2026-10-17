@@ -37,6 +37,7 @@ trait CreatesOperationsFixtures
         }
         (require database_path('migrations/2026_09_19_000007_create_repair_project_and_booking_tables.php'))->up();
         (require database_path('migrations/2026_10_07_000001_create_manufacturing_and_job_work.php'))->up();
+        (require database_path('migrations/2026_10_17_000006_job_work_returns_and_rework.php'))->up();
         (require database_path('migrations/2026_10_08_000001_create_industry_profile_extensions.php'))->up();
         foreach (['production_costs', 'inventory_loss'] as $subtype) {
             ChartOfAccount::forceCreate(['company_id' => $this->company->id, 'code' => strtoupper($subtype),

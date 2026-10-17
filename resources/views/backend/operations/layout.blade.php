@@ -1,7 +1,7 @@
 @extends('backend.layout.main')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/operations-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset('css/operations-workspace.css') }}?v={{ @filemtime(public_path('css/operations-workspace.css')) }}">
 @endpush
 
 @section('content')
@@ -91,7 +91,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/operations.js') }}"></script>
+<script src="{{ asset('js/operations.js') }}?v={{ @filemtime(public_path('js/operations.js')) }}"></script>
 <script>
     // Instant SPA Tab Switching without full page reload & whiteout
     $(document).on('click', '.ops-nav-pills a', function(e) {

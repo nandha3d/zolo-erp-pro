@@ -11,6 +11,13 @@
     padding-bottom: 8px;
 }
 
+/* Document pages (job work order, production order, project) are long forms: let them scroll instead of clipping. */
+.ops-workspace-view:has(> .ops-heading) {
+    height: auto;
+    overflow: visible;
+    display: block;
+}
+
 /* Command Bar */
 .ops-command-bar {
     display: flex;
@@ -373,3 +380,47 @@ body.dark-mode .ops-profile-card { background: #0f172a; border-color: #1e293b !i
 body.dark-mode .ops-profile-card.is-current { background: #1e1b4b; border-color: #6366f1 !important; }
 body.dark-mode .ops-profile-card .form-control { background: #111827; border-color: #334155; color: #f8fafc; }
 body.dark-mode .ops-profile-card .btn-outline-secondary { color: #cbd5e1; border-color: #475569; }
+
+/* ---------------------------------------------------------------- Job work workspace (order → Material DC → GRN → bill) */
+.jw-flow { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 18px 0 8px; padding: 0; counter-reset: jw; }
+.jw-flow li { position: relative; border: 1px solid var(--neo-border, #dbe3ed); border-radius: 8px; padding: 8px 10px 8px 36px; background: var(--neo-bg, #f8fafc); counter-increment: jw; min-width: 0; }
+.jw-flow li::before { content: counter(jw); position: absolute; left: 10px; top: 9px; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; background: var(--neo-border, #cbd5e1); color: var(--neo-text, #1e293b); }
+.jw-flow li.done::before { content: "✓"; background: #16a34a; color: #fff; }
+.jw-flow li.current { border-color: var(--neo-primary, #315ae8); }
+.jw-flow li.current::before { background: var(--neo-primary, #315ae8); color: #fff; }
+.jw-flow strong { display: block; font-size: 13px; }
+.jw-flow span { display: block; font-size: 12px; color: var(--neo-text-secondary, #66758a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jw-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.jw-section-head h2 { margin: 0; }
+.jw-register { width: 100%; border-collapse: collapse; font-size: 13px; }
+.jw-register th, .jw-register td { padding: 7px 8px; border-bottom: 1px solid var(--neo-border, #e2e8f0); text-align: left; vertical-align: middle; }
+.jw-register th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--neo-text-secondary, #66758a); }
+.jw-register .num { text-align: right; font-variant-numeric: tabular-nums; }
+.jw-register tr.jw-muted td { color: var(--neo-text-secondary, #94a3b8); }
+.jw-register tr.jw-panel-row > td { padding: 0; border-bottom: 0; }
+.jw-register tr.jw-panel-row > td:has(> .jw-panel:not([hidden])) { border-bottom: 1px solid var(--neo-border, #e2e8f0); }
+.jw-actions { white-space: nowrap; text-align: right; }
+.jw-actions-col { text-align: right !important; }
+.jw-actions button, .jw-action-link, .jw-section-head .jw-toggle { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 9px; margin: 2px 0 2px 4px; border-radius: 6px; border: 1px solid var(--neo-border, #cbd5e1); background: var(--neo-surface, #fff); color: var(--neo-text, #1e293b); cursor: pointer; text-decoration: none; }
+.jw-section-head .ops-primary.jw-toggle, .jw-actions .jw-main { background: var(--neo-primary, #315ae8); border-color: transparent; color: #fff; }
+.jw-actions .jw-danger { color: #b91c1c; }
+.jw-actions button[aria-expanded="true"] { box-shadow: inset 0 0 0 2px var(--neo-primary, #315ae8); }
+.jw-panel { margin: 4px 0 12px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--neo-primary, #315ae8) 35%, var(--neo-border, #dbe3ed)); border-radius: 8px; background: var(--neo-bg, #f8fafc); }
+.jw-panel h3 { margin-top: 0; }
+.jw-panel table { width: 100%; font-size: 13px; }
+.jw-empty { text-align: center; padding: 18px !important; color: var(--neo-text-secondary, #66758a); }
+.ops-badge.jw-status-at-job-worker, .ops-badge.jw-status-part-received { background: #fef3c7; color: #92400e; }
+.ops-badge.jw-status-settled { background: #dcfce7; color: #166534; }
+.ops-badge.jw-status-reversed { background: #f1f5f9; color: #64748b; }
+@media (max-width: 900px) {
+    .jw-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .jw-actions { white-space: normal; }
+}
+.jw-panel .ops-fields { margin: 10px 0; gap: 12px; }
+.jw-panel label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--neo-text-secondary, #526174); }
+.jw-panel input:not([type="checkbox"]):not([type="hidden"]), .jw-panel select { height: 34px; padding: 4px 8px; border: 1px solid var(--neo-border, #cbd5e1); border-radius: 6px; background: var(--neo-surface, #fff); color: var(--neo-text, #1e293b); font-size: 13px; font-weight: 400; }
+.jw-panel label:has(> input[type="checkbox"]) { flex-direction: row; align-items: center; }
+.jw-panel button { border: 1px solid var(--neo-border, #cbd5e1); border-radius: 6px; padding: 7px 14px; margin: 8px 8px 0 0; background: var(--neo-surface, #fff); color: var(--neo-text, #1e293b); font-size: 13px; font-weight: 600; cursor: pointer; }
+.jw-panel button.ops-primary { background: var(--neo-primary, #315ae8); border-color: transparent; color: #fff; }
+.jw-panel [data-remove-line] { margin: 0; padding: 4px 10px; font-size: 12px; }
+.jw-panel td { vertical-align: top; padding: 6px 8px 6px 0; }

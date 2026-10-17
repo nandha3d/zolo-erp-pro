@@ -77,6 +77,7 @@
                           data-search="{{ strtolower($company['name'].' '.$company['legal_name'].' '.$company['code'].' '.$section['name'].' '.($industries[$company['industry']] ?? '')) }}">
                         @csrf
                         <input type="hidden" name="company_id" value="{{ $company['id'] }}">
+                        @if(request('return') === 'workspace')<input type="hidden" name="return" value="workspace">@endif
                         <div class="cp-card-top">
                             <span class="cp-glyph" aria-hidden="true"><svg viewBox="0 0 24 24">{!! $glyphs[$company['industry']] ?? $glyphs['general_trading'] !!}</svg></span>
                             @if($company['id'] === $currentCompanyId)<span class="cp-current">Current</span>@endif

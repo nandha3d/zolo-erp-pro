@@ -27,7 +27,7 @@ class CommercialDraftService
         'purchase' => ['permission' => 'purchases-add', 'label' => 'Purchase'],
         'sreturn' => ['permission' => 'returns-add', 'label' => 'Sales Return'],
         'preturn' => ['permission' => 'purchase-return-add', 'label' => 'Purchase Return'],
-        'dc' => ['permission' => 'delivery-challans-index', 'label' => 'Delivery Challan'],
+        'dc' => ['permission' => 'delivery-challans-index', 'label' => 'Customer DC'],
         'grn' => ['permission' => 'grn-index', 'label' => 'Goods Receipt'],
         'quotation' => ['permission' => 'quotes-add', 'label' => 'Quotation'],
     ];

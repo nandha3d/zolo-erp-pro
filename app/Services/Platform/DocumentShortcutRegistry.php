@@ -16,7 +16,7 @@ final class DocumentShortcutRegistry
                 'url' => route('sales.index', ['new' => 1])],
             ['id' => 'sale-return', 'key' => 'Shift+F2', 'label' => 'New Sales Return', 'group' => 'Selling', 'permission' => 'returns-add',
                 'url' => route('return-sale.index', ['new' => 1])],
-            ['id' => 'delivery-challan', 'key' => 'Alt+F2', 'label' => 'New Delivery Challan', 'group' => 'Selling', 'permission' => 'delivery-challans-index',
+            ['id' => 'delivery-challan', 'key' => 'Alt+F2', 'label' => 'New Customer DC', 'group' => 'Selling', 'permission' => 'delivery-challans-index',
                 'url' => route('delivery-challans.index', ['new' => 1])],
             ['id' => 'quotation', 'key' => 'Alt+F10', 'label' => 'New Quotation', 'group' => 'Selling', 'permission' => 'quotes-add',
                 'url' => route('quotations.create')],
@@ -26,7 +26,7 @@ final class DocumentShortcutRegistry
                 'url' => route('return-purchase.index', ['new' => 1])],
             ['id' => 'purchase-order', 'key' => 'Ctrl+F12', 'label' => 'New Purchase Order', 'group' => 'Buying', 'permission' => 'purchases-add',
                 'url' => route('purchases.index', ['new' => 1, 'doc' => 'order']), 'enabled' => (bool) config('documents.purchase_order_shortcut')],
-            ['id' => 'grn', 'key' => 'Alt+F12', 'label' => 'New Goods Receipt (GRN)', 'group' => 'Buying', 'permission' => 'grn-index',
+            ['id' => 'grn', 'key' => 'Alt+F12', 'label' => 'New Supplier GRN', 'group' => 'Buying', 'permission' => 'grn-index',
                 'url' => route('goods-received-notes.index', ['new' => 1])],
         ];
     }
