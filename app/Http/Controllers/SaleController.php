@@ -212,7 +212,7 @@ class SaleController extends Controller
     {
         return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
@@ -223,7 +223,7 @@ class SaleController extends Controller
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
-            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->orderBy('position')
             ->get();
     }
@@ -651,6 +651,7 @@ class SaleController extends Controller
                                     type="button"
                                     class="add-payment btn btn-link"
                                     data-id="'.$sale->id.'"
+                                    data-due="'.round(max(0, ($sale->grand_total - $returned_amount - $sale->paid_amount) / $sale->exchange_rate), 4).'"
                                     data-currency_id="'.$sale->currency_id.'"
                                     data-currency_name="'.$currency_code_name.'"
                                     data-exchange_rate="'.$sale->exchange_rate.'"
@@ -1050,7 +1051,11 @@ class SaleController extends Controller
                 $product_sale['product_batch_id'] = null;
 
                 if($sale_unit[$i] != 'n/a' && $lims_product_data->type != 'combo') {
-                    $lims_sale_unit_data = Unit::where('unit_name', $sale_unit[$i])->orWhere('unit_code', $sale_unit[$i])->first() ?? Unit::first();
+                    $lims_sale_unit_data = Unit::where('unit_name', $sale_unit[$i])->orWhere('unit_code', $sale_unit[$i])->first() ?? Unit::find($lims_product_data->sale_unit_id ?: $lims_product_data->unit_id);
+                    // A named unit that does not exist is refused rather than swapped for another unit.
+                    if (!$lims_sale_unit_data || (trim((string) $sale_unit[$i]) !== '' && strcasecmp($lims_sale_unit_data->unit_name, $sale_unit[$i]) !== 0 && strcasecmp($lims_sale_unit_data->unit_code, $sale_unit[$i]) !== 0)) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['sale_unit' => 'Sale unit does not exist ('.$sale_unit[$i].').']);
+                    }
                     $sale_unit_id = $lims_sale_unit_data ? $lims_sale_unit_data->id : 1;
                     if($lims_product_data->is_variant) {
                         $lims_product_variant_data = ProductVariant::select('id', 'variant_id')->FindExactProductWithCode($id, $product_code[$i])->first();
@@ -1734,7 +1739,7 @@ class SaleController extends Controller
             ]);
         }
 
-        $lims_product_warehouse_data = $query->whereNull('products.is_imei')
+        $lims_product_warehouse_data = $query->where(fn ($q) => $q->whereNull('products.is_imei')->orWhere('products.is_imei', false))
                                         ->whereNull('product_warehouse.variant_id')
                                         ->whereNull('product_warehouse.product_batch_id')
                                         ->select('product_warehouse.*', 'products.name', 'products.code', 'products.type', 'products.product_list', 'products.qty_list', 'products.is_embeded')

@@ -140,7 +140,7 @@ class CompanyDirectoryService
      * Opens a new legal company with its MAIN branch, first financial year, main warehouse, chart of accounts and
      * industry profile. The actor and the group's admins become members of every branch.
      */
-    public function createCompany(int $actor, array $input): Company
+    public function createCompany(int $actor, array $input, ?\Illuminate\Http\UploadedFile $logo = null): Company
     {
         $groupId = isset($input['company_group_id']) && $input['company_group_id'] !== '' ? (int) $input['company_group_id'] : null;
         if (!$this->canManageGroup($actor, $groupId)) {
@@ -164,11 +164,12 @@ class CompanyDirectoryService
             throw ValidationException::withMessages(['subtype' => 'Select a business type for this industry.']);
         }
 
-        return DB::transaction(function () use ($actor, $groupId, $data) {
+        return DB::transaction(function () use ($actor, $groupId, $data, $input, $logo) {
             $company = Company::create([
                 'company_group_id' => $groupId, 'code' => $data['code'], 'legal_name' => $data['legal_name'],
                 'trade_name' => $data['trade_name'] ?? null, 'country_code' => 'IN', 'state_code' => $data['state_code'] ?? null,
-                'base_currency_id' => $data['base_currency_id'] ?? null, 'timezone' => $data['timezone'],
+                'base_currency_id' => $data['base_currency_id']
+                    ?? (Schema::hasTable('currencies') ? DB::table('currencies')->where('code', 'INR')->value('id') : null), 'timezone' => $data['timezone'],
             ]);
             $branch = $company->branches()->create(['code' => 'MAIN', 'name' => 'Main branch']);
             $year = $company->fiscalYears()->create(['name' => $this->yearName($data['fy_start'], $data['fy_end']),
@@ -183,6 +184,18 @@ class CompanyDirectoryService
 
             $context = new CompanyContext($company->id, $branch->id, $year->id);
             $this->applyIndustry($data['industry'], $data['subtype'], $context, $actor);
+            // Address, contact, PAN, GSTIN and logo given at creation go through the same path as Settings › Company profile.
+            $profile = array_filter(array_intersect_key($input, array_flip(['address', 'city', 'postal_code', 'phone', 'email', 'website', 'pan', 'gstin', 'registration_type'])),
+                fn ($value) => $value !== null && $value !== '');
+            if ($logo || $profile) {
+                app(CompanyProfileService::class)->save($company, $profile + ['legal_name' => $company->legal_name, 'trade_name' => $company->trade_name,
+                    'state_code' => $company->state_code, 'gst_effective_from' => $data['fy_start']], $logo, $context, $actor);
+            }
+            $this->installStarterMasters($company->refresh());
+            // A GST-registered company can bill with GST from its first invoice: install the standard slabs now.
+            if (!empty($profile['gstin']) && config('compliance.enabled') && Schema::hasTable('tax_categories')) {
+                app(\App\Services\Tax\GstSetupService::class)->installDefaults($context, $actor);
+            }
             DB::table('company_setup_audits')->insert(['company_id' => $company->id, 'actor_id' => $actor,
                 'action' => 'company_created', 'before_json' => '[]',
                 'after_json' => json_encode(['group_id' => $groupId, 'code' => $company->code, 'industry' => $data['industry'],
@@ -201,6 +214,42 @@ class CompanyDirectoryService
             DB::table('company_user_branches')->insertOrIgnore(['company_id' => $companyId, 'user_id' => $userId,
                 'branch_id' => $branchId, 'created_at' => now(), 'updated_at' => now()]);
         }
+    }
+
+    /**
+     * Masters every company needs before its first bill: customer group, product category, biller (the company itself),
+     * Cash and Bank payment accounts on the chart's cash/bank ledgers, and the Optech sale/purchase types, bill sundries
+     * and document series. Idempotent: only what is missing is added.
+     */
+    public function installStarterMasters(Company $company): void
+    {
+        // A company that already has any row of a master keeps its own setup; only empty masters are filled.
+        $empty = fn (string $table) => Schema::hasTable($table) && Schema::hasColumn($table, 'company_id')
+            && !DB::table($table)->where('company_id', $company->id)->exists();
+        $fill = array_filter(['customer_groups' => true, 'categories' => true, 'billers' => true, 'accounts' => true], fn ($v, $table) => $empty($table), ARRAY_FILTER_USE_BOTH);
+        $insert = function (string $table, array $match, array $values) use ($company, $fill) {
+            if (!isset($fill[$table])) return;
+            $columns = array_flip(Schema::getColumnListing($table));
+            DB::table($table)->insert(array_intersect_key(['company_id' => $company->id] + $match + $values
+                + ['is_active' => true, 'created_at' => now(), 'updated_at' => now()], $columns));
+        };
+        $name = $company->trade_name ?: $company->legal_name;
+        $state = $company->state_code ? (\App\Services\Tax\Gstin::$states[$company->state_code] ?? null) : null;
+        $insert('customer_groups', ['name' => 'General'], ['percentage' => 0]);
+        $insert('categories', ['name' => 'General'], []);
+        $insert('billers', ['name' => $name], ['company_name' => $company->legal_name, 'email' => $company->email ?? '',
+            'phone_number' => $company->phone ?? '', 'address' => $company->address ?? '', 'city' => $company->city ?? '', 'state' => $state,
+            'postal_code' => $company->postal_code, 'country' => 'India',
+            'vat_number' => Schema::hasTable('tax_registrations') ? DB::table('tax_registrations')->where('company_id', $company->id)->whereNull('effective_to')->value('gstin') : null]);
+        $isDefault = true;
+        foreach (['cash' => ['Cash', 'Cash'], 'bank' => ['Bank', 'Bank Account']] as $subType => [$label, $type]) {
+            $ledger = DB::table('chart_of_accounts')->where('company_id', $company->id)->where('sub_type', $subType)->where('is_active', true)->orderBy('code')->first();
+            $insert('accounts', ['name' => $label], ['account_no' => strtoupper($company->code).'-'.strtoupper($label), 'type' => $type,
+                'initial_balance' => 0, 'total_balance' => 0, 'is_default' => $isDefault, 'is_payment' => true, 'chart_of_account_id' => $ledger?->id,
+                'note' => 'Created with the company']);
+            $isDefault = false;
+        }
+        \Database\Seeders\OptechMasterSeeder::seedCompany($company);
     }
 
     private function installChart(int $companyId): void

@@ -22,6 +22,9 @@ class TenantDatabaseSeeder extends Seeder
 
     public function run()
     {
+        // The SalePro demo catalog (products, stock, suppliers, a sample purchase) only for demos: a real
+        // installation starts empty and each company gets its own starter masters when it is created.
+        $demo = (bool) config('app.seed_demo_data');
         $this->call(BarcodeSeeder::class);
         $this->call(ExternalServicesSeeder::class);
         $this->call(LanguagesTableSeeder::class);
@@ -1448,7 +1451,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('brands')->count()) {
+        if ($demo && !DB::table('brands')->count()) {
             DB::table('brands')->insert([
                 [
                     'id' => 1,
@@ -1501,7 +1504,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('categories')->count()) {
+        if ($demo && !DB::table('categories')->count()) {
             DB::table('categories')->insert([
                 [
                     'id' => 1,
@@ -1765,7 +1768,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('product_purchases')->count()) {
+        if ($demo && !DB::table('product_purchases')->count()) {
             DB::table('product_purchases')->insert([
                 [
                     'id' => 1,
@@ -1787,7 +1790,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('product_warehouse')->count()) {
+        if ($demo && !DB::table('product_warehouse')->count()) {
             DB::table('product_warehouse')->insert([
                 [
                     'id' => 1,
@@ -1802,7 +1805,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('products')->count()) {
+        if ($demo && !DB::table('products')->count()) {
             DB::table('products')->insert([
                 [
                     'id' => 1,
@@ -4079,7 +4082,7 @@ class TenantDatabaseSeeder extends Seeder
             DB::table('products')->whereNotNull('brand_id')->whereNotIn('brand_id', DB::table('brands')->select('id'))->update(['brand_id' => null]);
         }
 
-        if (!DB::table('purchases')->count()) {
+        if ($demo && !DB::table('purchases')->count()) {
             DB::table('purchases')->insert([
                 [
                     'id' => 1,
@@ -4108,7 +4111,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('suppliers')->count()) {
+        if ($demo && !DB::table('suppliers')->count()) {
             DB::table('suppliers')->insert([
                 [
                     'id' => 1,
@@ -4128,7 +4131,7 @@ class TenantDatabaseSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('taxes')->count()) {
+        if ($demo && !DB::table('taxes')->count()) {
             DB::table('taxes')->insert([
                 [
                     'id' => 1,

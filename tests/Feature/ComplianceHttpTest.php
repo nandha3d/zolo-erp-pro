@@ -35,6 +35,8 @@ class ComplianceHttpTest extends ReturnsDocumentTestCase
         $pdf = $this->get('/compliance/documents/sale_note/'.$id.'/print?output=pdf')->assertOk();
         $pdf->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-', $pdf->getContent());
+        // This fixture runs without the Common middleware and the legacy schema the full layout reads; a stand-in layout keeps the check on the return form.
+        app('view')->getFinder()->prependLocation(base_path('tests/Support/views'));
         $this->get('/return-sale/create?reference_no='.urlencode($sale->reference_no))->assertOk()->assertSee('Return / note');
         $this->deleteJson('/return-sale/'.$id)->assertStatus(409);
         $this->assertSame(1, DB::table('returns')->count());
@@ -75,6 +77,10 @@ class ComplianceHttpTest extends ReturnsDocumentTestCase
         for ($i = 0; $i < 3; $i++) $this->postedReturn($sale, [], 'part-'.$i);
         $this->assertEqualsWithDelta($sale->grand_total, DB::table('returns')->sum('grand_total'), .000001);
         $this->assertEquals(0, DB::table('account_open_items')->sum('open_amount'));
+        // The invoice rounded 1.1798 down to 1; the note that returns the last unit reverses that round-off.
+        $this->assertEquals(-.1798, $sale->attributes_json['round_off']);
+        $rounding = DB::table('journal_items')->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_items.chart_of_account_id')->where('sub_type', 'rounding');
+        $this->assertEqualsWithDelta(0, (clone $rounding)->sum('debit') - (clone $rounding)->sum('credit'), .000001);
         $this->assertEquals(20, $p->fresh()->qty);
         $this->expectException(\LogicException::class);
         ProductReturn::forceCreate(['return_id' => DB::table('returns')->value('id')]);

@@ -312,11 +312,7 @@ class PurchaseController extends Controller
 
             $warehousePrices = [];
             foreach ($product_id as $i => $id) {
-                $uName = $purchase_unit[$i] ?? 'Unit';
-                $lims_purchase_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first();
-                if (!$lims_purchase_unit_data) {
-                    $lims_purchase_unit_data = Unit::first();
-                }
+                $lims_purchase_unit_data = $this->lineUnit($purchase_unit[$i] ?? null, $id);
                 $lims_product_data = Product::find($id);
                 if (!$lims_product_data && !empty($data['product_name_text'][$i])) {
                     $manualName = trim($data['product_name_text'][$i]);
@@ -862,8 +858,10 @@ class PurchaseController extends Controller
                     $purchase_status = __('db.Pending');
                 }
                 else{
-                    $nestedData['purchase_status'] = '<div class="badge badge-danger">'.__('db.Ordered').'</div>';
-                    $purchase_status = __('db.Ordered');
+                    // An order closes once bills have received everything on it.
+                    $fulfilled = !empty((is_array($purchase->attributes_json) ? $purchase->attributes_json : json_decode((string) $purchase->attributes_json, true))['fulfilled_at'] ?? null);
+                    $nestedData['purchase_status'] = $fulfilled ? '<div class="badge badge-success">Fulfilled</div>' : '<div class="badge badge-danger">'.__('db.Ordered').'</div>';
+                    $purchase_status = $fulfilled ? 'Fulfilled' : __('db.Ordered');
                 }
 
                 if($purchase->paid_amount < $purchase->grand_total)
@@ -917,6 +915,7 @@ class PurchaseController extends Controller
                                 type="button"
                                 class="add-payment btn btn-link"
                                 data-id="'.$purchase->id.'"
+                                data-due="'.round(max(0, ($purchase->grand_total - $returned_amount - $purchase->paid_amount) / $purchase->exchange_rate), 4).'"
                                 data-currency_id="'.$purchase->currency_id.'"
                                 data-currency_name="'.$currency_code_name.'"
                                 data-exchange_rate="'.$purchase->exchange_rate.'"
@@ -1014,7 +1013,7 @@ class PurchaseController extends Controller
     {
         return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
             ->get();
     }
@@ -1025,7 +1024,7 @@ class PurchaseController extends Controller
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
-            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->orderBy('position')
             ->get();
     }
@@ -1261,8 +1260,7 @@ class PurchaseController extends Controller
             $log_data['item_description'] = '';
             $warehousePrices = [];
             foreach ($product_id as $key => $pro_id) {
-                $uName = $purchase_unit[$key] ?? 'Unit';
-                $lims_purchase_unit_data = Unit::where('unit_name', $uName)->orWhere('unit_code', $uName)->first() ?? Unit::first();
+                $lims_purchase_unit_data = $this->lineUnit($purchase_unit[$key] ?? null, $pro_id);
                 $lims_product_data = Product::find($pro_id);
                 if (!$lims_product_data && !empty($data['product_name_text'][$key])) {
                     $manualName = trim($data['product_name_text'][$key]);
@@ -2457,5 +2455,17 @@ class PurchaseController extends Controller
             "data"            => $data
         );
         echo json_encode($json_data);
+    }
+    /** A named unit must exist (no silent swap to another unit); with no unit the line uses the product's own unit. */
+    private function lineUnit($name, $productId, string $field = 'purchase_unit_id'): ?Unit
+    {
+        $name = trim((string) $name);
+        if ($name !== '' && strtolower($name) !== 'unit') {
+            $unit = Unit::where('unit_name', $name)->orWhere('unit_code', $name)->first();
+            if (!$unit) throw new \Exception(__('db.Purchase unit does not exist!').' ('.$name.')');
+            return $unit;
+        }
+        $product = $productId ? Product::find($productId) : null;
+        return ($product ? Unit::find($product->{$field} ?: $product->unit_id) : null) ?? Unit::first();
     }
 }

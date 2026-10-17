@@ -60,7 +60,7 @@
         <div class="gst-step {{ $registration ? 'ok' : 'todo' }}"><strong>1. Company GSTIN</strong>{{ $registration ? $registration->gstin.' · '.($states[$registration->state_code] ?? $registration->state_code) : 'Not registered yet' }}</div>
         <div class="gst-step {{ $taxable ? 'ok' : 'todo' }}"><strong>2. GST rates</strong>{{ $taxable ? $categories->count().' rates set up' : 'Click "Install standard GST setup"' }}</div>
         <div class="gst-step {{ $missing ? 'todo' : 'ok' }}"><strong>3. Products</strong>{{ $missing ? $missing.' products need a GST rate or HSN' : 'All products have GST rate + HSN' }}</div>
-        <div class="gst-step {{ $ledgers->every(fn ($l) => $l->account) ? 'ok' : 'todo' }}"><strong>4. GST ledgers</strong>{{ $ledgers->filter(fn ($l) => $l->account)->count() }}/8 mapped</div>
+        <div class="gst-step {{ $ledgers->every(fn ($l) => $l->account) ? 'ok' : 'todo' }}"><strong>4. GST ledgers</strong>{{ $ledgers->filter(fn ($l) => $l->account)->count() }}/{{ $ledgers->count() }} mapped</div>
         <div class="gst-step {{ $gstMode ? 'ok' : 'todo' }}"><strong>Billing mode</strong>{{ $gstMode ? 'GST billing is ON for this branch' : 'GST billing starts after step 1' }}</div>
     </div>
 
@@ -85,11 +85,11 @@
                 <form method="POST" action="{{ url('/settings/gst/registration') }}" class="gst-form mt-2" id="gst-registration-form">@csrf<input type="hidden" name="tab" value="registration">
                     <div class="row">
                         <div class="col-md-3"><label>GSTIN *</label><input name="gstin" id="reg-gstin" maxlength="15" required value="{{ old('gstin', $registration->gstin ?? '') }}"></div>
-                        <div class="col-md-3"><label>Legal name *</label><input name="legal_name" id="reg-legal" maxlength="191" required value="{{ old('legal_name', $registration->legal_name ?? '') }}"></div>
-                        <div class="col-md-2"><label>Trade name</label><input name="trade_name" id="reg-trade" maxlength="191" value="{{ old('trade_name', $registration->trade_name ?? '') }}"></div>
+                        <div class="col-md-3"><label>Legal name *</label><input name="legal_name" id="reg-legal" maxlength="191" required value="{{ old('legal_name', $registration->legal_name ?? $company->legal_name) }}"></div>
+                        <div class="col-md-2"><label>Trade name</label><input name="trade_name" id="reg-trade" maxlength="191" value="{{ old('trade_name', $registration->trade_name ?? $company->trade_name) }}"></div>
                         <div class="col-md-2"><label>Type *</label><select name="registration_type">@foreach(['regular' => 'Regular', 'composition' => 'Composition'] as $value => $label)<option value="{{ $value }}" @selected(old('registration_type', $registration->registration_type ?? 'regular') === $value)>{{ $label }}</option>@endforeach</select></div>
                         <div class="col-md-2"><label>Effective from *</label><input type="date" name="effective_from" required value="{{ old('effective_from', $registration->effective_from ?? now()->startOfYear()->toDateString()) }}"></div>
-                        <div class="col-md-10"><label>Registered address *</label><textarea name="address" id="reg-address" maxlength="1000" required>{{ old('address', $registration->address ?? '') }}</textarea></div>
+                        <div class="col-md-10"><label>Registered address *</label><textarea name="address" id="reg-address" maxlength="1000" required>{{ old('address', $registration->address ?? $companyAddress) }}</textarea></div>
                         <div class="col-md-2 d-flex align-items-end flex-column" style="gap:6px;">
                             <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="reg-lookup">Fetch from GSTIN</button>
                             <button type="submit" class="btn btn-primary btn-sm w-100">Save registration</button>
@@ -98,6 +98,29 @@
                     <p class="gst-muted mb-0" id="reg-lookup-status">Same GSTIN updates details. A new GSTIN closes the old one the day before its start date.</p>
                 </form>
                 @endif
+            </div>
+            <div class="gst-card">
+                <h2>Invoice print details</h2>
+                <p class="gst-muted">Printed on the A4 tax invoice under your name and address. Each bill keeps the details it was posted with. Name, address, phone, email, website and logo come from <a href="{{ route('settings.company') }}">Company profile</a>.</p>
+                @php $print = old() ? old() : $invoicePrint; @endphp
+                <form method="POST" action="{{ url('/settings/gst/print') }}" class="gst-form">@csrf<input type="hidden" name="tab" value="registration">
+                    <fieldset @disabled(!$canManage)>
+                    <div class="row">
+                        <div class="col-md-6"><label for="print-licences">Licence line (IEC, FSSAI, Drug licence…)</label><input id="print-licences" name="licences" maxlength="300" placeholder="IEC: … · FSSAI No: …" value="{{ $print['licences'] ?? '' }}"></div>
+                        <div class="col-md-6"><label for="print-dispatch">Dispatch from (if not the registered address)</label><input id="print-dispatch" name="dispatch_from" maxlength="300" value="{{ $print['dispatch_from'] ?? '' }}"></div>
+                        <div class="col-md-3"><label for="print-bank">Bank name</label><input id="print-bank" name="bank_name" maxlength="100" value="{{ $print['bank_name'] ?? '' }}"></div>
+                        <div class="col-md-3"><label for="print-holder">Account name</label><input id="print-holder" name="bank_account_name" maxlength="150" value="{{ $print['bank_account_name'] ?? '' }}"></div>
+                        <div class="col-md-2"><label for="print-account">Account no.</label><input id="print-account" name="bank_account_no" maxlength="40" value="{{ $print['bank_account_no'] ?? '' }}"></div>
+                        <div class="col-md-2"><label for="print-ifsc">IFSC</label><input id="print-ifsc" name="bank_ifsc" maxlength="20" value="{{ $print['bank_ifsc'] ?? '' }}"></div>
+                        <div class="col-md-2"><label for="print-branch">Branch</label><input id="print-branch" name="bank_branch" maxlength="100" value="{{ $print['bank_branch'] ?? '' }}"></div>
+                        <div class="col-md-3"><label for="print-upi">UPI ID</label><input id="print-upi" name="upi_id" maxlength="100" value="{{ $print['upi_id'] ?? '' }}"></div>
+                        <div class="col-md-3"><label for="print-signatory">Signature caption</label><input id="print-signatory" name="signatory" maxlength="100" placeholder="Authorised Signatory" value="{{ $print['signatory'] ?? '' }}"></div>
+                        <div class="col-md-6"><label for="print-declaration">Declaration</label><input id="print-declaration" name="declaration" maxlength="500" placeholder="We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct." value="{{ $print['declaration'] ?? '' }}"></div>
+                        <div class="col-md-10"><label for="print-terms">Terms &amp; conditions (one per line)</label><textarea id="print-terms" name="terms" maxlength="2000" style="height:72px">{{ $print['terms'] ?? '' }}</textarea></div>
+                        <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100">Save print details</button></div>
+                    </div>
+                    </fieldset>
+                </form>
             </div>
         </div>
 
@@ -254,7 +277,7 @@
         {{-- Ledgers --}}
         <div class="tab-pane fade" id="ledgers" role="tabpanel">
             <div class="gst-card">
-                <h2>GST ledgers</h2>
+                <h2>GST and round-off ledgers</h2>
                 <p class="gst-muted">Input GST is claimed on purchases; output GST is collected on sales. "Install standard GST setup" creates and maps any missing ledger.</p>
                 <table class="gst-table"><thead><tr><th>Posting role</th><th>Ledger</th></tr></thead><tbody>
                     @foreach($ledgers as $ledger)<tr><td>{{ $ledger->name }}</td><td>@if($ledger->account){{ $ledger->account->code }} · {{ $ledger->account->name }}@else<span class="gst-pill warn">Not mapped</span>@endif</td></tr>@endforeach

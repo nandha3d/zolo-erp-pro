@@ -180,7 +180,7 @@
                             </select>
                         </div>
                         <div class="field-compact-item" style="width:200px;flex-shrink:0;">
-                            <label for="form_warehouse_id">Warehouse *</label>
+                            <label for="form_warehouse_id">{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                             <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
                                 @foreach($lims_warehouse_list as $wh)
                                     <option value="{{ $wh->id }}">{{ $wh->name }}</option>
@@ -325,6 +325,8 @@
                 <div style="display:none;">
                     <input type="text" name="bale_no" id="hidden-bale-no">
                     <input type="number" name="no_of_bales" id="hidden-no-of-bales">
+                    <input type="number" name="bundle_count" id="hidden-bundle-count">
+                    <input type="text" name="vehicle_number" id="hidden-vehicle-number">
                     <input type="text" name="lr_no" id="hidden-lr-no">
                     <input type="date" name="lr_date" id="hidden-lr-date">
                     <input type="text" name="transporter_name" id="hidden-transporter-name">
@@ -399,7 +401,7 @@
                 <!-- Dropdown Filters (Moved from Top Bar) -->
                 <div class="side-dropdown-filters">
                     <div class="side-filter-group">
-                        <label>Warehouse</label>
+                        <label>{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }}</label>
                         <select id="side-filter-warehouse" class="form-control">
                             <option value="0">All Warehouse</option>
                             @foreach($lims_warehouse_list as $wh)
@@ -681,6 +683,16 @@
                             <div class="form-group col-md-6 mb-2">
                                 <label class="text-muted font-weight-bold">No. of Bales</label>
                                 <input type="number" id="drawer-no-of-bales" class="form-control form-control-sm" placeholder="e.g. 5">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold" for="drawer-bundle-count">No. of Bundles</label>
+                                <input type="number" id="drawer-bundle-count" class="form-control form-control-sm" min="0" placeholder="e.g. 12">
+                            </div>
+                            <div class="form-group col-md-6 mb-2">
+                                <label class="text-muted font-weight-bold" for="drawer-vehicle-number">Vehicle No.</label>
+                                <input type="text" id="drawer-vehicle-number" class="form-control form-control-sm" maxlength="30" placeholder="e.g. TN39 AB 1234">
                             </div>
                         </div>
                         <div class="form-row">
@@ -1878,6 +1890,8 @@
     @php
         $gstRates = app(\App\Services\Tax\GstSetupService::class)->currentRates();
         $jsProductList = [];
+        // Rates on the bill are before tax; a product priced tax-inclusive is shown at its pre-tax rate.
+        $exclusive = fn ($amount, $prod, $rate) => (int) ($prod->tax_method ?? 1) === 2 && $rate > 0 ? round($amount * 100 / (100 + $rate), 4) : $amount;
         foreach($lims_product_list_without_variant as $prod) {
             $taxVal = 0;
             if (!empty($prod->tax_category_id) && isset($gstRates[$prod->tax_category_id])) {
@@ -1891,8 +1905,8 @@
                 'type' => (string)($prod->type ?? 'standard'),
                 'name' => (string)$prod->name,
                 'code' => (string)$prod->code,
-                'price' => (float)($prod->price ?? 0),
-                'cost' => (float)($prod->cost ?? 0),
+                'price' => $exclusive((float)($prod->price ?? 0), $prod, $taxVal),
+                'cost' => $exclusive((float)($prod->cost ?? 0), $prod, $taxVal),
                 'tax_rate' => $taxVal,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
@@ -1912,8 +1926,8 @@
                 'type' => (string)($prod->type ?? 'standard'),
                 'name' => (string)$prod->name,
                 'code' => (string)($prod->item_code ?? $prod->code),
-                'price' => (float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)),
-                'cost' => (float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)),
+                'price' => $exclusive((float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)), $prod, $taxVal),
+                'cost' => $exclusive((float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)), $prod, $taxVal),
                 'tax_rate' => $taxVal,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
@@ -1932,6 +1946,14 @@
     // Append modals directly to body to avoid container clipping
     $(function() {
         $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #sale-details, #view-payment, #add-payment, #edit-payment, #add-delivery, #send-sms, #quick-create-category-modal, #quick-create-brand-modal, #quick-create-party-modal').appendTo('body');
+        // Register "Add Payment": the bill's id and due amount (restored after the command-center redesign dropped it).
+        $(document).on('click', 'table.sale-list tbody .add-payment, #sale-table tbody .add-payment', function () {
+            var due = parseFloat($(this).data('due')) || 0, $form = $('#add-payment');
+            $form.find('input[name="sale_id"]').val(String($(this).data('id')));
+            $form.find('input[name="balance"], input[name="amount"], input[name="paying_amount"]').val(due.toFixed(2));
+            $form.find('.change').text('0.00');
+            $('#currency_id').val($(this).data('currency_id')); $('#exchange_rate').val(parseFloat($(this).data('exchange_rate')) || 1);
+        });
     });
 
     // --- State variables ---
@@ -3624,6 +3646,8 @@
     $('#btn-save-drawer-details').on('click', function() {
         $('#hidden-bale-no').val($('#drawer-bale-no').val());
         $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val());
+        $('#hidden-bundle-count').val($('#drawer-bundle-count').val());
+        $('#hidden-vehicle-number').val($('#drawer-vehicle-number').val());
         $('#hidden-lr-no').val($('#drawer-lr-no').val());
         $('#hidden-lr-date').val($('#drawer-lr-date').val());
         $('#hidden-transporter-name').val($('#drawer-transporter-name').val());
@@ -3827,8 +3851,29 @@
         });
     }
 
+    // --- Convert a quotation: same entry engine, the posted bill marks the quotation converted ---
+    var fromQuotationId = urlParams.get('from_quotation');
+    if (fromQuotationId) {
+        switchWorkspaceMode('voucher');
+        $.getJSON('/quotations/' + fromQuotationId + '/conversion', function(res) {
+            if (!res || !res.quotation) return;
+            var q = res.quotation;
+            $('#customer_id').val(q.customer_id).trigger('change');
+            if (q.warehouse_id) $('#form_warehouse_id').val(q.warehouse_id).trigger('change');
+            if (q.biller_id) $('#form_biller_id').val(q.biller_id).trigger('change');
+            if (q.note) $('#hidden-note, #drawer-note').val(q.note);
+            $('#quotation_id_input').remove();
+            $('#sale-entry-form').append('<input type="hidden" name="quotation_id" id="quotation_id_input" value="' + q.id + '">');
+            $('#order-table-body tr.order-item-row').remove();
+            (res.items || []).forEach(function(item) { addProductRow(item); });
+            $('.selectpicker').selectpicker('refresh');
+            recalcTableSummary();
+            $('#doc-title-text').text('New Sales Bill (from Quotation ' + q.reference_no + ')');
+        });
+    }
+
     var savedMode = @json(request('view') === 'orders') ? 'register' : localStorage.getItem('zolo_sale_workspace_mode');
-    if (savedMode === 'register' && !fromDcId) {
+    if (savedMode === 'register' && !fromDcId && !fromQuotationId) {
         switchWorkspaceMode('register');
     }
 

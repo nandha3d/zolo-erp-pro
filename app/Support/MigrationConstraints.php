@@ -18,6 +18,10 @@ final class MigrationConstraints
             return strtolower($idx['name']) === strtolower($name);
         });
         if ($existing) {
+            // An existing primary key is accepted as is; a same-named unique index of another shape must be reviewed.
+            if (!$primary && ($existing['columns'] !== $columns || !$existing['unique'])) {
+                throw new RuntimeException('Unexpected existing index '.$table.'.'.$name.'.');
+            }
             return;
         }
         Schema::table($table, function (Blueprint $blueprint) use ($name, $columns, $primary) {

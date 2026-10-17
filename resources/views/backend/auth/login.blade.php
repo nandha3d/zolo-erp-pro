@@ -111,7 +111,7 @@
       </div>
 
       <!-- Quick Demo Access Bar -->
-      @if(!env('USER_VERIFIED') && !config('database.connections.zoloerp_landlord'))
+      @if(!config('app.user_verified') && !config('database.connections.zoloerp_landlord'))
       <div class="switch-theme" id="switch-theme">
         <div class="d-flex align-items-center justify-content-between flex-wrap">
           <div class="demo-label mb-1 mb-sm-0">

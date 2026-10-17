@@ -112,7 +112,8 @@
             });
             const row = $('#order-table-body tr.order-item-row').last()[0];
             if (!row) continue;
-            Object.entries(line.data).forEach(([name, value]) => row.setAttribute(name, value));
+            // A null attribute (no batch) must stay absent: setAttribute would store the string "null" and post it as an id.
+            Object.entries(line.data).forEach(([name, value]) => value === null ? row.removeAttribute(name) : row.setAttribute(name, value));
             Array.from(row.querySelectorAll('input, select')).forEach((element, index) => {
                 const stored = line.controls[index];
                 if (stored && stored.name === (element.name || '')) setControl(element, stored.value);
@@ -219,7 +220,8 @@
         handles: entry => entry.id === config.kind || (entry.id === 'purchase-order' && purchase && !!config.purchaseOrders),
         closed: () => { grid.resetFormToNew(); grid.switchWorkspaceMode('register'); },
         // Existing drafts are listed, but the register stays the workspace until one is chosen.
-        idle: hasTabs => { if (hasTabs) grid.switchWorkspaceMode('register'); },
+        // A conversion link (?from_grn / from_dc / from_quotation) is the document being worked on, so it stays visible.
+        idle: hasTabs => { if (hasTabs && !/[?&]from_(grn|dc|quotation)=/.test(location.search)) grid.switchWorkspaceMode('register'); },
         startOptions: query => ({doc: query.get('doc') === 'order' ? 'order' : undefined}),
         localShortcuts: [
             {key: 'Alt+I', label: 'Focus item search'}, {key: 'F6', label: 'Create a new item'}, {key: 'Ctrl+Shift+F', label: 'Hide / show the top bar'},

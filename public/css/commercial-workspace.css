@@ -2367,7 +2367,12 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 #row-detail-modal,
 #charges-drawer,
 #purchase-details,
-#sale-details {
+#sale-details,
+#add-payment,
+#view-payment,
+#edit-payment,
+#add-delivery,
+#send-sms {
     z-index: 1055 !important;
 }
 
@@ -3692,3 +3697,12 @@ body.dark-mode .doc-primary-fields .doc-segment .segment-btn.active { background
 }
 /* Document mode pill (New / Edit) beside the title: legacy !important text colours made it purple on purple. */
 #doc-breadcrumb-mode { color: #fff !important; }
+
+/* Narrow screens and long register strips: the bar wraps and the pill strip scrolls inside itself,
+   so the page never scrolls sideways (production matrix B37). Wide registers scroll inside their wrapper. */
+.comm-command-bar { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.comm-title-group { min-width: 0; flex-wrap: wrap; }
+.comm-nav-pills { min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+#content .dataTables_wrapper { max-width: 100%; overflow-x: auto; }
+/* Report filters: the branch selector and buttons wrap on tablets instead of pushing the page wider. */
+form[method="GET"] .row > .d-flex { flex-wrap: wrap; gap: 6px 0; }

@@ -92,6 +92,10 @@ class CompanySetupService
             if (!$branch) {
                 $branch = $company->branches()->create($data + ['branch_type' => 'branch']);
                 $this->audit($company->id, $actor, 'branch_setup', [], ['branch_id' => $branch->id] + $data);
+                // A new branch numbers its documents from the start, not through automatic fallback series.
+                foreach (DB::table('fiscal_years')->where('company_id', $company->id)->where('is_closed', false)->pluck('id') as $yearId) {
+                    \Database\Seeders\OptechMasterSeeder::seedSeries($company->id, $branch->id, (int) $yearId);
+                }
             }
             DB::table('company_user_branches')->updateOrInsert(['company_id' => $company->id, 'user_id' => $actor, 'branch_id' => $branch->id]);
             return $branch;

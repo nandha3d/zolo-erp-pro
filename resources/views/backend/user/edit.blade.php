@@ -100,6 +100,19 @@
                                           @endforeach
                                         </select>
                                     </div>
+                                    @if(!empty($company_branches) && count($company_branches))
+                                    <div class="form-group" id="branch-access">
+                                        <label>Branch access *</label>
+                                        <input type="hidden" name="branch_access" value="1">
+                                        @foreach($company_branches as $branch)
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="branch-{{ $branch->id }}" name="branch_ids[]" value="{{ $branch->id }}" @checked(in_array($branch->id, $user_branch_ids))>
+                                            <label class="custom-control-label" for="branch-{{ $branch->id }}">{{ $branch->name }} ({{ $branch->code }})</label>
+                                        </div>
+                                        @endforeach
+                                        <small class="text-muted">The user can open, post and report only in the ticked branches of this company.</small>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         {!! Form::close() !!}

@@ -21,6 +21,13 @@ final class IndustryCatalog
             'document_fields' => ['project_id', 'site_address'], 'reports' => ['project_margin', 'installed_serials', 'warranty_due']],
     ];
 
+    /** Preset unit code => [name, other spellings that already count as this unit]. */
+    public const UNITS = [
+        'PCS' => ['Pieces', ['pc', 'piece', 'nos', 'no', 'unit']], 'BOX' => ['Box', ['bx']], 'CASE' => ['Case', ['cs']],
+        'MTR' => ['Meter', ['m', 'mt', 'metre', 'meters', 'metres']], 'CFT' => ['Cubic feet', ['cu ft']],
+        'CBM' => ['Cubic meter', ['m3', 'cubic metre']], 'KW' => ['Kilowatt', ['kilowatts']],
+    ];
+
     public const ATTRIBUTES = [
         'general_trading' => [],
         'fmcg' => ['mrp' => ['MRP', 'number'], 'shelf_life_days' => ['Shelf life (days)', 'integer'], 'reorder_level' => ['Reorder level', 'number']],
@@ -35,7 +42,8 @@ final class IndustryCatalog
 
     // Process thresholds are explicit presets. Users configure their actual process before dispatch.
     public const PROCESSES = [
-        'textile' => [['DYEING', 'Dyeing', 4, false], ['PRINTING', 'Printing', 4, false], ['FINISHING', 'Finishing', 4, false]],
+        // Grey → dyed fabric is a conversion (a new item comes back); the others return the same material.
+        'textile' => [['GREY-DYE', 'Dyeing - grey to dyed fabric', 5, true], ['DYEING', 'Dyeing', 4, false], ['PRINTING', 'Printing', 4, false], ['FINISHING', 'Finishing', 4, false]],
         'timber' => [['SAWING', 'External sawing', 30, true]],
         'fmcg' => [['REPACKING', 'Outsourced repacking', 5, true]],
     ];

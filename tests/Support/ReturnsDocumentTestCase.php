@@ -25,6 +25,8 @@ abstract class ReturnsDocumentTestCase extends ComplianceTestCase
             '2018_05_21_163443_create_product_returns_table.php' => 'CreateProductReturnsTable',
             '2018_12_26_064330_create_return_purchases_table.php' => 'CreateReturnPurchasesTable',
             '2018_12_26_144708_create_purchase_product_return_table.php' => 'CreatePurchaseProductReturnTable',
+            // The shared layout reads the user's notifications on screens outside a company context.
+            '2020_10_30_135557_create_notifications_table.php' => 'CreateNotificationsTable',
         ] as $file => $class) { require_once database_path('migrations/'.$file); (new $class)->up(); }
         foreach (['returns', 'return_purchases', 'product_returns', 'purchase_product_return'] as $table) {
             Schema::table($table, fn (Blueprint $t) => $t->unsignedBigInteger('company_id')->nullable());

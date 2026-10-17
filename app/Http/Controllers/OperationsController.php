@@ -94,6 +94,11 @@ class OperationsController extends Controller
                 ->join('products as p', 'p.id', '=', 'l.product_id')->where('d.company_id', $context->companyId)->where('d.branch_id', $context->branchId)
                 ->where('p.company_id', $context->companyId)->where('d.job_work_order_id', $id)->select('l.*', 'p.name')->get()->groupBy('dispatch_id');
             $data['receipts'] = JobWorkReceipt::visibleIn($context)->whereIn('dispatch_id', $data['dispatches']->pluck('id'))->get();
+            // Route defaults (output item, processing-charge item and rate) pre-fill the forms; every value stays editable.
+            $data['route'] = DB::table('process_types')->where('company_id', $context->companyId)->find($record->process_type_id);
+            $data['jobWorker'] = DB::table('suppliers')->where('company_id', $context->companyId)->find($record->job_worker_party_id);
+            $data['acceptedQty'] = DB::table('job_work_receipt_lines')->whereIn('receipt_id', $data['receipts']->pluck('id'))
+                ->groupBy('receipt_id')->selectRaw('receipt_id, SUM(accepted_qty) AS qty')->pluck('qty', 'receipt_id');
         } else {
             $data['serials'] = DB::table('stock_identities as i')->join('products as p', 'p.id', '=', 'i.product_id')
                 ->join('warehouses as w', 'w.id', '=', 'i.warehouse_id')->where('i.company_id', $context->companyId)
@@ -119,7 +124,28 @@ class OperationsController extends Controller
     public function action(Request $request, string $action, ?int $id = null)
     {
         $context = $this->context($request); $actor = $request->user()->id; $data = $request->all(); $key = $this->key($request);
-        $record = match ($action) {
+        try {
+            $record = $this->perform($action, $id, $request, $data, $key, $context, $actor);
+        } catch (\InvalidArgumentException $error) {
+            // Setup gaps (e.g. an unmapped posting account) come back to the form as a message, not an error page.
+            throw \Illuminate\Validation\ValidationException::withMessages(['operation' => $error->getMessage()]);
+        }
+        $url = match (true) {
+            $record instanceof ProductionOrder => url('/operations/production/'.$record->id),
+            $record instanceof JobWorkOrder => url('/operations/job-work/'.$record->id),
+            $record instanceof JobWorkDispatch => url('/operations/job-work/'.$record->job_work_order_id),
+            $record instanceof JobWorkReceipt => url('/operations/job-work/'.JobWorkDispatch::visibleIn($context)->findOrFail($record->dispatch_id)->job_work_order_id),
+            $record instanceof Project => url('/operations/project/'.$record->id),
+            $record instanceof \App\Models\Operations\SerialReservation || $record instanceof \App\Models\Operations\ProjectInstallation => url('/operations/project/'.$record->project_id),
+            $record instanceof Bom => url('/operations/manufacturing'), default => url('/operations/stock'),
+        };
+        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $record, 'redirect' => $url], 201)
+            : redirect($url)->with('message', 'Operation saved.');
+    }
+
+    private function perform(string $action, ?int $id, Request $request, array $data, string $key, CompanyContext $context, int $actor)
+    {
+        return match ($action) {
             'bom' => app(BomService::class)->create($data, $key, $context, $actor),
             'production-plan' => app(ProductionService::class)->plan($data, $key, $context, $actor),
             'production-complete' => app(ProductionService::class)->complete($id, $data, $key, $context, $actor),
@@ -141,17 +167,6 @@ class OperationsController extends Controller
             'expiry-writeoff' => app(FmcgInventoryService::class)->writeOff($data, $key, $context, $actor),
             default => abort(404),
         };
-        $url = match (true) {
-            $record instanceof ProductionOrder => url('/operations/production/'.$record->id),
-            $record instanceof JobWorkOrder => url('/operations/job-work/'.$record->id),
-            $record instanceof JobWorkDispatch => url('/operations/job-work/'.$record->job_work_order_id),
-            $record instanceof JobWorkReceipt => url('/operations/job-work/'.JobWorkDispatch::visibleIn($context)->findOrFail($record->dispatch_id)->job_work_order_id),
-            $record instanceof Project => url('/operations/project/'.$record->id),
-            $record instanceof \App\Models\Operations\SerialReservation || $record instanceof \App\Models\Operations\ProjectInstallation => url('/operations/project/'.$record->project_id),
-            $record instanceof Bom => url('/operations/manufacturing'), default => url('/operations/stock'),
-        };
-        return $request->expectsJson() ? response()->json(['success' => true, 'data' => $record, 'redirect' => $url], 201)
-            : redirect($url)->with('message', 'Operation saved.');
     }
 
     public function configure(Request $request, string $action)
@@ -193,27 +208,89 @@ class OperationsController extends Controller
             $data['q'] ?? '', $this->context($request), $request->user()->id)]);
     }
 
+    public function lots(Request $request)
+    {
+        $data = $request->validate(['product_id' => 'required|integer|min:1', 'warehouse_id' => 'required|integer|min:1']);
+        return response()->json(['data' => app(\App\Services\Industry\IndustryStockQueries::class)->lots($data['product_id'], $data['warehouse_id'],
+            $this->context($request), $request->user()->id)]);
+    }
+
     public function materialDocument(Request $request, int $id)
     {
         $context = $this->context($request);
         app(OperationPosting::class)->authorize('operations.job_work', 'job_work.read', $context, $request->user()->id);
         $dispatch = JobWorkDispatch::visibleIn($context)->findOrFail($id);
         $order = JobWorkOrder::visibleIn($context)->findOrFail($dispatch->job_work_order_id);
-        $lines = DB::table('job_work_dispatch_lines as l')->join('products as p', 'p.id', '=', 'l.product_id')
-            ->where('p.company_id', $context->companyId)->where('l.dispatch_id', $id)->select('l.*', 'p.name', 'p.code')->get();
-        $company = \App\Models\Company::findOrFail($context->companyId);
-        $profile = app(IndustryProfileService::class)->settings($context);
-        $title = $profile['settings']['labels']['dispatch'] ?? 'Material Dispatch';
+        $challan = $this->jobWorkChallan($dispatch, $order, $context);
         if ($request->input('format') === 'dot_matrix') {
             app(CapabilityService::class)->assertEnabled('printing.dot_matrix', $context);
-            $rows = [$company->legal_name, $title.' '.$dispatch->reference_no, 'Date: '.$dispatch->business_date, 'Order: '.$order->reference_no,
-                'Own material sent for external processing.', str_repeat('-', 80)];
-            foreach ($lines as $line) $rows[] = $line->code.' '.$line->name.'  Qty: '.$line->qty_base;
+            $c = $challan; $rows = [$c['company']['name'], $c['company']['address'], 'GSTIN: '.($c['company']['gstin'] ?: 'Unregistered'),
+                'DELIVERY CHALLAN - GOODS SENT FOR JOB WORK (Rule 55(1)(c))', 'Challan No. '.$dispatch->reference_no.'   Date: '.$c['date'].'   Order: '.$order->reference_no,
+                'To: '.$c['worker']['name'].'  GSTIN: '.($c['worker']['gstin'] ?: 'Unregistered'), '    '.$c['worker']['address'],
+                'Place of supply: '.$c['place_of_supply'], 'Purpose: '.$c['purpose'], str_repeat('-', 80),
+                sprintf('%-30s %-8s %14s %10s %14s', 'Description', 'HSN', 'Quantity', 'Rate', 'Value')];
+            foreach ($c['lines'] as $line) $rows[] = sprintf('%-30s %-8s %14s %10s %14s', mb_strimwidth($line['name'].($line['lot'] ? ' Lot '.$line['lot'] : ''), 0, 30),
+                $line['hsn'], number_format($line['qty'], 3).' '.$line['unit'], number_format($line['rate'], 2), number_format($line['value'], 2));
+            array_push($rows, str_repeat('-', 80), sprintf('%-64s %15s', 'Total value', number_format($c['total'], 2)), $c['value_words'], 'No GST charged: goods sent for job work under Section 143 of the CGST Act.',
+                'Vehicle: '.($c['transport']['vehicle_number'] ?? '-').'  Transporter: '.($c['transport']['transporter_name'] ?? '-').'  E-way bill: '.($c['transport']['eway_bill_no'] ?? '-'),
+                '', 'Receiver signature: ______________          For '.$c['company']['name'].' : Authorised Signatory');
             $pages = [];
             foreach (array_chunk($rows, 68) as $page) $pages[] = implode("\r\n", array_map(fn ($row) => mb_strimwidth($row, 0, 80), array_pad($page, 68, '')));
             return response(implode("\f", $pages), 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
         }
         abort_unless(in_array($request->input('format', 'a4'), ['a4'], true), 422);
-        return view('backend.operations.material_document', compact('dispatch', 'order', 'lines', 'company', 'title'));
+        return view('backend.operations.job_work_challan', ['dispatch' => $dispatch, 'order' => $order, 'c' => $challan]);
+    }
+
+    /** Everything Rule 55 asks of a delivery challan for goods sent to a job worker, from the dispatch and its masters. */
+    private function jobWorkChallan(JobWorkDispatch $dispatch, JobWorkOrder $order, CompanyContext $context): array
+    {
+        $states = \App\Services\Tax\Gstin::$states;
+        $company = \App\Models\Company::findOrFail($context->companyId);
+        $registration = app(\App\Services\Tax\GstSetupService::class)->registration($context, (string) $dispatch->business_date);
+        $profiles = app(\App\Services\Platform\CompanyProfileService::class);
+        $worker = DB::table('suppliers')->where('company_id', $context->companyId)->find($order->job_worker_party_id);
+        // Without GST tables (non-GST setups) the challan still prints, just without those details.
+        $profile = \Illuminate\Support\Facades\Schema::hasTable('party_tax_profiles') ? DB::table('party_tax_profiles')->where('company_id', $context->companyId)
+            ->where('party_type', 'supplier')->where('party_id', $order->job_worker_party_id)->first(['gstin', 'state_code']) : null;
+        $workerGstin = trim((string) ($worker->vat_number ?? '')) ?: ($profile->gstin ?? '');
+        $workerState = $workerGstin ? substr($workerGstin, 0, 2) : ($profile->state_code ?? app(\App\Services\Tax\GstSetupService::class)->stateCode($worker->state ?? null));
+        $companyState = $registration ? substr($registration->gstin, 0, 2) : $company->state_code;
+        $gst = app(\App\Services\Tax\GstSetupService::class);
+        $hasRates = \App\Services\Tax\GstSetupService::available();
+        $columns = ['l.*', 'p.name', 'p.code'];
+        foreach (['hsn_code', 'tax_category_id'] as $column) $columns[] = \Illuminate\Support\Facades\Schema::hasColumn('products', $column) ? 'p.'.$column : DB::raw('NULL AS '.$column);
+        $columns[] = \Illuminate\Support\Facades\Schema::hasColumn('units', 'unit_code') ? 'u.unit_code' : DB::raw('NULL AS unit_code');
+        $lines = DB::table('job_work_dispatch_lines as l')->join('products as p', 'p.id', '=', 'l.product_id')
+            ->leftJoin('units as u', 'u.id', '=', 'p.unit_id')->where('p.company_id', $context->companyId)->where('l.dispatch_id', $dispatch->id)
+            ->orderBy('l.line_no')->get($columns)->map(function ($line) use ($gst, $dispatch, $hasRates) {
+                $details = json_decode($line->stock_details_json ?? '[]', true) ?: [];
+                $product = $hasRates ? \App\Models\Product::find($line->product_id) : null;
+                $rate = $product ? ($gst->rateFor($product, (string) $dispatch->business_date)['rate'] ?? null) : null;
+                return ['name' => $line->name, 'code' => $line->code, 'hsn' => $line->hsn_code ?: '—', 'unit' => $line->unit_code ?: '',
+                    'qty' => (float) $line->qty_base, 'value' => round((float) $line->value, 2),
+                    'rate' => (float) $line->qty_base > 0 ? round((float) $line->value / (float) $line->qty_base, 2) : 0, 'gst_rate' => $rate,
+                    'lot' => !empty($details['product_batch_id']) ? DB::table('product_batches')->where('id', $details['product_batch_id'])->value('batch_no') : null];
+            });
+        $total = round($lines->sum('value'), 2);
+        $process = $order->details_json['process'] ?? [];
+        return [
+            'date' => \Carbon\Carbon::parse($dispatch->business_date)->format('d-m-Y'),
+            'company' => ['name' => $company->trade_name ?: $company->legal_name, 'legal' => $registration->legal_name ?? $company->legal_name,
+                'address' => $registration->address ?? $profiles->fullAddress($company), 'gstin' => $registration->gstin ?? '',
+                'state' => $companyState ? (($states[$companyState] ?? $companyState).' ('.$companyState.')') : '', 'phone' => $company->phone, 'email' => $company->email,
+                'logo' => \App\Services\Documents\DocumentRenderingService::logo($company->logo)],
+            'worker' => ['name' => $worker->company_name ?? null ?: ($worker->name ?? 'Job worker'), 'contact' => $worker->name ?? null,
+                'address' => implode(', ', array_filter([$worker->address ?? null, $worker->city ?? null, trim(($worker->state ?? '').' '.($worker->postal_code ?? ''))])),
+                'gstin' => $workerGstin, 'state' => $workerState ? (($states[$workerState] ?? $workerState).' ('.$workerState.')') : '', 'phone' => $worker->phone_number ?? null],
+            'place_of_supply' => $workerState ? (($states[$workerState] ?? $workerState).' ('.$workerState.')') : '—',
+            'inter_state' => $workerState && $companyState && $workerState !== $companyState,
+            'purpose' => 'Sent for job work'.(($process['name'] ?? null) ? ' - '.$process['name'] : ''),
+            'process' => $process, 'expected_return' => $order->expected_return_date ? \Carbon\Carbon::parse($order->expected_return_date)->format('d-m-Y') : null,
+            'notes' => $order->notes, 'transport' => $dispatch->details_json['transport'] ?? [],
+            'lines' => $lines->all(), 'total' => $total,
+            'value_words' => \App\Services\Documents\DocumentRenderingService::rupeesInWords($total),
+            'tax_note' => 'Goods sent for job work without payment of tax under Section 143 of the CGST Act; not a supply.',
+        ];
     }
 }

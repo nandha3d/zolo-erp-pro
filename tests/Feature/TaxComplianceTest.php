@@ -54,7 +54,9 @@ class TaxComplianceTest extends ComplianceTestCase
         $sale = app(SaleApplicationService::class)->create(new SaleCommand($data, 'intra', 1, $this->context()));
         $snapshot = $sale->productSales->first()->tax_snapshot_json;
         $this->assertEquals(1.8, $snapshot['cgst']); $this->assertEquals(1.8, $snapshot['sgst']); $this->assertEquals(0, $snapshot['igst']);
-        $this->assertEquals(23.6, $sale->grand_total); $this->assertSame('1001', $snapshot['hsn_sac']);
+        $this->assertEquals(24, $sale->grand_total); $this->assertEquals(.4, $sale->attributes_json['round_off']); $this->assertSame('1001', $snapshot['hsn_sac']);
+        $this->assertEquals(.4, DB::table('journal_items')->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_items.chart_of_account_id')->where('sub_type', 'rounding')->sum('credit'));
+        $this->assertEquals(DB::table('journal_items')->sum('debit'), DB::table('journal_items')->sum('credit'));
         DB::table('tax_rates')->update(['rate' => 5]);
         $retry = app(SaleApplicationService::class)->create(new SaleCommand($data, 'intra', 1, $this->context()));
         $this->assertSame($sale->id, $retry->id); $this->assertEquals(18, $retry->productSales->first()->tax_snapshot_json['rate']);
@@ -79,7 +81,7 @@ class TaxComplianceTest extends ComplianceTestCase
     public function test_discount_apportions_taxable_base_and_purchase_itc_excludes_inventory(): void
     {
         $sale = $this->gstSale(['order_discount' => 2]);
-        $this->assertEquals(21.24, $sale->grand_total);
+        $this->assertEquals(21, $sale->grand_total); $this->assertEquals(-.24, $sale->attributes_json['round_off']);
         $this->assertEquals(18, $sale->productSales->first()->tax_snapshot_json['taxable_value']);
         $p = $this->gstProduct();
         $purchase = app(PurchaseApplicationService::class)->create(new PurchaseCommand($this->purchaseData($p), 'itc', 1, $this->context()));

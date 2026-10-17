@@ -136,7 +136,7 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Receipt</th>
+                                    <th>{{ \App\Services\Industry\IndustryProfileService::label('receipt', 'Receipt') }}</th>
                                     <th>Date</th>
                                     <th>Received</th>
                                     <th>Loss</th>
@@ -232,6 +232,15 @@
                         @include('backend.operations.form_start', ['formId'=>'process-form', 'action'=>'configure/process'])
                         <div class="ops-form-compact">
                             <div class="form-group">
+                                <label for="process-load">Edit an existing process</label>
+                                <select id="process-load">
+                                    <option value="">— New process —</option>
+                                    @foreach($processes as $process)
+                                        <option value="{{ $process->code }}" data-process='@json($process)'>{{ $process->name }} ({{ $process->code }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label>Process Code *</label>
                                 <input name="code" pattern="[A-Z0-9_-]+" maxlength="60" required placeholder="e.g. DYEING-01">
                             </div>
@@ -259,9 +268,40 @@
                                     <option value="1">Convert to other products (Recipe outputs)</option>
                                 </select>
                             </div>
+                            <p class="text-muted mb-1" style="font-size:11.5px;">Defaults pre-fill the receipt and the job worker's bill; they can be changed on each document and updated any time.</p>
+                            <div class="form-group">
+                                <label>Default output item</label>
+                                <select name="output_product_id">
+                                    <option value="">— Same as sent / choose on receipt —</option>
+                                    @foreach($products->where('type', 'standard') as $product)<option value="{{ $product->id }}">{{ $product->name }} · {{ $product->code }}</option>@endforeach
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-7 form-group">
+                                    <label>Processing charge item</label>
+                                    <select name="service_product_id">
+                                        <option value="">— Choose on the bill —</option>
+                                        @foreach($products->where('type', 'service') as $product)<option value="{{ $product->id }}">{{ $product->name }}</option>@endforeach
+                                    </select>
+                                </div>
+                                <div class="col-5 form-group">
+                                    <label>Rate per unit (₹)</label>
+                                    <input name="service_rate" type="number" step="0.0001" min="0" placeholder="e.g. 15">
+                                </div>
+                            </div>
                             <button type="submit" class="btn-ops-submit mt-2">
                                 <i class="fa fa-save mr-1"></i> Save Process Policy
                             </button>
+                            <script>
+                            document.getElementById('process-load').addEventListener('change', function () {
+                                var option = this.selectedOptions[0], data = option && option.dataset.process ? JSON.parse(option.dataset.process) : {};
+                                var form = document.getElementById('process-form');
+                                ['code', 'name', 'max_loss_percent', 'quantity_basis', 'output_product_id', 'service_product_id', 'service_rate'].forEach(function (field) {
+                                    var input = form.querySelector('[name="' + field + '"]'); if (input) input.value = data[field] == null ? '' : data[field];
+                                });
+                                form.querySelector('[name="conversion"]').value = data.conversion ? '1' : '0';
+                            });
+                            </script>
                         </div>
                         </form>
                     </div>
@@ -452,7 +492,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Warehouse *</label>
+                                <label>{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                                 <select name="warehouse_id" required>
                                     <option value="">Select warehouse</option>
                                     @foreach($warehouses as $warehouse)
@@ -769,7 +809,7 @@
                         @include('backend.operations.form_start', ['formId'=>'expiry-form', 'action'=>'expiry-writeoff'])
                         <div class="ops-form-compact">
                             <div class="form-group">
-                                <label>Warehouse *</label>
+                                <label>{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                                 <select name="warehouse_id" required>
                                     @foreach($warehouses as $warehouse)
                                         <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>

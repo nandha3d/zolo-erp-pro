@@ -184,4 +184,23 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
         DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => 5]);
         $this->get('/accounting/vouchers')->assertOk()->assertSee('accounting-voucher-form')->assertDontSee('Period controls');
     }
+
+    /** Production matrix B23: company membership alone never reads or posts manual journals. */
+    public function test_journal_screens_and_manual_posting_need_accounting_permissions(): void
+    {
+        $payload = ['entry_date' => '2026-10-03', 'description' => 'Clerk journal',
+            'items' => [['chart_of_account_id' => 1, 'debit' => 8], ['chart_of_account_id' => 2, 'credit' => 8]]];
+        DB::table('company_user')->where('company_id', $this->company->id)->where('user_id', 1)->update(['role_id_override' => 4]);
+        $this->postJson('/accounting/journal-entries', $payload)->assertForbidden();
+        $this->get('/accounting/journal-entries')->assertForbidden();
+        $this->get('/accounting/voucher/entry')->assertForbidden();
+        $this->postJson('/accounting/voucher/inline-account', ['code' => 'X1', 'name' => 'Clerk', 'type' => 'expense', 'sub_type' => 'x'])->assertForbidden();
+        $this->assertSame(0, JournalEntry::count());
+
+        $post = DB::table('permissions')->insertGetId(['name' => 'accounting.voucher.post']);
+        DB::table('role_has_permissions')->insert(['role_id' => 4, 'permission_id' => $post]);
+        $this->postJson('/accounting/journal-entries', $payload)->assertRedirect();
+        $this->assertSame(1, JournalEntry::count());
+        $this->get('/accounting/journal-entries')->assertForbidden(); // reading the register needs accounting.reports.view
+    }
 }

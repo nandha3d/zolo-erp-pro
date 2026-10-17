@@ -108,30 +108,15 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'company_name' => [
-                'max:255',
-                    Rule::unique('suppliers')->where(function ($query) {
-                    return $query->where('is_active', 1);
-                }),
-            ],
-            'email' => [
-                'max:255',
-                    Rule::unique('suppliers')->where(function ($query) {
-                    return $query->where('is_active', 1);
-                }),
-            ],
+            'company_name' => \App\Support\CompanyUnique::rules('suppliers'),
+            'email' => \App\Support\CompanyUnique::rules('suppliers'),
             'image' => 'image|mimes:jpg,jpeg,png,gif|max:100000',
         ]);
 
         //validation for customer if create both user and supplier
         if(isset($request->both)) {
             $this->validate($request, [
-                'phone_number' => [
-                    'max:255',
-                    Rule::unique('customers')->where(function ($query) {
-                        return $query->where('is_active', 1);
-                    }),
-                ],
+                'phone_number' => \App\Support\CompanyUnique::rules('customers'),
             ]);
         }
 
@@ -271,7 +256,7 @@ class SupplierController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('suppliers-edit')){
-            $lims_supplier_data = Supplier::where('id',$id)->first();
+            $lims_supplier_data = Supplier::findOrFail($id);
             return view('backend.supplier.edit',compact('lims_supplier_data'));
         }
         else
@@ -281,19 +266,9 @@ class SupplierController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'company_name' => [
-                'max:255',
-                    Rule::unique('suppliers')->ignore($id)->where(function ($query) {
-                    return $query->where('is_active', 1);
-                }),
-            ],
+            'company_name' => \App\Support\CompanyUnique::rules('suppliers', (int) $id),
 
-            'email' => [
-                'max:255',
-                    Rule::unique('suppliers')->ignore($id)->where(function ($query) {
-                    return $query->where('is_active', 1);
-                }),
-            ],
+            'email' => \App\Support\CompanyUnique::rules('suppliers', (int) $id),
             'image' => 'image|mimes:jpg,jpeg,png,gif|max:100000',
         ]);
 

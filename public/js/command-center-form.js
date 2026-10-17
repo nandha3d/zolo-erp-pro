@@ -116,11 +116,19 @@
         $('body').removeClass('command-center-printing-document command-center-printing-list');
         $details.removeClass('command-center-print-document');
     });
+    // Posted GST documents print as the A4 tax invoice; anything else prints the details modal.
+    let shown = null;
+    const invoiceUrl = doc => config.printUrl && doc?.posted_at && doc.document_snapshot_json ? config.printUrl + '/' + doc.id + '/print?format=a4' : null;
     $(document).on('click', '.btn-side-view, .btn-side-print', function (event) {
         event.preventDefault(); event.stopPropagation();
         const print = $(this).hasClass('btn-side-print');
+        // Opened during the click so popup blockers allow it; filled or closed once the document is known.
+        const tab = print && config.printUrl ? window.open('', '_blank') : null;
         $.getJSON(config.listUrl + '/' + $(this).data('id') + (purchase ? '' : '/json')).done(result => {
             const doc = result[config.kind], $body = $details.find('tbody').empty();
+            shown = doc;
+            if (tab && invoiceUrl(doc)) { tab.location.href = invoiceUrl(doc); return; }
+            tab?.close();
             const $heading = $('<div>');
             $('<strong>').text(doc.reference_no).appendTo($heading);
             $('<p>').text((doc[purchase ? 'supplier' : 'customer']?.name || '') + ' · ' + String(doc.created_at).slice(0, 10)).appendTo($heading);
@@ -134,9 +142,9 @@
             $('#' + config.kind + '-footer').text('Grand total: ₹ ' + Number(doc.grand_total).toFixed(2) + ' · Paid: ₹ ' + Number(doc.paid_amount || 0).toFixed(2));
             if (print) $details.one('shown.bs.modal', printDetails);
             $details.modal('show');
-        }).fail(failure);
+        }).fail(xhr => { tab?.close(); failure(xhr); });
     });
-    $('#print-btn, #sale-print-btn').on('click', printDetails);
+    $('#print-btn, #sale-print-btn').on('click', () => invoiceUrl(shown) ? window.open(invoiceUrl(shown), '_blank') : printDetails());
     $('#btn-save-drawer-details').on('click', () => {
         for (const name of ['shipping-cost', 'order-discount']) {
             if ($('#drawer-' + name).length) $('#hidden-' + name).val($('#drawer-' + name).val() || 0);
@@ -173,11 +181,11 @@
 
     $(document).on('command-center-reset', () => {
         paymentError = ''; $message.hide(); $reason.prop('hidden', true).find('input').prop('required', false).val('');
-        $(form).find('[name="delivery_challan_id"], [name="goods_received_note_id"], [name="draft_id"]').remove();
+        $(form).find('[name="delivery_challan_id"], [name="goods_received_note_id"], [name="quotation_id"], [name="draft_id"]').remove();
         $(form).find('[name="idempotency_key"]').val(crypto.randomUUID());
         $(form).find('[name="status"], [name="sale_status"]').val(1);
         $('#charges-drawer').find('input, textarea').val('');
-        $(form).find('[id^="hidden-"][type="text"], [id^="hidden-"][type="date"]').val('');
+        $(form).find('[id^="hidden-"][type="text"], [id^="hidden-"][type="date"], #hidden-no-of-bales, #hidden-bundle-count').val('');
         $('#drawer-paid-amount, #hidden-paid-amount').val(0);
         $('#hidden-shipping-cost, #hidden-order-discount, #drawer-shipping-cost, #drawer-order-discount').val(0);
         $('#input-paying-method, #drawer-paying-method').val('Credit'); $('[data-mode]').removeClass('active').filter('[data-mode="Credit"]').addClass('active');
@@ -188,7 +196,7 @@
     $(document).on('command-center-loaded', (event, doc) => {
         $(document).trigger('command-center-reset');
         if (config.shared) $reason.prop('hidden', false).find('input').prop('required', true);
-        for (const field of ['bale_no', 'no_of_bales', 'lr_no', 'lr_date', 'station_to', 'order_no', 'credit_days']) {
+        for (const field of ['bale_no', 'no_of_bales', 'bundle_count', 'vehicle_number', 'lr_no', 'lr_date', 'station_to', 'order_no', 'credit_days']) {
             const value = doc[field] || doc.attributes_json?.[field] || '';
             $('#hidden-' + field.replaceAll('_', '-') + ', #drawer-' + field.replaceAll('_', '-')).val(field.endsWith('date') ? String(value).slice(0, 10) : value);
         }

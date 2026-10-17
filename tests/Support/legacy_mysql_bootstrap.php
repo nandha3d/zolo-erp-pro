@@ -13,6 +13,8 @@ $fixtureEnvironment = [
     'DB_PORT' => getenv('ERP_TEST_MYSQL_PORT') ?: '3306',
     'DB_USERNAME' => getenv('ERP_TEST_MYSQL_USER') ?: 'zolo_test',
     'DB_PASSWORD' => getenv('ERP_TEST_MYSQL_PASSWORD') ?: '',
+    // The legacy rehearsal proves the original seed export, demo catalog included.
+    'SEED_DEMO_DATA' => 'true',
     'VIEW_COMPILED_PATH' => dirname(__DIR__, 2).'/storage/framework/views',
 ];
 foreach ($fixtureEnvironment as $key => $value) {

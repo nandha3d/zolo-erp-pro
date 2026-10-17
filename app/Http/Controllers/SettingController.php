@@ -64,8 +64,12 @@ class SettingController extends Controller
         if ($request->input('confirmation') !== self::EMPTY_DATABASE_CONFIRMATION) {
             return redirect()->back()->with('not_permitted', 'Type '.self::EMPTY_DATABASE_CONFIRMATION.' to confirm emptying the database.');
         }
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
+        // The wipe is database-wide: with several companies one company's owner would erase the others' books.
+        if (DB::getSchemaBuilder()->hasTable('companies') && ($companies = DB::table('companies')->count()) > 1) {
+            return redirect()->back()->with('not_permitted', "This database holds {$companies} companies. Emptying it would erase every company's data, so it is only allowed while a single company exists.");
+        }
 
         // Clear cached queries
         $this->cacheForget('biller_list');
@@ -124,6 +128,10 @@ class SettingController extends Controller
         if (auth()->user()->role_id > 2) {
             $query->where('activity_logs.user_id', auth()->id());
         }
+        // Owners and admins see their active company's activity only.
+        if (\Illuminate\Support\Facades\Schema::hasColumn('activity_logs', 'company_id')) {
+            $query->where('activity_logs.company_id', request()->attributes->get(\App\Services\Platform\CompanyContext::class)?->companyId ?? session('company_id') ?? 0);
+        }
 
         $activity_log_data = $query->get();
 
@@ -153,7 +161,7 @@ class SettingController extends Controller
 
     public function generalSettingStore(Request $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $this->validate($request, [
@@ -286,7 +294,7 @@ class SettingController extends Controller
 
     public function mailSettingStore(Request $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $data = $request->all();
@@ -397,7 +405,7 @@ class SettingController extends Controller
 
     public function smsSettingStore(Request $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $data = $request->all();
@@ -542,7 +550,7 @@ class SettingController extends Controller
                 ->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
 
-        if (!env('USER_VERIFIED')) {
+        if (!config('app.user_verified')) {
             Session::flash('message', 'This feature is disabled for demo!');
             Session::flash('type', 'error');
             return redirect()->back();
@@ -639,7 +647,7 @@ class SettingController extends Controller
 
     public function posSettingStore(Request $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $data = $request->all();

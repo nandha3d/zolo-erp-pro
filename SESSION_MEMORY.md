@@ -8,8 +8,13 @@
 ---
 
 ## 1. Active Session Metadata
+<<<<<<< HEAD
 - **Last Updated:** 2026-10-12 11:50:00 (+05:30)
 - **Active Git Branch:** ui (synchronized with origin/ui at `799424f`)
+=======
+- **Last Updated:** 2026-10-15 (+05:30) — production test matrix + fixes (section 30)
+- **Active Git Branch:** ui
+>>>>>>> origin/ui
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
@@ -898,9 +903,71 @@ User report (screenshot): picker shows "Select Supplier" but Party details strip
 - **Also this session:** business profile subtype dropdown shows saved subtype + status text + dark mode (operations); sidebar scroll/open menus persist (`public/js/sidebar-state.js`).
 - **Next:** start MariaDB, open Settings › GST: save GSTIN → Install standard GST setup → set product rates/HSN.
 
-## 23. Blade @json ParseError Fix in gst-entry.blade.php (2026-10-12)
-
+### Blade @json ParseError Fix in gst-entry.blade.php (2026-10-12)
 - **Issue:** Accessing `/purchases` or `/sales` threw `ParseError: Unclosed '[' does not match ')'` at `resources/views/backend/partials/gst-entry.blade.php:5`.
 - **Root Cause:** In `gst-entry.blade.php`, `@json($gstEntry + ['kind' => $kind, ...])` spanned multiple lines with nested calls (`url()`, `csrf_token()`). Laravel Blade's `@json(...)` regex matched the closing parenthesis of `csrf_token()`, cutting off the array expression and omitting `]` before `)`.
-- **Fix:** Computed `$gstEntryConfig` cleanly inside the `@php` block beforehand, passing a single variable `@json($gstEntryConfig)`. Cleared compiled views via `php artisan view:clear`.
+- **Fix:** Computed single-line config expansion inside the `@php` block beforehand, passing `@json($gstEntry)`. Cleared compiled views via `php artisan view:clear`.
 - **Verification:** `tests/Feature/DocumentEntryWebTest.php`, `tests/Feature/GstSetupTest.php`, and `tests/Feature/OptechVoucherWebTest.php` all passing 100% (28 tests, 168 assertions).
+
+## 23. GST Round-Off + A4 Tax Invoice (2026-10-12, uncommitted)
+
+- **Trigger:** user's FMCG sample bill (MSS Native Foods INV2627-403): taxable 9,568.30 + CGST 155 + SGST 155 = 9,878.30, round off -0.30, grand 9,878, words, HSN, rate incl. GST, bank/terms/declaration.
+- **Round-off:** `CommercialPricing::calculate` rounds a GST *sale* (data has `_tax_snapshot`) to whole rupees; `round_off` returned by preview, checked if submitted, stored in `sales.attributes_json.round_off` (no migration). Purchases and non-GST sales unchanged. `SalePostingService` posts the difference to role `rounding` (ledger 6095 "Round Off", added to `GstSetupService::LEDGERS`; `ensureLedgers($companyId, ['rounding'])` auto-creates it). `ReturnService`: the credit note that returns the last of every sold quantity carries the sale round-off (posted to rounding), so notes total the invoice and AR closes. `gst-entry.js` shows "Round off ±x" in the GST breakdown.
+- **Tax invoice print:** new `resources/views/backend/compliance/tax-invoice.blade.php` (A4, table layout, DomPDF-safe) used by `DocumentRenderingService::html` for format a4; thermal keeps `compliance/print.blade.php`. Snapshot adds unit, discount, trade name, states, party contact, ship-to, round_off, due date, paid, references, note, `print` (company letterhead/bank/terms). `dto()` falls back to live print details for older snapshots. Helpers `inr()` (Indian grouping) and `rupeesInWords()` (lakh/crore).
+- **Settings › GST › Registration:** "Invoice print details" form → `companies.settings_json.invoice_print` (action `print`).
+- **Sales/purchase page Print:** `command-center-form.js` opens `/compliance/documents/{kind}/{id}/print?format=a4` for posted documents with a snapshot (`printUrl` in command-center-form partial); otherwise the old modal print.
+- **Tests:** compliance suite 72/73 (+1 skipped) after updates (23.6→24, 21.24→21, partial return leaves 12.20 open, exchange leaves 0.20 due, final-return rounding nets to 0, print text assertions); IndustryFlowIntegrationTest updated (1499, 28) and green; `CommercialPricingTest` adds sample-invoice round-off. DC/GRN/Optech/DocumentEntry web tests need the MySQL dev DB (was down) — not run. Pre-existing failure before this work: `ComplianceHttpTest::test_web_and_api_note_posting_share_retry_and_approval_contracts` (500).
+
+## 24. Sample GST Sales Bill on Dev DB + Draft Restore Fix (2026-10-12, uncommitted)
+
+- **Doc:** `documents/sample-sales-bill/SAMPLE_SALES_BILL.md` (+ screenshots, `tax-invoice-MJ-00001.pdf`) — full walkthrough done in the real UI via Playwright on `localhost:8080` (user chose dev DB).
+- **Dev DB data added (company 1):** standard COA (32 rows, tinker, same as `CompanyDirectoryService::installChart`) + `seedCompany` mappings; GST registration `33ABCDE1234F1Z7` (synthetic); invoice print details; products 36/37 → GST 18%, HSN 8542/8473; customer 1 GSTIN `33PQRSX5678K1Z5`; purchase PUR-00001 (stock 10 each); sale MJ-00001 id 56 ₹15,104 posted (journal 106).
+- **Bug fixed:** `public/js/document-workspace.js` `restoreLines()` — `setAttribute(name, null)` stored `"null"` → reopened drafts posted `product_batch_id: "null"` → "The reference must belong to the selected product." Now null removes the attribute.
+- **Also fixed earlier this day:** `resources/views/backend/partials/gst-entry.blade.php` multi-line `@json(...)` ParseError → array built in `@php`.
+- **Open findings:** invoice prints USD (only currency row is USD; words only for INR); register action menu lacks Print; no UI to install COA on existing company; leftover dry-run sale draft id 19.
+
+## 25. Company Profile + INR + Logo (2026-10-12)
+
+- **User asks:** USD→INR; bills under company name (zoloERP Pro); logo upload; full company details at creation (group or independent). Chose: FMCG·Manufacturer for company 1, INR added as base (USD kept), picker dialog + Settings › Company profile, push all to origin + upstream `ui`.
+- **Code:** migration `2026_10_16_000001_add_profile_to_companies` (address, city, postal_code, phone, email, website, pan, logo + INR currency row); `App\Services\Platform\CompanyProfileService` (single save path, validates, logo → `public/images/company/` new file per upload, GSTIN → `GstSetupService::registerCompany` so registration legal/trade name + address follow the company; PAN defaults from GSTIN); `CompanyProfileController` + `settings/company` routes + `backend/company/profile.blade.php` (also currency → app default, industry change via `IndustryProfileService::apply`); picker `New company` dialog has all fields (`createCompany(..., $logo)`, default INR); `DocumentRenderingService::printSettings` merges profile contact/PAN/logo over GST print details, `logo()` data URI (HTML + DomPDF); tax-invoice letterhead shows logo/PAN; GST print form lost phone/email/website (legacy values kept as fallback); sidebar Settings › Company profile.
+- **Tests:** `tests/Feature/CompanyProfileTest.php` (3 tests) added to `phpunit.compliance.xml`.
+- **Dev DB:** company 1 profile filled via UI, INR (id 2) base + general_settings.currency, industry fmcg/manufacturer, sale MJ-00002 printed with logo. Doc section 11 in `documents/sample-sales-bill/SAMPLE_SALES_BILL.md`.
+
+## 26. Textile Company + Picker Logo Fix (2026-10-12)
+
+- **Bug fixed:** `CompanyDirectoryService::createCompany` type hint had lost backslashes (`?IlluminateHttpUploadedFile`) in 8b4661e → New company with logo crashed. Regression test `CompanyProfileTest::test_new_company_dialog_saves_profile_logo_and_gst_registration` (4/4).
+- **Dev DB:** company 14 `ZTEX` zoloERP Textiles (Textile · in_house_processing, GSTIN 33ZOLOT1234K1Z5 synthetic, INR, logo) created via picker UI.
+- **Doc:** `documents/textile-company/TEXTILE_COMPANY.md` — purchase/sales/GRN/DC identical across industries; textile adds Job Work + dot-matrix, attributes, process types, qty scale 3. Gaps: MTR unit not created (new company has no units), no bale/bundle/LR inputs on entry screens, receipt/warehouse labels unused, old process types linger after industry switch.
+
+## 27. Textile Preset Gaps Fixed (2026-10-12, committed locally)
+
+- Units: `IndustryCatalog::UNITS` + `IndustryProfileService::ensureUnits()` (called from `installDefaults`) add preset units with alias matching; migration `2026_10_16_000002_align_industry_units_and_processes` backfilled (company 14 MTR, company 1 BOX/CASE).
+- Transport: Sales/Purchase drawer + hidden inputs `bundle_count`, `vehicle_number`; snapshot transport now also keeps `bale_no`, `no_of_bales`; invoice shows Bale No./Bales/Bundles; `no_of_bales` validated integer; reset clears bale/bundle counts.
+- Labels: `IndustryProfileService::label(key, default)` (request-cached) used on sales/purchase/DC/GRN warehouse labels and job work send/receive headings + receipt column.
+- Processes: `IndustryProfileService::alignProcesses()` deactivates untouched other-industry presets (same code+name), reactivates own.
+- Tests: IndustryFlowIntegrationTest `test_presets_add_units_switch_process_types_and_name_shared_screens` (+ FMCG BOX/CASE test now uses preset units); CompanyProfileTest `test_transport_drawer_fields_print_on_the_invoice`.
+- Lesson: in this Git Bash, `node -e '...'` strips backslashes from PHP class names; edit via Edit tool or a PHP script file.
+
+## 28. Textile Job Work End-to-End Run + Fixes (2026-10-13)
+
+- **Run (dev DB, company 14 ZTEX, UI via Playwright):** purchase grey 1000 m (PUR-00001) → custom conversion process DYE-RB → job work order/dispatch (Material DC)/receipt 980 + 20 loss → service bill PUR-00002 ₹15,435 → paid PAY-00001 (bank) → sale MJ-00001 500 m ₹78,750 → REC-00001. Books balance. Doc: `documents/textile-job-work/TEXTILE_JOB_WORK_CYCLE.md`.
+- **Fixes:** `App\Support\CompanyUnique` (party uniqueness per company, blanks ignored) in Supplier/CustomerController; `CompanyDirectoryService::installStarterMasters()` (customer group, category, biller, Cash/Bank accounts, OptechMasterSeeder::seedCompany) + migration 000003; quick item `profit_margin` default; chart template adds role accounts (1150, 1250, 4040, 4050, 5030, 5040; 5020→inventory_loss, 4030→shipping_income, 6090 system) + `seedCompany` fills unmapped roles + migration 000004; OperationsController converts InvalidArgumentException to form errors; `registerCompany` calls `ensureLedgers`; register Add Payment: modals above backdrop (commercial-workspace.css), restored handlers with `data-due` (Sale/PurchaseController); register row menus pinned fixed (main.blade.php).
+- **Open (user decision):** job work charge not capitalised into output cost (expensed to 6090); Material DC print not GST-compliant (job worker #id, no GSTIN/HSN/value); textile preset processes non-conversion.
+
+## 29. Job Work Costing + GST Challan + Textile Process Route (2026-10-13)
+
+- **User decisions:** (1) capitalise job worker charge into processed stock; (2) GST-compliant job work delivery challan; (3) configurable default textile grey→dyed process with lots. Pushed 296153e before starting.
+- **Costing:** `InventoryMovementService::revalue()` (value-only lines, qty 0; reverse() negates value) + `App\Services\JobWork\JobWorkCosting::capitalise()` called from `PurchasePostingService` when `attributes_json.job_work_receipt_id` (whitelisted, set by `JobWorkService::serviceBill`). On-hand share → Dr Inventory + revaluation (source purchase, so CommercialReversalService reverses it); consumed share → Dr COGS. Receipt `details_json.processing_cost` written via DB (operation records immutable).
+- **Challan:** `OperationsController::jobWorkChallan()` + `resources/views/backend/operations/job_work_challan.blade.php` (3 copies, Rule 55(1)(c)/Sec 143) + dot-matrix; old `material_document.blade.php` removed; dispatch `details_json.transport` (vehicle, transporter, e-way, notes); series JWO-/JWDC-/JWGRN- (seeder + migration rewrites ERP-JW* defaults).
+- **Route:** migration `2026_10_16_000005` (dispatch details_json, process_types output_product_id/service_product_id/service_rate, product_batches.expired_date nullable, GREY-DYE preset for textile companies); batch expiry required only when `inventory.batch_expiry` enabled; Process Policy "Edit an existing process" + defaults; used processes allow default edits; stock lines have Lot/batch no.; receipt `details_json.lots`; sales line lot dropdown via `operations/inventory/lots` (`IndustryStockQueries::lots`).
+- **Dev DB run 2 (ZTEX):** PUR-00003 lot GREY-L02 → JWO-00002/JWDC-00002/JWGRN-00002 → PUR-00004 Dr Inventory 8,820 (₹97/m) → MJ-00002 300 m lot RB-L02. Doc section 4–5 in `documents/textile-job-work/TEXTILE_JOB_WORK_CYCLE.md`.
+- **Valuation note:** weighted average per item (not per lot).
+- **Blade gotcha:** `word@endif`/`word@if` is not a directive — use `{{ '' }}@if` or a space.
+
+## 30. Production-Completion Test Matrix + Fixes (2026-10-15)
+
+- **Report:** `documents/PRODUCTION_TEST_MATRIX_REPORT.md` (28 gates, findings B1–B44, fix status, evidence). Real-browser harness lives outside the repo (session scratchpad `e2e/*.mjs`): fresh install on disposable MySQL `127.0.0.1:33084` (DBs `zolo_test_completion_uat`, `zolo_test_uat2`), app on `php -S :8091/:8092`, Playwright via `V:/pers/Freelance/loanapp/node_modules/playwright-core`.
+- **Critical/high fixed:** B23 journal screens/posting need `accounting.*` permissions; B21 empty-database refused with >1 company; B28 stock adjustments post Dr/Cr Inventory vs Variance (5030) and keep `erp:health` inventory value green; B29 transfer/POS lists include `is_imei=0` items; B11 quotation → unified `/sales|/purchases?from_quotation=` (legacy `quotation/create_sale|create_purchase` views removed), bill marks quotation converted; B20 accounting permissions created + on Role page; B10 tax-inclusive master price shown as pre-tax rate; B12 GRN/DC stamped with branch/FY and branch-scoped; B35 starter series replay-safe; B42 `USER_VERIFIED`/`ERP_OPTIONAL_ACTIVATION_READY` read via `config('app.*')`.
+- **Also fixed:** B1 picker redirect on fresh install; B2 demo catalog only with `SEED_DEMO_DATA=true` (legacy suite sets it); B3 GST slabs at creation; B4 quick party uses company group; B5/B24 `OptechMasterSeeder::seedSeries()` for every branch/FY (tags MJ-CBE-, MJ-27-; called on new branch + new FY; migration 2026_10_17_000005); B6/B7/B9/B18 quotation fixes; B13 conversion links keep entry visible; B14 placeholder image shipped; B17 findOrFail; B19 branch access on user edit; B22 activity log company column; B25 `?branch_scope=all` company-wide reports; B27 ageing as of today; B30 FEFO label; B31 FMCG damage capability; B32 backups include `public/images`, `public/documents`; B33 backup errors shown/logged; B36 `/operations` lands on enabled area; B37 report/list overflow CSS; B39 root `.htaccess` deny rules; B41 phpunit pins ERP_* flags (suites no longer read dev `.env` flags); B43/B44 notification/user lists scoped to company.
+- **Second pass (user: "fix all the issues and merge it to ui"):** PO lifecycle (`PO-` series via `purchase_order` document type, receipts limited to open quantity, `attributes_json.fulfilled_at` + register shows Fulfilled); negative cash payment warning; dark-mode filter labels; missing `db.*` translations fall back to readable text (AppServiceProvider); CORS only on `api/*` (`API_CORS_ORIGIN`); StockPolicyException not reported; ComplianceHttpTest stand-in layout (`tests/Support/views`); old demo dump untracked (copy in `storage/app/private/db-backups/`).
+- **Still needs people/servers:** physical printing, real off-site backup disk, production server (HTTPS/nginx/workers), real-data reconciliation, operator/accountant sign-off, agreed p95 budgets. Ctrl+F12 purchase-order shortcut stays unassigned (user decision).

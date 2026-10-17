@@ -60,6 +60,14 @@ class CommercialApplicationService
                     throw ValidationException::withMessages([$materialField => 'Convert a pending document for the same party and warehouse.']);
                 }
             }
+            $quotation = null;
+            if (!empty($data['quotation_id'])) {
+                $quotation = \App\Models\Quotation::forCompany($context)->whereKey($data['quotation_id'])->lockForUpdate()->firstOrFail();
+                $quotedParty = $kind === 'sale' ? $quotation->customer_id : $quotation->supplier_id;
+                if ((int) $quotation->quotation_status !== 1 || ($quotedParty && (int) $quotedParty !== (int) $party->id)) {
+                    throw ValidationException::withMessages(['quotation_id' => 'Convert a pending quotation for the same party.']);
+                }
+            }
             $products = [];
             validator($data, ['sale_note' => 'nullable|string|max:10000', 'note' => 'nullable|string|max:10000',
                 'update_item_cost' => 'sometimes|boolean', 'update_item_hsn' => 'sometimes|boolean'])->validate();
@@ -127,8 +135,16 @@ class CommercialApplicationService
             if ($kind === 'purchase' && !empty($data['purchase_order_id'])) {
                 $order = Purchase::visibleIn($context)->whereKey($data['purchase_order_id'])->lockForUpdate()->firstOrFail();
                 if ((int) $order->status !== 4 || (int) $order->supplier_id !== (int) $party->id
-                    || (int) $order->warehouse_id !== (int) $data['warehouse_id'] || $order->reversed_at) {
+                    || (int) $order->warehouse_id !== (int) $data['warehouse_id'] || $order->reversed_at
+                    || !empty($order->attributes_json['fulfilled_at'])) {
                     throw ValidationException::withMessages(['purchase_order_id' => 'Link an active order for the same supplier and warehouse.']);
+                }
+                // A receipt can bring in only what is still open on the order, item by item.
+                $open = $this->openOrderQuantities($order, $context);
+                foreach (collect($data['items'])->groupBy('product_id') as $productId => $lines) {
+                    if ($lines->sum(fn ($line) => (float) ($line['received_qty'] ?? $line['qty'])) > ($open[(int) $productId] ?? 0) + 0.00005) {
+                        throw ValidationException::withMessages(['purchase_order_id' => 'Receipt exceeds the quantity still open on order '.$order->reference_no.'.']);
+                    }
                 }
             }
             if ($kind === 'purchase' && (int) ($data['status'] ?? 1) === 4 && ($data['paid_amount'] ?? 0) > 0) {
@@ -155,6 +171,7 @@ class CommercialApplicationService
                 ? app(SaleService::class)->createSale($data, $actor, $context, deferPosting: true)
                 : app(PurchaseService::class)->createPurchase($data, $actor, $context, deferPosting: true);
             $attributes = $this->attributes($data);
+            if (!empty($data['round_off'])) $attributes['round_off'] = $data['round_off'];
             $attributes['due_date'] = $data['due_date'] ?? CarbonImmutable::parse($date)->addDays((int) ($party->credit_days ?? 0))->toDateString();
             $dueDate = $attributes['due_date'];
             if (!is_string($dueDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $dueDate)
@@ -188,6 +205,16 @@ class CommercialApplicationService
             }
             $document = $kind === 'sale' ? app(SalePostingService::class)->post($document, $context, $actor)
                 : app(PurchasePostingService::class)->post($document, $context, $actor);
+            if ($kind === 'purchase' && !empty($data['purchase_order_id']) && (int) ($data['status'] ?? 1) !== 4) {
+                $order = Purchase::visibleIn($context)->whereKey($data['purchase_order_id'])->firstOrFail();
+                if (collect($this->openOrderQuantities($order, $context))->every(fn ($qty) => $qty <= 0.00005)) {
+                    $order->forceFill(['attributes_json' => ['fulfilled_at' => now()->toDateTimeString(), 'fulfilled_by_purchase_id' => $document->id] + ($order->attributes_json ?? [])])->save();
+                }
+            }
+            if ($quotation) {
+                // quotation_status 2 = sent/converted in the quotation register; a converted quotation cannot be billed twice.
+                \App\Models\Quotation::whereKey($quotation->id)->update(['quotation_status' => 2]);
+            }
             if ($material) {
                 $material->update(['status' => $kind === 'sale' ? 'converted_to_sale' : 'converted_to_purchase', $kind.'_id' => $document->id]);
             }
@@ -210,11 +237,28 @@ class CommercialApplicationService
             'source_id' => $document->id, 'details_json' => json_encode($details, JSON_THROW_ON_ERROR), 'created_at' => now()]);
     }
 
+    /** Ordered quantity per product minus what active bills linked to the order have already received. */
+    private function openOrderQuantities(Purchase $order, \App\Services\Platform\CompanyContext $context): array
+    {
+        $open = [];
+        foreach (DB::table('product_purchases')->where('purchase_id', $order->id)->get(['product_id', 'qty']) as $line) {
+            $open[(int) $line->product_id] = ($open[(int) $line->product_id] ?? 0) + (float) $line->qty;
+        }
+        $bills = Purchase::visibleIn($context)->where('supplier_id', $order->supplier_id)->where('status', '<>', 4)->whereNull('reversed_at')
+            ->where('id', '<>', $order->id)->get(['id', 'attributes_json'])
+            ->filter(fn ($bill) => (int) ($bill->attributes_json['purchase_order_id'] ?? 0) === (int) $order->id)->pluck('id');
+        foreach (DB::table('product_purchases')->whereIn('purchase_id', $bills)->get(['product_id', 'qty', 'recieved']) as $line) {
+            $open[(int) $line->product_id] = ($open[(int) $line->product_id] ?? 0) - (float) ($line->recieved ?? $line->qty);
+        }
+        return $open;
+    }
+
     private function attributes(array $data): array
     {
         $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no',
-            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id']));
-        foreach (['bale_count', 'bundle_count'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
+            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id']));
+        if (isset($attributes['job_work_receipt_id'])) validator($attributes, ['job_work_receipt_id' => 'integer|min:1'])->validate();
+        foreach (['bale_count', 'bundle_count', 'no_of_bales'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
         foreach ($attributes as $key => $value) {
             if ($value === null) {
                 unset($attributes[$key]);

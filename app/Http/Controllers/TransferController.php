@@ -463,7 +463,7 @@ class TransferController extends Controller
             ]);
         }
 
-        $lims_product_warehouse_data = $query->whereNull('products.is_imei')
+        $lims_product_warehouse_data = $query->where(fn ($q) => $q->whereNull('products.is_imei')->orWhere('products.is_imei', false))
                                         ->whereNull('product_warehouse.variant_id')
                                         ->whereNull('product_warehouse.product_batch_id')
                                         ->select('product_warehouse.*', 'products.name', 'products.code', 'products.type', 'products.product_list', 'products.qty_list', 'products.is_embeded')

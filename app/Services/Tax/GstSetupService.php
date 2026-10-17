@@ -42,6 +42,7 @@ class GstSetupService
         'output_tax_sgst' => ['2051', 'Output SGST', 'liability', '2000'],
         'output_tax_igst' => ['2052', 'Output IGST', 'liability', '2000'],
         'output_tax_cess' => ['2053', 'Output GST Cess', 'liability', '2000'],
+        'rounding' => ['6095', 'Round Off', 'expense', '6000'],
     ];
 
     public static function available(): bool
@@ -105,6 +106,8 @@ class GstSetupService
                     'effective_from' => $data['effective_from'], 'created_at' => now()]);
             }
             Company::whereKey($context->companyId)->update(['country_code' => 'IN', 'state_code' => substr($gstin, 0, 2)]);
+            // A registered company bills GST from its first document: make sure the GST and round-off ledgers are mapped.
+            $this->ensureLedgers($context->companyId);
         });
     }
 
@@ -130,11 +133,11 @@ class GstSetupService
         });
     }
 
-    /** Creates the eight GST ledgers when missing and maps any unmapped GST posting role to them. */
-    public function ensureLedgers(int $companyId): void
+    /** Creates the GST and round-off ledgers (or only $roles) when missing and maps any unmapped posting role to them. */
+    public function ensureLedgers(int $companyId, ?array $roles = null): void
     {
         if (!Schema::hasTable('chart_of_accounts') || !Schema::hasTable('semantic_account_mappings')) return;
-        foreach (self::LEDGERS as $role => [$code, $name, $type, $parentCode]) {
+        foreach ($roles === null ? self::LEDGERS : array_intersect_key(self::LEDGERS, array_flip($roles)) as $role => [$code, $name, $type, $parentCode]) {
             $account = ChartOfAccount::where('company_id', $companyId)->where('sub_type', $role)->where('type', $type)->first();
             if (!$account) {
                 $suffix = 0;

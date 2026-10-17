@@ -74,4 +74,21 @@ class DestructiveRoutesTest extends TestCase
     {
         return ['missing' => [null], 'yes' => ['yes'], 'wrong case' => ['delete all data'], 'padded' => [' DELETE ALL DATA']];
     }
+
+    /** Production matrix B21: the wipe is database-wide, so one company's owner must not erase other companies. */
+    public function test_empty_database_is_refused_while_several_companies_exist(): void
+    {
+        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'app.user_verified' => true]);
+        \Illuminate\Support\Facades\DB::purge('sqlite');
+        \Illuminate\Support\Facades\Schema::create('companies', fn ($table) => $table->id());
+        \Illuminate\Support\Facades\DB::table('companies')->insert([['id' => 1], ['id' => 2]]);
+        $this->actingAs(new User(['role_id' => 2, 'is_active' => 1, 'name' => 'Owner of one company']));
+
+        $response = app(SettingController::class)->emptyDatabase(Request::create('/setting/empty-database', 'POST',
+            ['confirmation' => SettingController::EMPTY_DATABASE_CONFIRMATION]));
+
+        $this->assertTrue($response->isRedirection());
+        $this->assertStringContainsString('2 companies', session('not_permitted'));
+        $this->assertSame(2, \Illuminate\Support\Facades\DB::table('companies')->count());
+    }
 }

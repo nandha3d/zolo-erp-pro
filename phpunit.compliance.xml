@@ -11,6 +11,7 @@
     <file>tests/Feature/ComplianceConcurrencyTest.php</file>
     <file>tests/Feature/ComplianceBrowserFixtureTest.php</file>
     <file>tests/Feature/GstSetupTest.php</file>
+    <file>tests/Feature/CompanyProfileTest.php</file>
   </testsuite></testsuites>
-  <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/></php>
+  <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/><env name="ERP_SHARED_COMMERCIAL_ENABLED" value="false" force="true"/><env name="ERP_COMPLIANCE_ENABLED" value="false" force="true"/><env name="ERP_OPERATIONS_ENABLED" value="false" force="true"/><env name="ERP_BACKUP_ENABLED" value="false" force="true"/><env name="ERP_OPTIONAL_ACTIVATION_READY" value="false" force="true"/></php>
 </phpunit>

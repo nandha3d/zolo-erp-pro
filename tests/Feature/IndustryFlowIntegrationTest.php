@@ -41,7 +41,7 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         ]), 'grey-sale', 1, $this->context()));
         app(\App\Services\ERP\PaymentService::class)->addPayment($sale, ['amount' => 200, 'account_id' => 1,
             'paying_method' => 'Cash', 'business_date' => '2026-10-03', 'idempotency_key' => 'grey-payment'], 1, $this->context());
-        $this->assertEquals(1499.2, DB::table('account_open_items')->where('source_type', 'sale')->where('source_id', $sale->id)->sum('open_amount'));
+        $this->assertEquals(1499, DB::table('account_open_items')->where('source_type', 'sale')->where('source_id', $sale->id)->sum('open_amount'));
         $this->assertEquals(0, $fabric->fresh()->qty); $this->assertSame([], $job->pending($this->context(), 1));
         $print = app(DocumentRenderingService::class); $document = $print->dto('sale', $sale->id, $this->context());
         $text = $print->fixedWidth($document, $print->profile('sale', $this->context(), null, 'dot_matrix'));
@@ -52,23 +52,126 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         $this->assertSame([], app(InventoryReconciliationService::class)->differences());
     }
 
+    public function test_job_work_charge_becomes_dyed_fabric_cost_with_lot_trace_cogs_split_and_bill_reversal(): void
+    {
+        (require database_path('migrations/2026_10_16_000005_job_work_textile_process_route.php'))->up();
+        $category = DB::table('tax_categories')->value('id');
+        $grey = $this->material(0, 80, ['tax_category_id' => $category, 'hsn_code' => '1001']);
+        $dyed = $this->material(0, 0, ['tax_category_id' => $category, 'hsn_code' => '1001']);
+        $charge = $this->gstProduct('service'); $charge->forceFill(['qty' => 0, 'tax_category_id' => $category])->save();
+        DB::table('product_warehouse')->where('product_id', $charge->id)->update(['qty' => 0]);
+        app(InventoryMovementService::class)->receive(new StockMovementCommand(date: '2026-10-03', warehouseId: 1, context: $this->context(), userId: 1,
+            lines: [new StockLine(productId: $grey->id, qty: 1000, unitCost: 80, batch: ['batch_no' => 'GREY-L1'])]));
+        $job = app(JobWorkService::class);
+        $process = $job->configureProcess(['code' => 'GREY-DYE', 'name' => 'Dyeing - grey to dyed fabric', 'max_loss_percent' => 5, 'conversion' => true,
+            'output_product_id' => $dyed->id, 'service_product_id' => $charge->id, 'service_rate' => 15], $this->context(), 1);
+        $this->assertSame([$dyed->id, $charge->id, 15.0], array_values(array_map(fn ($v) => is_numeric($v) && str_contains((string) $v, '.') ? (float) $v : (int) $v,
+            (array) DB::table('process_types')->where('id', $process)->first(['output_product_id', 'service_product_id', 'service_rate']))));
+        $average = fn ($product) => round(DB::table('stock_movement_lines')->where('product_id', $product->id)->sum('value')
+            / max(0.0001, DB::table('stock_movement_lines')->where('product_id', $product->id)->sum('qty_base')), 4);
+        $cycle = function (float $sent, float $accepted, string $key) use ($job, $process, $grey, $dyed) {
+            $order = $job->order(['job_worker_party_id' => 1, 'process_type_id' => $process, 'business_date' => '2026-10-03'], $key.'-order', $this->context(), 1);
+            $dispatch = $job->dispatch($order->id, ['warehouse_id' => 1, 'business_date' => '2026-10-03', 'transport' => ['vehicle_number' => 'TN39 AB 1234'],
+                'lines' => [['product_id' => $grey->id, 'qty' => $sent, 'batch' => ['batch_no' => 'GREY-L1']]]], $key.'-dispatch', $this->context(), 1);
+            $line = DB::table('job_work_dispatch_lines')->where('dispatch_id', $dispatch->id)->first();
+            return $job->receive($dispatch->id, ['warehouse_id' => 1, 'business_date' => '2026-10-03',
+                'lines' => [['dispatch_line_id' => $line->id, 'accepted_qty' => $accepted, 'rejected_qty' => 0, 'loss_qty' => $sent - $accepted]],
+                'outputs' => [['product_id' => $dyed->id, 'qty' => $accepted, 'cost_weight' => 1, 'batch' => ['batch_no' => 'RB-'.$key]]]], $key.'-receipt', $this->context(), 1);
+        };
+        $bill = fn ($receipt, float $qty, string $key) => $job->serviceBill($receipt->id, ['business_date' => '2026-10-03',
+            'items' => [['product_id' => $charge->id, 'qty' => $qty, 'net_unit_cost' => 15]]], $key, $this->context(), 1);
+
+        // 1. Bill before any sale: the whole charge goes into the dyed fabric (₹80 grey + ₹15 dyeing = ₹95 per metre).
+        $receipt = $cycle(500, 490, 'A');
+        $this->assertSame(['input' => ['GREY-L1'], 'output' => ['RB-A']], $receipt->fresh()->details_json['lots']);
+        $this->assertSame(80.0, $average($dyed));
+        $bill($receipt, 490, 'bill-A');
+        $this->assertSame(95.0, $average($dyed));
+        $cost = $receipt->fresh()->details_json['processing_cost'];
+        $this->assertEquals([7350, 7350, 0, 15, 80], [$cost['amount'], $cost['to_stock'], $cost['to_cogs'], $cost['per_unit'], $cost['material_per_unit']]);
+        $journal = fn (string $subType) => (float) DB::table('journal_items as i')->join('journal_entries as j', 'j.id', '=', 'i.journal_entry_id')
+            ->join('chart_of_accounts as a', 'a.id', '=', 'i.chart_of_account_id')->where('j.reference_type', 'purchase')
+            ->where('j.reference_id', $receipt->fresh()->service_purchase_id)->where('a.sub_type', $subType)->sum('i.debit');
+        $this->assertEquals([7350, 0], [$journal('inventory'), $journal('operating_expense')], 'The bill debits stock, not expense.');
+        $this->get('/operations/job-work/'.DB::table('job_work_dispatches')->where('id', $receipt->dispatch_id)->value('job_work_order_id'))->assertOk()
+            ->assertSee('Lots GREY-L1 → RB-A', false)->assertSee('material ₹80.00 + processing ₹15.00 = ₹95.00 per unit', false)->assertSee('Job worker bill:', false);
+        $this->getJson('/operations/inventory/lots?product_id='.$dyed->id.'&warehouse_id=1')->assertOk()->assertJsonPath('data.0.batch_no', 'RB-A')->assertJsonPath('data.0.qty', fn ($qty) => (float) $qty === 490.0);
+
+        // 2. Half of a second lot is sold before the dyer bills: that half of the charge goes to cost of goods sold.
+        $second = $cycle(400, 400, 'B');
+        app(SaleApplicationService::class)->create(new SaleCommand($this->saleData($dyed, ['items' => [
+            ['product_id' => $dyed->id, 'qty' => 490, 'net_unit_price' => 150, 'product_batch_id' => DB::table('product_batches')->where('batch_no', 'RB-A')->value('id')],
+            ['product_id' => $dyed->id, 'qty' => 200, 'net_unit_price' => 150, 'product_batch_id' => DB::table('product_batches')->where('batch_no', 'RB-B')->value('id')]]]), 'dyed-sale', 1, $this->context()));
+        $purchase = \App\Models\Purchase::findOrFail($bill($second, 400, 'bill-B')->fresh()->service_purchase_id);
+        $cost = $second->fresh()->details_json['processing_cost'];
+        $this->assertEquals([6000, 3000, 3000], [$cost['amount'], $cost['to_stock'], $cost['to_cogs']], '200 of 400 dyed metres were still in stock.');
+
+        // 3. Reversing the dyer's bill removes the revaluation with it.
+        $before = DB::table('stock_movement_lines')->where('product_id', $dyed->id)->sum('value');
+        app(\App\Services\Commercial\CommercialReversalService::class)->reverse($purchase, '2026-10-03', 'Billed twice', $this->context());
+        $this->assertEquals(round($before - 3000, 4), round(DB::table('stock_movement_lines')->where('product_id', $dyed->id)->sum('value'), 4));
+        $this->assertSame([], app(InventoryReconciliationService::class)->differences());
+    }
+
+    public function test_job_work_challan_prints_gst_delivery_challan_details_not_internal_ids(): void
+    {
+        (require database_path('migrations/2026_10_16_000005_job_work_textile_process_route.php'))->up();
+        DB::table('suppliers')->where('id', 1)->update(['name' => 'Ravi', 'company_name' => 'Bluewave Dyeing Works', 'address' => '5, Dyeing Unit Street',
+            'city' => 'Tiruppur', 'vat_number' => $this->gstin('33')]);
+        $grey = $this->material(100, 80, ['tax_category_id' => DB::table('tax_categories')->value('id'), 'hsn_code' => '5208', 'name' => 'Grey Cotton Fabric 60s']);
+        [$order, $dispatch] = $this->job($grey, 100, true);
+        DB::table('job_work_dispatches')->where('id', $dispatch->id)->update(['details_json' => json_encode(['transport' => ['vehicle_number' => 'TN39 AB 1234', 'eway_bill_no' => '1810 2233 4455']])]);
+        $html = $this->get('/operations/dispatch/'.$dispatch->id.'/print')->assertOk()->getContent();
+        foreach (['Delivery Challan', 'Rule 55(1)(c)', 'Bluewave Dyeing Works', '5, Dyeing Unit Street', $this->gstin('33'), 'Grey Cotton Fabric 60s', '5208',
+            '8,000.00', 'Eight Thousand Rupees Only', 'Sent for job work - Processing', 'TN39 AB 1234', '1810 2233 4455', 'Section 143',
+            'Original for consignee (job worker)', 'Duplicate for transporter', 'Triplicate for consignor', 'Authorised Signatory', $dispatch->reference_no] as $text) {
+            $this->assertStringContainsString(e($text), $html);
+        }
+        $this->assertStringNotContainsString('Job worker #', $html);
+        $this->get('/operations/job-work/'.$order->id)->assertOk()->assertSee('Print job work challan (GST)')->assertSee('Lot / batch no.')->assertSee('E-way bill no.');
+        $this->get('/operations/job-work')->assertOk()->assertSee('Edit an existing process')->assertSee('Processing charge item');
+    }
+
+    public function test_presets_add_units_switch_process_types_and_name_shared_screens(): void
+    {
+        $profiles = app(IndustryProfileService::class);
+        $active = fn () => DB::table('process_types')->where('company_id', $this->company->id)->where('is_active', true)->orderBy('code')->pluck('code')->all();
+        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $this->assertTrue(DB::table('units')->where('company_id', $this->company->id)->where('unit_code', 'MTR')->exists(), 'Textile adds its meter unit.');
+        $this->assertSame(['DYEING', 'FINISHING', 'GREY-DYE', 'PRINTING'], $active());
+        request()->attributes->set(\App\Services\Platform\CompanyContext::class, $this->context());
+        $this->assertSame(['Godown', 'Material DC', 'Job Work GRN'], [IndustryProfileService::label('warehouse', 'Warehouse'),
+            IndustryProfileService::label('dispatch', 'Send material'), IndustryProfileService::label('receipt', 'Receive material')]);
+
+        $profiles->apply('fmcg', 'distribution', $this->context(), 1);
+        $this->assertSame(['REPACKING'], $active(), 'Textile presets stop being offered after the switch.');
+        request()->attributes->remove('industry_labels');
+        $this->assertSame('Warehouse', IndustryProfileService::label('warehouse', 'Warehouse'));
+
+        $units = DB::table('units')->where('company_id', $this->company->id)->count();
+        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $this->assertSame(['DYEING', 'FINISHING', 'GREY-DYE', 'PRINTING'], $active(), 'Switching back offers them again.');
+        $this->assertSame($units, DB::table('units')->where('company_id', $this->company->id)->count(), 'Preset units are added once.');
+    }
+
     public function test_case_purchase_box_sale_free_scheme_and_mrp_use_normalized_base_quantities(): void
     {
         app(IndustryProfileService::class)->apply('fmcg', 'distribution', $this->context(), 1);
-        foreach ([2 => 'BOX', 3 => 'CASE'] as $id => $name) DB::table('units')->insert(['id' => $id, 'name' => $name, 'unit_name' => $name, 'company_id' => $this->company->id]);
+        $units = DB::table('units')->where('company_id', $this->company->id)->whereIn('unit_code', ['BOX', 'CASE'])->pluck('id', 'unit_code');
+        $this->assertCount(2, $units, 'The FMCG preset adds its BOX and CASE units.');
         $product = $this->material(0, 1, ['is_batch' => true, 'tax_category_id' => DB::table('tax_categories')->value('id'), 'hsn_code' => '1001']);
-        foreach ([2 => 12, 3 => 144] as $id => $factor) ProductUomConversion::create(['company_id' => $this->company->id,
+        foreach ([$units['BOX'] => 12, $units['CASE'] => 144] as $id => $factor) ProductUomConversion::create(['company_id' => $this->company->id,
             'product_id' => $product->id, 'from_uom_id' => $id, 'to_uom_id' => 1, 'factor' => $factor, 'rounding_scale' => 4]);
         app(PurchaseApplicationService::class)->create(new PurchaseCommand($this->purchaseData($product, ['items' => [[
-            'product_id' => $product->id, 'qty' => 1, 'purchase_unit_id' => 3, 'net_unit_cost' => 144,
+            'product_id' => $product->id, 'qty' => 1, 'purchase_unit_id' => $units['CASE'], 'net_unit_cost' => 144,
             'batch' => ['batch_no' => 'CASE-A', 'mfg_date' => '2026-09-01', 'expired_date' => '2027-09-01', 'mrp' => 5],
         ]]]), 'case-purchase', 1, $this->context()));
         $scheme = app(FmcgInventoryService::class)->configureScheme(['product_id' => $product->id, 'name' => '12+1',
             'buy_qty' => 12, 'free_qty' => 1, 'valid_from' => '2026-10-01', 'valid_to' => '2026-12-31'], $this->context(), 1);
         $sale = app(SaleApplicationService::class)->create(new SaleCommand($this->saleData($product, ['items' => [[
-            'product_id' => $product->id, 'qty' => 1, 'sale_unit_id' => 2, 'net_unit_price' => 24, 'quantity_scheme_id' => $scheme,
+            'product_id' => $product->id, 'qty' => 1, 'sale_unit_id' => $units['BOX'], 'net_unit_price' => 24, 'quantity_scheme_id' => $scheme,
         ]]]), 'box-sale', 1, $this->context()));
-        $this->assertEquals(28.32, $sale->grand_total); $this->assertEquals(131, $product->fresh()->qty);
+        $this->assertEquals(28, $sale->grand_total); $this->assertEquals(131, $product->fresh()->qty);
         $this->assertEquals(5, DB::table('product_batches')->value('mrp'));
         $this->assertSame([], app(InventoryReconciliationService::class)->differences());
     }

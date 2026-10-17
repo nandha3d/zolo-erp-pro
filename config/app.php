@@ -15,6 +15,18 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // false only on the public demo: blocks settings changes and deletions (read through config so config:cache works).
+    'user_verified' => (bool) env('USER_VERIFIED', true),
+
+    // Seed the SalePro demo catalog on db:seed (demo installs and the legacy rehearsal suite only).
+    'seed_demo_data' => (bool) env('SEED_DEMO_DATA', false),
+
+    // Origin allowed to call the token API from a browser ('*' = any); the web screens send no CORS headers.
+    'api_cors_origin' => env('API_CORS_ORIGIN', '*'),
+
+    // Optional industry capabilities can be switched on once company isolation acceptance is signed off.
+    'erp_optional_activation_ready' => (bool) env('ERP_OPTIONAL_ACTIVATION_READY', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

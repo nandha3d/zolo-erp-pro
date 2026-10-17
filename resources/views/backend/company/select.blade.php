@@ -149,27 +149,45 @@
 </dialog>
 
 <dialog id="dlg-company" class="cp-dialog cp-dialog-wide" aria-labelledby="dlg-company-title">
-    <form method="post" action="{{ route('company.companies.store') }}">
+    <form method="post" action="{{ route('company.companies.store') }}" enctype="multipart/form-data">
         @csrf
         <h2 id="dlg-company-title">New company</h2>
-        <p class="cp-dialog-sub">Creates the company with a main branch, a main warehouse, a standard chart of accounts and its first financial year.</p>
+        <p class="cp-dialog-sub">Creates the company with a main branch, a main warehouse, a standard chart of accounts and its first financial year. Its name, address, GSTIN and logo print on its bills; change them later in Settings › Company profile.</p>
         <div class="cp-grid">
             <label class="cp-span">Group<select name="company_group_id">
                 @foreach($manageableGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
                 <option value="">No group (independent)</option>
             </select></label>
-            <label>Display name<input type="text" name="trade_name" maxlength="255" placeholder="Motumo FMCG" value="{{ old('trade_name') }}"></label>
-            <label>Legal name<input type="text" name="legal_name" required maxlength="255" placeholder="Motumo Foods Private Limited" value="{{ old('legal_name') }}"></label>
+            <span class="cp-section">Business</span>
+            <label>Display name<input type="text" name="trade_name" maxlength="191" placeholder="Motumo FMCG" value="{{ old('trade_name') }}"></label>
+            <label>Legal name<input type="text" name="legal_name" required maxlength="191" placeholder="Motumo Foods Private Limited" value="{{ old('legal_name') }}"></label>
             <label>Industry<select name="industry" id="cp-industry" required>
                 @foreach($industries as $key => $label)<option value="{{ $key }}" @selected(old('industry') === $key)>{{ $label }}</option>@endforeach
             </select></label>
             <label>Business type<select name="subtype" id="cp-subtype"></select></label>
             <label><span>Short code <span class="cp-opt">optional</span></span><input type="text" name="code" maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="MOTUMO"></label>
-            <label><span>State code <span class="cp-opt">GST</span></span><input type="text" name="state_code" maxlength="20" placeholder="33" value="{{ old('state_code') }}"></label>
-            <label>Currency<select name="base_currency_id">
-                @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == $defaultCurrencyId)>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
+            <label><span>Logo <span class="cp-opt">PNG/JPG, up to 1 MB</span></span><input type="file" name="logo" accept="image/png,image/jpeg"></label>
+            <span class="cp-section">Address &amp; contact</span>
+            <label class="cp-span">Address<textarea name="address" maxlength="1000" placeholder="Door no., street, area">{{ old('address') }}</textarea></label>
+            <label>City<input type="text" name="city" maxlength="100" value="{{ old('city') }}"></label>
+            <label>State<select name="state_code">
+                <option value="">— Select —</option>
+                @foreach($states as $code => $name)<option value="{{ $code }}" @selected((string) old('state_code') === (string) $code)>{{ $name }} ({{ $code }})</option>@endforeach
             </select></label>
+            <label>PIN code<input type="text" name="postal_code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" value="{{ old('postal_code') }}"></label>
+            <label>Phone<input type="text" name="phone" maxlength="100" value="{{ old('phone') }}"></label>
+            <label>Email<input type="email" name="email" maxlength="191" value="{{ old('email') }}"></label>
+            <label>Website<input type="text" name="website" maxlength="191" value="{{ old('website') }}"></label>
+            <span class="cp-section">Tax</span>
+            <label><span>GSTIN <span class="cp-opt">turns on GST billing</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase" value="{{ old('gstin') }}"></label>
+            <label><span>PAN <span class="cp-opt">taken from GSTIN if blank</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase" value="{{ old('pan') }}"></label>
+            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option></select></label>
+            <label>Currency<select name="base_currency_id">
+                @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == old('base_currency_id', $defaultCurrencyId))>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
+            </select></label>
+            <span class="cp-section">Books</span>
             <label>Time zone<input type="text" name="timezone" required value="{{ old('timezone', $defaults['timezone']) }}"></label>
+            <span></span>
             <label>Financial year starts<input type="date" name="fy_start" required value="{{ old('fy_start', $defaults['fy_start']) }}"></label>
             <label>Financial year ends<input type="date" name="fy_end" required value="{{ old('fy_end', $defaults['fy_end']) }}"></label>
         </div>

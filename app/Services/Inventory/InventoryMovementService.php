@@ -109,6 +109,52 @@ class InventoryMovementService
     }
 
     /** Posts the exact negation of a movement at its original cost and marks it reversed. */
+    /**
+     * Value-only movement: capitalised cost (e.g. job work processing) added to stock already on hand. Quantities and
+     * projections never change; the weighted average of each product moves because its ledger value does.
+     *
+     * @param array<int, array{product_id:int, warehouse_id:int, value:float, batch_id?:?int, variant_id?:?int}> $lines
+     */
+    public function revalue(string $date, array $lines, string $sourceType, int $sourceId, ?string $sourceNo, string $idempotencyKey,
+        ?int $userId, CompanyContext $context, ?string $reason = null): StockMovement
+    {
+        return $this->shadow->paused(fn () => DB::transaction(function () use ($date, $lines, $sourceType, $sourceId, $sourceNo, $idempotencyKey, $userId, $context, $reason) {
+            if ($existing = $this->replay('revaluation', $idempotencyKey)) {
+                return $existing;
+            }
+            $lines = array_values(array_filter($lines, fn ($line) => abs((float) $line['value']) >= 0.0001));
+            if ($lines === []) {
+                throw new InvalidArgumentException('A revaluation needs at least one non-zero value.');
+            }
+            $companyId = $this->companyFor($context, array_values(array_unique(array_map(fn ($line) => (int) $line['warehouse_id'], $lines))));
+            $this->lockProducts(array_column($lines, 'product_id'), $companyId);
+            $movement = $this->createHeader('revaluation', [
+                'company_id' => $companyId, 'branch_id' => $context->branchId, 'financial_year_id' => $context->financialYearId,
+                'movement_date' => Carbon::parse($date)->toDateString(), 'source_type' => $sourceType, 'source_id' => $sourceId,
+                'source_no' => $sourceNo, 'idempotency_key' => $idempotencyKey, 'reason' => $reason, 'created_by' => $userId,
+                'projection_mode' => 'applied',
+            ]);
+            $this->valueLines($movement, $lines, 1);
+            return $movement->load('lines');
+        }));
+    }
+
+    /** @param iterable<array|object> $lines */
+    private function valueLines(StockMovement $movement, iterable $lines, int $sign): void
+    {
+        $lineNo = 0;
+        foreach ($lines as $line) {
+            $line = (array) $line;
+            StockMovementLine::create([
+                'stock_movement_id' => $movement->id, 'company_id' => $movement->company_id, 'line_no' => ++$lineNo,
+                'product_id' => (int) $line['product_id'], 'variant_id' => $line['variant_id'] ?? null, 'warehouse_id' => (int) $line['warehouse_id'],
+                'uom_id' => null, 'uom_qty' => null, 'qty_base' => 0, 'unit_cost' => 0, 'value' => round($sign * (float) $line['value'], 4),
+                'batch_id' => $line['batch_id'] ?? null, 'stock_identity_id' => null,
+                'attributes_json' => ($line['attributes_json'] ?? null) ? (is_string($line['attributes_json']) ? json_decode($line['attributes_json'], true) : $line['attributes_json']) : null,
+            ]);
+        }
+    }
+
     public function reverse(StockMovement|int $movement, string $reason, ?int $userId = null, ?string $date = null): StockMovement
     {
         if (trim($reason) === '') {
@@ -125,6 +171,20 @@ class InventoryMovementService
                 throw new InvalidArgumentException("Stock movement {$original->movement_no} is already reversed.");
             }
             $lines = $original->lines()->get();
+            if ($original->movement_type === 'revaluation') {
+                // Value-only lines carry no quantity, so they are negated by value rather than rebuilt from qty × cost.
+                $this->lockProducts($lines->pluck('product_id')->all(), $original->company_id);
+                $reversal = $this->createHeader('reversal', [
+                    'company_id' => $original->company_id, 'branch_id' => $original->branch_id, 'financial_year_id' => $original->financial_year_id,
+                    'movement_date' => Carbon::parse($date ?? now())->toDateString(), 'source_type' => $original->source_type,
+                    'source_id' => $original->source_id, 'source_no' => $original->source_no, 'reversal_of_id' => $original->id,
+                    'idempotency_key' => 'reversal:'.$original->id, 'reason' => $reason, 'created_by' => $userId, 'projection_mode' => 'applied',
+                ]);
+                $this->valueLines($reversal, $lines->map(fn ($line) => $line->only(['product_id', 'variant_id', 'warehouse_id', 'value', 'batch_id', 'attributes_json'])), -1);
+                $original->status = 'reversed';
+                $original->save();
+                return $reversal->load('lines');
+            }
             $products = $this->lockProducts($lines->pluck('product_id')->all(), $original->company_id);
 
             $reversal = $this->createHeader('reversal', [
@@ -491,13 +551,15 @@ class InventoryMovementService
 
     private function createBatch(Product $product, string $batchNo, array $data, PostingRun $run): object
     {
-        if (empty($data['expired_date']) || strtotime($data['expired_date']) === false) {
+        // Expiry is mandatory where batch/expiry control is on (FMCG); a textile lot or dyed batch has no expiry.
+        $expiryRequired = !$this->nullableExpiry() || ($run->companyId && app(\App\Services\Platform\CapabilityService::class)->enabled('inventory.batch_expiry', $run->companyId));
+        if ((!empty($data['expired_date']) && strtotime($data['expired_date']) === false) || ($expiryRequired && empty($data['expired_date']))) {
             throw new InvalidArgumentException("New batch {$batchNo} needs an expiry date.");
         }
         $id = DB::table('product_batches')->insertGetId([
             'product_id' => $product->id,
             'batch_no' => $batchNo,
-            'expired_date' => Carbon::parse($data['expired_date'])->toDateString(),
+            'expired_date' => empty($data['expired_date']) ? null : Carbon::parse($data['expired_date'])->toDateString(),
             'mfg_date' => empty($data['mfg_date']) ? null : Carbon::parse($data['mfg_date'])->toDateString(),
             'mrp' => isset($data['mrp']) ? (float) $data['mrp'] : null,
             'company_id' => $run->companyId,
@@ -507,6 +569,13 @@ class InventoryMovementService
         ]);
 
         return DB::table('product_batches')->where('id', $id)->first();
+    }
+
+    private ?bool $nullableExpiry = null;
+
+    private function nullableExpiry(): bool
+    {
+        return $this->nullableExpiry ??= !Schema::getConnection()->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
     }
 
     /** @return list<array{0: float, 1: ?StockIdentity}> */

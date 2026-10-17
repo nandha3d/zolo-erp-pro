@@ -161,6 +161,12 @@ Route::middleware('auth')->group(function () {
     Route::post('company-picker/companies', [\App\Http\Controllers\CompanySelectorController::class, 'storeCompany'])->name('company.companies.store');
 });
 
+// Settings › Company profile: names, address, GSTIN, logo, currency and industry of the current company.
+Route::middleware(['auth', 'company.context', 'common'])->group(function () {
+    Route::get('settings/company', [\App\Http\Controllers\CompanyProfileController::class, 'edit'])->name('settings.company');
+    Route::post('settings/company', [\App\Http\Controllers\CompanyProfileController::class, 'update'])->name('settings.company.update');
+});
+
 Route::group(['middleware' => 'auth'], function () {
     Route::controller(HomeController::class)->group(function () {
         Route::get('home', 'home');
@@ -467,6 +473,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::get('getproduct/{id}', 'getProduct')->name('quotation.getproduct');
             Route::get('{id}/create_sale', 'createSale')->name('quotation.create_sale');
             Route::get('{id}/create_purchase', 'createPurchase')->name('quotation.create_purchase');
+            Route::get('{id}/conversion', 'conversionData')->whereNumber('id')->name('quotation.conversion');
             Route::post('sendmail', 'sendMail')->name('quotation.sendmail');
             Route::post('deletebyselection', 'deleteBySelection');
         });

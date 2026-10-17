@@ -44,7 +44,7 @@ class InvoiceSettingController extends Controller
      */
     public function store(Request $request)
     {
-        if(!env('USER_VERIFIED')) {
+        if(!config('app.user_verified')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         }
 
@@ -94,7 +94,7 @@ class InvoiceSettingController extends Controller
             return true;
         }
 
-        if(!env('USER_VERIFIED')) {
+        if(!config('app.user_verified')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
         }
 
@@ -122,7 +122,7 @@ class InvoiceSettingController extends Controller
      */
     public function destroy($id)
     {
-        if(!env('USER_VERIFIED')) {
+        if(!config('app.user_verified')) {
             return response()->json(['not_permitted' => __('db.This feature is disable for demo!')]);
         }
 

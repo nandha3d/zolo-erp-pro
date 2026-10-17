@@ -16,6 +16,8 @@ class OperationStock
 {
     public function line(array $data, CompanyContext $context): StockLine
     {
+        // A blank "Lot / batch no." box on a form means no lot, not an invalid one.
+        if (isset($data['batch']) && trim((string) ($data['batch']['batch_no'] ?? '')) === '') unset($data['batch']);
         validator($data, ['product_id' => 'required|integer|min:1', 'qty' => 'required|numeric|gt:0|max:999999999',
             'uom_id' => 'nullable|integer|min:1', 'stock_identity_id' => 'nullable|integer|min:1',
             'serials' => 'nullable|array', 'serials.*' => 'string|max:191', 'batch' => 'nullable|array',

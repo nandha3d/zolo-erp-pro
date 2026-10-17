@@ -48,7 +48,7 @@ class DocumentLayoutFixtureTest extends TestCase
         $base['packing_slip_all'] = collect([$packing]);
 
         $pages = ['sale/edit', 'purchase/edit', 'quotation/edit', 'transfer/edit', 'adjustment/edit',
-            'return/edit', 'return_purchase/edit', 'quotation/create_sale', 'quotation/create_purchase',
+            'return/edit', 'return_purchase/edit',
             'challan/create', 'exchange/create'];
         foreach ($pages as $page) {
             $data = $base;

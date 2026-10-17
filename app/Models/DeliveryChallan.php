@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Models\Concerns\ScopesCompanyQueries;
+use App\Models\Concerns\StampsBranchAndYear;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DeliveryChallan extends Model
 {
-    use ScopesCompanyQueries;
+    use ScopesCompanyQueries, StampsBranchAndYear;
 
     protected $table = 'delivery_challans';
 

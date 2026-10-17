@@ -12,6 +12,10 @@ class RestoreRehearsal extends Command
     public function handle(BackupService $backups): int
     {
         try { $this->line(json_encode($backups->restoreRehearsal($this->argument('archive')), JSON_THROW_ON_ERROR)); return self::SUCCESS; }
-        catch (\Throwable $error) { $this->error('Restore rehearsal failed. Check archive integrity, password and empty restricted rehearsal target.'); return self::FAILURE; }
+        catch (\Throwable $error) {
+            \Illuminate\Support\Facades\Log::error('erp.restore_rehearsal_failed', ['error' => $error->getMessage(), 'class' => get_class($error)]);
+            $this->error('Restore rehearsal failed: '.$error->getMessage());
+            return self::FAILURE;
+        }
     }
 }

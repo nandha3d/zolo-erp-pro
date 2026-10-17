@@ -156,6 +156,7 @@
                     <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" style="height:32px; font-size:12px;">
                 </div>
                 <div class="col-md-4 d-flex" style="padding: 0 6px;">
+                    @include('backend.accounting.partials.branch_scope')
                     <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2" style="height:32px; font-size:12px; font-weight:600;">
                         <i class="dripicons-search"></i> Generate Report
                     </button>

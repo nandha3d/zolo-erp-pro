@@ -264,7 +264,7 @@
     $lims_warehouse_list = App\Models\Warehouse::where('is_active', true)->get();
 @endphp
 
-<div class="row">
+<div class="row mx-0">{{-- row around a container: no negative gutters, so the page never scrolls sideways --}}
     <div class="container-fluid">
         @if (!config('database.connections.zoloerp_landlord') && \Auth::user()->role_id <= 2)
             @if (isset($versionUpgradeData['alert_version_upgrade_enable']) && $versionUpgradeData['alert_version_upgrade_enable'] == true)

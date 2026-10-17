@@ -12,6 +12,11 @@ AddType application/octet-stream .csv
 
 RewriteEngine On
 
+# When the repository root is the web root, never serve source, secrets, logs or backups.
+RewriteRule (^|/)\.(?!well-known/) - [F,L]
+RewriteRule ^(app|bootstrap|config|database|resources|routes|tests|Modules|optech_screens|storage/(framework|logs|debugbar|app/private|app/documents)|documents/(auditing|chat_backups|phase[^/]*|sample-sales-bill|textile[^/]*|zolo_erp[^/]*))(/|$) - [F,L,NC]
+RewriteRule ^(artisan|server\.php|composer\.(json|lock)|package\.json|phpunit[^/]*|run-erp\.bat|[^/]+\.md|modules_statuses\.json)$ - [F,L,NC]
+
 RewriteCond %{REQUEST_FILENAME} -d [OR]
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ ^$1 [N]

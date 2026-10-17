@@ -47,6 +47,8 @@ class GstSettingsController extends Controller
             'registrations' => DB::table('tax_registrations')->where($scope)->where('branch_id', $context->branchId)->orderByDesc('effective_from')->get(),
             'categories' => $categories, 'codes' => DB::table('hsn_sac_codes')->where($scope)->orderBy('code')->get(),
             'products' => $products, 'productFilter' => $filter, 'parties' => $parties, 'ledgers' => $ledgers,
+            'invoicePrint' => ($company = \App\Models\Company::findOrFail($context->companyId))->settings_json['invoice_print'] ?? [],
+            'company' => $company, 'companyAddress' => app(\App\Services\Platform\CompanyProfileService::class)->fullAddress($company),
             'missing' => DB::table('products')->where($scope)->where('is_active', true)
                 ->where(fn ($q) => $q->whereNull('tax_category_id')->orWhereNull('hsn_code')->orWhere('hsn_code', ''))->count(),
             'states' => array_diff_key(Gstin::$states, ['97' => 1]), 'gstMode' => $gst->enabled($context),
@@ -89,6 +91,20 @@ class GstSettingsController extends Controller
                 $gst->authorize($context, $actor);
                 return $gst->syncAllParties($context->companyId).' party GST profiles synced from party masters.';
             })(),
+            'print' => tap('Invoice print details saved. New bills carry them; posted bills keep what they printed with.', function () use ($request, $gst, $context, $actor) {
+                $gst->authorize($context, $actor);
+                $fields = $request->validate(['licences' => 'nullable|string|max:300', 'dispatch_from' => 'nullable|string|max:300', 'bank_name' => 'nullable|string|max:100',
+                    'bank_account_name' => 'nullable|string|max:150', 'bank_account_no' => 'nullable|string|max:40', 'bank_ifsc' => 'nullable|string|max:20',
+                    'bank_branch' => 'nullable|string|max:100', 'upi_id' => 'nullable|string|max:100', 'terms' => 'nullable|string|max:2000',
+                    'declaration' => 'nullable|string|max:500', 'signatory' => 'nullable|string|max:100']);
+                DB::transaction(function () use ($fields, $context) {
+                    $company = \App\Models\Company::lockForUpdate()->findOrFail($context->companyId);
+                    // Contact now lives on Company profile; contact saved here earlier stays as its fallback.
+                    $legacy = array_intersect_key($company->settings_json['invoice_print'] ?? [], array_flip(['phone', 'email', 'website']));
+                    $company->settings_json = ['invoice_print' => array_map(fn ($value) => is_string($value) ? trim($value) : $value, $fields) + $legacy] + ($company->settings_json ?? []);
+                    $company->save();
+                });
+            }),
             'party' => tap('Party GST profile saved.', fn () => app(\App\Services\Tax\TaxSetupService::class)->save('party',
                 $request->only(['party_type', 'party_id', 'registration_type', 'gstin', 'state_code']), $context, $actor)),
             default => abort(404),

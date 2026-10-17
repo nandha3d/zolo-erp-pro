@@ -108,6 +108,8 @@
         if (cgst || sgst) parts.push('CGST ' + cgst.toFixed(decimals), 'SGST ' + sgst.toFixed(decimals));
         if (igst) parts.push('IGST ' + igst.toFixed(decimals));
         if (cess) parts.push('Cess ' + cess.toFixed(decimals));
+        var roundOff = Number(result.round_off || 0);
+        if (roundOff) parts.push('Round off ' + (roundOff > 0 ? '+' : '') + roundOff.toFixed(2));
         $('#gst-breakdown').text(parts.join(' · '));
         $('#gst-mode-badge').text(place ? (place === config.company_state ? 'CGST+SGST' : 'IGST') : '');
         if ($('#gst-reverse-charge').is(':checked') && tax === 0 && (cgst || sgst || igst)) {

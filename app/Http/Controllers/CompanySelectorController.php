@@ -47,7 +47,8 @@ class CompanySelectorController extends Controller
             'industries' => collect(CapabilityCatalog::PROFILES)->map(fn ($profile) => $profile[0])->all(),
             'subtypes' => IndustryCatalog::SUBTYPES,
             'currencies' => DB::table('currencies')->orderBy('code')->get(['id', 'code', 'name']),
-            'defaultCurrencyId' => DB::table('general_settings')->latest()->value('currency'),
+            'defaultCurrencyId' => DB::table('currencies')->where('code', 'INR')->value('id') ?? DB::table('general_settings')->latest()->value('currency'),
+            'states' => array_diff_key(\App\Services\Tax\Gstin::$states, ['97' => 1]),
             'defaults' => ['timezone' => config('app.timezone'), 'fy_start' => $fyStart->toDateString(),
                 'fy_end' => $fyStart->addYear()->subDay()->toDateString()],
             'theme' => $_COOKIE['theme'] ?? 'light',
@@ -77,7 +78,8 @@ class CompanySelectorController extends Controller
         $company = $this->directory->createCompany($request->user()->id, $request->only([
             'company_group_id', 'legal_name', 'trade_name', 'code', 'industry', 'subtype',
             'state_code', 'base_currency_id', 'timezone', 'fy_start', 'fy_end',
-        ]));
+            'address', 'city', 'postal_code', 'phone', 'email', 'website', 'pan', 'gstin', 'registration_type',
+        ]), $request->file('logo'));
 
         return redirect()->route('company.select', ['manage' => 1])
             ->with('status', ($company->trade_name ?: $company->legal_name).' is ready. Open it to start working.');

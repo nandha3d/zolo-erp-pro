@@ -80,7 +80,8 @@ class PurchaseService
             }
             $guard->products($data['items'], $context, 'purchase_unit_id');
             $numbers = app(DocumentNumberService::class);
-            $reservation = $numbers->reserve('purchase', $context, $date, $userId);
+            // Orders draw from their own series (PO-00001); bills keep the purchase series.
+            $reservation = $numbers->reserve((int) ($data['status'] ?? 1) === 4 ? 'purchase_order' : 'purchase', $context, $date, $userId);
             $referenceNo = $reservation->formatted_number;
 
             $itemCount = 0;

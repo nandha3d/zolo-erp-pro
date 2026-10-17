@@ -18,6 +18,7 @@ class BranchAccess
         'quotations' => ['warehouse_id'], 'expenses' => ['warehouse_id'], 'incomes' => ['warehouse_id'],
         'damage_stocks' => ['warehouse_id'], 'exchanges' => ['warehouse_id'], 'employees' => ['warehouse_id'],
         'productions' => ['warehouse_id'], 'transfers' => ['from_warehouse_id', 'to_warehouse_id'],
+        'goods_received_notes' => ['warehouse_id'], 'delivery_challans' => ['warehouse_id'],
     ];
 
     private const PARENTS = [

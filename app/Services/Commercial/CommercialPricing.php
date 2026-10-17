@@ -37,7 +37,7 @@ class CommercialPricing
             $this->invalid('party', 'Select a party before GST preview.');
         }
         $data = $this->calculate($data, $purchase);
-        return ['grand_total' => $data['grand_total'], 'total_tax' => array_sum(array_column($data['items'], 'tax')),
+        return ['grand_total' => $data['grand_total'], 'round_off' => $data['round_off'], 'total_tax' => array_sum(array_column($data['items'], 'tax')),
             'total_price' => array_sum(array_column($data['items'], 'total')), 'items' => $data['items']];
     }
 
@@ -103,9 +103,14 @@ class CommercialPricing
         $orderTax = $this->units(($total - $orderDiscount) / 10000 * $rate / 100);
         $shipping = $this->units($this->number($data['shipping_cost'] ?? 0, 'shipping_cost'));
         $grand = $total - $orderDiscount + $orderTax + $shipping;
+        // A GST sales invoice is billed in whole rupees; SalePostingService posts the difference to the rounding ledger.
+        $roundOff = !$purchase && isset($data['_tax_snapshot']) ? (int) round($grand / 10000) * 10000 - $grand : 0;
+        $grand += $roundOff;
         $this->check($data, 'order_tax', $orderTax);
+        $this->check($data, 'round_off', $roundOff);
         $this->check($data, 'grand_total', $grand);
         $data['order_tax'] = $orderTax / 10000;
+        $data['round_off'] = $roundOff / 10000;
         $data['grand_total'] = $grand / 10000;
         $data['paid_amount'] = $this->number($data['paid_amount'] ?? 0, 'paid_amount');
         if ($this->units($data['paid_amount']) > $grand) {

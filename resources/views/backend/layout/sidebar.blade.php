@@ -621,6 +621,9 @@
                 @if($isAdmin || $canNavigate('customer_group'))
                     <li id="customer-group-menu"><a href="{{route('customer_group.index')}}">{{__('db.Customer Group')}}</a></li>
                 @endif
+                @if($isAdmin)
+                    <li id="company-profile-menu"><a href="{{ route('settings.company') }}">Company profile</a></li>
+                @endif
                 @if($isAdmin || $canNavigate('currency'))
                     <li id="currency-menu"><a href="{{route('currency.index')}}">{{__('db.Currency')}}</a></li>
                 @endif

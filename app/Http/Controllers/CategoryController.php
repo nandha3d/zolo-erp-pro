@@ -218,7 +218,7 @@ class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request)
     {
-        if(!env('USER_VERIFIED'))
+        if(!config('app.user_verified'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
         $lims_category_data = DB::table('categories')->where('id', $request->category_id)->first();

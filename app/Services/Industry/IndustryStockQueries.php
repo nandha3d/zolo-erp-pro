@@ -34,6 +34,20 @@ class IndustryStockQueries
             ->take(200)->values()->all();
     }
 
+    /** Lots of a product with stock in a warehouse, oldest expiry first, for choosing the lot on a sale or issue. */
+    public function lots(int $product, int $warehouse, CompanyContext $context, int $actor): array
+    {
+        app(\App\Services\Commercial\CommercialPermission::class)->assert('products-index', $context, $actor);
+        app(CompanyWriteGuard::class)->owned(\App\Models\Product::class, $product, $context, 'product_id');
+        app(CompanyWriteGuard::class)->warehouse($warehouse, $context, $actor);
+        return DB::table('product_warehouse as w')->join('product_batches as b', 'b.id', '=', 'w.product_batch_id')
+            ->where('w.product_id', $product)->where('w.warehouse_id', $warehouse)->where('b.product_id', $product)
+            ->where(fn ($q) => $q->whereNull('b.company_id')->orWhere('b.company_id', $context->companyId))
+            ->groupBy('b.id', 'b.batch_no', 'b.expired_date')->havingRaw('SUM(w.qty) > 0.00005')
+            ->orderByRaw('b.expired_date IS NULL, b.expired_date')->orderBy('b.id')
+            ->selectRaw('b.id, b.batch_no, b.expired_date, SUM(w.qty) AS qty')->limit(200)->get()->map(fn ($row) => (array) $row)->all();
+    }
+
     public function batchBalances(CompanyContext $context, int $actor): array
     {
         app(OperationPosting::class)->authorize('inventory.batch_expiry', 'products-index', $context, $actor);

@@ -31,12 +31,23 @@ class JobWorkService
         app(OperationPosting::class)->authorize('operations.job_work', 'job_work.manage', $context, $actor);
         $data = validator($data, ['code' => 'required|string|max:60|regex:/^[A-Z0-9_-]+$/D', 'name' => 'required|string|max:100',
             'max_loss_percent' => 'required|numeric|min:0|max:100', 'conversion' => 'required|boolean',
-            'quantity_basis' => 'sometimes|in:base_qty,volume_cbm'])->validate();
+            'quantity_basis' => 'sometimes|in:base_qty,volume_cbm', 'output_product_id' => 'nullable|integer|min:1',
+            'service_product_id' => 'nullable|integer|min:1', 'service_rate' => 'nullable|numeric|min:0|max:99999999'])->validate();
+        foreach (['output_product_id' => 'standard', 'service_product_id' => 'service'] as $field => $type) {
+            if (empty($data[$field])) { $data[$field] = null; continue; }
+            $product = app(CompanyWriteGuard::class)->owned(\App\Models\Product::class, $data[$field], $context, $field);
+            if ($product->type !== $type) throw ValidationException::withMessages([$field => $type === 'service' ? 'Choose a service item for the processing charge.' : 'Choose a stock item as the default output.']);
+        }
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('process_types', 'output_product_id')) unset($data['output_product_id'], $data['service_product_id'], $data['service_rate']);
         return DB::transaction(function () use ($data, $context, $actor) {
             app(CompanyWriteGuard::class)->begin($context, null);
             $existing = DB::table('process_types')->where('company_id', $context->companyId)->where('code', $data['code'])->first();
             if ($existing && DB::table('job_work_orders')->where('process_type_id', $existing->id)->exists()) {
-                throw ValidationException::withMessages(['process' => 'Used process policy is immutable; create a new process code.']);
+                // Loss limit, conversion and yield basis are fixed once used; name and route defaults (items, rate) only pre-fill forms.
+                $changed = (float) $existing->max_loss_percent !== (float) $data['max_loss_percent'] || (bool) $existing->conversion !== (bool) $data['conversion']
+                    || ($existing->quantity_basis ?? 'base_qty') !== ($data['quantity_basis'] ?? $existing->quantity_basis ?? 'base_qty');
+                if ($changed) throw ValidationException::withMessages(['process' => 'Used process policy is immutable; create a new process code to change its loss limit, conversion or yield basis.']);
+                $data = array_intersect_key($data, array_flip(['code', 'name', 'output_product_id', 'service_product_id', 'service_rate']));
             }
             DB::table('process_types')->updateOrInsert(['company_id' => $context->companyId, 'code' => $data['code']],
                 $data + ['created_at' => now(), 'updated_at' => now()]);
@@ -79,7 +90,9 @@ class JobWorkService
         $data['order_id'] = $orderId;
         return app(OperationPosting::class)->run('job_work_dispatch', JobWorkDispatch::class, 'operations.job_work', 'job_work.dispatch',
             $data, $key, $context, $actor, function ($data, $date) use ($orderId, $context, $actor) {
-                validator($data, ['warehouse_id' => 'required|integer|min:1', 'lines' => 'required|array|min:1|max:500'])->validate();
+                validator($data, ['warehouse_id' => 'required|integer|min:1', 'lines' => 'required|array|min:1|max:500',
+                    'transport' => 'nullable|array', 'transport.vehicle_number' => 'nullable|string|max:30', 'transport.transporter_name' => 'nullable|string|max:100',
+                    'transport.eway_bill_no' => 'nullable|string|max:30', 'transport.notes' => 'nullable|string|max:500'])->validate();
                 $order = JobWorkOrder::visibleIn($context)->lockForUpdate()->findOrFail($orderId);
                 if ($date < $order->business_date) throw ValidationException::withMessages(['business_date' => 'Dispatch cannot precede the order.']);
                 $warehouse = app(CompanyWriteGuard::class)->warehouse($data['warehouse_id'], $context, $actor);
@@ -87,7 +100,8 @@ class JobWorkService
                 $number = app(DocumentNumberService::class)->reserve('job_work_dispatch', $context, $date, $actor);
                 $dispatch = JobWorkDispatch::create(app(OperationPosting::class)->header($context, $actor) + [
                     'job_work_order_id' => $orderId, 'warehouse_id' => $warehouse->id, 'reference_no' => $number->formatted_number, 'business_date' => $date,
-                ]);
+                ] + (\Illuminate\Support\Facades\Schema::hasColumn('job_work_dispatches', 'details_json')
+                    ? ['details_json' => ['transport' => array_filter($data['transport'] ?? [], fn ($value) => $value !== null && $value !== '')]] : []));
                 $stock = app(OperationStock::class);
                 $lines = array_map(fn ($line) => $stock->line(array_diff_key($line, array_flip(['unit_cost'])), $context), $data['lines']);
                 $movement = app(InventoryMovementService::class)->transfer($stock->command($dispatch, $date, $lines, $warehouse->id,
@@ -200,11 +214,14 @@ class JobWorkService
                             ['chart_of_account_id' => $accounts->resolve('inventory', $context)->id, 'credit' => LedgerAmount::decimal($actualLoss)]], $context);
                 }
                 DB::table('job_work_receipt_lines')->insert(app(OperationPosting::class)->lines('job_work_receipt_lines', $saved, $context));
+                $lot = fn ($batchId) => $batchId ? DB::table('product_batches')->where('id', $batchId)->value('batch_no') : null;
+                $lots = ['input' => array_values(array_unique(array_filter(array_map(fn ($line) => $lot($line->batchId), [...$consumes, ...$returns, ...$losses])))),
+                    'output' => array_values(array_unique(array_filter(($output ?? $material)?->lines->where('qty_base', '>', 0)->map(fn ($line) => $lot($line->batch_id))->all() ?? [])))];
                 $receipt->forceFill(['material_movement_id' => $material?->id, 'output_movement_id' => $output?->id,
                     'loss_movement_id' => $lossMovement?->id, 'journal_entry_id' => $journal?->id,
                     'details_json' => ['received_qty' => $received, 'loss_qty' => $lost, 'settled_qty' => $settled,
                         'loss_percent' => round($lost / $settled * 100, 4), 'rejected_movement_id' => $rejectedMovement?->id,
-                        'process' => $policy], 'posted_at' => now()])->save();
+                        'process' => $policy, 'lots' => $lots], 'posted_at' => now()])->save();
                 app(DocumentNumberService::class)->assign($number, $receipt);
                 return $receipt;
             });
@@ -248,7 +265,7 @@ class JobWorkService
                     'supplier_id' => $order->job_worker_party_id, 'warehouse_id' => $receipt->warehouse_id,
                     'business_date' => $date, 'status' => 1, 'items' => $data['items'],
                     'note' => 'Job work '.$order->reference_no.' / '.$receipt->reference_no,
-                    'attributes' => ['job_work_receipt_id' => $receipt->id],
+                    'job_work_receipt_id' => $receipt->id,
                 ], 'job-work-bill:'.$key, $actor, $context));
                 DB::table('job_work_receipts')->where('id', $receiptId)->update(['service_purchase_id' => $purchase->id]);
                 return $receipt->fresh();

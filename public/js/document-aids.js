@@ -168,7 +168,9 @@
         const fields = [];
         const add = (key, labelText, control) => { fields.push([key, control]); extra.append(group(control.attr('id'), labelText, control)); };
         extra.append($('<div style="font-size:11px;font-weight:700;color:#6d28d9;margin:10px 0 4px;">').text('Stock tracking'));
-        add('product_batch_id', 'Existing batch ID', input('trk-batch-id', 'number', {min: 1}));
+        // Sales and issues choose a lot from what the godown holds; purchases name a new lot in the line detail instead.
+        const lots = !purchase && config.lotsUrl ? $('<select id="trk-batch-id" class="form-control form-control-sm" style="height:32px;font-size:12px;">').append(new Option('No lot', '')) : null;
+        add('product_batch_id', lots ? 'Lot / batch' : 'Existing batch ID', lots || input('trk-batch-id', 'number', {min: 1}));
         add('variant_id', 'Variant ID', input('trk-variant-id', 'number', {min: 1}));
         if (purchase) {
             if (tracking.profile === 'fmcg') {
@@ -230,6 +232,16 @@
             fields.forEach(([key, control]) => {
                 const value = slots[key](t);
                 control.val(value === undefined || value === null ? '' : value);
+                if (control === lots) {
+                    const current = value === undefined || value === null ? '' : String(value);
+                    lots.empty().append(new Option('Loading lots…', current)).val(current);
+                    $.getJSON(config.lotsUrl, {product_id: row.find('.row-product-id').val(), warehouse_id: $('#form_warehouse_id').val()}).done(result => {
+                        // FMCG issues the earliest-expiring stock when no lot is chosen (server-side FEFO).
+                        lots.empty().append(new Option((result.data || []).length ? (tracking.profile === 'fmcg' ? 'Auto · earliest expiry first (FEFO)' : 'No lot') : 'No lots in this godown', ''));
+                        (result.data || []).forEach(lot => lots.append(new Option(lot.batch_no + ' · ' + Number(lot.qty).toLocaleString() + (lot.expired_date ? ' · exp ' + String(lot.expired_date).slice(0, 10) : ''), lot.id)));
+                        lots.val(current);
+                    }).fail(() => lots.empty().append(new Option('Lots unavailable', current)).val(current));
+                }
                 if (key === 'quantity_scheme_id') control.find('option').each(function () {
                     const product = $(this).data('product'); $(this).prop('hidden', !!product && Number(product) !== Number(row.find('.row-product-id').val()));
                 });

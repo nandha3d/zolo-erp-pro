@@ -121,7 +121,12 @@ class ManufacturingJobWorkTest extends OperationsTestCase
         $count = StockMovement::count();
         $billed = $service->serviceBill($receipt->id, ['business_date' => '2026-10-03',
             'items' => [['product_id' => $serviceItem->id, 'qty' => 1, 'net_unit_cost' => 25]]], 'bill', $this->context(), 1);
-        $this->assertNotNull($billed->service_purchase_id); $this->assertSame($count, StockMovement::count());
+        // The repacker's charge is conversion cost: one value-only revaluation adds it to the packs, no quantity moves.
+        $this->assertNotNull($billed->service_purchase_id); $this->assertSame($count + 1, StockMovement::count());
+        $revaluation = StockMovement::where('movement_type', 'revaluation')->firstOrFail();
+        $this->assertEquals([0, 25], [$revaluation->lines->sum('qty_base'), $revaluation->lines->sum('value')]);
+        $this->assertEquals(985, DB::table('stock_movement_lines')->where('product_id', $packs->id)->sum('value'));
+        $this->assertEquals(48, $packs->fresh()->qty);
         $this->assertEquals(25, DB::table('account_open_items')->where('source_type', 'purchase')->sum('original_amount'));
         $this->rejected(fn () => $service->reverse('receipt', $receipt->id, '2026-10-03', 'Undo', $this->context(), 1), 'service purchase');
     }

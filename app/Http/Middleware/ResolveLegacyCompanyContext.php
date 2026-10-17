@@ -18,6 +18,13 @@ class ResolveLegacyCompanyContext extends ResolveCompanyContext
     public function handle(Request $request, Closure $next)
     {
         if (!Schema::hasTable('companies') || !Company::query()->exists()) {
+            // A fresh installation has no business documents yet: its first company is created from the company picker.
+            // An upgraded database with history must be assigned to its company by the backfill instead.
+            $fresh = Schema::hasTable('companies') && collect(['sales', 'purchases', 'journal_entries'])
+                ->every(fn ($table) => !Schema::hasTable($table) || !\Illuminate\Support\Facades\DB::table($table)->exists());
+            if ($fresh && !$request->expectsJson() && $request->user() && \Illuminate\Support\Facades\Route::has('company.select')) {
+                return redirect()->route('company.select', ['manage' => 1])->with('status', 'Create your first company to start working.');
+            }
             $message = 'Company foundation is not initialised. An administrator must run "php artisan erp:backfill-company-context" (see the company backfill runbook) before business screens can be used.';
 
             return $request->expectsJson() ? response()->json(['message' => $message], 409) : response($message, 409);

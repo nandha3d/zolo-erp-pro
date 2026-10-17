@@ -31,7 +31,7 @@ class JournalEntryController extends Controller
 
     public function index(Request $request)
     {
-        $context = app(CompanyContextResolver::class)->forActor();
+        $context = $this->authorizedContext('accounting.reports.view');
         $request->validate(['start_date' => 'nullable|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d|after_or_equal:start_date']);
         $query = JournalEntry::forCompany($context)->with(['creator' => fn ($q) => $q->whereIn('id', DB::table('company_user')->select('user_id')->where('company_id', $context->companyId))]);
 
@@ -55,7 +55,7 @@ class JournalEntryController extends Controller
      */
     public function voucherEntry(Request $request)
     {
-        $context = app(CompanyContextResolver::class)->forActor();
+        $context = $this->authorizedContext('accounting.voucher.post');
         $company = \App\Models\Company::findOrFail($context->companyId);
         $businessDate = CarbonImmutable::now($company->timezone)->toDateString();
 
@@ -92,7 +92,7 @@ class JournalEntryController extends Controller
      */
     public function inlineAccount(Request $request)
     {
-        $context = app(CompanyContextResolver::class)->forActor();
+        $context = $this->authorizedContext('accounting.voucher.post');
         $validated = $request->validate([
             'code' => [
                 'required', 'string', 'max:50',
@@ -142,7 +142,7 @@ class JournalEntryController extends Controller
      */
     public function nextVoucherNumber(Request $request)
     {
-        $context = app(CompanyContextResolver::class)->forActor();
+        $context = $this->authorizedContext('accounting.voucher.post');
         $code = $request->query('series_code');
         $series = DocumentSeries::forCompany($context)
             ->where('branch_id', $context->branchId)
@@ -164,7 +164,7 @@ class JournalEntryController extends Controller
 
     public function show(Request $request, $id)
     {
-        $context = app(CompanyContextResolver::class)->forActor();
+        $context = $this->authorizedContext('accounting.reports.view');
         $entry = JournalEntry::withOwnedItems($context)->with(['creator' => fn ($q) => $q->whereIn('id', DB::table('company_user')->select('user_id')->where('company_id', $context->companyId))])->findOrFail($id);
         abort_if($entry->branch_id && (int) $entry->branch_id !== $context->branchId, 404);
         return response()->json($entry);
@@ -172,6 +172,7 @@ class JournalEntryController extends Controller
 
     public function store(Request $request)
     {
+        $context = $this->authorizedContext('accounting.voucher.post');
         $this->validate($request, [
             'entry_date' => 'required|date_format:Y-m-d',
             'description' => 'required|string|max:500',
@@ -190,7 +191,6 @@ class JournalEntryController extends Controller
         ]);
 
         try {
-            $context = app(CompanyContextResolver::class)->forActor();
             $entry = $this->accountingService->postJournalEntry([
                 'entry_date' => $request->entry_date,
                 'description' => $request->description,
@@ -225,5 +225,14 @@ class JournalEntryController extends Controller
             }
             return redirect()->back()->with('not_permitted', $e->getMessage());
         }
+    }
+
+    /** Journal screens and writes need an accounting permission, not just company membership. */
+    private function authorizedContext(string $permission): \App\Services\Platform\CompanyContext
+    {
+        $context = app(CompanyContextResolver::class)->forActor();
+        \App\Services\Accounting\AccountingAccess::assert($context, $permission);
+
+        return $context;
     }
 }

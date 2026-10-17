@@ -74,7 +74,7 @@ class SemanticAccountResolver
         }
     }
 
-    /** Explicit setup only. Existing mappings and all monetary balances are preserved. */
+    /** Explicit setup only. Mapped roles and all monetary balances are preserved; unmapped roles get an unambiguous account. */
     public function seedCompany(int $companyId): void
     {
         DB::transaction(function () use ($companyId) {
@@ -82,17 +82,16 @@ class SemanticAccountResolver
             foreach (self::ROLES as $role => [$subType, $type]) {
                 $aliases = array_keys(array_filter(self::ALIASES, fn ($canonical) => $canonical === $role));
                 $existing = SemanticAccountMapping::where('company_id', $companyId)->whereIn('semantic_role', [$role, ...$aliases])->first();
-                if ($existing) {
-                    $account = ChartOfAccount::where('company_id', $companyId)->find($existing->account_id);
-                } else {
+                $account = $existing?->account_id ? ChartOfAccount::where('company_id', $companyId)->find($existing->account_id) : null;
+                if (!$existing || !$existing->account_id) {
                     $candidates = ChartOfAccount::where('company_id', $companyId)->where('is_active', true)
                         ->whereIn('type', (array) $type)->where('sub_type', $subType)->whereDoesntHave('children')->get();
                     // Several leaves may share a sub-type (COGS products vs. shrinkage); the one system account is the
                     // designated default. Any other ambiguity stays unmapped for an administrator to choose.
                     $system = $candidates->where('is_system', true);
                     $account = $candidates->count() === 1 ? $candidates->sole() : ($system->count() === 1 ? $system->sole() : null);
-                    (new SemanticAccountMapping)->forceFill([
-                        'company_id' => $companyId, 'semantic_role' => $role, 'account_id' => $account?->id,
+                    ($existing ?? new SemanticAccountMapping)->forceFill([
+                        'company_id' => $companyId, 'semantic_role' => $existing->semantic_role ?? $role, 'account_id' => $account?->id,
                         'account_code' => $account?->code, 'account_name' => $account?->name,
                         'category' => 'core', 'description' => 'Company posting role: '.$role,
                     ])->save();
