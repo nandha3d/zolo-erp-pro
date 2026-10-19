@@ -241,12 +241,15 @@ class FinancialReportService
         return ['account' => $account, 'months' => $rows];
     }
     /** Historical opening-balance semantics remain unchanged; every activity row and header is owned. */
-    private function accountActivity(CompanyContext $context, ?string $startDate, ?string $endDate): Builder
+    private function accountActivity(CompanyContext $context, ?string $startDate, ?string $endDate, bool $withClosing = false): Builder
     {
         return ChartOfAccount::forCompany($context)->with([
             'journalItems' => fn ($q) => $q->forCompany($context)
-                ->whereHas('journalEntry', function ($q) use ($context, $startDate, $endDate) {
+                ->whereHas('journalEntry', function ($q) use ($context, $startDate, $endDate, $withClosing) {
                     app(FinancialReportService::class)->scopeEntries($q, $context);
+                    if (!$withClosing) {
+                        $this->withoutClosingEntries($q);
+                    }
                     if ($startDate) {
                         $q->whereDate('entry_date', '>=', $startDate);
                     }
@@ -255,6 +258,14 @@ class FinancialReportService
                     }
                 }),
         ]);
+    }
+
+    /** Year-end close entries (and their reversals on reopening) move profit to equity; they are not income or expense. */
+    private function withoutClosingEntries(Builder $query): void
+    {
+        $closing = JournalEntry::query()->withoutGlobalScopes()->where('reference_type', 'year_close')->select('id');
+        $query->where(fn ($q) => $q->whereNull('reference_type')->orWhere('reference_type', '!=', 'year_close'))
+            ->where(fn ($q) => $q->whereNull('reversal_of_id')->orWhereNotIn('reversal_of_id', $closing));
     }
 
     // ==========================================
@@ -335,12 +346,12 @@ class FinancialReportService
      * Generate Profit and Loss (Income Statement).
      * Net Income = Revenue - COGS - Operating Expenses
      */
-    public function getProfitAndLoss(?string $startDate = null, ?string $endDate = null, ?CompanyContext $context = null): array
+    public function getProfitAndLoss(?string $startDate = null, ?string $endDate = null, ?CompanyContext $context = null, bool $withClosing = false): array
     {
         $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
         [$startDate, $endDate] = app(FinancialReportService::class)->range($context, $startDate, $endDate);
-        return DB::transaction(function () use ($startDate, $endDate, $context) {
-            $accounts = $this->accountActivity($context, $startDate, $endDate)->whereIn('type', ['revenue', 'expense'])->orderBy('code')->get();
+        return DB::transaction(function () use ($startDate, $endDate, $context, $withClosing) {
+            $accounts = $this->accountActivity($context, $startDate, $endDate, $withClosing)->whereIn('type', ['revenue', 'expense'])->orderBy('code')->get();
 
             $revenues = [];
             $cogs = [];
@@ -406,7 +417,8 @@ class FinancialReportService
         [$startDate, $asOfDate] = app(FinancialReportService::class)->range($context, null, $asOfDate);
         return DB::transaction(function () use ($startDate, $asOfDate, $context) {
 
-            $accounts = $this->accountActivity($context, $startDate, $asOfDate)->whereIn('type', ['asset', 'liability', 'equity'])->orderBy('code')->get();
+            // Equity includes the year-end transfer to Retained Earnings, so the earnings below include it too.
+            $accounts = $this->accountActivity($context, $startDate, $asOfDate, true)->whereIn('type', ['asset', 'liability', 'equity'])->orderBy('code')->get();
 
             $assets = [];
             $liabilities = [];
@@ -442,7 +454,7 @@ class FinancialReportService
             }
 
             // Add current period Net Income to Equity for dynamic balance
-            $pnl = $this->getProfitAndLoss($startDate, $asOfDate, $context);
+            $pnl = $this->getProfitAndLoss($startDate, $asOfDate, $context, true);
             $currentEarnings = $pnl['net_income'];
             $priorEarnings = 0.0;
             foreach (ChartOfAccount::forCompany($context)->whereIn('type', ['revenue', 'expense'])->get() as $account) {

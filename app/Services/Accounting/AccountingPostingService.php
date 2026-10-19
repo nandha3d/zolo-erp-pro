@@ -181,6 +181,8 @@ class AccountingPostingService
             'adjustment' => \App\Models\Adjustment::class,
             'goods_received_note' => \App\Models\GoodsReceivedNote::class,
             'delivery_challan' => \App\Models\DeliveryChallan::class,
+            'customer_opening' => \App\Models\Customer::class, 'supplier_opening' => \App\Models\Supplier::class,
+            'year_close' => \App\Models\Accounting\FiscalYear::class,
             default => throw new InvalidArgumentException('This source requires its company-owned accounting path.'),
         };
         if (empty($header['reference_id'])) {

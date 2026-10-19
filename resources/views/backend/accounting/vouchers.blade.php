@@ -388,8 +388,8 @@
                             <label for="period-action" class="font-weight-600 mb-1" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Action</label>
                             <select name="action" id="period-action" class="form-control form-control-sm" style="height:32px; font-size:12px;">
                                 <option value="lock">Lock through date</option>
-                                <option value="unlock">Unlock / reopen year</option>
-                                <option value="close">Close financial year</option>
+                                <option value="unlock" title="Reopening a closed year reverses its transfer to Retained Earnings">Unlock / reopen year</option>
+                                <option value="close" title="Moves the year's profit or loss into Retained Earnings and locks the year">Close financial year (profit to Retained Earnings)</option>
                             </select>
                         </div>
                         <div class="col-md-3 form-group" style="padding: 0 6px;">

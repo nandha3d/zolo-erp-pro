@@ -432,6 +432,16 @@
 
                 <!-- Recent Sales List -->
                 <div class="side-list-container" id="side-bill-list">
+                    @php
+                        // The server checks again on the reversal form; this only hides a link the user cannot use.
+                        $canReverseBills = false;
+                        if (config('commercial.enabled')) {
+                            try {
+                                $canReverseBills = app(\App\Services\Commercial\CommercialPermission::class)->allows('sales-delete',
+                                    app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
+                            } catch (\Illuminate\Auth\Access\AuthorizationException) {}
+                        }
+                    @endphp
                     @forelse($recent_bills as $bill)
                         @php
                             $isPaid = ($bill->payment_status == 4 || ($bill->grand_total > 0 && $bill->paid_amount >= $bill->grand_total));
@@ -471,6 +481,11 @@
                                 <a href="javascript:void(0)" class="side-action-btn copy btn-side-copy" data-id="{{ $bill->id }}" title="Copy this bill into a new draft" hidden>
                                     <i class="dripicons-copy"></i> Copy
                                 </a>
+                                @if($canReverseBills && !$bill->reversed_at && !$isDraft && $bill->branch_id)
+                                <a href="{{ url('/commercial/sale/'.$bill->id.'/reverse') }}" class="side-action-btn reverse" title="Reverse: cancel this bill, stock comes back and its journal is reversed; the bill stays in history" aria-label="Reverse bill">
+                                    <i class="dripicons-return"></i>
+                                </a>
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -3649,7 +3664,7 @@
     // Card click & edit button click
     $(document).on('click', '.side-bill-card', function(e) {
         if ($(this).data('reversed')) return;
-        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print').length) return;
+        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print, .side-action-btn.reverse').length) return;
         var id = $(this).data('bill-id');
         if (id) loadSaleToForm(id);
     });

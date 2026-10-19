@@ -1158,6 +1158,11 @@ User: Product section should match other sections' theme; why duplicate Job Work
 - Applied all nine pending additive migrations successfully, including accounting permissions/repairs and Textile000008–000011. `migrate:status` shows no pending migrations. No production database was accessed.
 - Preparing the tested P0/P1/shared workspace checkpoint for origin/ui. P2 work starts after that push as requested. P2 covers ageing/receivables, collection follow-up/PDC/interest and discount previews/reminder tracking, product aliases, reviewed bulk item import, and quotation follow-up. External messages and financial interest posting are not implied by previews.
 
+## 44. Process Guides for Operators (2026-10-19, uncommitted)
+
+User asked for step-by-step end-to-end guides. Added `documents/process-guides/`: README (index, flow, key map), 00 New Company Setup, 01 Purchase, 02 Sales, 03 GRN, 04 DC, 05 Returns, 06 Accounting. Written from code (routes, sidebar, MaterialDocumentService, ComplianceRouteAdapter, VoucherService, PeriodCloseService, CompanyDirectoryService), not from a browser run.
+Findings noted in the guides: customer/supplier "Opening balance (Due)" field creates an unposted legacy bill with `warehouse_id = 1` (guide says don't use it; use journal or `erp:import-opening`); bill reversal form `/commercial/{kind}/{id}/reverse` has no visible link in the bill list; financial-year close locks only (no retained-earnings transfer) and requires ledger reconciliation.
+
 ## 45. Textile P2 implementation and final verification (2026-10-19, completed)
 
 - P0/P1 checkpoint `4767352` was committed and pushed to `origin/ui` after the first local backup and migrations. The user's requested ordering is complete. All five P2 slices in `documents/TEXTILE_P2_IMPLEMENTATION.md` are now implemented; final integrated verification and the P2 commit/push remain in progress.

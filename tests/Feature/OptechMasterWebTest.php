@@ -524,6 +524,14 @@ class OptechMasterWebTest extends TestCase
             'city' => 'Salem',
             'credit_days' => 30,
         ]);
+        // The opening due is a posted open item on Debtors, not an unposted "Opening balance" sale.
+        $customerId = $response->json('customer.id');
+        $entry = \App\Models\Accounting\JournalEntry::withoutGlobalScopes()->where('reference_type', 'customer_opening')
+            ->where('reference_id', $customerId)->sole();
+        $this->assertEquals(500, $entry->total_debit);
+        $this->assertEquals(500, \App\Models\Accounting\AccountOpenItem::withoutGlobalScopes()->where('party_type', 'customer')
+            ->where('party_id', $customerId)->value('open_amount'));
+        $this->assertDatabaseMissing('sales', ['customer_id' => $customerId]);
     }
 
     public function test_quick_store_party_creates_both_supplier_and_customer(): void

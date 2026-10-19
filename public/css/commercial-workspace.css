@@ -1793,6 +1793,16 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     border-color: #4338ca;
 }
 
+.side-bill-card .side-action-btn.reverse {
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+.side-bill-card .side-action-btn.reverse:hover {
+    background: #b91c1c;
+    color: #ffffff;
+    border-color: #b91c1c;
+}
+
 .side-bill-card .side-action-btn.view:hover,
 .side-bill-card .side-action-btn.print:hover {
     background: #f1f5f9;

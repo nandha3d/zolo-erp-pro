@@ -120,6 +120,12 @@ class SupplierController extends Controller
             ]);
         }
 
+        $request->validate(['opening_balance' => 'nullable|numeric|min:0']);
+        $openingBalance = (float) ($request->opening_balance ?? 0);
+        $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+        $openings = app(\App\Services\Accounting\PartyOpeningBalanceService::class);
+        $openings->assertPostable('supplier', $openingBalance, $context);
+
         $lims_supplier_data = $request->except('image');
         $lims_supplier_data['is_active'] = true;
         $image = $request->image;
@@ -127,32 +133,17 @@ class SupplierController extends Controller
             $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'supplier');
             $lims_supplier_data['image'] = $imageName;
         }
-        $create_supplier = Supplier::create($lims_supplier_data);
-
-        // create dummy purchase if supplier has opening balance (due)
-        if(isset($lims_supplier_data['opening_balance']) && $lims_supplier_data['opening_balance'] > 0) {
-            $lims_purchase_data = new Purchase();
-            $lims_purchase_data->reference_no = 'sob-' . date("Ymd") . '-'. date("his"); //customer opening balance
-            $lims_purchase_data->supplier_id = $create_supplier->id;
-            $lims_purchase_data->user_id = Auth::id();
-            $lims_purchase_data->warehouse_id = 1;
-            $lims_purchase_data->item = 0;
-            $lims_purchase_data->total_qty = 0;
-            $lims_purchase_data->total_discount = 0;
-            $lims_purchase_data->total_tax = 0;
-            $lims_purchase_data->total_cost = $lims_supplier_data['opening_balance'];
-            $lims_purchase_data->grand_total = $lims_supplier_data['opening_balance'];
-            $lims_purchase_data->status = 1; // completed
-            $lims_purchase_data->payment_status = 1; // pending
-            $lims_purchase_data->paid_amount = 0;
-            $lims_purchase_data->purchase_type = 'Opening balance';
-            $lims_purchase_data->created_at = '1970-01-01 12:00:00';
-            $lims_purchase_data->save();
-        }
+        // The opening due posts as an open item on Creditors, dated the financial year start.
+        $create_supplier = DB::transaction(function () use ($lims_supplier_data, $openingBalance, $openings, $context) {
+            $supplier = Supplier::create($lims_supplier_data);
+            $openings->post($supplier, $openingBalance, $context);
+            return $supplier;
+        });
 
         $message = 'Supplier';
         if(isset($request->both)) {
-            Customer::create($lims_supplier_data);
+            // The due entered here is the supplier's; the customer copy starts clear.
+            Customer::create(['opening_balance' => 0] + $lims_supplier_data);
             $message .= ' and Customer';
         }
         $mail_setting = MailSetting::latest()->first();

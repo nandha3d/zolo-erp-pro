@@ -223,7 +223,7 @@ class ChartOfAccountsSeeder extends Seeder
                 'code' => '3020',
                 'name' => 'Retained Earnings',
                 'type' => 'equity',
-                'sub_type' => 'equity',
+                'sub_type' => 'retained_earnings',
                 'parent_code' => '3000',
                 'is_system' => true,
                 'description' => 'Cumulative net income retained in business',
@@ -236,6 +236,15 @@ class ChartOfAccountsSeeder extends Seeder
                 'parent_code' => '3000',
                 'is_system' => false,
                 'description' => 'Withdrawals made by owners',
+            ],
+            [
+                'code' => '3040',
+                'name' => 'Opening Balance Adjustment',
+                'type' => 'equity',
+                'sub_type' => 'opening_balance',
+                'parent_code' => '3000',
+                'is_system' => true,
+                'description' => 'Other side of balances brought in at go-live (party dues, cash, bank)',
             ],
 
             // REVENUE (4000 - 4999)

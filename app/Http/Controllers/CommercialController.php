@@ -686,6 +686,8 @@ class CommercialController extends Controller
         abort_unless($companyId, 409, 'Choose a company first.');
 
         $partyType = $validated['party_type'] ?? 'supplier';
+        // With "both", the due entered belongs to the side the form was opened for; the other copy starts clear.
+        $openingSide = $partyType === 'customer' ? 'customer' : 'supplier';
         if (!empty($request->both) || $request->both == '1') {
             $partyType = 'both';
         }
@@ -705,9 +707,13 @@ class CommercialController extends Controller
 
         $supplier = null;
         $customer = null;
+        $openings = app(\App\Services\Accounting\PartyOpeningBalanceService::class);
+        $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+        $openings->assertPostable($openingSide, $openingBalance, $context);
 
         DB::transaction(function () use (
-            $partyType, $companyId, $validated, $taxNo, $waNumber, $country, $creditDays, $openingBalance, $customerGroupId, &$supplier, &$customer
+            $partyType, $companyId, $validated, $taxNo, $waNumber, $country, $creditDays, $openingBalance, $customerGroupId, &$supplier, &$customer,
+            $openingSide, $openings, $context
         ) {
             if ($partyType === 'supplier' || $partyType === 'both') {
                 $supplier = Supplier::create([
@@ -724,7 +730,7 @@ class CommercialController extends Controller
                     'state' => !empty($validated['state']) ? trim($validated['state']) : null,
                     'postal_code' => !empty($validated['postal_code']) ? trim($validated['postal_code']) : null,
                     'country' => $country,
-                    'opening_balance' => $openingBalance,
+                    'opening_balance' => $openingSide === 'supplier' ? $openingBalance : 0,
                     'credit_days' => $creditDays,
                     'is_active' => true,
                 ]);
@@ -745,11 +751,15 @@ class CommercialController extends Controller
                     'state' => !empty($validated['state']) ? trim($validated['state']) : null,
                     'postal_code' => !empty($validated['postal_code']) ? trim($validated['postal_code']) : null,
                     'country' => $country,
-                    'opening_balance' => $openingBalance,
+                    'opening_balance' => $openingSide === 'customer' ? $openingBalance : 0,
                     'credit_days' => $creditDays,
                     'bill_by_bill' => 1,
                     'is_active' => true,
                 ]);
+            }
+            $openingParty = $openingSide === 'customer' ? $customer : $supplier;
+            if ($openingParty) {
+                $openings->post($openingParty, $openingBalance, $context);
             }
         });
 
