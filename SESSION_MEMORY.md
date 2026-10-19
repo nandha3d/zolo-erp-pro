@@ -1158,7 +1158,7 @@ User: Product section should match other sections' theme; why duplicate Job Work
 - Applied all nine pending additive migrations successfully, including accounting permissions/repairs and Textile000008–000011. `migrate:status` shows no pending migrations. No production database was accessed.
 - Preparing the tested P0/P1/shared workspace checkpoint for origin/ui. P2 work starts after that push as requested. P2 covers ageing/receivables, collection follow-up/PDC/interest and discount previews/reminder tracking, product aliases, reviewed bulk item import, and quotation follow-up. External messages and financial interest posting are not implied by previews.
 
-## 45. Textile P2 implementation and final verification (2026-10-19, active)
+## 45. Textile P2 implementation and final verification (2026-10-19, completed)
 
 - P0/P1 checkpoint `4767352` was committed and pushed to `origin/ui` after the first local backup and migrations. The user's requested ordering is complete. All five P2 slices in `documents/TEXTILE_P2_IMPLEMENTATION.md` are now implemented; final integrated verification and the P2 commit/push remain in progress.
 - Extended historical ageing with configurable cutoffs, party/document/due/overdue details, current party dimensions, full filtered CSV and AR/AP reconciliation. Collections provide versioned follow-ups, reminder plans, PDC audit linked to an existing valid receipt, and exact-decimal interest/discount previews. These operational actions do not post or send messages. Final accounting review has no outstanding findings; targeted accounting run passed 45 tests/330 assertions with two separately covered MySQL skips.
@@ -1187,3 +1187,5 @@ User: "fix all three" (findings of section 44).
 - Chart: 3020 sub_type `retained_earnings`, new 3040 `opening_balance`; roles `retained_earnings`, `opening_balance` in `SemanticAccountResolver::ROLES`. Migration `2026_10_19_000017_add_retained_earnings_and_opening_balance_roles` (applied to local dev DB; companies 1, 14, 15, 16 mapped).
 - Tests: new `YearCloseAndOpeningBalanceTest` (company suite, 4 tests); `OptechMasterWebTest` quick customer asserts the opening journal. Company suite 333 pass + 1 unrelated error (LegacyInventoryCutoverTest: `no such table: categories` from uncommitted ProductMasterService work); commercial 160 OK (7 skipped); OptechMasterWebTest 19/19.
 - Guides in `documents/process-guides/` updated to the new behaviour.
+
+- Final Git receipt: P2 code/evidence commit `699d5d3` was pushed successfully to `origin/ui` after checkpoint `4767352`. All five local P2 migrations 000012–000016 report Ran. Remaining working-tree edits are the concurrent accounting/year-close/opening-balance/reversal UI/process-guide work and its section44 session entry; they were preserved and excluded. This Textile request is complete. Follow the next user instruction; do not deploy automatically.
