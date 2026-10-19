@@ -115,7 +115,7 @@ class PurchaseController extends Controller
             $standardRemarks = class_exists(\App\Models\StandardRemark::class) ? \App\Models\StandardRemark::where('is_active', true)->get() : collect();
             $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
             $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
-            $pending_grns = class_exists(\App\Models\GoodsReceivedNote::class) ? \App\Models\GoodsReceivedNote::with(['supplier:id,name', 'items.product', 'items.unit'])->where('status', 'pending')->latest('id')->limit(30)->get() : collect();
+            $pending_grns = class_exists(\App\Models\GoodsReceivedNote::class) ? \App\Models\GoodsReceivedNote::with(['supplier:id,name', 'items.product', 'items.unit'])->whereIn('status', ['pending', 'partially_billed'])->latest('id')->limit(30)->get() : collect();
             $lims_brand_list = Brand::where('is_active', true)->get();
             $lims_category_list = Category::where('is_active', true)->get();
             $lims_unit_list = Unit::where('is_active', true)->get();

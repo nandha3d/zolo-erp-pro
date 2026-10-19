@@ -30,6 +30,7 @@ class StoreCategoryRequest extends FormRequest
                     return $query->where('is_active', 1);
                 }),
             ],
+            'default_hsn_code' => ['nullable', 'string', 'regex:/^[0-9]{4}(?:[0-9]{2})?(?:[0-9]{2})?$/D'],
             'image' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,gif|max:1024',
             'icon'  => 'mimetypes:text/plain,image/png,image/jpeg,image/svg',
             'parent_id' => 'nullable|exists:categories,id',

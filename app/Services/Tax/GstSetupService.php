@@ -47,7 +47,7 @@ class GstSetupService
 
     public static function available(): bool
     {
-        return (bool) config('compliance.enabled') && Schema::hasTable('tax_categories');
+        return (bool) config('compliance.enabled') && app(\App\Support\Database\SchemaCache::class)->hasTable(DB::connection(), 'tax_categories');
     }
 
     /** The signed-in company bills under GST rules (India or not yet set); VAT companies keep the legacy tax list. */
@@ -55,7 +55,8 @@ class GstSetupService
     {
         if (!self::available()) return false;
         try {
-            $companyId ??= app(CompanyContextResolver::class)->forActor()->companyId;
+            $companyId ??= request()->attributes->get(CompanyContext::class)?->companyId
+                ?? app(CompanyContextResolver::class)->forActor()->companyId;
         } catch (\Throwable) {
             return false;
         }
@@ -71,7 +72,7 @@ class GstSetupService
 
     public function registration(CompanyContext $context, ?string $date = null): ?object
     {
-        if (!Schema::hasTable('tax_registrations')) return null;
+        if (!app(\App\Support\Database\SchemaCache::class)->hasTable(DB::connection(), 'tax_registrations')) return null;
         $date ??= now()->toDateString();
         return DB::table('tax_registrations')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)
             ->where('status', 'active')->where('effective_from', '<=', $date)
@@ -245,6 +246,20 @@ class GstSetupService
         $product->forceFill(['tax_category_id' => $categoryId ?: null, 'hsn_code' => $hsn ?: null])->save();
     }
 
+    /** Creation default only: explicit item code wins; group edits never rewrite existing masters. */
+    public function productCode(?string $code, ?int $groupId, ?string $type, CompanyContext $context): ?string
+    {
+        $group = null;
+        if ($groupId) {
+            $group = \App\Models\Category::forCompany($context)->where('company_id', $context->companyId)->find($groupId);
+            if (!$group) throw ValidationException::withMessages(['category_id' => 'Select an item group of this company.']);
+        }
+        $code = preg_replace('/\s+/', '', (string) $code);
+        $code = $code !== '' ? $code : ($group?->default_hsn_code ?? null);
+        if ($code) $this->validateCode($code, $this->kindFor($type));
+        return $code ?: null;
+    }
+
     public function kindFor(?string $productType): string
     {
         return in_array($productType, ['service', 'digital'], true) ? 'sac' : 'hsn';
@@ -286,9 +301,10 @@ class GstSetupService
     /** category id => [rate, name] effective on the date, for page product lists. */
     public function currentRates(?int $companyId = null, ?string $date = null): array
     {
-        if (!Schema::hasTable('tax_categories')) return [];
+        if (!app(\App\Support\Database\SchemaCache::class)->hasTable(DB::connection(), 'tax_categories')) return [];
         try {
-            $companyId ??= app(CompanyContextResolver::class)->forActor()->companyId;
+            $companyId ??= request()->attributes->get(CompanyContext::class)?->companyId
+                ?? app(CompanyContextResolver::class)->forActor()->companyId;
         } catch (\Throwable) {
             return [];
         }

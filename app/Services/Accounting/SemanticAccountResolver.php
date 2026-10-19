@@ -19,6 +19,8 @@ class SemanticAccountResolver
         'cogs' => ['cogs', 'expense'], 'tax_output' => ['tax_payable', 'liability'],
         'tax_input' => ['tax_receivable', 'asset'], 'discounts' => ['sales_discount', ['revenue', 'expense']],
         'freight' => ['shipping_income', 'revenue'], 'goods_in_transit' => ['goods_in_transit', 'asset'],
+        'goods_received_not_invoiced' => ['goods_received_not_invoiced', 'liability'],
+        'goods_delivered_not_invoiced' => ['goods_delivered_not_invoiced', 'asset'],
         'expense' => ['operating_expense', 'expense'], 'sales_returns' => ['sales_returns', 'revenue'],
         'purchase_returns' => ['purchase_returns', 'revenue'], 'rounding' => ['rounding', 'expense'],
         'damage' => ['inventory_loss', 'expense'], 'variance' => ['inventory_variance', 'expense'],

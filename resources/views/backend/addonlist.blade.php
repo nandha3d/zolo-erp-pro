@@ -10,6 +10,27 @@
 
 @push('css')
 <style>
+/* Four cards per row on wide screens so every addon is visible on one screen. */
+@media (min-width: 1200px) {
+    .addon-page-head h3 { font-size: 18px; margin: 0 !important; }
+    .addon-page-head p { font-size: 12px; }
+    .addon-grid > [class*="col-"] { flex: 0 0 100%; max-width: 100%; margin-bottom: 4px !important; }
+    .addon-grid .addon-card { display: grid !important; grid-template-columns: clamp(330px, 34%, 450px) minmax(0, 1fr) auto; grid-template-areas: "head desc foot"; align-items: center; column-gap: 16px; padding: 2px 14px !important; min-height: 0 !important; }
+    .addon-grid .addon-card .badge-light { font-size: 10px !important; }
+    .addon-grid .addon-card .switch-custom { flex: none; margin-left: 10px !important; }
+    .addon-grid .addon-card .addon-icon-box + div { display: flex; flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 8px; }
+    .addon-grid .addon-card .addon-icon-box + div > h5 { margin: 0 !important; white-space: nowrap; }
+    .addon-grid .addon-card .addon-icon-box { width: 30px !important; height: 30px !important; font-size: 14px !important; }
+    .addon-grid .addon-card > div:first-child { display: contents; }
+    .addon-grid .addon-card > div:first-child > div { grid-area: head; margin-bottom: 0 !important; }
+    .addon-grid .addon-card > div:first-child > p { grid-area: desc; margin: 0 !important; align-self: center; font-size: 11.5px; line-height: 1.3 !important; }
+    .addon-grid .addon-card > div:last-child { grid-area: foot; }
+    .addon-grid .addon-card > div:last-child > div { padding-top: 0 !important; border-top: 0 !important; flex-direction: row; align-items: center !important; gap: 10px; }
+    .addon-grid .addon-card h5 { font-size: 14px !important; }
+    .addon-grid .addon-card .addon-icon-box { width: 36px; height: 36px; font-size: 16px; margin-right: 10px !important; }
+    .addon-grid .addon-card small { white-space: nowrap; font-size: 11px; }
+    .addon-grid .addon-card .btn { height: 26px !important; min-height: 0 !important; padding: 0 10px !important; line-height: 24px !important; font-size: 12px !important; }
+}
 .addon-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid #e2e8f0;
@@ -76,7 +97,7 @@ input:checked + .slider-custom:before {
 <section class="forms">
     <div class="container-fluid">
         {{-- Header --}}
-        <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-2 addon-page-head">
             <div>
                 <h3 class="font-weight-bold mb-1" style="color: var(--neo-text-primary, #1e293b);">
                     <i class="dripicons-view-thumb mr-2 text-primary"></i>zoloERP SaaS &amp; Industry Addon Marketplace
@@ -96,15 +117,15 @@ input:checked + .slider-custom:before {
         </div>
 
         {{-- Addon Cards Grid --}}
-        <div class="row">
+        <div class="row addon-grid">
             @foreach($addons as $addon)
                 @php
                     $isActive = in_array($addon['key'], $activeModules);
                 @endphp
-                <div class="col-lg-6 col-xl-4 mb-4">
-                    <div class="card addon-card bg-white h-100 shadow-sm p-4 d-flex flex-column justify-content-between">
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card addon-card bg-white h-100 shadow-sm p-3 d-flex flex-column justify-content-between">
                         <div>
-                            <div class="d-flex align-items-start justify-content-between mb-3">
+                            <div class="d-flex align-items-start justify-content-between mb-2">
                                 <div class="d-flex align-items-center">
                                     <div class="addon-icon-box mr-3" style="background-color: {{ $addon['color'] }}15; color: {{ $addon['color'] }};">
                                         <i class="{{ $addon['icon'] }}"></i>
@@ -120,13 +141,13 @@ input:checked + .slider-custom:before {
                                 </label>
                             </div>
 
-                            <p class="text-muted small mb-3" style="min-height: 54px; line-height: 1.45;">
+                            <p class="text-muted small mb-2" style="line-height: 1.4;">
                                 {{ $addon['description'] }}
                             </p>
                         </div>
 
                         <div>
-                            <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top">
                                 <div class="d-flex align-items-center">
                                     <span class="badge {{ $isActive ? 'badge-success' : 'badge-secondary' }} px-2 py-1 mr-2 status-badge-{{ $addon['key'] }}">
                                         {{ $isActive ? 'Enabled' : 'Disabled' }}

@@ -241,7 +241,7 @@
                                 <tr style="background:#0f172a;color:#ffffff;font-size:11px;">
                                     <th style="width:36px;text-align:center;">#</th>
                                     <th style="min-width:240px;">ITEM</th>
-                                    <th style="width:110px;">SALE TYPE</th>
+                                    <th style="width:110px;" title="Sale type">TYPE</th>
                                     <th style="width:75px;">UNIT</th>
                                     <th style="width:95px;text-align:right;">RATE</th>
                                     <th style="width:70px;text-align:center;">QTY</th>
@@ -440,8 +440,11 @@
                             $statusLabel = $bill->reversed_at ? 'Reversed' : ($isDraft ? 'Draft' : ($isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Due')));
                             $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
                             $customerName = $bill->customer->name ?? 'Walk-in Customer';
+                            $registerBale = $bill->attributes_json['bale_no'] ?? $bill->bale_no ?? '';
+                            $registerTransport = $bill->attributes_json['transport_name'] ?? $bill->transport_name ?? '';
                         @endphp
                         <div class="side-bill-card" data-reversed="{{ $bill->reversed_at ? 1 : 0 }}" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-status-id="{{ $bill->sale_status }}" data-payment-status-id="{{ $bill->payment_status }}" data-warehouse-id="{{ $bill->warehouse_id }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                            <span hidden class="side-card-transport" data-bale-no="{{ $registerBale }}" data-transporter="{{ $registerTransport }}"></span>
                             <div class="side-card-top">
                                 <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
                                 <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
@@ -610,6 +613,8 @@
                             <th>{{__('db.Returned Amount')}}</th>
                             <th>{{__('db.Paid')}}</th>
                             <th>{{__('db.Due')}}</th>
+                            <th>Bale No.</th>
+                            <th>Transporter</th>
                             @foreach($custom_fields as $fieldName)
                             <th>{{$fieldName}}</th>
                             @endforeach
@@ -639,6 +644,7 @@
                         @foreach($custom_fields as $fieldName)
                         <th></th>
                         @endforeach
+                        <th></th><th></th>
                     </tfoot>
                 </table>
             </div>
@@ -1025,6 +1031,7 @@
                         </div>
                     </div>
 
+                    @include('backend.product.partials.stock-policy', ['product' => null])
                     <!-- Section 2: Units of Measure (3 columns) -->
                     <div class="compact-modal-section-title">
                         <i class="dripicons-box"></i> 2. Units of Measure
@@ -1879,6 +1886,7 @@
     </div>
 </div>
 
+@include('backend.commercial.orders', ['orderKind' => 'sale'])
 @endsection
 
 @push('scripts')
@@ -2931,6 +2939,7 @@
             tax_id: $('#quick-item-tax').data('gst') ? null : ($('#quick-item-tax').val() || null),
             tax_category_id: $('#quick-item-tax').data('gst') ? ($('#quick-item-tax').val() || null) : undefined,
             hsn_code: $('#quick-item-hsn').val() || undefined,
+            negative_stock_policy: $('#negative-stock-policy').val() || '',
             tax_method: $('#quick-item-tax-method').val() || 1,
             warranty: $('#quick-item-warranty').val() || null,
             warranty_type: $('#quick-item-warranty-type').val() || 'months',
@@ -3358,6 +3367,9 @@
         columns.push({"data": "returned_amount"});
         columns.push({"data": "paid_amount"});
         columns.push({"data": "due"});
+        var textileColumns = @json(($documentContextProfile ?? app(\App\Services\Industry\IndustryProfileService::class)->settings(request()->attributes->get(\App\Services\Platform\CompanyContext::class)))['profile'] === 'textile');
+        columns.push({"data": "bale_no", "visible": textileColumns, "orderable": false, "defaultContent": ""});
+        columns.push({"data": "transport_name", "visible": textileColumns, "orderable": false, "defaultContent": ""});
 
         var field_name = @json($field_name ?? []);
         for (var i = 0; i < field_name.length; i++) {
@@ -3840,8 +3852,15 @@
 
                 if (res.items && res.items.length) {
                     $('#order-table-body tr.order-item-row').remove();
+                    // Only what is still uninvoiced on the DC; the goods already left, so the invoice settles it.
                     res.items.forEach(function(item) {
-                        addProductRow({...item, preserve_line: true});
+                        var open = item.open_qty != null ? parseFloat(item.open_qty) : parseFloat(item.qty);
+                        if (open > 0) {
+                            addProductRow({...item, qty: open, preserve_line: true});
+                            var row = $('#order-table-body tr.order-item-row').last();
+                            if (item.variant_id) row.attr('data-variant-id', item.variant_id);
+                            if (item.base_factor) row.attr({'data-material-document-id': ch.id, 'data-material-item-id': item.id, 'data-material-base-factor': item.base_factor, 'data-material-unit-id': item.unit_id});
+                        }
                     });
                 }
                 $('.selectpicker').selectpicker('refresh');

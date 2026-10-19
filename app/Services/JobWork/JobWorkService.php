@@ -49,6 +49,8 @@ class JobWorkService
                 if ($changed) throw ValidationException::withMessages(['process' => 'Used process policy is immutable; create a new process code to change its loss limit, conversion or yield basis.']);
                 $data = array_intersect_key($data, array_flip(['code', 'name', 'output_product_id', 'service_product_id', 'service_rate']));
             }
+            // Explicit configuration activates the conservative, initially disabled Bleaching preset.
+            if ($data['code'] === 'BLEACHING') $data['is_active'] = true;
             DB::table('process_types')->updateOrInsert(['company_id' => $context->companyId, 'code' => $data['code']],
                 $data + ['created_at' => now(), 'updated_at' => now()]);
             $id = (int) DB::table('process_types')->where('company_id', $context->companyId)->where('code', $data['code'])->value('id');

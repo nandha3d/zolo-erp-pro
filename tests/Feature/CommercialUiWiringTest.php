@@ -60,7 +60,7 @@ class CommercialUiWiringTest extends CommercialTestCase
             $kind === 'sale' ? 'challan_date' : 'grn_date' => '2026-10-03',
             'warehouse_id' => 1, 'product_id' => [$product->id], 'unit_id' => [1],
             'qty' => [2], $kind === 'sale' ? 'rate' : 'cost' => [10], 'tax_rate' => [5],
-            'total' => [999], 'grand_total' => 999,
+            'total' => [999], 'grand_total' => 999, 'purpose' => 'approval',
         ];
     }
 
@@ -70,7 +70,8 @@ class CommercialUiWiringTest extends CommercialTestCase
         $path = $kind === 'sale' ? '/delivery-challans' : '/goods-received-notes';
         $key = $kind === 'sale' ? 'challan' : 'grn';
         $data = $this->material($kind);
-        $response = $this->postJson($path, $data)->assertCreated();
+        $response = $this->postJson($path, $data);
+        $this->assertSame(201, $response->status(), $response->getContent());
         $id = $response->json($key.'.id');
         $this->assertEquals(21, $response->json($key.'.grand_total'));
         $this->getJson($path.'/'.$id)->assertOk()->assertJsonPath('items.0.unit_id', 1)->assertJsonPath('items.0.qty', 2);

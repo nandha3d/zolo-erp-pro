@@ -34,6 +34,7 @@
         ($note ? 'Note No.' : ($kind === 'purchase' ? 'Bill No.' : 'Invoice No.')) => $d['number'],
         'Date' => \Carbon\Carbon::parse($d['date'])->format('d-m-Y'),
         'Against' => $d['source_number'] ?? null,
+        'Source DC / GRN' => implode(', ', array_column($d['material_documents'] ?? [], 'reference_no')),
         'Due Date' => !empty($d['due_date']) ? \Carbon\Carbon::parse($d['due_date'])->format('d-m-Y') : null,
         'Order No.' => $d['references']['order_no'] ?? null,
         'Transport' => $d['transport']['transport_name'] ?? null,

@@ -1,6 +1,7 @@
 @extends('backend.layout.main') 
 
 @section('content')
+<link rel="stylesheet" href="{{ versioned_asset('css/commercial-assistance.css') }}">
 
 <style type="text/css">
     .btn-icon i { margin-right: 5px; }
@@ -288,6 +289,9 @@
                             <button type="button" class="btn btn-sm btn-success" id="btn-convert-purchase" style="display:none; font-weight:600;">
                                 <i class="dripicons-card"></i> Convert to Purchase
                             </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-return-open" style="display:none; font-weight:600;" title="Send back the goods not yet billed; stock and the accrual are reversed for that quantity.">
+                                <i class="dripicons-return"></i> Return to supplier
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -325,12 +329,12 @@
                             <span>{{ \Carbon\Carbon::parse($gn->grn_date)->format('d M Y') }}</span>
                         </div>
                         <div class="d-flex align-items-center justify-content-between mt-2 pt-1" style="border-top:1px dashed #f1f5f9;">
-                            <span class="badge {{ $gn->status === 'converted_to_purchase' ? 'badge-success' : ($gn->status === 'cancelled' ? 'badge-danger' : 'badge-warning') }}" style="font-size:10px;">
+                            <span class="badge {{ $gn->status === 'converted_to_purchase' ? 'badge-success' : ($gn->status === 'cancelled' ? 'badge-danger' : ($gn->status === 'partially_billed' ? 'badge-info' : ($gn->status === 'returned' ? 'badge-secondary' : 'badge-warning'))) }}" style="font-size:10px;">
                                 {{ ucfirst(str_replace('_', ' ', $gn->status)) }}
                             </span>
                             <div class="d-flex align-items-center gap-1">
                                 <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 btn-load-grn" data-id="{{ $gn->id }}" title="Edit in Form">✎ Edit</button>
-                                @if($gn->status === 'pending')
+                                @if(in_array($gn->status, ['pending', 'partially_billed'], true))
                                     <a href="{{ route('purchases.index', ['from_grn' => $gn->id]) }}" class="btn btn-xs btn-outline-success py-0 px-2" title="Convert to Purchase Bill">🗲 Convert</a>
                                 @endif
                             </div>
@@ -368,7 +372,7 @@
                             </tr>
                         </thead>
                         <tbody id="multi-item-tbody">
-                            @foreach($lims_product_list_without_variant as $prod)
+                            @foreach(collect($lims_product_list_without_variant)->merge($lims_product_list_with_variant)->unique('id') as $prod)
                                 <tr class="multi-item-row" data-id="{{ $prod->id }}" data-name="{{ $prod->name }}" data-code="{{ $prod->code }}" data-price="{{ $prod->price }}" data-cost="{{ $prod->cost }}" data-unit="{{ $prod->unit_code ?? ($prod->unit_name ?? 'Unit') }}">
                                     <td><input type="checkbox" class="multi-item-cb" value="{{ $prod->id }}"></td>
                                     <td><code>{{ $prod->code }}</code></td>
@@ -437,7 +441,7 @@
 @push('scripts')
     @php
         $jsProductList = [];
-        foreach($lims_product_list_without_variant as $prod) {
+        foreach(collect($lims_product_list_without_variant)->merge($lims_product_list_with_variant)->unique('id') as $prod) {
             $taxVal = 0;
             if (!empty($prod->tax_id)) {
                 $taxObj = collect($lims_tax_list)->firstWhere('id', $prod->tax_id);
@@ -451,6 +455,8 @@
                 'cost' => (float)($prod->cost ?? 0),
                 'tax_rate' => $taxVal,
                 'unit_id' => (int)$prod->unit_id,
+                'is_variant' => (bool)$prod->is_variant,
+                'variants' => ($materialVariants[$prod->id] ?? collect())->map(fn ($variant) => ['id' => (int)$variant->variant_id, 'name' => $variant->name, 'code' => $variant->item_code])->values()->all(),
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
                 'label' => (string)$prod->code . ' - ' . (string)$prod->name,
@@ -468,7 +474,7 @@
             'storeUrl' => route('goods-received-notes.store'), 'productUrl' => route('products.quick-store'),
             'partyUrl' => route('parties.quick-store'), 'token' => csrf_token(),
             'partyType' => 'supplier', 'partySelect' => '#supplier_id', 'partyButton' => '#btn-quick-supplier',
-            'convertButton' => '#btn-convert-purchase', 'convertUrl' => route('purchases.index'), 'convertParam' => 'from_grn',
+            'convertButton' => '#btn-convert-purchase', 'convertUrl' => route('purchases.index'), 'convertParam' => 'from_grn', 'returnButton' => '#btn-return-open',
             'editId' => request('edit'),
             'draftKind' => 'grn', 'draftUrl' => url('documents/grn'), 'shortcut' => 'grn',
         ];

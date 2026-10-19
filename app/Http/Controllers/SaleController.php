@@ -190,7 +190,7 @@ class SaleController extends Controller
             $standardRemarks = class_exists(\App\Models\StandardRemark::class) ? \App\Models\StandardRemark::where('is_active', true)->get() : collect();
             $agents = class_exists(\App\Models\Agent::class) ? \App\Models\Agent::where('is_active', true)->get() : collect();
             $areas = class_exists(\App\Models\Area::class) ? \App\Models\Area::where('is_active', true)->get() : collect();
-            $pending_challans = class_exists(\App\Models\DeliveryChallan::class) ? \App\Models\DeliveryChallan::with(['customer:id,name', 'items.product', 'items.unit'])->where('status', 'pending')->latest('id')->limit(30)->get() : collect();
+            $pending_challans = class_exists(\App\Models\DeliveryChallan::class) ? \App\Models\DeliveryChallan::with(['customer:id,name', 'items.product', 'items.unit'])->whereIn('status', ['pending', 'partially_billed'])->latest('id')->limit(30)->get() : collect();
             $lims_brand_list = Brand::where('is_active', true)->get();
             $lims_category_list = Category::where('is_active', true)->get();
             $lims_unit_list = Unit::where('is_active', true)->get();
@@ -525,6 +525,8 @@ class SaleController extends Controller
                 $nestedData['key'] = $key;
                 $nestedData['date'] = date(config('date_format').' h:i:s a', strtotime($sale->created_at));
                 $nestedData['reference_no'] = $sale->reference_no;
+                $nestedData['bale_no'] = e($sale->attributes_json['bale_no'] ?? $sale->bale_no ?? '');
+                $nestedData['transport_name'] = e($sale->attributes_json['transport_name'] ?? $sale->transport_name ?? '');
                 $nestedData['created_by'] = $user->name;
                 $nestedData['customer'] = $sale->customer->name.'<br>'.$sale->customer->phone_number.'<input type="hidden" class="deposit" value="'.($sale->customer->deposit - $sale->customer->expense).'" />'.'<input type="hidden" class="points" value="'.$sale->customer->points.'" />';
 

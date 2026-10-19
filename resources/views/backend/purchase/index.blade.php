@@ -232,7 +232,7 @@
                                 <tr style="background:#0f172a;color:#ffffff;font-size:11px;">
                                     <th style="width:36px;text-align:center;">#</th>
                                     <th style="min-width:240px;">ITEM</th>
-                                    <th style="width:110px;">PURCHASE TYPE</th>
+                                    <th style="width:110px;" title="Purchase type">TYPE</th>
                                     <th style="width:75px;">UNIT</th>
                                     <th style="width:95px;text-align:right;">RATE</th>
                                     <th style="width:70px;text-align:center;">QTY</th>
@@ -1182,6 +1182,7 @@
                         </div>
                     </div>
 
+                    @include('backend.product.partials.stock-policy', ['product' => null])
                     <!-- Section 2: Units of Measure (3 columns) -->
                     <div class="compact-modal-section-title">
                         <i class="dripicons-box"></i> 2. Units of Measure
@@ -1651,6 +1652,7 @@
     </div>
 </div>
 
+@include('backend.commercial.orders', ['orderKind' => 'purchase'])
 @endsection
 
 @push('scripts')
@@ -2709,6 +2711,7 @@
             tax_id: $('#quick-item-tax').data('gst') ? null : ($('#quick-item-tax').val() || null),
             tax_category_id: $('#quick-item-tax').data('gst') ? ($('#quick-item-tax').val() || null) : undefined,
             hsn_code: $('#quick-item-hsn').val() || undefined,
+            negative_stock_policy: $('#negative-stock-policy').val() || '',
             tax_method: $('#quick-item-tax-method').val() || 1,
             warranty: $('#quick-item-warranty').val() || null,
             warranty_type: $('#quick-item-warranty-type').val() || 'months',
@@ -3613,8 +3616,15 @@
 
                 if (res.items && res.items.length) {
                     $('#order-table-body tr.order-item-row').remove();
+                    // Only what is still unbilled on the GRN; the stock is already in, so the bill settles it.
                     res.items.forEach(function(item) {
-                        addProductRow({...item, preserve_line: true});
+                        var open = item.open_qty != null ? parseFloat(item.open_qty) : parseFloat(item.qty);
+                        if (open > 0) {
+                            addProductRow({...item, qty: open, preserve_line: true});
+                            var row = $('#order-table-body tr.order-item-row').last();
+                            if (item.variant_id) row.attr('data-variant-id', item.variant_id);
+                            if (item.base_factor) row.attr({'data-material-document-id': gn.id, 'data-material-item-id': item.id, 'data-material-base-factor': item.base_factor, 'data-material-unit-id': item.unit_id});
+                        }
                     });
                 }
                 $('.selectpicker').selectpicker('refresh');

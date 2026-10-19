@@ -29,5 +29,8 @@
     <IfModule mod_setenvif.c>
         SetEnvIf Request_URI "^/(css|js|vendor|fonts)/.*\.(css|js|woff2?|ttf|eot)$" zolo_static_asset
         Header set Cache-Control "public, max-age=0, must-revalidate" env=zolo_static_asset
+        # Versioned code URLs are refreshed by the layout whenever their source file changes.
+        SetEnvIfExpr "%{REQUEST_URI} =~ m#^/(css|js|vendor|fonts)/.*\.(css|js|woff2?|ttf|eot)$# && %{QUERY_STRING} =~ m#^v=[0-9]+-[0-9]+$#" zolo_versioned_asset
+        Header set Cache-Control "public, max-age=31536000, immutable" env=zolo_versioned_asset
     </IfModule>
 </IfModule>

@@ -3068,3 +3068,445 @@ body.dark-mode .side-dropdown-filters label { color: #cbd5e1; }
 
 /* Top-bar reveal strip exists in every main-layout page but is styled (and shown) only by the commercial screens. */
 .reveal-topbar-strip { display: none; }
+
+/* ====================================================================
+ * Finance, Accounting, Expense & Income Zero-Scroll Modern Workspaces
+ * ==================================================================== */
+html:has(.finance-desk-view),
+body:has(.finance-desk-view),
+html:has(.expense-workspace-view),
+body:has(.expense-workspace-view),
+html:has(.expense-cat-workspace-view),
+body:has(.expense-cat-workspace-view),
+html:has(.income-workspace-view),
+body:has(.income-workspace-view),
+html:has(.income-cat-workspace-view),
+body:has(.income-cat-workspace-view),
+html:has(.transfer-workspace-view),
+body:has(.transfer-workspace-view),
+html:has(.account-workspace-view),
+body:has(.account-workspace-view),
+html:has(.coa-workspace-view),
+body:has(.coa-workspace-view),
+html:has(.journal-workspace-view),
+body:has(.journal-workspace-view),
+html:has(.ledger-workspace-view),
+body:has(.ledger-workspace-view),
+html:has(.tb-workspace-view),
+body:has(.tb-workspace-view),
+html:has(.pl-workspace-view),
+body:has(.pl-workspace-view),
+html:has(.bs-workspace-view),
+body:has(.bs-workspace-view) {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+body:has(.expense-workspace-view) #content,
+body:has(.expense-cat-workspace-view) #content,
+body:has(.income-workspace-view) #content,
+body:has(.income-cat-workspace-view) #content,
+body:has(.transfer-workspace-view) #content,
+body:has(.account-workspace-view) #content,
+body:has(.coa-workspace-view) #content,
+body:has(.journal-workspace-view) #content,
+body:has(.ledger-workspace-view) #content,
+body:has(.tb-workspace-view) #content,
+body:has(.pl-workspace-view) #content,
+body:has(.bs-workspace-view) #content,
+body:has(.finance-desk-view) #content {
+    height: calc(100vh - 40px) !important;
+    max-height: calc(100vh - 40px) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body:has(.expense-workspace-view) footer.main-footer,
+body:has(.expense-cat-workspace-view) footer.main-footer,
+body:has(.income-workspace-view) footer.main-footer,
+body:has(.income-cat-workspace-view) footer.main-footer,
+body:has(.transfer-workspace-view) footer.main-footer,
+body:has(.account-workspace-view) footer.main-footer,
+body:has(.coa-workspace-view) footer.main-footer,
+body:has(.journal-workspace-view) footer.main-footer,
+body:has(.ledger-workspace-view) footer.main-footer,
+body:has(.tb-workspace-view) footer.main-footer,
+body:has(.pl-workspace-view) footer.main-footer,
+body:has(.bs-workspace-view) footer.main-footer,
+body:has(.finance-desk-view) footer.main-footer {
+    display: none !important;
+}
+
+.expense-workspace-view,
+.expense-cat-workspace-view,
+.income-workspace-view,
+.income-cat-workspace-view,
+.transfer-workspace-view,
+.account-workspace-view,
+.coa-workspace-view,
+.journal-workspace-view,
+.ledger-workspace-view,
+.tb-workspace-view,
+.pl-workspace-view,
+.bs-workspace-view,
+.finance-desk-view {
+    height: 100% !important;
+    max-height: 100% !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 6px 14px 6px !important;
+    background: #f8fafc;
+}
+
+body.dark-mode .expense-workspace-view,
+body.dark-mode .expense-cat-workspace-view,
+body.dark-mode .income-workspace-view,
+body.dark-mode .income-cat-workspace-view,
+body.dark-mode .transfer-workspace-view,
+body.dark-mode .account-workspace-view,
+body.dark-mode .coa-workspace-view,
+body.dark-mode .journal-workspace-view,
+body.dark-mode .ledger-workspace-view,
+body.dark-mode .tb-workspace-view,
+body.dark-mode .pl-workspace-view,
+body.dark-mode .bs-workspace-view,
+body.dark-mode .finance-desk-view {
+    background: #0b0f19 !important;
+}
+
+/* Compact KPI Strip */
+.expense-workspace-view .kpi-summary-strip,
+.expense-cat-workspace-view .kpi-summary-strip,
+.income-workspace-view .kpi-summary-strip,
+.income-cat-workspace-view .kpi-summary-strip,
+.transfer-workspace-view .kpi-summary-strip,
+.account-workspace-view .kpi-summary-strip,
+.coa-workspace-view .kpi-summary-strip,
+.journal-workspace-view .kpi-summary-strip,
+.ledger-workspace-view .kpi-summary-strip,
+.tb-workspace-view .kpi-summary-strip,
+.pl-workspace-view .kpi-summary-strip,
+.bs-workspace-view .kpi-summary-strip {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+    flex-shrink: 0 !important;
+}
+
+.expense-workspace-view .kpi-card,
+.expense-cat-workspace-view .kpi-card,
+.income-workspace-view .kpi-card,
+.income-cat-workspace-view .kpi-card,
+.transfer-workspace-view .kpi-card,
+.account-workspace-view .kpi-card,
+.coa-workspace-view .kpi-card,
+.journal-workspace-view .kpi-card,
+.ledger-workspace-view .kpi-card,
+.tb-workspace-view .kpi-card,
+.pl-workspace-view .kpi-card,
+.bs-workspace-view .kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px !important;
+    min-height: 46px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+body.dark-mode .expense-workspace-view .kpi-card,
+body.dark-mode .expense-cat-workspace-view .kpi-card,
+body.dark-mode .income-workspace-view .kpi-card,
+body.dark-mode .income-cat-workspace-view .kpi-card,
+body.dark-mode .transfer-workspace-view .kpi-card,
+body.dark-mode .account-workspace-view .kpi-card,
+body.dark-mode .coa-workspace-view .kpi-card,
+body.dark-mode .journal-workspace-view .kpi-card,
+body.dark-mode .ledger-workspace-view .kpi-card,
+body.dark-mode .tb-workspace-view .kpi-card,
+body.dark-mode .pl-workspace-view .kpi-card,
+body.dark-mode .bs-workspace-view .kpi-card {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+
+.expense-workspace-view .kpi-card .kpi-label,
+.expense-cat-workspace-view .kpi-card .kpi-label,
+.income-workspace-view .kpi-card .kpi-label,
+.income-cat-workspace-view .kpi-card .kpi-label,
+.transfer-workspace-view .kpi-card .kpi-label,
+.account-workspace-view .kpi-card .kpi-label,
+.coa-workspace-view .kpi-card .kpi-label,
+.journal-workspace-view .kpi-card .kpi-label,
+.ledger-workspace-view .kpi-card .kpi-label,
+.tb-workspace-view .kpi-card .kpi-label,
+.pl-workspace-view .kpi-card .kpi-label,
+.bs-workspace-view .kpi-card .kpi-label {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    color: #64748b !important;
+    margin-bottom: 1px !important;
+}
+
+.expense-workspace-view .kpi-card .kpi-number,
+.expense-cat-workspace-view .kpi-card .kpi-number,
+.income-workspace-view .kpi-card .kpi-number,
+.income-cat-workspace-view .kpi-card .kpi-number,
+.transfer-workspace-view .kpi-card .kpi-number,
+.account-workspace-view .kpi-card .kpi-number,
+.coa-workspace-view .kpi-card .kpi-number,
+.journal-workspace-view .kpi-card .kpi-number,
+.ledger-workspace-view .kpi-card .kpi-number,
+.tb-workspace-view .kpi-card .kpi-number,
+.pl-workspace-view .kpi-card .kpi-number,
+.bs-workspace-view .kpi-card .kpi-number {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.1 !important;
+}
+
+body.dark-mode .expense-workspace-view .kpi-card .kpi-number,
+body.dark-mode .expense-cat-workspace-view .kpi-card .kpi-number,
+body.dark-mode .income-workspace-view .kpi-card .kpi-number,
+body.dark-mode .income-cat-workspace-view .kpi-card .kpi-number,
+body.dark-mode .transfer-workspace-view .kpi-card .kpi-number,
+body.dark-mode .account-workspace-view .kpi-card .kpi-number,
+body.dark-mode .coa-workspace-view .kpi-card .kpi-number,
+body.dark-mode .journal-workspace-view .kpi-card .kpi-number,
+body.dark-mode .ledger-workspace-view .kpi-card .kpi-number,
+body.dark-mode .tb-workspace-view .kpi-card .kpi-number,
+body.dark-mode .pl-workspace-view .kpi-card .kpi-number,
+body.dark-mode .bs-workspace-view .kpi-card .kpi-number {
+    color: #f8fafc !important;
+}
+
+/* Compact Filter Card */
+.desk-filter-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 4px 10px !important;
+    margin-bottom: 6px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    flex-shrink: 0;
+}
+
+body.dark-mode .desk-filter-card {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+
+.desk-filter-card .form-group {
+    margin-bottom: 0 !important;
+}
+
+.desk-filter-card label {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 1px !important;
+    color: #64748b !important;
+}
+
+body.dark-mode .desk-filter-card label {
+    color: #94a3b8 !important;
+}
+
+.desk-filter-card .form-control,
+.desk-filter-card .bootstrap-select > .btn {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    font-size: 12px !important;
+    padding: 2px 8px !important;
+    line-height: normal !important;
+}
+
+/* Data Table Card Wrapper & DataTables Container */
+.desk-card-wrapper {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    padding: 8px 12px !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+}
+
+body.dark-mode .desk-card-wrapper {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+
+.desk-card-wrapper > .table-responsive {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+
+.desk-card-wrapper .dataTables_wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    height: 100% !important;
+}
+
+.desk-card-wrapper .dataTables_wrapper > .row:first-child {
+    flex: 0 0 auto !important;
+    margin-bottom: 4px !important;
+    margin-top: 0 !important;
+    align-items: center;
+}
+
+.desk-card-wrapper .dataTables_wrapper > .row:nth-child(2) {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+}
+
+.desk-card-wrapper .dataTables_wrapper > .row:nth-child(2) > .col-sm-12 {
+    padding: 0 !important;
+}
+
+.desk-card-wrapper table.dataTable {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.desk-card-wrapper table.dataTable thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 5 !important;
+    background: #0f172a !important;
+    color: #ffffff !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 7px 10px !important;
+    border: none !important;
+    white-space: nowrap;
+}
+
+body.dark-mode .desk-card-wrapper table.dataTable thead th {
+    background: #090d16 !important;
+    color: #f8fafc !important;
+}
+
+.desk-card-wrapper table.dataTable tbody td {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+body.dark-mode .desk-card-wrapper table.dataTable tbody td {
+    border-bottom-color: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+.desk-card-wrapper table.dataTable tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.desk-card-wrapper table.dataTable tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+body.dark-mode .desk-card-wrapper table.dataTable tbody tr:nth-child(even) {
+    background-color: #1e293b !important;
+}
+
+body.dark-mode .desk-card-wrapper table.dataTable tbody tr:nth-child(odd) {
+    background-color: #141c2c !important;
+}
+
+.desk-card-wrapper table.dataTable tbody tr:hover {
+    background-color: #eef2ff !important;
+}
+
+body.dark-mode .desk-card-wrapper table.dataTable tbody tr:hover {
+    background-color: #27354f !important;
+}
+
+.desk-card-wrapper .dataTables_wrapper > .row:last-child {
+    flex: 0 0 auto !important;
+    margin-top: auto !important;
+    padding-top: 4px !important;
+    margin-bottom: 0 !important;
+    align-items: center;
+}
+
+.desk-card-wrapper .dataTables_info {
+    font-size: 11px !important;
+    color: #64748b !important;
+    padding-top: 4px !important;
+}
+
+.desk-card-wrapper .dataTables_paginate {
+    padding-top: 2px !important;
+}
+
+.desk-card-wrapper .dataTables_paginate .pagination {
+    margin: 0 !important;
+}
+
+.desk-card-wrapper .dataTables_paginate .page-link {
+    height: 24px !important;
+    min-height: 24px !important;
+    line-height: 22px !important;
+    padding: 0 7px !important;
+    font-size: 11px !important;
+    border-radius: 4px !important;
+}
+
+/* ====================================================================
+   Sidebar responsiveness: native scrolling (no JS scrollbar), quick submenu
+   open/close and instant hover feedback.
+   ==================================================================== */
+nav.side-navbar {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+nav.side-navbar:hover { scrollbar-color: rgba(148, 163, 184, 0.45) transparent; }
+nav.side-navbar::-webkit-scrollbar { width: 6px; }
+nav.side-navbar::-webkit-scrollbar-thumb { background: transparent; border-radius: 6px; }
+nav.side-navbar:hover::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.45); }
+nav.side-navbar.icon-only { overflow: visible !important; }
+.side-navbar .collapsing { transition: height 0.12s ease-out !important; }
+.side-navbar li a,
+.side-navbar li a i { transition: background-color 0.1s ease, color 0.1s ease !important; }
+.side-navbar li a:hover { transform: none !important; }
+
+/* POS (own layout, no app-shell class): right column is one screen high, product grid fills the rest. */
+@media (min-width: 768px) {
+    body.pos-page #pos-layout .col-md-5.order-first { height: calc(100vh - 10px); display: flex; flex-direction: column; }
+    body.pos-page #pos-layout .col-md-5.order-first > .row:last-child { flex: 1 1 0; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+}

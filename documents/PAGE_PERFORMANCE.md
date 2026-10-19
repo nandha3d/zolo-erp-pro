@@ -40,3 +40,39 @@ Raw local measurements: `scratch/performance-comparison.jsonl`. Temporary compar
 ## Limits
 
 This does not certify every optional ERP module, large production datasets, concurrent-user capacity, or real-user Core Web Vitals. Apache configuration was not exercised on this PHP development server. Existing database latency and company/branch query caching fixes documented in session memory were reused without being reimplemented.
+
+## Follow-up — 2026-10-17
+
+The shared shell now renders page content as HTML arrives. It no longer hides the whole page until JavaScript finishes, and it no longer adds the legacy one-second entry animation. The optional Google Fonts stylesheet loads without blocking initial rendering.
+
+Shared CSS and JavaScript URLs include their file modification time and size. The PHP server serves matching versions with `Cache-Control: public, max-age=31536000, immutable`, so repeat navigation can reuse them without a conditional request. Source changes produce a new URL. Unversioned and stale-version URLs still revalidate; matching ETags still return an empty 304 response. Apache has an equivalent rule for versioned URLs. Dynamic pages remain private. Business documents are excluded from public asset versioning.
+
+The sidebar reads its permission list once, rather than querying each menu permission. Workspace navigation evaluates its permission group with one fresh actor/context validation. Read-only capability and GST UI lookups reuse the context already authorized by middleware. Hot schema checks reuse the existing schema cache, which is invalidated by DDL. No business data or write authorization is cached by these changes.
+
+### Measurements
+
+Measurements use company 14, the same local database, an authenticated admin, OPcache and disabled Debugbar. Two temporary loopback servers used the previous and updated application classes/layouts. Each page was warmed first. Five samples alternate before/after, reversing their order each round. Values are medians of complete HTML responses; they exclude browser rendering, asset downloads and follow-up AJAX. Temporary servers were stopped after measurement.
+
+| Page | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Dashboard | 946.6 ms | 739.1 ms | 21.9% faster |
+| Sales | 966.4 ms | 828.5 ms | 14.3% faster |
+| Purchases | 1,005.6 ms | 883.5 ms | 12.1% faster |
+| Customers | 660.9 ms | 660.8 ms | Approximately unchanged |
+| Workspace | 819.0 ms | 635.0 ms | 22.5% faster |
+| Job Work | 699.0 ms | 756.0 ms | 8.2% slower in this sample |
+
+Customers and Job Work had variable timings, so a separate five-sample alternating check was run after the other validation finished. Customers measured 711.8 → 683.8 ms (3.9% faster), and Job Work measured 747.8 → 670.5 ms (10.3% faster). These small samples do not establish a stable latency improvement on those two pages. Their shared browser caching and removal of the hidden-content/animation delay apply regardless of the server timing variation.
+
+Separate kernel query counts were Sales 140 → 107, Purchases 131 → 100, Customers 47 → 37, Workspace 107 → 49, Job Work 86 → 76, and Dashboard 85 → 85. Capability cache warmth can change these counts by a few queries. The operator sidebar regression test confirms zero permission queries while rendering its menu from the provided permission list.
+
+Raw evidence is in `scratch/speed-matched-comparison.jsonl`, `scratch/speed-matched-confirmation.jsonl`, `scratch/speed-query-summary.json`, and the `scratch/speed-baseline-*` / `scratch/speed-after-*` files. The initial sequential measurement on port 8080 was noisy and is retained as `scratch/speed-http-before.jsonl` / `scratch/speed-http-after.jsonl`; it is not used for the response-time claims above.
+
+### Validation and limits
+
+- 52 targeted tests pass: PageSpeedTest, VersionedAssetTest, WorkspaceSecurityTest, GstSetupTest, IndustryProfilesTest and CapabilityEngineTest. The earlier CapabilityEngineTest/BranchIsolationTest run also passed 28 tests.
+- Regression coverage checks grouped authorization, role overrides, revoked grants/membership, inactive roles, foreign company denial, sidebar permission reuse, context reuse, and asset URL changes after source changes.
+- Live HTTP checks confirm immutable caching for the current version, revalidation for missing/stale versions, empty 304 responses, and private login responses.
+- Browser smoke checks cover Dashboard, Sales register/entry, Purchases register/entry, Customers, Workspace and Job Work. Registers display existing data; dashboard charts and navigation initialize. No console errors were observed on those pages. Purchase screenshot: `scratch/page-speed-purchases.png`.
+- PHP syntax and scoped whitespace checks pass. No dependency installation, database migration, commit or deployment was performed for this request.
+- This is local development evidence, not a production capacity or Core Web Vitals certification. Apache rules were not exercised. Optional modules and large datasets were not exhaustively profiled.

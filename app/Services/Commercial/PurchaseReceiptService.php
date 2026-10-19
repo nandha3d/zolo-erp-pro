@@ -58,6 +58,32 @@ class PurchaseReceiptService
                 if (in_array($product->type, ['service', 'digital'], true)) {
                     throw ValidationException::withMessages(['items' => 'Service lines do not receive stock.']);
                 }
+                $stored = ($line->stock_details_json ?? []) + $line->toArray();
+                foreach (['variant_id', 'product_batch_id', 'stock_identity_id'] as $identity) {
+                    if (empty($stored[$identity])) continue;
+                    if (isset($item[$identity]) && (int) $item[$identity] !== (int) $stored[$identity]) {
+                        throw ValidationException::withMessages(['items.'.$identity => 'Keep the identity recorded on the supplier bill.']);
+                    }
+                    $item[$identity] = $stored[$identity];
+                }
+                if (isset($item['batch']) && !is_array($item['batch'])) {
+                    throw ValidationException::withMessages(['items.batch' => 'Use a batch object.']);
+                }
+                foreach (($stored['batch'] ?? []) as $field => $original) {
+                    if ($original !== null && isset($item['batch'][$field]) && (string) $item['batch'][$field] !== (string) $original) {
+                        throw ValidationException::withMessages(['items.batch' => 'Keep the lot recorded on the supplier bill.']);
+                    }
+                }
+                $item['batch'] = ($stored['batch'] ?? []) + ($item['batch'] ?? []);
+                if (!$item['batch']) unset($item['batch']);
+                $item['product_id'] = $line->product_id;
+                $item['purchase_unit_id'] = $line->purchase_unit_id;
+                $guard->product($item, $context, 'purchase_unit_id');
+                $factor = $stored['base_factor'] ?? null;
+                if ($factor !== null && abs(app(\App\Services\Inventory\UomConversionService::class)->toBase(
+                    $product, (float) $line->qty, (int) $line->purchase_unit_id) / (float) $line->qty - (float) $factor) > 0.00000001) {
+                    throw ValidationException::withMessages(['items.purchase_unit_id' => 'Unit conversion changed after billing; restore it or review the bill before receipt.']);
+                }
                 $billValue = app(CommercialPricing::class)->units((float) $line->valuation_amount);
                 $before = (int) round($billValue * (float) $line->recieved / (float) $line->qty);
                 $after = (int) round($billValue * ((float) $line->recieved + $qty) / (float) $line->qty);
@@ -68,6 +94,7 @@ class PurchaseReceiptService
                     'attributes' => ['commercial_line_id' => $line->id] + ($item['attributes'] ?? [])] + $item);
                 $line->forceFill(['recieved' => round((float) $line->recieved + $qty, 4)])->save();
             }
+            app(OrderLifecycleService::class)->receivePurchase($purchase, $context);
             $movement = app(InventoryMovementService::class)->receive(new StockMovementCommand(
                 date: $date, lines: $stock, warehouseId: $purchase->warehouse_id, sourceType: 'purchase', sourceId: $purchase->id,
                 sourceNo: $purchase->reference_no, idempotencyKey: 'receipt:'.hash('sha256', $key), userId: auth()->id(), context: $context,

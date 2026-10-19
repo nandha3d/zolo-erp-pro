@@ -792,6 +792,21 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     padding: 4px 6px;
 }
 
+/* Wide inherited cell padding otherwise clips rates and quantities ("50" showed as "5"). */
+.material-document-workspace #order-table .item-row td {
+    padding: 4px !important;
+}
+
+.material-document-workspace #order-table .item-row input.form-control:not(.row-item-name):not(.row-batch) {
+    padding: 4px 6px !important;
+}
+
+.material-document-workspace #order-table .item-row .row-batch {
+    height: 28px;
+    font-size: 12px;
+    padding: 2px 8px !important;
+}
+
 /* Left Register Panel */
 .comm-register-card {
     background: #ffffff;
@@ -3569,7 +3584,12 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focu
 }
 
 @media (max-width: 991px) {
-    html.commercial-screen-lock, body.commercial-screen-lock { height: auto !important; overflow: auto !important; }
+    html.commercial-screen-lock, body.commercial-screen-lock,
+    html.app-shell.commercial-screen-lock, html.app-shell body.commercial-screen-lock {
+        height: auto !important;
+        max-height: none !important;
+        overflow: auto !important;
+    }
     body.commercial-screen-lock .page { height: auto !important; min-height: 100vh; overflow: visible !important; }
     body.commercial-screen-lock #content { flex: none !important; height: auto !important; overflow: visible !important; }
     .commercial-workspace-view { height: auto !important; max-height: none !important; overflow: visible !important; }
@@ -3706,3 +3726,95 @@ body.dark-mode .doc-primary-fields .doc-segment .segment-btn.active { background
 #content .dataTables_wrapper { max-width: 100%; overflow-x: auto; }
 /* Report filters: the branch selector and buttons wrap on tablets instead of pushing the page wider. */
 form[method="GET"] .row > .d-flex { flex-wrap: wrap; gap: 6px 0; }
+
+/* ====================================================================
+ * Line grid fit: every cell shows its full value without wrapping or
+ * clipping. The global .form-control min-height (40px) used to override
+ * the density heights, and 8px cell padding plus native select arrows
+ * left Type/Unit/Qty too narrow to read.
+ * ==================================================================== */
+.desk-grid-table thead th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+.desk-grid-table thead th:nth-child(1) { width: 3% !important; }
+.desk-grid-table thead th:nth-child(2) { width: 25% !important; }
+.desk-grid-table thead th:nth-child(3) { width: 11% !important; }
+.desk-grid-table thead th:nth-child(4) { width: 9% !important; }
+.desk-grid-table thead th:nth-child(5) { width: 9% !important; }
+.desk-grid-table thead th:nth-child(6) { width: 7% !important; }
+.desk-grid-table thead th:nth-child(7) { width: 10% !important; }
+.desk-grid-table thead th:nth-child(8) { width: 7% !important; }
+.desk-grid-table thead th:nth-child(9) { width: 12% !important; }
+.desk-grid-table thead th:nth-child(10) { width: 7% !important; }
+
+.desk-grid-table.compact thead th,
+.desk-grid-table.cozy thead th,
+.desk-grid-table.large thead th { padding-left: 4px !important; padding-right: 4px !important; }
+.desk-grid-table.compact tbody td { padding: 2px 2px !important; }
+.desk-grid-table.cozy tbody td { padding: 3px 3px !important; height: 34px !important; }
+.desk-grid-table.large tbody td { padding: 5px 4px !important; }
+
+.desk-grid-table tbody td input.form-control,
+.desk-grid-table tbody td select.form-control,
+.desk-grid-table tbody td .row-item-name,
+.desk-grid-table tbody td .row-type-select,
+.desk-grid-table tbody td .row-unit-select,
+.desk-grid-table tbody td .row-rate,
+.desk-grid-table tbody td .row-qty,
+.desk-grid-table tbody td .row-amount,
+.desk-grid-table tbody td .row-total {
+    min-height: 0 !important;
+    width: 100% !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}
+.desk-grid-table.compact tbody td input.form-control,
+.desk-grid-table.compact tbody td select.form-control { height: 22px !important; }
+.desk-grid-table.cozy tbody td input.form-control,
+.desk-grid-table.cozy tbody td select.form-control { height: 28px !important; font-size: 12px !important; }
+.desk-grid-table.large tbody td input.form-control,
+.desk-grid-table.large tbody td select.form-control { height: 34px !important; font-size: 13.5px !important; }
+
+/* Compact chevron instead of the wide native arrow, so the chosen value stays readable. */
+.desk-grid-table tbody td select.form-control {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    padding-right: 15px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%2364748b' d='M0 0h8L4 5z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 5px center !important;
+    background-size: 8px 5px !important;
+    text-overflow: ellipsis;
+}
+.desk-grid-table tbody td input[type=number] { -moz-appearance: textfield; }
+.desk-grid-table tbody td input[type=number]::-webkit-inner-spin-button,
+.desk-grid-table tbody td input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.desk-grid-table tbody td .btn-edit-row,
+.desk-grid-table tbody td .btn-delete-row { flex: 0 0 auto; }
+body.dark-mode .desk-grid-table tbody td select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%2394a3b8' d='M0 0h8L4 5z'/%3E%3C/svg%3E") !important;
+}
+
+/* Narrow grid (small screens / zoomed browser / list panel docked): rebalance so Type, Unit and Actions stay readable. */
+.table-responsive:has(> table.desk-grid-table) { container-type: inline-size; }
+@container (max-width: 780px) {
+    .desk-grid-table thead th:nth-child(2) { width: 20% !important; }
+    .desk-grid-table thead th:nth-child(3) { width: 12% !important; }
+    .desk-grid-table thead th:nth-child(8) { width: 8% !important; }
+    .desk-grid-table thead th:nth-child(9) { width: 11% !important; }
+    .desk-grid-table thead th:nth-child(10) { width: 9% !important; }
+    .desk-grid-table thead th { font-size: 10px !important; letter-spacing: 0 !important; }
+    .desk-grid-table tbody td input.form-control,
+    .desk-grid-table tbody td select.form-control { font-size: 11px !important; padding-left: 3px !important; padding-right: 3px !important; }
+    .desk-grid-table tbody td select.form-control { padding-right: 12px !important; background-position: right 3px center !important; }
+    .desk-grid-table tbody td .btn-edit-row,
+    .desk-grid-table tbody td .btn-delete-row { width: 22px !important; height: 22px !important; margin: 0 !important; }
+}
+
+/* GST place of supply + RCM: the wrapper is a control row, not a label line, so it keeps full control height
+   (the 10px label-line rule hid the "GST · Place of supply" label behind the select). */
+.doc-primary-fields #gst-entry-field > .d-flex { height: var(--doc-h) !important; margin-bottom: 0 !important; }
+.doc-primary-fields #gst-entry-field > .d-flex > select { flex: 1 1 auto; min-width: 0; }
+.doc-primary-fields #gst-entry-field > .d-flex > label { flex: 0 0 auto; margin: 0 !important; }
+.doc-primary-fields #gst-entry-field > label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+@container billhead (max-width: 1180px) {
+    .doc-primary-fields .doc-row-b > #gst-entry-field { flex: 1.4 1 190px !important; min-width: 190px; }
+}

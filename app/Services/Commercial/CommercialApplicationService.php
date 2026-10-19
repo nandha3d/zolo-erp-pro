@@ -49,17 +49,7 @@ class CommercialApplicationService
             if (isset($party->is_active) && !$party->is_active) {
                 throw ValidationException::withMessages(['party_id' => 'Select an active party.']);
             }
-            $materialField = $kind === 'sale' ? 'delivery_challan_id' : 'goods_received_note_id';
-            $material = null;
-            if (!empty($data[$materialField])) {
-                $materialClass = $kind === 'sale' ? \App\Models\DeliveryChallan::class : \App\Models\GoodsReceivedNote::class;
-                $material = $materialClass::forCompany($context)->whereKey($data[$materialField])->lockForUpdate()->firstOrFail();
-                if ($material->status !== 'pending'
-                    || (int) $material->{$kind === 'sale' ? 'customer_id' : 'supplier_id'} !== (int) $party->id
-                    || (int) $material->warehouse_id !== (int) $data['warehouse_id']) {
-                    throw ValidationException::withMessages([$materialField => 'Convert a pending document for the same party and warehouse.']);
-                }
-            }
+            $materials = app(MaterialDocumentService::class)->sources($kind, $data, $context, $actor, $date);
             $quotation = null;
             if (!empty($data['quotation_id'])) {
                 $quotation = \App\Models\Quotation::forCompany($context)->whereKey($data['quotation_id'])->lockForUpdate()->firstOrFail();
@@ -132,7 +122,7 @@ class CommercialApplicationService
             }
             $data = app(\App\Services\Tax\TaxDeterminationService::class)->prepare($data, $kind, $products, $party, $context, $date);
             $data = app(CommercialPricing::class)->calculate($data, $kind === 'purchase');
-            if ($kind === 'purchase' && !empty($data['purchase_order_id'])) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('commercial_order_items') && $kind === 'purchase' && !empty($data['purchase_order_id'])) {
                 $order = Purchase::visibleIn($context)->whereKey($data['purchase_order_id'])->lockForUpdate()->firstOrFail();
                 if ((int) $order->status !== 4 || (int) $order->supplier_id !== (int) $party->id
                     || (int) $order->warehouse_id !== (int) $data['warehouse_id'] || $order->reversed_at
@@ -161,8 +151,9 @@ class CommercialApplicationService
                 $data['items'] = app(LandedCostService::class)->allocate($data, $products);
             }
             foreach ($data['items'] as &$line) {
-                $line['stock_details_json'] = array_intersect_key($line, array_flip([
-                    'serials', 'imei_number', 'batch', 'product_batch_id', 'variant_id', 'stock_identity_id', 'dimensions', 'attributes',
+                $line['stock_details_json'] = ['base_factor' => round(app(\App\Services\Inventory\UomConversionService::class)->toBase(
+                    $products[$line['product_id']], (float) $line['qty'], (int) $line[$kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id']) / (float) $line['qty'], 8)] + array_intersect_key($line, array_flip([
+                    'serials', 'imei_number', 'batch', 'product_batch_id', 'variant_id', 'stock_identity_id', 'dimensions', 'attributes', 'material_sources', 'order_item_id',
                 ]));
             }
             unset($line);
@@ -171,6 +162,13 @@ class CommercialApplicationService
                 ? app(SaleService::class)->createSale($data, $actor, $context, deferPosting: true)
                 : app(PurchaseService::class)->createPurchase($data, $actor, $context, deferPosting: true);
             $attributes = $this->attributes($data);
+            if (empty($attributes['bale_no']) && \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')
+                && DB::table('company_industry_settings')->where('company_id', $context->companyId)->value('profile_key') === 'textile') {
+                $attributes['bale_no'] = $document->reference_no;
+            }
+            if ($materials->isNotEmpty()) $attributes['source_documents'] = $materials->map(fn ($source) => [
+                'type' => $kind === 'sale' ? 'dc' : 'grn', 'id' => $source->id,
+                'reference_no' => $kind === 'sale' ? $source->challan_no : $source->grn_no])->values()->all();
             if (!empty($data['round_off'])) $attributes['round_off'] = $data['round_off'];
             $attributes['due_date'] = $data['due_date'] ?? CarbonImmutable::parse($date)->addDays((int) ($party->credit_days ?? 0))->toDateString();
             $dueDate = $attributes['due_date'];
@@ -203,9 +201,17 @@ class CommercialApplicationService
                     $product->save();
                 }
             }
+            $orders = app(OrderLifecycleService::class);
+            if ($kind === 'purchase' && (int) $document->status === 4) $orders->initializePurchase($document, $data, $context);
+            if ($materials->isNotEmpty()) app(MaterialDocumentService::class)->allocateMany($materials, $document, $data['items'], $context);
+            $data = $orders->resolveMaterialReferences($kind, $data, $context, $document);
+            if (\Illuminate\Support\Facades\Schema::hasTable('commercial_order_items') && !($kind === 'purchase' && (int) $document->status === 4)) {
+                $orders->consume($document, $orders->prepareConsumer($kind, $data, $context, $actor, $document), $context);
+                $document->forceFill(['attributes_json' => array_intersect_key($data, array_flip(['sales_order_id', 'purchase_order_id'])) + ($document->attributes_json ?? [])])->save();
+            }
             $document = $kind === 'sale' ? app(SalePostingService::class)->post($document, $context, $actor)
                 : app(PurchasePostingService::class)->post($document, $context, $actor);
-            if ($kind === 'purchase' && !empty($data['purchase_order_id']) && (int) ($data['status'] ?? 1) !== 4) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('commercial_order_items') && $kind === 'purchase' && !empty($data['purchase_order_id']) && (int) ($data['status'] ?? 1) !== 4) {
                 $order = Purchase::visibleIn($context)->whereKey($data['purchase_order_id'])->firstOrFail();
                 if (collect($this->openOrderQuantities($order, $context))->every(fn ($qty) => $qty <= 0.00005)) {
                     $order->forceFill(['attributes_json' => ['fulfilled_at' => now()->toDateTimeString(), 'fulfilled_by_purchase_id' => $document->id] + ($order->attributes_json ?? [])])->save();
@@ -215,7 +221,7 @@ class CommercialApplicationService
                 // quotation_status 2 = sent/converted in the quotation register; a converted quotation cannot be billed twice.
                 \App\Models\Quotation::whereKey($quotation->id)->update(['quotation_status' => 2]);
             }
-            if ($material) {
+            foreach ($materials as $material) if (!$material->posted_at) {
                 $material->update(['status' => $kind === 'sale' ? 'converted_to_sale' : 'converted_to_purchase', $kind.'_id' => $document->id]);
             }
             DB::table('idempotency_keys')->insert(['company_id' => $context->companyId, 'key' => $key, 'request_hash' => $hash,
@@ -255,7 +261,7 @@ class CommercialApplicationService
 
     private function attributes(array $data): array
     {
-        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'purchase_order_id', 'goods_receipt_no',
+        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'sales_order_id', 'purchase_order_id', 'goods_receipt_no',
             'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id']));
         if (isset($attributes['job_work_receipt_id'])) validator($attributes, ['job_work_receipt_id' => 'integer|min:1'])->validate();
         foreach (['bale_count', 'bundle_count', 'no_of_bales'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();

@@ -19,6 +19,6 @@
     <div class="form-group">
         <label>HSN / SAC code</label>
         <input type="text" name="hsn_code" class="form-control" maxlength="8" inputmode="numeric"
-               value="{{ old('hsn_code', $product->hsn_code ?? '') }}" placeholder="Goods: 4/6/8 digits · Services: 99xxxx">
+               value="{{ old('hsn_code', $product->hsn_code ?? '') }}" placeholder="Blank: item-group default on creation. Goods: 4/6/8 digits · Services: 99xxxx">
     </div>
 </div>

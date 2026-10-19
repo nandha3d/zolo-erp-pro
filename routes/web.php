@@ -93,6 +93,8 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WhatsappController;
 
 require __DIR__.'/commercial.php';
+require __DIR__.'/orders.php';
+require __DIR__.'/inventory-reports.php';
 require __DIR__.'/compliance.php';
 
 Route::get('webview/auth', WebviewAuthController::class)->name('webview.auth');
@@ -312,6 +314,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::resource('standard-remark', StandardRemarkController::class);
     Route::resource('document-series', DocumentSeriesController::class);
     Route::post('delivery-challans/{id}/convert-to-sale', [DeliveryChallanController::class, 'convertToSale'])->name('delivery-challans.convert-to-sale');
+    Route::post('delivery-challans/{id}/return', [DeliveryChallanController::class, 'returnGoods'])->name('delivery-challans.return');
+    Route::post('goods-received-notes/{id}/return', [GoodsReceivedNoteController::class, 'returnGoods'])->name('goods-received-notes.return');
     Route::resource('delivery-challans', DeliveryChallanController::class);
     Route::post('goods-received-notes/{id}/convert-to-purchase', [GoodsReceivedNoteController::class, 'convertToPurchase'])->name('goods-received-notes.convert-to-purchase');
     Route::resource('goods-received-notes', GoodsReceivedNoteController::class);

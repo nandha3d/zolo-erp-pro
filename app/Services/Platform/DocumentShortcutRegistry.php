@@ -25,10 +25,20 @@ final class DocumentShortcutRegistry
             ['id' => 'purchase-return', 'key' => 'Shift+F12', 'label' => 'New Purchase Return', 'group' => 'Buying', 'permission' => 'purchase-return-add',
                 'url' => route('return-purchase.index', ['new' => 1])],
             ['id' => 'purchase-order', 'key' => 'Ctrl+F12', 'label' => 'New Purchase Order', 'group' => 'Buying', 'permission' => 'purchases-add',
-                'url' => route('purchases.index', ['new' => 1, 'doc' => 'order']), 'enabled' => (bool) config('documents.purchase_order_shortcut')],
+                'url' => route('purchases.index', ['new' => 1, 'doc' => 'order']), 'enabled' => $this->purchaseOrdersEnabled()],
             ['id' => 'grn', 'key' => 'Alt+F12', 'label' => 'New Supplier GRN', 'group' => 'Buying', 'permission' => 'grn-index',
                 'url' => route('goods-received-notes.index', ['new' => 1])],
         ];
+    }
+
+    public function purchaseOrdersEnabled(): bool
+    {
+        if (!config('commercial.enabled') || !config('documents.purchase_order_shortcut')) return false;
+        $cache = app(\App\Support\Database\SchemaCache::class);
+        foreach (['commercial_order_items', 'commercial_order_allocations', 'commercial_order_events'] as $table) {
+            if (!$cache->hasTable(\Illuminate\Support\Facades\DB::connection(), $table)) return false;
+        }
+        return true;
     }
 
     /** Entries the user may open. $can is the same permission test the sidebar uses; $isAdmin mirrors its admin bypass. */

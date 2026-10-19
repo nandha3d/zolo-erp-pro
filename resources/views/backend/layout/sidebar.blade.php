@@ -6,13 +6,17 @@
         ? (\Illuminate\Support\Facades\DB::table('company_user')->where('company_id', $navigationContext->companyId)->where('user_id', Auth::id())->value('role_id_override') ?? Auth::user()->role_id)
         : Auth::user()->role_id;
     $isAdmin = Auth::check() && in_array((int) $effectiveRoleId, [1, 2], true);
-    $canNavigate = function ($permission) use ($navigationContext, $effectiveRoleId) {
+    $navigationPermissions = $navigationContext
+        ? ($role_has_permissions_list ?? \Illuminate\Support\Facades\DB::table('permissions')
+            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->where('role_has_permissions.role_id', $effectiveRoleId)->select('permissions.name')->get())
+            ->pluck('name')->flip()
+        : collect();
+    $canNavigate = function ($permission) use ($navigationContext, $navigationPermissions) {
         if (!$navigationContext) {
             return Auth::user()->can($permission);
         }
-        return \Illuminate\Support\Facades\DB::table('permissions')
-            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-            ->where('role_has_permissions.role_id', $effectiveRoleId)->where('permissions.name', $permission)->exists();
+        return $navigationPermissions->has($permission);
     };
     $shortcutRegistry = app(\App\Services\Platform\DocumentShortcutRegistry::class);
     $documentShortcuts = $shortcutRegistry->forUser($canNavigate, $isAdmin);
@@ -51,6 +55,7 @@
                 @endif
                 @if($isAdmin || $canNavigate('products-index'))
                     <li id="product-list-menu"><a href="{{route('products.index')}}">{{__('db.product_list')}}</a></li>
+                    <li id="stock-by-lot-menu"><a href="{{route('inventory-reports.stock-by-lot')}}">Stock by lot</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('products-add'))
                     <li id="product-create-menu"><a href="{{route('products.create')}}">{{__('db.add_product')}}</a></li>
@@ -67,6 +72,9 @@
                 @endif
                 @if(in_array('inventory.damage_stock', $enabledCapabilities, true))
                     <li id="damage-stock-menu"><a href="{{route('damage-stock.index')}}">Damage Stock Audit</a></li>
+                @endif
+                @if(config('operations.enabled') && in_array('operations.job_work', $enabledCapabilities, true))
+                    <li id="job-work-product-menu"><a href="{{ url('/operations/job-work') }}">Job Work (Material DC / GRN)</a></li>
                 @endif
             </ul>
         </li>
@@ -101,8 +109,7 @@
             <ul id="purchase" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('purchases-index'))
                     <li id="purchase-list-menu"><a href="{{route('purchases.index')}}">Bills</a></li>
-                    <li><a href="{{route('purchases.index', ['view' => 'orders', 'purchase_status' => 4])}}">Orders</a></li>
-                    <li id="grn-list-menu"><a href="{{route('goods-received-notes.index')}}">Supplier GRN (goods before bill)</a></li>
+                    <li><a href="{{ config('commercial.enabled') ? route('purchases.index', ['orders' => 1]) : route('purchases.index', ['view' => 'orders', 'purchase_status' => 4]) }}">Purchase Orders</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
@@ -118,7 +125,7 @@
     @endif
 
     {{-- Sale Menu --}}
-    @if($isAdmin || $canNavigate('sidebar_sale'))
+    @if($isAdmin || $canNavigate('sidebar_sale') || $canNavigate('packing_slip_challan') || $canNavigate('delivery') || $canNavigate('delivery-challans-index'))
         <li>
             <a href="#sale" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-cart"></i>
@@ -132,7 +139,8 @@
                         @if($isAdmin)<li><a href="{{ url('/compliance/setup') }}">Tax & document settings</a></li>@endif
                     @endif
                     <li id="sale-list-menu"><a href="{{route('sales.index')}}">Bills</a></li>
-                    <li><a href="{{route('sales.index', ['view' => 'orders', 'sale_status' => 2])}}">Orders</a></li>
+                    @if(config('commercial.enabled'))<li><a href="{{ route('sales.index', ['orders' => 1]) }}">Sales Orders</a></li>@endif
+                    <li><a href="{{route('sales.index', ['view' => 'orders', 'sale_status' => 2])}}">Pending Sales</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('sales-add'))
                     <li><a href="{{route('sale.pos')}}">POS Terminal</a></li>
@@ -140,13 +148,9 @@
                 @if($isAdmin || $canNavigate('sales-import'))
                     <li id="sale-import-menu"><a href="{{url('sales/sale_by_csv')}}">{{__('db.Import Sale By CSV')}}</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('packing_slip_challan'))
-                    <li id="packing-list-menu"><a href="{{route('packingSlip.index')}}">{{__('db.Packing Slip List')}}</a></li>
-                    <li id="challan-list-menu"><a href="{{route('challan.index')}}">{{__('db.Challan List')}}</a></li>
-                    <li id="delivery-challan-menu"><a href="{{route('delivery-challans.index')}}">Customer DC (goods before invoice)</a></li>
-                @endif
-                @if($isAdmin || $canNavigate('delivery'))
-                    <li id="delivery-menu"><a href="{{route('delivery.index')}}">{{__('db.Delivery List')}}</a></li>
+                {{-- Existing dispatch owners share one register. --}}
+                @if($isAdmin || $canNavigate('packing_slip_challan') || $canNavigate('delivery') || $canNavigate('delivery-challans-index'))
+                    <li id="dispatch-menu"><a href="{{route('dispatch-register.index')}}">Dispatch Register</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('gift_card'))
                     <li id="gift-card-menu"><a href="{{route('gift_cards.index')}}">{{__('db.Gift Card List')}}</a></li>
@@ -425,10 +429,7 @@
         </li>
     @endif
 
-    {{-- Manufacturing --}}
-    @if(config('operations.enabled') && in_array('operations.job_work', $enabledCapabilities, true))
-        <li><a href="{{ url('/operations/job-work') }}"><i class="dripicons-network-3"></i><span>Job Work (Material DC / GRN)</span></a></li>
-    @endif
+    {{-- Manufacturing (Job Work lives once, under Product) --}}
     @if(config('operations.enabled') && auth()->user()->role_id <= 2)
         <li><a href="{{ url('/operations/profiles') }}"><i class="dripicons-gear"></i><span>Business profile</span></a></li>
     @endif

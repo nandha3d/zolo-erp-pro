@@ -91,7 +91,7 @@
 
         $("ul#sale").siblings('a').attr('aria-expanded','true');
         $("ul#sale").addClass("show");
-        $("ul#sale #challan-list-menu").addClass("active");
+        $("ul#sale #dispatch-menu").addClass("active");
 
         function confirmDelete() {
             if (confirm("Are you sure want to delete?")) {

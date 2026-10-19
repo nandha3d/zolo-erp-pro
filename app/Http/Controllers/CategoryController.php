@@ -176,6 +176,7 @@ class CategoryController extends Controller
             
             $lims_category_data['icon'] = $iconName;
         }
+        $lims_category_data['default_hsn_code'] = $request->input('default_hsn_code') ?: null;
         $lims_category_data['name'] = preg_replace('/\s+/', ' ', $request->name);
         $lims_category_data['parent_id'] = $request->parent_id;
         $lims_category_data['is_active'] = true;

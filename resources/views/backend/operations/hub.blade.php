@@ -8,6 +8,7 @@
         $jwDc = \App\Services\Industry\IndustryProfileService::label('dispatch', 'Material DC');
         $jwGrn = \App\Services\Industry\IndustryProfileService::label('receipt', 'Job Work GRN');
     @endphp
+    <div class="ops-hub-view jw-hub-view">
     <!-- KPI Strip -->
     <div class="ops-kpi-strip">
         <div class="ops-kpi-box">
@@ -15,28 +16,28 @@
                 <span class="ops-kpi-title">Recent Orders</span>
                 <span class="ops-kpi-value">{{ count($records) }}</span>
             </div>
-            <div class="ops-kpi-icon bg-light text-primary"><i class="dripicons-clipboard"></i></div>
+            <div class="ops-kpi-icon kpi-indigo"><i class="dripicons-clipboard"></i></div>
         </div>
         <div class="ops-kpi-box">
             <div class="ops-kpi-info">
                 <span class="ops-kpi-title">Material Outside</span>
                 <span class="ops-kpi-value">{{ count($pending) }} items</span>
             </div>
-            <div class="ops-kpi-icon bg-light text-warning"><i class="dripicons-export"></i></div>
+            <div class="ops-kpi-icon kpi-amber"><i class="dripicons-export"></i></div>
         </div>
         <div class="ops-kpi-box">
             <div class="ops-kpi-info">
                 <span class="ops-kpi-title">Shrinkage Receipts</span>
                 <span class="ops-kpi-value">{{ count($shrinkage) }}</span>
             </div>
-            <div class="ops-kpi-icon bg-light text-danger"><i class="dripicons-graph-bar"></i></div>
+            <div class="ops-kpi-icon kpi-rose"><i class="dripicons-graph-bar"></i></div>
         </div>
         <div class="ops-kpi-box">
             <div class="ops-kpi-info">
                 <span class="ops-kpi-title">Active Processes</span>
                 <span class="ops-kpi-value">{{ count($processes) }}</span>
             </div>
-            <div class="ops-kpi-icon bg-light text-info"><i class="dripicons-gear"></i></div>
+            <div class="ops-kpi-icon kpi-cyan"><i class="dripicons-gear"></i></div>
         </div>
     </div>
 
@@ -93,11 +94,11 @@
                                     <tr>
                                         <td><strong>{{ $record->reference_no ?? $record->title }}</strong></td>
                                         <td>{{ $orderInfo[$record->id]->worker ?? '' }}</td>
-                                        <td>{{ $orderInfo[$record->id]->process ?? ($record->details_json['process']['name'] ?? '') }}</td>
+                                        <td><span class="badge badge-light border text-muted px-2 py-1">{{ $orderInfo[$record->id]->process ?? ($record->details_json['process']['name'] ?? '') }}</span></td>
                                         <td>{{ $record->business_date ?? $record->start_date }}</td>
-                                        <td>{{ $orderCounts['dc'][$record->id] ?? 0 }} / {{ $orderCounts['grn'][$record->id] ?? 0 }}</td>
+                                        <td><span class="badge badge-light border font-weight-bold px-2 py-1">{{ $orderCounts['dc'][$record->id] ?? 0 }} / {{ $orderCounts['grn'][$record->id] ?? 0 }}</span></td>
                                         <td class="text-right">
-                                            <a class="btn btn-outline-primary btn-sm py-0 px-2" href="{{ url('/operations/job-work/'.$record->id) }}">
+                                            <a class="btn btn-outline-primary btn-sm py-0 px-2 btn-jw-open" href="{{ url('/operations/job-work/'.$record->id) }}">
                                                 Open &rarr;
                                             </a>
                                         </td>
@@ -123,13 +124,13 @@
                             <tbody>
                                 @forelse($dispatchRegister as $dc)
                                     <tr class="{{ $dc->reversed_at ? 'text-muted' : '' }}">
-                                        <td><strong>{{ $dc->reference_no }}</strong>@if($dc->reversed_at) <span class="badge badge-light">reversed</span>@endif</td>
+                                        <td><strong>{{ $dc->reference_no }}</strong>@if($dc->reversed_at) <span class="badge badge-light border">reversed</span>@endif</td>
                                         <td>{{ $dc->business_date }}</td>
                                         <td>{{ $orderInfo[$dc->job_work_order_id]->reference_no ?? '' }}</td>
                                         <td>{{ $orderInfo[$dc->job_work_order_id]->worker ?? '' }}</td>
-                                        <td>{{ ($dc->purpose ?? 'process') === 'rework' ? 'Rework' : 'Process' }}</td>
-                                        <td>{{ (float) ($dispatchSent[$dc->id] ?? 0) }}</td>
-                                        <td class="text-right"><a class="btn btn-outline-primary btn-sm py-0 px-2" href="{{ url('/operations/job-work/'.$dc->job_work_order_id) }}">Open order &rarr;</a></td>
+                                        <td><span class="badge badge-light border">{{ ($dc->purpose ?? 'process') === 'rework' ? 'Rework' : 'Process' }}</span></td>
+                                        <td><strong>{{ (float) ($dispatchSent[$dc->id] ?? 0) }}</strong></td>
+                                        <td class="text-right"><a class="btn btn-outline-primary btn-sm py-0 px-2 btn-jw-open" href="{{ url('/operations/job-work/'.$dc->job_work_order_id) }}">Open order &rarr;</a></td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="7" class="text-center text-muted py-4">No {{ $jwDc }} yet. Open an order to send material.</td></tr>
@@ -148,13 +149,13 @@
                                 @forelse($receiptRegister as $grn)
                                     @php $grnDc = $receiptDc[$grn->dispatch_id] ?? null; @endphp
                                     <tr class="{{ $grn->reversed_at ? 'text-muted' : '' }}">
-                                        <td><strong>{{ $grn->reference_no }}</strong>@if($grn->reversed_at) <span class="badge badge-light">reversed</span>@endif</td>
+                                        <td><strong>{{ $grn->reference_no }}</strong>@if($grn->reversed_at) <span class="badge badge-light border">reversed</span>@endif</td>
                                         <td>{{ $grn->business_date }}</td>
                                         <td>{{ $grnDc->reference_no ?? '' }}</td>
-                                        <td>{{ ($grn->receipt_kind ?? 'process') === 'material_return' ? 'Returned unprocessed' : 'Processed' }}</td>
-                                        <td>{{ $grn->details_json['received_qty'] ?? 0 }}</td>
-                                        <td>{{ $grn->details_json['loss_qty'] ?? 0 }}</td>
-                                        <td class="text-right">@if($grnDc)<a class="btn btn-outline-primary btn-sm py-0 px-2" href="{{ url('/operations/job-work/'.$grnDc->job_work_order_id) }}">Open order &rarr;</a>@endif</td>
+                                        <td><span class="badge badge-light border">{{ ($grn->receipt_kind ?? 'process') === 'material_return' ? 'Returned unprocessed' : 'Processed' }}</span></td>
+                                        <td><strong class="text-success">{{ $grn->details_json['received_qty'] ?? 0 }}</strong></td>
+                                        <td>@if(($grn->details_json['loss_qty'] ?? 0) > 0)<span class="text-danger font-weight-bold">{{ $grn->details_json['loss_qty'] }}</span>@else<span class="text-muted">0</span>@endif</td>
+                                        <td class="text-right">@if($grnDc)<a class="btn btn-outline-primary btn-sm py-0 px-2 btn-jw-open" href="{{ url('/operations/job-work/'.$grnDc->job_work_order_id) }}">Open order &rarr;</a>@endif</td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="7" class="text-center text-muted py-4">Nothing received from job workers yet.</td></tr>
@@ -181,8 +182,8 @@
                                     <tr>
                                         <td><strong>{{ $row['reference_no'] }}</strong></td>
                                         <td>{{ $products->firstWhere('id', $row['product_id'])?->name }}</td>
-                                        <td><span class="badge badge-warning px-2 py-1">{{ $row['pending_qty'] }}</span></td>
-                                        <td>{{ $row['pending_value'] }}</td>
+                                        <td><span class="badge badge-warning px-2 py-1 font-weight-bold">{{ $row['pending_qty'] }}</span></td>
+                                        <td><strong>{{ $row['pending_value'] }}</strong></td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -215,9 +216,9 @@
                                     <tr>
                                         <td><strong>{{ $receipt->reference_no }}</strong></td>
                                         <td>{{ $receipt->business_date }}</td>
-                                        <td>{{ $receipt->details_json['received_qty'] ?? 0 }}</td>
-                                        <td>{{ $receipt->details_json['loss_qty'] ?? 0 }}</td>
-                                        <td><span class="badge badge-danger px-2 py-1">{{ $receipt->details_json['loss_percent'] ?? 0 }}%</span></td>
+                                        <td><strong>{{ $receipt->details_json['received_qty'] ?? 0 }}</strong></td>
+                                        <td><span class="text-danger font-weight-bold">{{ $receipt->details_json['loss_qty'] ?? 0 }}</span></td>
+                                        <td><span class="badge badge-danger px-2 py-1 font-weight-bold">{{ $receipt->details_json['loss_percent'] ?? 0 }}%</span></td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -235,16 +236,16 @@
         </div>
 
         <!-- Right: Action & Creation Drawer -->
-        <div class="ops-subcard">
+        <div class="ops-subcard ops-action-subcard">
             <div class="ops-subcard-header">
                 <div class="d-flex align-items-center justify-content-between w-100">
                     <span class="font-weight-bold text-dark font-13"><i class="fa fa-pencil-square-o text-primary mr-1"></i> Quick Action</span>
-                    <ul class="nav nav-pills" role="tablist" style="gap: 3px;">
+                    <ul class="nav nav-pills ops-quick-pills" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active py-1 px-2 font-11 rounded" data-toggle="pill" href="#act-order">New Order</a>
+                            <a class="nav-link active" data-toggle="pill" href="#act-order">New Order</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link py-1 px-2 font-11 rounded" data-toggle="pill" href="#act-process">Process Policy</a>
+                            <a class="nav-link" data-toggle="pill" href="#act-process">Process Policy</a>
                         </li>
                     </ul>
                 </div>
@@ -285,7 +286,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Notes</label>
-                                <textarea name="notes" placeholder="Order instructions or specifications..." maxlength="5000"></textarea>
+                                <textarea name="notes" placeholder="Order instructions or specifications..." maxlength="5000" rows="3"></textarea>
                             </div>
                             <button type="submit" class="btn-ops-submit mt-2">
                                 <i class="fa fa-plus-circle mr-1"></i> Create Job Work Order
@@ -375,6 +376,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
 @elseif($area === 'manufacturing')

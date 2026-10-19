@@ -10,7 +10,7 @@ final class IndustryCatalog
         'fmcg' => ['quantity_scale' => 4, 'units' => ['PCS', 'BOX', 'CASE'], 'picking' => 'fefo', 'expired_batch' => 'block',
             'master_defaults' => ['barcode', 'brand', 'hsn_code', 'gst', 'mrp', 'shelf_life_days', 'reorder_level'],
             'labels' => [], 'reports' => ['batch_expiry', 'reorder', 'route_distribution']],
-        'textile' => ['quantity_scale' => 3, 'units' => ['MTR'], 'uqc' => 'MTR',
+        'textile' => ['quantity_scale' => 3, 'units' => ['MTR', 'KGS', 'DOZ', 'PCS'], 'uqc' => 'MTR',
             'labels' => ['dispatch' => 'Material DC', 'receipt' => 'Job Work GRN', 'warehouse' => 'Godown'],
             'document_fields' => ['transporter', 'lr_no', 'lr_date', 'bale_count', 'bundle_count'],
             'print' => ['lines' => 68, 'columns' => 80], 'entry_aids' => ['previous_rates' => true, 'outstanding' => true, 'clone_invoice' => true, 'inline_party' => true, 'inline_item' => true, 'tracking' => true],
@@ -24,6 +24,7 @@ final class IndustryCatalog
     /** Preset unit code => [name, other spellings that already count as this unit]. */
     public const UNITS = [
         'PCS' => ['Pieces', ['pc', 'piece', 'nos', 'no', 'unit']], 'BOX' => ['Box', ['bx']], 'CASE' => ['Case', ['cs']],
+        'KGS' => ['Kilogram', ['kg', 'kilograms', 'kgs']], 'DOZ' => ['Dozen', ['dz', 'dozens']],
         'MTR' => ['Meter', ['m', 'mt', 'metre', 'meters', 'metres']], 'CFT' => ['Cubic feet', ['cu ft']],
         'CBM' => ['Cubic meter', ['m3', 'cubic metre']], 'KW' => ['Kilowatt', ['kilowatts']],
     ];
@@ -43,7 +44,7 @@ final class IndustryCatalog
     // Process thresholds are explicit presets. Users configure their actual process before dispatch.
     public const PROCESSES = [
         // Grey → dyed fabric is a conversion (a new item comes back); the others return the same material.
-        'textile' => [['GREY-DYE', 'Dyeing - grey to dyed fabric', 5, true], ['DYEING', 'Dyeing', 4, false], ['PRINTING', 'Printing', 4, false], ['FINISHING', 'Finishing', 4, false]],
+        'textile' => [['BLEACHING', 'Bleaching', 0, false], ['GREY-DYE', 'Dyeing - grey to dyed fabric', 5, true], ['DYEING', 'Dyeing', 4, false], ['PRINTING', 'Printing', 4, false], ['FINISHING', 'Finishing', 4, false]],
         'timber' => [['SAWING', 'External sawing', 30, true]],
         'fmcg' => [['REPACKING', 'Outsourced repacking', 5, true]],
     ];

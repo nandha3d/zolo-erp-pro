@@ -33,7 +33,8 @@ class ComplianceRouteAdapter
                         return redirect('/compliance/returns');
                     }
                     $kind = str_contains($name, 'ReturnPurchaseController') ? 'purchase' : 'sale';
-                    if ($action === 'index' || $action === 'returnData') return $controller->notes($request);
+                    // /return-purchase and /return-sale stay inside their command center: that side only.
+                    if ($action === 'index' || $action === 'returnData') return $controller->notes($request, $kind);
                     if (in_array($action, ['create', 'store'], true)) {
                         $context = $request->attributes->get(CompanyContext::class);
                         $source = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)

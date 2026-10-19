@@ -469,6 +469,10 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         return DB::transaction(function () use ($request) {
+            $this->validateMasterFields($request);
+            app(\App\Services\Tax\GstSetupService::class)->productCode($request->input('hsn_code'),
+                $request->filled('category_id') ? (int) $request->category_id : null, $request->input('type'),
+                app(\App\Services\Platform\CompanyContextResolver::class)->forActor());
             $this->validate($request, [
                 'code' => [
                     'max:255',
@@ -584,7 +588,7 @@ class ProductController extends Controller
             //return $data;
 
             $lims_product_data = Product::create($data);
-            $this->applyGst($lims_product_data, $request);
+            $this->applyMasterFields($lims_product_data, $request);
 
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'product')->select('name', 'type')->get();
@@ -1225,11 +1229,17 @@ class ProductController extends Controller
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
     }
 
-    /** GST rate and HSN/SAC from the product form; only present when the company bills under GST. */
-    private function validateGst(Request $request): void
+    /** Company-owned group, stock policy and optional GST fields from normal product forms. */
+    private function validateMasterFields(Request $request): void
     {
-        if (!$request->has('tax_category_id')) return;
-        $request->validate(['tax_category_id' => 'nullable|integer|min:1', 'hsn_code' => 'nullable|string|max:8']);
+        $request->validate(['negative_stock_policy' => 'nullable|in:allow,warn,block',
+            'category_id' => 'nullable|integer|min:1', 'tax_category_id' => 'nullable|integer|min:1', 'hsn_code' => 'nullable|string|max:8']);
+        if ($request->filled('category_id')) {
+            $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+            if (!\App\Models\Category::forCompany($context)->where('company_id', $context->companyId)->whereKey($request->category_id)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['category_id' => 'Select an item group of this company.']);
+            }
+        }
         $companyId = \App\Services\Tax\GstSetupService::usesGst() ? app(\App\Services\Platform\CompanyContextResolver::class)->forActor()->companyId : null;
         if ($request->filled('tax_category_id') && !DB::table('tax_categories')->where('company_id', $companyId)->where('id', $request->tax_category_id)->exists()) {
             throw \Illuminate\Validation\ValidationException::withMessages(['tax_category_id' => 'Select a GST rate of this company.']);
@@ -1240,17 +1250,25 @@ class ProductController extends Controller
         }
     }
 
-    private function applyGst(Product $product, Request $request): void
+    private function applyMasterFields(Product $product, Request $request): void
     {
-        if (!$request->has('tax_category_id')) return;
-        $this->validateGst($request);
-        $product->forceFill(['tax_category_id' => $request->filled('tax_category_id') ? (int) $request->tax_category_id : null,
-            'hsn_code' => $request->filled('hsn_code') ? preg_replace('/\s+/', '', $request->hsn_code) : null])->save();
+        $this->validateMasterFields($request);
+        $attributes = [];
+        if ($request->has('tax_category_id')) $attributes['tax_category_id'] = $request->filled('tax_category_id') ? (int) $request->tax_category_id : null;
+        if ($product->wasRecentlyCreated) {
+            $attributes['hsn_code'] = app(\App\Services\Tax\GstSetupService::class)->productCode(
+                $request->input('hsn_code'), $product->category_id ? (int) $product->category_id : null, $product->type,
+                app(\App\Services\Platform\CompanyContextResolver::class)->forActor());
+        } elseif ($request->has('hsn_code')) {
+            $attributes['hsn_code'] = $request->filled('hsn_code') ? preg_replace('/\s+/', '', $request->hsn_code) : null;
+        }
+        if ($request->has('negative_stock_policy')) $attributes['negative_stock_policy'] = $request->input('negative_stock_policy') ?: null;
+        if ($attributes) $product->forceFill($attributes)->save();
     }
 
     public function updateProduct(Request $request)
     {
-        $this->validateGst($request);
+        $this->validateMasterFields($request);
 
         if(!config('app.user_verified')) {
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
@@ -1535,7 +1553,7 @@ class ProductController extends Controller
                 $data['guarantee_type'] = null;
             }
             $lims_product_data->update($data);
-            $this->applyGst($lims_product_data, $request);
+            $this->applyMasterFields($lims_product_data, $request);
             //inserting data for custom fields
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'product')->select('name', 'type')->get();

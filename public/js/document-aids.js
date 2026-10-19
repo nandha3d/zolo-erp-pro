@@ -23,13 +23,21 @@
     if (aids.previous_rates && config.shared) {
         const cache = new Map();
         const rateOf = line => Number(purchase ? line.net_unit_cost : line.net_unit_price) || 0;
-        const draw = (row, lines) => {
+        const draw = (row, response) => {
             row.find('.row-prev-rate').remove();
+            const lines = response.data || [];
             if (!lines.length) return;
             const line = lines[0];
             const hint = $('<a class="row-prev-rate" role="button" tabindex="0">').text('Last ' + money(rateOf(line)) + ' × ' + Number(line.qty))
                 .attr('title', 'Previous rate for this party. Click to use it.');
-            const apply = () => { row.find('.row-rate').val(rateOf(line)).trigger('input'); };
+            const apply = () => {
+                const unit = config.units.find(unit => unit.unit_name === row.find('.row-unit-select').val());
+                const factor = Number(response.unit_factors?.[unit?.id]);
+                if (!(factor > 0) || !(Number(line.base_factor) > 0) || !response.currency || line.currency !== response.currency) {
+                    workspace.status('Previous rate requires compatible units and company currency.', true); return;
+                }
+                row.find('.row-rate').val((rateOf(line) / Number(line.base_factor) * factor).toFixed(4)).trigger('input');
+            };
             hint.on('click', apply).on('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); apply(); } });
             row.find('.row-rate').closest('td').append(hint);
         };
@@ -40,68 +48,15 @@
             if (!productId || !party) return;
             const key = party + ':' + productId;
             if (cache.has(key)) { draw(row, cache.get(key)); return; }
+            row.attr('data-rate-query', key);
             read('/previous-rates', {party_id: party, product_id: productId}).done(response => {
-                cache.set(key, response.data || []);
+                if (row.attr('data-rate-query') !== key || String($(partySelector).val()) !== String(party)) return;
+                cache.set(key, response);
                 draw(row, cache.get(key));
             });
         };
         $(document).on('command-center-row-product command-center-row-added', (event, row) => show($(row)));
         $(partySelector).on('change', () => { $('#order-table-body tr.order-item-row').each(function () { show($(this)); }); });
-    }
-
-    /* ----------------------------------------------- outstanding and pending bills */
-    if (aids.outstanding && config.shared) {
-        const card = document.getElementById('party-info-card');
-        if (card) {
-            const badge = $('<span id="party-outstanding-badge" class="badge" hidden></span>').appendTo(card);
-            const link = $('<a id="party-pending-link" role="button" tabindex="0" hidden>Pending bills</a>').appendTo(card);
-            let latest = 0;
-            const refresh = () => {
-                const party = $(partySelector).val();
-                badge.prop('hidden', true); link.prop('hidden', true);
-                if (!party) return;
-                const mine = ++latest;
-                read('/party/' + party).done(response => {
-                    if (mine !== latest) return;
-                    const data = response.data || {};
-                    const outstanding = Number(data.outstanding || 0);
-                    let label = 'Outstanding ' + money(outstanding);
-                    if (data.credit && Number(data.credit.credit_limit) > 0) label += ' · Available ' + money(data.credit.available_credit);
-                    badge.text(label).css({background: outstanding > 0 ? '#fee2e2' : '#dcfce7', color: outstanding > 0 ? '#991b1b' : '#166534'}).prop('hidden', false);
-                    link.prop('hidden', outstanding === 0);
-                }); // a user without register access simply sees no balance
-            };
-            $(partySelector).on('change', refresh);
-            const openPending = () => {
-                const party = $(partySelector).val();
-                if (!party) return;
-                read('/party/' + party, {pending: 1}).done(response => {
-                    const items = (response.data || {}).items || [];
-                    const dialog = document.createElement('dialog');
-                    dialog.className = 'document-pending-dialog'; dialog.setAttribute('data-owns-keys', '');
-                    dialog.setAttribute('aria-label', 'Pending bills');
-                    dialog.appendChild(text('h3', 'Pending bills'));
-                    const table = document.createElement('table');
-                    const head = table.createTHead().insertRow();
-                    [['Date', ''], ['Document', ''], ['Due', ''], ['Original', 'num'], ['Open', 'num']].forEach(([title, cls]) => head.appendChild(text('th', title, cls)));
-                    const body = table.createTBody();
-                    if (!items.length) { const cell = body.insertRow().insertCell(); cell.colSpan = 5; cell.textContent = 'No pending bills.'; }
-                    items.forEach(item => {
-                        const row = body.insertRow();
-                        [item.document_date, item.document_no, item.due_date].forEach(value => row.insertCell().textContent = value || '');
-                        [item.original_amount, item.open_amount].forEach(value => { const cell = row.insertCell(); cell.className = 'num'; cell.textContent = money(value); });
-                    });
-                    dialog.appendChild(table);
-                    const close = text('button', 'Close', 'btn btn-sm btn-primary'); close.type = 'button';
-                    close.addEventListener('click', () => dialog.remove());
-                    dialog.addEventListener('cancel', () => dialog.remove());
-                    dialog.appendChild(close); document.body.appendChild(dialog);
-                    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
-                    close.focus();
-                });
-            };
-            link.on('click', openPending).on('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPending(); } });
-        }
     }
 
     /* ---------------------------------------------------------------- copy bill */

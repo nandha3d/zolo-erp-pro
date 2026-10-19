@@ -10,7 +10,36 @@
     const money = value => Number(value || 0).toFixed(config.decimals);
     const escape = value => $('<span>').text(value ?? '').html();
     const error = xhr => $('#material-document-error').text(xhr?.responseJSON?.message || 'Unable to complete this action. Please try again.').show();
-    const refresh = select => { if ($.fn.selectpicker) $(select).selectpicker('refresh'); };
+    function openReturn(doc, items) {
+        const node = document.createElement('dialog'); node.className = 'commercial-aid-dialog'; node.setAttribute('aria-label', 'Return unbilled goods');
+        const $dialog = $(node), key = crypto.randomUUID();
+        $('<h3>').text('Return unbilled goods · ' + doc[config.numberField]).appendTo($dialog);
+        const $returnForm = $('<form>'), $rows = $('<div>'); $returnForm.append($rows);
+        items.filter(item => Number(item.open_qty ?? item.qty) > 0).forEach(item => {
+            const product = products.find(product => String(product.id) === String(item.product_id));
+            const variant = product?.variants?.find(variant => String(variant.id) === String(item.variant_id));
+            const identity = [item.product_name, item.variant_id ? (variant?.name || 'Variant #' + item.variant_id) : '', item.batch_no ? 'Lot ' + item.batch_no : ''].filter(Boolean).join(' · ');
+            const open = Number(item.open_qty ?? item.qty), label = $('<label class="commercial-source-line">').text(identity + ' · open ' + open + ' ' + (item.unit || ''));
+            $('<input type="number" min="0" step="0.0001" required class="form-control">').attr({max: open, 'data-item': item.id}).val(open).appendTo(label); $rows.append(label);
+        });
+        const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        $returnForm.append($('<label>').text('Return date').append($('<input type="date" name="business_date" required class="form-control">').val(today)));
+        $returnForm.append($('<label>').text('Reason').append('<input name="reason" required minlength="3" maxlength="500" class="form-control">'));
+        const $status = $('<p role="status">'), $save = $('<button type="submit" class="btn btn-primary">Return selected quantities</button>');
+        $returnForm.append($status, $save); $dialog.append($returnForm, $('<button type="button" class="btn btn-light">Close</button>').on('click', () => node.close()));
+        node.addEventListener('close', () => { node.remove(); $(config.returnButton).trigger('focus'); });
+        $returnForm.on('submit', function (event) {
+            event.preventDefault(); if (!this.reportValidity() || $save.prop('disabled')) return;
+            const quantities = {}; $rows.find('[data-item]').each(function () { quantities[this.dataset.item] = Number(this.value); });
+            if (!Object.values(quantities).some(qty => qty > 0)) { $status.text('Enter at least one positive quantity.'); return; }
+            $save.prop('disabled', true);
+            $.ajax({url: config.storeUrl + '/' + doc.id + '/return', method: 'POST', dataType: 'json', data: {
+                _token: config.token, business_date: this.business_date.value, reason: this.reason.value, items: quantities, idempotency_key: key}})
+                .done(() => window.location.reload()).fail(xhr => $status.text(xhr.responseJSON?.message || 'Return failed. Try again.')).always(() => $save.prop('disabled', false));
+        });
+        document.body.append(node); node.showModal();
+    }
+    const refresh = select => { if ($.fn.selectpicker) $(select).filter('.selectpicker').selectpicker('refresh'); };
 
     $('#multi-item-modal, #quick-create-item-modal, #material-party-modal').appendTo('body');
 
@@ -22,7 +51,7 @@
             const net = Number($row.find('.row-rate').val() || 0) * quantity;
             const gst = net * Number($row.find('.row-tax-rate').val() || 0) / 100;
             $row.find('.row-num').text(index + 1);
-            $row.find('.row-amount').val(net.toFixed(4));
+            $row.find('.row-amount').val(net.toFixed(2)); // display only; the server recomputes line amounts
             $row.find('.row-tax-amount').val(gst.toFixed(4));
             $row.find('.row-total').val((net + gst).toFixed(4));
             $row.find('.row-total-disp').text('₹ ' + money(net + gst));
@@ -48,7 +77,18 @@
         $row.find('.row-unit').text(product.unit);
         $row.find('.row-rate').val(product[config.rateField] ?? product[config.purchase ? 'cost' : 'price'] ?? 0);
         $row.find('.row-tax-rate').val(product.tax_rate ?? 0);
+        $row.find('.row-order-item-id').val('');
+        variants($row, product);
         totals();
+    }
+
+    function variants($row, product, selected = '') {
+        const select = $row.find('.row-variant').empty().append($('<option>').val('').text('Select variant'));
+        (product?.variants || []).forEach(variant => select.append($('<option>').val(variant.id).text(variant.name + (variant.code ? ' · ' + variant.code : ''))));
+        if (selected && !select.find('option').toArray().some(option => String(option.value) === String(selected))) {
+            select.append($('<option>').val(selected).text('Retained variant #' + selected));
+        }
+        select.val(selected || '').prop('required', !!product?.is_variant).prop('hidden', !product?.is_variant && !selected);
     }
 
     function search($input, select) {
@@ -65,7 +105,12 @@
     function addRow(item = {}, merge = true) {
         if (merge && item.product_id) {
             const $existing = $body.find('.item-row').filter(function () {
-                return String($(this).find('.row-product-id').val()) === String(item.product_id);
+                const row = $(this);
+                return String(row.find('.row-product-id').val()) === String(item.product_id)
+                    && String(row.find('.row-variant').val() || '') === String(item.variant_id || '')
+                    && String(row.find('.row-batch').val() || '') === String(item.batch_no || '')
+                    && (!item.unit_id || String(row.find('.row-unit-id').val()) === String(item.unit_id))
+                    && String(row.find('.row-order-item-id').val() || '') === String(item.order_item_id || '');
             }).first();
             if ($existing.length) {
                 $existing.find('.row-qty').val(Number($existing.find('.row-qty').val()) + Number(item.qty ?? 1));
@@ -77,9 +122,12 @@
         const $row = $(`<tr class="item-row">
             <td><span class="row-num"></span><input type="hidden" name="product_id[]" class="row-product-id">
                 <input type="hidden" name="unit_id[]" class="row-unit-id">
+                <input type="hidden" name="order_item_id[]" class="row-order-item-id">
                 <input type="hidden" name="tax_amount[]" class="row-tax-amount"><input type="hidden" name="total[]" class="row-total"></td>
             <td><input class="form-control form-control-sm row-item-name" placeholder="Search item or scan..." autocomplete="off" required>
-                <small class="row-product-code"></small><input type="hidden" name="item_remarks[]" class="row-remarks"></td>
+                <small class="row-product-code"></small><input type="hidden" name="item_remarks[]" class="row-remarks">
+                <select name="variant_id[]" class="form-control form-control-sm row-variant mt-1" aria-label="Item variant" hidden></select>
+                <input name="batch_no[]" class="form-control form-control-sm row-batch mt-1" maxlength="100" placeholder="Lot / batch (if tracked)" autocomplete="off"></td>
             <td>${escape(config.typeLabel)}</td><td><span class="row-unit"></span></td>
             <td><input type="number" min="0" step="0.0001" name="${config.rateField}[]" class="form-control form-control-sm row-rate text-right" required></td>
             <td><input type="number" min="0.000001" step="any" name="qty[]" class="form-control form-control-sm row-qty text-right" required></td>
@@ -94,11 +142,14 @@
         $row.find('.row-product-code').text(item.product_code ?? product?.code ?? '');
         $row.find('.row-unit').text(item.unit ?? product?.unit ?? '');
         $row.find('.row-remarks').val(item.remarks ?? '');
+        $row.find('.row-batch').val(item.batch_no ?? '');
+        $row.find('.row-order-item-id').val(item.order_item_id ?? '');
+        variants($row, product, item.variant_id);
         $row.find('.row-rate').val(rate);
         $row.find('.row-qty').val(item.qty ?? 1);
         $row.find('.row-tax-rate').val(item.tax_rate ?? product?.tax_rate ?? 0);
         search($row.find('.row-item-name'), p => { applyProduct($row, p); $row.find('.row-qty').focus().select(); });
-        $row.find('.row-item-name').on('input', function () { $row.find('.row-product-id, .row-unit-id').val(''); });
+        $row.find('.row-item-name').on('input', function () { $row.find('.row-product-id, .row-unit-id, .row-order-item-id').val(''); variants($row, null); });
         $body.append($row); totals();
         return $row;
     }
@@ -177,9 +228,10 @@
         loadRequest?.abort(); loading = false;
         form.reset(); $('#form-method').val('POST'); form.action = config.storeUrl;
         $(form).find('[name="' + config.idField + '"]').val('');
+        $(form).find('[name="sales_order_id"], [name="purchase_order_id"]').remove();
         $body.find('.item-row').remove(); $('.bill-card').removeClass('active-editing');
         $('#entry-title-text').text(config.title); $('#entry-breadcrumb').text(config.breadcrumb);
-        $('#status-pill').text('New'); $(config.convertButton).hide();
+        $('#status-pill').text('New'); $(config.convertButton + ', ' + config.returnButton).hide();
         $('#btn-save, #btn-add-row, #btn-multi-item, #btn-create-item-modal').prop('disabled', false);
         $('#comm-drawer').prop('hidden', true); $('#material-document-error').hide();
         refresh($(form).find('select')); totals();
@@ -203,13 +255,34 @@
             }
             $body.find('.item-row').remove();
             result.items.forEach(item => addRow(item, false)); totals();
+            const linkedOrder = result.items.find(item => item.order_id);
+            $(form).find('[name="sales_order_id"], [name="purchase_order_id"]').remove();
+            if (linkedOrder) $('<input type="hidden">').attr('name', config.purchase ? 'purchase_order_id' : 'sales_order_id').val(linkedOrder.order_id).appendTo(form);
             $('#entry-title-text').text('Edit ' + config.label + ': ' + doc[config.numberField]);
             $('#entry-breadcrumb').text(config.breadcrumb.replace('/ New', '/ Edit'));
             $('#status-pill').text(doc.status.replaceAll('_', ' '));
+            $('#material-source-history').remove();
+            if (result.history?.length) {
+                $('<button type="button" id="material-source-history" class="btn btn-sm btn-outline-secondary">History / linked bills</button>').insertAfter('#status-pill').on('click', () => {
+                    const node = document.createElement('dialog'); node.className = 'commercial-aid-dialog'; node.setAttribute('aria-label', 'Source document history');
+                    const box = $(node); $('<h3>').text('History · ' + doc[config.numberField]).appendTo(box);
+                    result.history.forEach(entry => {
+                        const row = $('<p>').text(entry.type + ' · ' + entry.reference_no + ' · ' + entry.qty_base + ' base units · ' + (entry.released_at ? 'Reversed' : 'Active'));
+                        if (entry.url) $('<a class="ml-2">Open bill</a>').attr('href', entry.url).appendTo(row); box.append(row);
+                    });
+                    $('<button type="button" class="btn btn-light">Close</button>').on('click', () => node.close()).appendTo(box);
+                    node.addEventListener('close', () => node.remove()); document.body.append(node); node.showModal();
+                });
+            }
+            // Editable only before anything is billed or returned; billable and returnable while goods stay unbilled.
             const pending = doc.status === 'pending';
+            const open = pending || doc.status === 'partially_billed';
             $('#btn-save, #btn-add-row, #btn-multi-item, #btn-create-item-modal').prop('disabled', !pending);
-            $(config.convertButton).toggle(pending).off('click').on('click', () => {
+            $(config.convertButton).toggle(open).off('click').on('click', () => {
                 window.location.href = config.convertUrl + '?' + config.convertParam + '=' + doc.id;
+            });
+            $(config.returnButton).toggle(open && !!doc.posted_at).off('click').on('click', () => {
+                openReturn(doc, result.items);
             });
             $('.bill-card').removeClass('active-editing').filter('[data-id="' + doc.id + '"]').addClass('active-editing');
             refresh($(form).find('select'));
@@ -233,7 +306,8 @@
         const lines = $body.find('.item-row').toArray().map(row => {
             const $row = $(row);
             return {product_id: $row.find('.row-product-id').val(), unit_id: $row.find('.row-unit-id').val(), product_name: $row.find('.row-item-name').val(),
-                product_code: $row.find('.row-product-code').text(), unit: $row.find('.row-unit').text(), remarks: $row.find('.row-remarks').val(),
+                variant_id: $row.find('.row-variant').val(), order_item_id: $row.find('.row-order-item-id').val(),
+                product_code: $row.find('.row-product-code').text(), unit: $row.find('.row-unit').text(), remarks: $row.find('.row-remarks').val(), batch_no: $row.find('.row-batch').val(),
                 [config.rateField]: $row.find('.row-rate').val(), qty: $row.find('.row-qty').val(), tax_rate: $row.find('.row-tax-rate').val()};
         });
         const ui = {action: form.getAttribute('action') || '', title: $('#entry-title-text').text(), status: $('#status-pill').text()};
@@ -242,6 +316,9 @@
     function restore(payload) {
         const state = payload.form || {};
         reset();
+        ['sales_order_id', 'purchase_order_id'].forEach(name => {
+            if (state.fields?.[name]) $('<input type="hidden">').attr('name', name).val(state.fields[name]).appendTo(form);
+        });
         fieldControls().forEach(element => {
             if (Object.prototype.hasOwnProperty.call(state.fields || {}, element.name)) element.value = state.fields[element.name] ?? '';
         });

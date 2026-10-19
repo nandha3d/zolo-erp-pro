@@ -43,6 +43,15 @@
                 product_batch_id: $row.attr('data-batch-id') || null,
                 ...(purchase && $row.find('.row-batch-val').val() ? {batch: {batch_no: $row.find('.row-batch-val').val(), expired_date: $row.find('.row-expire-val').val() || null}} : {})
             };
+            if ($row.attr('data-order-item-id')) line.order_item_id = Number($row.attr('data-order-item-id'));
+            if ($row.attr('data-variant-id')) line.variant_id = Number($row.attr('data-variant-id'));
+            const orderBatch = $row.attr('data-order-batch-no');
+            if (orderBatch && !line.batch) line.batch = {batch_no: orderBatch};
+            if ($row.attr('data-material-item-id')) {
+                if ($row.attr('data-material-unit-id') && Number($row.attr('data-material-unit-id')) !== Number(line[purchase ? 'purchase_unit_id' : 'sale_unit_id'])) throw new Error('Keep the selected source unit, or remove this source line and load it again.');
+                line.material_sources = [{document_id: Number($row.attr('data-material-document-id')),
+                    item_id: Number($row.attr('data-material-item-id')), qty_base: Number(line.qty) * Number($row.attr('data-material-base-factor'))}];
+            }
             // Extended tracking (variant, piece, HSN, freight, dimensions, batch MRP/mfg date) is added by document-aids.js.
             const extras = window.zoloDocumentAids ? window.zoloDocumentAids.lineExtras(row) : {};
             if (extras.batch) { if (line.batch) line.batch = {...line.batch, ...extras.batch}; delete extras.batch; }
@@ -52,7 +61,13 @@
         for (const key of Object.keys(values)) if (Array.isArray(values[key])) delete values[key];
         for (const key of ['_method', 'pos', 'grand_total', 'order_tax', 'total_tax', 'total_price', 'total_cost', 'total_qty', 'total_discount']) delete values[key];
         const series = config.series.find(s => String(s.id) === String(values.series_id));
-        const context = ['project_id', 'purchase_order_id', 'exchange_return_id'].reduce((refs, key) => config.context?.[key] ? {...refs, [key]: config.context[key]} : refs, {});
+        const entryContext = window.zoloDocumentWorkspace?.config.context || config.context;
+        const context = ['project_id', 'purchase_order_id', 'sales_order_id', 'exchange_return_id'].reduce((refs, key) => entryContext?.[key] ? {...refs, [key]: entryContext[key]} : refs, {});
+        const sourceIds = [...new Set(items.flatMap(item => (item.material_sources || []).map(source => source.document_id)))];
+        if (sourceIds.length) {
+            values[purchase ? 'goods_received_note_ids' : 'delivery_challan_ids'] = sourceIds;
+            items.forEach(item => { item.material_sources ??= []; });
+        }
         return {...values, ...context, items, business_date: values.created_at,
             transport_name: values.transporter_name || '', series_code: series?.code,
             };
@@ -140,6 +155,7 @@
                     .forEach(value => $('<td>').text(value).appendTo($row));
             });
             $('#' + config.kind + '-footer').text('Grand total: ₹ ' + Number(doc.grand_total).toFixed(2) + ' · Paid: ₹ ' + Number(doc.paid_amount || 0).toFixed(2));
+            if (doc.attributes_json?.source_documents?.length) $('#' + config.kind + '-footer').append($('<p>').text('Sources: ' + doc.attributes_json.source_documents.map(source => source.reference_no).join(', ')));
             if (print) $details.one('shown.bs.modal', printDetails);
             $details.modal('show');
         }).fail(xhr => { tab?.close(); failure(xhr); });
@@ -168,10 +184,14 @@
     });
     $('#side-export-excel, #side-export-csv').on('click', () => {
         const rows = [['Bill number', purchase ? 'Supplier' : 'Customer', 'Date', 'Status', 'Amount']];
+        const textile = !purchase && config.textile;
+        if (textile) rows[0].push('Bale No', 'Transporter');
         $('#side-bill-list .side-bill-card:visible').each(function () {
             const $card = $(this);
-            rows.push([$card.find('.side-card-ref').text().trim(), $card.find('.side-card-party').text().trim(),
-                $card.attr('data-date'), $card.find('.side-card-status').text().trim(), $card.find('.side-card-amount').text().replace(/[^\d.-]/g, '')]);
+            const row = [$card.find('.side-card-ref').text().trim(), $card.find('.side-card-party').text().trim(),
+                $card.attr('data-date'), $card.find('.side-card-status').text().trim(), $card.find('.side-card-amount').text().replace(/[^\d.-]/g, '')];
+            if (textile) row.push($card.find('.side-card-transport').attr('data-bale-no') || '', $card.find('.side-card-transport').attr('data-transporter') || '');
+            rows.push(row);
         });
         const csv = rows.map(row => row.map(value => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replaceAll('"', '""') + '"').join(',')).join('\r\n');
         const url = URL.createObjectURL(new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8;'}));
@@ -181,8 +201,9 @@
 
     $(document).on('command-center-reset', () => {
         paymentError = ''; $message.hide(); $reason.prop('hidden', true).find('input').prop('required', false).val('');
-        $(form).find('[name="delivery_challan_id"], [name="goods_received_note_id"], [name="quotation_id"], [name="draft_id"]').remove();
+        $(form).find('[name="delivery_challan_id"], [name="goods_received_note_id"], [name="sales_order_id"], [name="purchase_order_id"], [name="quotation_id"], [name="draft_id"]').remove();
         $(form).find('[name="idempotency_key"]').val(crypto.randomUUID());
+        if (window.zoloDocumentWorkspace?.config) window.zoloDocumentWorkspace.config.context = {};
         $(form).find('[name="status"], [name="sale_status"]').val(1);
         $('#charges-drawer').find('input, textarea').val('');
         $(form).find('[id^="hidden-"][type="text"], [id^="hidden-"][type="date"], #hidden-no-of-bales, #hidden-bundle-count').val('');
@@ -200,7 +221,7 @@
             const value = doc[field] || doc.attributes_json?.[field] || '';
             $('#hidden-' + field.replaceAll('_', '-') + ', #drawer-' + field.replaceAll('_', '-')).val(field.endsWith('date') ? String(value).slice(0, 10) : value);
         }
-        $('#hidden-transporter-name, #drawer-transporter-name').val(doc.transport_name || '');
+        $('#hidden-transporter-name, #drawer-transporter-name').val(doc.attributes_json?.transport_name ?? doc.transport_name ?? '');
         $('#hidden-note, #drawer-note').val(doc[purchase ? 'note' : 'sale_note'] || '');
         for (const name of ['shipping_cost', 'order_discount']) $('#hidden-' + name.replaceAll('_', '-') + ', #drawer-' + name.replaceAll('_', '-')).val(doc[name] || 0);
         $('#drawer-paid-amount, #hidden-paid-amount').val(doc.paid_amount || 0);

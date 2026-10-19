@@ -32,6 +32,9 @@ class SalePostingService
             }
             $date = $guard->begin($context, $sale->created_at->toDateString());
             $stock = [];
+            $delivered = 0;
+            // Lines already dispatched on a Customer DC clear its accrual at the DC cost instead of issuing stock again.
+            $settled = app(MaterialDocumentService::class)->settledLines('sale', $sale->id, $context);
             // Lock all referenced products once, preserving company ownership checks for every line.
             $products = \App\Models\Product::forCompany($context)
                 ->whereIn('id', $sale->productSales->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
@@ -43,8 +46,17 @@ class SalePostingService
                 if (!$product) {
                     throw \Illuminate\Validation\ValidationException::withMessages(['product_id' => 'Select a company-owned record.']);
                 }
+                $qty = (float) $line->qty;
+                if (($dc = $settled[$line->id] ?? null) && !in_array($product->type, ['service', 'digital'], true)) {
+                    $base = app(\App\Services\Inventory\UomConversionService::class)->toBase($product, $qty, $line->sale_unit_id ? (int) $line->sale_unit_id : null);
+                    $delivered += $dc['value'];
+                    $qty = round($qty - $qty * min(1, $dc['qty_base'] / $base), 4);
+                    if ($qty <= MaterialDocumentService::EPSILON) {
+                        continue;
+                    }
+                }
                 if (!in_array($product->type, ['service', 'digital'], true)) {
-                    $stock[] = StockLine::fromArray(['uom_id' => $line->sale_unit_id,
+                    $stock[] = StockLine::fromArray(['qty' => $qty, 'uom_id' => $line->sale_unit_id,
                         'attributes' => ['commercial_line_id' => $line->id] + ($line->stock_details_json['attributes'] ?? [])] + ($line->stock_details_json ?? []) + $line->toArray());
                 }
             }
@@ -86,8 +98,9 @@ class SalePostingService
                 app(\App\Services\Tax\GstSetupService::class)->ensureLedgers($context->companyId, ['rounding']);
                 $add('rounding', max(-$roundOff, 0), max($roundOff, 0));
             }
-            $add('cogs', $cost, 0);
+            $add('cogs', $cost + $delivered / 10000, 0);
             $add('inventory', 0, $cost);
+            $add('goods_delivered_not_invoiced', 0, $delivered / 10000);
             if ($lines !== []) {
                 app(AccountingService::class)->postJournalEntry([
                     'entry_date' => $date, 'reference_type' => 'sale', 'reference_id' => $sale->id,

@@ -616,6 +616,9 @@
     </div>
 </section>
 
+{{-- Dashboard panels as labelled tabs (app-shell.js steps) so the dashboard fits one screen. --}}
+<div class="dash-panels container-fluid" data-shell-steps>
+<div data-step-title="Cash flow">
 <!-- Visual Financial & Cash Flow Analytics Row -->
 <div class="container-fluid">
     <div class="row">
@@ -691,8 +694,11 @@
     </div>
 </div>
 
+</div>
+
 <!-- Modular Industry Addon Live Pulse Bar -->
 @if(!empty($addon_stats))
+<div data-step-title="Industry addons">
 <div class="container-fluid mt-1 mb-3">
     <div class="row">
         @if(isset($addon_stats['water_tankers']) || isset($addon_stats['cans_delivered_today']))
@@ -762,8 +768,10 @@
         @endif
     </div>
 </div>
+</div>
 @endif
 
+<div data-step-title="Transactions &amp; stock">
 <!-- Operational Activity & Inventory Alerts Hub -->
 <div class="container-fluid">
     <div class="row">
@@ -937,7 +945,9 @@
         </div>
     </div>
 </div>
+</div>
 
+<div data-step-title="Yearly &amp; best sellers">
 <!-- Annual Commercial Growth Section (Collapsible / Compact) -->
 <div class="container-fluid mb-4">
     <div class="row">
@@ -1013,6 +1023,8 @@
             </div>
         </div>
     </div>
+</div>
+</div>
 </div>
 
 @endsection

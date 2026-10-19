@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 
 class GoodsReceivedNoteController extends Controller
 {
-    use NumbersLegacyDocuments, \App\Http\Controllers\Concerns\ValidatesMaterialDocuments;
+    use NumbersLegacyDocuments, \App\Http\Controllers\Concerns\ValidatesMaterialDocuments, \App\Http\Controllers\Concerns\PostsMaterialDocuments;
 
     public function index(Request $request)
     {
@@ -51,17 +51,19 @@ class GoodsReceivedNoteController extends Controller
 
         $lims_product_list_without_variant = Product::ActiveStandard()
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'products.is_variant', 'units.unit_name', 'units.unit_code')
             ->whereNull('products.is_variant')
             ->get();
 
         $lims_product_list_with_variant = Product::ActiveStandard()
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'products.is_variant', 'units.unit_name', 'units.unit_code')
             ->whereNotNull('products.is_variant')
             ->get();
 
+        $materialVariants = $this->materialVariants($lims_product_list_with_variant->where('is_variant', true)->pluck('id')->all());
         return view('backend.goods_received_note.index', compact(
+            'materialVariants',
             'recent_grns',
             'lims_supplier_list',
             'lims_warehouse_list',
@@ -134,6 +136,7 @@ class GoodsReceivedNoteController extends Controller
             $totals = $request->input('total', []);
             $unitIds = $request->input('unit_id', []);
             $itemRemarks = $request->input('item_remarks', []);
+            $batchNos = $request->input('batch_no', []);
 
             foreach ($productIds as $idx => $prodId) {
                 if (empty($prodId)) continue;
@@ -149,8 +152,10 @@ class GoodsReceivedNoteController extends Controller
                     'tax_amount' => (float)($taxAmounts[$idx] ?? 0),
                     'total' => (float)($totals[$idx] ?? 0),
                     'remarks' => $itemRemarks[$idx] ?? null,
-                ]);
+                ] + $this->materialIdentityAttributes($request, $idx, true));
             }
+
+            $this->postMaterial($grn);
 
             DB::commit();
             app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('grn', $request->integer('draft_id'), (int) Auth::id());
@@ -178,10 +183,12 @@ class GoodsReceivedNoteController extends Controller
         $grn = GoodsReceivedNote::with(['items.product', 'items.unit', 'supplier', 'warehouse', 'purchaseType', 'agent'])->findOrFail($id);
 
         if (request()->wantsJson() || request()->ajax()) {
+            $open = app(\App\Services\Commercial\MaterialDocumentService::class)->openQuantities($grn);
             return response()->json([
                 'success' => true,
                 'grn' => $grn,
-                'items' => $grn->items->map(function ($item) {
+                'history' => $this->materialHistory($grn),
+                'items' => $grn->items->map(function ($item) use ($open) {
                     return [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
@@ -196,7 +203,7 @@ class GoodsReceivedNoteController extends Controller
                         'tax_amount' => (float)$item->tax_amount,
                         'total' => (float)$item->total,
                         'remarks' => $item->remarks,
-                    ];
+                    ] + $this->materialLine($item, $open);
                 }),
             ]);
         }
@@ -235,6 +242,7 @@ class GoodsReceivedNoteController extends Controller
                 'remarks' => $request->input('remarks'),
             ]);
 
+            $this->unpostMaterial($grn, 'Edited before billing');
             GoodsReceivedNoteItem::where('goods_received_note_id', $grn->id)->delete();
 
             $productIds = $request->input('product_id', []);
@@ -246,6 +254,7 @@ class GoodsReceivedNoteController extends Controller
             $totals = $request->input('total', []);
             $unitIds = $request->input('unit_id', []);
             $itemRemarks = $request->input('item_remarks', []);
+            $batchNos = $request->input('batch_no', []);
 
             foreach ($productIds as $idx => $prodId) {
                 if (empty($prodId)) continue;
@@ -261,8 +270,10 @@ class GoodsReceivedNoteController extends Controller
                     'tax_amount' => (float)($taxAmounts[$idx] ?? 0),
                     'total' => (float)($totals[$idx] ?? 0),
                     'remarks' => $itemRemarks[$idx] ?? null,
-                ]);
+                ] + $this->materialIdentityAttributes($request, $idx, true));
             }
+
+            $this->postMaterial($grn);
 
             DB::commit();
             app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('grn', $request->integer('draft_id'), (int) Auth::id());
@@ -285,11 +296,21 @@ class GoodsReceivedNoteController extends Controller
         }
     }
 
+    public function returnGoods(Request $request, $id)
+    {
+        return $this->returnMaterial($request, GoodsReceivedNote::class, (int) $id);
+    }
+
     public function destroy($id)
     {
         DB::transaction(function () use ($id) {
             $grn = GoodsReceivedNote::lockForUpdate()->findOrFail($id);
             abort_unless($grn->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
+            if ($grn->posted_at) {
+                $this->unpostMaterial($grn, 'Cancelled before billing');
+                $grn->forceFill(['status' => 'cancelled'])->save();
+                return;
+            }
             $grn->update(['status' => 'cancelled']);
             GoodsReceivedNoteItem::where('goods_received_note_id', $grn->id)->delete();
             $grn->delete();

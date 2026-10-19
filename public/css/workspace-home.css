@@ -136,3 +136,20 @@ body.dark-mode .zw { --ind: #94a3b8; --ind-fmcg: #34d399; --ind-textile: #a78bfa
   .zw-hero h1 { font-size: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .zw-module, .zw-module-go { transition: none; } .zw-module:hover { transform: none; } }
+
+/* One-screen layout on wide screens: hero across the top, workspaces left, company switcher right. */
+@media (min-width: 1100px) {
+  html.app-shell .zw {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); column-gap: 20px; align-items: start;
+    max-width: 1440px; padding: 14px 20px 12px;
+  }
+  html.app-shell .zw > .zw-flash,
+  html.app-shell .zw > .zw-hero { grid-column: 1 / -1; }
+  html.app-shell .zw > .zw-hero { margin-bottom: 14px; padding-top: 14px; padding-bottom: 14px; }
+  html.app-shell .zw > .zw-section { margin-bottom: 0; }
+  html.app-shell .zw .zw-modules { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  html.app-shell .zw .zw-module { min-height: 62px; padding: 12px 14px; }
+  html.app-shell .zw .zw-companies { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  html.app-shell .zw .zw-company { padding: 10px 12px 10px 16px; gap: 8px; flex-direction: row; align-items: center; }
+  html.app-shell .zw .zw-company-head { flex: 1 1 auto; }
+}

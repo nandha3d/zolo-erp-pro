@@ -18,6 +18,12 @@
         return {main, ctrl: parts.includes('Ctrl'), alt: parts.includes('Alt'), shift: parts.includes('Shift')};
     };
     const registry = entries.map(entry => ({...entry, combo: parse(entry.key)}));
+    const actions = [];
+    const registerAction = (key, label, run) => {
+        const previous = actions.findIndex(action => action.key === key);
+        if (previous >= 0) actions.splice(previous, 1);
+        actions.push({key, label, run, combo: parse(key)});
+    };
     const find = id => registry.find(entry => entry.id === id) || null;
 
     // Another dialog owning the keyboard (a Bootstrap modal, a native <dialog>, or anything marked data-owns-keys) wins.
@@ -36,6 +42,12 @@
 
     document.addEventListener('keydown', event => {
         if (event.defaultPrevented || event.repeat || event.isComposing || event.metaKey) return;
+        const action = actions.find(({combo}) => combo.main.toLowerCase() === event.key.toLowerCase()
+            && combo.ctrl === event.ctrlKey && combo.alt === event.altKey && combo.shift === event.shiftKey);
+        if (action && !dialogOwnsKeys()) {
+            if (action.run() !== false) event.preventDefault();
+            return;
+        }
         const entry = registry.find(({combo}) => combo.main === event.key
             && combo.ctrl === event.ctrlKey && combo.alt === event.altKey && combo.shift === event.shiftKey);
         if (entry) {
@@ -79,6 +91,7 @@
             labelCell.textContent = label;
         };
         registry.forEach(entry => add(entry.key, entry.label));
+        actions.forEach(action => add(action.key, action.label));
         local.forEach(item => add(item.key, item.label));
         add('Enter / Tab', 'Move to the next field');
         add('Shift+Tab', 'Move to the previous field');
@@ -110,5 +123,5 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startFromRegister); else startFromRegister();
 
-    window.zoloDocumentShortcuts = {registry, find, open, showHelp};
+    window.zoloDocumentShortcuts = {registry, find, open, showHelp, registerAction};
 })();

@@ -1,0 +1,257 @@
+/* ====================================================================
+ * zoloERP one-screen app shell (all pages using backend.layout.main, except POS)
+ *
+ * - The page is locked to the viewport: no browser scrollbar.
+ * - Header is a compact 40px bar on every page (it was ~97px outside the bill screens),
+ *   matching the calc(100vh - 40px) that the workspace screens already assume.
+ * - #content takes the rest of the height. It keeps overflow-y:auto only as a safety net
+ *   so content is never cut off; pages are laid out (and lists paginated by app-shell.js)
+ *   so that net is not needed.
+ * ==================================================================== */
+html.app-shell,
+html.app-shell body {
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+html.app-shell .page {
+    height: 100vh !important;
+    min-height: 0 !important;
+    padding-bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Compact header */
+html.app-shell .page > header.container-fluid {
+    flex: 0 0 auto !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+    position: relative !important;
+    z-index: 1020 !important;
+    overflow: visible !important;
+    line-height: normal !important;
+    border-radius: 0 !important;
+}
+html.app-shell .page > header.container-fluid > nav.navbar {
+    height: 40px !important;
+    min-height: 40px !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+}
+html.app-shell .page > header nav.navbar a#toggle-btn.menu-btn,
+html.app-shell .page > header #toggle-btn.zolo-sidebar-toggle {
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+    margin: 0 8px 0 0 !important;
+}
+html.app-shell .page > header #toggle-btn .toggle-state-indicator { display: none !important; }
+html.app-shell .page > header nav.navbar .nav-menu,
+html.app-shell .page > header nav.navbar .nav-item { height: 40px !important; display: flex !important; align-items: center !important; margin: 0 !important; padding: 0 !important; }
+body.dark-mode .page > header.container-fluid { background: #0f172a !important; border-bottom-color: #1e293b !important; }
+
+html.topbar-hidden.app-shell .page > header.container-fluid { display: none !important; }
+
+/* Content area: fills the remaining height. */
+html.app-shell #content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+html.app-shell #content > * { flex-shrink: 0; }
+html.app-shell footer.main-footer { display: none !important; }
+
+/* Workspace screens (KPI strip + list card): the list card takes the remaining height instead of
+   collapsing to nothing when its parent was not height-constrained. */
+html.app-shell #content > :has(> .desk-card-wrapper) {
+    flex: 1 1 auto !important;
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column !important;
+}
+html.app-shell #content > :has(> .desk-card-wrapper) > * { flex-shrink: 0; }
+html.app-shell .desk-card-wrapper { flex: 1 1 0 !important; min-height: 220px !important; }
+
+/* Legacy list pages: tighter vertical rhythm so more rows fit. */
+html.app-shell #content > section,
+html.app-shell #content > .container-fluid { padding-top: 8px !important; padding-bottom: 0 !important; margin-top: 0 !important; }
+html.app-shell #content > section > .container-fluid:first-child { margin-bottom: 6px !important; }
+html.app-shell #content .dataTables_wrapper > .row { margin-top: 2px !important; margin-bottom: 2px !important; }
+html.app-shell #content table.dataTable { margin-top: 2px !important; margin-bottom: 2px !important; }
+
+/* Report grids without DataTables paging must never clip rows: the grid scrolls inside its card
+   under a sticky header, while page header, filters and totals stay in view. */
+html.app-shell .desk-card-wrapper:not(:has(.dataTables_wrapper)),
+html.app-shell .desk-card-wrapper > .table-responsive:not(:has(.dataTables_wrapper)) { overflow-y: auto !important; }
+html.app-shell .desk-card-wrapper .table-responsive:not(:has(.dataTables_wrapper)) thead th { position: sticky; top: 0; z-index: 2; }
+html.app-shell #content [class$="-workspace-view"] { overflow-y: auto !important; }
+
+/* Grids sized by app-shell.js to fit the screen: scroll inside, header stays visible. */
+html.app-shell .shell-fit-scroll { overflow-y: auto !important; overflow-x: auto; scrollbar-width: thin; }
+html.app-shell .shell-fit-scroll > table > thead th { position: sticky; top: 0; z-index: 2; }
+
+/* Denser rows on list and report tables so more data fits one screen. */
+html.app-shell #content table.table:not(.desk-grid-table) > tbody > tr > td { padding-top: 6px !important; padding-bottom: 6px !important; vertical-align: middle; }
+html.app-shell #content table.table:not(.desk-grid-table) > thead > tr > th { padding-top: 8px !important; padding-bottom: 8px !important; }
+html.app-shell #content table.table:not(.desk-grid-table) > tbody > tr > td .btn:not(.dropdown-toggle) { padding: 3px 8px !important; min-height: 0 !important; height: auto !important; line-height: 1.3 !important; }
+
+/* ====================================================================
+ * Dense forms (legacy card + bootstrap grid pages). Low specificity via :where() so screens with their
+ * own compact styling keep it; this only overrides the global 40px control height and 1rem gaps.
+ * ==================================================================== */
+:where(html.app-shell #content) .card { margin-bottom: 8px; }
+:where(html.app-shell #content) .card-header { padding: 8px 14px !important; min-height: 0 !important; }
+:where(html.app-shell #content) .card-header h3,
+:where(html.app-shell #content) .card-header h4 { font-size: 15px !important; margin: 0 !important; }
+:where(html.app-shell #content) .card-body { padding: 10px 14px !important; }
+:where(html.app-shell #content) form .form-group { margin-bottom: 8px !important; }
+:where(html.app-shell #content) form label { margin-bottom: 2px !important; font-size: 12px; line-height: 1.3; }
+:where(html.app-shell #content) form .form-control:not(textarea),
+:where(html.app-shell #content) form input[type="text"],
+:where(html.app-shell #content) form input[type="number"],
+:where(html.app-shell #content) form input[type="email"],
+:where(html.app-shell #content) form input[type="password"],
+:where(html.app-shell #content) form input[type="date"],
+:where(html.app-shell #content) form .bootstrap-select > .btn.dropdown-toggle {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 4px 10px !important;
+    font-size: 13px !important;
+    line-height: 22px !important;
+}
+:where(html.app-shell #content) form textarea.form-control { min-height: 56px !important; padding: 6px 10px !important; font-size: 13px !important; }
+:where(html.app-shell #content) form .input-group > .input-group-append > .btn,
+:where(html.app-shell #content) form .input-group > .input-group-prepend > .btn,
+:where(html.app-shell #content) form .input-group > .btn { height: 32px !important; min-height: 32px !important; padding: 0 10px !important; }
+:where(html.app-shell #content) form p.italic,
+:where(html.app-shell #content) form .italic { margin-bottom: 4px !important; }
+:where(html.app-shell #content) form h5 { font-size: 13px; margin: 4px 0; }
+:where(html.app-shell #content) form .mt-3 { margin-top: 6px !important; }
+/* Wide screens: four fields per row instead of three. */
+@media (min-width: 1400px) {
+    :where(html.app-shell #content) form .row > .col-md-4 { flex: 0 0 25%; max-width: 25%; }
+}
+
+/* #content is a flex column; children centred with margin:auto would otherwise shrink to their content
+   width. Stretch them (max-width still applies and auto margins still centre). */
+:where(html.app-shell #content) > * { width: -webkit-fill-available; width: -moz-available; width: stretch; }
+
+/* Steps: a long form split into labelled sections; one section shows at a time, the labels stay visible. */
+.shell-steps [data-step-title]:not(.is-active) { display: none !important; }
+.shell-steps.shell-steps-all [data-step-title] { display: flex !important; }
+.shell-steps-nav {
+    display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; padding: 3px;
+    background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; width: max-content; max-width: 100%;
+}
+.shell-steps-nav [role="tab"] {
+    display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px;
+    border: 0; border-radius: 6px; background: transparent; color: #475569; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.shell-steps-nav [role="tab"]:hover { background: #e2e8f0; color: #0f172a; }
+.shell-steps-nav [role="tab"][aria-selected="true"] { background: #7c3aed; color: #fff; box-shadow: 0 1px 2px rgba(124, 58, 237, .35); }
+.shell-steps-nav [role="tab"]:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+.shell-step-no {
+    display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(15, 23, 42, .08); font-size: 11px;
+}
+.shell-steps-nav [role="tab"][aria-selected="true"] .shell-step-no { background: rgba(255, 255, 255, .25); }
+body.dark-mode .shell-steps-nav { background: #0f172a; border-color: #334155; }
+body.dark-mode .shell-steps-nav [role="tab"] { color: #94a3b8; }
+body.dark-mode .shell-steps-nav [role="tab"]:hover { background: #1e293b; color: #f8fafc; }
+
+/* Empty inline error holders still create a blank 24px line under every field. */
+:where(html.app-shell #content) .validation-msg:empty,
+:where(html.app-shell #content) span.text-danger:empty,
+:where(html.app-shell #content) .invalid-feedback:empty { display: none !important; }
+.shell-steps-nav [role="tab"].has-errors { color: #b91c1c; }
+.shell-steps-nav [role="tab"].has-errors .shell-step-no { background: #dc2626; color: #fff; }
+.shell-steps-nav [role="tab"][aria-selected="true"].has-errors { background: #dc2626; color: #fff; }
+
+/* ====================================================================
+ * Dashboard on one screen: compact greeting bar, all eight KPIs in one row, panels as tabs.
+ * ==================================================================== */
+html.app-shell .zolo-dashboard-header { padding: 10px 16px !important; }
+html.app-shell .zolo-dashboard-header .zolo-greeting-title { font-size: 18px !important; margin: 0 !important; }
+html.app-shell .zolo-dashboard-header .zolo-greeting-subtitle { font-size: 12px !important; margin: 0 !important; }
+html.app-shell .zolo-dashboard-header .zolo-quick-actions-bar { padding-top: 6px !important; margin-top: 6px !important; }
+html.app-shell #content > .row.mx-0 > .container-fluid > .col-md-12.mt-2.mb-3 { margin-top: 6px !important; margin-bottom: 6px !important; }
+html.app-shell .dashboard-counts > .container-fluid { padding-top: 0 !important; }
+@media (min-width: 1200px) {
+    html.app-shell .dashboard-counts .row > [class*="col-xl-3"] { flex: 0 0 12.5%; max-width: 12.5%; padding-left: 4px; padding-right: 4px; margin-bottom: 8px !important; }
+    html.app-shell .dashboard-counts .row { margin-left: 8px; margin-right: 8px; }
+    html.app-shell .dashboard-counts .zolo-kpi-card { padding: 8px 10px !important; min-height: 0 !important; height: auto !important; }
+    html.app-shell .dashboard-counts .zolo-kpi-header { margin-bottom: 4px !important; }
+    html.app-shell .dashboard-counts .zolo-kpi-icon { width: 24px !important; height: 24px !important; font-size: 12px !important; }
+    html.app-shell .dashboard-counts .zolo-kpi-header > :not(.zolo-kpi-icon) { font-size: 9.5px !important; padding: 1px 6px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    html.app-shell .dashboard-counts .zolo-kpi-value { font-size: 17px !important; line-height: 1.2 !important; white-space: nowrap; }
+    html.app-shell .dashboard-counts .zolo-kpi-label { font-size: 10px !important; margin-top: 2px !important; }
+    html.app-shell .dashboard-counts .zolo-kpi-subtext { font-size: 10px !important; margin-top: 2px !important; }
+}
+html.app-shell .dash-panels { padding-left: 15px; padding-right: 15px; }
+html.app-shell .dash-panels > .shell-steps-nav { margin-bottom: 8px; }
+html.app-shell .dash-panels > [data-step-title] > .container-fluid { padding-left: 0; padding-right: 0; margin-bottom: 0 !important; }
+html.app-shell .dash-panels .card { margin-bottom: 8px !important; }
+html.app-shell .zolo-dashboard-header .zolo-greeting { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+html.app-shell .zolo-dashboard-header .zolo-filter-bar { margin-top: 0 !important; }
+html.app-shell .zolo-dashboard-header .zolo-filter-bar .zolo-warehouse-picker,
+html.app-shell .zolo-dashboard-header .zolo-filter-bar .dropdown > .btn,
+html.app-shell .zolo-dashboard-header .zolo-filter-bar .btn { height: 30px !important; min-height: 30px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+html.app-shell .zolo-dashboard-header .zolo-quick-btn { height: 26px !important; padding: 0 10px !important; font-size: 12px !important; }
+/* Panel tables were fixed at 320px; let them size to content and scroll inside if long. */
+html.app-shell .dash-panels .table-responsive,
+html.app-shell .dash-panels .tab-pane { min-height: 0 !important; max-height: 220px; overflow-y: auto; }
+html.app-shell .dash-panels .card.h-100 { height: auto !important; }
+html.app-shell .dash-panels .card-header { padding: 6px 12px !important; }
+html.app-shell .dash-panels .col-lg-7,
+html.app-shell .dash-panels .col-lg-5,
+html.app-shell .dash-panels .col-md-6,
+html.app-shell .dash-panels .col-md-12 { margin-bottom: 0 !important; }
+/* Yearly tab: chart and both best-seller lists side by side. */
+@media (min-width: 1200px) {
+    html.app-shell .dash-panels [data-step-title^="Yearly"] > .container-fluid > .row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0; }
+    html.app-shell .dash-panels [data-step-title^="Yearly"] > .container-fluid > .row > [class*="col-"] { max-width: none; }
+}
+
+/* Stepped forms: full-width textarea rows sit two per line on wide screens. */
+@media (min-width: 1200px) {
+    :where(html.app-shell) .shell-steps [data-step-title] > .col-md-12:has(> .form-group > textarea) { flex: 0 0 50%; max-width: 50%; }
+}
+:where(html.app-shell #content) form hr { margin: 8px 0 !important; }
+
+/* Compliance setup panels: tighter rhythm. */
+html.app-shell .compliance-wrapper .panel { margin: 6px 0 !important; }
+html.app-shell .compliance-wrapper .panel h2 { margin: 0 0 6px !important; font-size: 15px !important; }
+html.app-shell .compliance-wrapper .settings-grid { gap: 8px !important; margin: 6px 0; }
+
+/* Legacy 30px gap above every DataTables toolbar. */
+html.app-shell #content .dataTables_wrapper { margin-top: 0 !important; }
+
+/* Tables wider than their box (set by app-shell.js): compact type, wrapped headers. */
+html.app-shell #content table.shell-fit-wide { font-size: 11.5px !important; }
+html.app-shell #content table.shell-fit-wide > thead > tr > th { white-space: normal !important; font-size: 10.5px !important; line-height: 1.2; padding: 6px 6px !important; vertical-align: bottom; }
+html.app-shell #content table.shell-fit-wide > tbody > tr > td { padding: 5px 6px !important; }

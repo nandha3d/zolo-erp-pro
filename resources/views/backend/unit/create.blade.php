@@ -5,11 +5,11 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <a href="#" data-toggle="modal" data-target="#createUnitModal" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Unit')}}</a>&nbsp;
-        <a href="#" data-toggle="modal" data-target="#importUnit" class="btn btn-primary"><i class="dripicons-copy"></i> {{__('db.Import Unit')}}</a>
-    </div>
+<x-product-command-bar active="unit">
+        <a href="#" data-toggle="modal" data-target="#createUnitModal" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Unit')}}</a>
+        <a href="#" data-toggle="modal" data-target="#importUnit" class="btn btn-secondary"><i class="dripicons-copy"></i> {{__('db.Import Unit')}}</a>
+</x-product-command-bar>
+<section class="product-workspace-view">
     <div class="table-responsive">
         <table id="unit-table" class="table">
             <thead>

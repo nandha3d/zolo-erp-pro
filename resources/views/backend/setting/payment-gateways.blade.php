@@ -5,6 +5,11 @@
 
 @push('css')
 <style>
+    /* One gateway per step; its fields two per row. */
+    .pg-step.is-active { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; align-content: start; }
+    .pg-step > h4, .pg-step > hr { grid-column: 1 / -1; }
+    .pg-step > h4 { font-size: 16px; margin: 0; }
+    .pg-step > hr { margin: 8px 0; }
     .custom-switch {
         padding-left: .5rem;
     }
@@ -51,10 +56,10 @@
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        {!! Form::open(['route' => 'setting.gateway.update', 'files' => true, 'method' => 'post']) !!}
+                        {!! Form::open(['route' => 'setting.gateway.update', 'files' => true, 'method' => 'post', 'data-shell-steps' => '']) !!}
                         <div class="row">
                             @foreach($payment_gateways as $pg)
-                            <div class="col-md-12 mt-3 mb-3">
+                            <div class="col-md-12 mt-1 mb-2 pg-step" data-step-title="{{ $pg->name }}">
                                 <h4 class="d-flex align-items-center justify-content-between">
                                     {{$pg->name}} {{__('db.Details')}}
 

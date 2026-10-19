@@ -117,6 +117,15 @@ class ChartOfAccountsSeeder extends Seeder
                 'description' => 'Stock dispatched between locations and not yet received',
             ],
             [
+                'code' => '1260',
+                'name' => 'Goods Delivered Not Invoiced',
+                'type' => 'asset',
+                'sub_type' => 'goods_delivered_not_invoiced',
+                'parent_code' => '1000',
+                'is_system' => true,
+                'description' => 'Cost of stock sent to customers on a delivery challan and not yet invoiced',
+            ],
+            [
                 'code' => '1500',
                 'name' => 'Fixed Assets',
                 'type' => 'asset',
@@ -180,6 +189,15 @@ class ChartOfAccountsSeeder extends Seeder
                 'parent_code' => '2000',
                 'is_system' => false,
                 'description' => 'Unearned revenue / advance payments from customers',
+            ],
+            [
+                'code' => '2060',
+                'name' => 'Goods Received Not Invoiced',
+                'type' => 'liability',
+                'sub_type' => 'goods_received_not_invoiced',
+                'parent_code' => '2000',
+                'is_system' => true,
+                'description' => 'Supplier goods received on a GRN and not yet billed',
             ],
 
             // EQUITY (3000 - 3999)

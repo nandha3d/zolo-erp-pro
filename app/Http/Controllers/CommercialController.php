@@ -153,59 +153,60 @@ class CommercialController extends Controller
         $type = $kind === 'sale' ? 'customer' : 'supplier';
         $credit = $kind === 'sale' ? app(CreditControlService::class)->summary($party, $context,
             \Carbon\CarbonImmutable::now(\App\Models\Company::findOrFail($context->companyId)->timezone)->toDateString()) : [];
-        $request->validate(['page' => 'nullable|integer|min:1|max:1000000', 'pending' => 'nullable|boolean']);
-        $page = (int) $request->input('page', 1);
-        $items = DB::table('account_open_items')->where('company_id', $context->companyId)
-            ->where('party_type', $type)->where('party_id', $id)
-            ->when($request->boolean('pending'), fn ($query) => $query->where('open_amount', '!=', 0))
-            ->orderByDesc('document_date')->orderByDesc('id')->offset(($page - 1) * 100)->limit(101)->get();
+        $request->validate(['page' => 'nullable|integer|min:1|max:1000000', 'pending' => 'nullable|boolean',
+            'statement' => 'nullable|boolean', 'exclude_id' => 'nullable|integer|min:1']);
+        $page = (int) ($request->input('page') ?: 1);
+        $base = DB::table('account_open_items')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+            ->where('party_type', $type)->where('party_id', $id);
+        $outstanding = round((float) (clone $base)->sum('open_amount'), 4);
+        $previous = $outstanding;
+        if ($request->filled('exclude_id')) {
+            $source = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)
+                ->where($kind === 'sale' ? 'customer_id' : 'supplier_id', $id)->whereNull('reversed_at')->findOrFail($request->integer('exclude_id'));
+            $previous -= (float) (clone $base)->where('source_type', $kind)->where('source_id', $source->id)->sum('open_amount');
+        }
+        $statement = $request->boolean('statement');
+        $query = (clone $base)->when($request->boolean('pending'), fn ($q) => $q->where('open_amount', '!=', 0));
+        $items = $statement ? $query->orderBy('document_date')->orderBy('id') : $query->orderByDesc('document_date')->orderByDesc('id');
+        $opening = $statement && $page > 1 ? (float) DB::query()->fromSub((clone $items)->limit(($page - 1) * 100)->select('original_amount'), 'prior')->sum('original_amount') : 0;
+        $items = $items->offset(($page - 1) * 100)->limit(101)->get();
         return response()->json(['data' => ['party' => $party, 'items' => $items->take(100)->values(),
-            'next_page' => $items->count() > 100 ? $page + 1 : null, 'credit' => $credit, 'outstanding' => round((float) DB::table('account_open_items')
-            ->where('company_id', $context->companyId)->where('party_type', $type)->where('party_id', $id)->sum('open_amount'), 4)]]);
+            'next_page' => $items->count() > 100 ? $page + 1 : null, 'credit' => $credit, 'outstanding' => $outstanding,
+            'previous' => round($previous, 4), 'opening_before_page' => $opening, 'balance_kind' => $kind === 'sale' ? 'Receivable' : 'Payable']] );
+    }
+
+    public function materialSources(Request $request, string $kind)
+    {
+        $context = $this->context($request);
+        $purchase = $kind === 'purchase';
+        app(CommercialPermission::class)->assert($purchase ? 'grn-index' : 'delivery-challans-index', $context, $request->user()->id);
+        $request->validate(['party_id' => 'required|integer|min:1', 'warehouse_id' => 'required|integer|min:1', 'page' => 'nullable|integer|min:1|max:1000000']);
+        app(CompanyWriteGuard::class)->warehouse($request->integer('warehouse_id'), $context, $request->user()->id);
+        app(CompanyWriteGuard::class)->owned($purchase ? Supplier::class : Customer::class, $request->integer('party_id'), $context, 'party_id');
+        $sources = ($purchase ? \App\Models\GoodsReceivedNote::class : \App\Models\DeliveryChallan::class)::forCompany($context)
+            ->where('branch_id', $context->branchId)->where($purchase ? 'supplier_id' : 'customer_id', $request->integer('party_id'))
+            ->where('warehouse_id', $request->integer('warehouse_id'))->whereNotNull('posted_at')
+            ->whereIn('status', ['pending', 'partially_billed'])->when(!$purchase, fn ($q) => $q->where('purpose', '<>', 'not_supply'))
+            ->with(['items.product', 'items.unit'])->orderBy('id')->paginate(50);
+        $service = app(\App\Services\Commercial\MaterialDocumentService::class);
+        return response()->json(['data' => collect($sources->items())->map(fn ($source) => [
+            'id' => $source->id, 'reference_no' => $purchase ? $source->grn_no : $source->challan_no,
+            'date' => ($purchase ? $source->grn_date : $source->challan_date)->toDateString(),
+            'items' => $source->items->map(fn ($line) => ['id' => $line->id, 'product_id' => $line->product_id,
+                  'variant_id' => $line->variant_id,
+                'name' => $line->product?->name, 'code' => $line->product?->code, 'unit_id' => $line->unit_id, 'unit' => $line->unit?->unit_name,
+                'batch_no' => $line->batch_no, 'product_batch_id' => $line->batch_no ? DB::table('product_batches')->where('product_id', $line->product_id)->where('batch_no', $line->batch_no)->value('id') : null,
+                'qty' => $service->openQuantities($source)[$line->id], 'base_factor' => $line->qty_base / $line->qty,
+                'rate' => $purchase ? $line->cost : $line->rate])->values()]), 'next_page' => $sources->hasMorePages() ? $sources->currentPage() + 1 : null]);
     }
 
     public function previousRates(Request $request, string $kind)
     {
-        $partyId = (int) ($request->input('party_id') ?: $request->input('customer_id') ?: $request->input('supplier_id'));
-        $productId = (int) $request->input('product_id');
-        $request->merge(['party_id' => $partyId, 'product_id' => $productId]);
-        $request->validate(['party_id' => 'required|integer|min:1', 'product_id' => 'required|integer|min:1']);
-        $context = $this->context($request);
-        app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-index' : 'purchases-index', $context, $request->user()->id);
-        app(CompanyWriteGuard::class)->owned($kind === 'sale' ? Customer::class : Supplier::class, $partyId, $context, 'party_id');
-        app(CompanyWriteGuard::class)->owned(Product::class, $productId, $context, 'product_id');
-        $documents = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)
-            ->where($kind === 'sale' ? 'customer_id' : 'supplier_id', $partyId)->whereNotNull('posted_at')->whereNull('reversed_at')->select('id');
-        $lines = DB::table($kind === 'sale' ? 'product_sales' : 'product_purchases')->where('company_id', $context->companyId)
-            ->whereIn($kind.'_id', $documents)->where('product_id', $productId)->orderByDesc('id')->limit(10)->get();
-
-        $lastSale = DB::table('product_sales')
-            ->join('sales', 'product_sales.sale_id', '=', 'sales.id')
-            ->where('sales.company_id', $context->companyId)
-            ->where('product_sales.product_id', $productId)
-            ->where('sales.customer_id', $partyId)
-            ->whereNotNull('sales.posted_at')
-            ->orderByDesc('sales.created_at')
-            ->select('sales.reference_no', 'sales.created_at', 'product_sales.net_unit_price as rate', 'product_sales.total as amount', 'product_sales.qty', 'product_sales.tax_rate')
-            ->first();
-
-        $lastPurchase = DB::table('product_purchases')
-            ->join('purchases', 'product_purchases.purchase_id', '=', 'purchases.id')
-            ->where('purchases.company_id', $context->companyId)
-            ->where('product_purchases.product_id', $productId)
-            ->where('purchases.supplier_id', $partyId)
-            ->whereNotNull('purchases.posted_at')
-            ->orderByDesc('purchases.created_at')
-            ->select('purchases.reference_no', 'purchases.created_at', 'product_purchases.net_unit_cost as cost', 'product_purchases.total as amount', 'product_purchases.qty', 'product_purchases.tax_rate')
-            ->first();
-
-        return response()->json([
-            'data' => $lines,
-            'last_sale' => $lastSale,
-            'last_purchase' => $lastPurchase,
-        ]);
+        $request->merge(['party_id' => $request->input('party_id') ?: $request->input('customer_id') ?: $request->input('supplier_id')]);
+        $request->validate(['party_id' => 'required|integer|min:1', 'product_id' => 'required|integer|min:1', 'page' => 'nullable|integer|min:1|max:1000000']);
+        return response()->json(app(\App\Services\Commercial\RateHistory::class)->read($kind, $request->integer('party_id'),
+            $request->integer('product_id'), (int) ($request->input('page') ?: 1), $this->context($request), $request->user()->id));
     }
-
     public function cloneDocument(Request $request, string $kind, int $id)
     {
         $context = $this->context($request);
@@ -489,6 +490,7 @@ class CommercialController extends Controller
             'tax_id' => 'nullable',
             'tax_category_id' => 'nullable|integer|min:1',
             'hsn_code' => 'nullable|string|max:8',
+            'negative_stock_policy' => 'nullable|in:allow,warn,block',
             'tax_method' => 'nullable',
             'warranty' => 'nullable',
             'warranty_type' => 'nullable|string',
@@ -503,6 +505,12 @@ class CommercialController extends Controller
             'product_details' => 'nullable|string',
         ]);
 
+        $context = $request->attributes->get(CompanyContext::class) ?? abort(409, 'Choose a company first.');
+        app(CommercialPermission::class)->assert('products-add', $context, $request->user()->id);
+        if (!empty($validated['tax_category_id']) && !DB::table('tax_categories')->where('company_id', $context->companyId)->where('id', $validated['tax_category_id'])->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['tax_category_id' => 'Select a GST rate of this company.']);
+        }
+        return DB::transaction(function () use ($request, $validated, $context) {
         $name = trim($validated['name']);
         $code = !empty($validated['code']) ? trim($validated['code']) : ('ITM-' . mt_rand(100000, 999999));
         $cost = isset($validated['cost']) ? (float)$validated['cost'] : 0;
@@ -540,6 +548,8 @@ class CommercialController extends Controller
         }
         $taxRate = $tax ? (float)$tax->rate : 0;
 
+        $resolvedHsn = app(\App\Services\Tax\GstSetupService::class)->productCode($validated['hsn_code'] ?? null,
+            $categoryId ? (int) $categoryId : null, $type, $request->attributes->get(CompanyContext::class));
         $product = \App\Models\Product::create([
             'name' => $name,
             'code' => $code,
@@ -573,14 +583,15 @@ class CommercialController extends Controller
             'qty' => 0,
             'is_active' => 1,
         ]);
-        if (!empty($validated['tax_category_id']) || !empty($validated['hsn_code'])) {
+        if (!empty($validated['tax_category_id']) || $resolvedHsn) {
             $gst = app(\App\Services\Tax\GstSetupService::class);
-            $hsn = !empty($validated['hsn_code']) ? preg_replace('/\s+/', '', $validated['hsn_code']) : null;
+            $hsn = $resolvedHsn;
             $categoryId = !empty($validated['tax_category_id']) && \Illuminate\Support\Facades\DB::table('tax_categories')
                 ->where('company_id', $product->company_id)->where('id', $validated['tax_category_id'])->exists() ? (int) $validated['tax_category_id'] : null;
             $product->forceFill(['tax_category_id' => $categoryId, 'hsn_code' => $hsn])->save();
             if ($rate = $gst->rateFor($product)) $taxRate = $rate['rate'];
         }
+        if (array_key_exists('negative_stock_policy', $validated)) $product->forceFill(['negative_stock_policy' => $validated['negative_stock_policy'] ?: null])->save();
 
         return response()->json([
             'success' => true,
@@ -599,6 +610,7 @@ class CommercialController extends Controller
             ],
             'message' => 'Product created successfully',
         ]);
+        });
     }
 
     public function quickStoreCategory(Request $request)

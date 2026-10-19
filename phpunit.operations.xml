@@ -5,6 +5,7 @@
     <file>tests/Feature/JobWorkReturnsReworkTest.php</file>
     <file>tests/Feature/OperationalConversionTest.php</file>
     <file>tests/Feature/IndustryProfilesTest.php</file>
+    <file>tests/Feature/TextileInventoryDefaultsTest.php</file>
     <file>tests/Feature/IndustryFlowIntegrationTest.php</file>
     <file>tests/Feature/OperationsWebTest.php</file>
     <file>tests/Feature/OperationsConcurrencyTest.php</file>

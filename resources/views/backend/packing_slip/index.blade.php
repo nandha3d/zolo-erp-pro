@@ -39,7 +39,7 @@
 
         $("ul#sale").siblings('a').attr('aria-expanded','true');
         $("ul#sale").addClass("show");
-        $("ul#sale #packing-list-menu").addClass("active");
+        $("ul#sale #dispatch-menu").addClass("active");
 
         var packing_slip_id = [];
         function confirmDelete() {
