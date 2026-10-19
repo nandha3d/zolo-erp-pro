@@ -123,8 +123,29 @@ class VoucherController extends Controller
     public function ageing(Request $request)
     {
         $request->validate(['party_type' => 'nullable|in:customer,supplier', 'as_of_date' => 'nullable|date_format:Y-m-d']);
-        $report = app(FinancialReportService::class)->ageing(app(CompanyContextResolver::class)->forActor(), $request->input('party_type', 'customer'), $request->as_of_date);
-        return $request->expectsJson() ? response()->json($report) : view('backend.accounting.ageing', compact('report'));
+        $context = app(CompanyContextResolver::class)->forActor();
+        $report = app(FinancialReportService::class)->ageing($context, $request->input('party_type', 'customer'), $request->as_of_date, $request->all());
+        if ($request->query('export') === 'csv') {
+            return response()->streamDownload(function () use ($report) {
+                $stream = fopen('php://output', 'w');
+                fputcsv($stream, ['Party', 'Document', 'Document date', 'Due date', 'Days overdue', 'Bucket', 'Open amount', 'Agent', 'Agent basis', 'Current area', 'Invoice salesman', 'Ledger group']);
+                foreach ($report['rows'] as $row) {
+                    $text = static fn ($value) => preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : $value;
+                    fputcsv($stream, [$text($row['party_name']), $text($row['document_no']), $row['document_date'],
+                        $row['due_date'], $row['days'], $text($row['bucket']), $row['open_amount'], $text($row['agent_name']),
+                        $text($row['agent_basis']), $text($row['area_name']), $text($row['salesman_name']), $text($row['ledger_group_name'])]);
+                }
+                foreach ($report['reconciliation'] as $key => $value) { fputcsv($stream, [$key, is_bool($value) ? (int) $value : $value]); }
+                fclose($stream);
+            }, 'ageing-'.$report['as_of_date'].'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }
+        if ($request->expectsJson()) { return response()->json($report); }
+        $options = [];
+        foreach (['party_id' => $report['party_type'] === 'customer' ? 'customers' : 'suppliers', 'agent_id' => 'agents', 'area_id' => 'areas', 'salesman_id' => 'employees', 'ledger_group_id' => 'chart_of_accounts'] as $field => $table) {
+            $options[$field] = app(\App\Support\Database\SchemaCache::class)->hasColumn(DB::connection(), $table, 'company_id')
+                ? DB::table($table)->where('company_id', $context->companyId)->orderBy('name')->get(['id', 'name']) : collect();
+        }
+        return view('backend.accounting.ageing', compact('report', 'options'));
     }
 
     public function monthly(Request $request, int $id)

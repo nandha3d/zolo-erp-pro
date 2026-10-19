@@ -414,3 +414,11 @@ One unrelated existing documents-web failure remains: `NavigationWebTest` expect
 ### Rollout boundary
 
 Apply the additive migrations through the normal backed-up deployment process before enabling new entry actions on real data. Do not drop allocation, settlement or return history after posting. The existing-data rehearsal does not authorize live accounting backfills. Complete real-data reconciliation, physical printing and operator/accountant/GST UAT, including final DC statutory wording, before production sign-off. P2 remains deferred exactly as listed above.
+
+## P2 promotion — 2026-10-19
+
+The user subsequently authorized all P2 slices after local migration and the P0/P1 push (`4767352`).
+The earlier deferral and navigation-failure note above describe the P0/P1 checkpoint only. P2 implementation,
+its corrected route expectations, final verification and local migration evidence are recorded in
+[TEXTILE_P2_IMPLEMENTATION.md](TEXTILE_P2_IMPLEMENTATION.md). Production reconciliation, physical printing and
+operator/accountant/GST sign-off remain separate gates.

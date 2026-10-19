@@ -86,7 +86,8 @@ class OperationsController extends Controller
 
     private function lookups(CompanyContext $context): array
     {
-        return ['navigation' => app(CapabilityService::class)->forNavigation($context),
+        return ['productAliasLabels' => app(\App\Services\Commercial\ProductAliasService::class)->commonLabels($context),
+            'navigation' => app(CapabilityService::class)->forNavigation($context),
             'products' => Product::forCompany($context)->where('is_active', true)->orderBy('name')->limit(200)->get(['id', 'name', 'code', 'type', 'unit_id']),
             'units' => DB::table('units')->where('company_id', $context->companyId)->get(['id', 'unit_name']),
             'warehouses' => DB::table('warehouses')->where('company_id', $context->companyId)->where('branch_id', $context->branchId)

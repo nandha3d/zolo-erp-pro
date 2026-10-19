@@ -196,7 +196,7 @@ class SaleController extends Controller
             $lims_unit_list = Unit::where('is_active', true)->get();
             $lims_customer_group_all = class_exists(\App\Models\CustomerGroup::class) ? \App\Models\CustomerGroup::where('is_active', true)->get() : collect();
             $documentContext = app(\App\Services\Commercial\DocumentContextResolver::class)->fromRequest($request, 'sale', request()->attributes->get(\App\Services\Platform\CompanyContext::class), (int) \Auth::id());
-            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills', 'lims_tax_list', 'lims_biller_list', 'currency', 'saleTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'pending_challans', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_customer_group_all'))->with('documentContext', $documentContext);
+            return view('backend.sale.index', compact('starting_date', 'ending_date', 'warehouse_id', 'sale_status', 'payment_status', 'sale_type', 'payment_method', 'lims_gift_card_list', 'lims_pos_setting_data', 'lims_reward_point_setting_data', 'lims_account_list', 'lims_warehouse_list', 'all_permission','options', 'numberOfInvoice', 'custom_fields', 'field_name', 'lims_courier_list','smsTemplates', 'currency_list', 'todaySalesAmount', 'todaySalesCount', 'totalPaid', 'totalDue', 'lims_customer_list', 'recent_bills', 'lims_tax_list', 'lims_biller_list', 'currency', 'saleTypes', 'documentSeries', 'billSundries', 'standardRemarks', 'agents', 'areas', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'pending_challans', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_customer_group_all'))->with('documentContext', $documentContext)->with('catalogCostVisible', $this->salesCatalogCostVisible());
 
         }
         else
@@ -210,22 +210,31 @@ class SaleController extends Controller
 
     public function productWithoutVariant()
     {
-        return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
+        $query = Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
-            ->get();
+            ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false));
+        if ($this->salesCatalogCostVisible()) $query->addSelect('products.cost');
+        return $query->get();
     }
 
     public function productWithVariant()
     {
-        return Product::join('product_variants', 'products.id', 'product_variants.product_id')
+        $query = Product::join('product_variants', 'products.id', 'product_variants.product_id')
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
-            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->orderBy('position')
-            ->get();
+            ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->orderBy('position');
+        if ($this->salesCatalogCostVisible()) $query->addSelect('products.cost', 'product_variants.additional_cost');
+        return $query->get();
+    }
+
+    private function salesCatalogCostVisible(): bool
+    {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        return $context && request()->user() && app(\App\Services\Commercial\CommercialPermission::class)
+            ->allows('purchases-index', $context, (int) request()->user()->id);
     }
 
     public function getSaleJson($id)
@@ -4937,9 +4946,19 @@ class SaleController extends Controller
         }
 
         $search = trim(base64_decode($search));
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        abort_unless($context, 403, 'Select a company.');
+        app(\App\Services\Commercial\CommercialPermission::class)->assert('sales-add', $context, (int) request()->user()->id);
+        app(\App\Services\ERP\CompanyWriteGuard::class)->warehouse($warehouse_id, $context, (int) request()->user()->id);
+        request()->validate(['customer_id' => 'nullable|integer|min:1']);
+        $rankedProducts = app(\App\Services\Commercial\ProductQueryService::class)->search($search, $context, 'customer', request()->integer('customer_id') ?: null);
+        $rankedIds = array_column($rankedProducts, 'id');
+        $rankOrder = 'CASE products.id '.implode(' ', array_map(fn ($id, $position) => 'WHEN '.(int) $id.' THEN '.(int) $position, $rankedIds, array_keys($rankedIds))).' ELSE 999999 END';
+        if (!$rankedIds) $rankOrder = 'products.id';
         $exactMatchFound = false;
         $products = [];
 
+        $escapedSearch = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
         $today = Carbon::now()->toDateString();
 
         // Handle embedded barcode (13 digits → take first 7)
@@ -4961,6 +4980,7 @@ class SaleController extends Controller
         $exactVariant = ProductVariant::join('products', 'product_variants.product_id', '=', 'products.id')
             ->join('product_warehouse', function ($join) use ($warehouse_id) {
                 $join->on('product_variants.variant_id', '=', 'product_warehouse.variant_id')
+                    ->on('product_variants.product_id', '=', 'product_warehouse.product_id')
                     ->where('product_warehouse.warehouse_id', $warehouse_id);
             })
             ->where('product_variants.item_code', $search)
@@ -5004,6 +5024,7 @@ class SaleController extends Controller
 
         $variants = ProductVariant::join('product_warehouse', function ($join) use ($warehouse_id) {
                 $join->on('product_variants.variant_id', '=', 'product_warehouse.variant_id')
+                    ->on('product_variants.product_id', '=', 'product_warehouse.product_id')
                     ->where('product_warehouse.warehouse_id', $warehouse_id);
             })
             ->select(
@@ -5011,6 +5032,7 @@ class SaleController extends Controller
                 'product_variants.item_code',
                 'product_variants.variant_id',
                 'product_variants.additional_price',
+                'product_warehouse.price as warehouse_price',
                 'product_warehouse.qty'
             )
             ->get()
@@ -5025,7 +5047,7 @@ class SaleController extends Controller
                 ->where('product_warehouse.warehouse_id',$warehouse_id);
             })
             ->where('products.is_active',1)
-            ->where('products.code','like',$search.'%')
+            ->whereIn('products.id', $rankedIds)
             ->select(
                 'products.*',
                 DB::raw("CASE WHEN products.is_diffPrice = 1 THEN product_warehouse.price ELSE products.price END as price"),
@@ -5033,8 +5055,7 @@ class SaleController extends Controller
                 'product_warehouse.imei_number',
                 'product_warehouse.product_batch_id'
             )
-            ->orderBy('products.code')
-            ->limit(20)
+            ->orderByRaw($rankOrder)
             ->get();
 
 
@@ -5050,7 +5071,7 @@ class SaleController extends Controller
                     ->where('product_warehouse.warehouse_id',$warehouse_id);
                 })
                 ->where('products.is_active',1)
-                ->where('products.name','like','%'.$search.'%')
+                ->whereRaw("products.name LIKE ? ESCAPE '!'", ['%'.$escapedSearch.'%'])
                 ->select(
                     'products.*',
                     DB::raw("CASE WHEN products.is_diffPrice = 1 THEN product_warehouse.price ELSE products.price END as price"),
@@ -5072,7 +5093,7 @@ class SaleController extends Controller
         if ($byCode->isEmpty() && $byName->isEmpty()) {
 
             $byIMEI = Product_Warehouse::where('warehouse_id',$warehouse_id)
-                ->where('imei_number','like','%'.$search.'%')
+                ->whereRaw("imei_number LIKE ? ESCAPE '!'", ['%'.$escapedSearch.'%'])
                 ->limit(5)
                 ->get()
                 ->map(function($pw){
@@ -5085,7 +5106,7 @@ class SaleController extends Controller
         if ($byCode->isEmpty() && $byName->isEmpty()) {
 
             $imeiMatch = Product_Warehouse::where('warehouse_id',$warehouse_id)
-                ->where('imei_number','like','%'.$search.'%')
+                ->whereRaw("imei_number LIKE ? ESCAPE '!'", ['%'.$escapedSearch.'%'])
                 ->first();
 
             if ($imeiMatch) {
@@ -5115,12 +5136,14 @@ class SaleController extends Controller
                     ->values();
 
 
+        $ranks = array_flip($rankedIds);
+        $baseProducts = $baseProducts->sortBy(fn ($product) => $ranks[$product->id] ?? PHP_INT_MAX)->values();
         // 🔹 Step 4: Add combo products
         $combos = Product::where('products.is_active', true)
             ->where('products.type', 'combo')
-            ->where(function ($q) use ($search) {
-                $q->where('products.code', 'like', "%search%")
-                ->orWhere('products.name', 'like', "%$search%");
+            ->where(function ($q) use ($escapedSearch) {
+                $q->whereRaw("products.code LIKE ? ESCAPE '!'", [$escapedSearch.'%'])
+                ->orWhereRaw("products.name LIKE ? ESCAPE '!'", ['%'.$escapedSearch.'%']);
             })
             ->select('products.*')
             ->orderBy('name')
@@ -5179,7 +5202,7 @@ class SaleController extends Controller
                             'code' => $v->item_code,
                             'name' => $product->name,
                             'qty' => $v->qty,
-                            'price' => $product->price + $v->additional_price,
+                            'price' => $product->is_diffPrice ? $v->warehouse_price : $product->price + $v->additional_price,
                             'is_imei' => $product->is_imei,
                             'is_embeded' => $product->is_embeded,
                             'batch_no' => $batch_no,
@@ -5214,7 +5237,7 @@ class SaleController extends Controller
                         'code' => $v->item_code,
                         'name' => $product->name,
                         'qty' => $v->qty,
-                        'price' => $product->price + $v->additional_price,
+                        'price' => $product->is_diffPrice ? $v->warehouse_price : $product->price + $v->additional_price,
                         'is_imei' => $product->is_imei,
                         'is_embeded' => $product->is_embeded,
                         'batch_no' => $batch_no,

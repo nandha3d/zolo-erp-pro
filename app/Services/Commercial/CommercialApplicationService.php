@@ -54,8 +54,8 @@ class CommercialApplicationService
             if (!empty($data['quotation_id'])) {
                 $quotation = \App\Models\Quotation::forCompany($context)->whereKey($data['quotation_id'])->lockForUpdate()->firstOrFail();
                 $quotedParty = $kind === 'sale' ? $quotation->customer_id : $quotation->supplier_id;
-                if ((int) $quotation->quotation_status !== 1 || ($quotedParty && (int) $quotedParty !== (int) $party->id)) {
-                    throw ValidationException::withMessages(['quotation_id' => 'Convert a pending quotation for the same party.']);
+                if (!$quotation->canConvert() || ($quotedParty && (int) $quotedParty !== (int) $party->id)) {
+                    throw ValidationException::withMessages(['quotation_id' => 'Choose an unconverted quotation for the same party. Older ambiguous Sent quotations require conversion review.']);
                 }
             }
             $products = [];
@@ -218,8 +218,7 @@ class CommercialApplicationService
                 }
             }
             if ($quotation) {
-                // quotation_status 2 = sent/converted in the quotation register; a converted quotation cannot be billed twice.
-                \App\Models\Quotation::whereKey($quotation->id)->update(['quotation_status' => 2]);
+                $quotation->recordConversion($kind, $document->id);
             }
             foreach ($materials as $material) if (!$material->posted_at) {
                 $material->update(['status' => $kind === 'sale' ? 'converted_to_sale' : 'converted_to_purchase', $kind.'_id' => $document->id]);

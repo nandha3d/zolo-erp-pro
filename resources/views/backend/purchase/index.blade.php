@@ -1656,6 +1656,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/commercial-product-lookup.js') }}"></script>
 <script type="text/javascript">
 (function() {
     'use strict';
@@ -1710,6 +1711,7 @@
         }
     @endphp
 
+    CommercialProductLookup.enabled = @json(config('commercial.enabled'));
     var allProducts = @json($jsProductList);
     function matchesProductMode(product) {
         var mode = $('[data-nature].active').data('nature') || 'mixed';
@@ -1754,14 +1756,9 @@
     var $productSearch = $('#lims_productcodeSearch');
     $productSearch.autocomplete({
         minLength: 1,
-        autoFocus: true,
+        autoFocus: false,
         source: function(request, response) {
-            var term = request.term.toLowerCase().trim();
-            var matches = allProducts.filter(function(p) {
-                return matchesProductMode(p) && ((p.name && p.name.toLowerCase().includes(term)) ||
-                       (p.code && p.code.toLowerCase().includes(term)));
-            });
-            response(matches.slice(0, 20));
+            CommercialProductLookup.search(request.term, allProducts, 'purchase', matchesProductMode).then(response).catch(function(error) { response([]); console.warn(error.message); });
         },
         select: function(event, ui) {
             if (ui && ui.item) {
@@ -1806,15 +1803,24 @@
         };
     }
 
-    $productSearch.on('keydown', function(e) {
+    $productSearch.on('keydown', async function(e) {
         if (e.which === 13) {
+            if (e.isDefaultPrevented()) return;
             e.preventDefault();
             var val = $(this).val().trim();
             if (val) {
-                var exact = allProducts.find(function(p) {
-                    return (p.code && p.code.toLowerCase() === val.toLowerCase()) ||
-                           (p.name && p.name.toLowerCase() === val.toLowerCase());
-                });
+                if (this.dataset.productLookupPending) return;
+                    this.dataset.productLookupPending = '1';
+                    var matches;
+                    try { matches = await CommercialProductLookup.search(val, allProducts, 'purchase', matchesProductMode); }
+                    catch (error) { alert(error.message); return; }
+                    finally { delete this.dataset.productLookupPending; }
+                    if (CommercialProductLookup.normalize(this.value) !== CommercialProductLookup.normalize(val)) return;
+                    var exact = CommercialProductLookup.exact(matches, val);
+                    if (!exact && matches.length) {
+                        $(this).autocomplete('search', val);
+                        return;
+                    }
                 if (exact) {
                     addProductRow({
                         product_id: exact.id,
@@ -1991,14 +1997,9 @@
 
         $input.autocomplete({
             minLength: 1,
-            autoFocus: true,
+            autoFocus: false,
             source: function(request, response) {
-                var term = request.term.toLowerCase().trim();
-                var matches = allProducts.filter(function(p) {
-                    return matchesProductMode(p) && ((p.name && p.name.toLowerCase().includes(term)) ||
-                           (p.code && p.code.toLowerCase().includes(term)));
-                });
-                response(matches.slice(0, 20));
+                CommercialProductLookup.search(request.term, allProducts, 'purchase', matchesProductMode).then(response).catch(function(error) { response([]); console.warn(error.message); });
             },
             select: function(event, ui) {
                 if (ui && ui.item) {
@@ -2037,16 +2038,25 @@
             };
         }
 
-        $input.on('keydown', function(e) {
+        $input.on('keydown', async function(e) {
             if (e.which === 13) {
+                if (e.isDefaultPrevented()) return;
                 e.preventDefault();
                 var val = $(this).val().trim();
                 var tr = $(this).closest('tr');
                 if (val) {
-                    var exact = allProducts.find(function(p) {
-                        return (p.code && p.code.toLowerCase() === val.toLowerCase()) ||
-                               (p.name && p.name.toLowerCase() === val.toLowerCase());
-                    });
+                    if (this.dataset.productLookupPending) return;
+                    this.dataset.productLookupPending = '1';
+                    var matches;
+                    try { matches = await CommercialProductLookup.search(val, allProducts, 'purchase', matchesProductMode); }
+                    catch (error) { alert(error.message); return; }
+                    finally { delete this.dataset.productLookupPending; }
+                    if (CommercialProductLookup.normalize(this.value) !== CommercialProductLookup.normalize(val)) return;
+                    var exact = CommercialProductLookup.exact(matches, val);
+                    if (!exact && matches.length) {
+                        $(this).autocomplete('search', val);
+                        return;
+                    }
                     if (exact) {
                         applyProductToRow(tr, exact);
                         tr.find('.row-qty').focus().select();

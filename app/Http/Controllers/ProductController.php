@@ -504,7 +504,6 @@ class ProductController extends Controller
                 $data['variant_option'] = $data['variant_value'] = null;
             }
 
-            $data['name'] = preg_replace('/[\n\r]/', "<br>", htmlspecialchars(trim($data['name']), ENT_QUOTES));
 
             if(in_array('ecommerce', explode(',',config('addons')))) {
                 $data['slug'] = Str::slug($data['name'], '-');
@@ -587,8 +586,8 @@ class ProductController extends Controller
                     $data['is_sync_disable'] = null;
             //return $data;
 
-            $lims_product_data = Product::create($data);
-            $this->applyMasterFields($lims_product_data, $request);
+            $lims_product_data = app(\App\Services\ERP\ProductMasterService::class)->create($data, $request->all(),
+                app(\App\Services\Platform\CompanyContextResolver::class)->forActor());
 
             $custom_field_data = [];
             $custom_fields = CustomField::where('belongs_to', 'product')->select('name', 'type')->get();
@@ -1232,40 +1231,15 @@ class ProductController extends Controller
     /** Company-owned group, stock policy and optional GST fields from normal product forms. */
     private function validateMasterFields(Request $request): void
     {
-        $request->validate(['negative_stock_policy' => 'nullable|in:allow,warn,block',
-            'category_id' => 'nullable|integer|min:1', 'tax_category_id' => 'nullable|integer|min:1', 'hsn_code' => 'nullable|string|max:8']);
-        if ($request->filled('category_id')) {
-            $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
-            if (!\App\Models\Category::forCompany($context)->where('company_id', $context->companyId)->whereKey($request->category_id)->exists()) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['category_id' => 'Select an item group of this company.']);
-            }
-        }
-        $companyId = \App\Services\Tax\GstSetupService::usesGst() ? app(\App\Services\Platform\CompanyContextResolver::class)->forActor()->companyId : null;
-        if ($request->filled('tax_category_id') && !DB::table('tax_categories')->where('company_id', $companyId)->where('id', $request->tax_category_id)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['tax_category_id' => 'Select a GST rate of this company.']);
-        }
-        if ($request->filled('hsn_code')) {
-            $gst = app(\App\Services\Tax\GstSetupService::class);
-            $gst->validateCode(preg_replace('/\s+/', '', $request->hsn_code), $gst->kindFor($request->input('type')));
-        }
+        app(\App\Services\ERP\ProductMasterService::class)->validateMetadata($request->all(),
+            app(\App\Services\Platform\CompanyContextResolver::class)->forActor());
     }
 
     private function applyMasterFields(Product $product, Request $request): void
     {
-        $this->validateMasterFields($request);
-        $attributes = [];
-        if ($request->has('tax_category_id')) $attributes['tax_category_id'] = $request->filled('tax_category_id') ? (int) $request->tax_category_id : null;
-        if ($product->wasRecentlyCreated) {
-            $attributes['hsn_code'] = app(\App\Services\Tax\GstSetupService::class)->productCode(
-                $request->input('hsn_code'), $product->category_id ? (int) $product->category_id : null, $product->type,
-                app(\App\Services\Platform\CompanyContextResolver::class)->forActor());
-        } elseif ($request->has('hsn_code')) {
-            $attributes['hsn_code'] = $request->filled('hsn_code') ? preg_replace('/\s+/', '', $request->hsn_code) : null;
-        }
-        if ($request->has('negative_stock_policy')) $attributes['negative_stock_policy'] = $request->input('negative_stock_policy') ?: null;
-        if ($attributes) $product->forceFill($attributes)->save();
+        app(\App\Services\ERP\ProductMasterService::class)->applyMetadata($product, $request->all(),
+            app(\App\Services\Platform\CompanyContextResolver::class)->forActor());
     }
-
     public function updateProduct(Request $request)
     {
         $this->validateMasterFields($request);
@@ -1276,6 +1250,9 @@ class ProductController extends Controller
 
         DB::beginTransaction();
         try {
+            // Share the create/import lock so an edit cannot claim a code while a reviewed import creates it.
+            $masterContext = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+            \App\Models\Company::whereKey($masterContext->companyId)->lockForUpdate()->firstOrFail();
             $this->validate($request, [
                 'code' => [
                     'max:255',
@@ -1860,266 +1837,6 @@ class ProductController extends Controller
             $data['message'] = 'Wrong Batch Number!';
         }
         return $data;
-    }
-
-    public function importProduct(Request $request)
-    {
-        // Get file
-        $upload = $request->file('file');
-        $ext = pathinfo($upload->getClientOriginalName(), PATHINFO_EXTENSION);
-        if ($ext != 'csv') {
-            return redirect()->back()->with('message', __('db.Please upload a valid CSV file'));
-        }
-
-        $filePath = $upload->getRealPath();
-
-        // Open and read file
-        $file = fopen($filePath, 'r');
-        $header = fgetcsv($file);
-        if (!$header) {
-            fclose($file);
-            return redirect()->back()->with('message', __('db.CSV file is empty or invalid'));
-        }
-
-        $escapedHeader = [];
-        foreach ($header as $key => $value) {
-            $lheader = strtolower(trim($value));
-            $escapedItem = preg_replace('/[^a-z]/', '', $lheader);
-            $escapedHeader[] = $escapedItem;
-        }
-
-        // Looping through other columns
-        try {
-            DB::beginTransaction();
-            $counter = 1;
-            while ($columns = fgetcsv($file)) {
-                if (count($escapedHeader) !== count($columns)) {
-                    fclose($file);
-                    throw new \Exception(__('db.CSV file format is incorrect'));
-                }
-
-                $data = array_combine($escapedHeader, $columns);
-
-                // Validate and sanitize input
-                $data['name'] = htmlspecialchars(trim($data['name']));
-                $data['cost'] = is_numeric($data['cost']) ? str_replace(",", "", $data['cost']) : 0;
-
-                // Default margin from general settings
-                $general_setting = GeneralSetting::first();
-                $defaultMargin = $general_setting->default_margin_value ?? 25;
-
-                if (!empty($data['profitmargin']) && !empty($data['price'])) {
-                    $data['price'] = is_numeric($data['price']) ? str_replace(",", "", $data['price']) : 0;
-
-                    $data['profitmargin'] = ($data['cost'] > 0) ? (($data['price'] - $data['cost']) / $data['cost']) * 100 : $defaultMargin;
-                } else if (!empty($data['profitmargin'])) {
-                    $profitMargin = (float) $data['profitmargin'];
-
-                    $data['price'] = $data['cost'] * (1 + $profitMargin / 100);
-                } else if (!empty($data['price'])) {
-                    $data['price'] = is_numeric($data['price']) ? str_replace(",", "", $data['price']) : 0;
-
-                    $data['profitmargin'] = ($data['cost'] > 0) ? (($data['price'] - $data['cost']) / $data['cost']) * 100 : $defaultMargin;
-                } else {
-                    $data['profitmargin'] = $defaultMargin;
-                    $data['price'] = $data['cost'] * (1 + $defaultMargin / 100);
-                }
-
-                // Handle brand
-                $brand_id = null;
-                if (isset($data['brand']) && $data['brand'] !== 'N/A' && $data['brand'] !== '') {
-                    $lims_brand_data = Brand::firstOrCreate(['title' => $data['brand'], 'is_active' => true]);
-                    $brand_id = $lims_brand_data->id;
-                }
-
-                // Handle category
-                $lims_category_data = Category::firstOrCreate(['name' => $data['category'], 'is_active' => true]);
-
-                // Handle unit
-                $lims_unit_data = Unit::where('unit_code', $data['unitcode'])->first();
-                if (!$lims_unit_data) {
-                    fclose($file);
-                    throw new \Exception(__('db.Unit code does not exist in the database'));
-                }
-
-                // Create or update product
-                $product = Product::firstOrNew([
-                    'code' => $data['code'],
-                    'is_active' => true
-                ]);
-
-                $product->fill([
-                    'name' => $data['name'],
-                    'type' => strtolower($data['type']),
-                    'barcode_symbology' => 'C128',
-                    'brand_id' => $brand_id,
-                    'category_id' => $lims_category_data->id,
-                    'unit_id' => $lims_unit_data->id,
-                    'purchase_unit_id' => $lims_unit_data->id,
-                    'sale_unit_id' => $lims_unit_data->id,
-                    'cost' => $data['cost'],
-                    'profit_margin' => $data['profitmargin'],
-                    'price' => $data['price'],
-                    'tax_method' => 1,
-                    'qty' => 0,
-                    'product_details' => $data['productdetails'] ?? '',
-                    'is_active' => true,
-                    'image' => $data['image'] ?? 'zummXD2dvAtI.png',
-                ]);
-
-                if (in_array('ecommerce', explode(',', config('addons')))) {
-                    $data['slug'] = Str::slug($data['name'], '-');
-                    $product->slug = preg_replace('/[^A-Za-z0-9\-]/', '', $data['slug']);
-                    $product->in_stock = true;
-                }
-
-                $image_names = [];
-                if (!empty($data['image']) && $data['image'] != 'zummXD2dvAtI.png') {
-                    $imageUrls = explode(',', $data['image']);
-                    $this->diffSizeOfImagePathExistOrCreate();
-
-                    foreach ($imageUrls as $url) {
-                        $url = trim($url);
-
-                        try {
-                            // যদি URL হয় এবং https দিয়ে শুরু হয়
-                            if (filter_var($url, FILTER_VALIDATE_URL) && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'))) {
-                                $response = Http::get($url);
-                                if (!$response->successful()) {
-                                    throw new Exception("Failed to fetch the image: {$url}");
-                                }
-
-                                $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
-                                $imageName = date("Ymdhis") . ($key + 1);
-                                // Handle multi-tenant logic if necessary
-                                if (!config('database.connections.zoloerp_landlord')) {
-                                    $imageName = $imageName . '.' . $ext;
-                                } else {
-                                    $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
-                                }
-
-                                $manager = new ImageManager(new GdDriver());
-                                $image = $manager->read($response->body());
-
-                                $image->save(public_path('images/product/') . $imageName);
-
-                                $this->diffSizeImageStore($image, $imageName);
-
-                                $image_names[] = $imageName;
-
-                            } else {
-                                $ext = pathinfo($url, PATHINFO_EXTENSION) ?: 'jpg';
-                                $imageName = date("Ymdhis") . ($key + 1);
-                                // Handle multi-tenant logic if necessary
-                                if (!config('database.connections.zoloerp_landlord')) {
-                                    $imageName = $imageName . '.' . $ext;
-                                } else {
-                                    $imageName = $this->getTenantId() . '_' . $imageName . '.' . $ext;
-                                }
-
-                                if (file_exists(public_path($url))) {
-                                    copy(public_path($url), public_path('images/product/') . $imageName);
-
-                                    $manager = new ImageManager(new GdDriver());
-                                    $image = $manager->read(public_path('images/product/' . $imageName));
-                                    $image->save(public_path('images/product/') . $imageName);
-
-                                    $this->diffSizeImageStore($image, $imageName);
-
-                                    $image_names[] = $imageName;
-                                }
-                            }
-                        } catch (\Exception $e) {
-                            Log::error("Error processing image: " . $e->getMessage());
-                        }
-                    }
-
-                    $product['image'] = implode(",", $image_names);
-
-                }
-
-                $product->save();
-
-                // Handle variants
-                $warehouse_ids = Warehouse::where('is_active', true)->pluck('id');
-                if (!empty($data['variantvalue']) && !empty($data['variantname'])) {
-                    $variant_option = [];
-                    $variant_value = [];
-                    $variantInfo = explode(",", $data['variantvalue']);
-
-                    foreach ($variantInfo as $key => $info) {
-                        if (!strpos($info, "[")) {
-                            fclose($file);
-                            throw new \Exception(__('db.Invalid variant value format'));
-                        }
-                        $variant_option[] = strtok($info, "[");
-                        $variant_value[] = str_replace("/", ",", substr($info, strpos($info, "[") + 1, (strpos($info, "]") - strpos($info, "[") - 1)));
-                    }
-
-                    $product->variant_option = json_encode($variant_option);
-                    $product->variant_value = json_encode($variant_value);
-                    $product->is_variant = true;
-                    $product->save();
-
-                    $variant_names = explode(",", $data['variantname']);
-                    $item_codes = explode(",", $data['itemcode']);
-                    $additional_costs = explode(",", $data['additionalcost']);
-                    $additional_prices = explode(",", $data['additionalprice']);
-
-                    $productVariants = [];
-                    $productWarehouses = [];
-
-                    foreach ($variant_names as $key => $variant_name) {
-                        $variant = Variant::firstOrCreate(['name' => $variant_name]);
-
-                        $productVariants[] = [
-                            'product_id' => $product->id,
-                            'variant_id' => $variant->id,
-                            'position' => $key + 1,
-                            'item_code' => $item_codes[$key] ?? $variant_name . '-' . $data['code'],
-                            'additional_cost' => $additional_costs[$key] ?? 0,
-                            'additional_price' => $additional_prices[$key] ?? 0,
-                            'qty' => 0,
-                        ];
-
-                        foreach ($warehouse_ids as $warehouse_id) {
-                            $productWarehouses[] = [
-                                'product_id' => $product->id,
-                                'variant_id' => $variant->id,
-                                'warehouse_id' => $warehouse_id,
-                                'qty' => 0,
-                            ];
-                        }
-                    }
-
-                    ProductVariant::insert($productVariants);
-                    if (config('without_stock') === 'yes') {
-                        Product_Warehouse::insert(Product_Warehouse::withRequestCompany($productWarehouses));
-                    }
-                } elseif (config('without_stock') === 'yes') {
-                    $productWarehouses = [];
-                    foreach ($warehouse_ids as $warehouse_id) {
-                        $productWarehouses[] = [
-                            'product_id' => $product->id,
-                            'warehouse_id' => $warehouse_id,
-                            'qty' => 0,
-                        ];
-                    }
-                    Product_Warehouse::insert(Product_Warehouse::withRequestCompany($productWarehouses));
-                }
-                $counter++;
-            }
-
-            fclose($file);
-            $this->cacheForget('product_list');
-            $this->cacheForget('product_list_with_variant');
-            DB::commit();
-            return redirect('products')->with('import_message', __('db.Products imported successfully!'));
-        } catch (\Exception $e) {
-            // fclose($file);
-            DB::rollBack();
-            return redirect()->back()->with('not_permitted', "Error in row $counter: " . $e->getMessage());
-        }
     }
 
     public function allProductInStock()

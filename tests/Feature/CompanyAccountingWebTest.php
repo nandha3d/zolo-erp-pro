@@ -13,6 +13,16 @@ use Tests\Support\CompanyContextTestCase;
 
 class CompanyAccountingWebTest extends CompanyContextTestCase
 {
+    public function test_ageing_and_collection_workspace_render_and_export_with_optional_schema(): void
+    {
+        $this->get('/accounting/ageing')->assertOk()->assertSee('Branch reconciliation:')->assertSee('Bucket cutoffs (days)')->assertDontSee('Secret B');
+        $export = $this->get('/accounting/ageing?export=csv')->assertOk();
+        $this->assertStringContainsString('Document date', $export->streamedContent());
+        $this->get('/accounting/collections')->assertOk()->assertSee('Apply the collection tracking migration');
+        (require database_path('migrations/2026_10_19_000012_create_collection_tracking.php'))->up();
+        $this->get('/accounting/collections')->assertOk()->assertSee('Interest and cash discount preview')->assertSee('Save collection record')->assertDontSee('Secret B');
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

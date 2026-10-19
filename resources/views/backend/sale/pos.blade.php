@@ -1970,18 +1970,33 @@
         });
 
         let typingTimer;
+        let productSearchSequence = 0;
+        function currentProductSearch(sequence, customer, warehouse, term) {
+            return sequence === productSearchSequence && String(warehouse_id) === warehouse
+                && String($('[name="customer_id"]').val() || '') === customer
+                && String($input.val() || '').trim() === term;
+        }
+        $('[name="customer_id"], [name="warehouse_id"]').on('change.productAliasSearch', function () {
+            ++productSearchSequence; clearResults();
+        });
 
         function searchProducts(search) {
+            const lookupSequence = ++productSearchSequence;
+            const lookupCustomer = String($('[name="customer_id"]').val() || '');
+            const lookupWarehouse = String(warehouse_id);
+            const lookupTerm = search.trim();
             $results.css('padding', '0 10px 15px');
             $results.html('<div class="loader " title="4" style="border:none;min-height:300px"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect></svg></div>');
             $noResults.hide();
 
-            search = btoa(search);
+            search = btoa(unescape(encodeURIComponent(search)));
 
             $.ajax({
-                url: '{{url("/sales/search")}}/' + warehouse_id + '/' + search,
+                url: '{{url("/sales/search")}}/' + warehouse_id + '/' + encodeURIComponent(search),
+                data: {customer_id: lookupCustomer || undefined},
                 type: 'GET',
                 success: function (data) {
+                    if (!currentProductSearch(lookupSequence, lookupCustomer, lookupWarehouse, lookupTerm)) return;
                     $results.empty();
                     if (data.length > 0) {
                         $noResults.hide();
@@ -2081,6 +2096,7 @@
                     }
                 },
                 error: function () {
+                    if (!currentProductSearch(lookupSequence, lookupCustomer, lookupWarehouse, lookupTerm)) return;
                     $noResults.text("Error searching products.").show();
                 }
             });
@@ -2090,6 +2106,8 @@
 
         // Trigger on input
         $input.on('input', function () {
+            ++productSearchSequence;
+            clearResults();
             const value = $(this).val().trim();
             if (value.length >= 3) {
                 click = 0;

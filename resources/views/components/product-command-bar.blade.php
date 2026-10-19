@@ -11,6 +11,8 @@
     };
     $links = [
         ['key' => 'products', 'permission' => 'products-index', 'route' => 'products.index', 'icon' => 'dripicons-list', 'label' => __('db.product_list')],
+        ['key' => 'aliases', 'permission' => 'products-index', 'route' => 'product-aliases.index', 'icon' => 'dripicons-tag', 'label' => 'Alternate names'],
+        ['key' => 'import', 'permission' => 'products-import', 'route' => 'products.import.index', 'icon' => 'dripicons-upload', 'label' => 'Reviewed import'],
         ['key' => 'category', 'permission' => 'categories-index', 'route' => 'category.index', 'icon' => 'dripicons-folder', 'label' => __('db.category')],
         ['key' => 'brand', 'permission' => 'brand', 'route' => 'brand.index', 'icon' => 'dripicons-tag', 'label' => __('db.Brand')],
         ['key' => 'unit', 'permission' => 'unit', 'route' => 'unit.index', 'icon' => 'dripicons-scale', 'label' => __('db.Unit')],

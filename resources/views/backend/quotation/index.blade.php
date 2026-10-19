@@ -242,6 +242,17 @@
                     @endforeach
                 </select>
             </div>
+            <div class="form-group mr-2 mb-1">
+                <label for="follow-up-from" class="small">Follow-up from</label>
+                <input id="follow-up-from" name="follow_up_from" type="date" class="form-control form-control-sm" value="{{ request('follow_up_from') }}">
+            </div>
+            <div class="form-group mr-2 mb-1">
+                <label for="follow-up-to" class="small">Follow-up to</label>
+                <input id="follow-up-to" name="follow_up_to" type="date" class="form-control form-control-sm" value="{{ request('follow_up_to') }}">
+            </div>
+            <div class="form-group mr-2 mb-1">
+                <label><input type="checkbox" name="follow_up_due" value="1" @checked(request()->boolean('follow_up_due'))> Follow-up due</label>
+            </div>
             <div class="form-group mb-1">
                 <button class="btn btn-primary btn-sm btn-action-pill" id="filter-btn" type="submit" style="background:#0f172a; border-color:#0f172a;">
                     <i class="fa fa-filter"></i> {{__('db.submit')}}
@@ -265,6 +276,7 @@
                         <th>{{__('db.Supplier')}}</th>
                         <th>{{__('db.Quotation Status')}}</th>
                         <th>{{__('db.grand total')}}</th>
+                        <th>Next follow-up</th>
                         <th class="not-exported">{{__('db.action')}}</th>
                     </tr>
                 </thead>
@@ -272,6 +284,7 @@
                 <tfoot class="tfoot active">
                     <th></th>
                     <th>{{__('db.Total')}}</th>
+                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -401,14 +414,17 @@
                 all_permission: all_permission,
                 starting_date: starting_date,
                 ending_date: ending_date,
-                warehouse_id: warehouse_id
+                warehouse_id: warehouse_id,
+                follow_up_from: $('#follow-up-from').val(),
+                follow_up_to: $('#follow-up-to').val(),
+                follow_up_due: $('[name="follow_up_due"]').prop('checked') ? 1 : 0
             },
             dataType: "json",
             type:"post",
         },
         "createdRow": function( row, data, dataIndex ) {
             $(row).addClass('quotation-link');
-            $(row).attr('data-quotation', data['quotation']);
+            $(row).attr('data-quotation', JSON.stringify(data['quotation']));
         },
         "columns": [
             {"data": "key"},
@@ -420,6 +436,7 @@
             {"data": "supplier"},
             {"data": "status"},
             {"data": "grand_total"},
+            {"data": "next_follow_up"},
             {"data": "options"},
         ],
         'language': {
@@ -435,7 +452,7 @@
         'columnDefs': [
             {
                 "orderable": false,
-                'targets': [0, 3, 4, 7, 8, 9]
+                'targets': [0, 3, 4, 7, 10]
             },
             {
                 'render': function(data, type, row, meta){

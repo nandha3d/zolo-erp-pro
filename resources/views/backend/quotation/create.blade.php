@@ -187,6 +187,8 @@
                                 	<div class="col-md-12">
                                 		<div class="form-group">
                                 			<label>{{__('db.Note')}}</label>
+                                            <label for="next-follow-up">Next follow-up</label>
+                                            <input type="date" id="next-follow-up" name="next_follow_up" value="{{ old('next_follow_up') }}" class="form-control mb-2">
                                 			<textarea rows="5" name="note" class="form-control"></textarea>
                                 		</div>
                                 	</div>

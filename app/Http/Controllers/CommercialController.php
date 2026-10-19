@@ -138,10 +138,14 @@ class CommercialController extends Controller
 
     public function search(Request $request, string $kind, string $resource)
     {
-        $request->validate(['q' => 'nullable|string|max:100']);
+        $request->validate(['q' => 'nullable|string|max:150', 'party_id' => 'nullable|integer|min:1']);
         app(CommercialPermission::class)->assert($kind === 'sale' ? 'sales-add' : 'purchases-add', $this->context($request), $request->user()->id);
         $data = $resource === 'parties' ? app(PartyQueryService::class)->search($kind, $request->input('q', ''), $this->context($request))
-            : app(ProductQueryService::class)->search($request->input('q', ''), $this->context($request));
+            : app(ProductQueryService::class)->search($request->input('q', ''), $this->context($request),
+                $kind === 'sale' ? 'customer' : 'supplier', $request->integer('party_id') ?: null);
+        if ($resource === 'products' && $kind === 'sale' && !app(CommercialPermission::class)->allows('purchases-index', $this->context($request), $request->user()->id)) {
+            $data = array_map(function ($product) { unset($product['cost']); return $product; }, $data);
+        }
         return response()->json(['data' => $data]);
     }
 
@@ -550,7 +554,7 @@ class CommercialController extends Controller
 
         $resolvedHsn = app(\App\Services\Tax\GstSetupService::class)->productCode($validated['hsn_code'] ?? null,
             $categoryId ? (int) $categoryId : null, $type, $request->attributes->get(CompanyContext::class));
-        $product = \App\Models\Product::create([
+        $product = app(\App\Services\ERP\ProductMasterService::class)->create([
             'name' => $name,
             'code' => $code,
             'type' => $type,
@@ -582,16 +586,8 @@ class CommercialController extends Controller
             'product_details' => $validated['product_details'] ?? null,
             'qty' => 0,
             'is_active' => 1,
-        ]);
-        if (!empty($validated['tax_category_id']) || $resolvedHsn) {
-            $gst = app(\App\Services\Tax\GstSetupService::class);
-            $hsn = $resolvedHsn;
-            $categoryId = !empty($validated['tax_category_id']) && \Illuminate\Support\Facades\DB::table('tax_categories')
-                ->where('company_id', $product->company_id)->where('id', $validated['tax_category_id'])->exists() ? (int) $validated['tax_category_id'] : null;
-            $product->forceFill(['tax_category_id' => $categoryId, 'hsn_code' => $hsn])->save();
-            if ($rate = $gst->rateFor($product)) $taxRate = $rate['rate'];
-        }
-        if (array_key_exists('negative_stock_policy', $validated)) $product->forceFill(['negative_stock_policy' => $validated['negative_stock_policy'] ?: null])->save();
+        ], $validated, $context);
+        if ($rate = app(\App\Services\Tax\GstSetupService::class)->rateFor($product)) $taxRate = $rate['rate'];
 
         return response()->json([
             'success' => true,

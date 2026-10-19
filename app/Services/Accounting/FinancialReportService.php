@@ -105,7 +105,7 @@ class FinancialReportService
     }
 
     /** Historical ageing reconstructs allocations as of the report date, including reversal dates. */
-    public function ageing(CompanyContext $context, string $partyType, ?string $asOf = null): array
+    public function ageing(CompanyContext $context, string $partyType, ?string $asOf = null, array $filters = []): array
     {
         $context = app(CompanyWriteGuard::class)->context($context, auth()->id());
         if (!in_array($partyType, ['customer', 'supplier'], true)) {
@@ -118,6 +118,24 @@ class FinancialReportService
             $asOf = max($year->start_date->toDateString(), min($year->end_date->toDateString(), now($timezone)->toDateString()));
         }
         [, $asOf] = $this->range($context, null, $asOf);
+        $filters = Validator::make($filters, [
+            'bucket_cutoffs' => 'nullable|array|min:1|max:8', 'bucket_cutoffs.*' => 'required|integer|min:1|max:36500',
+            'party_id' => 'nullable|integer|min:1', 'agent_id' => 'nullable|integer|min:1',
+            'area_id' => 'nullable|integer|min:1', 'salesman_id' => 'nullable|integer|min:1',
+            'ledger_group_id' => 'nullable|integer|min:1',
+        ])->validate();
+        $cutoffs = array_map('intval', $filters['bucket_cutoffs'] ?? [30, 60]);
+        if ($cutoffs !== array_values(array_unique($cutoffs)) || $cutoffs !== (function ($values) { sort($values); return $values; })($cutoffs)) {
+            throw ValidationException::withMessages(['bucket_cutoffs' => 'Use distinct ascending day cutoffs.']);
+        }
+        $partyModel = $partyType === 'customer' ? \App\Models\Customer::class : \App\Models\Supplier::class;
+        foreach (['party_id' => $partyModel, 'agent_id' => \App\Models\Agent::class, 'area_id' => \App\Models\Area::class,
+            'salesman_id' => \App\Models\Employee::class, 'ledger_group_id' => ChartOfAccount::class] as $field => $model) {
+            if (!empty($filters[$field]) && (!app(\App\Support\Database\SchemaCache::class)->hasColumn(DB::connection(), (new $model)->getTable(), 'company_id')
+                || !$model::where('company_id', $context->companyId)->whereKey($filters[$field])->exists())) {
+                throw ValidationException::withMessages([$field => 'Select a company-owned report filter.']);
+            }
+        }
         $items = AccountOpenItem::forCompany($context)->where('branch_id', $context->branchId)
             ->where('party_type', $partyType)->whereDate('document_date', '<=', $asOf)->orderBy('due_date')->get();
         $allocations = AccountAllocation::forCompany($context)->whereDate('allocation_date', '<=', $asOf)
@@ -128,19 +146,75 @@ class FinancialReportService
             $effects[$allocation->debit_open_item_id] = ($effects[$allocation->debit_open_item_id] ?? 0) - $amount;
             $effects[$allocation->credit_open_item_id] = ($effects[$allocation->credit_open_item_id] ?? 0) + $amount;
         }
-        $totals = ['0-30' => 0, '31-60' => 0, '60+' => 0, 'credits' => 0];
+        $labels = []; $lower = 0;
+        foreach ($cutoffs as $cutoff) { $labels[] = $lower.'-'.$cutoff; $lower = $cutoff + 1; }
+        $labels[] = end($cutoffs).'+';
+        $totals = array_fill_keys([...$labels, 'credits'], 0);
+        $parties = $partyModel::where('company_id', $context->companyId)->whereIn('id', $items->pluck('party_id'))->get()->keyBy('id');
+        $accounts = ChartOfAccount::forCompany($context)->get()->keyBy('id');
+        $main = \App\Models\CompanyBranch::whereKey($context->branchId)->value('code') === 'MAIN';
+        $sales = \App\Models\Sale::forCompany($context)
+            ->whereHas('warehouse', fn ($q) => $q->forCompany($context)->where('branch_id', $context->branchId))
+            ->whereIn('id', $items->where('source_type', 'sale')->pluck('source_id'))->get()->keyBy('id');
+        $agents = $this->ageingNames('agents', $context);
+        $areas = $this->ageingNames('areas', $context);
+        $salesmen = $this->ageingNames('employees', $context);
         $rows = [];
+        $unfiltered = 0;
         foreach ($items as $item) {
             $amount = LedgerAmount::units($item->original_amount) + ($effects[$item->id] ?? 0);
             if (!$amount) {
                 continue;
             }
+            $unfiltered += $amount;
+            $party = $parties->get($item->party_id);
+            $sale = $item->source_type === 'sale' ? $sales->get($item->source_id) : null;
+            $agentId = $sale?->agent_id ?: $party?->agent_id;
+            $areaId = $party?->area_id;
+            $salesmanId = $sale?->salesman_id;
+            $account = $accounts->get($item->account_id);
+            foreach (['party_id' => $item->party_id, 'agent_id' => $agentId, 'area_id' => $areaId,
+                'salesman_id' => $salesmanId, 'ledger_group_id' => $account?->parent_id] as $field => $value) {
+                if (!empty($filters[$field]) && (int) $filters[$field] !== (int) $value) { continue 2; }
+            }
             $days = max(0, (int) CarbonImmutable::parse($item->due_date)->diffInDays(CarbonImmutable::parse($asOf), false));
-            $bucket = $amount < 0 ? 'credits' : ($days <= 30 ? '0-30' : ($days <= 60 ? '31-60' : '60+'));
+            $bucket = end($labels);
+            foreach ($cutoffs as $index => $cutoff) { if ($days <= $cutoff) { $bucket = $labels[$index]; break; } }
+            if ($amount < 0) { $bucket = 'credits'; }
             $totals[$bucket] += $amount;
-            $rows[] = ['item' => $item, 'open_amount' => LedgerAmount::decimal($amount), 'days' => $days, 'bucket' => $bucket];
+            $rows[] = ['item' => $item, 'open_amount' => LedgerAmount::decimal($amount), 'days' => $days, 'bucket' => $bucket,
+                'party_name' => $party?->name ?? 'Unassigned party', 'document_no' => $item->document_no,
+                'document_date' => $item->document_date->toDateString(), 'due_date' => $item->due_date->toDateString(),
+                'agent_id' => $agentId, 'agent_name' => $agents[$agentId] ?? null,
+                'agent_basis' => $sale?->agent_id ? 'invoice' : 'current party',
+                'area_id' => $areaId, 'area_name' => $areas[$areaId] ?? null,
+                'salesman_id' => $salesmanId, 'salesman_name' => $salesmen[$salesmanId] ?? null,
+                'ledger_group_id' => $account?->parent_id, 'ledger_group_name' => $accounts->get($account?->parent_id)?->name];
         }
-        return ['as_of_date' => $asOf, 'party_type' => $partyType, 'rows' => $rows, 'totals' => array_map(LedgerAmount::decimal(...), $totals)];
+        $control = 0;
+        $controls = $accounts->where('control_type', $partyType === 'customer' ? 'ar' : 'ap');
+        foreach ($controls as $account) {
+            if ($main) { $control += LedgerAmount::units($account->opening_balance); }
+        }
+        foreach (JournalItem::forCompany($context)->whereIn('chart_of_account_id', $controls->keys())
+            ->whereHas('journalEntry', fn ($q) => $q->forCompany($context)->where('status', 'posted')->whereDate('entry_date', '<=', $asOf)
+                ->where(fn ($q) => $q->where('branch_id', $context->branchId)->when($main, fn ($q) => $q->orWhereNull('branch_id'))))->cursor() as $line) {
+            $control += (LedgerAmount::units($line->debit) - LedgerAmount::units($line->credit)) * ($partyType === 'customer' ? 1 : -1);
+        }
+        return ['as_of_date' => $asOf, 'party_type' => $partyType, 'rows' => $rows,
+            'filters' => $filters, 'bucket_cutoffs' => $cutoffs, 'totals' => array_map(LedgerAmount::decimal(...), $totals),
+            'metadata_basis' => 'Party names and areas are current metadata; agent uses the invoice value when available.',
+            'reconciliation' => ['scope' => 'All parties in selected branch, all financial years through report date; filters affect displayed rows only.',
+                'control_balance' => LedgerAmount::decimal($control), 'open_item_balance' => LedgerAmount::decimal($unfiltered),
+                'difference' => LedgerAmount::decimal($control - $unfiltered), 'is_reconciled' => $control === $unfiltered,
+                'filtered_balance' => LedgerAmount::decimal(array_sum($totals))]];
+    }
+
+    private function ageingNames(string $table, CompanyContext $context): array
+    {
+        $schema = app(\App\Support\Database\SchemaCache::class);
+        if (!$schema->hasColumn(DB::connection(), $table, 'company_id')) { return []; }
+        return DB::table($table)->where('company_id', $context->companyId)->pluck('name', 'id')->all();
     }
 
     public function monthlyLedger(int $accountId, CompanyContext $context): array

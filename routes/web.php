@@ -95,6 +95,7 @@ use App\Http\Controllers\WhatsappController;
 require __DIR__.'/commercial.php';
 require __DIR__.'/orders.php';
 require __DIR__.'/inventory-reports.php';
+require __DIR__.'/product-aliases.php';
 require __DIR__.'/compliance.php';
 
 Route::get('webview/auth', WebviewAuthController::class)->name('webview.auth');
@@ -233,7 +234,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::post('products/sale-return-history-data', 'saleReturnHistoryData');
         Route::post('products/purchase-return-history-data', 'purchaseReturnHistoryData');
 
-        Route::post('importproduct', 'importProduct')->name('product.import');
+        Route::post('importproduct', [\App\Http\Controllers\ReviewedProductImportController::class, 'preview'])->name('product.import');
         Route::post('exportproduct', 'exportProduct')->name('product.export');
         Route::get('products/all-product-in-stock', 'allProductInStock')->name('product.allProductInStock');
         Route::get('products/show-all-product-online', 'showAllProductOnline')->name('product.showAllProductOnline');
@@ -260,7 +261,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
 
     //Sms Template
     Route::resource('smstemplates', SmsTemplateController::class);
-    Route::resource('unit', UnitController::class);
+    Route::resource('unit', UnitController::class)->only(['index', 'store', 'edit', 'update', 'destroy'])->where(['unit' => '[0-9]+']);
     Route::controller(UnitController::class)->group(function () {
         Route::post('importunit', 'importUnit')->name('unit.import');
         Route::post('unit/deletebyselection', 'deleteBySelection');
@@ -891,6 +892,12 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::get('ageing', 'ageing')->name('accounting.ageing');
             Route::get('monthly-ledger/{id}', 'monthly')->name('accounting.monthly-ledger');
         });
+        Route::controller(\App\Http\Controllers\Accounting\CollectionController::class)->group(function () {
+            Route::get('collections', 'index')->name('accounting.collections');
+            Route::post('collections', 'store')->name('accounting.collections.store');
+            Route::put('collections/{id}', 'update')->name('accounting.collections.update');
+            Route::post('collection-preview', 'preview')->name('accounting.collections.preview');
+        });
         Route::get('cash-flow-statement', [\App\Http\Controllers\Accounting\FinancialReportController::class, 'cashFlowStatement'])->name('accounting.cash-flow');
         Route::get('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'index'])->name('accounting.inventory-close');
         Route::post('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'postClose'])->name('accounting.inventory-close.store');
@@ -978,3 +985,5 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     }
 
 });
+
+require __DIR__.'/product-imports.php';

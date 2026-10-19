@@ -13,6 +13,9 @@
     <file>tests/Feature/MaterialDocumentIdentityTest.php</file>
     <file>tests/Feature/CommercialLifecycleConcurrencyTest.php</file>
     <file>tests/Feature/RateHistoryTest.php</file>
+    <file>tests/Feature/QuotationFollowUpTest.php</file>
+    <file>tests/Feature/ProductAliasTest.php</file>
+    <file>tests/Feature/ReviewedProductImportTest.php</file>
     <file>tests/Feature/DispatchRegisterTest.php</file>
     <file>tests/Feature/TextileEntryContractTest.php</file>
     <file>tests/Feature/OrderAllocationLifecycleTest.php</file>

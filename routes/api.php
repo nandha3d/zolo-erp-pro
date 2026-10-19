@@ -98,6 +98,12 @@ Route::prefix('v1')->group(function () {
                 Route::get('ageing', 'ageing')->name('api.v1.accounting.ageing');
                 Route::get('monthly-ledger/{id}', 'monthly')->name('api.v1.accounting.monthly-ledger');
             });
+            Route::middleware('company.context')->controller(\App\Http\Controllers\Accounting\CollectionController::class)->group(function () {
+                Route::get('collections', 'index')->name('api.v1.accounting.collections');
+                Route::post('collections', 'store')->name('api.v1.accounting.collections.store');
+                Route::put('collections/{id}', 'update')->name('api.v1.accounting.collections.update');
+                Route::post('collection-preview', 'preview')->name('api.v1.accounting.collections.preview');
+            });
         });
 
         // Partners (Customers & Suppliers)
