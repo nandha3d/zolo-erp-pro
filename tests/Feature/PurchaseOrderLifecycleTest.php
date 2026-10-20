@@ -8,7 +8,7 @@ use Tests\Support\CommercialTestCase;
 
 /**
  * Evidence for the Ctrl+F12 decision. A Purchase Order is purchases.status = 4 on the normal purchase form.
- * These tests pin what is proven; the gaps that keep the shortcut unassigned are listed in documents/DOCUMENT_ENTRY_CONSOLIDATION.md.
+ * These checks, allocation tests and MySQL races provide evidence for the shortcut gate.
  */
 class PurchaseOrderLifecycleTest extends CommercialTestCase
 {
@@ -54,7 +54,8 @@ class PurchaseOrderLifecycleTest extends CommercialTestCase
 
         $this->postJson('/purchases', $this->again($base, ['status' => 1, 'purchase_order_id' => $order['id'] + 100]))->assertStatus(404);
         $this->postJson('/purchases', $this->legacyOrder(['status' => 1, 'purchase_order_id' => $order['id']]))->assertStatus(422); // item not on the order
-        $this->postJson('/commercial/purchase/'.$order['id'].'/reverse', ['business_date' => '2026-10-03', 'reason' => 'Order cancelled'])->assertOk();
+        $this->postJson('/commercial/purchase/'.$order['id'].'/reverse', ['business_date' => '2026-10-03', 'reason' => 'Order cancelled'])->assertUnprocessable();
+        $this->postJson('/commercial/orders/purchase/'.$order['id'].'/cancel', ['business_date' => '2026-10-03', 'reason' => 'Remainder cancelled'])->assertOk();
         $this->postJson('/purchases', $this->again($base, ['status' => 1, 'purchase_order_id' => $order['id'], 'qty' => [1]]))->assertStatus(422);
     }
 
@@ -73,10 +74,14 @@ class PurchaseOrderLifecycleTest extends CommercialTestCase
         $this->postJson('/purchases', $this->again($base, ['status' => 1, 'purchase_order_id' => $order['id'], 'qty' => [1]]))->assertStatus(422);
     }
 
-    public function test_the_order_shortcut_stays_unassigned_until_the_open_lifecycle_gaps_are_closed(): void
+    public function test_order_shortcut_requires_enabled_gate_and_installed_lifecycle(): void
     {
-        $this->assertFalse(config('documents.purchase_order_shortcut'));
+        config(['documents.purchase_order_shortcut' => false]);
         $registry = app(DocumentShortcutRegistry::class);
+        $this->assertNotContains('purchase-order', array_column($registry->forUser(fn () => true, true), 'id'));
+        config(['documents.purchase_order_shortcut' => true]);
+        $this->assertContains('purchase-order', array_column($registry->forUser(fn () => true, true), 'id'));
+        \Illuminate\Support\Facades\Schema::drop('commercial_order_events');
         $this->assertNotContains('purchase-order', array_column($registry->forUser(fn () => true, true), 'id'));
     }
 }

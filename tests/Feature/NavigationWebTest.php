@@ -50,7 +50,14 @@ class NavigationWebTest extends TestCase
     {
         $this->fresh();
         $this->get('/unit/create')->assertNotFound();           // resource route whose screen is a modal
-        $this->get('/menu/no-such-catalogue')->assertNotFound(); // unknown or inactive catalogue QR
+        $catalogue = $this->get('/menu/no-such-catalogue');
+        if ($catalogue->status() === 403) {
+            // Capability denial intentionally precedes catalogue lookup on installations without this optional module.
+            $this->assertInstanceOf(\Illuminate\Auth\Access\AuthorizationException::class, $catalogue->exception);
+            $this->assertSame('Capability is disabled: sales.catalogue_qr', $catalogue->exception->getMessage());
+        } else {
+            $catalogue->assertNotFound();
+        }
         $this->get('/purchases/999999999/edit')->assertNotFound();
     }
 }

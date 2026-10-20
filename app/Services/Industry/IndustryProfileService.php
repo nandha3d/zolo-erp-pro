@@ -55,7 +55,7 @@ class IndustryProfileService
         foreach (IndustryCatalog::PROCESSES[$profile] ?? [] as [$code, $name, $loss, $conversion]) {
             if (!DB::table('process_types')->where('company_id', $companyId)->where('code', $code)->exists()) {
                 DB::table('process_types')->insert(['company_id' => $companyId, 'code' => $code, 'name' => $name,
-                    'max_loss_percent' => $loss, 'conversion' => $conversion, 'quantity_basis' => $profile === 'timber' ? 'volume_cbm' : 'base_qty',
+                    'is_active' => $code !== 'BLEACHING', 'max_loss_percent' => $loss, 'conversion' => $conversion, 'quantity_basis' => $profile === 'timber' ? 'volume_cbm' : 'base_qty',
                     'created_at' => now(), 'updated_at' => now()]);
             }
         }
@@ -71,6 +71,8 @@ class IndustryProfileService
         $own = array_column(IndustryCatalog::PROCESSES[$profile] ?? [], 1, 0);
         foreach (IndustryCatalog::PROCESSES as $processes) {
             foreach ($processes as [$code, $name]) {
+                // Bleaching starts disabled until its conversion/loss policy is configured and activated.
+                if ($code === 'BLEACHING' && isset($own[$code])) continue;
                 DB::table('process_types')->where('company_id', $companyId)->where('code', $code)->where('name', $name)
                     ->update(['is_active' => ($own[$code] ?? null) === $name, 'updated_at' => now()]);
             }
@@ -102,7 +104,7 @@ class IndustryProfileService
             $request = request();
             if (!$request->attributes->has('industry_labels')) {
                 $context = $request->attributes->get(CompanyContext::class) ?? app(CompanyContextResolver::class)->forActor();
-                $request->attributes->set('industry_labels', Schema::hasTable('company_industry_settings')
+                $request->attributes->set('industry_labels', app(\App\Support\Database\SchemaCache::class)->hasTable(DB::connection(), 'company_industry_settings')
                     ? (app(self::class)->settings($context)['settings']['labels'] ?? []) : []);
             }
             return $request->attributes->get('industry_labels')[$key] ?? $default;

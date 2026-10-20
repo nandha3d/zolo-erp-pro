@@ -93,6 +93,9 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WhatsappController;
 
 require __DIR__.'/commercial.php';
+require __DIR__.'/orders.php';
+require __DIR__.'/inventory-reports.php';
+require __DIR__.'/product-aliases.php';
 require __DIR__.'/compliance.php';
 
 Route::get('webview/auth', WebviewAuthController::class)->name('webview.auth');
@@ -159,6 +162,11 @@ Route::middleware('auth')->group(function () {
     Route::post('select-company', [\App\Http\Controllers\CompanySelectorController::class, 'choose'])->name('company.choose');
     Route::post('company-picker/groups', [\App\Http\Controllers\CompanySelectorController::class, 'storeGroup'])->name('company.groups.store');
     Route::post('company-picker/companies', [\App\Http\Controllers\CompanySelectorController::class, 'storeCompany'])->name('company.companies.store');
+    Route::post('company-picker/companies/{company}', [\App\Http\Controllers\CompanySelectorController::class, 'updateCompany'])->whereNumber('company')->name('company.companies.update');
+    Route::post('company-picker/companies/{company}/delete', [\App\Http\Controllers\CompanySelectorController::class, 'deleteCompany'])->whereNumber('company')->name('company.companies.delete');
+    Route::post('company-picker/companies/{company}/restore', [\App\Http\Controllers\CompanySelectorController::class, 'restoreCompany'])->whereNumber('company')->name('company.companies.restore');
+    Route::post('company-picker/groups/{group}', [\App\Http\Controllers\CompanySelectorController::class, 'updateGroup'])->whereNumber('group')->name('company.groups.update');
+    Route::post('company-picker/groups/{group}/delete', [\App\Http\Controllers\CompanySelectorController::class, 'deleteGroup'])->whereNumber('group')->name('company.groups.delete');
 });
 
 // Settings › Company profile: names, address, GSTIN, logo, currency and industry of the current company.
@@ -231,7 +239,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::post('products/sale-return-history-data', 'saleReturnHistoryData');
         Route::post('products/purchase-return-history-data', 'purchaseReturnHistoryData');
 
-        Route::post('importproduct', 'importProduct')->name('product.import');
+        Route::post('importproduct', [\App\Http\Controllers\ReviewedProductImportController::class, 'preview'])->name('product.import');
         Route::post('exportproduct', 'exportProduct')->name('product.export');
         Route::get('products/all-product-in-stock', 'allProductInStock')->name('product.allProductInStock');
         Route::get('products/show-all-product-online', 'showAllProductOnline')->name('product.showAllProductOnline');
@@ -258,7 +266,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
 
     //Sms Template
     Route::resource('smstemplates', SmsTemplateController::class);
-    Route::resource('unit', UnitController::class);
+    Route::resource('unit', UnitController::class)->only(['index', 'store', 'edit', 'update', 'destroy'])->where(['unit' => '[0-9]+']);
     Route::controller(UnitController::class)->group(function () {
         Route::post('importunit', 'importUnit')->name('unit.import');
         Route::post('unit/deletebyselection', 'deleteBySelection');
@@ -312,6 +320,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::resource('standard-remark', StandardRemarkController::class);
     Route::resource('document-series', DocumentSeriesController::class);
     Route::post('delivery-challans/{id}/convert-to-sale', [DeliveryChallanController::class, 'convertToSale'])->name('delivery-challans.convert-to-sale');
+    Route::post('delivery-challans/{id}/return', [DeliveryChallanController::class, 'returnGoods'])->name('delivery-challans.return');
+    Route::post('goods-received-notes/{id}/return', [GoodsReceivedNoteController::class, 'returnGoods'])->name('goods-received-notes.return');
     Route::resource('delivery-challans', DeliveryChallanController::class);
     Route::post('goods-received-notes/{id}/convert-to-purchase', [GoodsReceivedNoteController::class, 'convertToPurchase'])->name('goods-received-notes.convert-to-purchase');
     Route::resource('goods-received-notes', GoodsReceivedNoteController::class);
@@ -887,6 +897,12 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::get('ageing', 'ageing')->name('accounting.ageing');
             Route::get('monthly-ledger/{id}', 'monthly')->name('accounting.monthly-ledger');
         });
+        Route::controller(\App\Http\Controllers\Accounting\CollectionController::class)->group(function () {
+            Route::get('collections', 'index')->name('accounting.collections');
+            Route::post('collections', 'store')->name('accounting.collections.store');
+            Route::put('collections/{id}', 'update')->name('accounting.collections.update');
+            Route::post('collection-preview', 'preview')->name('accounting.collections.preview');
+        });
         Route::get('cash-flow-statement', [\App\Http\Controllers\Accounting\FinancialReportController::class, 'cashFlowStatement'])->name('accounting.cash-flow');
         Route::get('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'index'])->name('accounting.inventory-close');
         Route::post('inventory-close', [\App\Http\Controllers\Accounting\PeriodicInventoryCloseController::class, 'postClose'])->name('accounting.inventory-close.store');
@@ -974,3 +990,5 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     }
 
 });
+
+require __DIR__.'/product-imports.php';

@@ -157,6 +157,17 @@ class CapabilityEngineTest extends CompanyContextTestCase
         $this->postJson('/api/v1/company-context/capabilities/import-legacy')->assertForbidden();
     }
 
+    public function test_navigation_reuses_middleware_context_without_repeating_authorization_queries(): void
+    {
+        request()->attributes->set(CompanyContext::class, $this->context);
+        $expected = $this->service->forNavigation($this->context);
+        DB::connection()->enableQueryLog();
+        DB::connection()->flushQueryLog();
+        $this->assertSame($expected, $this->service->forNavigation());
+        $authorizationReads = array_filter(DB::getQueryLog(), fn ($query) => preg_match('/\b(users|company_user|company_branches|fiscal_years)\b/', $query['query']));
+        $this->assertCount(0, $authorizationReads);
+    }
+
     public function test_company_role_override_controls_configuration_and_spoofing_is_rejected(): void
     {
         DB::table('company_user')->where('user_id', 1)->update(['role_id_override' => 4]);

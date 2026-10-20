@@ -3,16 +3,15 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <!-- Trigger the modal with a button -->
-         @can('categories-add')
-            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#category-modal"><i class="dripicons-plus"></i> {{__("db.Add Category")}}</button>&nbsp;
-        @endcan
-        @can('categories-import')
-            <button class="btn btn-primary" data-toggle="modal" data-target="#importCategory"><i class="dripicons-copy"></i> {{__('db.Import Category')}}</button>
-        @endcan
-    </div>
+<x-product-command-bar active="category">
+    @can('categories-add')
+        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#category-modal"><i class="dripicons-plus"></i> {{__("db.Add Category")}}</button>
+    @endcan
+    @can('categories-import')
+        <button class="btn btn-secondary" data-toggle="modal" data-target="#importCategory"><i class="dripicons-copy"></i> {{__('db.Import Category')}}</button>
+    @endcan
+</x-product-command-bar>
+<section class="product-workspace-view">
     <div class="table-responsive">
         <table id="category-table" class="table" style="width: 100%">
             <thead>
@@ -49,6 +48,7 @@
                 <x-validation-error fieldName="name" />
             </div>
             <input type="hidden" name="category_id">
+            <div class="col-md-6 form-group"><label>Default HSN</label><input name="default_hsn_code" class="form-control" maxlength="8" inputmode="numeric"><small>New items only; existing items keep their HSN.</small></div>
             <div class="col-md-6 form-group">
                 <label>{{__('db.Image')}}</label>
                 <input type="file" name="image" class="form-control">
@@ -188,6 +188,7 @@
             $("#editModal input[name='name']").val(data['name']);
             $("#editModal select[name='parent_id']").val(data['parent_id']);
             $("#editModal input[name='category_id']").val(data['id']);
+            $("#editModal input[name='default_hsn_code']").val(data['default_hsn_code'] || '');
 
             var updateUrl = "category/" + data['id'];
             $("#editCategoryForm").attr('action', updateUrl);

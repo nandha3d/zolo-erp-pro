@@ -5,27 +5,32 @@ const { runInNewContext } = require('node:vm');
 
 const code = readFileSync(require('node:path').join(__dirname, '../../public/js/document-keyboard.js'), 'utf8');
 
-function fixture(formSelector = '#sale-entry-form', withModals = false) {
-    let handler, invalid, owner = null;
+function fixture(formSelector = '#sale-entry-form', withModals = false, windowExtras = {}) {
+    let handler, captureHandler, invalid, owner = null;
     const fields = [];
-    const form = { querySelectorAll: () => fields };
+    // formSelector null = an ordinary (non-document) form found through closest('form').
+    const form = { querySelectorAll: () => fields, matches: () => false, closest: () => null, contains: () => true };
     const document = {
         addEventListener(name, callback, capture) {
+            if (name === 'DOMContentLoaded') return;
             if (name === 'invalid') { assert.equal(capture, true); invalid = callback; }
+            else if (capture) { assert.equal(name, 'keydown'); captureHandler = callback; }
             else { assert.equal(name, 'keydown'); handler = callback; }
         },
         querySelector: selector => selector.startsWith('#sale-entry-form,') ? form : owner,
     };
     const modalHooks = {};
-    const jqueryDocument = { on(event, selector, callback) { assert.equal(selector, '.modal'); modalHooks[event] = callback; return this; } };
-    runInNewContext(code, { document, window: withModals ? { jQuery: () => jqueryDocument } : {},
+    const jqueryDocument = { on(event, selector, callback) { if (selector === '.modal') modalHooks[event] = callback; return this; } };
+    runInNewContext(code, { document, window: withModals ? { jQuery: () => jqueryDocument, ...windowExtras } : { ...windowExtras },
         getComputedStyle: element => ({ visibility: element.visibility || 'visible' }) });
     const control = (tagName = 'INPUT', options = {}) => {
         const element = {
             tagName, type: tagName === 'INPUT' ? 'text' : '', tabIndex: 0, isConnected: true,
             getClientRects() { return this.hidden ? [] : [{}]; },
             closest(selector) {
-                if (selector.includes(formSelector)) return this.outside ? null : form;
+                if (formSelector && selector.includes(formSelector)) return this.outside ? null : form;
+                if (!formSelector && selector === 'form') return this.outside ? null : form;
+                if (selector === '[data-step-title]:not(.is-active)') return this.step && !this.step.active ? this.step : null;
                 if (selector === '[hidden], [inert]') return this.hiddenAncestor ? {} : null;
                 if (selector === '.bootstrap-select') return this.enhanced ? { querySelector: () => this.toggle || null } : null;
                 if (selector === 'details') return this.details || null;
@@ -180,4 +185,36 @@ test('Alt+I owns capture before bootstrap-select letter navigation on sales, pur
         modal = null; visible = false;
         assert.equal(press().defaultPrevented, undefined, 'hidden entry never takes focus');
     }
+});
+
+test('ordinary multi-field forms advance on Enter, skip helper buttons and finish on Save', () => {
+    const f = fixture(null), name = f.control();
+    f.control('BUTTON', { type: 'button', className: 'btn btn-default' });
+    f.control('A');
+    const code = f.control();
+    const save = f.control('BUTTON', { type: 'button', className: 'btn btn-primary' });
+    assert.equal(f.press(name).defaultPrevented, true);
+    assert.equal(f.document.activeElement, code, 'helper button and link are skipped');
+    f.press(code);
+    assert.equal(f.document.activeElement, save, 'primary action is still reached');
+});
+
+test('a lone search box keeps native Enter-to-submit; an ordinary form submits after its last field', () => {
+    const search = fixture(null), box = search.control();
+    assert.equal(search.press(box).defaultPrevented, false);
+    const form = fixture(null), first = form.control(), last = form.control();
+    assert.equal(form.press(last).defaultPrevented, false, 'nothing follows: native submit');
+    assert.equal(form.press(first).defaultPrevented, true);
+});
+
+test('Enter continues into the next step of a stepped form', () => {
+    const step = { active: false };
+    const zoloSteps = { reveal(element) { element.step.active = true; element.hidden = false; return true; } };
+    const f = fixture(null, false, { zoloSteps }), first = f.control();
+    f.control();
+    const later = f.control('INPUT', { step, hidden: true });
+    f.press(f.document.activeElement = first);
+    f.press(f.document.activeElement);
+    assert.equal(f.document.activeElement, later);
+    assert.equal(step.active, true);
 });

@@ -26,9 +26,17 @@ class CommercialReversalService
         }
         return DB::transaction(function () use ($document, $guard, $context, $date, $reason, $kind) {
             $guard->begin($context, $date);
+            \App\Models\Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
             $document = $document::visibleIn($context)->whereKey($document->id)->lockForUpdate()->firstOrFail();
             if ($document->reversed_at) {
                 return $document;
+            }
+            if ($document instanceof Purchase && (int) $document->status === 4
+                && \Illuminate\Support\Facades\Schema::hasTable('commercial_order_allocations')
+                && DB::table('commercial_order_allocations as a')->join('commercial_order_items as i', 'i.id', '=', 'a.order_item_id')
+                    ->where('a.company_id', $context->companyId)->where('i.order_kind', 'purchase')->where('i.order_id', $document->id)
+                    ->whereNull('a.released_at')->whereColumn('a.qty_base', '>', 'a.returned_qty_base')->exists()) {
+                throw ValidationException::withMessages(['order' => 'This order has fulfilments. Cancel its remaining quantity through Orders instead.']);
             }
             if (\Illuminate\Support\Facades\Schema::hasColumn($kind === 'sale' ? 'returns' : 'return_purchases', 'posted_at')
                 && DB::table($kind === 'sale' ? 'returns' : 'return_purchases')->where('company_id', $context->companyId)
@@ -56,6 +64,8 @@ class CommercialReversalService
                 }
                 app(InventoryMovementService::class)->reverse($movement, $reason, auth()->id(), $date);
             }
+            app(MaterialDocumentService::class)->release($document, $context);
+            app(OrderLifecycleService::class)->release($document, $context);
             $document->forceFill(['reversed_at' => now(), 'reversal_reason' => $reason])->save();
             app(\App\Services\Tax\GstProjectionService::class)->reverse($document, $kind, $date, $context);
             app(CommercialApplicationService::class)->audit('reversed', $document, $context, auth()->id(), ['date' => $date, 'reason' => $reason]);

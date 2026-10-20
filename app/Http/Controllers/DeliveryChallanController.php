@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 
 class DeliveryChallanController extends Controller
 {
-    use NumbersLegacyDocuments, \App\Http\Controllers\Concerns\ValidatesMaterialDocuments;
+    use NumbersLegacyDocuments, \App\Http\Controllers\Concerns\ValidatesMaterialDocuments, \App\Http\Controllers\Concerns\PostsMaterialDocuments;
 
     public function index(Request $request)
     {
@@ -53,17 +53,19 @@ class DeliveryChallanController extends Controller
 
         $lims_product_list_without_variant = Product::ActiveStandard()
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'products.is_variant', 'units.unit_name', 'units.unit_code')
             ->whereNull('products.is_variant')
             ->get();
 
         $lims_product_list_with_variant = Product::ActiveStandard()
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
-            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'units.unit_name', 'units.unit_code')
+            ->select('products.id', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.unit_id', 'products.is_variant', 'units.unit_name', 'units.unit_code')
             ->whereNotNull('products.is_variant')
             ->get();
 
+        $materialVariants = $this->materialVariants($lims_product_list_with_variant->where('is_variant', true)->pluck('id')->all());
         return view('backend.delivery_challan.index', compact(
+            'materialVariants',
             'recent_challans',
             'lims_customer_list',
             'lims_warehouse_list',
@@ -122,6 +124,7 @@ class DeliveryChallanController extends Controller
                 'grand_total' => (float)$request->input('grand_total', 0),
                 'sundries_json' => $request->input('sundries_json') ? (is_array($request->input('sundries_json')) ? $request->input('sundries_json') : json_decode($request->input('sundries_json'), true)) : null,
                 'remarks' => $request->input('remarks'),
+                'purpose' => $request->input('purpose') ?: 'approval',
                 'status' => 'pending',
                 'created_by' => Auth::id() ?? 1,
             ]);
@@ -140,6 +143,7 @@ class DeliveryChallanController extends Controller
             $totals = $request->input('total', []);
             $unitIds = $request->input('unit_id', []);
             $itemRemarks = $request->input('item_remarks', []);
+            $batchNos = $request->input('batch_no', []);
 
             foreach ($productIds as $idx => $prodId) {
                 if (empty($prodId)) continue;
@@ -155,8 +159,10 @@ class DeliveryChallanController extends Controller
                     'tax_amount' => (float)($taxAmounts[$idx] ?? 0),
                     'total' => (float)($totals[$idx] ?? 0),
                     'remarks' => $itemRemarks[$idx] ?? null,
-                ]);
+                ] + $this->materialIdentityAttributes($request, $idx, false));
             }
+
+            $this->postMaterial($challan);
 
             DB::commit();
             app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('dc', $request->integer('draft_id'), (int) Auth::id());
@@ -184,10 +190,12 @@ class DeliveryChallanController extends Controller
         $challan = DeliveryChallan::with(['items.product', 'items.unit', 'customer', 'warehouse', 'saleType', 'agent', 'area'])->findOrFail($id);
 
         if (request()->wantsJson() || request()->ajax()) {
+            $open = app(\App\Services\Commercial\MaterialDocumentService::class)->openQuantities($challan);
             return response()->json([
                 'success' => true,
                 'challan' => $challan,
-                'items' => $challan->items->map(function ($item) {
+                'history' => $this->materialHistory($challan),
+                'items' => $challan->items->map(function ($item) use ($open) {
                     return [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
@@ -202,7 +210,7 @@ class DeliveryChallanController extends Controller
                         'tax_amount' => (float)$item->tax_amount,
                         'total' => (float)$item->total,
                         'remarks' => $item->remarks,
-                    ];
+                    ] + $this->materialLine($item, $open);
                 }),
             ]);
         }
@@ -242,9 +250,11 @@ class DeliveryChallanController extends Controller
                 'grand_total' => (float)$request->input('grand_total', 0),
                 'sundries_json' => $request->input('sundries_json') ? (is_array($request->input('sundries_json')) ? $request->input('sundries_json') : json_decode($request->input('sundries_json'), true)) : null,
                 'remarks' => $request->input('remarks'),
+                'purpose' => $request->input('purpose') ?: 'approval',
             ]);
 
             // Replace items
+            $this->unpostMaterial($challan, 'Edited before billing');
             DeliveryChallanItem::where('delivery_challan_id', $challan->id)->delete();
 
             $productIds = $request->input('product_id', []);
@@ -256,6 +266,7 @@ class DeliveryChallanController extends Controller
             $totals = $request->input('total', []);
             $unitIds = $request->input('unit_id', []);
             $itemRemarks = $request->input('item_remarks', []);
+            $batchNos = $request->input('batch_no', []);
 
             foreach ($productIds as $idx => $prodId) {
                 if (empty($prodId)) continue;
@@ -271,8 +282,10 @@ class DeliveryChallanController extends Controller
                     'tax_amount' => (float)($taxAmounts[$idx] ?? 0),
                     'total' => (float)($totals[$idx] ?? 0),
                     'remarks' => $itemRemarks[$idx] ?? null,
-                ]);
+                ] + $this->materialIdentityAttributes($request, $idx, false));
             }
+
+            $this->postMaterial($challan);
 
             DB::commit();
             app(\App\Services\Commercial\CommercialDraftService::class)->forgetPosted('dc', $request->integer('draft_id'), (int) Auth::id());
@@ -295,11 +308,21 @@ class DeliveryChallanController extends Controller
         }
     }
 
+    public function returnGoods(Request $request, $id)
+    {
+        return $this->returnMaterial($request, DeliveryChallan::class, (int) $id);
+    }
+
     public function destroy($id)
     {
         DB::transaction(function () use ($id) {
             $challan = DeliveryChallan::lockForUpdate()->findOrFail($id);
             abort_unless($challan->status === 'pending', 422, 'Converted or cancelled documents cannot be changed.');
+            if ($challan->posted_at) {
+                $this->unpostMaterial($challan, 'Cancelled before billing');
+                $challan->forceFill(['status' => 'cancelled'])->save();
+                return;
+            }
             $challan->update(['status' => 'cancelled']);
             DeliveryChallanItem::where('delivery_challan_id', $challan->id)->delete();
             $challan->delete();

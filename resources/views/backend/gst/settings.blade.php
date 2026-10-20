@@ -57,11 +57,11 @@
 
     @php $taxable = $categories->where('supply_type', 'taxable')->count(); @endphp
     <div class="gst-steps">
-        <div class="gst-step {{ $registration ? 'ok' : 'todo' }}"><strong>1. Company GSTIN</strong>{{ $registration ? $registration->gstin.' · '.($states[$registration->state_code] ?? $registration->state_code) : 'Not registered yet' }}</div>
+        <div class="gst-step {{ $registration ? 'ok' : 'todo' }}"><strong>1. Company GSTIN</strong>{{ $registration ? ($registration->gstin ?: 'Unregistered').' · '.($states[$registration->state_code] ?? $registration->state_code) : 'Not registered yet' }}</div>
         <div class="gst-step {{ $taxable ? 'ok' : 'todo' }}"><strong>2. GST rates</strong>{{ $taxable ? $categories->count().' rates set up' : 'Click "Install standard GST setup"' }}</div>
         <div class="gst-step {{ $missing ? 'todo' : 'ok' }}"><strong>3. Products</strong>{{ $missing ? $missing.' products need a GST rate or HSN' : 'All products have GST rate + HSN' }}</div>
         <div class="gst-step {{ $ledgers->every(fn ($l) => $l->account) ? 'ok' : 'todo' }}"><strong>4. GST ledgers</strong>{{ $ledgers->filter(fn ($l) => $l->account)->count() }}/{{ $ledgers->count() }} mapped</div>
-        <div class="gst-step {{ $gstMode ? 'ok' : 'todo' }}"><strong>Billing mode</strong>{{ $gstMode ? 'GST billing is ON for this branch' : 'GST billing starts after step 1' }}</div>
+        <div class="gst-step {{ $gstMode ? 'ok' : 'todo' }}"><strong>Billing mode</strong>{{ !$gstMode ? 'GST billing starts after step 1' : (($registration->registration_type ?? '') === 'unregistered' ? 'Unregistered: bills carry no GST' : 'GST billing is ON for this branch') }}</div>
     </div>
 
     <ul class="nav gst-tabs mb-2" role="tablist">
@@ -76,26 +76,28 @@
             <div class="gst-card">
                 <h2>Company GST registration (this branch)</h2>
                 @forelse($registrations as $row)
-                    <p class="mb-1">{{ $row->gstin }} · {{ $row->legal_name }} · {{ $states[$row->state_code] ?? $row->state_code }} · {{ ucfirst($row->registration_type) }}
+                    <p class="mb-1">{{ $row->gstin ?: 'No GSTIN' }} · {{ $row->legal_name }} · {{ $states[$row->state_code] ?? $row->state_code }} · {{ ucfirst($row->registration_type) }}
                         <span class="gst-muted">({{ $row->effective_from }} — {{ $row->effective_to ?: 'current' }})</span></p>
                 @empty
-                    <p class="gst-muted">No GSTIN yet. Until you add one, bills use the old tax list without GST.</p>
+                    <p class="gst-muted">Not set up yet. Enter your GSTIN, or choose type Unregistered if the business has no GSTIN.</p>
                 @endforelse
                 @if($canManage)
                 <form method="POST" action="{{ url('/settings/gst/registration') }}" class="gst-form mt-2" id="gst-registration-form">@csrf<input type="hidden" name="tab" value="registration">
                     <div class="row">
-                        <div class="col-md-3"><label>GSTIN *</label><input name="gstin" id="reg-gstin" maxlength="15" required value="{{ old('gstin', $registration->gstin ?? '') }}"></div>
+                        @php $regType = old('registration_type', $registration->registration_type ?? 'regular'); @endphp
+                        <div class="col-md-3"><label for="reg-gstin">GSTIN <span id="reg-gstin-star">*</span></label><input name="gstin" id="reg-gstin" maxlength="15" @required($regType !== 'unregistered') @disabled($regType === 'unregistered') value="{{ old('gstin', $registration->gstin ?? '') }}"></div>
                         <div class="col-md-3"><label>Legal name *</label><input name="legal_name" id="reg-legal" maxlength="191" required value="{{ old('legal_name', $registration->legal_name ?? $company->legal_name) }}"></div>
                         <div class="col-md-2"><label>Trade name</label><input name="trade_name" id="reg-trade" maxlength="191" value="{{ old('trade_name', $registration->trade_name ?? $company->trade_name) }}"></div>
-                        <div class="col-md-2"><label>Type *</label><select name="registration_type">@foreach(['regular' => 'Regular', 'composition' => 'Composition'] as $value => $label)<option value="{{ $value }}" @selected(old('registration_type', $registration->registration_type ?? 'regular') === $value)>{{ $label }}</option>@endforeach</select></div>
+                        <div class="col-md-2"><label for="reg-type">Type *</label><select name="registration_type" id="reg-type">@foreach(['regular' => 'Regular', 'composition' => 'Composition', 'unregistered' => 'Unregistered (no GSTIN)'] as $value => $label)<option value="{{ $value }}" @selected($regType === $value)>{{ $label }}</option>@endforeach</select></div>
                         <div class="col-md-2"><label>Effective from *</label><input type="date" name="effective_from" required value="{{ old('effective_from', $registration->effective_from ?? now()->startOfYear()->toDateString()) }}"></div>
-                        <div class="col-md-10"><label>Registered address *</label><textarea name="address" id="reg-address" maxlength="1000" required>{{ old('address', $registration->address ?? $companyAddress) }}</textarea></div>
+                        <div class="col-md-8"><label for="reg-address">Registered address *</label><textarea name="address" id="reg-address" maxlength="1000" required>{{ old('address', $registration->address ?? $companyAddress) }}</textarea></div>
+                        <div class="col-md-2"><label for="reg-state">State *</label><select name="state_code" id="reg-state" @disabled($regType !== 'unregistered')><option value="">Choose…</option>@foreach($states as $code => $name)<option value="{{ $code }}" @selected(old('state_code', $registration->state_code ?? $company->state_code) == $code)>{{ $name }}</option>@endforeach</select></div>
                         <div class="col-md-2 d-flex align-items-end flex-column" style="gap:6px;">
                             <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="reg-lookup">Fetch from GSTIN</button>
                             <button type="submit" class="btn btn-primary btn-sm w-100">Save registration</button>
                         </div>
                     </div>
-                    <p class="gst-muted mb-0" id="reg-lookup-status">Same GSTIN updates details. A new GSTIN closes the old one the day before its start date.</p>
+                    <p class="gst-muted mb-0" id="reg-lookup-status">Same GSTIN updates details. A new GSTIN closes the old one the day before its start date. Unregistered: bills charge no GST and purchase GST goes into cost (no input credit). The state comes from the GSTIN, or from State when unregistered.</p>
                 </form>
                 @endif
             </div>
@@ -295,6 +297,17 @@
     var hash = (location.hash || '').replace('#', '') || new URLSearchParams(location.search).get('tab');
     if (hash && $('.gst-tabs a[href="#' + hash + '"]').length) $('.gst-tabs a[href="#' + hash + '"]').tab('show');
     $('.gst-tabs a').on('shown.bs.tab', function () { history.replaceState(null, '', '#' + this.getAttribute('href').slice(1)); });
+
+    // Unregistered has no GSTIN; its state is chosen. Other types take the state from the GSTIN.
+    $('#reg-type').on('change', function () {
+        var unregistered = this.value === 'unregistered';
+        $('#reg-gstin').prop({ required: !unregistered, disabled: unregistered });
+        if (unregistered) $('#reg-gstin').val('');
+        $('#reg-gstin-star').toggle(!unregistered);
+        $('#reg-lookup').prop('disabled', unregistered);
+        $('#reg-state').prop({ disabled: !unregistered, required: unregistered });
+        if ($.fn.selectpicker) $('#reg-state').selectpicker('refresh');
+    }).trigger('change');
 
     $('#reg-lookup').on('click', function () {
         var gstin = ($('#reg-gstin').val() || '').trim().toUpperCase();

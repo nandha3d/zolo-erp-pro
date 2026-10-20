@@ -136,6 +136,8 @@
             <li><a class="nav-link" href="{{ route('accounting.cash-book') }}"><i class="dripicons-wallet"></i> Cash Book</a></li>
         </ul>
         <div class="comm-actions">
+            <a href="{{ route('accounting.collections') }}" class="btn btn-outline-primary btn-sm">Collections</a>
+            <a href="{{ request()->fullUrlWithQuery(['export' => 'csv']) }}" class="btn btn-outline-secondary btn-sm">Export all filtered rows</a>
             <button onclick="window.print();" class="btn btn-outline-secondary btn-sm" style="height:28px; font-size:11px;">
                 <i class="dripicons-print"></i> Print Report
             </button>
@@ -163,7 +165,20 @@
                     </button>
                 </div>
             </div>
+            <div class="row mt-2">
+                @foreach(['party_id' => 'Party', 'agent_id' => 'Agent (invoice/current)', 'area_id' => 'Current area', 'salesman_id' => 'Invoice salesman', 'ledger_group_id' => 'Ledger parent group'] as $field => $label)
+                    <div class="col-md-2"><label for="ageing-{{ $field }}">{{ $label }}</label><select class="form-control form-control-sm" name="{{ $field }}" id="ageing-{{ $field }}"><option value="">All</option>@foreach($options[$field] as $option)<option value="{{ $option->id }}" @selected((string)request($field) === (string)$option->id)>{{ $option->name }}</option>@endforeach</select></div>
+                @endforeach
+                <div class="col-md-2"><label for="ageing-cutoffs">Bucket cutoffs (days)</label><input class="form-control form-control-sm" id="ageing-cutoffs" value="{{ implode(',', $report['bucket_cutoffs']) }}" pattern="[0-9]+(,[0-9]+)*" required></div>
+                <span id="ageing-bucket-inputs">@foreach($report['bucket_cutoffs'] as $cutoff)<input type="hidden" name="bucket_cutoffs[]" value="{{ $cutoff }}">@endforeach</span>
+            </div>
         </form>
+    </div>
+    <div class="alert {{ $report['reconciliation']['is_reconciled'] ? 'alert-success' : 'alert-warning' }} py-2">
+        <strong>Branch reconciliation:</strong> Control {{ $report['reconciliation']['control_balance'] }};
+        open items including credits {{ $report['reconciliation']['open_item_balance'] }};
+        difference {{ $report['reconciliation']['difference'] }}. Filtered net {{ $report['reconciliation']['filtered_balance'] }}.
+        <small class="d-block">{{ $report['reconciliation']['scope'] }} {{ $report['metadata_basis'] }}</small>
     </div>
 
     <!-- KPI Summary Strip -->
@@ -191,17 +206,20 @@
                     <tr>
                         <th scope="col">Document / Bill</th>
                         <th scope="col">Party</th>
+                        <th scope="col">Document Date</th>
                         <th scope="col">Due Date</th>
                         <th scope="col" class="text-center">Days Overdue</th>
                         <th scope="col">Aging Bucket</th>
                         <th scope="col" class="text-right">Open Amount</th>
+                        <th scope="col">Agent / Area / Salesman / Group</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($report['rows'] as $row)
                         <tr>
                             <td><span class="font-weight-bold font-monospace text-primary">{{ $row['item']->document_no }}</span></td>
-                            <td class="font-weight-600">{{ $row['item']->party_type }} #{{ $row['item']->party_id }}</td>
+                            <td class="font-weight-600">{{ $row['party_name'] }}</td>
+                            <td>{{ $row['document_date'] }}</td>
                             <td>{{ $row['item']->due_date->format('Y-m-d') }}</td>
                             <td class="text-center font-monospace">{{ $row['days'] }}</td>
                             <td>
@@ -212,10 +230,11 @@
                             <td class="text-right font-monospace font-weight-bold" style="color: #0f172a;">
                                 ₹ {{ number_format((float)$row['open_amount'], 2) }}
                             </td>
+                            <td>{{ $row['agent_name'] ?? '—' }} ({{ $row['agent_basis'] }}) / {{ $row['area_name'] ?? '—' }} / {{ $row['salesman_name'] ?? '—' }} / {{ $row['ledger_group_name'] ?? '—' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No open items as of this date.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No open items as of this date.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -223,5 +242,12 @@
         </div>
     </div>
 </section>
+<script>
+document.getElementById('ageing-cutoffs').addEventListener('input', function () {
+    const container = document.getElementById('ageing-bucket-inputs');
+    container.replaceChildren();
+    this.value.split(',').forEach(value => { const input = document.createElement('input'); input.type = 'hidden'; input.name = 'bucket_cutoffs[]'; input.value = value.trim(); container.append(input); });
+});
+</script>
 
 @endsection

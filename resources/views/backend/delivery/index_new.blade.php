@@ -226,7 +226,7 @@
 
     $("ul#sale").siblings('a').attr('aria-expanded','true');
     $("ul#sale").addClass("show");
-    $("ul#sale #delivery-menu").addClass("active");
+    $("ul#sale #dispatch-menu").addClass("active");
 
     var delivery_id = [];
     var user_verified = <?php echo json_encode(config('app.user_verified')) ?>;

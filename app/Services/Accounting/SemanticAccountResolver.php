@@ -19,6 +19,8 @@ class SemanticAccountResolver
         'cogs' => ['cogs', 'expense'], 'tax_output' => ['tax_payable', 'liability'],
         'tax_input' => ['tax_receivable', 'asset'], 'discounts' => ['sales_discount', ['revenue', 'expense']],
         'freight' => ['shipping_income', 'revenue'], 'goods_in_transit' => ['goods_in_transit', 'asset'],
+        'goods_received_not_invoiced' => ['goods_received_not_invoiced', 'liability'],
+        'goods_delivered_not_invoiced' => ['goods_delivered_not_invoiced', 'asset'],
         'expense' => ['operating_expense', 'expense'], 'sales_returns' => ['sales_returns', 'revenue'],
         'purchase_returns' => ['purchase_returns', 'revenue'], 'rounding' => ['rounding', 'expense'],
         'damage' => ['inventory_loss', 'expense'], 'variance' => ['inventory_variance', 'expense'],
@@ -26,6 +28,7 @@ class SemanticAccountResolver
         'output_tax_igst' => ['output_tax_igst', 'liability'], 'input_tax_cgst' => ['input_tax_cgst', 'asset'],
         'input_tax_sgst' => ['input_tax_sgst', 'asset'], 'input_tax_igst' => ['input_tax_igst', 'asset'],
         'output_tax_cess' => ['output_tax_cess', 'liability'], 'input_tax_cess' => ['input_tax_cess', 'asset'],
+        'retained_earnings' => ['retained_earnings', 'equity'], 'opening_balance' => ['opening_balance', 'equity'],
     ];
 
     private const ALIASES = [

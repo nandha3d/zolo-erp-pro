@@ -75,6 +75,11 @@
   align-items: baseline !important;
   gap: 2px !important;
 }
+/* KPI amounts take the card's value size (scaled down by fitKpiValues() when a figure is long) and never clip. */
+.dashboard-counts .zolo-kpi-value .count-number { font-size: inherit !important; line-height: inherit !important; }
+.dashboard-counts .zolo-kpi-value { min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; }
+.dashboard-counts .zolo-kpi-subtext { white-space: nowrap; gap: 6px; }
+.dashboard-counts .zolo-kpi-label { white-space: nowrap; }
 .zolo-kpi-currency {
   font-size: 0.95rem !important;
   font-weight: 600 !important;
@@ -452,7 +457,7 @@
                             <i class="dripicons-cart"></i>
                         </div>
                         <span class="zolo-kpi-badge">
-                            <i class="dripicons-tag"></i> Sales Volume
+                            <i class="dripicons-tag"></i> Sales
                         </span>
                     </div>
                     <div class="zolo-kpi-body">
@@ -521,7 +526,7 @@
                             <x-info title="Operational overhead and direct business expenditures" type="info" />
                         </div>
                         <div class="zolo-kpi-subtext">
-                            <span>Cost Control:</span>
+                            <span>Type:</span>
                             <span class="text-warning font-weight-bold">Direct &amp; SG&amp;A</span>
                         </div>
                     </div>
@@ -536,7 +541,7 @@
                             <i class="dripicons-clock"></i>
                         </div>
                         <span class="zolo-kpi-badge">
-                            <i class="dripicons-warning"></i> Customer Due
+                            <i class="dripicons-warning"></i> Due in
                         </span>
                     </div>
                     <div class="zolo-kpi-body">
@@ -564,7 +569,7 @@
                             <i class="dripicons-calendar"></i>
                         </div>
                         <span class="zolo-kpi-badge">
-                            <i class="dripicons-information"></i> Vendor Due
+                            <i class="dripicons-information"></i> Due out
                         </span>
                     </div>
                     <div class="zolo-kpi-body">
@@ -592,7 +597,7 @@
                             <i class="dripicons-briefcase"></i>
                         </div>
                         <span class="zolo-kpi-badge">
-                            <i class="dripicons-checkmark"></i> Liquid Capital
+                            <i class="dripicons-checkmark"></i> Liquidity
                         </span>
                     </div>
                     <div class="zolo-kpi-body">
@@ -601,12 +606,12 @@
                             <span class="count-number liquid-balance-data">{{ number_format((float) $liquid_balance, $general_setting->decimal, '.', '') }}</span>
                         </div>
                         <div class="zolo-kpi-label">
-                            <span>Cash &amp; Bank Liquidity</span>
+                            <span>Cash &amp; Bank</span>
                             <x-info title="Total available liquidity across all active bank and cash accounts" type="info" />
                         </div>
                         <div class="zolo-kpi-subtext">
                             <span>Inventory Value:</span>
-                            <span class="text-success font-weight-bold">{{ $currency_symbol }}{{ number_format((float)$stock_valuation, 0, '.', ',') }}</span>
+                            <span class="text-success font-weight-bold">{{ $currency_symbol }}<span class="stock-value-data">{{ number_format((float) $stock_valuation, $general_setting->decimal, '.', '') }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -616,6 +621,9 @@
     </div>
 </section>
 
+{{-- Dashboard panels as labelled tabs (app-shell.js steps) so the dashboard fits one screen. --}}
+<div class="dash-panels container-fluid" data-shell-steps>
+<div data-step-title="Cash flow">
 <!-- Visual Financial & Cash Flow Analytics Row -->
 <div class="container-fluid">
     <div class="row">
@@ -691,8 +699,11 @@
     </div>
 </div>
 
+</div>
+
 <!-- Modular Industry Addon Live Pulse Bar -->
 @if(!empty($addon_stats))
+<div data-step-title="Industry addons">
 <div class="container-fluid mt-1 mb-3">
     <div class="row">
         @if(isset($addon_stats['water_tankers']) || isset($addon_stats['cans_delivered_today']))
@@ -762,8 +773,10 @@
         @endif
     </div>
 </div>
+</div>
 @endif
 
+<div data-step-title="Transactions &amp; stock">
 <!-- Operational Activity & Inventory Alerts Hub -->
 <div class="container-fluid">
     <div class="row">
@@ -937,7 +950,9 @@
         </div>
     </div>
 </div>
+</div>
 
+<div data-step-title="Yearly &amp; best sellers">
 <!-- Annual Commercial Growth Section (Collapsible / Compact) -->
 <div class="container-fluid mb-4">
     <div class="row">
@@ -1013,6 +1028,8 @@
             </div>
         </div>
     </div>
+</div>
+</div>
 </div>
 
 @endsection
@@ -1192,17 +1209,43 @@
     function dashboardFilter(data) {
         // data array:
         // [0: revenue, 1: return, 2: profit, 3: purchase_return, 4: total_sale, 5: invoice_due, 6: purchase - return, 7: purchase_due, 8: expense]
-        $('.revenue-data').hide().html(parseFloat(data[0] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.return-data').hide().html(parseFloat(data[1] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.profit-data').hide().html(parseFloat(data[2] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.purchase_return-data').hide().html(parseFloat(data[3] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.total_sale-data').hide().html(parseFloat(data[4] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.invoice-due-data').hide().html(parseFloat(data[5] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.total_purchase-data').hide().html(parseFloat(data[6] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        $('.purchase_due-data').hide().html(parseFloat(data[7] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        if (data[8] !== undefined) {
-            $('.expense-data').hide().html(parseFloat(data[8] ?? 0).toFixed({{ $general_setting->decimal }})).fadeIn(300);
-        }
+        var fields = ['revenue', 'return', 'profit', 'purchase_return', 'total_sale', 'invoice-due', 'total_purchase', 'purchase_due', 'expense'];
+        fields.forEach(function(name, i) {
+            if (data[i] !== undefined) showKpi('.' + name + '-data', data[i]);
+        });
+        fitKpiValues();
     }
+
+    // KPI amounts: grouped in the company currency's style; from one lakh (1,00,000) up they show compact
+    // (1.33L, 2.4Cr) so they fit the card, and the exact figure is the hover title.
+    var kpiDecimals = {{ (int) $general_setting->decimal }};
+    var kpiSymbol = @json($currency_symbol);
+    var kpiLocale = kpiSymbol === '₹' ? 'en-IN' : 'en';
+    function setKpi(el, value) {
+        var n = Number(value) || 0;
+        var full = n.toLocaleString(kpiLocale, {minimumFractionDigits: kpiDecimals, maximumFractionDigits: kpiDecimals});
+        el.textContent = Math.abs(n) >= 100000
+            ? new Intl.NumberFormat(kpiLocale, {notation: 'compact', minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n) : full;
+        el.title = kpiSymbol + full;
+    }
+    function showKpi(selector, value) {
+        $(selector).each(function() { setKpi(this, value); }).hide().fadeIn(300);
+    }
+    // Long figures shrink the value text instead of being cut off at the card edge.
+    function fitKpiValues() {
+        document.querySelectorAll('.dashboard-counts .zolo-kpi-value').forEach(function(box) {
+            box.style.fontSize = '';
+            var size = parseFloat(getComputedStyle(box).fontSize);
+            while (box.scrollWidth > box.clientWidth && size > 11) {
+                size -= 1;
+                box.style.setProperty('font-size', size + 'px', 'important');
+            }
+        });
+    }
+    $('.dashboard-counts .count-number, .return-data, .purchase_return-data, .stock-value-data').each(function() {
+        setKpi(this, parseFloat(this.textContent));
+    });
+    fitKpiValues();
+    $(window).on('load resize', fitKpiValues);
 </script>
 @endpush

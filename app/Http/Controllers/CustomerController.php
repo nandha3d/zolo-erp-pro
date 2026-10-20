@@ -487,6 +487,11 @@ class CustomerController extends Controller
                 ],
             ]);
         }
+        $request->validate(['opening_balance' => 'nullable|numeric|min:0']);
+        $openingBalance = (float) ($request->opening_balance ?? 0);
+        $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+        $openings = app(\App\Services\Accounting\PartyOpeningBalanceService::class);
+        $openings->assertPostable('customer', $openingBalance, $context);
         $customer_data = $request->all();
 
         $customer_data['is_active'] = true;
@@ -502,7 +507,8 @@ class CustomerController extends Controller
         }
         $customer_data['name'] = $customer_data['customer_name'];
         if(isset($request->both)) {
-            Supplier::create($customer_data);
+            // The due entered here is the customer's; the supplier copy starts clear.
+            Supplier::create(['opening_balance' => 0] + $customer_data);
             $prefixMessage .= ' and Supplier';
         }
 
@@ -525,27 +531,12 @@ class CustomerController extends Controller
         // else
         //     $message .= ' created successfully!';
 
-        $lims_customer_data = Customer::create($customer_data);
-
-        // create dummy sale if customer has opening balance (due)
-        if(isset($customer_data['opening_balance']) && $customer_data['opening_balance'] > 0) {
-            $lims_sale_data = new Sale();
-            $lims_sale_data->reference_no = 'cob-' . date("Ymd") . '-'. date("his"); //customer opening balance
-            $lims_sale_data->customer_id = $lims_customer_data->id;
-            $lims_sale_data->user_id = Auth::id();
-            $lims_sale_data->warehouse_id = 1;
-            $lims_sale_data->item = 0;
-            $lims_sale_data->total_qty = 0;
-            $lims_sale_data->total_discount = 0;
-            $lims_sale_data->total_tax = 0;
-            $lims_sale_data->total_price = $customer_data['opening_balance'];
-            $lims_sale_data->grand_total = $customer_data['opening_balance'];
-            $lims_sale_data->sale_status = 1; // completed
-            $lims_sale_data->payment_status = 1; // pending
-            $lims_sale_data->sale_type = 'Opening balance';
-            $lims_sale_data->created_at = '1970-01-01 12:00:00';
-            $lims_sale_data->save();
-        }
+        // The opening due posts as an open item on Debtors, dated the financial year start.
+        $lims_customer_data = DB::transaction(function () use ($customer_data, $openingBalance, $openings, $context) {
+            $customer = Customer::create($customer_data);
+            $openings->post($customer, $openingBalance, $context);
+            return $customer;
+        });
 
         //inserting data for custom fields
         $custom_field_data = [];

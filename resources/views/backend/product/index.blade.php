@@ -13,27 +13,26 @@
 <x-error-message key="not_permitted" />
 <x-error-message key="message" />
 
-<section>
-    <div class="container-fluid">
-        
-        @can('products-add')
-            <a href="{{route('products.create')}}" class="btn btn-info add-product-btn btn-icon"><i class="dripicons-plus"></i> {{__('db.add_product')}}</a>
-        @endcan
-        @can('products-import')
-            <a href="#" data-toggle="modal" data-target="#importProduct" class="btn btn-primary add-product-btn btn-icon"><i class="dripicons-copy"></i> {{__('db.import_product')}}</a>
-        @endcan
-
-        @can('products-edit')
-            @if(in_array('ecommerce',explode(',',$general_setting->modules)) )
-                <a href="{{route('product.allProductInStock')}}" class="btn btn-dark add-product-btn btn-icon"><i class="dripicons-stack"></i> {{__('db.All Product In Stock')}}</a>
-                <a href="{{route('product.showAllProductOnline')}}" class="btn btn-dark add-product-btn btn-icon"><i class="dripicons-wifi"></i> {{__('db.Show All Product Online')}}</a>
-            @endif
-        @endcan
-        <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
-            <i class="dripicons-experiment"></i> {{ __('db.Filter Products') }}
-        </button>
-
-        <div class="card mt-3 mb-2">
+<x-product-command-bar active="products">
+    @can('products-add')
+        <a href="{{route('products.create')}}" class="btn btn-info add-product-btn btn-icon"><i class="dripicons-plus"></i> {{__('db.add_product')}}</a>
+    @endcan
+    @can('products-import')
+        <a href="{{ route('products.import.index') }}" class="btn btn-secondary add-product-btn btn-icon"><i class="dripicons-copy"></i> Reviewed import</a>
+    @endcan
+    @can('products-edit')
+        @if(in_array('ecommerce',explode(',',$general_setting->modules)) )
+            <a href="{{route('product.allProductInStock')}}" class="btn btn-secondary add-product-btn btn-icon"><i class="dripicons-stack"></i> {{__('db.All Product In Stock')}}</a>
+            <a href="{{route('product.showAllProductOnline')}}" class="btn btn-secondary add-product-btn btn-icon"><i class="dripicons-wifi"></i> {{__('db.Show All Product Online')}}</a>
+        @endif
+    @endcan
+    <button type="button" class="btn btn-secondary btn-icon" id="toggle-filter">
+        <i class="dripicons-experiment"></i> {{ __('db.Filter Products') }}
+    </button>
+</x-product-command-bar>
+<section class="product-workspace-view">
+    <div class="container-fluid px-0">
+        <div class="card mb-2 product-filter-card">
             <div class="card-body" id="filter-card" style="display: none;">
                 <div class="row">
                     <div class="col-md-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
@@ -157,40 +156,6 @@
         </table>
     </div>
 </section>
-
-<div id="importProduct" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
-      <div class="modal-content">
-        {!! Form::open(['route' => 'product.import', 'method' => 'post', 'files' => true]) !!}
-        <div class="modal-header">
-          <h5 id="exampleModalLabel" class="modal-title">Import Product</h5>
-          <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-        </div>
-        <div class="modal-body">
-          <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-           <p>{{__('db.The correct column order is')}} (image, name*, code*, type*, brand, category*, unit_code*, cost*, profit_margin(%), price, product_details, variant_name, item_code, additional_price) {{__('db.and you must follow this')}}.</p>
-           <p>If you provide profit_margin, then price will be calculated based on profit_margin: <strong>price = cost * (1 + profit_margin / 100)</strong></p>
-           <p>{{__('db.To display Image it must be stored in')}} images/product {{__('db.directory')}}. {{__('db.Image name must be same as product name')}}</p>
-           <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>{{__('db.Upload CSV File')}} *</label>
-                        {{Form::file('file', array('class' => 'form-control','required'))}}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label> {{__('db.Sample File')}}</label>
-                        <a href="sample_file/sample_products.csv" class="btn btn-info btn-block btn-md"><i class="dripicons-download"></i>  {{__('db.Download')}}</a>
-                    </div>
-                </div>
-           </div>
-            {{Form::submit('Submit', ['class' => 'btn btn-primary'])}}
-        </div>
-        {!! Form::close() !!}
-      </div>
-    </div>
-</div>
 
 <div id="product-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">

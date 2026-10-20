@@ -4,7 +4,7 @@ $activeCompany = $companyContext ? \App\Models\Company::with('group')->find($com
 $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_years')->where('id', $companyContext->financialYearId)->value('name') : null;
 @endphp
 <!DOCTYPE html>
-<html dir="@if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl){{'rtl'}}@endif">
+<html dir="@if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl){{'rtl'}}@endif" @if(Route::currentRouteName() != 'sale.pos') class="app-shell" @endif>
 
 <head>
   <meta charset="utf-8">
@@ -66,76 +66,76 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     }
   </style>
   <!-- Bootstrap CSS-->
-  <link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
-  <link rel="preload" href="<?php echo asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="stylesheet" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('vendor/bootstrap/css/bootstrap-datepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="<?php echo asset('vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-datepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-select.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-select.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- Font Awesome CSS-->
-  <link rel="preload" href="<?php echo asset('vendor/font-awesome/css/font-awesome.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/font-awesome/css/font-awesome.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/font-awesome/css/font-awesome.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/font-awesome/css/font-awesome.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- Drip icon font-->
-  <link rel="preload" href="<?php echo asset('vendor/dripicons/webfont.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/dripicons/webfont.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/dripicons/webfont.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/dripicons/webfont.css') ?>" rel="stylesheet">
   </noscript>
 
   <!-- jQuery Circle-->
-  <link rel="preload" href="<?php echo asset('css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- Custom Scrollbar-->
-  <link rel="preload" href="<?php echo asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" rel="stylesheet">
   </noscript>
 
   @if(Route::currentRouteName() != '/')
   <!-- date range stylesheet-->
-  <link rel="preload" href="<?php echo asset('vendor/daterange/css/daterangepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/daterange/css/daterangepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/daterange/css/daterangepicker.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/daterange/css/daterangepicker.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- table sorter stylesheet-->
-  <link rel="preload" href="<?php echo asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ versioned_asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ versioned_asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
   @endif
 
-  <link rel="stylesheet" href="<?php echo asset('css/style.default.css') ?>" id="theme-stylesheet" type="text/css">
-  <link rel="stylesheet" href="<?php echo asset('css/dropzone.css') ?>">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/style.default.css') ?>" id="theme-stylesheet" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/dropzone.css') ?>">
   <!-- Custom stylesheet - for your changes-->
-  <link rel="stylesheet" href="<?php echo asset('css/custom-' . $general_setting->theme) ?>" type="text/css" id="custom-style">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/custom-' . $general_setting->theme) ?>" type="text/css" id="custom-style">
 
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
   <!-- RTL css -->
-  <link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap-rtl.min.css') ?>" type="text/css">
-  <link rel="stylesheet" href="<?php echo asset('css/custom-rtl.css') ?>" type="text/css" id="custom-style">
+  <link rel="stylesheet" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-rtl.min.css') ?>" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/custom-rtl.css') ?>" type="text/css" id="custom-style">
   @endif
   @else
   <link rel="icon" type="image/png" href="{{url('logo', $general_setting->favicon ?? $general_setting->site_logo)}}" />
@@ -145,79 +145,79 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <meta name="robots" content="all,follow">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <!-- Bootstrap CSS-->
-  <link rel="stylesheet" href="<?php echo asset('../../vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
-  <link rel="preload" href="<?php echo asset('../../vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="stylesheet" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-datepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-datepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-datepicker.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-datepicker.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('../../vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/jquery-timepicker/jquery.timepicker.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('../../vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap/css/awesome-bootstrap-checkbox.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-select.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-select.min.css') . '?v=1.13.18' ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-select.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- Font Awesome CSS-->
-  <link rel="preload" href="<?php echo asset('../../vendor/font-awesome/css/font-awesome.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/font-awesome/css/font-awesome.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/font-awesome/css/font-awesome.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/font-awesome/css/font-awesome.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- Drip icon font-->
-  <link rel="preload" href="<?php echo asset('../../vendor/dripicons/webfont.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/dripicons/webfont.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/dripicons/webfont.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/dripicons/webfont.css') ?>" rel="stylesheet">
   </noscript>
 
   <!-- jQuery Circle-->
-  <link rel="preload" href="<?php echo asset('../../css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('css/grasp_mobile_progress_circle-1.0.0.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- Custom Scrollbar-->
-  <link rel="preload" href="<?php echo asset('../../vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') ?>" rel="stylesheet">
   </noscript>
 
   @if(Route::currentRouteName() != '/')
   <!-- date range stylesheet-->
-  <link rel="preload" href="<?php echo asset('../../vendor/daterange/css/daterangepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/daterange/css/daterangepicker.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/daterange/css/daterangepicker.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/daterange/css/daterangepicker.min.css') ?>" rel="stylesheet">
   </noscript>
   <!-- table sorter stylesheet-->
-  <link rel="preload" href="<?php echo asset('../../vendor/datatable/dataTables.bootstrap4.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="<?php echo versioned_asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="<?php echo asset('../../vendor/datatable/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
+    <link href="<?php echo versioned_asset('vendor/datatable/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ versioned_asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="{{ asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ versioned_asset('vendor/datatable/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
-  <link rel="preload" href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript>
-    <link href="{{ asset('vendor/datatable/responsive.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.css') }}" rel="stylesheet">
   </noscript>
   @endif
 
-  <link rel="stylesheet" href="<?php echo asset('../../css/style.default.css') ?>" id="theme-stylesheet" type="text/css">
-  <link rel="stylesheet" href="<?php echo asset('../../css/dropzone.css') ?>">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/style.default.css') ?>" id="theme-stylesheet" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/dropzone.css') ?>">
   <!-- Custom stylesheet - for your changes-->
-  <link rel="stylesheet" href="<?php echo asset('../../css/custom-' . $general_setting->theme) ?>" type="text/css" id="custom-style">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/custom-' . $general_setting->theme) ?>" type="text/css" id="custom-style">
 
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
   <!-- RTL css -->
-  <link rel="stylesheet" href="<?php echo asset('../../vendor/bootstrap/css/bootstrap-rtl.min.css') ?>" type="text/css">
-  <link rel="stylesheet" href="<?php echo asset('../../css/custom-rtl.css') ?>" type="text/css" id="custom-style">
+  <link rel="stylesheet" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap-rtl.min.css') ?>" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/custom-rtl.css') ?>" type="text/css" id="custom-style">
   @endif
   @endif
 
@@ -227,20 +227,32 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   @else
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet"></noscript>
   @endif
 
   <!-- zoloERP Design System -->
-  <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css" id="zolo-neo-style">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
+  <!-- One-screen app shell: compact header, viewport-locked page, lists sized to fit -->
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/app-shell.css') ?>" type="text/css">
 
   @stack('css')
+
+  <!-- Sidebar links: fetch the page on hover so the click opens it without waiting on the server.
+       Prefetch requests do not touch the session's previous URL (Laravel skips Sec-Purpose: prefetch). -->
+  <script type="speculationrules">
+  {"prefetch": [{"where": {"and": [
+    {"selector_matches": "nav.side-navbar a[href]"},
+    {"not": {"selector_matches": "[href^='#'], [href^='javascript'], [target], [download], [data-no-prefetch], [href*='logout'], [href*='backup']"}}
+  ]}, "eagerness": "moderate"}]}
+  </script>
 
   <!-- Custom CSS from general settings -->
   {!! $general_setting->custom_css !!}
 </head>
 
 <body class="@if($theme == 'dark')dark-mode dripicons-brightness-low @endif  @if(Route::currentRouteName() == 'sale.pos') pos-page @endif">
-  <div id="loader"></div>
+  <div id="loader" style="display:none" aria-hidden="true"></div>
   <!-- Side Navbar -->
   <nav class="side-navbar d-print-none">
     <script>
@@ -308,7 +320,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
 
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
           @if($activeCompany)
-          <li class="nav-item company-switch"><a class="company-switch-link" href="{{ route('company.select', ['manage' => 1]) }}" title="Switch company" aria-label="Switch company: {{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
+          <li class="nav-item company-switch"><a class="company-switch-link" href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" title="Switch company" aria-label="Switch company: {{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
             <span class="company-switch-mark" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
             @if($activeCompany->group)<span class="company-switch-group">{{ $activeCompany->group->name }}</span>@endif
             <span class="company-switch-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>
@@ -562,7 +574,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     @endif
 
 
-    <div style="display:none" id="content" class="animate-bottom">
+    <div id="content">
       @yield('content')
     </div>
 
@@ -629,6 +641,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
       </div>
     </div>
     <!-- end notification modal -->
+    @endunless
 
     <!-- Category Modal -->
     <div id="category-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
@@ -646,6 +659,10 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                 <label>{{ __('name') }} *</label>
                 {{Form::text('name',null,array('required' => 'required', 'class' => 'form-control', 'placeholder' => __('db.Type category name')))}}
                 <x-validation-error fieldName="name" />
+              </div>
+              <div class="col-md-6 form-group">
+                <label for="category-default-hsn">Item group default HSN / SAC</label>
+                <input id="category-default-hsn" name="default_hsn_code" class="form-control" maxlength="8" inputmode="numeric" placeholder="Optional creation default">
               </div>
               <div class="col-md-6 form-group">
                 <label>{{ __('Image') }}</label>
@@ -714,6 +731,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     <!-- Category Modal -->
 
     <!-- expense modal -->
+    @unless($companyContext)
     <div id="expense-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
@@ -1258,117 +1276,117 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     @endunless
   </div>
   @if(!config('database.connections.zoloerp_landlord'))
-  <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery-ui.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/jquery/bootstrap-datepicker.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/jquery/jquery.timepicker.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/popper.js/umd/popper.min.js') ?>">
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery-ui.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/bootstrap-datepicker.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery.timepicker.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/popper.js/umd/popper.min.js') ?>">
   </script>
-  <script type="text/javascript" src="<?php echo asset('vendor/bootstrap/js/bootstrap.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/bootstrap-toggle/js/bootstrap-toggle.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/bootstrap/js/bootstrap-select.min.js') . '?v=1.13.18' ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/bootstrap/js/bootstrap.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/bootstrap-toggle/js/bootstrap-toggle.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/bootstrap/js/bootstrap-select.min.js') ?>"></script>
   @if(Route::currentRouteName() == 'sale.pos' || View::hasSection('virtual-keyboard'))
-  <script type="text/javascript" src="<?php echo asset('vendor/keyboard/js/jquery.keyboard.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/keyboard/js/jquery.keyboard.extension-autocomplete.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/keyboard/js/jquery.keyboard.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/keyboard/js/jquery.keyboard.extension-autocomplete.js') ?>"></script>
   @endif
-  <script type="text/javascript" src="<?php echo asset('js/grasp_mobile_progress_circle-1.0.0.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/jquery.cookie/jquery.cookie.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/grasp_mobile_progress_circle-1.0.0.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery.cookie/jquery.cookie.js') ?>"></script>
   @hasSection('charts')
-  <script type="text/javascript" src="<?php echo asset('vendor/chart.js/Chart.min.js') ?>"></script>
-  <script type="text/javascript" src="{{ asset('js/charts-custom.js') }}?v={{ filemtime(public_path('js/charts-custom.js')) }}"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/chart.js/Chart.min.js') ?>"></script>
+  <script type="text/javascript" src="{{ versioned_asset('js/charts-custom.js') }}"></script>
   @endif
-  <script type="text/javascript" src="<?php echo asset('vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
-  <script type="text/javascript" src="<?php echo asset('js/front_rtl.js') . '?v=' . (file_exists(public_path('js/front_rtl.js')) ? filemtime(public_path('js/front_rtl.js')) : time()) ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/front_rtl.js') ?>"></script>
   @else
-  <script type="text/javascript" src="<?php echo asset('js/front.js') . '?v=' . (file_exists(public_path('js/front.js')) ? filemtime(public_path('js/front.js')) : time()) ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/front.js') ?>"></script>
   @endif
 
   @if(Route::currentRouteName() != '/')
-  <script type="text/javascript" src="<?php echo asset('vendor/daterange/js/moment.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/daterange/js/knockout-3.4.2.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/daterange/js/daterangepicker.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/daterange/js/moment.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/daterange/js/knockout-3.4.2.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/daterange/js/daterangepicker.min.js') ?>"></script>
   @hasSection('rich-editor')
-  <script type="text/javascript" src="<?php echo asset('vendor/tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/tinymce/js/tinymce/tinymce.min.js') ?>"></script>
   @endif
   @hasSection('image-upload')
-  <script type="text/javascript" src="<?php echo asset('js/dropzone.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/dropzone.js') ?>"></script>
   @endif
 
   <!-- table sorter js-->
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/jquery.dataTables.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/dataTables.bootstrap4.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/dataTables.buttons.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.bootstrap4.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.colVis.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.html5.min.js') ?>"></script>
-  <script src="{{ asset('js/table-exports.js') }}?v={{ filemtime(public_path('js/table-exports.js')) }}" data-base="{{ asset('vendor/datatable') }}" data-arabic="{{ Config::get('app.locale') == 'ar' ? '1' : '0' }}"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/buttons.printnew.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/jquery.dataTables.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/dataTables.bootstrap4.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/dataTables.buttons.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.bootstrap4.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.colVis.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.html5.min.js') ?>"></script>
+  <script src="{{ versioned_asset('js/table-exports.js') }}" data-base="{{ asset('vendor/datatable') }}" data-arabic="{{ Config::get('app.locale') == 'ar' ? '1' : '0' }}"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.printnew.js') ?>"></script>
 
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/sum().js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('vendor/datatable/dataTables.checkboxes.min.js') ?>"></script>
-  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
-  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
-  <script type="text/javascript" src="{{ asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/sum().js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/dataTables.checkboxes.min.js') ?>"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
   @endif
   @else
-  <script type="text/javascript" src="<?php echo asset('../../vendor/jquery/jquery.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/jquery/jquery-ui.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/jquery/bootstrap-datepicker.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/jquery/jquery.timepicker.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/popper.js/umd/popper.min.js') ?>">
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery-ui.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/bootstrap-datepicker.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery.timepicker.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/popper.js/umd/popper.min.js') ?>">
   </script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap/js/bootstrap.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap-toggle/js/bootstrap-toggle.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/bootstrap/js/bootstrap-select.min.js') . '?v=1.13.18' ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/bootstrap/js/bootstrap.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/bootstrap-toggle/js/bootstrap-toggle.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/bootstrap/js/bootstrap-select.min.js') ?>"></script>
   @if(Route::currentRouteName() == 'sale.pos' || View::hasSection('virtual-keyboard'))
-  <script type="text/javascript" src="{{ asset('vendor/keyboard/js/jquery.keyboard.js') }}"></script>
-  <script type="text/javascript" src="{{ asset('vendor/keyboard/js/jquery.keyboard.extension-autocomplete.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/keyboard/js/jquery.keyboard.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/keyboard/js/jquery.keyboard.extension-autocomplete.js') }}"></script>
   @endif
 
-  <script type="text/javascript" src="<?php echo asset('../../js/grasp_mobile_progress_circle-1.0.0.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/jquery.cookie/jquery.cookie.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/grasp_mobile_progress_circle-1.0.0.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery.cookie/jquery.cookie.js') ?>"></script>
   @hasSection('charts')
-  <script type="text/javascript" src="<?php echo asset('../../vendor/chart.js/Chart.min.js') ?>"></script>
-  <script type="text/javascript" src="{{ asset('js/charts-custom.js') }}?v={{ filemtime(public_path('js/charts-custom.js')) }}"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/chart.js/Chart.min.js') ?>"></script>
+  <script type="text/javascript" src="{{ versioned_asset('js/charts-custom.js') }}"></script>
   @endif
-  <script type="text/javascript" src="<?php echo asset('../../vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery-validation/jquery.validate.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') ?>"></script>
   @if( Config::get('app.locale') == 'ar' || $general_setting->is_rtl)
-  <script type="text/javascript" src="<?php echo asset('../../js/front_rtl.js') . '?v=' . (file_exists(public_path('js/front_rtl.js')) ? filemtime(public_path('js/front_rtl.js')) : time()) ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/front_rtl.js') ?>"></script>
   @else
-  <script type="text/javascript" src="<?php echo asset('../../js/front.js') . '?v=' . (file_exists(public_path('js/front.js')) ? filemtime(public_path('js/front.js')) : time()) ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/front.js') ?>"></script>
   @endif
 
   @if(Route::currentRouteName() != '/')
-  <script type="text/javascript" src="<?php echo asset('../../vendor/daterange/js/moment.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/daterange/js/knockout-3.4.2.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/daterange/js/daterangepicker.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/daterange/js/moment.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/daterange/js/knockout-3.4.2.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/daterange/js/daterangepicker.min.js') ?>"></script>
   @hasSection('rich-editor')
-  <script type="text/javascript" src="<?php echo asset('../../vendor/tinymce/js/tinymce/tinymce.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/tinymce/js/tinymce/tinymce.min.js') ?>"></script>
   @endif
   @hasSection('image-upload')
-  <script type="text/javascript" src="<?php echo asset('../../js/dropzone.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/dropzone.js') ?>"></script>
   @endif
 
   <!-- table sorter js-->
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/jquery.dataTables.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/dataTables.bootstrap4.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/dataTables.buttons.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.bootstrap4.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.colVis.min.js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.html5.min.js') ?>"></script>
-  <script src="{{ asset('js/table-exports.js') }}?v={{ filemtime(public_path('js/table-exports.js')) }}" data-base="{{ asset('vendor/datatable') }}" data-arabic="{{ Config::get('app.locale') == 'ar' ? '1' : '0' }}"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/buttons.printnew.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/jquery.dataTables.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/dataTables.bootstrap4.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/dataTables.buttons.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.bootstrap4.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.colVis.min.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.html5.min.js') ?>"></script>
+  <script src="{{ versioned_asset('js/table-exports.js') }}" data-base="{{ asset('vendor/datatable') }}" data-arabic="{{ Config::get('app.locale') == 'ar' ? '1' : '0' }}"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/buttons.printnew.js') ?>"></script>
 
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/sum().js') ?>"></script>
-  <script type="text/javascript" src="<?php echo asset('../../vendor/datatable/dataTables.checkboxes.min.js') ?>"></script>
-  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
-  <script type="text/javascript" src="{{ asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
-  <script type="text/javascript" src="{{ asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/sum().js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('vendor/datatable/dataTables.checkboxes.min.js') ?>"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
 
-  <script type="text/javascript" src="{{ asset('js/barcode-qrcode-scanner_plugin.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('js/barcode-qrcode-scanner_plugin.js') }}"></script>
 
   @endif
   @endif
@@ -1776,7 +1794,8 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     });
 
   </script>
-  <script type="text/javascript" src="<?php echo asset('js/sidebar-state.js') . '?v=' . filemtime(public_path('js/sidebar-state.js')) ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/sidebar-state.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/app-shell.js') ?>"></script>
 </body>
 
 </html>

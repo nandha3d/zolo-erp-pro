@@ -10,7 +10,7 @@ class WorkspaceNavigation
     public function items(CompanyContext $context, int $actor): array
     {
         $items = [];
-        foreach ([
+        $definitions = [
             ['Sales', '/sales?new=1', 'core.sales', 'sales-add', 'commercial.enabled'],
             ['Purchases', '/purchases?new=1', 'core.purchases', 'purchases-add', 'commercial.enabled'],
             ['Inventory', '/operations/stock', 'core.inventory', 'products-index', 'operations.enabled'],
@@ -19,9 +19,11 @@ class WorkspaceNavigation
             ['Job Work', '/operations/job-work', 'operations.job_work', 'job_work.read', 'operations.enabled'],
             ['Projects', '/operations/projects', 'operations.projects', 'projects.read', 'operations.enabled'],
             ['Reports', '/accounting/trial-balance', 'core.accounting', 'accounting.reports.view', null],
-        ] as [$label, $url, $capability, $permission, $gate]) {
+        ];
+        $allowed = app(CommercialPermission::class)->allowed(array_column($definitions, 3), $context, $actor);
+        foreach ($definitions as [$label, $url, $capability, $permission, $gate]) {
             if (($gate === null || config($gate)) && app(CapabilityService::class)->enabled($capability, $context)
-                && app(CommercialPermission::class)->allows($permission, $context, $actor)) {
+                && in_array($permission, $allowed, true)) {
                 $items[] = compact('label', 'url');
             }
         }

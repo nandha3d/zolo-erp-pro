@@ -39,6 +39,12 @@ $(document).ready(function () {
         });
     }
 
+    // Keep dropdown menus inside the screen, not the nearest scrolling card: with the default scrollParent boundary
+    // Popper pushed tall selectpicker menus down over their own field.
+    if ($.fn.dropdown && $.fn.dropdown.Constructor) {
+        $.fn.dropdown.Constructor.Default.boundary = 'viewport';
+    }
+
     //Custom select - Universal anti-clipping container (exclude DataTables and native selects)
     if ($.fn.selectpicker) {
         $.fn.selectpicker.Constructor.DEFAULTS.container = 'body';
@@ -57,7 +63,7 @@ $(document).ready(function () {
     // ------------------------------------------------------ //
 
     if ($(window).outerWidth() > 992) {
-        $("nav.side-navbar,.table-container,.transaction-list,.right-sidebar").mCustomScrollbar({
+        $(".table-container,.transaction-list,.right-sidebar").mCustomScrollbar({
             theme: "light",
             scrollInertia: 200
         });

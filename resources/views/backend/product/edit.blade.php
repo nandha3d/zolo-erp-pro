@@ -21,6 +21,7 @@
 
 <x-success-message key="edit_message" />
 
+<x-product-command-bar active="products"></x-product-command-bar>
 <section class="forms">
     <div class="container-fluid">
         <div class="row">
@@ -34,9 +35,9 @@
 
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        <form id="product-form">
+                        <form id="product-form" data-shell-steps>
                             <input type="hidden" name="id" value="{{$lims_product_data->id}}" />
-                            <div class="row">
+                            <div class="row" data-step-title="Item">
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Product Type')}} * </label>
@@ -257,6 +258,8 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row" data-step-title="Price &amp; tax">
                                 <div id="cost" class="col-md-4 @if(Auth::user()->role_id > 2) d-none @endif">
                                     <div class="form-group">
                                         <label>{{__('db.Product Cost')}} * </label>
@@ -315,6 +318,7 @@
                                         <input type="number" name="alert_quantity" value="{{$lims_product_data->alert_quantity}}" class="form-control" step="any">
                                     </div>
                                 </div>
+                                @include('backend.product.partials.stock-policy', ['product' => $lims_product_data])
                                 @if(\App\Services\Tax\GstSetupService::usesGst())
                                 <input type="hidden" name="tax" value="{{$lims_product_data->tax_id}}">
                                 @include('backend.product.partials.gst-fields', ['product' => $lims_product_data])
@@ -432,6 +436,8 @@
                                         </div>
                                     @endif
                                 @endforeach
+                            </div>
+                            <div class="row" data-step-title="Stock &amp; image">
                                 <div class="col-md-4">
                                     <div class="form-group mt-3">
                                         @if($lims_product_data->featured)
@@ -490,6 +496,8 @@
                                     </div>
                                 </div>
                                 @endif
+                            </div>
+                            <div class="row" data-step-title="Details &amp; options">
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>{{__('db.Product Details')}}</label>

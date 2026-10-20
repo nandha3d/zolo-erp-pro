@@ -2,6 +2,18 @@
 
 use Carbon\Carbon;
 
+/** Public code URLs change when files change, so repeat navigation can use the browser cache. */
+function versioned_asset(string $path): string
+{
+    $url = asset($path);
+    $file = public_path($path);
+    if (preg_match('#^(css|js|vendor|fonts)/.*\.(css|js|woff2?|ttf|eot)$#i', $path) && is_file($file)) {
+        return $url.'?v='.filemtime($file).'-'.filesize($file);
+    }
+
+    return $url;
+}
+
 if (!function_exists('normalize_to_sql_datetime')) {
     function normalize_to_sql_datetime($input, $useCurrentTime = false)
     {

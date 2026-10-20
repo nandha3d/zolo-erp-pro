@@ -144,4 +144,70 @@ class CompanyGroupDirectoryTest extends CompanyContextTestCase
 
         $this->assertTrue($response->isRedirect(route('company.select')));
     }
+    public function test_admin_edits_company_names_code_address_and_group(): void
+    {
+        Schema::table('currencies', function (Blueprint $table) {
+            $table->decimal('exchange_rate', 12, 4)->nullable();
+            $table->timestamps();
+        });
+        (require database_path('migrations/2026_10_16_000001_add_profile_to_companies.php'))->up();
+        $group =$this->directory->createGroup(1, ['name' => 'MJ Group']);
+        $company = $this->newCompany(1, null, 'Motumo');
+
+        $this->directory->updateCompany(1, $company->id, ['legal_name' => 'Motumo Foods Private Limited',
+            'trade_name' => 'Motumo Foods', 'code' => 'motu', 'company_group_id' => $group->id, 'city' => 'Chennai']);
+
+        $company->refresh();
+        $this->assertSame(['Motumo Foods Private Limited', 'Motumo Foods', 'MOTU', $group->id, 'Chennai'],
+            [$company->legal_name, $company->trade_name, $company->code, $company->company_group_id, $company->city]);
+        $this->assertSame(1, DB::table('company_setup_audits')->where('company_id', $company->id)->where('action', 'company_updated')->count());
+        $this->assertSame('MJ Group', $this->directory->directory(1)['groups'][0]['name']);
+
+        $this->directory->updateGroup(1, $group->id, ['name' => 'MJ Holdings', 'code' => 'mjh']);
+        $this->assertSame(['MJ Holdings', 'MJH'], [$group->fresh()->name, $group->fresh()->code]);
+
+        $this->expectException(AuthorizationException::class);
+        $this->directory->updateCompany(3, $company->id, ['legal_name' => 'Hijack']);
+    }
+
+    public function test_delete_needs_the_code_hides_the_company_and_restore_brings_it_back(): void
+    {
+        $company = $this->newCompany(1, null, 'Motumo');
+        try {
+            $this->directory->deleteCompany(1, $company->id, 'WRONG');
+            $this->fail('A wrong short code must not delete the company.');
+        } catch (\Illuminate\Validation\ValidationException $error) {
+            $this->assertArrayHasKey('confirm_code', $error->errors());
+        }
+        $this->assertSame('active', $company->fresh()->status);
+
+        $this->directory->deleteCompany(1, $company->id, strtolower($company->code));
+        $this->assertSame('deleted', $company->fresh()->status);
+        $this->assertNotContains($company->id, array_column($this->directory->directory(1)['ungrouped'], 'id'));
+        $this->assertSame([$company->id], $this->directory->deletedCompanies(1)->pluck('id')->all());
+        $this->assertSame(1, DB::table('company_branches')->where('company_id', $company->id)->count(), 'Books stay.');
+
+        $this->directory->restoreCompany(1, $company->id);
+        $this->assertSame('active', $company->fresh()->status);
+        $this->assertContains($company->id, array_column($this->directory->directory(1)['ungrouped'], 'id'));
+    }
+
+    public function test_deleting_a_group_keeps_its_companies_as_independent(): void
+    {
+        $group = $this->directory->createGroup(1, ['name' => 'MJ Group']);
+        $company = $this->newCompany(1, $group->id, 'MJ Textiles', 'textile');
+        try {
+            $this->directory->deleteGroup(2, $group->id);
+            $this->fail('Only a group administrator may delete the group.');
+        } catch (AuthorizationException) {
+        }
+
+        $this->directory->deleteGroup(1, $group->id);
+
+        $this->assertSame(0, DB::table('company_groups')->count());
+        $this->assertSame(0, DB::table('company_group_admins')->count());
+        $this->assertNull($company->fresh()->company_group_id);
+        $this->assertSame('active', $company->fresh()->status);
+        $this->assertContains($company->id, array_column($this->directory->directory(1)['ungrouped'], 'id'));
+    }
 }

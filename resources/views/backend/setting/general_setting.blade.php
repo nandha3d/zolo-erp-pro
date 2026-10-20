@@ -13,8 +13,8 @@
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        {!! Form::open(['route' => 'setting.generalStore', 'files' => true, 'method' => 'post']) !!}
-                            <div class="row">
+                        {!! Form::open(['route' => 'setting.generalStore', 'files' => true, 'method' => 'post', 'data-shell-steps' => '']) !!}
+                            <div class="row" data-step-title="Company">
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.System Title')}} *</label>
@@ -73,6 +73,8 @@
                                         <input type="text" name="vat_registration_number" class="form-control" value="@if($lims_general_setting_data){{$lims_general_setting_data->vat_registration_number}}@endif" />
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row" data-step-title="Sales &amp; currency">
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Time Zone')}}</label>
@@ -214,6 +216,8 @@
                                 </div>
 
 
+                            </div>
+                            <div class="row" data-step-title="Formats &amp; defaults">
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Digits after deciaml point')}}*</label>
@@ -359,6 +363,8 @@
                                 </div>
 
 
+                            </div>
+                            <div class="row" data-step-title="Custom CSS &amp; more">
                                 <div class="col-md-12 mt-2">
                                     <div class="form-group">
                                         <label>{{__('db.Font CSS')}} <x-info title="If you you want to change font, you have to put your font css files here" type="info" /></label>

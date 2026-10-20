@@ -52,6 +52,7 @@ class DocumentLayoutFixtureTest extends TestCase
             'challan/create', 'exchange/create'];
         foreach ($pages as $page) {
             $data = $base;
+            if ($page === 'quotation/edit') $data['followUpHistory'] = collect();
             if ($page === 'return_purchase/edit') {
                 $data['lims_return_data'] = (new ReturnPurchase)->forceFill($attributes);
             }

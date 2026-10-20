@@ -20,7 +20,7 @@ final class DocumentEntryAids
     public function forContext(?CompanyContext $context, string $kind): array
     {
         $profile = ['profile' => 'general_trading', 'settings' => ['quantity_scale' => 4]];
-        if ($context && config('operations.enabled') && Schema::hasTable('company_industry_settings')) {
+        if ($context && config('operations.enabled') && app(\App\Support\Database\SchemaCache::class)->hasTable(DB::connection(), 'company_industry_settings')) {
             $profile = app(IndustryProfileService::class)->settings($context);
         }
         $aids = array_fill_keys(self::KEYS, true);

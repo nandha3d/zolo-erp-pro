@@ -49,6 +49,21 @@
     }
 </style>
 
+@if(!empty($side))
+{{-- Opened from the Purchase or Sales command center: stay inside it. --}}
+@section('navbar-center')
+<div class="comm-navbar-center-wrap d-flex align-items-center w-100" style="min-width:0; gap:8px;">
+    <div class="comm-navbar-title-group">
+        <span class="badge comm-title-badge">
+            <i class="{{ $side === 'sale' ? 'dripicons-cart text-primary' : 'dripicons-download text-success' }}"></i> {{ $side === 'sale' ? 'Sales' : 'Purchase' }} Command Center
+        </span>
+        <span style="color:#cbd5e1;font-size:12px;font-weight:600;">/</span>
+        <span class="comm-doc-title">{{ $side === 'sale' ? 'Sales returns (credit notes)' : 'Purchase returns (debit notes)' }}</span>
+    </div>
+</div>
+@endsection
+@include('backend.partials.command-center-nav', ['kind' => $side, 'current' => 'returns', 'withDrafts' => false])
+@else
 <div class="comm-command-bar">
     <div class="comm-title-group">
         <h1><i class="dripicons-swap text-primary"></i> @yield('title', 'Returns & Compliance')</h1>
@@ -64,6 +79,7 @@
         <a href="{{ route('purchases.index') }}" class="btn btn-outline-secondary btn-sm py-1 px-3" style="font-size:11.5px; border-radius:4px;"><i class="dripicons-card"></i> Purchase Bills</a>
     </div>
 </div>
+@endif
 
 <div class="compliance-wrapper">
     @if(session('message'))

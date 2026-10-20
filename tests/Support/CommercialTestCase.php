@@ -80,6 +80,8 @@ abstract class CommercialTestCase extends CompanyErpServiceTestCase
         (require database_path('migrations/2026_10_13_000001_create_optech_modern_master_tables.php'))->up();
         (require database_path('migrations/2026_10_13_000002_add_optech_transport_and_addins_to_sales_table.php'))->up();
         (require database_path('migrations/2026_10_14_000001_add_navigation_metadata_to_sale_drafts.php'))->up();
+        (require database_path('migrations/2026_10_17_000008_create_commercial_order_lifecycle.php'))->up();
+        (require database_path('migrations/2026_10_17_000010_textile_inventory_defaults.php'))->up();
         $this->withoutMiddleware(\App\Http\Middleware\Common::class);
         $this->withoutMiddleware(\App\Http\Middleware\Active::class);
         CommandCenterViewFixture::share();

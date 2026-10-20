@@ -16,9 +16,9 @@ use Illuminate\Validation\ValidationException;
  */
 class DocumentContextResolver
 {
-    public const KEYS = ['project_id', 'exchange_return_id', 'purchase_order_id'];
+    public const KEYS = ['project_id', 'exchange_return_id', 'purchase_order_id', 'sales_order_id'];
     /** Dropping these changes what is posted, so a stale reference blocks the draft instead of being removed. */
-    private const REQUIRED = ['exchange_return_id', 'purchase_order_id'];
+    private const REQUIRED = ['exchange_return_id', 'purchase_order_id', 'sales_order_id'];
 
     /** Strict resolution for a request: a foreign or unusable record is a 404/403, never silently ignored. */
     public function fromRequest(Request $request, string $kind, ?CompanyContext $context, int $actor): array
@@ -59,6 +59,7 @@ class DocumentContextResolver
                     'project_id' => $this->project($id, $kind, $context, $actor),
                     'exchange_return_id' => $this->exchangeReturn($id, $kind, $context),
                     'purchase_order_id' => $this->purchaseOrder($id, $kind, $context),
+                    'sales_order_id' => $this->salesOrder($id, $kind, $context),
                 });
                 $valid[] = $key;
             } catch (\Throwable $error) {
@@ -94,11 +95,19 @@ class DocumentContextResolver
     {
         abort_unless($kind === 'purchase', 404);
         $order = Purchase::visibleIn($context)->whereKey($id)->where('status', 4)->whereNull('reversed_at')->firstOrFail();
+        abort_if(!empty($order->attributes_json['fulfilled_at']), 422, 'This purchase order has no remaining quantity.');
         return ['purchase_order_id' => $order->id, 'party_id' => $order->supplier_id, 'warehouse_id' => $order->warehouse_id];
+    }
+
+    private function salesOrder(int $id, string $kind, CompanyContext $context): array
+    {
+        abort_unless($kind === 'sale', 404);
+        $order = \App\Models\SalesOrder::visibleIn($context)->whereIn('status', ['open', 'partial'])->findOrFail($id);
+        return ['sales_order_id' => $order->id, 'party_id' => $order->customer_id, 'warehouse_id' => $order->warehouse_id];
     }
 
     private function label(string $key): string
     {
-        return ['project_id' => 'project', 'exchange_return_id' => 'return', 'purchase_order_id' => 'order'][$key];
+        return ['project_id' => 'project', 'exchange_return_id' => 'return', 'purchase_order_id' => 'purchase order', 'sales_order_id' => 'sales order'][$key];
     }
 }

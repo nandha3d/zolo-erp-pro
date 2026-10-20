@@ -40,6 +40,8 @@
     body.dark-mode .notes-kpi-val {
         color: #f8fafc;
     }
+    .notes-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 12px; align-items: start; }
+    .notes-split .notes-table-card { margin-bottom: 0; }
     .notes-table-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -210,12 +212,16 @@
         </span>
     </div>
     <div class="d-flex align-items-center gap-2">
+        @if(($side ?? null) !== 'sale')
         <a href="{{ url('/purchases?new=1') }}" class="btn btn-sm btn-outline-secondary py-1 px-3" style="font-size:11px; border-radius:4px;">
             <i class="dripicons-card"></i> New Purchase
         </a>
+        @endif
+        @if(($side ?? null) !== 'purchase')
         <a href="{{ url('/sales?new=1') }}" class="btn btn-sm btn-outline-secondary py-1 px-3" style="font-size:11px; border-radius:4px;">
             <i class="dripicons-cart"></i> New Sale
         </a>
+        @endif
     </div>
 </div>
 
@@ -228,6 +234,7 @@
     $awaitingCount = $purchases->where('status', 'awaiting_approval')->count() + $sales->where('status', 'awaiting_approval')->count();
 @endphp
 <div class="notes-kpi-grid">
+    @if(($side ?? null) !== 'sale')
     <div class="notes-kpi-card">
         <div>
             <div class="notes-kpi-title">Purchase Returns (Debit Notes)</div>
@@ -237,6 +244,8 @@
             <i class="dripicons-return" style="font-size:18px;"></i>
         </div>
     </div>
+    @endif
+    @if(($side ?? null) !== 'purchase')
     <div class="notes-kpi-card">
         <div>
             <div class="notes-kpi-title">Sales Returns (Credit Notes)</div>
@@ -246,6 +255,7 @@
             <i class="dripicons-swap" style="font-size:18px;"></i>
         </div>
     </div>
+    @endif
     <div class="notes-kpi-card">
         <div>
             <div class="notes-kpi-title">Awaiting Approval</div>
@@ -257,6 +267,9 @@
     </div>
 </div>
 
+<!-- Purchase and sales notes side by side so both registers fit one screen. -->
+<div class="notes-split">
+@if(($side ?? null) !== 'sale')
 <!-- SECTION 1: PURCHASE NOTES (PURCHASE RETURNS) -->
 <div class="notes-table-card">
     <div class="notes-card-header">
@@ -334,7 +347,9 @@
         </table>
     </div>
 </div>
+@endif
 
+@if(($side ?? null) !== 'purchase')
 <!-- SECTION 2: SALE NOTES (SALES RETURNS) -->
 <div class="notes-table-card">
     <div class="notes-card-header">
@@ -416,6 +431,8 @@
             </tbody>
         </table>
     </div>
+</div>
+@endif
 </div>
 @endsection
 

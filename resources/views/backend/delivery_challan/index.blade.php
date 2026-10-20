@@ -1,6 +1,7 @@
 @extends('backend.layout.main') 
 
 @section('content')
+<link rel="stylesheet" href="{{ versioned_asset('css/commercial-assistance.css') }}">
 
 <style type="text/css">
     .btn-icon i { margin-right: 5px; }
@@ -27,13 +28,18 @@
     <!-- Top Command Bar -->
     <div class="comm-command-bar">
         <div class="comm-title-group">
-            <h1><i class="dripicons-box text-primary"></i> {{ __('Delivery Challan') }} Command Center</h1>
+            <h1><i class="dripicons-box text-primary"></i> Customer DC <small class="text-muted" style="font-size:60%;font-weight:500;">{{ __('Delivery Challan') }} Command Center · goods to customer before invoice</small></h1>
             <span class="comm-title-badge"><i class="dripicons-export"></i> Outbound Material Dispatch</span>
         </div>
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" href="#desk-bill-list-panel" id="material-list-link"><i class="dripicons-list"></i> {{ __('All Challans') }}</a></li>
             <li><a class="nav-link" href="{{ route('sales.index') }}"><i class="dripicons-cart"></i> Sales Bills</a></li>
             <li><a class="nav-link" href="{{ route('packingSlip.index') }}"><i class="dripicons-clipboard"></i> Packing Slips</a></li>
+            <li><a class="nav-link" href="{{ route('challan.index') }}"><i class="dripicons-document"></i> Courier Challans</a></li>
+            <li><a class="nav-link" href="{{ route('delivery.index') }}"><i class="dripicons-rocket"></i> Deliveries</a></li>
+            @if(config('operations.enabled') && in_array('operations.job_work', app(\App\Services\Platform\CapabilityService::class)->forNavigation(), true))
+            <li><a class="nav-link" href="{{ url('/operations/job-work') }}" title="Material sent to a job worker goes on a Material DC inside its Job Work Order, not here."><i class="dripicons-network-3"></i> Sending to a job worker? Job Work</a></li>
+            @endif
         </ul>
         <div class="comm-actions">
             <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle Challan List Panel" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
@@ -57,7 +63,7 @@
                 <div class="entry-header-card">
                     <div class="entry-header-top d-flex align-items-center justify-content-between mb-2">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="entry-breadcrumb" id="entry-breadcrumb">Home / Selling / Delivery Challans / New</span>
+                            <span class="entry-breadcrumb" id="entry-breadcrumb">Home / Selling / Customer DC / New</span>
                             <span class="badge badge-light-primary px-2 py-1 ml-2" id="status-pill" style="font-weight:600;font-size:11px;background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe;border-radius:4px;">Draft DC</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
@@ -67,7 +73,7 @@
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
                             <div class="entry-doc-icon"><i class="dripicons-box" style="color:#7c3aed;font-size:20px;"></i></div>
-                            <h2 class="entry-title mb-0" id="entry-title-text" style="font-size:17px;font-weight:700;color:#0f172a;">New Delivery Challan</h2>
+                            <h2 class="entry-title mb-0" id="entry-title-text" style="font-size:17px;font-weight:700;color:#0f172a;">New Customer DC</h2>
                         </div>
                     </div>
                 </div>
@@ -123,6 +129,18 @@
                                     <option value="">General Dispatch</option>
                                     @foreach($saleTypes as $st)
                                         <option value="{{ $st->id }}">{{ $st->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 col-sm-6">
+                            <div class="comm-field">
+                                <label for="purpose" title="GST Rule 55: goods may leave on a challan before the invoice only in these cases. A regular sale needs the tax invoice at dispatch.">Challan Purpose (Rule 55) <span class="text-danger">*</span></label>
+                                <select name="purpose" id="purpose" class="form-control form-control-sm" required>
+                                    <option value="">Select purpose; use an invoice for a normal sale</option>
+                                    @foreach(\App\Services\Commercial\MaterialDocumentService::DC_PURPOSES as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -304,6 +322,9 @@
                             <button type="button" class="btn btn-sm btn-success" id="btn-convert-sale" style="display:none; font-weight:600;">
                                 <i class="dripicons-cart"></i> Convert to Sale
                             </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-return-open" style="display:none; font-weight:600;" title="Send back the goods not yet billed; stock and the accrual are reversed for that quantity.">
+                                <i class="dripicons-return"></i> Goods came back
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -314,7 +335,7 @@
         <div class="comm-drawer-card desk-bill-list-panel" id="desk-bill-list-panel">
             <div class="side-panel-header d-flex align-items-center justify-content-between p-2" style="border-bottom:1px solid #e2e8f0; background:#f8fafc;">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="font-weight-bold text-dark" style="font-size:13px;"><i class="dripicons-box text-primary mr-1"></i> Delivery Challans</span>
+                    <span class="font-weight-bold text-dark" style="font-size:13px;"><i class="dripicons-box text-primary mr-1"></i> Customer DC list</span>
                     <span class="badge badge-secondary" style="font-size:10px;">{{ count($recent_challans) }}</span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
@@ -341,12 +362,12 @@
                             <span>{{ \Carbon\Carbon::parse($ch->challan_date)->format('d M Y') }}</span>
                         </div>
                         <div class="d-flex align-items-center justify-content-between mt-2 pt-1" style="border-top:1px dashed #f1f5f9;">
-                            <span class="badge {{ $ch->status === 'converted_to_sale' ? 'badge-success' : ($ch->status === 'cancelled' ? 'badge-danger' : 'badge-warning') }}" style="font-size:10px;">
+                            <span class="badge {{ $ch->status === 'converted_to_sale' ? 'badge-success' : ($ch->status === 'cancelled' ? 'badge-danger' : ($ch->status === 'partially_billed' ? 'badge-info' : ($ch->status === 'returned' ? 'badge-secondary' : 'badge-warning'))) }}" style="font-size:10px;">
                                 {{ ucfirst(str_replace('_', ' ', $ch->status)) }}
                             </span>
                             <div class="d-flex align-items-center gap-1">
                                 <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 btn-load-challan" data-id="{{ $ch->id }}" title="Edit in Form">✎ Edit</button>
-                                @if($ch->status === 'pending')
+                                @if(in_array($ch->status, ['pending', 'partially_billed'], true))
                                     <a href="{{ route('sales.index', ['from_dc' => $ch->id]) }}" class="btn btn-xs btn-outline-success py-0 px-2" title="Convert to Sale Bill">🗲 Convert</a>
                                 @endif
                             </div>
@@ -384,7 +405,7 @@
                             </tr>
                         </thead>
                         <tbody id="multi-item-tbody">
-                            @foreach($lims_product_list_without_variant as $prod)
+                            @foreach(collect($lims_product_list_without_variant)->merge($lims_product_list_with_variant)->unique('id') as $prod)
                                 <tr class="multi-item-row" data-id="{{ $prod->id }}" data-name="{{ $prod->name }}" data-code="{{ $prod->code }}" data-price="{{ $prod->price }}" data-cost="{{ $prod->cost }}" data-unit="{{ $prod->unit_code ?? ($prod->unit_name ?? 'Unit') }}">
                                     <td><input type="checkbox" class="multi-item-cb" value="{{ $prod->id }}"></td>
                                     <td><code>{{ $prod->code }}</code></td>
@@ -453,7 +474,7 @@
 @push('scripts')
     @php
         $jsProductList = [];
-        foreach($lims_product_list_without_variant as $prod) {
+        foreach(collect($lims_product_list_without_variant)->merge($lims_product_list_with_variant)->unique('id') as $prod) {
             $taxVal = 0;
             if (!empty($prod->tax_id)) {
                 $taxObj = collect($lims_tax_list)->firstWhere('id', $prod->tax_id);
@@ -467,6 +488,8 @@
                 'cost' => (float)($prod->cost ?? 0),
                 'tax_rate' => $taxVal,
                 'unit_id' => (int)$prod->unit_id,
+                'is_variant' => (bool)$prod->is_variant,
+                'variants' => ($materialVariants[$prod->id] ?? collect())->map(fn ($variant) => ['id' => (int)$variant->variant_id, 'name' => $variant->name, 'code' => $variant->item_code])->values()->all(),
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
                 'label' => (string)$prod->code . ' - ' . (string)$prod->name,
@@ -479,12 +502,12 @@
             'form' => 'challan-entry-form', 'documentKey' => 'challan', 'idField' => 'challan_id',
             'numberField' => 'challan_no', 'totalField' => 'total_amount', 'rateField' => 'rate',
             'purchase' => false, 'products' => $jsProductList, 'decimals' => $general_setting->decimal ?? 2,
-            'typeLabel' => 'Sale', 'label' => 'Delivery Challan', 'title' => 'New Delivery Challan',
-            'breadcrumb' => 'Home / Selling / Delivery Challans / New',
+            'typeLabel' => 'Sale', 'label' => 'Customer DC', 'title' => 'New Customer DC',
+            'breadcrumb' => 'Home / Selling / Customer DC / New',
             'storeUrl' => route('delivery-challans.store'), 'productUrl' => route('products.quick-store'),
             'partyUrl' => route('parties.quick-store'), 'token' => csrf_token(),
             'partyType' => 'customer', 'partySelect' => '#customer_id', 'partyButton' => '#btn-quick-customer',
-            'convertButton' => '#btn-convert-sale', 'convertUrl' => route('sales.index'), 'convertParam' => 'from_dc',
+            'convertButton' => '#btn-convert-sale', 'convertUrl' => route('sales.index'), 'convertParam' => 'from_dc', 'returnButton' => '#btn-return-open',
             'editId' => request('edit'),
             'draftKind' => 'dc', 'draftUrl' => url('documents/dc'), 'shortcut' => 'delivery-challan',
         ];

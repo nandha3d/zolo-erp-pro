@@ -237,6 +237,26 @@ class ReturnService
             ->where('product_id', $line->product_id)->whereHas('movement', fn ($q) => $q->where('source_type', $kind)->where('source_id', $source->id)
                 ->where('branch_id', $context->branchId)->where('projection_mode', 'applied')->where('status', 'posted')->whereNull('reversal_of_id'))
             ->orderBy('id')->get()->filter(fn ($m) => (int) ($m->attributes_json['commercial_line_id'] ?? 0) === $line->id)->values();
+        // Quantities settled from a Customer DC / Supplier GRN moved on that document's stock lines.
+        $materials = app(MaterialDocumentService::class);
+        $available = $movements->mapWithKeys(fn ($movement) => [$movement->id => abs((float) $movement->qty_base)])->all();
+        $materialLines = $materials->stockLinesFor($kind, $line->id, $context);
+        $materialLines->each(fn ($movement) => $movement->loadMissing('movement'));
+        $settlements = $materials->settledLines($kind, $source->id, $context)[$line->id]['rows'] ?? collect();
+        // The bill owns only its settled share of a material item, even when that item's original stock line is larger.
+        foreach ($settlements as $settlement) {
+            $remaining = (float) $settlement->qty_base;
+            foreach ($materialLines as $movement) {
+                if ((int) $movement->movement->source_id !== (int) $settlement->document_id
+                    || (int) ($movement->attributes_json['material_item_id'] ?? 0) !== (int) $settlement->document_item_id) continue;
+                $take = min($remaining, max(0, abs((float) $movement->qty_base) - ($available[$movement->id] ?? 0)));
+                $available[$movement->id] = round(($available[$movement->id] ?? 0) + $take, 4);
+                $remaining = round($remaining - $take, 4);
+                if ($remaining <= 0.00005) break;
+            }
+            if ($remaining > 0.00005) $this->invalid('stock', 'Settled material stock history does not cover the source line.');
+        }
+        $movements = $movements->concat($materialLines)->unique('id')->filter(fn ($movement) => ($available[$movement->id] ?? 0) > 0)->values();
         if ($movements->isEmpty()) $this->invalid('stock', 'Stock history requires reviewed commercial line attribution before return.');
         if ($selected) {
             if (count(array_unique($selected)) !== count($selected) || array_diff($selected, $movements->pluck('id')->all())) $this->invalid('stock_line_ids', 'Select distinct stock identities from this source line.');
@@ -246,10 +266,7 @@ class ReturnService
         }
         $ratio = $kind === 'purchase' ? (float) $line->recieved : (float) $line->qty;
         // Base/entered ratio is the posting-time ratio, unaffected by later UOM changes.
-        $full = StockMovementLine::where('company_id', $context->companyId)->where('product_id', $line->product_id)
-            ->whereHas('movement', fn ($q) => $q->where('source_type', $kind)->where('source_id', $source->id)->where('projection_mode', 'applied')->whereNull('reversal_of_id'))
-            ->get()->filter(fn ($m) => (int) ($m->attributes_json['commercial_line_id'] ?? 0) === $line->id);
-        $needed = round(abs((float) $full->sum('qty_base')) * $qty / $ratio, 4);
+        $needed = round(array_sum($available) * $qty / $ratio, 4);
         $priorModel = $kind === 'sale' ? ProductReturn::class : PurchaseProductReturn::class;
         $headerTable = $kind === 'sale' ? 'returns' : 'return_purchases';
         $prior = $priorModel::forCompany($context)->where('source_line_id', $line->id)
@@ -258,7 +275,7 @@ class ReturnService
         foreach ($prior as $p) foreach ($p->stock_details_json['chunks'] ?? [] as $chunk) $used[$chunk['source_stock_line_id']] = ($used[$chunk['source_stock_line_id']] ?? 0) + $chunk['qty'];
         $chunks = [];
         foreach ($movements as $m) {
-            $take = min($needed, max(0, abs((float) $m->qty_base) - ($used[$m->id] ?? 0)));
+            $take = min($needed, max(0, $available[$m->id] - ($used[$m->id] ?? 0)));
             if ($take <= 0) continue;
             if ($m->stock_identity_id && $m->identity?->identity_type === 'serial' && $take !== 1.0) $this->invalid('qty', 'A serial return must restore one whole base unit.');
             $chunks[] = ['source_stock_line_id' => $m->id, 'product_id' => $m->product_id, 'qty' => $take,

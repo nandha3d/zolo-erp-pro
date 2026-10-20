@@ -31,14 +31,18 @@ POS ───────────────────────┘    
 |---|---|---|
 | F2 | `/sales?new=1` | blank bill, focus on the customer |
 | Shift+F2 | Sales Returns, new state | the Returns register opens its own "Add return" step |
-| Ctrl+F2 | — | **unassigned**: Sales Order has no proven lifecycle (`sale_status = 2` means Pending) |
+| Ctrl+F2 | — | **unassigned** pending a separate shortcut review; explicit Sales Orders use the normal Sales workspace. `sale_status = 2` remains Pending Sale. |
 | Alt+F2 | `/delivery-challans?new=1` | |
 | F12 | `/purchases?new=1` | |
 | Shift+F12 | Purchase Returns, new state | |
-| Ctrl+F12 | — | **unassigned**, see "Purchase Order" below |
+| Ctrl+F12 | `/purchases?new=1&doc=order` | enabled after the nine lifecycle checks; requires shared Commercial and installed allocation tables |
 | Alt+F12 | `/goods-received-notes?new=1` | |
 | Alt+F10 | `/quotations/create` | |
 | F6 | new item | form-local only (never global); accounting F4–F9 are untouched |
+| Ctrl+B | Pending Bills | selected party in the normal bill form |
+| Ctrl+S | Last Sale / previous rates | selected party and active item; never submits |
+| Alt+Y | Party Statement | dated statement movements, separate from pending bills |
+| Ctrl+Enter | Save/Post | existing form submission, including validation and duplicate-submit protection |
 | ? | shortcut help | never while typing |
 
 Rules: one listener in the authenticated layout; permission-filtered for UX only (the target page authorises on the
@@ -91,7 +95,7 @@ A return draft belongs to the bill it returns: from the return register its tab 
   `fetch(keepalive)` and is best-effort only (the UI never claims it saved), and is skipped once a post has left the
   page. A 409 offers *Load latest* or *Keep mine as a new tab*. The page's own New / Discard buttons go through the tabs,
   so clearing the form never overwrites the active draft.
-* **References** `project_id`, `exchange_return_id`, `purchase_order_id` are references, not trusted state. They are
+* **References** `project_id`, `exchange_return_id`, `purchase_order_id`, `sales_order_id`, and material source allocations are references, not trusted state. They are
   validated against the trusted company/branch context when `?new=1` is processed, when a draft is saved, when it is
   loaded and again when posting (`DocumentContextResolver`). An optional stale reference is removed with a notice; a
   required one blocks the draft (and posting with it) until corrected.
@@ -100,21 +104,21 @@ A return draft belongs to the bill it returns: from the return register its tab 
   batch MRP/mfg date, dimensioned pieces, quantity schemes where the capability applies). These are UI assistance
   appropriate to the profile, never a gate on the page.
 
-## Purchase Order (Ctrl+F12) — verified, not enabled
+## Purchase Order (Ctrl+F12) — lifecycle gate passed
 
-Proven (see `PurchaseOrderLifecycleTest`): the normal form can save `status = 4`; no stock movement, no journal entry,
-no open item, no payment (a paid order is rejected); a receipt links through `purchase_order_id` only to an active
-order of the same supplier and warehouse; a reversed or foreign order cannot be linked.
+The nine checks and their evidence are recorded in `TEXTILE_READINESS_IMPLEMENTATION_PLAN.md`, completion record dated
+2026-10-19. Purchase Orders use a distinct number series, explicit line allocations and open/partial/fulfilled/cancelled
+states. The normal Purchase workspace provides creation, remaining-line loading, amendments and cancellation of the
+unfulfilled remainder. Orders have no stock, accounting, open-item or payment effects.
 
-Open gaps that keep `documents.purchase_order_shortcut` **off**:
+`documents.purchase_order_shortcut` now defaults to true. `DOCUMENTS_PURCHASE_ORDER_SHORTCUT=false` disables it.
+The registry additionally requires shared Commercial and all three order allocation/event tables; incomplete upgrades
+omit the shortcut. Real-browser checks verified omission before the gate, opening the normal Purchase Order form after
+the gate, and preserving the current draft when the shortcut is repeated.
 
-1. Orders draw their number from the purchase **bill** series (there is no `purchase_order` numbering type), so orders
-   leave gaps in the bill series.
-2. An order has no fulfilled/closed state: it stays status 4 after receipts and can be linked by any number of receipts.
-3. The orders list is a status filter on the purchase register; there is no dedicated order edit/convert lifecycle.
-
-Close those, then set `DOCUMENTS_PURCHASE_ORDER_SHORTCUT=true` (or the config default) and add the browser proof.
-Sales Order stays unassigned until conversion, fulfilment, numbering, stock and payment behaviour are proven.
+Sales Orders have a dedicated header and share the line allocation owner with purchasing. Delivery through Customer DC
+and invoice billing are tracked separately. Pending Sale remains unchanged. Ctrl+F2 remains unassigned until an explicit
+shortcut review; the visible Sales Orders action is available in the Sales workspace.
 
 ## Verification
 

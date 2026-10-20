@@ -27,7 +27,7 @@
     // Controls that never belong to a document: tokens, per-attempt keys and the draft pointer.
     const VOLATILE = new Set(['_token', 'idempotency_key', 'draft_id']);
     // Hidden inputs the pages append to the form when a document is started from a challan / goods receipt.
-    const LINK_FIELDS = ['delivery_challan_id', 'goods_received_note_id'];
+    const LINK_FIELDS = ['delivery_challan_id', 'goods_received_note_id', 'sales_order_id', 'purchase_order_id'];
     const containers = () => [form, document.getElementById('charges-drawer')].filter(Boolean);
     const keyOf = element => element.id || element.name;
     const skipped = element => !keyOf(element) || ['button', 'submit', 'file', 'image', 'reset'].includes(element.type)
@@ -71,7 +71,7 @@
 
     function references() {
         const refs = {};
-        for (const key of ['project_id', 'exchange_return_id', 'purchase_order_id']) {
+        for (const key of ['project_id', 'exchange_return_id', 'purchase_order_id', 'sales_order_id']) {
             if (config.context && config.context[key]) refs[key] = config.context[key];
         }
         return refs;
@@ -124,8 +124,8 @@
     /** Replace the entire form with a snapshot. Never merges into whatever was on screen before. */
     function restore(stored) {
         const state = stored.form || {};
-        config.context = {...(config.context || {}), ...(state.context || {})};
         grid.resetFormToNew();
+        config.context = {...(state.context || {})};
         grid.switchWorkspaceMode('voucher');
         const ui = state.ui || {};
         if (ui.action) form.setAttribute('action', ui.action);

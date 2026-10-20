@@ -63,16 +63,17 @@ class ComplianceController extends Controller
             ->header('Content-Disposition', 'attachment; filename="gst-review.json"');
     }
 
-    public function notes(Request $request)
+    /** Returns register. $side 'purchase' / 'sale' (from the Purchase or Sales command center) lists that side only. */
+    public function notes(Request $request, ?string $side = null)
     {
         $context = $this->context($request); $permissions = app(CommercialPermission::class);
-        $saleAccess = $permissions->allows('returns-index', $context, $request->user()->id);
-        $purchaseAccess = $permissions->allows('purchase-return-index', $context, $request->user()->id);
+        $saleAccess = $side !== 'purchase' && $permissions->allows('returns-index', $context, $request->user()->id);
+        $purchaseAccess = $side !== 'sale' && $permissions->allows('purchase-return-index', $context, $request->user()->id);
         abort_unless($saleAccess || $purchaseAccess, 403);
         $query = fn ($model) => $model::forCompany($context)->where('branch_id', $context->branchId)->where('financial_year_id', $context->financialYearId)->latest()->limit(100)->get();
         $sales = $saleAccess ? $query(Returns::class) : collect(); $purchases = $purchaseAccess ? $query(ReturnPurchase::class) : collect();
         return $request->expectsJson() ? response()->json(['data' => compact('sales', 'purchases')])
-            : view('backend.compliance.notes', compact('context', 'sales', 'purchases'));
+            : view('backend.compliance.notes', compact('context', 'sales', 'purchases', 'side'));
     }
 
     public function returnForm(Request $request, string $kind, int $id)

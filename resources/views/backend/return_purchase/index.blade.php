@@ -164,7 +164,7 @@
             <li><a class="nav-link active" href="{{ route('return-purchase.index') }}"><i class="dripicons-list"></i> Returns</a></li>
             <li><a class="nav-link" href="{{ route('purchases.index') }}"><i class="dripicons-card"></i> Bills</a></li>
             <li><a class="nav-link" href="{{ route('purchases.index', ['view' => 'orders', 'purchase_status' => 4]) }}"><i class="dripicons-clipboard"></i> Orders</a></li>
-            <li><a class="nav-link" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-download"></i> GRN</a></li>
+            <li><a class="nav-link" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-download"></i> Supplier GRN</a></li>
             <li><a class="nav-link" href="{{ route('supplier.index') }}"><i class="dripicons-user"></i> Suppliers</a></li>
         </ul>
         <div class="comm-actions">

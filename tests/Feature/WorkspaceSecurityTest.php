@@ -18,6 +18,33 @@ class WorkspaceSecurityTest extends OperationsTestCase
         DB::table('currencies')->insert(['id' => 1, 'name' => 'Rupee', 'code' => 'INR']);
         Schema::table('warehouses', fn (Blueprint $t) => $t->string('phone')->nullable());
         (require database_path('migrations/2026_10_09_000001_create_company_setup_audits.php'))->up();
+        // The workspace renders inside the main layout: company switcher (groups) and, outside a company context, notifications.
+        (require database_path('migrations/2026_10_13_000001_create_company_groups.php'))->up();
+        require_once database_path('migrations/2020_10_30_135557_create_notifications_table.php');
+        (new \CreateNotificationsTable)->up();
+    }
+
+    public function test_switching_company_from_the_workspace_replaces_the_whole_context(): void
+    {
+        $this->other->users()->attach(1);
+        DB::table('company_user_branches')->insert(['company_id' => $this->other->id, 'user_id' => 1, 'branch_id' => $this->otherBranch->id]);
+        $this->get('/workspace')->assertOk()->assertSee('Switch company')->assertSee('Company B')->assertSee('Current company');
+
+        // Only the company is posted: its single branch and today's financial year are resolved for it.
+        $this->post('/workspace/context', ['company_id' => $this->other->id])->assertRedirect('/workspace')
+            ->assertSessionHas('company_id', $this->other->id)->assertSessionHas('branch_id', $this->otherBranch->id)
+            ->assertSessionHas('financial_year_id', $this->otherYear->id)->assertSessionHas('status', 'Switched to Company B.');
+        $this->get('/workspace')->assertOk()->assertSeeInOrder(['<h1>Company B</h1>', 'Company A', 'Switch'], false);
+
+        // A switch started from the workspace returns to the new company's workspace, not the dashboard.
+        $this->post(route('company.choose'), ['company_id' => $this->company->id, 'return' => 'workspace'])->assertRedirect('/workspace')
+            ->assertSessionHas('company_id', $this->company->id);
+    }
+
+    public function test_workspace_cannot_switch_into_a_company_the_user_does_not_belong_to(): void
+    {
+        $this->postJson('/workspace/context', ['company_id' => $this->other->id])->assertForbidden();
+        $this->get('/workspace')->assertOk()->assertDontSee('Company B');
     }
 
     public function test_setup_works_before_a_year_exists_and_preserves_settings_and_stock(): void
@@ -26,6 +53,8 @@ class WorkspaceSecurityTest extends OperationsTestCase
         $this->company->update(['settings_json' => ['existing' => 'preserved']]);
         $product = $this->material();
         $this->year->delete();
+        // Without a year there is no company context, so the shell falls back to legacy chrome this fixture has no tables for.
+        app('view')->getFinder()->prependLocation(base_path('tests/Support/views'));
         $this->get('/workspace/setup')->assertOk()->assertSee('Company setup');
         $this->putJson('/api/v1/company-context/setup/company', ['legal_name' => 'New company name', 'state_code' => '33',
             'base_currency_id' => 1, 'print_format' => 'a4', 'company_id' => $this->other->id])->assertOk();

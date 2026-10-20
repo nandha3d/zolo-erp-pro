@@ -19,6 +19,17 @@
     .cpf-logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .cpf-check { display: flex !important; align-items: center; gap: 6px; font-weight: 400 !important; }
     .cpf-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    /* Wide screens: sections side by side so the whole profile fits one screen. */
+    @media (min-width: 1200px) {
+        .cpf-wrap { max-width: 1440px; }
+        #company-profile-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 12px; align-items: start; }
+        #company-profile-form > .cpf-actions { grid-column: 1 / -1; }
+        #company-profile-form .cpf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .cpf-card .bootstrap-select { width: 100% !important; min-width: 0; }
+    .cpf-logo-box { flex: none; }
+    .cpf-logo > :not(.cpf-logo-box) { min-width: 0; }
+    .cpf-logo input[type=file] { max-width: 100%; font-size: 12px; }
     body.dark-mode .cpf-card { background: #0f172a; border-color: #1e293b; }
     body.dark-mode .cpf-head h1, body.dark-mode .cpf-card h2 { color: #f8fafc; }
     body.dark-mode .cpf-card label { color: #94a3b8; }

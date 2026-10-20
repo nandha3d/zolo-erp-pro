@@ -12,6 +12,11 @@
                         <h4>{{__('db.Update Quotation')}}</h4>
                     </div>
                     <div class="card-body">
+                        @if($lims_quotation_data->converted_document_id)
+                            <div class="alert alert-info">Converted to {{ ucfirst($lims_quotation_data->converted_kind) }} #{{ $lims_quotation_data->converted_document_id }}. Follow-up history is retained.</div>
+                        @elseif($lims_quotation_data->conversion_review_required)
+                            <div class="alert alert-warning">Historical Sent status may already represent a billed quotation. Reconcile existing invoices before reopening it; duplicate billing is blocked.</div>
+                        @endif
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                         {!! Form::open(['route' => ['quotations.update', $lims_quotation_data->id], 'method' => 'put', 'files' => true, 'id' => 'payment-form']) !!}
                         <div class="row">
@@ -310,6 +315,15 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>{{__('db.Note')}}</label>
+                                            <label for="next-follow-up">Next follow-up</label>
+                                            <input type="date" id="next-follow-up" name="next_follow_up" value="{{ old('next_follow_up', $lims_quotation_data->next_follow_up?->toDateString()) }}" class="form-control mb-2">
+                                            @if($followUpHistory->isNotEmpty())
+                                                <details class="mb-2"><summary>Recent follow-up history</summary>
+                                                    @foreach($followUpHistory as $change)
+                                                        <div class="small">{{ $change->created_at }}: {{ $change->previous_date ?: 'None' }} to {{ $change->next_date ?: 'None' }}</div>
+                                                    @endforeach
+                                                </details>
+                                            @endif
                                             <textarea rows="5" class="form-control" name="note" >{{ $lims_quotation_data->note }}</textarea>
                                         </div>
                                     </div>

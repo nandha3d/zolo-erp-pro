@@ -1,10 +1,11 @@
 @php
     $salesCenter = $kind === 'sale';
     $centerRoute = $salesCenter ? 'sales.index' : 'purchases.index';
-    $centerContext = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+    $centerContext = (isset($context) && $context instanceof \App\Services\Platform\CompanyContext) ? $context : request()->attributes->get(\App\Services\Platform\CompanyContext::class);
     $centerPermission = app(\App\Services\Commercial\CommercialPermission::class);
     $centerCan = fn ($permission) => $centerContext && $centerPermission->allows($permission, $centerContext, Auth::id());
-    $centerOrders = request('view') === 'orders';
+    $centerCurrent = $current ?? null; // 'returns' when included by the returns register
+    $centerOrders = !$centerCurrent && request('view') === 'orders';
 @endphp
 @once
     @push('css')
@@ -13,11 +14,16 @@
 @endonce
 <nav class="command-center-nav" aria-label="{{ $salesCenter ? 'Sales' : 'Purchase' }} Command Center">
     @if($centerCan($salesCenter ? 'sales-index' : 'purchases-index'))
-        <a href="{{ route($centerRoute) }}" @if(!$centerOrders) aria-current="page" @endif>Bills</a>
-        <a href="{{ route($centerRoute, ['view' => 'orders', $salesCenter ? 'sale_status' : 'purchase_status' => $salesCenter ? 2 : 4]) }}" @if($centerOrders) aria-current="page" @endif>Orders</a>
+        <a href="{{ route($centerRoute) }}" @if(!$centerOrders && !$centerCurrent) aria-current="page" @endif>Bills</a>
+        @if(config('commercial.enabled'))
+            <a href="{{ route($centerRoute, ['orders' => 1]) }}" data-order-register>{{ $salesCenter ? 'Sales Orders' : 'Purchase Orders' }}</a>
+            @if($salesCenter)<a href="{{ route($centerRoute, ['view' => 'orders', 'sale_status' => 2]) }}" @if($centerOrders) aria-current="page" @endif>Pending Sales</a>@endif
+        @else
+            <a href="{{ route($centerRoute, ['view' => 'orders', $salesCenter ? 'sale_status' : 'purchase_status' => $salesCenter ? 2 : 4]) }}" @if($centerOrders) aria-current="page" @endif>Orders</a>
+        @endif
     @endif
     @if($centerCan($salesCenter ? 'returns-index' : 'purchase-return-index'))
-        <a href="{{ route($salesCenter ? 'return-sale.index' : 'return-purchase.index') }}">Returns</a>
+        <a href="{{ route($salesCenter ? 'return-sale.index' : 'return-purchase.index') }}" @if($centerCurrent === 'returns') aria-current="page" @endif>Returns</a>
     @endif
     @if($salesCenter && $centerCan('quotes-index'))
         <a href="{{ route('quotations.index') }}">Quotations</a>
@@ -25,4 +31,6 @@
         <a href="{{ route('supplier.index') }}">Suppliers</a>
     @endif
 </nav>
+@if($withDrafts ?? true)
 @include('backend.partials.document-draft-tabs', ['draftLabel' => $salesCenter ? 'sales' : 'purchase', 'draftKey' => $salesCenter ? 'F2' : 'F12'])
+@endif

@@ -55,6 +55,9 @@ class CompanyDirectoryService
             ? DB::table('company_industry_settings')->whereIn('company_id', $companies->pluck('id'))->get()->keyBy('company_id')
             : collect();
         $today = fn (Company $company) => CarbonImmutable::now($company->timezone)->toDateString();
+        $gst = Schema::hasTable('tax_registrations') ? DB::table('tax_registrations')->whereIn('company_id', $companies->pluck('id'))
+            ->where('status', 'active')->whereNull('effective_to')->orderByDesc('effective_from')->get()->unique('company_id')->keyBy('company_id') : collect();
+        $resolver = app(CompanyContextResolver::class);
 
         $groups = CompanyGroup::where('status', 'active')
             ->where(fn ($q) => $q->whereIn('id', $companies->pluck('company_group_id')->filter())->orWhereIn('id', $managed))
@@ -77,6 +80,11 @@ class CompanyDirectoryService
                 'branches' => $branches->map->only(['id', 'name'])->all(),
                 'years' => $years->map(fn ($year) => ['id' => $year->id, 'name' => $year->name, 'status' => $year->status])->all(),
                 'current_year_id' => $current?->id,
+                // Edit / delete from the picker: company administrators only; the details prefill the edit dialog.
+                'manageable' => $resolver->canManageFinancialYears($userId, $company->id),
+                'details' => $company->only(['legal_name', 'trade_name', 'code', 'company_group_id', 'address', 'city', 'state_code',
+                    'postal_code', 'phone', 'email', 'website', 'pan', 'base_currency_id'])
+                    + ['gstin' => $gst->get($company->id)?->gstin, 'registration_type' => $gst->get($company->id)?->registration_type ?? 'regular'],
             ];
             if ($company->company_group_id && isset($groups[$company->company_group_id])) {
                 $groups[$company->company_group_id]['companies'][] = $entry;
@@ -298,6 +306,142 @@ class CompanyDirectoryService
         }
 
         return $code;
+    }
+
+    /**
+     * Company administrators edit the master details from the picker. Names, address, contact, tax and logo go through
+     * CompanyProfileService (the same path as Settings › Company profile); moving the company into another group also
+     * needs administration of that group, whose admins then get access.
+     */
+    public function updateCompany(int $actor, int $companyId, array $input, ?\Illuminate\Http\UploadedFile $logo = null): Company
+    {
+        $company = Company::where('status', 'active')->findOrFail($companyId);
+        if (!app(CompanyContextResolver::class)->canManageFinancialYears($actor, $company->id)) {
+            throw new AuthorizationException('Company administrator required.');
+        }
+        $input['code'] = strtoupper(trim((string) ($input['code'] ?? ''))) ?: $company->code;
+        $data = Validator::make($input, [
+            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Z0-9_-]+$/', Rule::unique('companies', 'code')->ignore($company->id)],
+            'company_group_id' => 'nullable|integer|min:1',
+        ])->validate();
+        $groupId = !empty($data['company_group_id']) ? (int) $data['company_group_id'] : null;
+        $moving = $groupId !== ($company->company_group_id ? (int) $company->company_group_id : null);
+        if ($moving && !$this->canManageGroup($actor, $groupId)) {
+            throw new AuthorizationException('Group administrator required to move a company into this group.');
+        }
+
+        return DB::transaction(function () use ($actor, $company, $data, $groupId, $moving, $input, $logo) {
+            $before = $company->only(['code', 'company_group_id']);
+            $company->forceFill(['code' => $data['code'], 'company_group_id' => $groupId])->save();
+            if ($moving && $groupId) {
+                foreach (DB::table('company_group_admins')->where('company_group_id', $groupId)->pluck('user_id') as $userId) {
+                    $this->grant($company->id, (int) $userId);
+                }
+            }
+            $profile = array_intersect_key($input, array_flip([...CompanyProfileService::FIELDS, 'gstin', 'registration_type']));
+            app(CompanyProfileService::class)->save($company->refresh(), $profile, $logo, $this->profileContext($company), $actor);
+            $this->audit($company->id, $actor, 'company_updated', $before, $company->only(['code', 'company_group_id']));
+
+            return $company->refresh();
+        });
+    }
+
+    /**
+     * Deleting hides the company from every picker and blocks entering it; its books, stock and documents stay, so an
+     * administrator can restore it. The short code must be typed to confirm.
+     */
+    public function deleteCompany(int $actor, int $companyId, string $confirmCode): Company
+    {
+        $company = $this->administeredCompany($actor, $companyId, 'active');
+        if (strtoupper(trim($confirmCode)) !== strtoupper($company->code)) {
+            throw ValidationException::withMessages(['confirm_code' => 'Type the company short code '.$company->code.' to confirm.']);
+        }
+        $company->forceFill(['status' => 'deleted'])->save();
+        $this->audit($company->id, $actor, 'company_deleted', ['status' => 'active'], ['status' => 'deleted']);
+
+        return $company;
+    }
+
+    public function restoreCompany(int $actor, int $companyId): Company
+    {
+        $company = $this->administeredCompany($actor, $companyId, 'deleted');
+        $company->forceFill(['status' => 'active'])->save();
+        $this->audit($company->id, $actor, 'company_restored', ['status' => 'deleted'], ['status' => 'active']);
+
+        return $company;
+    }
+
+    /** Deleted companies this administrator can restore. */
+    public function deletedCompanies(int $userId): \Illuminate\Support\Collection
+    {
+        if (!$this->isInstallationAdmin($userId)) {
+            return collect();
+        }
+        return Company::where('status', 'deleted')
+            ->whereIn('id', DB::table('company_user')->where('user_id', $userId)->select('company_id'))
+            ->orderBy('legal_name')->get(['id', 'code', 'legal_name', 'trade_name'])
+            ->filter(fn (Company $company) => app(CompanyContextResolver::class)->canManageFinancialYears($userId, $company->id))->values();
+    }
+
+    public function updateGroup(int $actor, int $groupId, array $input): CompanyGroup
+    {
+        $group = CompanyGroup::where('status', 'active')->findOrFail($groupId);
+        if (!$this->canManageGroup($actor, $group->id)) {
+            throw new AuthorizationException('Group administrator required.');
+        }
+        $input['code'] = strtoupper(trim((string) ($input['code'] ?? ''))) ?: $group->code;
+        $data = Validator::make($input, [
+            'name' => 'required|string|max:255',
+            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Z0-9_-]+$/', Rule::unique('company_groups', 'code')->ignore($group->id)],
+        ])->validate();
+        $group->update(['name' => $data['name'], 'code' => $data['code']]);
+
+        return $group;
+    }
+
+    /** A group is only a container: deleting it makes its companies independent and keeps their books untouched. */
+    public function deleteGroup(int $actor, int $groupId): void
+    {
+        $group = CompanyGroup::where('status', 'active')->findOrFail($groupId);
+        if (!$this->canManageGroup($actor, $group->id)) {
+            throw new AuthorizationException('Group administrator required.');
+        }
+        DB::transaction(function () use ($actor, $group) {
+            foreach (Company::where('company_group_id', $group->id)->lockForUpdate()->get() as $company) {
+                $company->forceFill(['company_group_id' => null])->save();
+                $this->audit($company->id, $actor, 'company_left_group', ['company_group_id' => $group->id, 'group' => $group->name], ['company_group_id' => null]);
+            }
+            DB::table('company_group_admins')->where('company_group_id', $group->id)->delete();
+            $group->delete();
+        });
+    }
+
+    private function administeredCompany(int $actor, int $companyId, string $status): Company
+    {
+        $company = Company::where('status', $status)->findOrFail($companyId);
+        if (!$this->isInstallationAdmin($actor) || !app(CompanyContextResolver::class)->canManageFinancialYears($actor, $company->id)) {
+            throw new AuthorizationException('Company administrator required.');
+        }
+
+        return $company;
+    }
+
+    /** The branch whose GST registration a GSTIN edit updates: MAIN (else the first branch), in the latest year. */
+    private function profileContext(Company $company): CompanyContext
+    {
+        $branch = $company->branches()->orderByRaw("CASE WHEN code = 'MAIN' THEN 0 ELSE 1 END")->orderBy('id')->firstOrFail();
+        $year = $company->fiscalYears()->orderByDesc('start_date')->firstOrFail();
+
+        return new CompanyContext($company->id, $branch->id, $year->id);
+    }
+
+    private function audit(int $companyId, int $actor, string $action, array $before, array $after): void
+    {
+        if (Schema::hasTable('company_setup_audits')) {
+            DB::table('company_setup_audits')->insert(['company_id' => $companyId, 'actor_id' => $actor, 'action' => $action,
+                'before_json' => json_encode($before, JSON_THROW_ON_ERROR), 'after_json' => json_encode($after, JSON_THROW_ON_ERROR),
+                'created_at' => now()]);
+        }
     }
 
     private function yearName(string $start, string $end): string

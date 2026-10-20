@@ -52,6 +52,7 @@ class CompanySelectorController extends Controller
             'defaults' => ['timezone' => config('app.timezone'), 'fy_start' => $fyStart->toDateString(),
                 'fy_end' => $fyStart->addYear()->subDay()->toDateString()],
             'theme' => $_COOKIE['theme'] ?? 'light',
+            'deletedCompanies' => $this->directory->deletedCompanies($userId),
         ]);
     }
 
@@ -85,6 +86,48 @@ class CompanySelectorController extends Controller
             ->with('status', ($company->trade_name ?: $company->legal_name).' is ready. Open it to start working.');
     }
 
+    public function updateCompany(Request $request, int $company)
+    {
+        $updated = $this->directory->updateCompany($request->user()->id, $company, $request->only([
+            'company_group_id', 'legal_name', 'trade_name', 'code', 'state_code', 'base_currency_id',
+            'address', 'city', 'postal_code', 'phone', 'email', 'website', 'pan', 'gstin', 'registration_type',
+        ]), $request->file('logo'));
+
+        return redirect()->route('company.select', ['manage' => 1])->with('status', ($updated->trade_name ?: $updated->legal_name).' saved.');
+    }
+
+    public function deleteCompany(Request $request, int $company)
+    {
+        $deleted = $this->directory->deleteCompany($request->user()->id, $company, (string) $request->input('confirm_code', ''));
+        if ((int) $request->session()->get('company_id') === $deleted->id) {
+            $request->session()->forget(self::SESSION_KEYS);
+        }
+
+        return redirect()->route('company.select', ['manage' => 1])
+            ->with('status', ($deleted->trade_name ?: $deleted->legal_name).' deleted. Its books are kept; restore it from Deleted companies.');
+    }
+
+    public function restoreCompany(Request $request, int $company)
+    {
+        $restored = $this->directory->restoreCompany($request->user()->id, $company);
+
+        return redirect()->route('company.select', ['manage' => 1])->with('status', ($restored->trade_name ?: $restored->legal_name).' restored.');
+    }
+
+    public function updateGroup(Request $request, int $group)
+    {
+        $updated = $this->directory->updateGroup($request->user()->id, $group, $request->only(['name', 'code']));
+
+        return redirect()->route('company.select', ['manage' => 1])->with('status', "Group {$updated->name} saved.");
+    }
+
+    public function deleteGroup(Request $request, int $group)
+    {
+        $this->directory->deleteGroup($request->user()->id, $group);
+
+        return redirect()->route('company.select', ['manage' => 1])->with('status', 'Group deleted. Its companies are now independent.');
+    }
+
     private function enter(Request $request, int $companyId, ?int $branchId = null, ?int $yearId = null)
     {
         try {
@@ -105,6 +148,7 @@ class CompanySelectorController extends Controller
         $request->session()->put(['company_id' => $context->companyId, 'branch_id' => $context->branchId,
             'financial_year_id' => $context->financialYearId]);
 
-        return redirect()->intended('/dashboard');
+        // A switch started from the workspace lands on the new company's workspace.
+        return $request->input('return') === 'workspace' ? redirect('/workspace') : redirect()->intended('/dashboard');
     }
 }

@@ -3,6 +3,7 @@
 $entryAids = app(\App\Services\Industry\DocumentEntryAids::class)->forContext(request()->attributes->get(\App\Services\Platform\CompanyContext::class), $kind);
 $commandCenterFormConfig = [
     'kind' => $kind, 'shared' => (bool) config('commercial.enabled'),
+    'textile' => $entryAids['tracking']['profile'] === 'textile',
     'baseUrl' => url('commercial/'.$kind), 'listUrl' => route($kind === 'sale' ? 'sales.index' : 'purchases.index'),
     'units' => $lims_unit_list ?? \App\Models\Unit::where('is_active', true)->get(),
     'series' => $documentSeries,
@@ -11,7 +12,7 @@ $commandCenterFormConfig = [
     'piecesUrl' => config('operations.enabled') ? url('operations/inventory/pieces') : null,
     'lotsUrl' => config('operations.enabled') ? url('operations/inventory/lots') : null,
     'printUrl' => config('compliance.enabled') && config('commercial.enabled') ? url('compliance/documents/'.$kind) : null,
-    'purchaseOrders' => $kind === 'purchase' && config('documents.purchase_order_shortcut'),
+    'purchaseOrders' => $kind === 'purchase' && app(\App\Services\Platform\DocumentShortcutRegistry::class)->purchaseOrdersEnabled(),
 ];
 @endphp
 <script type="application/json" id="command-center-form-data">@json($commandCenterFormConfig)</script>
@@ -19,4 +20,7 @@ $commandCenterFormConfig = [
 <script src="{{ asset('js/document-drafts.js') }}?v={{ filemtime(public_path('js/document-drafts.js')) }}"></script>
 <script src="{{ asset('js/document-workspace.js') }}?v={{ filemtime(public_path('js/document-workspace.js')) }}"></script>
 <script src="{{ asset('js/document-aids.js') }}?v={{ filemtime(public_path('js/document-aids.js')) }}"></script>
+<link rel="stylesheet" href="{{ versioned_asset('css/commercial-assistance.css') }}">
+<script src="{{ versioned_asset('js/commercial-assistance.js') }}"></script>
+<script src="{{ versioned_asset('js/commercial-orders.js') }}"></script>
 @endpush

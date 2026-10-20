@@ -3,6 +3,14 @@
 <x-error-message key="not_permitted" />
 
 <style>
+.barcode-print-layout .row.mt-3.mb-5 { margin-bottom: 8px !important; }
+.barcode-print-options { border-left: 1px solid #e2e8f0; }
+.barcode-print-options > .row { margin-top: 6px !important; }
+.barcode-print-options .col-md-4 { flex: 0 0 50% !important; max-width: 50% !important; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.barcode-print-options .col-md-4 > strong { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.barcode-print-options .col-md-8 { flex: 0 0 100% !important; max-width: 100% !important; }
+.barcode-print-options input[type=number] { width: 70px; }
+body.dark-mode .barcode-print-options { border-left-color: #334155; }
 @media print {
     * {
         font-size:12px;
@@ -21,6 +29,7 @@
     }
 }
 </style>
+<x-product-command-bar active="barcode"></x-product-command-bar>
 <section class="forms">
     <div class="container-fluid">
         <div class="row">
@@ -36,8 +45,8 @@
                         {{-- @csrf --}}
                         <div class="card-body">
                             <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                            <div class="row">
-                                <div class="col-md-12">
+                            <div class="row barcode-print-layout">
+                                <div class="col-lg-8">
                                     <div class="row">
                                         <div class="col-md-12">
                                             <label>{{__('db.add_product')}} *</label>
@@ -90,7 +99,9 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <hr>
+                                </div>
+                                {{-- Label options beside the product list so the page fits one screen. --}}
+                                <div class="col-lg-4 barcode-print-options">
                                     {{-- CUT --}}
                                     <label><strong>{{__('db.Information on Label')}} *</strong></label>
 

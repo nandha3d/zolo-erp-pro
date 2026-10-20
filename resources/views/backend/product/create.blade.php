@@ -18,6 +18,7 @@
 @endif
 
 @section('content')
+<x-product-command-bar active="products"></x-product-command-bar>
 <section class="forms">
     <div class="container-fluid">
         <div class="row">
@@ -28,8 +29,8 @@
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        <form id="product-form">
-                            <div class="row">
+                        <form id="product-form" data-shell-steps>
+                            <div class="row" data-step-title="Item">
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Product Type')}} *</strong> </label>
@@ -187,6 +188,8 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row" data-step-title="Price &amp; tax">
                                 <div id="cost" class="col-md-4">
                                      <div class="form-group">
                                         <label>{{__('db.Product Cost')}} *</strong> </label>
@@ -245,6 +248,7 @@
                                         <input type="number" name="alert_quantity" class="form-control" step="any">
                                     </div>
                                 </div>
+                                @include('backend.product.partials.stock-policy', ['product' => null])
                                 @if(\App\Services\Tax\GstSetupService::usesGst())
                                 @include('backend.product.partials.gst-fields', ['product' => null])
                                 @else
@@ -354,6 +358,8 @@
                                     </div>
                                 @endif
                             @endforeach
+                            </div>
+                            <div class="row" data-step-title="Stock">
                                 <div id="featured" class="col-md-4">
                                     <div class="form-group mt-3">
                                         <input type="checkbox" name="featured" value="1">&nbsp;
@@ -398,6 +404,8 @@
                                         </table>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row" data-step-title="Image &amp; details">
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>{{__('db.Product Image')}}</strong> </label> <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.You can upload multiple image Only jpeg, jpg, png, gif file can be uploaded First image will be base image')}}"></i>
@@ -411,6 +419,8 @@
                                         <textarea name="product_details" class="form-control" rows="3"></textarea>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row" data-step-title="Variants &amp; options">
                                 <div class="col-md-12 mt-3" id="variant-option">
                                     <h5><input name="is_variant" type="checkbox" id="is-variant" value="1">&nbsp; {{__('db.This product has variant')}}</h5>
                                 </div>
@@ -541,7 +551,7 @@
                                 @endif
                             </div>
                             @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
-                            <div class="row">
+                            <div class="row" data-step-title="Online &amp; SEO">
                                 <div class="col-12 mt-3">
                                     <div class="form-group">
                                         <label>{{__('db.Product Tags')}}</strong> </label>
@@ -574,7 +584,7 @@
                             @endif
 
                             @if(in_array('restaurant',explode(',',$general_setting->modules)))
-                            <div class="row">
+                            <div class="row" data-step-title="Restaurant">
                                 <div class="col-md-12 form-group extra-section">
                                     <label>{{__('db.Extras')}}</label>
                                     <input type="text" id="search_addons" class="form-control">

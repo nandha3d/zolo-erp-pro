@@ -27,7 +27,9 @@ if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
         $modified = filemtime($file);
         $etag = '"'.$modified.'-'.filesize($file).'"';
         header('Content-Type: '.$types[$type]);
-        header('Cache-Control: public, max-age=0, must-revalidate');
+        $version = $modified.'-'.filesize($file);
+        $versioned = ($_GET['v'] ?? '') === $version;
+        header('Cache-Control: public, '.($versioned ? 'max-age=31536000, immutable' : 'max-age=0, must-revalidate'));
         header('ETag: '.$etag);
         header('Last-Modified: '.gmdate('D, d M Y H:i:s', $modified).' GMT');
         if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) {

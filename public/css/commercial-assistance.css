@@ -1,0 +1,9 @@
+.commercial-aid-dialog{width:min(920px,94vw);max-height:85vh;padding:16px;border:1px solid #94a3b8;border-radius:8px;overflow:auto;color:#0f172a;background:#fff}
+.commercial-aid-dialog::backdrop{background:#0f172a88}.commercial-aid-dialog h3{font-size:17px;margin:0 0 12px}.commercial-aid-dialog table{width:100%;border-collapse:collapse;margin:10px 0}.commercial-aid-dialog th,.commercial-aid-dialog td{padding:6px;text-align:left;border-bottom:1px solid #cbd5e1}.commercial-aid-dialog button{margin:4px}.commercial-aid-toolbar{display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap}.commercial-aid-toolbar button{font-size:11px;padding:2px 5px}.commercial-balance{font-size:11px;white-space:normal}.commercial-aid-error{color:#b91c1c}.commercial-source-line{display:block;padding:5px;border-bottom:1px solid #cbd5e1}
+body.dark-mode .commercial-aid-dialog{background:#172033;color:#e2e8f0;border-color:#475569}body.dark-mode .commercial-aid-dialog th,body.dark-mode .commercial-aid-dialog td{border-color:#475569}
+.items-controls-group{flex-wrap:wrap;gap:4px}
+.items-controls-group .commercial-aid-toolbar button,.items-controls-group #commercial-orders button{height:24px!important;min-height:24px!important;padding:2px 6px!important;font-size:11px!important;line-height:18px!important;white-space:nowrap}
+.items-controls-group #commercial-orders{gap:4px;margin:0!important}
+.commercial-balance{display:block;min-height:0;margin-top:4px;line-height:1.4}
+.commercial-balance:empty{display:none}
+#commercial-orders-modal{z-index:1055!important}

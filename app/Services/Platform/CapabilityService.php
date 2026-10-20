@@ -48,6 +48,7 @@ class CapabilityService
                 return [];
             }
         }
+        $company ??= request()->attributes->get(CompanyContext::class);
         return array_keys(array_filter($this->snapshot($this->companyId($company)), fn ($state) => $state['enabled']));
     }
 

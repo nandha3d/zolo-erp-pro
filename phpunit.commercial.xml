@@ -9,6 +9,16 @@
     <file>tests/Feature/DocumentEntryTest.php</file>
     <file>tests/Feature/WorkspaceDraftTest.php</file>
     <file>tests/Feature/PurchaseOrderLifecycleTest.php</file>
+    <file>tests/Feature/MaterialDocumentPostingTest.php</file>
+    <file>tests/Feature/MaterialDocumentIdentityTest.php</file>
+    <file>tests/Feature/CommercialLifecycleConcurrencyTest.php</file>
+    <file>tests/Feature/RateHistoryTest.php</file>
+    <file>tests/Feature/QuotationFollowUpTest.php</file>
+    <file>tests/Feature/ProductAliasTest.php</file>
+    <file>tests/Feature/ReviewedProductImportTest.php</file>
+    <file>tests/Feature/DispatchRegisterTest.php</file>
+    <file>tests/Feature/TextileEntryContractTest.php</file>
+    <file>tests/Feature/OrderAllocationLifecycleTest.php</file>
     <file>tests/Feature/CapabilityRetirementTest.php</file>
   </testsuite></testsuites>
   <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/><env name="ERP_SHARED_COMMERCIAL_ENABLED" value="false" force="true"/><env name="ERP_COMPLIANCE_ENABLED" value="false" force="true"/><env name="ERP_OPERATIONS_ENABLED" value="false" force="true"/><env name="ERP_BACKUP_ENABLED" value="false" force="true"/><env name="ERP_OPTIONAL_ACTIVATION_READY" value="false" force="true"/></php>

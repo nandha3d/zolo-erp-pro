@@ -44,7 +44,7 @@ class DeliveryChallanWebTest extends TestCase
 
         $response->assertSee('Delivery Challan Command Center');
         $response->assertSee('comm-entry-workspace', false);
-        $response->assertSee('New Delivery Challan');
+        $response->assertSee('New Customer DC');
         $response->assertSee('order-table', false);
         $response->assertSee('comm-drawer', false);
         $response->assertSee('desk-bill-list-panel', false);

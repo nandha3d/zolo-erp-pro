@@ -24,6 +24,7 @@ class DocumentNumberService
         'sale' => [Sale::class, 'reference_no', 'SAL'],
         'purchase' => [Purchase::class, 'reference_no', 'PUR'],
         'purchase_order' => [Purchase::class, 'reference_no', 'PO'],
+        'sales_order' => [\App\Models\SalesOrder::class, 'reference_no', 'SO'],
         'transfer' => [Transfer::class, 'reference_no', 'TRF'],
         'sale_payment' => [Payment::class, 'payment_reference', 'REC'],
         'purchase_payment' => [Payment::class, 'payment_reference', 'PAY'],

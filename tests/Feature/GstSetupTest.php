@@ -137,6 +137,36 @@ class GstSetupTest extends ReturnsDocumentTestCase
         $this->get('/settings/gst?products=all#products')->assertOk()->assertSee($product->name);
     }
 
+    public function test_unregistered_company_bills_without_gst_and_keeps_supplier_gst_in_cost(): void
+    {
+        (require database_path('migrations/2026_10_20_000001_allow_unregistered_company_tax_registration.php'))->up();
+        DB::table('tax_registrations')->delete();
+        $register = fn (array $data) => $this->gst()->registerCompany($data + ['legal_name' => 'Sweet Soil', 'address' => 'Erode',
+            'effective_from' => '2026-01-01'], $this->context(), 1);
+        foreach ([['registration_type' => 'unregistered', 'gstin' => $this->gstin('33')], ['registration_type' => 'regular', 'gstin' => '']] as $invalid) {
+            try { $register($invalid); $this->fail('GSTIN and type must agree.'); } catch (ValidationException $error) { $this->assertArrayHasKey('gstin', $error->errors()); }
+        }
+        $register(['registration_type' => 'unregistered', 'state_code' => '33']);
+        $this->assertSame([null, '33', 'unregistered'], [DB::table('tax_registrations')->value('gstin'),
+            DB::table('tax_registrations')->value('state_code'), DB::table('tax_registrations')->value('registration_type')]);
+        $this->assertTrue($this->gst()->enabled($this->context()));
+
+        $product = $this->gstProduct();
+        $sale = app(SaleApplicationService::class)->create(new SaleCommand($this->saleData($product), 'unregistered-sale', 1, $this->context()));
+        $line = $sale->productSales->first()->tax_snapshot_json;
+        $this->assertEquals([0, 0, 0, 0], [$line['rate'], $line['cgst'], $line['sgst'], $line['igst']], 'an unregistered seller charges no GST');
+        $this->assertNull($sale->tax_snapshot_json['registration_gstin']);
+
+        $purchase = app(PurchaseApplicationService::class)->create(new PurchaseCommand($this->purchaseData($product), 'unregistered-buy', 1, $this->context()));
+        $line = $purchase->productPurchases->first()->tax_snapshot_json;
+        $this->assertEquals(0.9, $line['sgst'], 'a registered supplier still charges GST');
+        $this->assertFalse($line['input_credit_allowed'], 'an unregistered buyer cannot claim it');
+
+        // Taking a GSTIN later closes the unregistered period the day before.
+        $register(['registration_type' => 'regular', 'gstin' => $this->gstin('33'), 'effective_from' => '2026-11-01']);
+        $this->assertSame('2026-10-31', DB::table('tax_registrations')->whereNull('gstin')->value('effective_to'));
+    }
+
     public function test_entry_config_and_legacy_form_preview_use_server_gst(): void
     {
         $config = $this->gst()->entryConfig($this->context());

@@ -4,6 +4,9 @@ use App\Http\Controllers\CommercialController;
 use App\Http\Middleware\RequireSharedCommercial;
 use Illuminate\Support\Facades\Route;
 
+Route::get('dispatch-register', [\App\Http\Controllers\DispatchRegisterController::class, 'index'])
+    ->middleware(['auth', 'company.context', 'common'])->name('dispatch-register.index');
+
 // Draft tabs of the document pages that post through their own controllers (returns, challans, goods receipts, quotations).
 Route::prefix('documents')->middleware(['auth', 'company.context'])->where(['kind' => 'sreturn|preturn|dc|grn|quotation', 'id' => '[0-9]+'])->group(function () {
     Route::get('{kind}/drafts', [CommercialController::class, 'drafts']);
@@ -19,6 +22,7 @@ Route::prefix('commercial')->middleware(['auth', 'company.context', RequireShare
         Route::get('{kind}/search/{resource}', [CommercialController::class, 'search']);
         Route::get('{kind}/party/{id}', [CommercialController::class, 'party']);
         Route::get('{kind}/previous-rates', [CommercialController::class, 'previousRates']);
+        Route::get('{kind}/material-sources', [CommercialController::class, 'materialSources']);
         Route::get('{kind}/clone/{id}', [CommercialController::class, 'cloneDocument']);
         Route::get('{kind}/drafts', [CommercialController::class, 'drafts']);
         Route::post('{kind}/drafts', [CommercialController::class, 'draft']);

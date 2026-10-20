@@ -17,7 +17,7 @@
     <div class="d-none d-xxl-flex align-items-center" style="gap:3px; flex-shrink:0;">
         <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-sales" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('sale.pos') }}"><i class="dripicons-shopping-bag"></i> POS</a>
-        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> Challans</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> Customer DC</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('quotations.index') }}"><i class="dripicons-document-edit"></i> Quotations</a>
     </div>
 
@@ -241,7 +241,7 @@
                                 <tr style="background:#0f172a;color:#ffffff;font-size:11px;">
                                     <th style="width:36px;text-align:center;">#</th>
                                     <th style="min-width:240px;">ITEM</th>
-                                    <th style="width:110px;">SALE TYPE</th>
+                                    <th style="width:110px;" title="Sale type">TYPE</th>
                                     <th style="width:75px;">UNIT</th>
                                     <th style="width:95px;text-align:right;">RATE</th>
                                     <th style="width:70px;text-align:center;">QTY</th>
@@ -432,6 +432,16 @@
 
                 <!-- Recent Sales List -->
                 <div class="side-list-container" id="side-bill-list">
+                    @php
+                        // The server checks again on the reversal form; this only hides a link the user cannot use.
+                        $canReverseBills = false;
+                        if (config('commercial.enabled')) {
+                            try {
+                                $canReverseBills = app(\App\Services\Commercial\CommercialPermission::class)->allows('sales-delete',
+                                    app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
+                            } catch (\Illuminate\Auth\Access\AuthorizationException) {}
+                        }
+                    @endphp
                     @forelse($recent_bills as $bill)
                         @php
                             $isPaid = ($bill->payment_status == 4 || ($bill->grand_total > 0 && $bill->paid_amount >= $bill->grand_total));
@@ -440,8 +450,11 @@
                             $statusLabel = $bill->reversed_at ? 'Reversed' : ($isDraft ? 'Draft' : ($isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Due')));
                             $statusClass = $isDraft ? 'draft' : ($isPaid ? 'paid' : ($isPartial ? 'partial' : 'due'));
                             $customerName = $bill->customer->name ?? 'Walk-in Customer';
+                            $registerBale = $bill->attributes_json['bale_no'] ?? $bill->bale_no ?? '';
+                            $registerTransport = $bill->attributes_json['transport_name'] ?? $bill->transport_name ?? '';
                         @endphp
                         <div class="side-bill-card" data-reversed="{{ $bill->reversed_at ? 1 : 0 }}" data-bill-id="{{ $bill->id }}" data-ref="{{ strtolower($bill->reference_no ?? '') }}" data-party="{{ strtolower($customerName) }}" data-status="{{ strtolower($statusLabel) }}" data-status-id="{{ $bill->sale_status }}" data-payment-status-id="{{ $bill->payment_status }}" data-warehouse-id="{{ $bill->warehouse_id }}" data-date="{{ substr($bill->created_at ?? '', 0, 10) }}">
+                            <span hidden class="side-card-transport" data-bale-no="{{ $registerBale }}" data-transporter="{{ $registerTransport }}"></span>
                             <div class="side-card-top">
                                 <strong class="side-card-ref">{{ $bill->reference_no ?? ('#'.$bill->id) }}</strong>
                                 <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
@@ -468,6 +481,11 @@
                                 <a href="javascript:void(0)" class="side-action-btn copy btn-side-copy" data-id="{{ $bill->id }}" title="Copy this bill into a new draft" hidden>
                                     <i class="dripicons-copy"></i> Copy
                                 </a>
+                                @if($canReverseBills && !$bill->reversed_at && !$isDraft && $bill->branch_id)
+                                <a href="{{ url('/commercial/sale/'.$bill->id.'/reverse') }}" class="side-action-btn reverse" title="Reverse: cancel this bill, stock comes back and its journal is reversed; the bill stays in history" aria-label="Reverse bill">
+                                    <i class="dripicons-return"></i>
+                                </a>
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -610,6 +628,8 @@
                             <th>{{__('db.Returned Amount')}}</th>
                             <th>{{__('db.Paid')}}</th>
                             <th>{{__('db.Due')}}</th>
+                            <th>Bale No.</th>
+                            <th>Transporter</th>
                             @foreach($custom_fields as $fieldName)
                             <th>{{$fieldName}}</th>
                             @endforeach
@@ -639,6 +659,7 @@
                         @foreach($custom_fields as $fieldName)
                         <th></th>
                         @endforeach
+                        <th></th><th></th>
                     </tfoot>
                 </table>
             </div>
@@ -1025,6 +1046,7 @@
                         </div>
                     </div>
 
+                    @include('backend.product.partials.stock-policy', ['product' => null])
                     <!-- Section 2: Units of Measure (3 columns) -->
                     <div class="compact-modal-section-title">
                         <i class="dripicons-box"></i> 2. Units of Measure
@@ -1879,9 +1901,11 @@
     </div>
 </div>
 
+@include('backend.commercial.orders', ['orderKind' => 'sale'])
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/commercial-product-lookup.js') }}"></script>
 <script type="text/javascript">
 (function() {
     'use strict';
@@ -1906,7 +1930,7 @@
                 'name' => (string)$prod->name,
                 'code' => (string)$prod->code,
                 'price' => $exclusive((float)($prod->price ?? 0), $prod, $taxVal),
-                'cost' => $exclusive((float)($prod->cost ?? 0), $prod, $taxVal),
+                ...(($catalogCostVisible ?? false) ? ['cost' => $exclusive((float)($prod->cost ?? 0), $prod, $taxVal)] : []),
                 'tax_rate' => $taxVal,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
@@ -1927,7 +1951,7 @@
                 'name' => (string)$prod->name,
                 'code' => (string)($prod->item_code ?? $prod->code),
                 'price' => $exclusive((float)(($prod->price ?? 0) + ($prod->additional_price ?? 0)), $prod, $taxVal),
-                'cost' => $exclusive((float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)), $prod, $taxVal),
+                ...(($catalogCostVisible ?? false) ? ['cost' => $exclusive((float)(($prod->cost ?? 0) + ($prod->additional_cost ?? 0)), $prod, $taxVal)] : []),
                 'tax_rate' => $taxVal,
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
@@ -1936,6 +1960,7 @@
         }
     @endphp
 
+    CommercialProductLookup.enabled = @json(config('commercial.enabled'));
     var allProducts = @json($jsProductList);
     function matchesProductMode(product) {
         var mode = $('[data-nature].active').data('nature') || 'mixed';
@@ -1979,14 +2004,9 @@
     var $productSearch = $('#lims_productcodeSearch');
     $productSearch.autocomplete({
         minLength: 1,
-        autoFocus: true,
+        autoFocus: false,
         source: function(request, response) {
-            var term = request.term.toLowerCase().trim();
-            var matches = allProducts.filter(function(p) {
-                return matchesProductMode(p) && ((p.name && p.name.toLowerCase().includes(term)) ||
-                       (p.code && p.code.toLowerCase().includes(term)));
-            });
-            response(matches.slice(0, 20));
+            CommercialProductLookup.search(request.term, allProducts, 'sale', matchesProductMode).then(response).catch(function(error) { response([]); console.warn(error.message); });
         },
         select: function(event, ui) {
             if (ui && ui.item) {
@@ -2031,15 +2051,24 @@
         };
     }
 
-    $productSearch.on('keydown', function(e) {
+    $productSearch.on('keydown', async function(e) {
         if (e.which === 13) {
+            if (e.isDefaultPrevented()) return;
             e.preventDefault();
             var val = $(this).val().trim();
             if (val) {
-                var exact = allProducts.find(function(p) {
-                    return (p.code && p.code.toLowerCase() === val.toLowerCase()) ||
-                           (p.name && p.name.toLowerCase() === val.toLowerCase());
-                });
+                if (this.dataset.productLookupPending) return;
+                    this.dataset.productLookupPending = '1';
+                    var matches;
+                    try { matches = await CommercialProductLookup.search(val, allProducts, 'sale', matchesProductMode); }
+                    catch (error) { alert(error.message); return; }
+                    finally { delete this.dataset.productLookupPending; }
+                    if (CommercialProductLookup.normalize(this.value) !== CommercialProductLookup.normalize(val)) return;
+                    var exact = CommercialProductLookup.exact(matches, val);
+                    if (!exact && matches.length) {
+                        $(this).autocomplete('search', val);
+                        return;
+                    }
                 if (exact) {
                     addProductRow({
                         product_id: exact.id,
@@ -2214,14 +2243,9 @@
 
         $input.autocomplete({
             minLength: 1,
-            autoFocus: true,
+            autoFocus: false,
             source: function(request, response) {
-                var term = request.term.toLowerCase().trim();
-                var matches = allProducts.filter(function(p) {
-                    return matchesProductMode(p) && ((p.name && p.name.toLowerCase().includes(term)) ||
-                           (p.code && p.code.toLowerCase().includes(term)));
-                });
-                response(matches.slice(0, 20));
+                CommercialProductLookup.search(request.term, allProducts, 'sale', matchesProductMode).then(response).catch(function(error) { response([]); console.warn(error.message); });
             },
             select: function(event, ui) {
                 if (ui && ui.item) {
@@ -2260,16 +2284,25 @@
             };
         }
 
-        $input.on('keydown', function(e) {
+        $input.on('keydown', async function(e) {
             if (e.which === 13) {
+                if (e.isDefaultPrevented()) return;
                 e.preventDefault();
                 var val = $(this).val().trim();
                 var tr = $(this).closest('tr');
                 if (val) {
-                    var exact = allProducts.find(function(p) {
-                        return (p.code && p.code.toLowerCase() === val.toLowerCase()) ||
-                               (p.name && p.name.toLowerCase() === val.toLowerCase());
-                    });
+                    if (this.dataset.productLookupPending) return;
+                    this.dataset.productLookupPending = '1';
+                    var matches;
+                    try { matches = await CommercialProductLookup.search(val, allProducts, 'sale', matchesProductMode); }
+                    catch (error) { alert(error.message); return; }
+                    finally { delete this.dataset.productLookupPending; }
+                    if (CommercialProductLookup.normalize(this.value) !== CommercialProductLookup.normalize(val)) return;
+                    var exact = CommercialProductLookup.exact(matches, val);
+                    if (!exact && matches.length) {
+                        $(this).autocomplete('search', val);
+                        return;
+                    }
                     if (exact) {
                         applyProductToRow(tr, exact);
                         tr.find('.row-qty').focus().select();
@@ -2931,6 +2964,7 @@
             tax_id: $('#quick-item-tax').data('gst') ? null : ($('#quick-item-tax').val() || null),
             tax_category_id: $('#quick-item-tax').data('gst') ? ($('#quick-item-tax').val() || null) : undefined,
             hsn_code: $('#quick-item-hsn').val() || undefined,
+            negative_stock_policy: $('#negative-stock-policy').val() || '',
             tax_method: $('#quick-item-tax-method').val() || 1,
             warranty: $('#quick-item-warranty').val() || null,
             warranty_type: $('#quick-item-warranty-type').val() || 'months',
@@ -3269,7 +3303,6 @@
             $('#nav-mode-icon').text('⇄');
             $('#nav-mode-text').text('Split View');
             $('#btn-navbar-workspace-toggle').addClass('btn-mode-split').attr('title', 'Switch to Split View (Voucher Entry + Bill List)');
-            localStorage.setItem('zolo_sale_workspace_mode', 'register');
             if ($.fn.DataTable.isDataTable('#sale-table')) {
                 $('#sale-table').DataTable().columns.adjust().draw(false);
             } else {
@@ -3283,7 +3316,6 @@
             $('#nav-mode-icon').text('⛶');
             $('#nav-mode-text').text('Full Width');
             $('#btn-navbar-workspace-toggle').removeClass('btn-mode-split').attr('title', 'Switch to Full Width Register');
-            localStorage.setItem('zolo_sale_workspace_mode', 'voucher');
         }
     }
 
@@ -3358,6 +3390,9 @@
         columns.push({"data": "returned_amount"});
         columns.push({"data": "paid_amount"});
         columns.push({"data": "due"});
+        var textileColumns = @json(($documentContextProfile ?? app(\App\Services\Industry\IndustryProfileService::class)->settings(request()->attributes->get(\App\Services\Platform\CompanyContext::class)))['profile'] === 'textile');
+        columns.push({"data": "bale_no", "visible": textileColumns, "orderable": false, "defaultContent": ""});
+        columns.push({"data": "transport_name", "visible": textileColumns, "orderable": false, "defaultContent": ""});
 
         var field_name = @json($field_name ?? []);
         for (var i = 0; i < field_name.length; i++) {
@@ -3627,7 +3662,7 @@
     // Card click & edit button click
     $(document).on('click', '.side-bill-card', function(e) {
         if ($(this).data('reversed')) return;
-        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print').length) return;
+        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print, .side-action-btn.reverse').length) return;
         var id = $(this).data('bill-id');
         if (id) loadSaleToForm(id);
     });
@@ -3757,7 +3792,7 @@
 
     function initPanelState() {
         var dock = localStorage.getItem(STORAGE_DOCK_KEY) || 'right';
-        var open = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
+        var open = true; // Split view on arrival: the bill list starts open; closing it lasts for this visit.
         applyDock(dock);
         applyDrawer(open);
     }
@@ -3840,8 +3875,15 @@
 
                 if (res.items && res.items.length) {
                     $('#order-table-body tr.order-item-row').remove();
+                    // Only what is still uninvoiced on the DC; the goods already left, so the invoice settles it.
                     res.items.forEach(function(item) {
-                        addProductRow({...item, preserve_line: true});
+                        var open = item.open_qty != null ? parseFloat(item.open_qty) : parseFloat(item.qty);
+                        if (open > 0) {
+                            addProductRow({...item, qty: open, preserve_line: true});
+                            var row = $('#order-table-body tr.order-item-row').last();
+                            if (item.variant_id) row.attr('data-variant-id', item.variant_id);
+                            if (item.base_factor) row.attr({'data-material-document-id': ch.id, 'data-material-item-id': item.id, 'data-material-base-factor': item.base_factor, 'data-material-unit-id': item.unit_id});
+                        }
                     });
                 }
                 $('.selectpicker').selectpicker('refresh');
@@ -3872,8 +3914,9 @@
         });
     }
 
-    var savedMode = @json(request('view') === 'orders') ? 'register' : localStorage.getItem('zolo_sale_workspace_mode');
-    if (savedMode === 'register' && !fromDcId && !fromQuotationId) {
+    // Bills always open in split view (entry + bill list); full width is a switch for this visit only.
+    // Only a register link (Pending Sales) opens the full-width list.
+    if (@json(request('view') === 'orders') && !fromDcId && !fromQuotationId) {
         switchWorkspaceMode('register');
     }
 

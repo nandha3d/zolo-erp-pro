@@ -5,13 +5,13 @@
     <x-success-message key="message" />
     <x-error-message key="not_permitted" />
 
-    <section>
-        <div class="container-fluid">
+    <x-product-command-bar active="brand">
             <button class="btn btn-info" data-toggle="modal" data-target="#createModal"><i class="dripicons-plus"></i>
-                {{ __('db.Add Brand') }} </button>&nbsp;
-            <button class="btn btn-primary" data-toggle="modal" data-target="#importBrand"><i class="dripicons-copy"></i>
+                {{ __('db.Add Brand') }} </button>
+            <button class="btn btn-secondary" data-toggle="modal" data-target="#importBrand"><i class="dripicons-copy"></i>
                 {{ __('db.Import Brand') }}</button>
-        </div>
+    </x-product-command-bar>
+    <section class="product-workspace-view">
         <div class="table-responsive">
             <table id="biller-table" class="table">
                 <thead>

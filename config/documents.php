@@ -1,6 +1,6 @@
 <?php
 
 return [
-    // Ctrl+F12 opens a new Purchase Order (status 4). Enable only after the order lifecycle checks pass.
-    'purchase_order_shortcut' => (bool) env('DOCUMENTS_PURCHASE_ORDER_SHORTCUT', false),
+    // Nine lifecycle checks passed; the registry also requires the installed allocation schema.
+    'purchase_order_shortcut' => (bool) env('DOCUMENTS_PURCHASE_ORDER_SHORTCUT', true),
 ];

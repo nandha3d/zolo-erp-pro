@@ -99,8 +99,20 @@ class CompanyWriteGuard
                 $query = $field === 'product_batch_id'
                     ? DB::table('product_batches')->where('id', $line[$field])->where('product_id', $product->id)
                     : DB::table('product_variants')->where('variant_id', $line[$field])->where('product_id', $product->id);
-                if (!$query->lockForUpdate()->exists()) {
+                $reference = $query->lockForUpdate()->first();
+                if (!$reference) {
                     throw ValidationException::withMessages(['items.'.$field => 'The reference must belong to the selected product.']);
+                }
+                if ($field === 'product_batch_id' && isset($reference->batch_no)) {
+                    if (isset($line['batch']) && !is_array($line['batch'])) {
+                        throw ValidationException::withMessages(['items.batch' => 'Use a batch object.']);
+                    }
+                    foreach ([$line['batch']['batch_no'] ?? null, $line['batch_no'] ?? null] as $name) {
+                        if ($name !== null && (string) $name !== (string) $reference->batch_no) {
+                            throw ValidationException::withMessages(['items.product_batch_id' => 'Batch ID and lot name must identify the same lot.']);
+                        }
+                    }
+                    $line['batch'] = ['batch_no' => $reference->batch_no] + ($line['batch'] ?? []);
                 }
             }
         }

@@ -6,6 +6,8 @@
     <file>tests/Unit/CommercialPricingTest.php</file>
     <file>tests/Feature/TaxComplianceTest.php</file>
     <file>tests/Feature/ReturnsDocumentsTest.php</file>
+    <file>tests/Feature/MaterialDocumentReturnsTest.php</file>
+    <file>tests/Feature/MaterialReturnAllocationTest.php</file>
     <file>tests/Feature/ComplianceHttpTest.php</file>
     <file>tests/Feature/ComplianceMigrationTest.php</file>
     <file>tests/Feature/ComplianceConcurrencyTest.php</file>

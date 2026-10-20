@@ -436,7 +436,7 @@ class InventoryMovementService
         if ($qty < 0 && $after < -self::EPSILON) {
             $message = sprintf('Insufficient stock for product %d in warehouse %d: %s available, %s requested.',
                 $product->id, $warehouseId, round((float) $row->qty, 4) + 0, -$qty);
-            match ($this->policy->negativeStock($run->companyId)) {
+            match ($this->policy->negativeStock($run->companyId, $product)) {
                 'block' => throw new StockPolicyException($message),
                 'warn' => $run->warnings[] = $message,
                 default => null,

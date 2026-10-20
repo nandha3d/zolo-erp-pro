@@ -31,7 +31,10 @@ class PurchasePostingService
             }
             $date = $guard->begin($context, $purchase->created_at->toDateString());
             $stock = [];
-            $inventory = $transit = $expense = 0;
+            $inventory = $transit = $expense = $accrued = 0;
+            $variances = [];
+            // Lines already received on a Supplier GRN settle its accrual instead of receiving stock again.
+            $settled = app(MaterialDocumentService::class)->settledLines('purchase', $purchase->id, $context);
             // Lock all referenced products once, preserving company ownership checks for every line.
             $products = \App\Models\Product::forCompany($context)
                 ->whereIn('id', $purchase->productPurchases->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
@@ -48,13 +51,31 @@ class PurchasePostingService
                     $expense += $value;
                     continue;
                 }
-                $receivedValue = (int) round($value * (float) $line->recieved / (float) $line->qty);
+                $qty = (float) $line->qty;
+                $received = (float) $line->recieved;
+                if ($grn = $settled[$line->id] ?? null) {
+                    $base = app(\App\Services\Inventory\UomConversionService::class)->toBase($product, $qty, $line->purchase_unit_id ? (int) $line->purchase_unit_id : null);
+                    $units = round($qty * min(1, $grn['qty_base'] / $base), 4);
+                    if ($received + MaterialDocumentService::EPSILON < $units) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['recieved' => 'Goods already received on the GRN count as received on the bill.']);
+                    }
+                    $billed = (int) round($value * $units / $qty);
+                    $accrued += $grn['value'];
+                    $variances[] = ['rows' => $grn['rows'], 'amount' => $billed - $grn['value']];
+                    $value -= $billed;
+                    $qty = round($qty - $units, 4);
+                    $received = round($received - $units, 4);
+                    if ($qty <= MaterialDocumentService::EPSILON) {
+                        continue;
+                    }
+                }
+                $receivedValue = (int) round($value * $received / $qty);
                 $inventory += $receivedValue;
                 $transit += $value - $receivedValue;
-                if ($line->recieved > 0) {
+                if ($received > 0) {
                     $stock[] = StockLine::fromArray([
-                        'qty' => $line->recieved, 'uom_id' => $line->purchase_unit_id,
-                        'unit_cost' => $receivedValue / 10000 / (float) $line->recieved,
+                        'qty' => $received, 'uom_id' => $line->purchase_unit_id,
+                        'unit_cost' => $receivedValue / 10000 / $received,
                         'attributes' => ['commercial_line_id' => $line->id] + ($line->stock_details_json['attributes'] ?? []),
                     ] + ($line->stock_details_json ?? []) + $line->toArray());
                 }
@@ -86,8 +107,12 @@ class PurchasePostingService
                     'partner_type' => $party && $purchase->supplier_id ? 'supplier' : null,
                     'partner_id' => $party ? $purchase->supplier_id : null];
             };
-            $add('inventory', ($inventory + $capitalised['inventory']) / 10000, 0);
-            $add('cogs', $capitalised['cogs'] / 10000, 0);
+            $priced = $variances === [] ? ['inventory' => 0, 'cogs' => 0]
+                : app(MaterialDocumentService::class)->priceVariance($purchase, $variances, $date, $context, $actor);
+            $signed = fn (string $role, int $units) => $add($role, max($units, 0) / 10000, max(-$units, 0) / 10000);
+            $add('goods_received_not_invoiced', $accrued / 10000, 0);
+            $signed('inventory', $inventory + $capitalised['inventory'] + $priced['inventory']);
+            $signed('cogs', $capitalised['cogs'] + $priced['cogs']);
             $add('goods_in_transit', $transit / 10000, 0);
             $add('operating_expense', $expense / 10000, 0);
             if ($purchase->tax_snapshot_json) {

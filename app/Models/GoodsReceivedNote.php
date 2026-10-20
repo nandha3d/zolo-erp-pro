@@ -17,13 +17,15 @@ class GoodsReceivedNote extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
-        'grn_date' => 'date',
-        'lr_date' => 'date',
+        // Plain dates in JSON: a UTC timestamp loaded the form one day early in IST.
+        'grn_date' => 'date:Y-m-d',
+        'lr_date' => 'date:Y-m-d',
         'sundries_json' => 'array',
         'total_qty' => 'float',
         'total_cost' => 'float',
         'total_tax' => 'float',
         'grand_total' => 'float',
+        'posted_at' => 'datetime',
     ];
 
     public function items(): HasMany
