@@ -8,22 +8,20 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-17 11:27:00 (+05:30)
-- **Active Git Branch:** ui (merged origin/ui up to `38f4017` / merge commit `2291cc8`)
+- **Last Updated:** 2026-10-20 19:32:00 (+05:30)
+- **Active Git Branch:** ui (synchronized with origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
 - **Latest Commits:**
-  - `2291cc8` — "Merge branch 'origin/ui' into ui"
-  - `38f4017` — "fix: production test matrix findings (security, accounting, inventory, GST, UI, tests)"
-  - `25c05c4` — "feat(job-work): capitalise processing cost, GST job work challan, textile process route"
-  - `296153e` — "fix(cycle): textile job work end-to-end run — new-company setup, payments, menus"
-  - `ad94c97` — "fix(industry): preset units, bale/bundle/vehicle on bills, industry labels, process switch"
-  - `93f32ca` — "fix(company): New company with logo crashed; textile vs FMCG comparison doc"
-  - `4a377fb` — "docs(sample): sample GST sales bill walkthrough and session memory"
-  - `8b4661e` — "feat(gst,company): GST round-off, A4 tax invoice, company profile with INR and logo"
-- **Working Tree State:** Changes in CommercialController, GST views, OptechMasterWebTest, and Playwright e2e test suite preserved
-- **Test Suite Status:** 41/41 feature tests passing (OptechMasterWebTest, GstSetupTest, OptechVoucherWebTest)
+  - `4a7307d` — "feat(test-suite): add FMCG full life-cycle matrix, Playwright E2E suites & interactive HTML reports"
+  - `6b0a310` — "Merge branch 'ui' of https://github.com/vigneshsinna/zolo-erp-pro into ui"
+  - `72e4d47` — "Support unregistered companies; fix dropdown placement"
+  - `87b7f8c` — "Add company/group edit and delete; polish bills and KPIs"
+  - `d8c035e` — "Post year-end close and party opening balances"
+  - `928d257` — "docs: record completed Textile P2 delivery"
+- **Working Tree State:** Clean; 22/22 FMCG and 13/13 Textile Playwright milestones passing; 66/66 menus audited HTTP 200 OK
+- **Test Suite Status:** 100% green across all Playwright E2E test suites (FMCG & Textile) and PHPUnit feature suites
 - **Database & Server State:**
   - Database: MariaDB/MySQL running with all migrations applied up to `2026_10_17_000005_seed_missing_document_series`
   - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`)
