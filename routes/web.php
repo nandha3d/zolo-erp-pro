@@ -162,6 +162,11 @@ Route::middleware('auth')->group(function () {
     Route::post('select-company', [\App\Http\Controllers\CompanySelectorController::class, 'choose'])->name('company.choose');
     Route::post('company-picker/groups', [\App\Http\Controllers\CompanySelectorController::class, 'storeGroup'])->name('company.groups.store');
     Route::post('company-picker/companies', [\App\Http\Controllers\CompanySelectorController::class, 'storeCompany'])->name('company.companies.store');
+    Route::post('company-picker/companies/{company}', [\App\Http\Controllers\CompanySelectorController::class, 'updateCompany'])->whereNumber('company')->name('company.companies.update');
+    Route::post('company-picker/companies/{company}/delete', [\App\Http\Controllers\CompanySelectorController::class, 'deleteCompany'])->whereNumber('company')->name('company.companies.delete');
+    Route::post('company-picker/companies/{company}/restore', [\App\Http\Controllers\CompanySelectorController::class, 'restoreCompany'])->whereNumber('company')->name('company.companies.restore');
+    Route::post('company-picker/groups/{group}', [\App\Http\Controllers\CompanySelectorController::class, 'updateGroup'])->whereNumber('group')->name('company.groups.update');
+    Route::post('company-picker/groups/{group}/delete', [\App\Http\Controllers\CompanySelectorController::class, 'deleteGroup'])->whereNumber('group')->name('company.groups.delete');
 });
 
 // Settings › Company profile: names, address, GSTIN, logo, currency and industry of the current company.

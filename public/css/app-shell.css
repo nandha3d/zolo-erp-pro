@@ -202,7 +202,8 @@ html.app-shell .zolo-dashboard-header .zolo-quick-actions-bar { padding-top: 6px
 html.app-shell #content > .row.mx-0 > .container-fluid > .col-md-12.mt-2.mb-3 { margin-top: 6px !important; margin-bottom: 6px !important; }
 html.app-shell .dashboard-counts > .container-fluid { padding-top: 0 !important; }
 @media (min-width: 1200px) {
-    html.app-shell .dashboard-counts .row > [class*="col-xl-3"] { flex: 0 0 12.5%; max-width: 12.5%; padding-left: 4px; padding-right: 4px; margin-bottom: 8px !important; }
+    /* Eight KPI cards in one row only when each gets ~140px; narrower screens use two rows of four so nothing clips. */
+    html.app-shell .dashboard-counts .row > [class*="col-xl-3"] { flex: 0 0 25%; max-width: 25%; padding-left: 4px; padding-right: 4px; margin-bottom: 8px !important; }
     html.app-shell .dashboard-counts .row { margin-left: 8px; margin-right: 8px; }
     html.app-shell .dashboard-counts .zolo-kpi-card { padding: 8px 10px !important; min-height: 0 !important; height: auto !important; }
     html.app-shell .dashboard-counts .zolo-kpi-header { margin-bottom: 4px !important; }
@@ -211,6 +212,9 @@ html.app-shell .dashboard-counts > .container-fluid { padding-top: 0 !important;
     html.app-shell .dashboard-counts .zolo-kpi-value { font-size: 17px !important; line-height: 1.2 !important; white-space: nowrap; }
     html.app-shell .dashboard-counts .zolo-kpi-label { font-size: 10px !important; margin-top: 2px !important; }
     html.app-shell .dashboard-counts .zolo-kpi-subtext { font-size: 10px !important; margin-top: 2px !important; }
+}
+@media (min-width: 1440px) {
+    html.app-shell .dashboard-counts .row > [class*="col-xl-3"] { flex: 0 0 12.5%; max-width: 12.5%; }
 }
 html.app-shell .dash-panels { padding-left: 15px; padding-right: 15px; }
 html.app-shell .dash-panels > .shell-steps-nav { margin-bottom: 8px; }

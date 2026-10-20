@@ -3303,7 +3303,6 @@
             $('#nav-mode-icon').text('⇄');
             $('#nav-mode-text').text('Split View');
             $('#btn-navbar-workspace-toggle').addClass('btn-mode-split').attr('title', 'Switch to Split View (Voucher Entry + Bill List)');
-            localStorage.setItem('zolo_sale_workspace_mode', 'register');
             if ($.fn.DataTable.isDataTable('#sale-table')) {
                 $('#sale-table').DataTable().columns.adjust().draw(false);
             } else {
@@ -3317,7 +3316,6 @@
             $('#nav-mode-icon').text('⛶');
             $('#nav-mode-text').text('Full Width');
             $('#btn-navbar-workspace-toggle').removeClass('btn-mode-split').attr('title', 'Switch to Full Width Register');
-            localStorage.setItem('zolo_sale_workspace_mode', 'voucher');
         }
     }
 
@@ -3794,7 +3792,7 @@
 
     function initPanelState() {
         var dock = localStorage.getItem(STORAGE_DOCK_KEY) || 'right';
-        var open = localStorage.getItem(STORAGE_OPEN_KEY) !== 'false';
+        var open = true; // Split view on arrival: the bill list starts open; closing it lasts for this visit.
         applyDock(dock);
         applyDrawer(open);
     }
@@ -3916,8 +3914,9 @@
         });
     }
 
-    var savedMode = @json(request('view') === 'orders') ? 'register' : localStorage.getItem('zolo_sale_workspace_mode');
-    if (savedMode === 'register' && !fromDcId && !fromQuotationId) {
+    // Bills always open in split view (entry + bill list); full width is a switch for this visit only.
+    // Only a register link (Pending Sales) opens the full-width list.
+    if (@json(request('view') === 'orders') && !fromDcId && !fromQuotationId) {
         switchWorkspaceMode('register');
     }
 
