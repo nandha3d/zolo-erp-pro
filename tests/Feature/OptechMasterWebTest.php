@@ -585,6 +585,7 @@ class OptechMasterWebTest extends TestCase
 
     public function test_gst_lookup_decodes_statutory_gstin_and_state(): void
     {
+        \App\Models\Company::where('id', 1)->update(['state_code' => '33']);
         // 33AIUPN6412D1ZA -> Tamil Nadu, PAN: AIUPN6412D, Proprietorship
         $response = $this->actingAs($this->adminUser)
             ->postJson('/parties/gst-lookup', [
@@ -636,6 +637,77 @@ class OptechMasterWebTest extends TestCase
                 'company_name' => 'Ravi Silk Mills',
                 'city' => 'Coimbatore',
             ],
+        ]);
+    }
+
+    public function test_gst_lookup_fetches_and_normalizes_from_gstinapi_provider(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('gst-provider:33AAACC1206D1ZN');
+        \Illuminate\Support\Facades\Http::fake([
+            '*/v1/gstin/33AAACC1206D1ZN' => \Illuminate\Support\Facades\Http::response([
+                'success' => true,
+                'gstin' => '33AAACC1206D1ZN',
+                'data' => [
+                    'gstin' => '33AAACC1206D1ZN',
+                    'legal_name' => 'CENTRAL WAREHOUSING CORPORATION',
+                    'trade_name' => 'CENTRAL WAREHOUSING CORPORATION',
+                    'status' => 'Active',
+                    'address' => [
+                        'building_no' => 'No. 4',
+                        'street' => 'Safdarjung Enclave',
+                        'location' => 'New Delhi',
+                        'district' => 'South West',
+                        'city' => 'New Delhi',
+                        'state' => 'Tamil Nadu',
+                        'pincode' => '600001',
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/gst-lookup', [
+                'gstin' => '33AAACC1206D1ZN',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'is_existing' => true,
+            'party' => [
+                'name' => 'CENTRAL WAREHOUSING CORPORATION',
+                'company_name' => 'CENTRAL WAREHOUSING CORPORATION',
+                'address' => 'No. 4, Safdarjung Enclave, New Delhi, South West',
+                'city' => 'New Delhi',
+                'state' => 'Tamil Nadu',
+                'postal_code' => '600001',
+                'registration_status' => 'Active',
+                'source' => 'live_api',
+            ],
+        ]);
+    }
+
+    public function test_gst_lookup_captures_provider_error_message(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('gst-provider:33AAACC1206D1ZN');
+        \Illuminate\Support\Facades\Http::fake([
+            '*/v1/gstin/33AAACC1206D1ZN' => \Illuminate\Support\Facades\Http::response([
+                'error' => 'Your free lookup credits are waiting — confirm your email address to unlock them.',
+                'code' => 'email_unverified_credits_held',
+            ], 402),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)
+            ->postJson('/parties/gst-lookup', [
+                'gstin' => '33AAACC1206D1ZN',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'is_existing' => false,
+            'party' => null,
+            'provider_message' => 'Your free lookup credits are waiting — confirm your email address to unlock them.',
         ]);
     }
 

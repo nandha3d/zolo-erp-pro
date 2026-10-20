@@ -1493,7 +1493,7 @@
             <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #e2e8f0;">
                 <div>
                     <h5 class="modal-title font-weight-bold" style="font-size:14.5px;color:#0f172a;margin:0;">
-                        <span id="quick-party-modal-title"><i class="fa fa-user-plus text-primary mr-1"></i> Add Supplier</span>
+                        <span id="quick-party-modal-title"><i class="fa fa-truck text-primary mr-1"></i> Add Supplier</span>
                     </h5>
                     <small class="text-muted italic d-block" style="font-size:11px;margin-top:2px;">The field labels marked with * are required input fields.</small>
                 </div>
@@ -1504,22 +1504,19 @@
             <form id="quick-create-party-form">
                 @csrf
                 <input type="hidden" id="party_type_input" name="party_type" value="supplier">
-                <div class="modal-body" style="padding:16px 20px;max-height:calc(85vh - 120px);overflow-y:auto;">
+                <div class="modal-body" style="padding:16px 22px;max-height:calc(85vh - 120px);overflow-y:auto;">
                     
-                    <!-- Top Options: Dual Nature & Customer Group -->
-                    <div class="row align-items-center mb-3 p-2" style="background:#f1f5f9;border-radius:6px;border:1px solid #e2e8f0;margin:0 0 14px 0;">
-                        <div class="col-md-5">
-                            <div class="form-check d-flex align-items-center mb-0" style="gap:8px;">
-                                <input type="checkbox" id="party-both-checkbox" name="both" value="1" class="form-check-input" style="margin-top:0;cursor:pointer;width:16px;height:16px;">
-                                <label for="party-both-checkbox" class="form-check-label font-weight-bold" style="font-size:12px;cursor:pointer;color:#1e293b;user-select:none;margin-bottom:0;">
-                                    Both Customer and Supplier
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-7" id="party-customer-group-col" style="display:none;">
+                    <!-- Top Options: Dual Nature & Customer Group (Cleanly Aligned Checkbox) -->
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-3 py-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+                        <label for="party-both-checkbox" class="d-flex align-items-center mb-0" style="cursor:pointer;gap:9px;user-select:none;">
+                            <input type="checkbox" id="party-both-checkbox" name="both" value="1" style="width:16px;height:16px;margin:0;accent-color:#7c3aed;cursor:pointer;">
+                            <span class="font-weight-bold" style="font-size:12.5px;color:#1e293b;">Both Customer and Supplier</span>
+                            <small class="text-muted ml-1" style="font-size:11px;">(creates linked account for reciprocal trade)</small>
+                        </label>
+                        <div id="party-customer-group-col" style="display:none;">
                             <div class="d-flex align-items-center" style="gap:8px;">
                                 <label style="font-size:11.5px;font-weight:700;color:#334155;white-space:nowrap;margin:0;">Customer Group *</label>
-                                <select id="party-customer-group-id" name="customer_group_id" class="form-control form-control-sm" style="height:32px;font-size:12px;">
+                                <select id="party-customer-group-id" name="customer_group_id" class="form-control form-control-sm" style="height:30px;font-size:12px;width:150px;">
                                     @if(isset($lims_customer_group_all) && count($lims_customer_group_all))
                                         @foreach($lims_customer_group_all as $cg)
                                             <option value="{{ $cg->id }}">{{ $cg->name }}</option>
@@ -1532,84 +1529,97 @@
                         </div>
                     </div>
 
-                    <!-- Row 1: Name, Company Name, VAT/Tax/GSTIN -->
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Name *</label>
-                                <input type="text" id="party-name" name="name" class="form-control" placeholder="Contact or Person Name" required style="height:34px;font-size:12.5px;">
-                            </div>
+                    <!-- Section 1: GSTIN Auto-Fill & Verification Hero Panel -->
+                    <div class="mb-3 p-3" style="background:#f1f5f9;border-radius:8px;border:1px solid #cbd5e1;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="font-weight-bold text-uppercase mb-0" style="font-size:11px;letter-spacing:0.4px;color:#334155;">
+                                <i class="fa fa-bolt text-warning mr-1"></i> GSTIN Auto-Fill & Statutory Verification
+                            </label>
+                            <span id="party-modal-gst-badge" class="badge" style="display:none;font-size:10.5px;padding:3px 8px;"></span>
                         </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Company Name *</label>
-                                <input type="text" id="party-company-name" name="company_name" class="form-control" placeholder="Company / Trade Name" required style="height:34px;font-size:12.5px;">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <label class="mb-0">VAT / Tax Number (GSTIN)</label>
-                                    <span id="party-modal-gst-badge" class="badge" style="display:none;font-size:10px;padding:2px 6px;"></span>
-                                </div>
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
                                 <div class="input-group">
-                                    <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase" placeholder="e.g. 33AIUPN6412D1ZA" maxlength="15" autocomplete="off" style="height:34px;font-size:12px;font-family:monospace;font-weight:700;letter-spacing:0.5px;">
+                                    <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase" placeholder="Enter 15-char GSTIN (e.g. 33AIUPN6412D1ZA)" maxlength="15" autocomplete="off" style="height:36px;font-size:13px;font-family:monospace;font-weight:700;letter-spacing:0.5px;">
                                     <div class="input-group-append">
-                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary" title="1-Click Auto-Fill from GSTIN (Free)" style="height:34px;font-size:11px;padding:0 10px;font-weight:600;display:flex;align-items:center;gap:4px;">
-                                            <i class="fa fa-bolt"></i> <span>Fetch</span>
+                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary" title="1-Click Auto-Fill all details from GST registry" style="background:#7c3aed;border-color:#7c3aed;height:36px;font-size:12px;padding:0 14px;font-weight:700;display:flex;align-items:center;gap:5px;">
+                                            <i class="fa fa-bolt"></i> <span>Fetch Details</span>
                                         </button>
-                                        <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary" title="Verify on official Government GST Portal (Free)" style="height:34px;font-size:11px;padding:0 9px;display:flex;align-items:center;">
+                                        <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary" title="Verify on official Government GST Portal" style="height:36px;font-size:12px;padding:0 11px;display:flex;align-items:center;">
                                             <i class="fa fa-external-link"></i>
                                         </a>
                                     </div>
                                 </div>
-                                <!-- Live Statutory GSTIN Insight Strip -->
-                                <div id="party-gst-preview-strip" class="mt-1" style="display:none;font-size:10.5px;padding:4px 8px;border-radius:5px;border:1px solid #cbd5e1;background:#f8fafc;line-height:1.4;">
-                                    <div class="d-flex align-items-center flex-wrap" style="gap:4px;">
-                                        <span id="gst-strip-state" class="badge badge-info" style="font-size:10px;font-weight:600;"></span>
-                                        <span id="gst-strip-const" class="badge badge-dark" style="font-size:10px;font-weight:600;"></span>
-                                        <span id="gst-strip-tax" class="badge badge-success" style="font-size:10px;font-weight:600;"></span>
-                                    </div>
-                                    <div id="gst-strip-msg" class="text-muted mt-1" style="font-size:10px;"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center" style="gap:6px;">
+                                    <span class="text-muted" style="font-size:11.5px;font-weight:600;white-space:nowrap;">PAN:</span>
+                                    <input type="text" id="party-pan-display" readonly placeholder="Auto from GSTIN" class="form-control form-control-sm text-uppercase" style="height:36px;font-size:12.5px;font-family:monospace;font-weight:700;background:#e2e8f0;color:#0f172a;">
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Full-Width GSTIN Details & Badges Strip -->
+                        <div id="party-gst-preview-strip" class="mt-2 p-2" style="display:none;border-radius:6px;border:1px solid #cbd5e1;background:#ffffff;">
+                            <div class="d-flex align-items-center flex-wrap" style="gap:6px;">
+                                <span id="gst-strip-state" class="badge badge-info" style="font-size:11px;font-weight:600;padding:4px 8px;"></span>
+                                <span id="gst-strip-const" class="badge badge-dark" style="font-size:11px;font-weight:600;padding:4px 8px;"></span>
+                                <span id="gst-strip-tax" class="badge badge-primary" style="font-size:11px;font-weight:600;padding:4px 8px;"></span>
+                                <span id="gst-strip-status" class="badge" style="font-size:11px;font-weight:700;padding:4px 8px;display:none;"></span>
+                                <span id="gst-strip-taxpayer" class="badge badge-secondary" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
+                                <span id="gst-strip-regdate" class="badge badge-light border" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
+                                <span id="gst-strip-cancdate" class="badge badge-danger" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
+                                <span id="gst-strip-filing" class="badge badge-light border" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
+                                <span id="gst-strip-nature" class="badge badge-light border" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
+                            </div>
+                            <div id="gst-strip-msg" class="text-muted mt-2" style="font-size:11.5px;line-height:1.4;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Business & Identification Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="compact-field-block">
+                                <label>Name / Contact Person *</label>
+                                <input type="text" id="party-name" name="name" class="form-control" placeholder="Contact or Person Name" required style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="compact-field-block">
+                                <label>Company / Trade Name *</label>
+                                <input type="text" id="party-company-name" name="company_name" class="form-control" placeholder="Company / Trade Name" required style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Row 2: Opening Balance, Email, Phone Number -->
+                    <!-- Section 3: Contact Details -->
                     <div class="row">
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Opening balance (Due) <i class="fa fa-info-circle text-muted" title="Amount due at start"></i></label>
-                                <input type="number" id="party-opening-balance" name="opening_balance" class="form-control" value="0" step="any" min="0" style="height:34px;font-size:12.5px;">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Email *</label>
-                                <input type="email" id="party-email" name="email" class="form-control" placeholder="example@example.com" required style="height:34px;font-size:12.5px;">
-                            </div>
-                        </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Phone Number *</label>
                                 <input type="text" id="party-phone-number" name="phone_number" class="form-control" placeholder="Primary Phone" required style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Row 3: WhatsApp Number, Credit Days, City -->
-                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Email</label>
+                                <input type="email" id="party-email" name="email" class="form-control" placeholder="email@example.com" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>WhatsApp Number</label>
                                 <input type="text" id="party-wa-number" name="wa_number" class="form-control" placeholder="WhatsApp Number" style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+
+                    <!-- Section 4: Registered Address Details (Auto-Filled) -->
+                    <div class="row">
+                        <div class="col-md-8">
                             <div class="compact-field-block">
-                                <label>Credit Days</label>
-                                <input type="number" id="party-credit-days" name="credit_days" class="form-control" value="30" min="0" placeholder="30" style="height:34px;font-size:12.5px;">
+                                <label>Street Address *</label>
+                                <input type="text" id="party-address" name="address" class="form-control" placeholder="Building / Street / Door No / Locality" required style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -1620,38 +1630,43 @@
                         </div>
                     </div>
 
-                    <!-- Row 4: Address, State, Postal Code -->
                     <div class="row">
                         <div class="col-md-4">
                             <div class="compact-field-block">
-                                <label>Address *</label>
-                                <input type="text" id="party-address" name="address" class="form-control" placeholder="Street / Door No / Area" required style="height:34px;font-size:12.5px;">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>State</label>
+                                <label>State *</label>
                                 <input type="text" id="party-state" name="state" class="form-control" placeholder="State" style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
-                                <label>Postal Code</label>
-                                <input type="text" id="party-postal-code" name="postal_code" class="form-control" placeholder="Postal / Pin Code" style="height:34px;font-size:12.5px;">
+                                <label>Postal / PIN Code</label>
+                                <input type="text" id="party-postal-code" name="postal_code" class="form-control" placeholder="PIN Code" style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Row 5: Country & Error Display -->
-                    <div class="row">
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Country</label>
                                 <input type="text" id="party-country" name="country" class="form-control" value="India" placeholder="Country" style="height:34px;font-size:12.5px;">
                             </div>
                         </div>
-                        <div class="col-md-8 d-flex align-items-center">
-                            <div id="party-form-error" class="alert alert-danger w-100 mb-0 py-1 px-3" style="display:none;font-size:12px;border-radius:6px;"></div>
+                    </div>
+
+                    <!-- Section 5: Credit Terms & Balance -->
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Credit Days</label>
+                                <input type="number" id="party-credit-days" name="credit_days" class="form-control" value="30" min="0" placeholder="30" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Opening Balance (Due) <i class="fa fa-info-circle text-muted" title="Amount due at start"></i></label>
+                                <input type="number" id="party-opening-balance" name="opening_balance" class="form-control" value="0" step="any" min="0" style="height:34px;font-size:12.5px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div id="party-form-error" class="alert alert-danger mb-0 py-1 px-2" style="display:none;font-size:11px;border-radius:6px;"></div>
                         </div>
                     </div>
 
@@ -2515,17 +2530,20 @@
         if (gstin.length < 2) {
             $('#party-modal-gst-badge').hide();
             $('#party-gst-preview-strip').hide();
+            $('#party-pan-display').val('');
             return;
         }
         var stateCode = gstin.substring(0, 2);
         var stateName = GST_STATE_MAP[stateCode];
 
         // Auto-fill State input field immediately
-        if (stateName) {
+        if (stateName && !$('#party-state').val()) {
             $('#party-state').val(stateName);
         }
 
-        var pan = gstin.length >= 10 ? gstin.substring(2, 10) : '';
+        // Full 10-char PAN extraction (characters 2 to 12)
+        var pan = gstin.length >= 12 ? gstin.substring(2, 12) : (gstin.length > 2 ? gstin.substring(2) : '');
+        $('#party-pan-display').val(pan);
         var panType = pan.length >= 4 ? pan[3] : '';
         var constitution = GST_PAN_CONSTITUTIONS[panType] || '';
 
@@ -2544,14 +2562,14 @@
             var isValid = validateGstinChecksum(gstin);
             if (isValid) {
                 $('#party-modal-gst-badge').removeClass('badge-danger badge-secondary').addClass('badge-success').text('✔ Valid GSTIN').show();
-                $('#gst-strip-msg').html('<span class="text-success font-weight-bold">✔ Luhn Mod-36 Checksum verified.</span> Click Fetch to auto-populate existing records.');
+                $('#gst-strip-msg').html('<span class="text-success font-weight-bold">✔ Luhn Mod-36 Checksum verified.</span> Click <strong>Fetch Details</strong> to load full registered name, address, and live filing status.');
             } else {
                 $('#party-modal-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
-                $('#gst-strip-msg').html('<span class="text-danger">GSTIN checksum does not match official statutory algorithm.</span>');
+                $('#gst-strip-msg').html('<span class="text-danger font-weight-bold">GSTIN checksum does not match official statutory algorithm.</span>');
             }
         } else {
             $('#party-modal-gst-badge').removeClass('badge-success badge-danger').addClass('badge-secondary').text(gstin.length + '/15').show();
-            $('#gst-strip-msg').text('Enter all 15 characters to verify official checksum.');
+            $('#gst-strip-msg').text('Enter full 15 characters to verify official checksum and fetch details.');
         }
     }
 
@@ -2571,7 +2589,7 @@
 
         var $btn = $('#btn-fetch-gstin');
         var originalBtn = $btn.html();
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Fetching...');
 
         $.ajax({
             type: 'POST',
@@ -2584,6 +2602,9 @@
             success: function(res) {
                 $btn.prop('disabled', false).html(originalBtn);
                 if (res && res.success) {
+                    if (res.pan) {
+                        $('#party-pan-display').val(res.pan);
+                    }
                     if (res.state_name) {
                         $('#party-state').val(res.state_name);
                     }
@@ -2593,21 +2614,75 @@
                         $('#party-modal-gst-badge').removeClass('badge-success badge-secondary').addClass('badge-danger').text('✖ Invalid Checksum').show();
                     }
 
-                    $('#gst-strip-state').text(res.state_code + ' - ' + res.state_name).show();
+                    $('#gst-strip-state').text((res.state_code || '') + ' - ' + (res.state_name || '')).show();
                     $('#gst-strip-const').text(res.constitution || 'Business Entity').toggle(!!res.constitution);
-                    $('#gst-strip-tax').text(res.tax_rule).show();
+                    $('#gst-strip-tax').text(res.tax_rule || '').show();
                     $('#party-gst-preview-strip').slideDown(150);
 
-                    if (res.is_existing && res.party) {
-                        var p = res.party;
-                        if (p.name && !$('#party-name').val()) $('#party-name').val(p.name);
-                        if (p.company_name && !$('#party-company-name').val()) $('#party-company-name').val(p.company_name);
-                        if (p.address && !$('#party-address').val()) $('#party-address').val(p.address);
-                        if (p.city && !$('#party-city').val()) $('#party-city').val(p.city);
-                        if (p.postal_code && !$('#party-postal-code').val()) $('#party-postal-code').val(p.postal_code);
+                    var p = res.party || res.gst_details;
+                    if (p) {
+                        // Populate Input Fields
+                        if (p.name) $('#party-name').val(p.name);
+                        if (p.company_name) $('#party-company-name').val(p.company_name);
+                        if (p.address) $('#party-address').val(p.address);
+                        if (p.city) $('#party-city').val(p.city);
+                        if (p.state) $('#party-state').val(p.state);
+                        if (p.postal_code) $('#party-postal-code').val(p.postal_code);
+                        if (p.country) $('#party-country').val(p.country);
                         if (p.phone_number && !$('#party-phone-number').val()) $('#party-phone-number').val(p.phone_number);
                         if (p.email && !$('#party-email').val()) $('#party-email').val(p.email);
-                        $('#gst-strip-msg').html('<span class="text-success font-weight-bold">✔ Matched existing party in ERP!</span> Registered name & address loaded.');
+
+                        // Populate Badges
+                        var status = p.status || p.registration_status;
+                        if (status) {
+                            var isAct = status.toLowerCase() === 'active' || status.toLowerCase() === 'act';
+                            var isCnl = status.toLowerCase().indexOf('cancel') !== -1;
+                            var badgeClass = isAct ? 'badge-success' : (isCnl ? 'badge-danger' : 'badge-warning');
+                            var statusLabel = '● ' + status;
+                            if (p.cancellation_date) {
+                                statusLabel += ' (' + p.cancellation_date + ')';
+                            }
+                            $('#gst-strip-status').removeClass('badge-success badge-danger badge-warning').addClass(badgeClass).text(statusLabel).show();
+                        } else {
+                            $('#gst-strip-status').hide();
+                        }
+
+                        if (p.taxpayer_type) {
+                            $('#gst-strip-taxpayer').text(p.taxpayer_type).show();
+                        } else {
+                            $('#gst-strip-taxpayer').hide();
+                        }
+
+                        if (p.registration_date) {
+                            $('#gst-strip-regdate').text('Reg: ' + p.registration_date).show();
+                        } else {
+                            $('#gst-strip-regdate').hide();
+                        }
+
+                        if (p.gstr3b_filed_till) {
+                            $('#gst-strip-filing').text('GSTR-3B: ' + p.gstr3b_filed_till).show();
+                        } else if (p.filing_frequency) {
+                            $('#gst-strip-filing').text('Filing: ' + p.filing_frequency).show();
+                        } else {
+                            $('#gst-strip-filing').hide();
+                        }
+
+                        if (p.nature_of_business) {
+                            var nat = p.nature_of_business;
+                            if (nat.length > 40) nat = nat.substring(0, 38) + '...';
+                            $('#gst-strip-nature').text('Business: ' + nat).attr('title', p.nature_of_business).show();
+                        } else {
+                            $('#gst-strip-nature').hide();
+                        }
+
+                        var sourceLabel = p.source === 'live_api' ? '✔ Live GST Registry match!' : '✔ Matched existing party in ERP!';
+                        var detailMsg = '<span class="text-success font-weight-bold">' + sourceLabel + '</span> Registered trade name and full address loaded.';
+                        if (p.legal_name && p.trade_name && p.legal_name !== p.trade_name) {
+                            detailMsg += ' <span class="text-muted d-block mt-1" style="font-size:11px;">Legal: <em>' + p.legal_name + '</em> | Trade: <em>' + p.trade_name + '</em></span>';
+                        }
+                        $('#gst-strip-msg').html(detailMsg);
+                    } else if (res.provider_message) {
+                        $('#gst-strip-msg').html('<span class="text-warning font-weight-bold">⚠ Provider note:</span> ' + res.provider_message);
                     } else {
                         $('#gst-strip-msg').html('<span class="text-info font-weight-bold">✔ Statutory Verified:</span> ' + res.state_name + ' (' + res.constitution + '). State set automatically.');
                     }

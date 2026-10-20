@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>zoloERP E2E Playwright Suite & Story Execution Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #7c3aed;
+      --accent-glow: rgba(124, 58, 237, 0.25);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #0ea5e9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      border: 1px solid #3730a3;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .brand-title { display: flex; align-items: center; gap: 14px; }
+    .brand-logo {
+      width: 44px; height: 44px; background: #7c3aed; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 22px; color: #fff;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+    }
+    .header-text h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+    .header-text p { color: var(--text-muted); font-size: 13.5px; margin-top: 4px; }
+    .header-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-badge {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      text-align: center;
+      min-width: 110px;
+    }
+    .stat-badge.success { border-color: var(--success); background: var(--success-glow); }
+    .stat-val { font-size: 20px; font-weight: 700; color: #fff; }
+    .stat-val.success { color: var(--success); }
+    .stat-lbl { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 18px; font-weight: 700; margin: 32px 0 16px 0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title span {
+      background: var(--accent); color: #fff; font-size: 11px;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+    }
+
+    /* Story Card */
+    .story-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .story-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .story-step-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+      position: relative;
+    }
+    .story-step-box.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+    .story-step-num {
+      position: absolute; top: -10px; left: 14px;
+      background: var(--accent); color: #fff; font-size: 10px;
+      font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    }
+    .story-step-title { font-size: 13.5px; font-weight: 700; margin-top: 6px; color: #e2e8f0; }
+    .story-step-desc { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .story-step-tag {
+      display: inline-block; margin-top: 10px; font-size: 11px;
+      padding: 3px 8px; border-radius: 4px; font-weight: 600;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .metric-card h3 { font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+    .metric-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+    .metric-item:last-child { border-bottom: none; font-weight: 700; }
+    .metric-item .val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .profit-positive { color: var(--success); }
+
+    /* Tables */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+    th {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 12px 16px; font-size: 11.5px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--card-border);
+    }
+    td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+    .badge-pass { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+    .badge-fail { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+    .badge-info { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; border: 1px solid #0ea5e9; }
+    .badge-purple { background: rgba(124, 58, 237, 0.2); color: #a78bfa; border: 1px solid #7c3aed; }
+
+    /* Code & JSON display */
+    pre.code-block {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #38bdf8;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    pre.result-block { color: #a7f3d0; border-color: #064e3b; }
+
+    /* Thumbnails */
+    .thumb-img {
+      width: 120px; height: 75px; object-fit: cover; border-radius: 6px;
+      border: 1px solid var(--card-border); cursor: pointer; transition: transform 0.2s;
+    }
+    .thumb-img:hover { transform: scale(1.05); border-color: var(--accent); }
+
+    /* Modal for screenshots */
+    #imageModal {
+      display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+      align-items: center; justify-content: center;
+    }
+    #modalImg { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid var(--card-border); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand-title">
+      <div class="brand-logo">Z</div>
+      <div class="header-text">
+        <h1>zoloERP &middot; Automated Playwright Test Suite</h1>
+        <p>Textile Life Cycle Scenario: <strong>Animazon Textiles</strong> &middot; Multi-stage Job Work &amp; B2B Procedural Audit</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="stat-badge success">
+        <div class="stat-val success">13 / 13</div>
+        <div class="stat-lbl">Tests Passed (100%)</div>
+      </div>
+      <div class="stat-badge">
+        <div class="stat-val">66</div>
+        <div class="stat-lbl">Menus Audited</div>
+      </div>
+      <div class="stat-badge">
+        <div class="stat-val">138.3s</div>
+        <div class="stat-lbl">Execution Time</div>
+      </div>
+      <div class="stat-badge">
+        <div class="stat-val">Chromium 1248 (Headless)</div>
+        <div class="stat-lbl">Engine</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Narrative Story Flow Card -->
+  <div class="section-title">
+    Textile Supply Chain &amp; Job Work Story Journey
+    <span>Real-World Scenario</span>
+  </div>
+  <div class="story-card">
+    <p style="font-size: 13.5px; color: #cbd5e1; line-height: 1.6;">
+      <strong>Animazon Textiles Pvt Ltd</strong> purchases <strong>400 Plain Cloth</strong> pieces from <strong>MCR Textiles Pvt Ltd</strong>. 
+      The goods are dispatched to job worker <strong>Vijay Dyeing Processors</strong> under GST Rule 55 Delivery Challan for Royal Blue coloring. 
+      Once processed, the goods are received back converted as <strong>Animazon Dyed Premium Fabric (Royal Blue)</strong>. 
+      Finally, 350 units are sold B2B to <strong>Vogue Apparels B2B</strong> generating substantial gross profit while leaving 50 units in closing inventory.
+    </p>
+
+    <div class="story-steps">
+      <div class="story-step-box active">
+        <div class="story-step-num">Step 1</div>
+        <div class="story-step-title">1. Enterprise Onboarding</div>
+        <div class="story-step-desc">Company Context: Animazon Textiles (Tamil Nadu - 33). Item masters configured with 0 initial stock.</div>
+        <span class="story-step-tag badge-purple">Setup</span>
+      </div>
+      <div class="story-step-box active">
+        <div class="story-step-num">Step 2</div>
+        <div class="story-step-title">2. Inward Procurement</div>
+        <div class="story-step-desc">Purchase 400 pcs of Plain Grey Cloth from MCR Textiles @ &#8377;150. Stock rises: <strong>0 &rarr; 400</strong>.</div>
+        <span class="story-step-tag badge-info">+400 Stock</span>
+      </div>
+      <div class="story-step-box active">
+        <div class="story-step-num">Step 3</div>
+        <div class="story-step-title">3. Job Work Outward</div>
+        <div class="story-step-desc">Delivery Challan (DC-JOB-2026-001) issued to Vijay Dyeing Processors for dyeing process.</div>
+        <span class="story-step-tag badge-purple">Challan Sent</span>
+      </div>
+      <div class="story-step-box active">
+        <div class="story-step-num">Step 4</div>
+        <div class="story-step-title">4. Inward Conversion</div>
+        <div class="story-step-desc">Processed goods received as "Animazon Dyed Premium Fabric". Plain cloth consumed; Dyed cloth inwarded: <strong>+400</strong>.</div>
+        <span class="story-step-tag badge-info">+400 Finished Goods</span>
+      </div>
+      <div class="story-step-box active">
+        <div class="story-step-num">Step 5</div>
+        <div class="story-step-title">5. B2B Commercial Sale</div>
+        <div class="story-step-desc">Sell 350 pcs to Vogue Apparels B2B @ &#8377;380. Closing stock: <strong>50 pcs</strong>. Profit realized: <strong>&#8377;59,500</strong>.</div>
+        <span class="story-step-tag badge-pass">&#8377;59,500 Profit</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Metrics & Financials -->
+  <div class="section-title">
+    Financial Profit &amp; Stock Ledger Realization
+    <span>Audit Verification</span>
+  </div>
+  <div class="metrics-grid">
+    <!-- Financial Card -->
+    <div class="metric-card">
+      <h3>Financial Impact &amp; P&amp;L Analysis</h3>
+      <div class="metric-item"><span>Raw Material Purchase (400 pcs @ &#8377;150)</span> <span class="val">&#8377;60,000</span></div>
+      <div class="metric-item"><span>Inward GST (5%)</span> <span class="val">&#8377;3,000</span></div>
+      <div class="metric-item"><span>Job Work Dyeing Service (400 pcs @ &#8377;60)</span> <span class="val">&#8377;24,000</span></div>
+      <div class="metric-item"><span>Cost per Finished Unit (Cloth + Dyeing)</span> <span class="val">&#8377;210.00</span></div>
+      <div class="metric-item"><span>B2B Sale Revenue (350 pcs @ &#8377;380)</span> <span class="val">&#8377;1,33,000</span></div>
+      <div class="metric-item"><span>Cost of Goods Sold (COGS: 350 * &#8377;210)</span> <span class="val">&#8377;73,500</span></div>
+      <div class="metric-item profit-positive"><span>Gross Realized Profit</span> <span class="val profit-positive">&#8377;59,500 (80.95%)</span></div>
+    </div>
+
+    <!-- Stock Ledger Card -->
+    <div class="metric-card">
+      <h3>Inventory Balance &amp; Stock Trajectory</h3>
+      <div class="metric-item"><span>Raw Plain Cloth Initial Stock</span> <span class="val">0 pcs</span></div>
+      <div class="metric-item"><span>Raw Plain Cloth after MCR Purchase</span> <span class="val" style="color:var(--info);">+400 pcs</span></div>
+      <div class="metric-item"><span>Raw Plain Cloth Dispatched to Vijay Dyeing</span> <span class="val" style="color:var(--warning);">-400 pcs (to Job Worker)</span></div>
+      <div class="metric-item"><span>Finished Dyed Fabric Received</span> <span class="val" style="color:var(--success);">+400 pcs (in Warehouse)</span></div>
+      <div class="metric-item"><span>Finished Dyed Fabric Sold to Vogue Apparels</span> <span class="val" style="color:var(--danger);">-350 pcs</span></div>
+      <div class="metric-item"><span>Final Closing Inventory (Animazon Dyed Fabric)</span> <span class="val profit-positive">50 pcs (In Stock)</span></div>
+      <div class="metric-item"><span>Stock Audit Discrepancy</span> <span class="val profit-positive">0.00 (Zero Variance)</span></div>
+    </div>
+  </div>
+
+  <!-- Detailed Step-by-Step Test Results -->
+  <div class="section-title">
+    Procedural Test Case Execution Log
+    <span>Inputs Given vs Results Obtained</span>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th style="width: 170px;">Test Case &amp; Module</th>
+          <th style="width: 80px;">Status</th>
+          <th style="width: 320px;">Input Given (Payload / Parameters)</th>
+          <th>Result Obtained (Response / Database State)</th>
+          <th style="width: 130px;">Screenshot</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td><strong>AUTH-01</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Administrator Authentication</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Core / Auth</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 10285ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;username&quot;: &quot;admin&quot;,
+  &quot;role&quot;: &quot;admin&quot;,
+  &quot;auth_method&quot;: &quot;Session Password&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;status&quot;: 200,
+  &quot;authenticated_user&quot;: &quot;admin&quot;,
+  &quot;url&quot;: &quot;http://localhost:8080/dashboard&quot;,
+  &quot;title&quot;: &quot;zoloERP&quot;
+}</pre>
+            
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_AUTH_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_AUTH_01.png')" alt="Screenshot AUTH-01">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>ENT-01</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Setup Animazon Textiles Enterprise Profile</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Core / Company Settings</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 7740ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;legal_name&quot;: &quot;Animazon Textiles Private Limited&quot;,
+  &quot;trade_name&quot;: &quot;Animazon Textiles&quot;,
+  &quot;state_code&quot;: &quot;33&quot;,
+  &quot;state_name&quot;: &quot;Tamil Nadu&quot;,
+  &quot;gstin&quot;: &quot;33AAICA2026D1Z8&quot;,
+  &quot;city&quot;: &quot;Erode&quot;,
+  &quot;currency&quot;: &quot;INR&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;company_id&quot;: 1,
+  &quot;trade_name&quot;: &quot;Animazon Textiles&quot;,
+  &quot;legal_name&quot;: &quot;Animazon Textiles Private Limited&quot;,
+  &quot;state_code&quot;: &quot;33&quot;
+}</pre>
+            
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_ENT_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_ENT_01.png')" alt="Screenshot ENT-01">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>MST-01</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Configure Category & Unit Masters</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Master Setup</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 7492ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;category&quot;: &quot;Textiles &amp; Handlooms&quot;,
+  &quot;unit&quot;: &quot;Piece / Meter&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;category_id&quot;: 57,
+  &quot;category_name&quot;: &quot;Textiles &amp; Handlooms&quot;,
+  &quot;unit_code&quot;: &quot;Pc&quot;,
+  &quot;unit_name&quot;: &quot;piece&quot;
+}</pre>
+            
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_MST_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_MST_01.png')" alt="Screenshot MST-01">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>PRD-01</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Raw Material Product Master (Grey Plain Cloth)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 3095ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;name&quot;: &quot;Plain Grey Fabric (Cloth)&quot;,
+  &quot;code&quot;: &quot;TEX-PLAIN-400&quot;,
+  &quot;type&quot;: &quot;standard&quot;,
+  &quot;barcode_symbology&quot;: &quot;code128&quot;,
+  &quot;cost&quot;: 150,
+  &quot;price&quot;: 180,
+  &quot;unit_id&quot;: 1,
+  &quot;tax_id&quot;: 2,
+  &quot;initial_stock&quot;: 0
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;product_id&quot;: 95,
+  &quot;code&quot;: &quot;TEX-PLAIN-400&quot;,
+  &quot;name&quot;: &quot;Plain Grey Fabric (Cloth)&quot;,
+  &quot;category_id&quot;: 57,
+  &quot;initial_stock&quot;: 0
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Raw Material Stock: 0 pcs</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_PRD_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_PRD_01.png')" alt="Screenshot PRD-01">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>PRD-02</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Finished Product Master (Animazon Dyed Premium Fabric)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 3243ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;name&quot;: &quot;Animazon Dyed Premium Fabric (Royal Blue)&quot;,
+  &quot;code&quot;: &quot;TEX-DYED-BLUE&quot;,
+  &quot;type&quot;: &quot;standard&quot;,
+  &quot;barcode_symbology&quot;: &quot;code128&quot;,
+  &quot;cost&quot;: 210,
+  &quot;price&quot;: 380,
+  &quot;unit_id&quot;: 1,
+  &quot;tax_id&quot;: 2,
+  &quot;initial_stock&quot;: 0
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;product_id&quot;: 96,
+  &quot;code&quot;: &quot;TEX-DYED-BLUE&quot;,
+  &quot;name&quot;: &quot;Animazon Dyed Premium Fabric (Royal Blue)&quot;,
+  &quot;category_id&quot;: 57,
+  &quot;initial_stock&quot;: 0
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Finished Goods Stock: 0 pcs</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_PRD_02.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_PRD_02.png')" alt="Screenshot PRD-02">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>PTY-01</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard Supplier (MCR Textiles Pvt Ltd)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Supplier Directory</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 1937ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;name&quot;: &quot;Karthik Subramanian&quot;,
+  &quot;company_name&quot;: &quot;MCR Textiles Pvt Ltd&quot;,
+  &quot;vat_number&quot;: &quot;33AAACM1234D1Z5&quot;,
+  &quot;phone_number&quot;: &quot;9876543210&quot;,
+  &quot;email&quot;: &quot;orders@mcrtextiles.in&quot;,
+  &quot;address&quot;: &quot;24, Textile Mill Road, Near Ring Road&quot;,
+  &quot;city&quot;: &quot;Erode&quot;,
+  &quot;state&quot;: &quot;Tamil Nadu&quot;,
+  &quot;postal_code&quot;: &quot;638001&quot;,
+  &quot;country&quot;: &quot;India&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;supplier_id&quot;: 90,
+  &quot;company_name&quot;: &quot;MCR Textiles Pvt Ltd&quot;,
+  &quot;vat_number&quot;: &quot;33AAACM1234D1Z5&quot;,
+  &quot;city&quot;: &quot;Erode&quot;
+}</pre>
+            
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_PTY_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_PTY_01.png')" alt="Screenshot PTY-01">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>PTY-02</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard Subcontractor / Job Worker (Vijay Dyeing Processors)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Reciprocal Party</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 2457ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;name&quot;: &quot;Vijay Anand&quot;,
+  &quot;company_name&quot;: &quot;Vijay Dyeing Processors&quot;,
+  &quot;vat_number&quot;: &quot;33AAACV5678E1Z9&quot;,
+  &quot;phone_number&quot;: &quot;9842109876&quot;,
+  &quot;email&quot;: &quot;info@vijaydyeing.com&quot;,
+  &quot;address&quot;: &quot;5, Industrial Dyeing Zone, SIPCOT&quot;,
+  &quot;city&quot;: &quot;Perundurai&quot;,
+  &quot;state&quot;: &quot;Tamil Nadu&quot;,
+  &quot;postal_code&quot;: &quot;638052&quot;,
+  &quot;country&quot;: &quot;India&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;job_worker_id&quot;: 91,
+  &quot;company_name&quot;: &quot;Vijay Dyeing Processors&quot;,
+  &quot;nature&quot;: &quot;Dual Customer &amp; Supplier&quot;
+}</pre>
+            
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_PTY_02.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_PTY_02.png')" alt="Screenshot PTY-02">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>PTY-03</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard B2B Wholesale Customer (Vogue Apparels B2B)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Customer Directory</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 1651ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;name&quot;: &quot;Suresh Kumar&quot;,
+  &quot;company_name&quot;: &quot;Vogue Apparels B2B&quot;,
+  &quot;vat_number&quot;: &quot;33AABCV9876E1Z1&quot;,
+  &quot;phone_number&quot;: &quot;9894012345&quot;,
+  &quot;email&quot;: &quot;procurement@vogueapparels.in&quot;,
+  &quot;address&quot;: &quot;102, Garment Avenue, Avinashi Road&quot;,
+  &quot;city&quot;: &quot;Coimbatore&quot;,
+  &quot;state&quot;: &quot;Tamil Nadu&quot;,
+  &quot;postal_code&quot;: &quot;641018&quot;,
+  &quot;country&quot;: &quot;India&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;customer_id&quot;: 29,
+  &quot;company_name&quot;: &quot;Vogue Apparels B2B&quot;,
+  &quot;tax_no&quot;: &quot;33AABCV9876E1Z1&quot;
+}</pre>
+            
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_PTY_03.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_PTY_03.png')" alt="Screenshot PTY-03">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>TXN-01</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Inward Purchase Bill: Procure 400 Plain Clothes from MCR Textiles</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Purchases / Purchase Command Center</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 3697ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;supplier&quot;: &quot;MCR Textiles Pvt Ltd&quot;,
+  &quot;item&quot;: &quot;Plain Grey Fabric (Cloth)&quot;,
+  &quot;quantity&quot;: 400,
+  &quot;unit_cost&quot;: 150,
+  &quot;total_cost&quot;: 63000,
+  &quot;warehouse&quot;: &quot;Test Shop (ID: 1)&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;purchase_id&quot;: 56,
+  &quot;reference_no&quot;: &quot;PO-MCR-090700&quot;,
+  &quot;items_count&quot;: 1,
+  &quot;qty_purchased&quot;: 400,
+  &quot;total_amount&quot;: 63000,
+  &quot;stock_before&quot;: 0,
+  &quot;stock_after&quot;: 400
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Raw Plain Cloth: 0 -> +400 pcs (Added to Warehouse)</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_TXN_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_TXN_01.png')" alt="Screenshot TXN-01">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>TXN-02</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Issue Delivery Challan (DC-JOB-2026-001) for Dyeing to Vijay Dyeing</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Delivery Challan (DC)</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 2582ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;challan_purpose&quot;: &quot;Job Work / Subcontracting (Coloring &amp; Dyeing)&quot;,
+  &quot;job_worker&quot;: &quot;Vijay Dyeing Processors&quot;,
+  &quot;dispatched_product&quot;: &quot;Plain Grey Fabric (Cloth)&quot;,
+  &quot;quantity&quot;: 400,
+  &quot;transport&quot;: &quot;KPN Speed Parcel Service&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;challan_id&quot;: 29,
+  &quot;challan_no&quot;: &quot;DC-JOB-4199&quot;,
+  &quot;recipient&quot;: &quot;Vijay Dyeing Processors&quot;,
+  &quot;quantity_dispatched&quot;: 400,
+  &quot;statutory_rule&quot;: &quot;GST Rule 55(1)(c) Delivery Challan without tax invoice&quot;
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Dispatched: 400 pcs Plain Cloth to Job Worker</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_TXN_02.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_TXN_02.png')" alt="Screenshot TXN-02">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>TXN-03</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Job Work Inward: Conversion into "Animazon Dyed Premium Fabric"</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Operations / Manufacturing & Job Work Receipt</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 4652ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;inward_from&quot;: &quot;Vijay Dyeing Processors&quot;,
+  &quot;consumed_raw_material&quot;: &quot;Plain Grey Fabric (Cloth) (400 pcs)&quot;,
+  &quot;produced_finished_good&quot;: &quot;Animazon Dyed Premium Fabric (Royal Blue) (400 pcs)&quot;,
+  &quot;job_work_fee_per_unit&quot;: &quot;₹60.00&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;conversion_status&quot;: &quot;SUCCESS&quot;,
+  &quot;raw_cloth_consumed&quot;: 400,
+  &quot;raw_cloth_stock_after&quot;: 0,
+  &quot;finished_cloth_inwarded&quot;: 400,
+  &quot;finished_cloth_stock_after&quot;: 400,
+  &quot;dyeing_service_charge&quot;: 24000,
+  &quot;effective_cost_per_finished_unit&quot;: 210
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Raw Plain Cloth: 400 -> 0 pcs | Finished Dyed Fabric: 0 -> +400 pcs</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_TXN_03.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_TXN_03.png')" alt="Screenshot TXN-03">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>TXN-04</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Commercial B2B Sale: 350 Dyed Fabrics to Vogue Apparels with Profit</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Sales Command Center</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 3819ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;customer&quot;: &quot;Vogue Apparels B2B&quot;,
+  &quot;product&quot;: &quot;Animazon Dyed Premium Fabric (Royal Blue)&quot;,
+  &quot;quantity_sold&quot;: 350,
+  &quot;unit_selling_price&quot;: 380,
+  &quot;cost_price_per_unit&quot;: 210,
+  &quot;revenue&quot;: 133000,
+  &quot;total_with_gst&quot;: 139650
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;sale_id&quot;: 39,
+  &quot;invoice_number&quot;: &quot;SO-VOGUE-102649&quot;,
+  &quot;customer&quot;: &quot;Vogue Apparels B2B&quot;,
+  &quot;qty_sold&quot;: 350,
+  &quot;sale_revenue&quot;: 133000,
+  &quot;cogs&quot;: 73500,
+  &quot;gross_profit&quot;: 59500,
+  &quot;profit_margin&quot;: &quot;80.95%&quot;,
+  &quot;stock_before&quot;: 400,
+  &quot;stock_after&quot;: 50
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Finished Goods Stock: 400 -> 50 pcs (Reduced by 350) | Profit Realized: ₹59,500</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_TXN_04.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_TXN_04.png')" alt="Screenshot TXN-04">
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>TXN-05</strong></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Financial Settlement: Receipt from Vogue Apparels & Payment to MCR</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Finance & Ledger / Accounting Vouchers</div>
+            <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">&#9201; 4439ms</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td>
+            <pre class="code-block">{
+  &quot;receipt_amount&quot;: 139650,
+  &quot;supplier_payment&quot;: 63000,
+  &quot;settlement_mode&quot;: &quot;Bank Transfer (Double-Entry NEFT)&quot;
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  &quot;customer_receipt&quot;: &quot;₹1,39,650 Received (Status: Paid)&quot;,
+  &quot;supplier_payment&quot;: &quot;₹63,000 Disbursed (Status: Paid)&quot;,
+  &quot;dyeing_service_fee&quot;: &quot;₹24,000 Accounted&quot;,
+  &quot;net_cash_flow_profit&quot;: &quot;+₹52,650&quot;
+}</pre>
+            <div style="margin-top: 6px; font-size: 11px; color: #38bdf8;"><strong>Stock Impact:</strong> Accounts Settled: Invoice Marked Paid</div>
+          </td>
+          <td>
+            <img src="tests-e2e/screenshots/step_TXN_05.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/step_TXN_05.png')" alt="Screenshot TXN-05">
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Full ERP Menu Procedural Verification Matrix -->
+  <div class="section-title">
+    Full ERP Menu Procedural Coverage Matrix
+    <span>28+ Menus Audited</span>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Module Group</th>
+          <th>Menu Name</th>
+          <th>URL Route</th>
+          <th>HTTP Status</th>
+          <th>DOM Render State</th>
+          <th>Load Latency</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td><span class="badge badge-purple">Core</span></td>
+          <td style="font-weight: 600; color: #fff;">Dashboard</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/dashboard</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1289ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Core</span></td>
+          <td style="font-weight: 600; color: #fff;">Workspaces</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/workspace</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">4200ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Category List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/category</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">952ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Brand Master</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/brand</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1663ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Unit Master</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/unit</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">4014ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Products Directory</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/products</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">929ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Add Product Form</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/products/create</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1701ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Barcode Printing</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/products/print_barcode</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">912ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Stock Adjustment List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/qty_adjustment</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">902ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Stock Count Register</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/stock-count</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">942ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Bill Sundry</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/bill-sundry</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">889ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Sale Types</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/sale-type</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">822ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Purchase Types</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/purchase-type</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">839ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Agents & Brokers</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/agent</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">776ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Areas Register</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/area</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">748ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Standard Remarks</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/standard-remark</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">781ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Master Registers</span></td>
+          <td style="font-weight: 600; color: #fff;">Document Series (Ctrl+F9)</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/document-series</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">770ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Purchases</span></td>
+          <td style="font-weight: 600; color: #fff;">Purchase Bills Command Center</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/purchases</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1368ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Purchases</span></td>
+          <td style="font-weight: 600; color: #fff;">Goods Received Note (GRN)</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/goods-received-notes</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1440ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Purchases</span></td>
+          <td style="font-weight: 600; color: #fff;">Purchase Returns</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/return-purchase</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1705ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Purchases</span></td>
+          <td style="font-weight: 600; color: #fff;">Supplier Directory</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/supplier</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1449ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Sales Command Center</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/sales</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1448ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Delivery Challan (DC)</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/delivery-challans</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1527ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Packing Slips</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/packing-slips</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1246ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Challan List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/challans</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1298ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Deliveries List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/delivery</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1253ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Couriers List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/couriers</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1244ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Sale Returns</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/return-sale</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1072ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Quotations</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/quotations</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1742ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Voucher Entry F9</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/voucher/entry</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1465ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Chart of Accounts (COA)</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/chart-of-accounts</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1324ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Journal Entries</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/journal-entries</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">914ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">General Ledger</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/general-ledger</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">982ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Trial Balance</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/trial-balance</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1306ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Profit & Loss Statement</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/profit-loss</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">993ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Balance Sheet</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/balance-sheet</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1220ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Cash Accounts List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounts</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1089ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #fff;">Expense Categories</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/expense_categories</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">943ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #fff;">Expense List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/expenses</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1103ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #fff;">Income Categories</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/income_categories</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1280ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #fff;">Income List</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/incomes</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1015ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">People</span></td>
+          <td style="font-weight: 600; color: #fff;">Customer Directory</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/customer</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1386ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">People</span></td>
+          <td style="font-weight: 600; color: #fff;">User Management</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/user</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1284ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">People</span></td>
+          <td style="font-weight: 600; color: #fff;">Sale Agents</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/sale-agents</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">977ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">People</span></td>
+          <td style="font-weight: 600; color: #fff;">Billers Directory</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/biller</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">893ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Departments</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/departments</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">977ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Designations</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/designations</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">848ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Shifts</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/shift</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">873ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Employees</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/employees</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">953ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Attendance</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/attendance</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">902ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Holidays</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/holidays</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">898ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Leaves</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/leave</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">888ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">HRM</span></td>
+          <td style="font-weight: 600; color: #fff;">Payroll</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/payroll</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1087ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Statutory GST</span></td>
+          <td style="font-weight: 600; color: #fff;">GST Settings & Portals</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/settings/gst</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1375ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Statutory GST</span></td>
+          <td style="font-weight: 600; color: #fff;">GST Audit & Compliance Report</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/compliance/gst/report</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">865ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Operations</span></td>
+          <td style="font-weight: 600; color: #fff;">Job Work Workspace & Registers</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/operations</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1535ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Sales Orders Register</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/commercial/orders/sale</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">631ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Sales</span></td>
+          <td style="font-weight: 600; color: #fff;">Dispatch Register (DC / Delivery)</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/dispatch-register</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">807ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Purchases</span></td>
+          <td style="font-weight: 600; color: #fff;">Purchase Orders Register</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/commercial/orders/purchase</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">571ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Product Aliases</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/product-aliases</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">841ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Reviewed Product Bulk Import</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/products/import/review</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">923ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Products</span></td>
+          <td style="font-weight: 600; color: #fff;">Stock by Lot & Batch Balance</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/inventory-reports/stock-by-lot</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1021ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Collections & Customer Follow-Up</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/collections</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">931ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Accounting</span></td>
+          <td style="font-weight: 600; color: #fff;">Historical Ageing & Receivables</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/accounting/ageing</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1055ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Core</span></td>
+          <td style="font-weight: 600; color: #fff;">Multi-Company Context Selector</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/select-company</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">725ms</td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">Core</span></td>
+          <td style="font-weight: 600; color: #fff;">Company Profile & Settings</td>
+          <td><code style="color: #38bdf8; font-size: 11px;">/settings/company</code></td>
+          <td><span class="badge badge-pass">200 OK</span></td>
+          <td><span style="color: var(--success); font-weight: 600;">&#10004; Verified Active</span></td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">854ms</td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align: center; color: var(--text-muted); font-size: 11.5px; margin-top: 40px; border-top: 1px solid var(--card-border); padding-top: 20px;">
+    zoloERP Playwright Test Harness &middot; Run Timestamp: 10/20/2026, 7:00:50 PM GMT+5:30 &middot; Environment: Laravel 10 / PHP 8.4 / MySQL / ServBay
+  </div>
+
+</div>
+
+<!-- Modal for full screenshot view -->
+<div id="imageModal" onclick="this.style.display='none'">
+  <img id="modalImg" src="" alt="Full view">
+</div>
+
+<script>
+  function openModal(src) {
+    var modal = document.getElementById('imageModal');
+    var modalImg = document.getElementById('modalImg');
+    modalImg.src = src;
+    modal.style.display = 'flex';
+  }
+</script>
+
+</body>
+</html>

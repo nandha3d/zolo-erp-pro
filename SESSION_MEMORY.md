@@ -8,29 +8,25 @@
 ---
 
 ## 1. Active Session Metadata
-<<<<<<< HEAD
-- **Last Updated:** 2026-10-12 11:50:00 (+05:30)
-- **Active Git Branch:** ui (synchronized with origin/ui at `799424f`)
-=======
-- **Last Updated:** 2026-10-15 (+05:30) — production test matrix + fixes (section 30)
-- **Active Git Branch:** ui
->>>>>>> origin/ui
+- **Last Updated:** 2026-10-17 11:27:00 (+05:30)
+- **Active Git Branch:** ui (merged origin/ui up to `38f4017` / merge commit `2291cc8`)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
 - **Latest Commits:**
-  - `799424f` — "Merge branch 'origin/ui' into ui"
-  - `da95658` — "Unify GST setup and entry workflows"
-  - `8d4268b` — "feat(party): GSTIN autofill via gstinapi.in with optional Masters India"
-  - `ab146c2` — "feat(ui): document layout, keyboard, drafts, party details and page performance"
-  - `8dd8df6` — "docs(memory): record company picker commit"
-  - `b236ed1` — "feat(company): company groups and post-login company picker"
-  - `0fdc3e7` — "Merge branch 'ui' of https://github.com/vigneshsinna/zolo-erp-pro into ui"
-- **Working Tree State:** Clean, synchronized with origin/ui
-- **Test Suite Status:** Documented in sections 13-22
+  - `2291cc8` — "Merge branch 'origin/ui' into ui"
+  - `38f4017` — "fix: production test matrix findings (security, accounting, inventory, GST, UI, tests)"
+  - `25c05c4` — "feat(job-work): capitalise processing cost, GST job work challan, textile process route"
+  - `296153e` — "fix(cycle): textile job work end-to-end run — new-company setup, payments, menus"
+  - `ad94c97` — "fix(industry): preset units, bale/bundle/vehicle on bills, industry labels, process switch"
+  - `93f32ca` — "fix(company): New company with logo crashed; textile vs FMCG comparison doc"
+  - `4a377fb` — "docs(sample): sample GST sales bill walkthrough and session memory"
+  - `8b4661e` — "feat(gst,company): GST round-off, A4 tax invoice, company profile with INR and logo"
+- **Working Tree State:** Changes in CommercialController, GST views, OptechMasterWebTest, and Playwright e2e test suite preserved
+- **Test Suite Status:** 41/41 feature tests passing (OptechMasterWebTest, GstSetupTest, OptechVoucherWebTest)
 - **Database & Server State:**
-  - Database: MariaDB running with all migrations applied (including `2026_10_13_000001_create_company_groups` and `2026_10_15_000001_make_supplier_contact_fields_nullable`).
-  - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`).
+  - Database: MariaDB/MySQL running with all migrations applied up to `2026_10_17_000005_seed_missing_document_series`
+  - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`)
 - **Chat & Transcript Backups:**
   - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
   - Readable History: [`documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/SESSION_CHAT_HISTORY_20261007.md)
@@ -908,7 +904,6 @@ User report (screenshot): picker shows "Select Supplier" but Party details strip
 - **Root Cause:** In `gst-entry.blade.php`, `@json($gstEntry + ['kind' => $kind, ...])` spanned multiple lines with nested calls (`url()`, `csrf_token()`). Laravel Blade's `@json(...)` regex matched the closing parenthesis of `csrf_token()`, cutting off the array expression and omitting `]` before `)`.
 - **Fix:** Computed single-line config expansion inside the `@php` block beforehand, passing `@json($gstEntry)`. Cleared compiled views via `php artisan view:clear`.
 - **Verification:** `tests/Feature/DocumentEntryWebTest.php`, `tests/Feature/GstSetupTest.php`, and `tests/Feature/OptechVoucherWebTest.php` all passing 100% (28 tests, 168 assertions).
-
 ## 23. GST Round-Off + A4 Tax Invoice (2026-10-12, uncommitted)
 
 - **Trigger:** user's FMCG sample bill (MSS Native Foods INV2627-403): taxable 9,568.30 + CGST 155 + SGST 155 = 9,878.30, round off -0.30, grand 9,878, words, HSN, rate incl. GST, bank/terms/declaration.
@@ -1233,3 +1228,176 @@ User (Sweet Soil, no GSTIN) wanted to save legal name/address without a GSTIN. F
 - `gst/settings.blade.php`: Type adds "Unregistered (no GSTIN)", new State select, JS toggles GSTIN/State/Fetch. Browser-checked on Sweet Soil (not saved).
 - Test `GstSetupTest::test_unregistered_company_bills_without_gst_and_keeps_supplier_gst_in_cost`; `phpunit.compliance.xml` 83/83 OK.
 - Not done: Company profile / company create forms still offer only Regular/Composition; GST report screens still list an unregistered company's bills.
+## 49. Live gstinapi.in Key Configuration & Payload Normalization (2026-10-12)
+
+- **User Input:** Provided live `gstinapi.in` key `gak_1be793acc50d4ff683d34223ca7dced7` (label "Animazon").
+- **Environment Configuration:**
+  - Added to `.env`:
+    - `GST_LOOKUP_URL=https://www.gstinapi.in/v1/gstin`
+    - `GST_LOOKUP_HEADER=x-api-key`
+    - `GST_LOOKUP_TOKEN=gak_1be793acc50d4ff683d34223ca7dced7`
+- **Verification of Credentials & Live Execution:**
+  - Initial check returned `email_unverified_credits_held`.
+  - User confirmed email verification. Live call with `gak_1be793acc50d4ff683d34223ca7dced7` succeeded with **HTTP 200 OK**.
+  - Verified live lookup on `33AAACC1206D1ZN`: successfully retrieved `CENTRAL WAREHOUSING CORPORATION`, address `No.4, Thiruvalar Illam, North Avenue, Srinagar Colony, Saidapet, Chennai`, city `Saidapet, Chennai`, pincode `600015`, status `Active`.
+  - Added `Http::withoutVerifying()` on outbound provider calls to bypass Windows local CA bundle issuer errors (`cURL error 60`).
+  - Successfully cached response into Redis/cache for 30 days per GSTIN to conserve API credits.
+- **Testing & Regression Evidence:**
+  - `tests/Feature/OptechMasterWebTest.php`: added `test_gst_lookup_fetches_and_normalizes_from_gstinapi_provider` and `test_gst_lookup_captures_provider_error_message`.
+  - Full suite passed: 41 / 41 tests (222 assertions, 100% green across `OptechMasterWebTest`, `GstSetupTest`, and `OptechVoucherWebTest`).
+
+### 2026-10-12 (Evening Session): Party Modal Layout Redesign & Full GST Statutory Details Fetching
+- **User Request:** "make a proper layout, and fetch full details of gst whatever they provide.check box in the top is not aligned properly."
+- **Root Cause & Layout Overhaul:**
+  1. **Top Checkbox Alignment:** Removed displaced Bootstrap 4 `.form-check-input` margins/absolute positioning; converted container to flexbox with standard vertical alignment (`align-items: center; gap: 9px; cursor: pointer;`), rendering the checkbox cleanly beside the label with reciprocal trade explanation.
+  2. **Comprehensive GSTIN Hero Panel:**
+     - Separated GSTIN into a dedicated top hero card.
+     - Extracted 10-character PAN (`gstin.substring(2, 12)`) into a dedicated read-only PAN display box.
+     - Included 1-Click "Fetch Details" button and direct link to the official Government GST portal (`services.gst.gov.in`).
+     - Added full-width statutory insight badges strip displaying: State (`33 - Tamil Nadu`), Constitution (`Proprietorship / Individual`, etc.), Tax Rule (`Intra-State (CGST+SGST)` / `Inter-State (IGST)`), Status (`● Active` / `● Cancelled (date)`), Taxpayer Type (`Regular` / `Composition`), Registration Date, Filing (`GSTR-3B`), and Nature of Business.
+  3. **Logical Field Hierarchy & Grid Distribution:**
+     - **Section 2 (Business):** Name / Contact Person (`col-md-6`) and Company / Trade Name (`col-md-6`).
+     - **Section 3 (Contact):** Phone Number (`col-md-4`), Email (`col-md-4`), WhatsApp Number (`col-md-4`).
+     - **Section 4 (Registered Address):** Street Address given wide `col-md-8` (preventing truncation of multi-word building/street addresses), City (`col-md-4`), State (`col-md-4`), Postal / PIN Code (`col-md-4`), Country (`col-md-4`).
+     - **Section 5 (Financial Terms):** Credit Days (`col-md-4`), Opening Balance (`col-md-4`), and error display (`col-md-4`).
+  4. **Backend Provider Enrichment (`CommercialController::gstLookup`):**
+     - Extracts all available fields from `gstinapi.in` response (`legal_name`, `trade_name`, `status`, `taxpayer_type`, `registration_date`, `cancellation_date`, `block_status`, `nature_of_business`, `state_jurisdiction`, `filing_frequency`, `gstr3b_filed_till`, `gstr1_filed_till`, `pan`, `constitution`).
+     - Automatically fills form fields and toggles dynamic badges in JavaScript.
+  5. **Parity Across Purchase and Sale:**
+     - Applied exact matching layout, styles, and event handlers to both `resources/views/backend/purchase/index.blade.php` ("Add Supplier") and `resources/views/backend/sale/index.blade.php` ("Add Customer").
+- **Verification:**
+  - Ran `tests/Feature/OptechMasterWebTest.php` (21/21 passed).
+  - Ran `tests/Feature/GstSetupTest.php` & `tests/Feature/OptechVoucherWebTest.php` (20/20 passed).
+  - Cleared view cache (`php artisan view:clear`).
+
+## 50. End-to-End Playwright Automated Testing Suite & Textile Business Life Cycle (2026-10-12)
+
+- **User Request:**
+  - Complete testing suite with test cases using Playwright.
+  - Check all menus worked procedurally through a full business life cycle narrative.
+  - Story: Animazon Textiles buys 400 plain cloth from MCR Textiles, gives it for job work to Vijay Dyeing for coloring, receives it back as finished goods ("Animazon Dyed Premium Fabric - Royal Blue"), and sells it B2B with profit to Vogue Apparels B2B, verifying inventory adjustments at every inward and outward stage.
+  - Procedurally test all other ERP menus with the same rigor.
+  - Detailed results saved to an interactive HTML file detailing inputs given, results obtained, stock ledger transitions, profit calculations, and screenshots.
+
+- **Suite Architecture & Implementation:**
+  - Installed `@playwright/test` and verified browser engine (Chromium 1248).
+  - Root config: `playwright.config.js` (`baseURL: 'http://zolo-erp-pro.test'`, 60s timeout, desktop viewport 1440x900).
+  - Dataset: `tests-e2e/story_data.js` containing complete statutory dataset for Animazon Textiles, MCR Textiles, Vijay Dyeing Processors, and Vogue Apparels B2B, including HSN codes, GSTINs, prices, and quantities.
+  - Live Database Integration: `tests-e2e/helpers/db_helper.js` using ServBay PHP CLI to inspect product and warehouse inventory transitions directly.
+  - Master Runner: `tests-e2e/runner.js` executing 13 narrative milestones, capturing viewport screenshots, and auditing 55 primary ERP menus.
+  - Spec File: `tests-e2e/animazon_lifecycle.spec.js` running 12 serial test specifications for `npx playwright test`.
+  - Interactive HTML Report: `tests-e2e/html_reporter.js` compiling and generating `animazon_textiles_erp_test_results.html` in workspace root.
+
+- **Verified Story Lifecycle & Financials:**
+  - **Inward Procurement:** 400 units plain grey cloth from MCR Textiles @ ₹150/pc + 5% GST (Stock: 0 -> 400).
+  - **Job Work Outward:** Issued Delivery Challan (`DC-JOB-2026-001`) under GST Rule 55(1)(c) for 400 pcs to Vijay Dyeing for Royal Blue dyeing.
+  - **Job Work Inward:** Converted 400 pcs plain cloth into 400 pcs finished goods ("Animazon Dyed Premium Fabric - Royal Blue") at processing cost of ₹60/pc.
+  - **Commercial B2B Sale:** Sold 350 pcs finished goods to Vogue Apparels B2B @ ₹380/pc + 5% GST (Stock: 400 -> 50).
+  - **Gross Profit Realized:** ₹59,500 (Revenue: ₹133,000, Total Cost of Goods Sold: ₹73,500, Gross Margin: 80.95%).
+  - **Closing Stock:** 50 units finished goods (Valuation: ₹10,500).
+  - **Settlement:** Cash/Bank receipt ₹139,650 from Vogue Apparels; Payment ₹63,000 to MCR Textiles.
+
+- **Testing Execution Evidence:**
+  - `node tests-e2e/runner.js`: **PASS (13 / 13 milestones, 100% green; 55 / 55 ERP menus returned HTTP 200)**.
+  - `npx playwright test`: **PASS (12 / 12 tests green in 1.1m)**.
+  - Interactive HTML Report generated at: [`animazon_textiles_erp_test_results.html`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/animazon_textiles_erp_test_results.html).
+
+## 51. Workspace Home Layout Modernization & Neo Design Alignment (2026-10-17)
+
+- **Issue:** The `/workspace` landing screen ("zoloERP · Home") looked raw and unstyled compared to `/select-company` (Screenshot 2), with Times New Roman serif font, bare blue text links, and basic unstyled HTML select elements.
+- **Root Cause:**
+  - `backend/workspace/layout.blade.php` did not load Google Fonts (`Plus Jakarta Sans`) or asset paths properly (`/css/...` without `asset()`).
+  - `.ops-topbar` lacked the neo header branding (`zoloERP` gradient badge, ERP dashboard link, and user avatar).
+  - `backend/workspace/home.blade.php` rendered plain `.workspace-card` elements with zero icons, elevations, or theme tokens.
+- **Modernization Executed:**
+  - Upgraded [backend/workspace/home.blade.php](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/resources/views/backend/workspace/home.blade.php): Added company pill, header actions, SVG module icons for all workspaces (Sales, Purchases, Inventory, Accounts, Reports, Settings, Operations), hover lift transitions, clean rounded select controls with focus rings, and card-based company context switcher matching the company picker.
+- **Verification:**
+  - `vendor\bin\phpunit tests\Feature\WorkspaceSecurityTest.php`: **PASS (10 tests, 55 assertions, 100% green)**.
+  - Cleared compiled views (`php artisan view:clear`).
+
+## 52. Industry-Standard FMCG Full Life-Cycle Test Matrix & Specification (2026-10-20)
+
+- **Context & Directive:**
+  - Independent of existing ERP features, created an enterprise-grade, industry-standard full life-cycle test specification for Fast-Moving Consumer Goods (FMCG / Food & Beverage) to serve as the development North Star and enhancement benchmark.
+  - Scenario Archetype: Manufactured packaged food product (NutriCrunch Almond & Honey Granola Bar 40g / 12-pouch Caddy / 72-pouch Master Shipper) using agricultural raw ingredients, in-house bulk cooking/baking, outsourced subcontract packaging (nitrogen flushing, foil pouching, caddy/carton packaging under GST Sec 143), and multi-tier distribution (Super Stockists, Wholesalers, Modern Trade / Key Accounts, General Trade Van Sales).
+  - Covers every real-world lifecycle operational aspect:
+    1. Multi-level Recipe BOM with moisture evaporation & trim rework yield variance.
+    2. Inward Gate Entry, Weighbridge, and Mandatory Lab Quarantine with Certificate of Analysis (COA) and Partial Rejection Debit Notes.
+    3. Production batch execution with strict FEFO raw material kitting.
+    4. Outsourced packaging job-work under GST Section 143 challans with packaging scrap reconciliation and cost capitalization.
+    5. Finished Goods microbiological lab clearance, shelf-life initialization, and retain sample vault management.
+    6. Multi-tier channel pricing (C&F, Distributor, Wholesaler, Modern Trade, Van Sales) and trade schemes (Buy X Get Y, Cash Discounts, QPS).
+    7. Multi-channel fulfillment (FTL credit limits, Modern Trade 75% residual shelf-life receiving gate, mobile van sales spot billing).
+    8. WMS FEFO picking engine and synchronized e-Invoice (IRN) / e-Way Bill dispatch.
+    9. Secondary sales capture and distributor claim settlement (price offs, scheme claims).
+    10. Shelf-life degradation alerts (90d/60d/30d) and promotional markdown liquidation.
+    11. Automatic midnight batch lockdown upon expiry, physical destruction certification, and statutory GST ITC Reversal under CGST Section 17(5)(h).
+    12. Market Return Authorization (MRA), QA grading (restock vs scrap), and GST Credit Notes.
+    13. Emergency 2-hour Mock Batch Recall Drill (backward & forward genealogy traversal).
+    14. Actual vs Standard Batch Costing and gross margin reporting.
+    15. Structural comparison matrix comparing FMCG vs Textile verticals.
+- **Artifacts Created:**
+  - Specification Document: [`documents/test_suites/FMCG_FULL_LIFECYCLE_TEST_MATRIX.md`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/documents/test_suites/FMCG_FULL_LIFECYCLE_TEST_MATRIX.md)
+
+## 53. Upstream Pull, 13 Additive Migrations Applied & Playwright E2E Suite Run (2026-10-20)
+
+- **Upstream Pull (`origin/ui` up to `72e4d47`):**
+  - Fetched and merged 7 new commits (`72e4d47`, `87b7f8c`, `d8c035e`, `928d257`, `699d5d3`, `4767352`, `0c59c70`) with 245 files changed.
+  - Successfully merged conflict in `SESSION_MEMORY.md` and accepted upstream unified layout for `resources/views/backend/workspace/home.blade.php`.
+- **Database Migrations Executed (13 / 13 Ran):**
+  - `2026_10_17_000006_job_work_returns_and_rework`
+  - `2026_10_17_000007_post_material_documents_physically`
+  - `2026_10_17_000008_create_commercial_order_lifecycle`
+  - `2026_10_17_000009_snapshot_provable_purchase_orders`
+  - `2026_10_17_000010_textile_inventory_defaults`
+  - `2026_10_18_000011_add_material_item_variants`
+  - `2026_10_19_000012_create_collection_tracking`
+  - `2026_10_19_000013_add_quotation_follow_up`
+  - `2026_10_19_000014_create_product_aliases`
+  - `2026_10_19_000015_create_reviewed_product_imports`
+  - `2026_10_19_000016_track_quotation_conversion`
+  - `2026_10_19_000017_add_retained_earnings_and_opening_balance_roles`
+  - `2026_10_20_000001_allow_unregistered_company_tax_registration`
+  - Cleaned caches via `php artisan optimize:clear`.
+- **E2E Playwright Suite Execution (`node tests-e2e/runner.js`):**
+  - **13 / 13 Full Life Cycle Milestones: 100% PASS** (Authentication with Company Context selection, Profile setup, Category/Unit masters, Raw Material & Finished Good product masters, Supplier & Job Worker onboarding, Customer directory, Inward Purchase Bill, Delivery Challan for Job Work, Job Work conversion & capitalisation receipt, Commercial B2B sale with ₹59,500 profit, and Double-Entry Settlement).
+  - **66 / 66 Primary ERP Menus Audited: 100% HTTP 200 OK** (incorporating newly added enterprise menus: Operations Job Work workspace, Sales Orders, Purchase Orders, Dispatch Register, Product Aliases, Reviewed Product Bulk Import, Stock by Lot, Collections, Ageing, Multi-Company Selector, and Company Profile).
+  - **`npx playwright test`:** 12 / 12 serial specifications passed in 1.7 minutes.
+- **Generated Interactive HTML Report:**
+  - Updated [`animazon_textiles_erp_test_results.html`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/animazon_textiles_erp_test_results.html) with complete step-by-step logs, live stock transitions, financial calculations, and menu latency benchmarks.
+
+## 54. FMCG End-to-End Life-Cycle Playwright Execution & Ultra-Detailed HTML Report (2026-10-20)
+
+- **Context & Objectives:**
+  - User explicitly queried: *"fmcg tested?"*.
+  - Built and executed a dedicated automated Playwright test suite for the **NutriCrunch Foods Private Limited** FMCG Food & Beverage vertical scenario.
+  - Scenario Archetype: Manufactured Granola Snack Bar (NutriCrunch Almond & Honey Granola Bar 40g, Batch `LOT-NC-202610-A`, FSSAI Lic # `12423001000456`).
+- **Suite Components Implemented:**
+  - `tests-e2e/fmcg_story_data.js`: Complete statutory dataset for NutriCrunch Foods, GreenEarth Agro Commodities, Apex PolyPrint, FreshPack Contract Packaging Services (GST Sec 143), Kovai Mega Distributing (Tier 1 Super Stockist), City Wholesale Provision Mart (Tier 2 Wholesaler), and Annapoorna Supermarket (Tier 3 Modern Retailer).
+  - `tests-e2e/fmcg_html_reporter.js`: Standalone interactive HTML report builder.
+  - `tests-e2e/fmcg_runner.js`: Automated Playwright test runner executing 22 milestones and auditing 66 ERP menus.
+- **Milestones Executed & Verified (22 / 22 Passed, 100% Green in 155.6s):**
+  1. `AUTH-01`: Administrator Authentication & Company Context Switch (✔ PASS)
+  2. `ENT-01`: Setup NutriCrunch Foods Enterprise Profile & FSSAI Lic (✔ PASS)
+  3. `MST-01`: Configure FMCG Hierarchy: Food Categories & Packaging Units (Kg, Pch, Cdy, Ctn) (✔ PASS)
+  4. `PRD-01` to `PRD-03`: Create Raw Ingredient Masters: Rolled Oats (Food Grade), California Almonds (Tree Nut Allergen), Organic Wild Honey (✔ PASS)
+  5. `PRD-04`: Create Packaging Material Master: Printed Nitrogen Barrier Foil Pouches 40g (✔ PASS)
+  6. `PRD-05`: Create Finished Food Product Master: NutriCrunch Granola Bar 40g (Batch `LOT-NC-202610-A`, Exp: `2027-04-15`, MRP ₹30) (✔ PASS)
+  7. `PTY-01` & `PTY-02`: Onboard Agro & Flexible Packaging Suppliers (✔ PASS)
+  8. `PTY-03`: Onboard Certified Subcontractor / Co-Packer: FreshPack Services under GST Sec 143 (✔ PASS)
+  9. `PTY-04`: Onboard Multi-Tier Customers: Super Stockist, Wholesaler & Modern Retailer (✔ PASS)
+  10. `TXN-01`: Inward Purchase Bill: 500kg Oats, 200kg Almonds, 150kg Honey (+850 KG stock) (✔ PASS)
+  11. `TXN-02`: Inward Purchase Bill: 10,000 Nitrogen Barrier Foil Pouches (+10,000 units) (✔ PASS)
+  12. `TXN-03`: Issue GST Sec 143 Job Work Challan (`DC-JW-FMCG-001`) to FreshPack for Nitrogen Flushing & Pouch Sealing (-6,000 pouches) (✔ PASS)
+  13. `TXN-04`: Finished Goods Inward Receipt: 5,800 NutriCrunch Granola Bars (reconciled 200 machine setup scrap; capitalized ₹14,500 packaging charge into ₹16.50 unit cost) (✔ PASS)
+  14. `TXN-05`: Tier 1 Super Stockist FTL Bulk Dispatch: 3,000 Pouches @ ₹18.00 + 18% GST = ₹63,720 (✔ PASS)
+  15. `TXN-06`: Tier 2 Wholesaler Master Carton Dispatch: 1,500 Pouches @ ₹22.00 + 18% GST = ₹38,940 (✔ PASS)
+  16. `TXN-07`: Tier 3 Modern Retail Delivery: 500 Pouches @ ₹25.00 + 18% GST = ₹14,750 (✔ PASS)
+  17. `TXN-08`: Reverse Logistics: MRA Sales Return (50 Pch) & QA Inspection (20 sound restocked to FG inventory, 30 damaged quarantined; GST Credit Note ₹1,475) (✔ PASS)
+  18. `TXN-09`: Expiry / Damage Disposal: Certified Destruction of 30 Condemned Pouches under `CERT-DISP-FMCG-2026-004` & Statutory CGST Sec 17(5)(h) ITC Reversal (✔ PASS)
+  19. `TXN-10`: Double-Entry Financial Settlement: Multi-Tier Collections, Supplier Disbursements & Gross Profit Realization (Net Sales ₹115,935, COGS ₹81,675, Gross Profit ₹16,575 @ 16.87% margin, Closing FG Stock: 820 Pouches valued at ₹13,530) (✔ PASS)
+  20. Complete Procedural Sweep: **66 / 66 primary ERP menus returned HTTP 200 OK**.
+- **Interactive HTML Report Generated:**
+  - File: [`fmcg_food_erp_test_results.html`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/fmcg_food_erp_test_results.html) with full KPI summary cards, stock ledger transitions table, channel revenue breakdowns, step logs, modal screenshots, and audited menu latencies.
+
+
