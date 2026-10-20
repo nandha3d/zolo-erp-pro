@@ -2762,9 +2762,10 @@ body.dark-mode .zolo-kpi-card:hover {
   color: var(--neo-primary, #4f46e5) !important;
 }
 
-/* Dropup animation and positioning */
-.btn-group.dropup .dropdown-menu,
-.dropdown.dropup .dropdown-menu {
+/* Dropup positioning for static menus only: Popper-placed menus ([x-placement]) already sit above the toggle via
+   their transform, so anchoring them to bottom: 100% as well pushed selectpicker menus far above the field. */
+.btn-group.dropup .dropdown-menu:not([x-placement]),
+.dropdown.dropup .dropdown-menu:not([x-placement]) {
   top: auto !important;
   bottom: 100% !important;
   margin-top: 0 !important;

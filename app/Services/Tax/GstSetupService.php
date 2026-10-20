@@ -79,34 +79,42 @@ class GstSetupService
             ->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))->orderByDesc('effective_from')->first();
     }
 
-    /** Company GST registration. Same GSTIN updates the open period; a new GSTIN closes it the day before. */
+    /**
+     * Company GST registration. Same GSTIN updates the open period; a new GSTIN closes it the day before.
+     * Unregistered keeps the legal name, address and state without a GSTIN: bills post with no GST and no input credit.
+     */
     public function registerCompany(array $data, CompanyContext $context, int $actor): void
     {
         $this->authorize($context, $actor);
-        validator($data, ['gstin' => 'required|string|max:15', 'legal_name' => 'required|string|max:191', 'trade_name' => 'nullable|string|max:191',
-            'address' => 'required|string|max:1000', 'registration_type' => 'required|in:regular,composition',
-            'effective_from' => 'required|date_format:Y-m-d'])->validate();
-        $gstin = Gstin::normalize($data['gstin']);
-        DB::transaction(function () use ($data, $gstin, $context) {
+        validator($data, ['gstin' => 'nullable|string|max:15', 'legal_name' => 'required|string|max:191', 'trade_name' => 'nullable|string|max:191',
+            'address' => 'required|string|max:1000', 'registration_type' => 'required|in:regular,composition,unregistered',
+            'state_code' => 'nullable|string|size:2', 'effective_from' => 'required|date_format:Y-m-d'])->validate();
+        $unregistered = $data['registration_type'] === 'unregistered';
+        $raw = trim((string) ($data['gstin'] ?? ''));
+        if ($unregistered && $raw !== '') throw ValidationException::withMessages(['gstin' => 'Leave GSTIN empty for an unregistered business, or choose Regular / Composition.']);
+        if (!$unregistered && $raw === '') throw ValidationException::withMessages(['gstin' => 'Enter the GSTIN, or choose Unregistered as the type.']);
+        $gstin = $unregistered ? null : Gstin::normalize($raw);
+        $state = $gstin ? substr($gstin, 0, 2) : (($data['state_code'] ?? null) ?: Company::whereKey($context->companyId)->value('state_code'));
+        if (!$state || $state === '97' || !isset(Gstin::$states[$state])) throw ValidationException::withMessages(['state_code' => 'Choose the state of the business.']);
+        DB::transaction(function () use ($data, $gstin, $state, $context) {
             Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
             $scope = ['company_id' => $context->companyId, 'branch_id' => $context->branchId];
             $open = DB::table('tax_registrations')->where($scope)->whereNull('effective_to')->lockForUpdate()->first();
             $fields = ['legal_name' => $data['legal_name'], 'trade_name' => $data['trade_name'] ?? null, 'address' => $data['address'],
-                'registration_type' => $data['registration_type'], 'status' => 'active', 'updated_at' => now()];
+                'registration_type' => $data['registration_type'], 'state_code' => $state, 'status' => 'active', 'updated_at' => now()];
             if ($open && $open->gstin === $gstin) {
                 DB::table('tax_registrations')->where('id', $open->id)->update($fields);
             } else {
                 if ($open) {
                     if ($data['effective_from'] <= $open->effective_from) {
-                        throw ValidationException::withMessages(['effective_from' => 'A new GSTIN must start after '.$open->effective_from.'.']);
+                        throw ValidationException::withMessages(['effective_from' => 'A new GSTIN or registration change must start after '.$open->effective_from.'.']);
                     }
                     DB::table('tax_registrations')->where('id', $open->id)
                         ->update(['effective_to' => date('Y-m-d', strtotime($data['effective_from'].' -1 day')), 'updated_at' => now()]);
                 }
-                DB::table('tax_registrations')->insert($scope + $fields + ['gstin' => $gstin, 'state_code' => substr($gstin, 0, 2),
-                    'effective_from' => $data['effective_from'], 'created_at' => now()]);
+                DB::table('tax_registrations')->insert($scope + $fields + ['gstin' => $gstin, 'effective_from' => $data['effective_from'], 'created_at' => now()]);
             }
-            Company::whereKey($context->companyId)->update(['country_code' => 'IN', 'state_code' => substr($gstin, 0, 2)]);
+            Company::whereKey($context->companyId)->update(['country_code' => 'IN', 'state_code' => $state]);
             // A registered company bills GST from its first document: make sure the GST and round-off ledgers are mapped.
             $this->ensureLedgers($context->companyId);
         });

@@ -67,11 +67,15 @@ Click **Save**, then pick the new company in the picker.
 
 **Settings › GST & Tax** (`/settings/gst`)
 
-1. **Registration** – GSTIN, legal name, trade name, type (Regular / Composition), effective from, address. Saving sets the company state and turns GST billing on.
+1. **Registration** – GSTIN, legal name, trade name, type (Regular / Composition / Unregistered), effective from, address. Saving sets the company state and turns GST billing on. **No GSTIN?** Choose type **Unregistered**, leave GSTIN empty and pick the state: bills then print as "Invoice" with no GST, and GST paid to suppliers goes into cost (no input credit). When you get a GSTIN later, save it with its start date; the unregistered period closes the day before.
 2. **Install standard GST setup** – only if the GST slabs or GST ledgers are missing.
 3. **Invoice print details** – phone, email, bank name, account no., IFSC, branch, UPI ID, signature caption, terms lines. These print on the A4 tax invoice.
 4. **Products** tab – set GST rate and HSN/SAC for each item (can also be done in step 9).
 5. **Parties** tab – check each customer/supplier GST profile (Regular / Unregistered / Composition, state).
+
+> **Buying from an unregistered supplier (no GSTIN, e.g. a small supplier under the ₹40 lakh goods threshold, including inter-state):** mark the supplier **Unregistered** on the Parties tab and leave the product on its normal GST slab. Do **not** switch the product to *Exempt* or *Non-GST supply* — that is a product-level setting and would also affect your sales of it. With an Unregistered supplier the system charges **no CGST/SGST/IGST** on the purchase and takes **no input credit**.
+>
+> **Warning:** an unregistered supplier cannot charge GST, so **never enter IGST (or CGST/SGST) on such a bill** — the system will not post it, and if the supplier's bill shows GST, ask them for a corrected bill of supply. Leave *Reverse charge* off unless the purchase is in a category the law notifies for reverse charge. The system does not track the ₹40 lakh limit; the supplier is responsible for staying within it.
 
 **Sales › Tax & document settings** (`/compliance/setup`) – admin only: e-invoice / e-way settings, return approval limits, document settings.
 
