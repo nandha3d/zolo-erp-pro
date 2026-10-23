@@ -8,68 +8,59 @@
 @endpush
 @section('content')
     @include('includes.session_message')
-    
-    <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>{{ __('db.Invoice Settings') }}</h2>
+
+    <x-settings-command-bar active="invoice">
+        <a class="btn btn-primary" href="{{ route('settings.invoice.create') }}"><i class="dripicons-plus"></i> {{ __('db.Add New Invoice Setting') }}</a>
+    </x-settings-command-bar>
+
+    <section class="settings-workspace-view">
+        <div class="settings-card-wrapper">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col-3">{{ __('db.Template Name') }}</th>
+                            <th class="col-2">{{ __('db.Size') }}</th>
+                            <th class="col-2 text-center">{{ __('db.Default') }}</th>
+                            <th class="col-3 text-center">{{ __('db.action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="table-loader" style="display: none;">
+                            <td colspan="5" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        @forelse ($invoiceSettings as $invoice)
+                            <tr>
+                                <td>{{ $invoice->template_name }}</td>
+                                <td>{{ $invoice->size }}</td>
+                                <td class="text-center align-middle">
+                                    @if ($invoice->is_default)
+                                        <span class="badge badge-success">{{ __('db.Default')}}</span>
+                                    @else
+                                        <button class="btn btn-sm btn-outline-secondary change-status" data-id="{{ $invoice->id }}"
+                                            data-column="is_default" data-url="{{ route('settings.invoice.update', $invoice->id) }}">
+                                            {{ __('db.Set Default')}}
+                                        </button>
+                                    @endif
+                                </td>
+                                <td class="text-center align-middle">
+                                    <a class="btn btn-warning btn-sm"
+                                        href="{{ route('settings.invoice.edit', $invoice->id) }}">{{ __('db.update')}}</a>
+                                    <button class="btn btn-danger btn-sm delete-invoice" data-id="{{ $invoice->id }}"
+                                        data-url="{{ route('settings.invoice.destroy', $invoice->id) }}">{{ __('db.delete')}}</button>
+                                </td>
+                            </tr>
+                        @empty
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <div class=" mb-3 ">
-            <a class="btn btn-primary float-end" href="{{ route('settings.invoice.create') }}"> <i class="dripicons-plus"></i>
-                {{ __('db.Add New Invoice Setting') }}</a>
-        </div>
-
-
-
-        <table class="table table-bordered">
-            <thead class="table-secondary">
-                <tr>
-                    <th class="col-3">{{ __('db.Template Name') }}</th>
-                    <th class="col-2">{{ __('db.Size') }}</th>
-                    <th class="col-2  text-center">{{ __('db.Default') }}</th>
-                    <th class="col-3 text-center">{{ __('db.action') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr id="table-loader" style="display: none;">
-                    <td colspan="5" class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden"></span>
-                        </div>
-                    </td>
-                </tr>
-                @forelse ($invoiceSettings as $invoice)
-                    <tr>
-                        <td>{{ $invoice->template_name }}</td>
-                        <td>{{ $invoice->size }}</td>
-                        <td class="text-center align-middle">
-                            @if ($invoice->is_default)
-                                <span class="badge bg-success">{{ __('db.Default')}}</span>
-                            @else
-                                <button class="btn btn-sm btn-outline-secondary change-status" data-id="{{ $invoice->id }}"
-                                    data-column="is_default" data-url="{{ route('settings.invoice.update', $invoice->id) }}">
-                                    {{ __('db.Set Default')}}
-                                </button>
-                            @endif
-                        </td>
-
-
-
-                        <td class="text-center align-middle">
-                            <a class="btn btn-warning btn-sm"
-                                href="{{ route('settings.invoice.edit', $invoice->id) }}"></i>{{ __('db.update')}}</a>
-                            <button class="btn btn-danger btn-sm delete-invoice" data-id="{{ $invoice->id }}"
-                                data-url="{{ route('settings.invoice.destroy', $invoice->id) }}">{{ __('db.delete')}}</button>
-                            {{-- <a href="{{ route('settings.invoice.show', $invoice->id) }}" class="btn btn-outline-primary">Show
-                            </a> --}}
-                        </td>
-                    </tr>
-                @empty
-                @endforelse
-
-            </tbody>
-        </table>
-    </div>
+    </section>
 @endsection
 
 @push('scripts')

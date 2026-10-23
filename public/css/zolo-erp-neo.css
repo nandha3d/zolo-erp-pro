@@ -2772,6 +2772,13 @@ body.dark-mode .zolo-kpi-card:hover {
   margin-bottom: 6px !important;
 }
 
+/* With the 'viewport' dropdown boundary Bootstrap marks the toggle's parent .position-static. A selectpicker menu
+   already lives in its own body-level .bs-container, so it must stay positioned: static, the menu's min-width:100%
+   was taken from the page and the list stretched across the whole screen. */
+.bootstrap-select.bs-container.position-static {
+  position: absolute !important;
+}
+
 /* Release overflow across ALL screen widths when any dropdown or collection is active */
 .table-responsive.dropdown-active,
 .table-responsive.dt-collection-active,
@@ -3073,6 +3080,8 @@ body.dark-mode .side-dropdown-filters label { color: #cbd5e1; }
 /* ====================================================================
  * Finance, Accounting, Expense & Income Zero-Scroll Modern Workspaces
  * ==================================================================== */
+html:has(.settings-workspace-view),
+body:has(.settings-workspace-view),
 html:has(.finance-desk-view),
 body:has(.finance-desk-view),
 html:has(.expense-workspace-view),
@@ -3104,6 +3113,7 @@ body:has(.bs-workspace-view) {
     overflow: hidden !important;
 }
 
+body:has(.settings-workspace-view) #content,
 body:has(.expense-workspace-view) #content,
 body:has(.expense-cat-workspace-view) #content,
 body:has(.income-workspace-view) #content,
@@ -3124,6 +3134,7 @@ body:has(.finance-desk-view) #content {
     flex-direction: column !important;
 }
 
+body:has(.settings-workspace-view) footer.main-footer,
 body:has(.expense-workspace-view) footer.main-footer,
 body:has(.expense-cat-workspace-view) footer.main-footer,
 body:has(.income-workspace-view) footer.main-footer,
@@ -3140,6 +3151,7 @@ body:has(.finance-desk-view) footer.main-footer {
     display: none !important;
 }
 
+.settings-workspace-view,
 .expense-workspace-view,
 .expense-cat-workspace-view,
 .income-workspace-view,
@@ -3164,6 +3176,7 @@ body:has(.finance-desk-view) footer.main-footer {
     background: #f8fafc;
 }
 
+body.dark-mode .settings-workspace-view,
 body.dark-mode .expense-workspace-view,
 body.dark-mode .expense-cat-workspace-view,
 body.dark-mode .income-workspace-view,

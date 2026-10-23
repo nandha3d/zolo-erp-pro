@@ -58,7 +58,20 @@
             <p class="zw-hint">Optional activation: {{ $activation_ready ? 'Foundation accepted' : 'Awaiting company isolation acceptance' }}. Opening data and production activation require reconciliation and reviewed acceptance.</p>
             <ul class="zw-list">@foreach($capabilities as $key=>$state)@if($state['enabled'])<li>{{ \App\Services\Platform\CapabilityCatalog::DEFINITIONS[$key][0] }}</li>@endif
             @endforeach</ul>
-            <a class="zw-link" href="/accounting/semantic-mappings">Account mappings →</a>
+            <a class="zw-link" href="{{ route('accounting.semantic-mappings') }}">Account mappings →</a>
+        </section>
+
+        <section class="zw-panel"><h2>Master registers</h2>
+            <p class="zw-hint">Numbering and the lists used on bills, DCs and GRNs. Also in the sidebar under Product.</p>
+            <ul class="zw-list">
+                <li><a href="{{ route('document-series.index') }}">Voucher series (Ctrl+F9)</a></li>
+                <li><a href="{{ route('sale-type.index') }}">Sale types</a></li>
+                <li><a href="{{ route('purchase-type.index') }}">Purchase types</a></li>
+                <li><a href="{{ route('bill-sundry.index') }}">Bill sundry</a></li>
+                <li><a href="{{ route('agent.index') }}">Agents &amp; brokers</a></li>
+                <li><a href="{{ route('area.index') }}">Areas</a></li>
+                <li><a href="{{ route('standard-remark.index') }}">Standard remarks</a></li>
+            </ul>
         </section>
     </div>
 </div>

@@ -29,7 +29,7 @@ class CompanyProfileService
             'email' => 'nullable|email|max:191', 'website' => 'nullable|string|max:191',
             'pan' => 'nullable|regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/',
             'base_currency_id' => 'nullable|integer|exists:currencies,id',
-            'gstin' => 'nullable|string|max:15', 'registration_type' => 'nullable|in:regular,composition',
+            'gstin' => 'nullable|string|max:15', 'registration_type' => 'nullable|in:regular,composition,unregistered',
             'gst_effective_from' => 'nullable|date_format:Y-m-d',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg|max:1024',
         ];
@@ -44,6 +44,8 @@ class CompanyProfileService
         $data = validator($input + ['logo' => $logo], $this->rules())->validate();
         $gstin = trim((string) ($data['gstin'] ?? '')) !== '' ? Gstin::normalize($data['gstin']) : null;
         $pan = isset($data['pan']) ? strtoupper($data['pan']) : null;
+        $unregistered = ($data['registration_type'] ?? null) === 'unregistered';
+        if ($unregistered && $gstin) throw ValidationException::withMessages(['gstin' => 'Leave GSTIN empty for an unregistered business, or choose Regular / Composition.']);
         if ($gstin) {
             if ($pan && $pan !== substr($gstin, 2, 10)) throw ValidationException::withMessages(['pan' => 'PAN must match characters 3–12 of the GSTIN.']);
             if (trim((string) ($data['address'] ?? '')) === '') throw ValidationException::withMessages(['address' => 'Enter the registered address for the GSTIN.']);
@@ -51,7 +53,7 @@ class CompanyProfileService
             $data['state_code'] = substr($gstin, 0, 2);
         }
 
-        return DB::transaction(function () use ($company, $data, $gstin, $pan, $logo, $context, $actor) {
+        return DB::transaction(function () use ($company, $data, $gstin, $unregistered, $pan, $logo, $context, $actor) {
             $company = Company::lockForUpdate()->findOrFail($company->id);
             $before = $company->only([...self::FIELDS, 'logo']);
             $values = array_intersect_key($data, array_flip(self::FIELDS));
@@ -59,12 +61,24 @@ class CompanyProfileService
             $values = array_map(fn ($value) => is_string($value) ? (trim($value) === '' ? null : trim($value)) : $value, $values);
             if ($logo) $values['logo'] = $this->storeLogo($company, $logo);
             $company->forceFill($values)->save();
-            if ($gstin) {
+            // A GSTIN, or the Unregistered type (no GSTIN; state from the company), keeps the branch's GST registration in step.
+            if ($gstin || $unregistered) {
                 $gst = app(GstSetupService::class);
                 $open = $gst->registration($context);
+                $type = $unregistered ? 'unregistered' : ($data['registration_type'] ?? (($open->registration_type ?? null) === 'composition' ? 'composition' : 'regular'));
+                $effectiveFrom = $data['gst_effective_from'] ?? null;
+                if (!$effectiveFrom) {
+                    if ($open && $open->gstin === $gstin) {
+                        $effectiveFrom = substr((string) $open->effective_from, 0, 10);
+                    } elseif (!$open && $unregistered && ($fyStart = DB::table('fiscal_years')->where('id', $context->financialYearId)->value('start_date'))) {
+                        $effectiveFrom = substr((string) $fyStart, 0, 10);
+                    } else {
+                        $effectiveFrom = now()->toDateString();
+                    }
+                }
                 $gst->registerCompany(['gstin' => $gstin, 'legal_name' => $company->legal_name, 'trade_name' => $company->trade_name,
-                    'address' => $this->fullAddress($company), 'registration_type' => $data['registration_type'] ?? $open->registration_type ?? 'regular',
-                    'effective_from' => $data['gst_effective_from'] ?? ($open && $open->gstin === $gstin ? $open->effective_from : now()->toDateString())],
+                    'address' => $this->fullAddress($company), 'registration_type' => $type, 'state_code' => $company->state_code,
+                    'effective_from' => $effectiveFrom],
                     $context, $actor);
             }
             if (Schema::hasTable('company_setup_audits')) {

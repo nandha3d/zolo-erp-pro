@@ -1,13 +1,14 @@
 @extends('backend.layout.main')
 @section('content')
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.Add barcode sticker setting')}}</h4>
-                    </div>
+<x-settings-command-bar active="barcode">
+    <a href="{{route('barcodes.index')}}" class="btn btn-secondary"><i class="dripicons-arrow-left"></i> {{__('db.Back')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view forms">
+    <div class="settings-form-card card">
+        <div class="card-header d-flex align-items-center">
+            <h4>{{__('db.Add barcode sticker setting')}}</h4>
+        </div>
                     <div class="card-body">
                         {!! Form::open(['url' => action([\App\Http\Controllers\BarcodeController::class, 'store']), 'method' => 'post',
                         'id' => 'add_barcode_settings_form' ]) !!}
@@ -163,8 +164,5 @@
                         {!! Form::close() !!}
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 </section>
 @endsection

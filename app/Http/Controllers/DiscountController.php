@@ -124,6 +124,11 @@ class DiscountController extends Controller
 
     public function destroy($id)
     {
-        //
+        $lims_discount_data = Discount::findOrFail($id);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($lims_discount_data) {
+            DiscountPlanDiscount::where('discount_id', $lims_discount_data->id)->delete();
+            $lims_discount_data->delete();
+        });
+        return redirect()->route('discounts.index')->with('message', 'Discount deleted. Bills already made keep their discount.');
     }
 }

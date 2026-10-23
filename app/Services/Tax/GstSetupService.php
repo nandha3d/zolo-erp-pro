@@ -241,6 +241,54 @@ class GstSetupService
             'input_credit_allowed' => $category->supply_type === 'taxable' && !empty($data['input_credit_allowed'])]);
     }
 
+    /** Removes an unused GST rate with its periods. Posted bills keep their own rate snapshot. */
+    public function deleteCategory(int $id, CompanyContext $context, int $actor): void
+    {
+        $this->authorize($context, $actor);
+        DB::transaction(function () use ($id, $context) {
+            $scope = ['company_id' => $context->companyId];
+            abort_unless(DB::table('tax_categories')->where($scope)->where('id', $id)->exists(), 404);
+            $used = DB::table('products')->where($scope)->where('tax_category_id', $id)->count();
+            if ($used) throw ValidationException::withMessages(['id' => "This GST rate is set on {$used} products. Move them to another rate first."]);
+            DB::table('tax_rates')->where($scope)->where('tax_category_id', $id)->delete();
+            DB::table('tax_categories')->where($scope)->where('id', $id)->delete();
+        });
+    }
+
+    /** Saves an HSN/SAC code; a code used by products or item groups keeps its kind. */
+    public function saveCode(array $data, CompanyContext $context, int $actor): void
+    {
+        $this->authorize($context, $actor);
+        $data = validator($data, ['code' => 'required|string|max:8', 'kind' => 'required|in:hsn,sac', 'description' => 'required|string|max:191'])->validate();
+        $this->validateCode($data['code'], $data['kind']);
+        $scope = ['company_id' => $context->companyId, 'code' => $data['code']];
+        $existing = DB::table('hsn_sac_codes')->where($scope)->first();
+        if ($existing && $existing->kind !== $data['kind'] && $this->codeUsage($context->companyId, $data['code'])) {
+            throw ValidationException::withMessages(['kind' => 'This code is used by products, so its kind cannot change.']);
+        }
+        DB::table('hsn_sac_codes')->updateOrInsert($scope, ['kind' => $data['kind'], 'description' => $data['description'],
+            'updated_at' => now(), 'created_at' => $existing->created_at ?? now()]);
+    }
+
+    public function deleteCode(string $code, CompanyContext $context, int $actor): void
+    {
+        $this->authorize($context, $actor);
+        $scope = ['company_id' => $context->companyId, 'code' => $code];
+        abort_unless(DB::table('hsn_sac_codes')->where($scope)->exists(), 404);
+        if ($used = $this->codeUsage($context->companyId, $code)) {
+            throw ValidationException::withMessages(['code' => "Code {$code} is set on {$used} products or item groups. Change them first."]);
+        }
+        DB::table('hsn_sac_codes')->where($scope)->delete();
+    }
+
+    /** Products and item groups that carry an HSN/SAC code. */
+    public function codeUsage(int $companyId, string $code): int
+    {
+        $groups = Schema::hasColumn('categories', 'default_hsn_code')
+            ? DB::table('categories')->where('company_id', $companyId)->where('default_hsn_code', $code)->count() : 0;
+        return DB::table('products')->where('company_id', $companyId)->where('hsn_code', $code)->count() + $groups;
+    }
+
     /** Sets a product's GST rate and HSN/SAC; the code joins the company catalog automatically. */
     public function assignProduct(int $productId, ?int $categoryId, ?string $hsn, CompanyContext $context, int $actor): void
     {

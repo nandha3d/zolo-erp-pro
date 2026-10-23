@@ -434,6 +434,6 @@
 @push('scripts')
 @if($canPost)
     <script type="application/json" id="previous-voucher-lines">@json(old('items', []))</script>
-    <script src="{{ asset('js/accounting-vouchers.js') }}"></script>
+    <script src="{{ asset('js/accounting-vouchers.js') }}?v={{ filemtime(public_path('js/accounting-vouchers.js')) }}"></script>
 @endif
 @endpush

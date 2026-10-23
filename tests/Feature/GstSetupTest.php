@@ -123,7 +123,7 @@ class GstSetupTest extends ReturnsDocumentTestCase
 
     public function test_settings_page_install_products_and_rate_forms(): void
     {
-        $this->get('/settings/gst')->assertOk()->assertSee('GST Settings')->assertSee('Domestic goods');
+        $this->get('/settings/gst')->assertOk()->assertSee('HSN / SAC codes')->assertSee('Domestic goods');
         $this->post('/settings/gst/install')->assertSessionHasNoErrors()->assertRedirect();
         $product = $this->stock();
         $this->post('/settings/gst/products', ['products' => [$product->id => ['tax_category_id' => $this->category('GST 12%'), 'hsn_code' => '1001']]])
@@ -135,6 +135,31 @@ class GstSetupTest extends ReturnsDocumentTestCase
         $this->post('/settings/gst/products', ['products' => [$product->id => ['tax_category_id' => $this->category('GST 12%'), 'hsn_code' => '12']]])
             ->assertSessionHasErrors('hsn_code');
         $this->get('/settings/gst?products=all#products')->assertOk()->assertSee($product->name);
+        $this->get('/settings/gst')->assertOk()->assertSee($product->name, false);
+        $this->get('/settings/gst?products=missing')->assertOk()->assertDontSee('<strong>'.$product->name.'</strong>', false);
+    }
+
+    public function test_gst_rates_and_codes_can_be_edited_and_deleted_when_unused(): void
+    {
+        $this->post('/settings/gst/install')->assertSessionHasNoErrors();
+        $product = $this->stock();
+        $used = $this->category('GST 12%'); $unused = $this->category('GST 40%');
+        $this->post('/settings/gst/products', ['products' => [$product->id => ['tax_category_id' => $used, 'hsn_code' => '1001']]])->assertSessionHasNoErrors();
+
+        $this->post('/settings/gst/rename', ['id' => $unused, 'name' => 'GST 40% luxury', 'input_credit_allowed' => 1])->assertSessionHasNoErrors();
+        $this->assertSame('GST 40% luxury', DB::table('tax_categories')->where('id', $unused)->value('name'));
+        $this->post('/settings/gst/category-delete', ['id' => $used])->assertSessionHasErrors('id');
+        $this->post('/settings/gst/category-delete', ['id' => $unused])->assertSessionHasNoErrors();
+        $this->assertFalse(DB::table('tax_categories')->where('id', $unused)->exists());
+        $this->assertFalse(DB::table('tax_rates')->where('tax_category_id', $unused)->exists());
+
+        $this->post('/settings/gst/code', ['code' => '1001', 'kind' => 'hsn', 'description' => 'Wheat'])->assertSessionHasNoErrors();
+        $this->assertSame('Wheat', DB::table('hsn_sac_codes')->where('company_id', $this->company->id)->where('code', '1001')->value('description'));
+        $this->post('/settings/gst/code', ['code' => '1001', 'kind' => 'sac', 'description' => 'Wheat'])->assertSessionHasErrors();
+        $this->post('/settings/gst/code-delete', ['code' => '1001'])->assertSessionHasErrors('code');
+        $this->post('/settings/gst/code', ['code' => '998314', 'kind' => 'sac', 'description' => 'IT services'])->assertSessionHasNoErrors();
+        $this->post('/settings/gst/code-delete', ['code' => '998314'])->assertSessionHasNoErrors();
+        $this->assertFalse(DB::table('hsn_sac_codes')->where('code', '998314')->exists());
     }
 
     public function test_unregistered_company_bills_without_gst_and_keeps_supplier_gst_in_cost(): void

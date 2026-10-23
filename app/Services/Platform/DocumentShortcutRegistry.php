@@ -28,6 +28,9 @@ final class DocumentShortcutRegistry
                 'url' => route('purchases.index', ['new' => 1, 'doc' => 'order']), 'enabled' => $this->purchaseOrdersEnabled()],
             ['id' => 'grn', 'key' => 'Alt+F12', 'label' => 'New Supplier GRN', 'group' => 'Buying', 'permission' => 'grn-index',
                 'url' => route('goods-received-notes.index', ['new' => 1])],
+            // Plain F4-F9 belong to the voucher screen; Ctrl+F9 opens the numbering every voucher and bill uses.
+            ['id' => 'voucher-series', 'key' => 'Ctrl+F9', 'label' => 'Voucher Series', 'group' => 'Masters', 'permission' => 'sidebar_product',
+                'url' => route('document-series.index')],
         ];
     }
 

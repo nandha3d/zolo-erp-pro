@@ -5,13 +5,15 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Customer Group')}}</a>
-        <a href="#" data-toggle="modal" data-target="#importcustomer_group" class="btn btn-primary"><i class="dripicons-copy"></i> {{__('db.Import Customer Group')}}</a>
-    </div>
-    <div class="table-responsive">
-        <table id="customer-grp-table" class="table">
+<x-settings-command-bar active="customer_group">
+    <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-primary"><i class="dripicons-plus"></i> {{__('db.Add Customer Group')}}</a>
+    <a href="#" data-toggle="modal" data-target="#importcustomer_group" class="btn btn-secondary"><i class="dripicons-copy"></i> {{__('db.Import Customer Group')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
+            <table id="customer-grp-table" class="table">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -50,6 +52,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 

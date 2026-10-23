@@ -4,15 +4,13 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
+<x-settings-command-bar active="reward_point" />
 
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{ __("db.Reward Point Setting") }}</h4>
-                    </div>
+<section class="settings-workspace-view forms">
+    <div class="settings-form-card card">
+        <div class="card-header d-flex align-items-center">
+            <h4>{{ __("db.Reward Point Setting") }}</h4>
+        </div>
 
                     <div class="card-body">
 
@@ -164,9 +162,6 @@
 
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 </section>
 
 @endsection

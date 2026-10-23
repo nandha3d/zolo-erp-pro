@@ -46,14 +46,13 @@
     }
 </style>
 @endpush
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.Payment Gateways')}}</h4>
-                    </div>
+<x-settings-command-bar active="payment_gateway" />
+
+<section class="settings-workspace-view forms">
+    <div class="settings-form-card card">
+        <div class="card-header d-flex align-items-center">
+            <h4>{{__('db.Payment Gateways')}}</h4>
+        </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                         {!! Form::open(['route' => 'setting.gateway.update', 'files' => true, 'method' => 'post', 'data-shell-steps' => '']) !!}
@@ -110,9 +109,6 @@
                         {!! Form::close() !!}
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 </section>
 
 @endsection

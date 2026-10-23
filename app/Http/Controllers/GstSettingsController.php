@@ -29,11 +29,15 @@ class GstSettingsController extends Controller
             $category->products = (int) ($usage[$category->id] ?? 0);
             return $category;
         })->sortBy(fn ($c) => [$c->supply_type === 'taxable' ? 1 : 0, (float) ($c->current->rate ?? 0), $c->name])->values();
-        $filter = $request->query('products', 'missing');
+        // All products by default; ones missing a GST rate or HSN/SAC come first.
+        $filter = $request->query('products') === 'missing' ? 'missing' : 'all';
+        $missingSql = "(tax_category_id IS NULL OR hsn_code IS NULL OR hsn_code = '')";
         $products = DB::table('products')->where($scope)->where('is_active', true)
-            ->when($filter === 'missing', fn ($q) => $q->where(fn ($q) => $q->whereNull('tax_category_id')->orWhereNull('hsn_code')->orWhere('hsn_code', '')))
+            ->when($filter === 'missing', fn ($q) => $q->whereRaw($missingSql))
             ->when($request->filled('q'), fn ($q) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$request->q.'%')->orWhere('code', 'like', '%'.$request->q.'%')))
-            ->orderBy('name')->limit(300)->get(['id', 'name', 'code', 'type', 'hsn_code', 'tax_category_id']);
+            ->orderByRaw("CASE WHEN {$missingSql} THEN 0 ELSE 1 END")->orderBy('name')->limit(300)->get(['id', 'name', 'code', 'type', 'hsn_code', 'tax_category_id']);
+        $codeUsage = DB::table('products')->where($scope)->whereNotNull('hsn_code')->groupBy('hsn_code')
+            ->selectRaw('hsn_code, count(*) as total')->pluck('total', 'hsn_code');
         $profiles = DB::table('party_tax_profiles')->where($scope)->get()->keyBy(fn ($p) => $p->party_type.':'.$p->party_id);
         $parties = collect(['supplier' => 'suppliers', 'customer' => 'customers'])->flatMap(fn ($table, $type) => DB::table($table)->where($scope)
             ->where('is_active', true)->orderBy('name')->limit(300)->get()->map(fn ($p) => (object) ['type' => $type, 'id' => $p->id, 'name' => $p->name,
@@ -46,7 +50,7 @@ class GstSettingsController extends Controller
             'registration' => $gst->registration($context),
             'registrations' => DB::table('tax_registrations')->where($scope)->where('branch_id', $context->branchId)->orderByDesc('effective_from')->get(),
             'categories' => $categories, 'codes' => DB::table('hsn_sac_codes')->where($scope)->orderBy('code')->get(),
-            'products' => $products, 'productFilter' => $filter, 'parties' => $parties, 'ledgers' => $ledgers,
+            'codeUsage' => $codeUsage, 'products' => $products, 'productFilter' => $filter, 'parties' => $parties, 'ledgers' => $ledgers,
             'invoicePrint' => ($company = \App\Models\Company::findOrFail($context->companyId))->settings_json['invoice_print'] ?? [],
             'company' => $company, 'companyAddress' => app(\App\Services\Platform\CompanyProfileService::class)->fullAddress($company),
             'missing' => DB::table('products')->where($scope)->where('is_active', true)
@@ -70,13 +74,9 @@ class GstSettingsController extends Controller
             'rename' => tap('GST rate updated.', fn () => $gst->updateCategory($request->integer('id'), $request->only(['name', 'input_credit_allowed']), $context, $actor)),
             'rate' => tap('New rate period saved. Bills already posted keep their old rate.', fn () => $gst->changeRate($request->integer('id'),
                 (float) $request->input('rate'), (float) $request->input('cess_rate', 0), (string) $request->input('effective_from'), $context, $actor)),
-            'code' => tap('HSN/SAC code saved.', function () use ($request, $gst, $context, $actor) {
-                $gst->authorize($context, $actor);
-                $data = $request->validate(['code' => 'required|string|max:8', 'kind' => 'required|in:hsn,sac', 'description' => 'required|string|max:191']);
-                $gst->validateCode($data['code'], $data['kind']);
-                DB::table('hsn_sac_codes')->updateOrInsert(['company_id' => $context->companyId, 'code' => $data['code']],
-                    ['kind' => $data['kind'], 'description' => $data['description'], 'updated_at' => now(), 'created_at' => now()]);
-            }),
+            'category-delete' => tap('GST rate deleted.', fn () => $gst->deleteCategory($request->integer('id'), $context, $actor)),
+            'code' => tap('HSN/SAC code saved.', fn () => $gst->saveCode($request->only(['code', 'kind', 'description']), $context, $actor)),
+            'code-delete' => tap('HSN/SAC code deleted.', fn () => $gst->deleteCode((string) $request->input('code'), $context, $actor)),
             'products' => (function () use ($request, $gst, $context, $actor) {
                 $rows = $request->validate(['products' => 'required|array|max:500', 'products.*.tax_category_id' => 'nullable|integer|min:1',
                     'products.*.hsn_code' => 'nullable|string|max:8'])['products'];

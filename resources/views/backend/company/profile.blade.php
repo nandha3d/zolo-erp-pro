@@ -37,15 +37,19 @@
     body.dark-mode .cpf-logo-box { background: #111827; border-color: #334155; }
 </style>
 
-<div class="cpf-wrap">
-    <div class="cpf-head">
-        <h1>Company profile</h1>
-        <p>These details print on this company's invoices, bills and notes. Bank details and terms are under <a href="{{ route('settings.gst') }}#registration">GST &amp; Tax › Registration</a>.</p>
-    </div>
-    @if(session('message'))<div class="alert alert-success py-2">{{ session('message') }}</div>@endif
-    @if($errors->any())<div class="alert alert-danger py-2"><ul class="mb-0 pl-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+<x-settings-command-bar active="company">
+    <button type="submit" form="company-profile-form" class="btn btn-primary"><i class="dripicons-checkmark"></i> Save profile</button>
+</x-settings-command-bar>
 
-    <form method="POST" action="{{ route('settings.company.update') }}" enctype="multipart/form-data" id="company-profile-form">
+<section class="settings-workspace-view">
+    <div class="cpf-wrap" style="padding: 4px 6px; max-width: 100%; width: 100%; flex: 1 1 0; overflow-y: auto;">
+        <div class="cpf-head" style="margin-bottom: 6px;">
+            <p style="margin: 0 0 6px; font-size: 12px; color: #64748b;">These details print on this company's invoices, bills and notes. Bank details and terms are under <a href="{{ route('settings.gst') }}#registration">GST &amp; Tax › Registration</a>.</p>
+        </div>
+        @if(session('message'))<div class="alert alert-success py-2">{{ session('message') }}</div>@endif
+        @if($errors->any())<div class="alert alert-danger py-2"><ul class="mb-0 pl-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+
+        <form method="POST" action="{{ route('settings.company.update') }}" enctype="multipart/form-data" id="company-profile-form">
         @csrf
         <div class="cpf-card">
             <h2>Business</h2>
@@ -82,12 +86,12 @@
                 <div><label for="cpf-gstin">GSTIN</label><input id="cpf-gstin" name="gstin" maxlength="15" style="text-transform:uppercase" value="{{ old('gstin', $registration->gstin ?? '') }}"></div>
                 <div><label for="cpf-pan">PAN</label><input id="cpf-pan" name="pan" maxlength="10" style="text-transform:uppercase" value="{{ old('pan', $company->pan) }}"></div>
                 <div><label for="cpf-regtype">GST type</label><select id="cpf-regtype" name="registration_type">
-                    @foreach(['regular' => 'Regular', 'composition' => 'Composition'] as $value => $label)<option value="{{ $value }}" @selected(old('registration_type', $registration->registration_type ?? 'regular') === $value)>{{ $label }}</option>@endforeach
+                    @foreach(['regular' => 'Regular', 'composition' => 'Composition', 'unregistered' => 'Unregistered (no GSTIN)'] as $value => $label)<option value="{{ $value }}" @selected(old('registration_type', $registration->registration_type ?? 'regular') === $value)>{{ $label }}</option>@endforeach
                 </select></div>
-                <div><label for="cpf-gstfrom">New GSTIN effective from</label><input id="cpf-gstfrom" type="date" name="gst_effective_from" value="{{ old('gst_effective_from') }}">
-                    <p class="cpf-muted">Only for a new or changed GSTIN; blank means today.</p></div>
+                <div><label for="cpf-gstfrom">Effective from</label><input id="cpf-gstfrom" type="date" name="gst_effective_from" value="{{ old('gst_effective_from') }}">
+                    <p class="cpf-muted">Only for a new GSTIN or a type change; blank means today (first Unregistered save: start of the year).</p></div>
             </div>
-            <p class="cpf-muted">With a GSTIN, the state comes from it, PAN defaults to characters 3–12, and the GST registration takes this legal name, display name and address, so bills always carry the company's name.</p>
+            <p class="cpf-muted">With a GSTIN, the state comes from it, PAN defaults to characters 3–12, and the GST registration takes this legal name, display name and address, so bills always carry the company's name. Unregistered: leave GSTIN empty and choose the State; bills carry no GST.</p>
         </div>
 
         <div class="cpf-card">
@@ -117,6 +121,7 @@
         <div class="cpf-actions"><button type="submit" class="btn btn-primary">Save company profile</button></div>
     </form>
 </div>
+</section>
 <script>
 (function () {
     var subtypes = @json($subtypes);
@@ -131,6 +136,13 @@
     }
     industry.addEventListener('change', function () { subtype.dataset.current = ''; fill(); });
     fill();
+})();
+// Unregistered has no GSTIN.
+(function () {
+    var type = document.getElementById('cpf-regtype'), gstin = document.getElementById('cpf-gstin');
+    function sync() { gstin.disabled = type.value === 'unregistered'; if (gstin.disabled) gstin.value = ''; }
+    type.addEventListener('change', sync);
+    sync();
 })();
 </script>
 @endsection

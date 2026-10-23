@@ -200,8 +200,8 @@ class CompanyDirectoryService
                     'state_code' => $company->state_code, 'gst_effective_from' => $data['fy_start']], $logo, $context, $actor);
             }
             $this->installStarterMasters($company->refresh());
-            // A GST-registered company can bill with GST from its first invoice: install the standard slabs now.
-            if (!empty($profile['gstin']) && config('compliance.enabled') && Schema::hasTable('tax_categories')) {
+            // A GST-registered (or declared unregistered) company bills under GST rules from its first invoice: install the standard slabs now.
+            if ((!empty($profile['gstin']) || ($profile['registration_type'] ?? null) === 'unregistered') && config('compliance.enabled') && Schema::hasTable('tax_categories')) {
                 app(\App\Services\Tax\GstSetupService::class)->installDefaults($context, $actor);
             }
             DB::table('company_setup_audits')->insert(['company_id' => $company->id, 'actor_id' => $actor,

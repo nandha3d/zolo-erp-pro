@@ -5,13 +5,15 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Tax')}}</a>
-        <a href="#" data-toggle="modal" data-target="#importTax" class="btn btn-primary"><i class="dripicons-copy"></i> {{__('db.Import Tax')}}</a>
-    </div>
-    <div class="table-responsive">
-        <table id="tax-table" class="table">
+<x-settings-command-bar active="gst">
+    <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-primary"><i class="dripicons-plus"></i> {{__('db.Add Tax')}}</a>
+    <a href="#" data-toggle="modal" data-target="#importTax" class="btn btn-secondary"><i class="dripicons-copy"></i> {{__('db.Import Tax')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
+            <table id="tax-table" class="table">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -50,6 +52,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 

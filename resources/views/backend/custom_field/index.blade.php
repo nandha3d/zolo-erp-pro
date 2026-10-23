@@ -3,11 +3,13 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <a href="{{route('custom-fields.create')}}" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Create Custom Field')}}</a>&nbsp;
-    </div>
-    <div class="table-responsive">
+<x-settings-command-bar active="custom_field">
+    <a href="{{route('custom-fields.create')}}" class="btn btn-primary"><i class="dripicons-plus"></i> {{__('db.Create Custom Field')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
         <table id="custom-field-table" class="table">
             <thead>
                 <tr>
@@ -56,6 +58,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 {{ Form::close() }}

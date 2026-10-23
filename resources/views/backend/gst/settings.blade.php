@@ -39,18 +39,21 @@
     body.dark-mode .gst-scroll { border-color: #1e293b; }
 </style>
 
-<div class="gst-wrap">
-    <div class="gst-head">
-        <div>
-            <h1>GST Settings</h1>
-            <p>Products carry a GST rate and HSN/SAC. The app splits CGST + SGST or IGST from your state and the party's state.</p>
+<x-settings-command-bar active="gst">
+    @if($canManage)
+    <form method="POST" action="{{ url('/settings/gst/install') }}" style="display:inline-block; margin:0;">@csrf<input type="hidden" name="tab" value="rates">
+        <button class="btn btn-primary" type="submit"><i class="fa fa-magic mr-1"></i> Install standard GST setup</button>
+    </form>
+    @endif
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="gst-wrap" style="padding: 4px 6px; width: 100%; flex: 1 1 0; overflow-y: auto;">
+        <div class="gst-head" style="margin-bottom: 6px;">
+            <div>
+                <p style="margin: 0; font-size: 12px; color: #64748b;">Products carry a GST rate and HSN/SAC. The app splits CGST + SGST or IGST from your state and the party's state.</p>
+            </div>
         </div>
-        @if($canManage)
-        <form method="POST" action="{{ url('/settings/gst/install') }}">@csrf<input type="hidden" name="tab" value="rates">
-            <button class="btn btn-primary btn-sm" type="submit"><i class="fa fa-magic mr-1"></i> Install standard GST setup</button>
-        </form>
-        @endif
-    </div>
 
     @if(session('message'))<div class="alert alert-success py-2">{{ session('message') }}</div>@endif
     @if($errors->any())<div class="alert alert-danger py-2"><ul class="mb-0 pl-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
@@ -132,7 +135,7 @@
                 <h2>GST rates</h2>
                 <div class="gst-scroll">
                 <table class="gst-table">
-                    <thead><tr><th>Name</th><th>Type</th><th>GST %</th><th>Cess %</th><th>Since</th><th>Input credit</th><th>Products</th>@if($canManage)<th>Change rate from a date</th>@endif</tr></thead>
+                    <thead><tr><th>Name</th><th>Type</th><th>GST %</th><th>Cess %</th><th>Since</th><th>Input credit</th><th>Products</th>@if($canManage)<th>Change rate from a date</th><th style="width:130px;">Actions</th>@endif</tr></thead>
                     <tbody>
                     @forelse($categories as $category)
                         <tr>
@@ -155,10 +158,18 @@
                                 </form>
                                 @else<span class="gst-muted">No tax charged</span>@endif
                             </td>
+                            <td class="text-nowrap">
+                                <button type="button" class="btn btn-outline-secondary btn-sm js-edit-rate" data-id="{{ $category->id }}" data-name="{{ $category->name }}"
+                                    data-credit="{{ $category->input_credit_allowed ? 1 : 0 }}" data-taxable="{{ $category->supply_type === 'taxable' ? 1 : 0 }}">Edit</button>
+                                <form method="POST" action="{{ url('/settings/gst/category-delete') }}" class="d-inline" data-confirm="Delete GST rate {{ $category->name }}?" onsubmit="return confirm(this.dataset.confirm);">@csrf
+                                    <input type="hidden" name="tab" value="rates"><input type="hidden" name="id" value="{{ $category->id }}">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit" @disabled($category->products) title="{{ $category->products ? 'Set on '.$category->products.' products. Move them to another rate first.' : 'Delete' }}">Delete</button>
+                                </form>
+                            </td>
                             @endif
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="text-center gst-muted py-4">No GST rates yet. Click "Install standard GST setup" for 0%, 5%, 12%, 18%, 28%, 40%, exempt and nil-rated.</td></tr>
+                        <tr><td colspan="9" class="text-center gst-muted py-4">No GST rates yet. Click "Install standard GST setup" for 0%, 5%, 12%, 18%, 28%, 40%, exempt and nil-rated.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
@@ -188,20 +199,22 @@
                 <div class="d-flex align-items-center justify-content-between mb-2" style="gap:8px;flex-wrap:wrap;">
                     <h2 class="mb-0">Product GST rate &amp; HSN/SAC</h2>
                     <form method="GET" action="{{ url('/settings/gst') }}" class="d-flex gst-form" style="gap:6px;">
-                        <select name="products" style="width:170px;"><option value="missing" @selected($productFilter === 'missing')>Needs GST details</option><option value="all" @selected($productFilter === 'all')>All products</option></select>
+                        <select name="products" style="width:170px;" onchange="this.form.submit()"><option value="all" @selected($productFilter === 'all')>All products</option><option value="missing" @selected($productFilter === 'missing')>Needs GST details</option></select>
                         <input name="q" value="{{ request('q') }}" placeholder="Search name or code" style="width:200px;">
                         <input type="hidden" name="tab" value="products">
                         <button class="btn btn-outline-secondary btn-sm">Filter</button>
+                        @if($products->isNotEmpty())<button type="submit" form="gst-products-form" class="btn btn-primary btn-sm text-nowrap">Save products</button>@endif
                     </form>
                 </div>
-                <form method="POST" action="{{ url('/settings/gst/products') }}">@csrf<input type="hidden" name="tab" value="products">
+                <form method="POST" action="{{ url('/settings/gst/products') }}" id="gst-products-form">@csrf<input type="hidden" name="tab" value="products">
                     <div class="gst-scroll">
                     <table class="gst-table">
                         <thead><tr><th>Product</th><th>Type</th><th style="width:240px;">GST rate</th><th style="width:150px;">HSN / SAC</th></tr></thead>
                         <tbody>
                         @forelse($products as $product)
                             <tr>
-                                <td><strong>{{ $product->name }}</strong> <span class="gst-muted">{{ $product->code }}</span></td>
+                                <td><strong>{{ $product->name }}</strong> <span class="gst-muted">{{ $product->code }}</span>
+                                    @if(!$product->tax_category_id || !$product->hsn_code)<span class="gst-pill warn">Needs GST details</span>@endif</td>
                                 <td>{{ in_array($product->type, ['service', 'digital'], true) ? 'Service (SAC)' : 'Goods (HSN)' }}</td>
                                 <td><select name="products[{{ $product->id }}][tax_category_id]">
                                     <option value="">— Not set —</option>
@@ -215,7 +228,6 @@
                         </tbody>
                     </table>
                     </div>
-                    @if($products->isNotEmpty())<div class="text-right mt-2"><button type="submit" class="btn btn-primary btn-sm">Save products</button></div>@endif
                 </form>
             </div>
         </div>
@@ -226,19 +238,32 @@
                 <h2>HSN / SAC codes</h2>
                 <p class="gst-muted">Codes typed on a product are added here automatically. Add descriptions for your invoices.</p>
                 @if($canManage)
-                <form method="POST" action="{{ url('/settings/gst/code') }}" class="gst-form mb-2">@csrf<input type="hidden" name="tab" value="codes">
+                <form method="POST" action="{{ url('/settings/gst/code') }}" class="gst-form mb-2" id="code-form">@csrf<input type="hidden" name="tab" value="codes">
                     <div class="row">
-                        <div class="col-md-2"><label>Code *</label><input name="code" maxlength="8" required inputmode="numeric"></div>
-                        <div class="col-md-2"><label>Kind *</label><select name="kind"><option value="hsn">Goods (HSN)</option><option value="sac">Service (SAC)</option></select></div>
-                        <div class="col-md-6"><label>Description *</label><input name="description" maxlength="191" required></div>
-                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary btn-sm w-100" type="submit">Save code</button></div>
+                        <div class="col-md-2"><label>Code *</label><input name="code" id="code-code" maxlength="8" required inputmode="numeric"></div>
+                        <div class="col-md-2"><label>Kind *</label><select name="kind" id="code-kind"><option value="hsn">Goods (HSN)</option><option value="sac">Service (SAC)</option></select></div>
+                        <div class="col-md-5"><label>Description *</label><input name="description" id="code-description" maxlength="191" required></div>
+                        <div class="col-md-3 d-flex align-items-end" style="gap:6px;"><button class="btn btn-primary btn-sm w-100" type="submit" id="code-save">Save code</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" id="code-cancel" style="display:none;">Cancel</button></div>
                     </div>
                 </form>
                 @endif
                 <div class="gst-scroll">
-                <table class="gst-table"><thead><tr><th>Code</th><th>Kind</th><th>Description</th></tr></thead><tbody>
-                    @forelse($codes as $code)<tr><td>{{ $code->code }}</td><td>{{ strtoupper($code->kind) }}</td><td>{{ $code->description }}</td></tr>
-                    @empty<tr><td colspan="3" class="text-center gst-muted py-4">No codes yet.</td></tr>@endforelse
+                <table class="gst-table"><thead><tr><th>Code</th><th>Kind</th><th>Description</th><th>Products</th>@if($canManage)<th style="width:130px;">Actions</th>@endif</tr></thead><tbody>
+                    @forelse($codes as $code)
+                        @php $used = (int) ($codeUsage[$code->code] ?? 0); @endphp
+                        <tr><td>{{ $code->code }}</td><td>{{ strtoupper($code->kind) }}</td><td>{{ $code->description }}</td><td>{{ $used }}</td>
+                            @if($canManage)
+                            <td class="text-nowrap">
+                                <button type="button" class="btn btn-outline-secondary btn-sm js-edit-code" data-code="{{ $code->code }}" data-kind="{{ $code->kind }}" data-description="{{ $code->description }}">Edit</button>
+                                <form method="POST" action="{{ url('/settings/gst/code-delete') }}" class="d-inline" data-confirm="Delete code {{ $code->code }}?" onsubmit="return confirm(this.dataset.confirm);">@csrf
+                                    <input type="hidden" name="tab" value="codes"><input type="hidden" name="code" value="{{ $code->code }}">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit" @disabled($used) title="{{ $used ? 'Set on '.$used.' products. Change them first.' : 'Delete' }}">Delete</button>
+                                </form>
+                            </td>
+                            @endif
+                        </tr>
+                    @empty<tr><td colspan="5" class="text-center gst-muted py-4">No codes yet.</td></tr>@endforelse
                 </tbody></table>
                 </div>
             </div>
@@ -288,6 +313,22 @@
         </div>
     </div>
 </div>
+@if($canManage)
+<div class="modal fade" id="rate-edit-modal" tabindex="-1" role="dialog" aria-labelledby="rate-edit-title">
+    <div class="modal-dialog modal-sm" role="document">
+        <form method="POST" action="{{ url('/settings/gst/rename') }}" class="modal-content gst-form">@csrf<input type="hidden" name="tab" value="rates"><input type="hidden" name="id" id="rate-edit-id">
+            <div class="modal-header py-2"><h5 class="modal-title" id="rate-edit-title">Edit GST rate</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>
+            <div class="modal-body">
+                <label for="rate-edit-name">Name *</label><input id="rate-edit-name" name="name" maxlength="191" required>
+                <div id="rate-edit-credit-wrap"><label class="d-flex align-items-center mt-2 mb-0" style="gap:6px;"><input type="checkbox" name="input_credit_allowed" value="1" id="rate-edit-credit" style="width:auto;height:auto;"> Input credit allowed</label></div>
+                <p class="gst-muted mt-2 mb-0">To change the percentage, use "Change rate from a date" so older bills keep their rate.</p>
+            </div>
+            <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save</button></div>
+        </form>
+    </div>
+</div>
+@endif
+</section>
 @endsection
 
 @push('scripts')
@@ -297,6 +338,36 @@
     var hash = (location.hash || '').replace('#', '') || new URLSearchParams(location.search).get('tab');
     if (hash && $('.gst-tabs a[href="#' + hash + '"]').length) $('.gst-tabs a[href="#' + hash + '"]').tab('show');
     $('.gst-tabs a').on('shown.bs.tab', function () { history.replaceState(null, '', '#' + this.getAttribute('href').slice(1)); });
+
+    $('.js-edit-rate').on('click', function () {
+        var d = this.dataset;
+        $('#rate-edit-id').val(d.id);
+        $('#rate-edit-name').val(d.name);
+        $('#rate-edit-credit').prop('checked', d.credit === '1');
+        $('#rate-edit-credit-wrap').toggle(d.taxable === '1');
+        $('#rate-edit-modal').modal('show').one('shown.bs.modal', function () { $('#rate-edit-name').trigger('focus').select(); });
+    });
+
+    // Editing a code keeps the code fixed: products point at it by its number.
+    function resetCodeForm() {
+        $('#code-form')[0].reset();
+        $('#code-code').prop('readonly', false);
+        $('#code-save').text('Save code');
+        $('#code-cancel').hide();
+    }
+    $('.js-edit-code').on('click', function () {
+        var d = this.dataset;
+        $('#code-code').val(d.code).prop('readonly', true);
+        $('#code-kind').val(d.kind).trigger('change');
+        if ($.fn.selectpicker) $('#code-kind').selectpicker('refresh');
+        $('#code-description').val(d.description).trigger('focus').select();
+        $('#code-save').text('Update code');
+        $('#code-cancel').show();
+    });
+    $('#code-cancel').on('click', function () {
+        resetCodeForm();
+        if ($.fn.selectpicker) $('#code-kind').selectpicker('refresh');
+    });
 
     // Unregistered has no GSTIN; its state is chosen. Other types take the state from the GSTIN.
     $('#reg-type').on('change', function () {

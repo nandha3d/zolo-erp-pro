@@ -5,11 +5,12 @@
     <x-success-message key="message" />
     <x-error-message key="not_permitted" />
 
-    <section>
-        <div class="container-fluid">
-            <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-info add-printer-btn"><i
-                    class="dripicons-plus"></i> {{ __('db.Add Printer') }}</a>
-        </div>
+<x-settings-command-bar active="printers">
+    <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-primary add-printer-btn"><i class="dripicons-plus"></i> {{ __('db.Add Printer') }}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
         <div class="table-responsive">
             <table id="printer-table" class="table">
                 <thead>
@@ -70,7 +71,8 @@
                 </tbody>
             </table>
         </div>
-    </section>
+    </div>
+</section>
 
     <div id="createModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
         class="modal fade text-left">

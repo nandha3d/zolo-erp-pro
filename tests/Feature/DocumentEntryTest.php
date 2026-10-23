@@ -14,7 +14,7 @@ class DocumentEntryTest extends CommercialTestCase
     {
         $keys = array_column(app(DocumentShortcutRegistry::class)->definitions(), 'key');
         $this->assertSame($keys, array_unique($keys), 'a key may open only one document');
-        $this->assertEqualsCanonicalizing(['F2', 'Shift+F2', 'Alt+F2', 'Alt+F10', 'F12', 'Shift+F12', 'Ctrl+F12', 'Alt+F12'], $keys);
+        $this->assertEqualsCanonicalizing(['F2', 'Shift+F2', 'Alt+F2', 'Alt+F10', 'F12', 'Shift+F12', 'Ctrl+F12', 'Alt+F12', 'Ctrl+F9'], $keys);
         $this->assertNotContains('Ctrl+F2', $keys, 'Sales Order stays unassigned until it has a proven lifecycle');
         foreach (['F4', 'F5', 'F6', 'F7', 'F9'] as $accountingKey) {
             $this->assertNotContains($accountingKey, $keys, $accountingKey.' belongs to the accounting vouchers');

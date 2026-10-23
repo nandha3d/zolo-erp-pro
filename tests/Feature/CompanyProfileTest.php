@@ -61,6 +61,29 @@ class CompanyProfileTest extends ReturnsDocumentTestCase
         $this->assertFileExists(public_path($this->logos[0]), 'A new logo never removes the one older bills print.');
     }
 
+    public function test_unregistered_type_registers_without_gstin_from_the_year_start_and_prints_an_invoice(): void
+    {
+        (require database_path('migrations/2026_10_20_000001_allow_unregistered_company_tax_registration.php'))->up();
+        DB::table('tax_registrations')->delete();
+        try {
+            $this->profile(['registration_type' => 'unregistered']);
+            $this->fail('An unregistered business cannot keep a GSTIN.');
+        } catch (ValidationException $error) {
+            $this->assertArrayHasKey('gstin', $error->errors());
+        }
+        $this->profile(['gstin' => '', 'registration_type' => 'unregistered']);
+        $registration = DB::table('tax_registrations')->where('company_id', $this->company->id)->sole();
+        $this->assertSame([null, '33', 'unregistered', 'Motumo Foods Private Limited'],
+            [$registration->gstin, $registration->state_code, $registration->registration_type, $registration->legal_name]);
+        $this->assertSame(substr((string) DB::table('fiscal_years')->where('id', $this->year->id)->value('start_date'), 0, 10), substr((string) $registration->effective_from, 0, 10));
+
+        $sale = $this->gstSale(); $renderer = app(DocumentRenderingService::class);
+        $html = $renderer->html($renderer->dto('sale', $sale->id, $this->context()), $renderer->profile('sale', $this->context(), null, 'a4'));
+        $this->assertStringContainsString('GSTIN: Unregistered', $html);
+        $this->assertStringNotContainsString('Tax invoice', $html);
+        $this->assertEquals(0, (float) $sale->total_tax);
+    }
+
     public function test_transport_drawer_fields_print_on_the_invoice(): void
     {
         $sale = $this->gstSale(['bale_no' => 'BL-7', 'no_of_bales' => 3, 'bundle_count' => 9, 'vehicle_number' => 'TN39 AB 1234', 'lr_no' => 'LR-55']);

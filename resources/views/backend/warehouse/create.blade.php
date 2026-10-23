@@ -5,13 +5,15 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-info add-warehouse-btn"><i class="dripicons-plus"></i> {{__('db.Add Warehouse')}}</a>
-        <a href="#" data-toggle="modal" data-target="#importWarehouse" class="btn btn-primary add-warehouse-btn"><i class="dripicons-copy"></i> {{__('db.Import Warehouse')}}</a>
-    </div>
-    <div class="table-responsive">
-        <table id="warehouse-table" class="table">
+<x-settings-command-bar active="warehouse">
+    <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-primary add-warehouse-btn"><i class="dripicons-plus"></i> {{__('db.Add Warehouse')}}</a>
+    <a href="#" data-toggle="modal" data-target="#importWarehouse" class="btn btn-secondary add-warehouse-btn"><i class="dripicons-copy"></i> {{__('db.Import Warehouse')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
+            <table id="warehouse-table" class="table">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -71,6 +73,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 

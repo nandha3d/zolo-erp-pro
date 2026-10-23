@@ -22,6 +22,7 @@ Press `?` on any page to see its keyboard shortcuts.
 | State | Company state (decides CGST+SGST vs IGST) | Strongly recommended |
 | Address, city, PIN, phone, email, website | Printed on invoices | Recommended |
 | PAN / GSTIN | GSTIN of the company. PAN is taken from it | Needed for GST billing |
+| GST type | Regular, Composition, or **Unregistered (no GSTIN)** – leave GSTIN empty for Unregistered | Yes |
 | Logo | PNG/JPG for the invoice header | No |
 | Currency | INR (default) | Yes |
 | Time zone | Asia/Kolkata | Yes |
@@ -37,7 +38,7 @@ Click **Save**, then pick the new company in the picker.
 | Warehouse | "<Company> - Main" |
 | Financial year | The dates you entered, status *open* |
 | Chart of accounts | Standard chart (Cash 1010, Bank 1020, Debtors 1100, Inventory 1200, Creditors 2010, GRNI 2060, GDNI 1260, Capital 3010, Retained Earnings 3020, Opening Balance Adjustment 3040, Sales 4010, Sales Returns 4040, Purchase Returns 4050, COGS 5010, Shrinkage 5020, Variance 5030, expenses 6010-6090 …) with posting roles linked |
-| GST | Registration (if GSTIN given), standard GST slabs and GST ledgers (CGST / SGST / IGST / cess / round-off) |
+| GST | Registration (if a GSTIN is given or the type is Unregistered), standard GST slabs and GST ledgers (CGST / SGST / IGST / cess / round-off) |
 | Starter masters | Customer group *General*, category *General*, biller (the company), payment accounts *Cash* and *Bank*, sale types, purchase types, bill sundries, document (voucher) series |
 | Industry preset | Modules, product attributes, units (e.g. MTR for textile), process types, print decimals |
 | Access | You and the group admins get access to the company and its branch |
@@ -48,9 +49,10 @@ Click **Save**, then pick the new company in the picker.
 
 **Settings › Company profile** (`/settings/company`)
 
-1. Check legal name, trade name, address, state, PIN, phone, email, PAN, GSTIN.
-2. Upload or change the logo.
-3. Save.
+1. Check legal name, trade name, address, state, PIN, phone, email, PAN, GSTIN and GST type.
+2. **No GSTIN?** Set GST type to **Unregistered (no GSTIN)** and make sure the State is chosen. The first save starts the unregistered period on the first day of the financial year.
+3. Upload or change the logo.
+4. Save. The GST registration (step 4) takes this legal name, display name and address.
 
 ---
 
@@ -67,15 +69,11 @@ Click **Save**, then pick the new company in the picker.
 
 **Settings › GST & Tax** (`/settings/gst`)
 
-1. **Registration** – GSTIN, legal name, trade name, type (Regular / Composition / Unregistered), effective from, address. Saving sets the company state and turns GST billing on. **No GSTIN?** Choose type **Unregistered**, leave GSTIN empty and pick the state: bills then print as "Invoice" with no GST, and GST paid to suppliers goes into cost (no input credit). When you get a GSTIN later, save it with its start date; the unregistered period closes the day before.
+1. **Registration** – check it. It is already saved if you gave a GSTIN or chose Unregistered in step 1 or 2. Fields: GSTIN, legal name, trade name, type (Regular / Composition / Unregistered), effective from, address. Saving sets the company state and turns GST billing on. **No GSTIN?** Choose type **Unregistered**, leave GSTIN empty and pick the state: bills then print as "Invoice" with no GST, and GST paid to suppliers goes into cost (no input credit). When you get a GSTIN later, save it with its start date; the unregistered period closes the day before.
 2. **Install standard GST setup** – only if the GST slabs or GST ledgers are missing.
-3. **Invoice print details** – phone, email, bank name, account no., IFSC, branch, UPI ID, signature caption, terms lines. These print on the A4 tax invoice.
-4. **Products** tab – set GST rate and HSN/SAC for each item (can also be done in step 9).
-5. **Parties** tab – check each customer/supplier GST profile (Regular / Unregistered / Composition, state).
+3. **Invoice print details** – licence line (FSSAI, IEC…), bank name, account no., IFSC, branch, UPI ID, signature caption, declaration, terms lines. These print on the A4 invoice. This box saves on its own, with or without a GSTIN.
 
-> **Buying from an unregistered supplier (no GSTIN, e.g. a small supplier under the ₹40 lakh goods threshold, including inter-state):** mark the supplier **Unregistered** on the Parties tab and leave the product on its normal GST slab. Do **not** switch the product to *Exempt* or *Non-GST supply* — that is a product-level setting and would also affect your sales of it. With an Unregistered supplier the system charges **no CGST/SGST/IGST** on the purchase and takes **no input credit**.
->
-> **Warning:** an unregistered supplier cannot charge GST, so **never enter IGST (or CGST/SGST) on such a bill** — the system will not post it, and if the supplier's bill shows GST, ask them for a corrected bill of supply. Leave *Reverse charge* off unless the purchase is in a category the law notifies for reverse charge. The system does not track the ₹40 lakh limit; the supplier is responsible for staying within it.
+The **Products** and **Parties** tabs on this page are used later: set item GST rates in step 9 and check party GST profiles in step 10, after those masters exist.
 
 **Sales › Tax & document settings** (`/compliance/setup`) – admin only: e-invoice / e-way settings, return approval limits, document settings.
 
@@ -108,14 +106,16 @@ Changing the industry here swaps the industry presets (process types, labels suc
 
 ## Step 7: Numbering and transaction masters
 
-**Master Registers** (sidebar)
+**Master Registers** – left sidebar, section *Sales, Purchases & Inventory*, just below **Product**. Click it to open the list (Bill Sundry, Sale Types, Purchase Types, Agents & Brokers, Areas, Standard Remarks, Voucher Series). The same links are on **Workspaces › Settings › Master registers**. Voucher Series also opens from anywhere with **Ctrl+F9**. Not in your sidebar? Your role needs the Product menu permission – see [00A](00A_SETUP_MASTERS_ACCOUNTS_ITEMS.md#where-to-find-the-master-registers).
+
+Field-by-field details for steps 7, 8 and 9: [00A Setup – masters, accounts, items](00A_SETUP_MASTERS_ACCOUNTS_ITEMS.md).
 
 | Item | Path | What to check |
 |---|---|---|
 | Voucher Series | Master Registers › Voucher Series (`/document-series`, Ctrl+F9) | Prefix and next number for Sales, Purchase, DC, GRN, PO, SO, Credit note, Debit note, Receipt, Payment, Journal. Set them **before** the first document; numbers are allocated on save |
-| Sale Types | Master Registers › Sale Types | e.g. Local, Inter-state, Export, Exempt |
-| Purchase Types | Master Registers › Purchase Types | e.g. Local, Inter-state, Import, Unregistered |
-| Bill Sundry | Master Registers › Bill Sundry | Freight, packing, discount, round-off lines used on bills |
+| Sale Types | Master Registers › Sale Types | "Tax Classification" on sales bills / DC. A fixed-rate type locks every line's GST; MultiTax keeps item rates. Starter list: 5–28% GST / IGST, MultiTax, Export, SEZ, Exempted |
+| Purchase Types | Master Registers › Purchase Types | Same for purchase bills / GRN. Starter list: 5–28% GST / IGST Inward, MultiTax, Import, Exempted. Unregistered suppliers are set on the party, not here |
+| Bill Sundry | Master Registers › Bill Sundry | Register of freight, packing, discount, round-off charges. Bills use the Freight and Bill Discount boxes on the Charges tab |
 | Agents & Brokers | Master Registers › Agents & Brokers | Only if you sell/buy through agents |
 | Areas | Master Registers › Areas | Routes / areas for DCs and sales |
 | Standard Remarks | Master Registers › Standard Remarks | Repeated remarks for bills |
@@ -138,7 +138,8 @@ Changing the industry here swaps the industry presets (process types, labels suc
 | goods_received_not_invoiced | 2060 | GRN |
 | goods_delivered_not_invoiced | 1260 | Customer DC |
 | damage (shrinkage) / variance | 5020 / 5030 | Returns, job work loss, price differences |
-| freight / goods_in_transit / production_costs / expense | 6050 / 1250 / 5040 / 6090 | Charges, transfers, production |
+| freight / rounding | 4030 / 6095 | Freight on sales bills, bill round-off |
+| goods_in_transit / production_costs / expense | 1250 / 5040 / 6090 | Transfers, production, general expenses |
 | opening_balance | 3040 Opening Balance Adjustment | Party opening dues, go-live balances |
 | retained_earnings | 3020 Retained Earnings | Year close (profit moves here) |
 
@@ -157,6 +158,7 @@ Changing the industry here swaps the industry presets (process types, labels suc
 2. Categories and brands.
 3. For each item: name, code, type (*standard* = stock item; *service* = no stock), unit, purchase unit, sale unit, cost, price, **GST rate**, **HSN/SAC**, reorder level, batch/expiry or serial flags if used.
 4. Bulk: Product list › import (CSV) for many items. Use product aliases (alternate names / codes) if parties call items by different names.
+5. Check **Settings › GST & Tax › Products** tab: it lists every item still missing a GST rate or HSN/SAC, and you can fill them there in one go.
 
 > GRN and DC accept **standard (stock) items only**. Serial-numbered items are received on the purchase bill and sold on the invoice, not on GRN/DC.
 
@@ -168,6 +170,12 @@ Changing the industry here swaps the industry presets (process types, labels suc
 
 For each party enter: name, GSTIN (state is read from it), state, address, PIN, phone, email, credit days / credit limit, customer group, agent, area.
 Same-state party → CGST + SGST. Other state → IGST. No GSTIN → unregistered.
+
+After the parties are in, check **Settings › GST & Tax › Parties** tab: each customer/supplier GST profile (Regular / Unregistered / Composition, state). Use it to mark a Composition party, or to add a missing state.
+
+> **Buying from an unregistered supplier (no GSTIN, e.g. a small supplier under the ₹40 lakh goods threshold, including inter-state):** leave the supplier's GSTIN empty (or mark it **Unregistered** on the Parties tab) and leave the product on its normal GST slab. Do **not** switch the product to *Exempt* or *Non-GST supply* — that is a product-level setting and would also affect your sales of it. With an Unregistered supplier the system charges **no CGST/SGST/IGST** on the purchase and takes **no input credit**.
+>
+> **Warning:** an unregistered supplier cannot charge GST, so **never enter IGST (or CGST/SGST) on such a bill** — the system will not post it, and if the supplier's bill shows GST, ask them for a corrected bill of supply. Leave *Reverse charge* off unless the purchase is in a category the law notifies for reverse charge. The system does not track the ₹40 lakh limit; the supplier is responsible for staying within it.
 
 **Opening balance (Due)**: what the party owed you (customer) or you owed the party (supplier) on go-live day. On save it posts on the **first day of the financial year**:
 customer → Dr Debtors (party) / Cr 3040 Opening Balance Adjustment; supplier → Dr 3040 / Cr Creditors (party).

@@ -3,11 +3,13 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <a href="{{route('discount-plans.create')}}" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Create Discount Plan')}}</a>&nbsp;
-    </div>
-    <div class="table-responsive">
+<x-settings-command-bar active="discount_plan">
+    <a href="{{route('discount-plans.create')}}" class="btn btn-primary"><i class="dripicons-plus"></i> {{__('db.Create Discount Plan')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
         <table id="discount-plan-table" class="table">
             <thead>
                 <tr>
@@ -51,6 +53,12 @@
                                 <li>
                                     <a href="{{ route('discount-plans.edit', $discount_plan->id) }}" class="btn btn-link"><i class="dripicons-document-edit"></i> {{__('db.edit')}}</a>
                                 </li>
+                                <li class="divider"></li>
+                                {{ Form::open(['route' => ['discount-plans.destroy', $discount_plan->id], 'method' => 'DELETE'] ) }}
+                                <li>
+                                    <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="dripicons-trash"></i> {{__('db.delete')}}</button>
+                                </li>
+                                {{ Form::close() }}
                             </ul>
                         </div>
                     </td>
@@ -58,6 +66,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 

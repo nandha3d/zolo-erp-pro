@@ -5,12 +5,14 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <button class="btn btn-info" data-toggle="modal" data-target="#createModal"><i class="dripicons-plus"></i> {{__('db.Add Currency')}} </button>&nbsp;
-    </div>
-    <div class="table-responsive zolo-table-responsive" style="min-height: 280px; position: relative;">
-        <table id="currency-table" class="table">
+<x-settings-command-bar active="currency">
+    <button class="btn btn-primary" data-toggle="modal" data-target="#createModal"><i class="dripicons-plus"></i> {{__('db.Add Currency')}}</button>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive zolo-table-responsive" style="position: relative;">
+            <table id="currency-table" class="table">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -53,6 +55,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 

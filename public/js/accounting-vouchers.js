@@ -114,7 +114,7 @@
         if (types[event.key] && !document.querySelector('.modal.show')) {
             event.preventDefault(); document.getElementById('voucher-type').value = types[event.key];
             document.getElementById('voucher-description').focus();
-        } else if (event.key === 'F9') {
+        } else if (event.key === 'F9' && !event.ctrlKey && !event.altKey && !event.shiftKey) {
             event.preventDefault(); document.getElementById('voucher-hub').focus();
         } else if (event.ctrlKey && event.key === 'Enter' && !button.disabled && !document.querySelector('.modal.show')) {
             event.preventDefault(); form.requestSubmit();

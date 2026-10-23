@@ -1,17 +1,13 @@
 @extends('backend.layout.main') 
 @section('content')
 
-<section>
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header mt-2">
-                <h3 class="text-center">{{__('db.SMS Template List')}}</h3>
-            </div>
-        </div>
-        <button class="btn btn-info" data-toggle="modal" data-target="#smstemplates-modal"><i class="dripicons-plus"></i> {{__('db.Add Template')}}</button>
-    </div>
+<x-settings-command-bar active="sms_template">
+    <button class="btn btn-primary" data-toggle="modal" data-target="#smstemplates-modal"><i class="dripicons-plus"></i> {{__('db.Add Template')}}</button>
+</x-settings-command-bar>
 
-    <div class="table-responsive">
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
         <table id="template-table" class="table" style="width: 100%">
             <thead>
                 <tr>
@@ -62,6 +58,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 

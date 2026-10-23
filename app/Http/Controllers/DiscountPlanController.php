@@ -99,6 +99,17 @@ class DiscountPlanController extends Controller
         });
     }
 
+    public function destroy($id)
+    {
+        $lims_discount_plan = DiscountPlan::findOrFail($id);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($lims_discount_plan) {
+            DiscountPlanCustomer::where('discount_plan_id', $lims_discount_plan->id)->delete();
+            \App\Models\DiscountPlanDiscount::where('discount_plan_id', $lims_discount_plan->id)->delete();
+            $lims_discount_plan->delete();
+        });
+        return redirect()->route('discount-plans.index')->with('message', 'Discount plan deleted. Bills already made keep their discount.');
+    }
+
     private function validateCompanyReferences(Request $request): void
     {
         $request->validate(['customer_id' => 'required|array|min:1', 'customer_id.*' => 'required|integer|min:1|distinct']);

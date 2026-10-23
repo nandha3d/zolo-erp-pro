@@ -1,20 +1,23 @@
 @extends('backend.layout.main')
 @section('content')
-<section>
-    <div class="container-fluid">
-        <a href="{{route('barcodes.create')}}" class="btn btn-info add-sale-btn"><i class="dripicons-plus"></i> {{__('db.Add New Setting')}}</a>&nbsp;
-    </div>
-    <div class="table-responsive">
-        <table id="barcode-table" class="table" style="width: 100%">
-            <thead>
-                <tr>
-                    <th class="not-exported"></th>
-                    <th>{{__('db.Sticker Sheet setting Name')}}</th>
-                    <th>{{__('db.Sticker Sheet setting Description')}}</th>
-                    <th class="not-exported">{{__('db.action')}}</th>
-                </tr>
-            </thead>
-        </table>
+<x-settings-command-bar active="barcode">
+    <a href="{{route('barcodes.create')}}" class="btn btn-primary add-sale-btn"><i class="dripicons-plus"></i> {{__('db.Add New Setting')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view">
+    <div class="settings-card-wrapper">
+        <div class="table-responsive">
+            <table id="barcode-table" class="table" style="width: 100%">
+                <thead>
+                    <tr>
+                        <th class="not-exported"></th>
+                        <th>{{__('db.Sticker Sheet setting Name')}}</th>
+                        <th>{{__('db.Sticker Sheet setting Description')}}</th>
+                        <th class="not-exported">{{__('db.action')}}</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 </section>
 

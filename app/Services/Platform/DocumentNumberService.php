@@ -171,6 +171,52 @@ class DocumentNumberService
         }, 3);
     }
 
+    /** Document types a series can number. */
+    public static function types(): array
+    {
+        return array_keys(self::TYPES);
+    }
+
+    /**
+     * Edit a series. An unused series takes any change. Once it has issued a number only the default flag and a higher
+     * next number may change, so printed numbers are never reformatted or reused: a new format is a new series.
+     */
+    public function updateSeries(int $id, array $data, CompanyContext $context, int $actor): void
+    {
+        if (!app(CompanyContextResolver::class)->canManageFinancialYears($actor, $context->companyId)) {
+            throw new AuthorizationException('Company administrator required to configure series.');
+        }
+        $data = Validator::make($data, [
+            'prefix' => 'nullable|string|max:100', 'suffix' => 'nullable|string|max:50',
+            'padding' => 'required|integer|min:1|max:18', 'next_number' => 'required|integer|min:1|max:999999999999998',
+            'is_default' => 'sometimes|boolean',
+        ])->validate();
+        DB::transaction(function () use ($id, $data, $context) {
+            \App\Models\Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
+            $series = DB::table('document_series')->where('company_id', $context->companyId)->where('id', $id)->lockForUpdate()->first();
+            abort_unless($series, 404);
+            $format = ['prefix' => (string) ($data['prefix'] ?? ''), 'suffix' => (string) ($data['suffix'] ?? ''), 'padding' => (int) $data['padding']];
+            if (DB::table('document_number_reservations')->where('series_id', $id)->exists()) {
+                if ($format !== ['prefix' => (string) $series->prefix, 'suffix' => (string) $series->suffix, 'padding' => (int) $series->padding]) {
+                    throw ValidationException::withMessages(['series' => 'This series has already numbered documents, so its prefix, suffix and padding stay as printed. Add a new series with the new format and make it the default.']);
+                }
+                if ((int) $data['next_number'] < (int) $series->next_number) {
+                    throw ValidationException::withMessages(['next_number' => 'On a used series the next number can only move forward (it is '.$series->next_number.' now).']);
+                }
+            }
+            $default = !empty($data['is_default']);
+            $scope = ['company_id' => $series->company_id, 'branch_id' => $series->branch_id,
+                'financial_year_id' => $series->financial_year_id, 'document_type' => $series->document_type];
+            if ($default) {
+                DB::table('document_series')->where($scope)->where('id', '<>', $id)->update(['is_default' => false, 'updated_at' => now()]);
+            } elseif ($series->is_default) {
+                throw ValidationException::withMessages(['is_default' => 'Bills need a default series: make another series of this type the default instead.']);
+            }
+            DB::table('document_series')->where('id', $id)->update($format + ['next_number' => (int) $data['next_number'],
+                'is_default' => $default, 'reset_policy' => 'financial_year', 'updated_at' => now()]);
+        }, 3);
+    }
+
     private function requireTransaction(): void
     {
         if (DB::transactionLevel() < 1) {

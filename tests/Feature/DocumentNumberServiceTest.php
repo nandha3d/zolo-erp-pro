@@ -216,6 +216,34 @@ class DocumentNumberServiceTest extends CompanyContextTestCase
         $this->numbers->configure($this->context, ['document_type' => 'sale', 'code' => 'MAIN', 'next_number' => 1], 1);
     }
 
+    public function test_series_edit_changes_an_unused_series_and_keeps_a_used_one_as_printed(): void
+    {
+        $id = $this->numbers->configure($this->context, ['document_type' => 'sale', 'code' => 'MAIN', 'prefix' => 'S-', 'padding' => 5], 1);
+        $edit = fn (array $data) => $this->numbers->updateSeries($id, $data + ['prefix' => 'INV/', 'suffix' => '/26', 'padding' => 4,
+            'next_number' => 7, 'is_default' => true], $this->context, 1);
+        $refused = function (array $data, string $field) use ($edit) {
+            try { $edit($data); $this->fail('Edit must be refused: '.json_encode($data)); }
+            catch (ValidationException $error) { $this->assertArrayHasKey($field, $error->errors()); }
+        };
+
+        $edit([]);
+        $this->assertSame('INV/0007/26', $this->reserve()->formatted_number, 'an unused series takes any edit');
+        $refused(['prefix' => 'NEW/', 'next_number' => 8], 'series');
+        $refused(['next_number' => 2], 'next_number');
+        $refused(['next_number' => 8, 'is_default' => false], 'is_default');
+        $edit(['next_number' => 20]);
+        $this->assertSame('INV/0020/26', $this->reserve()->formatted_number, 'a used series may only jump forward');
+
+        $other = $this->numbers->configure($this->context, ['document_type' => 'sale', 'code' => 'B2B', 'prefix' => 'B2B-', 'is_default' => false], 1);
+        $this->numbers->updateSeries($other, ['prefix' => 'B2B-', 'padding' => 3, 'next_number' => 1, 'is_default' => true], $this->context, 1);
+        $this->assertSame('B2B', DB::table('document_series')->where('is_default', true)->value('code'), 'one default per type');
+        $this->assertSame('B2B-001', $this->reserve()->formatted_number);
+
+        DB::table('users')->where('id', 1)->update(['role_id' => 4]);
+        $this->expectException(AuthorizationException::class);
+        $edit(['next_number' => 30]);
+    }
+
     public function test_database_rejects_two_defaults_in_same_scope(): void
     {
         $this->reserve();

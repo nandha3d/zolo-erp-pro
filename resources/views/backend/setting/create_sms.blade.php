@@ -3,48 +3,44 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.Create SMS')}}</h4>
-                    </div>
-                    <div class="card-body">
-                        <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.<strong>{{__('db.Add mobile numbers by selecting the customers')}}</strong></small></p>
-                        {!! Form::open(['route' => 'setting.sendSms', 'method' => 'post']) !!}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mt-1">
-                                        <label>{{__('db.SMS Template')}}</label>
-                                        <select name="template_id" class="form-control selectpicker sms_template">                            
-                                            <option value="">Select Template</option>
-                                            @foreach($smsTemplates as $template)
-                                            <option value="{{ $template->id }}" data-msg="{{ $template->content}}" >{{ $template->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="text" class="form-control" name="lims_customerSearch" id="lims_customerSearch" placeholder="{{ __('db.Please type customer name or mobile no and select') }}" />
-                                    </div>
-                                    <div class="form-group twilio">
-                                        <label>{{__('db.Mobile')}} *</label>
-                                        <input type="text" name="mobile" id="mobile" class="form-control" placeholder="{{ __('db.example : +8801*********,+8801*********') }}" required />
-                                    </div>
-                                    <div class="form-group twilio">
-                                        <label>{{__('db.Message')}} *</label>
-                                        <textarea name="message" class="form-control message" rows="3" required></textarea>
-                                    </div>
-                                    <div class="form-group">
-                                        <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane"></i> {{__('db.Send SMS')}}</button>
-                                    </div>
-                                </div>
-                            </div>
-                        {!! Form::close() !!}
+<x-settings-command-bar active="sms" />
+
+<section class="settings-workspace-view forms">
+    <div class="settings-form-card card">
+        <div class="card-header d-flex align-items-center">
+            <h4>{{__('db.Create SMS')}}</h4>
+        </div>
+        <div class="card-body">
+            <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.<strong>{{__('db.Add mobile numbers by selecting the customers')}}</strong></small></p>
+            {!! Form::open(['route' => 'setting.sendSms', 'method' => 'post']) !!}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mt-1">
+                            <label>{{__('db.SMS Template')}}</label>
+                            <select name="template_id" class="form-control selectpicker sms_template">                            
+                                <option value="">Select Template</option>
+                                @foreach($smsTemplates as $template)
+                                <option value="{{ $template->id }}" data-msg="{{ $template->content}}" >{{ $template->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="lims_customerSearch" id="lims_customerSearch" placeholder="{{ __('db.Please type customer name or mobile no and select') }}" />
+                        </div>
+                        <div class="form-group twilio">
+                            <label>{{__('db.Mobile')}} *</label>
+                            <input type="text" name="mobile" id="mobile" class="form-control" placeholder="{{ __('db.example : +8801*********,+8801*********') }}" required />
+                        </div>
+                        <div class="form-group twilio">
+                            <label>{{__('db.Message')}} *</label>
+                            <textarea name="message" class="form-control message" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane"></i> {{__('db.Send SMS')}}</button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {!! Form::close() !!}
         </div>
     </div>
 </section>

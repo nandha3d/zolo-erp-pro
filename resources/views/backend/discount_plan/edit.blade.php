@@ -3,14 +3,15 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.Update Discount Plan')}}</h4>
-                    </div>
+<x-settings-command-bar active="discount_plan">
+    <a href="{{route('discount-plans.index')}}" class="btn btn-secondary"><i class="dripicons-arrow-left"></i> {{__('db.Back')}}</a>
+</x-settings-command-bar>
+
+<section class="settings-workspace-view forms">
+    <div class="settings-form-card card">
+        <div class="card-header d-flex align-items-center">
+            <h4>{{__('db.Update Discount Plan')}}</h4>
+        </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                         {!! Form::open(['route' => ['discount-plans.update', $lims_discount_plan->id], 'method' => 'put']) !!}
@@ -58,9 +59,6 @@
                         {!! Form::close() !!}
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 </section>
 
 @endsection

@@ -192,7 +192,7 @@
             <span class="cp-section">Tax</span>
             <label><span>GSTIN <span class="cp-opt">turns on GST billing</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase"></label>
             <label><span>PAN <span class="cp-opt">taken from GSTIN if blank</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase"></label>
-            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition">Composition</option></select></label>
+            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition">Composition</option><option value="unregistered">Unregistered (no GSTIN)</option></select></label>
             <label>Currency<select name="base_currency_id">
                 @foreach($currencies as $currency)<option value="{{ $currency->id }}">{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
             </select></label>
@@ -282,7 +282,7 @@
             <span class="cp-section">Tax</span>
             <label><span>GSTIN <span class="cp-opt">turns on GST billing</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase" value="{{ old('gstin') }}"></label>
             <label><span>PAN <span class="cp-opt">taken from GSTIN if blank</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase" value="{{ old('pan') }}"></label>
-            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option></select></label>
+            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option><option value="unregistered" @selected(old('registration_type') === 'unregistered')>Unregistered (no GSTIN)</option></select></label>
             <label>Currency<select name="base_currency_id">
                 @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == old('base_currency_id', $defaultCurrencyId))>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
             </select></label>

@@ -331,6 +331,13 @@ class OptechMasterWebTest extends TestCase
             'code' => $uniqueCode,
             'prefix' => 'RET-',
         ]);
+
+        // Every row can be edited from the page; an unused series takes a new format.
+        $id = \Illuminate\Support\Facades\DB::table('document_series')->where('company_id', 1)->where('code', strtoupper($uniqueCode))->value('id');
+        $this->actingAs($this->adminUser)->get('/document-series')->assertOk()->assertSee('series-edit', false)->assertSee('RET-0101');
+        $this->actingAs($this->adminUser)->put('/document-series/'.$id, ['prefix' => 'RT/', 'suffix' => '', 'padding' => 3, 'next_number' => 5])
+            ->assertSessionHasNoErrors()->assertRedirect(route('document-series.index'));
+        $this->assertDatabaseHas('document_series', ['id' => $id, 'prefix' => 'RT/', 'padding' => 3, 'next_number' => 5]);
     }
 
     public function test_inline_creation_of_document_series(): void
