@@ -912,8 +912,9 @@ class CommercialController extends Controller
                     $header = config('compliance.gst_lookup_header');
                     // Providers charge per lookup, so a successful response is reused for 30 days.
                     $ext = \Illuminate\Support\Facades\Cache::get('gst-provider:' . $gstin);
+                    $providerMessage = null;
                     if (!$ext) {
-                        $client = \Illuminate\Support\Facades\Http::timeout(5)->acceptJson();
+                        $client = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(5)->acceptJson();
                         if ($token) {
                             $client = $header ? $client->withHeaders([$header => $token]) : $client->withToken($token);
                         }
@@ -921,37 +922,92 @@ class CommercialController extends Controller
                         if ($response->successful()) {
                             $ext = $response->json();
                             \Illuminate\Support\Facades\Cache::put('gst-provider:' . $gstin, $ext, now()->addDays(30));
+                        } else {
+                            $errJson = $response->json();
+                            $providerMessage = is_array($errJson) ? ($errJson['error'] ?? ($errJson['message'] ?? null)) : null;
                         }
                     }
                     if ($ext) {
-                        // Normalize across gstin_lookup, sandbox, or standard GSP schemas
+                        // Normalize across gstinapi.in, gstin_lookup, sandbox, or standard GSP schemas
                         $data = $ext['data'] ?? $ext;
                         $legalName = $data['legalName'] ?? ($data['legal_name'] ?? ($data['lgnm'] ?? ''));
                         $tradeName = $data['tradeName'] ?? ($data['trade_name'] ?? ($data['tradeNam'] ?? $legalName));
                         
-                        $address = $data['principalAddress'] ?? ($data['address'] ?? '');
-                        if (!$address && isset($data['pradr']['addr'])) {
+                        $rawAddr = $data['principalAddress'] ?? ($data['address'] ?? null);
+                        $address = '';
+                        $pincode = '';
+                        $city = '';
+                        $state = '';
+
+                        if (is_array($rawAddr)) {
+                            // gstinapi.in object structure
+                            $parts = array_filter([
+                                $rawAddr['building_no'] ?? ($rawAddr['bno'] ?? ''),
+                                $rawAddr['floor_no'] ?? ($rawAddr['flno'] ?? ''),
+                                $rawAddr['street'] ?? ($rawAddr['st'] ?? ''),
+                                $rawAddr['location'] ?? ($rawAddr['loc'] ?? ''),
+                                $rawAddr['district'] ?? ($rawAddr['dst'] ?? ''),
+                            ]);
+                            $address = implode(', ', $parts);
+                            $pincode = $rawAddr['pincode'] ?? ($rawAddr['pncd'] ?? ($rawAddr['postal_code'] ?? ''));
+                            $city = $rawAddr['city'] ?? ($rawAddr['district'] ?? ($rawAddr['location'] ?? ''));
+                            $state = $rawAddr['state'] ?? '';
+                        } elseif (is_string($rawAddr) && trim($rawAddr) !== '') {
+                            $address = $rawAddr;
+                        } elseif (isset($data['pradr']['addr']) && is_array($data['pradr']['addr'])) {
+                            // Sandbox / GSTN pradr structure
                             $addr = $data['pradr']['addr'];
                             $parts = array_filter([$addr['bno'] ?? '', $addr['flno'] ?? '', $addr['st'] ?? '', $addr['loc'] ?? '', $addr['dst'] ?? '']);
                             $address = implode(', ', $parts);
+                            $pincode = $addr['pncd'] ?? '';
+                            $city = $addr['dst'] ?? ($addr['loc'] ?? '');
+                            $state = $addr['stcd'] ?? '';
                         }
 
-                        $pincode = $data['pincode'] ?? ($data['postal_code'] ?? ($data['pradr']['addr']['pncd'] ?? ''));
-                        $city = $data['city'] ?? ($data['pradr']['addr']['dst'] ?? '');
-                        $state = $data['state'] ?? ($data['pradr']['addr']['stcd'] ?? $parsed['state_name']);
+                        $pincode = $pincode ?: ($data['pincode'] ?? ($data['postal_code'] ?? ($data['pradr']['addr']['pncd'] ?? '')));
+                        $city = $city ?: ($data['city'] ?? ($data['pradr']['addr']['dst'] ?? ''));
+                        $state = $state ?: ($data['state'] ?? ($data['pradr']['addr']['stcd'] ?? $parsed['state_name']));
+
+                        $status = $data['status'] ?? ($data['sts'] ?? 'Active');
+                        $taxpayerType = $data['taxpayer_type'] ?? ($data['dty'] ?? 'Regular');
+                        $regDate = $data['registration_date'] ?? ($data['rgdt'] ?? null);
+                        $cancellationDate = $data['cancellation_date'] ?? null;
+                        $blockStatus = $data['block_status'] ?? null;
+                        $natureOfBusiness = is_array($data['nature_of_business'] ?? null)
+                            ? implode(', ', $data['nature_of_business'])
+                            : ($data['nature_of_business'] ?? null);
+                        $stateJurisdiction = $data['state_jurisdiction'] ?? null;
+                        $filingFrequency = $data['filing_frequency'] ?? null;
+                        $gstr3bFiledTill = $data['gstr3b_filed_till'] ?? null;
+                        $gstr1FiledTill = $data['gstr1_filed_till'] ?? null;
 
                         if ($legalName || $tradeName) {
                             $partyData = [
                                 'name' => $legalName ?: $tradeName,
                                 'company_name' => $tradeName ?: $legalName,
+                                'legal_name' => $legalName,
+                                'trade_name' => $tradeName,
                                 'address' => $address,
                                 'city' => $city,
                                 'state' => $state,
                                 'postal_code' => $pincode,
+                                'country' => 'India',
                                 'phone_number' => $data['phone_number'] ?? '',
                                 'email' => $data['email'] ?? '',
                                 'party_type' => 'registered_business',
-                                'registration_status' => $data['status'] ?? ($data['sts'] ?? ''),
+                                'registration_status' => $status,
+                                'status' => $status,
+                                'taxpayer_type' => $taxpayerType,
+                                'registration_date' => $regDate,
+                                'cancellation_date' => $cancellationDate,
+                                'block_status' => $blockStatus,
+                                'nature_of_business' => $natureOfBusiness,
+                                'state_jurisdiction' => $stateJurisdiction,
+                                'filing_frequency' => $filingFrequency,
+                                'gstr3b_filed_till' => $gstr3bFiledTill,
+                                'gstr1_filed_till' => $gstr1FiledTill,
+                                'pan' => $parsed['pan'],
+                                'constitution' => $parsed['constitution'],
                                 'source' => 'live_api',
                             ];
                         }
@@ -975,6 +1031,8 @@ class CommercialController extends Controller
             'tax_rule' => $taxRule,
             'is_existing' => (bool)$partyData,
             'party' => $partyData,
+            'gst_details' => $partyData,
+            'provider_message' => $providerMessage ?? null,
         ]);
     }
 }

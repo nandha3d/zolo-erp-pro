@@ -393,7 +393,11 @@
                 if (p.company_name && !$('#reg-trade').val()) $('#reg-trade').val(p.company_name);
                 var address = [p.address, p.city, p.state, p.postal_code].filter(Boolean).join(', ');
                 if (address && !$('#reg-address').val()) $('#reg-address').val(address);
-                status.text(p.name ? 'Details filled. Check them before saving.' : 'GSTIN format OK (' + (res.state_name || '') + '). Enter name and address.');
+                if (res && res.provider_message) {
+                    status.text('Live provider note: ' + res.provider_message);
+                } else {
+                    status.text(p.name ? 'Details filled. Check them before saving.' : 'GSTIN format OK (' + (res.state_name || '') + '). Enter name and address.');
+                }
             })
             .fail(function (xhr) { status.text((xhr.responseJSON && xhr.responseJSON.message) || 'Lookup unavailable. Enter the details manually.'); });
     });

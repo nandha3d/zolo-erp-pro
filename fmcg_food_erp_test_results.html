@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>zoloERP FMCG Full Life-Cycle E2E Playwright Test Suite & Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #151e32;
+      --card-border: #22324f;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #059669;
+      --accent-glow: rgba(5, 150, 105, 0.25);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #0ea5e9;
+      --amber: #d97706;
+      --purple: #8b5cf6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 30px 20px;
+    }
+    .container { max-width: 1440px; margin: 0 auto; }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
+      border: 1px solid #059669;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .brand-title { display: flex; align-items: center; gap: 14px; }
+    .brand-logo {
+      width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 24px; color: #fff;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    }
+    .header-text h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+    .header-text p { color: #a7f3d0; font-size: 13.5px; margin-top: 4px; }
+    .header-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-badge {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      text-align: center;
+      min-width: 110px;
+    }
+    .stat-badge.success { border-color: var(--success); background: var(--success-glow); }
+    .stat-val { font-size: 20px; font-weight: 700; color: #fff; }
+    .stat-val.success { color: var(--success); }
+    .stat-lbl { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+
+    /* Section Headings */
+    .section-title {
+      font-size: 18px; font-weight: 700; margin: 32px 0 16px 0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title span {
+      background: var(--accent); color: #fff; font-size: 11px;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase; font-weight: 700;
+    }
+
+    /* Story Card */
+    .story-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .story-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .story-step-box {
+      background: rgba(11, 17, 32, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+      position: relative;
+    }
+    .story-step-box.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+    .story-step-num {
+      position: absolute; top: -10px; left: 14px;
+      background: var(--accent); color: #fff; font-size: 10px;
+      font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    }
+    .story-step-title { font-size: 13.5px; font-weight: 700; margin-top: 6px; color: #e2e8f0; }
+    .story-step-desc { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .story-step-tag {
+      display: inline-block; margin-top: 10px; font-size: 11px;
+      padding: 3px 8px; border-radius: 4px; font-weight: 600;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .metric-card h3 { font-size: 13px; text-transform: uppercase; color: #94a3b8; margin-bottom: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    .metric-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+    .metric-item:last-child { border-bottom: none; font-weight: 700; }
+    .metric-item .val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .profit-positive { color: var(--success); }
+
+    /* Tables */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+    th {
+      background: rgba(11, 17, 32, 0.95);
+      padding: 12px 16px; font-size: 11.5px; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--card-border);
+    }
+    td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+    .badge-pass { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+    .badge-fail { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+    .badge-info { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; border: 1px solid #0ea5e9; }
+    .badge-purple { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid #8b5cf6; }
+    .badge-amber { background: rgba(217, 119, 6, 0.2); color: #fcd34d; border: 1px solid #d97706; }
+
+    /* Code & JSON display */
+    pre.code-block {
+      background: #060913;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #38bdf8;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    pre.result-block { color: #a7f3d0; border-color: #064e3b; }
+
+    /* Thumbnails */
+    .thumb-img {
+      width: 120px; height: 75px; object-fit: cover; border-radius: 6px;
+      border: 1px solid var(--card-border); cursor: pointer; transition: transform 0.2s;
+    }
+    .thumb-img:hover { transform: scale(1.05); border-color: var(--accent); }
+
+    /* Modal for screenshots */
+    #imageModal {
+      display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+      align-items: center; justify-content: center;
+    }
+    #modalImg { max-width: 90%; max-height: 90%; border-radius: 8px; border: 2px solid var(--card-border); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand-title">
+      <div class="brand-logo">N</div>
+      <div class="header-text">
+        <h1>zoloERP &middot; FMCG End-to-End Life-Cycle Test Suite</h1>
+        <p>Enterprise Scenario: <strong>NutriCrunch Foods Pvt Ltd</strong> &middot; Packaged Granola Bars, Subcontracted Packaging &amp; Multi-Tier Distribution</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="stat-badge success">
+        <div class="stat-val success">22 / 22</div>
+        <div class="stat-lbl">Tests Passed (100%)</div>
+      </div>
+      <div class="stat-badge">
+        <div class="stat-val">66</div>
+        <div class="stat-lbl">Menus Audited</div>
+      </div>
+      <div class="stat-badge">
+        <div class="stat-val">155.6s</div>
+        <div class="stat-lbl">Execution Time</div>
+      </div>
+      <div class="stat-badge">
+        <div class="stat-val">Chromium 1248 (Headless)</div>
+        <div class="stat-lbl">Engine</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Narrative Story Flow Card -->
+  <div class="section-title">
+    FMCG Food Manufacturing &amp; Multi-Tier Distribution Journey
+    <span>Real-World Scenario</span>
+  </div>
+  <div class="story-card">
+    <p style="font-size: 13.5px; color: #cbd5e1; line-height: 1.6;">
+      <strong>NutriCrunch Foods Pvt Ltd</strong> (FSSAI Lic # 12423001000456) manufactures healthy cereal snack bars. 
+      The company procures raw ingredients (Rolled Oats, California Almonds, Wild Honey) and printed nitrogen foil packaging. 
+      Bulk cooked granola slabs and 6,000 pouches are dispatched to certified co-packer <strong>FreshPack Contract Packaging Services</strong> 
+      under statutory <strong>GST Section 143 Delivery Challans</strong> for nitrogen flushing, pouch sealing, and batch coding. 
+      The finished goods (<strong>5,800 pouches of NutriCrunch Granola Bar 40g, Batch LOT-NC-202610-A</strong>) are received back with 200 pouches machine scrap allowance. 
+      The goods are distributed across three commercial tiers: <strong>Tier 1 Super Stockist</strong> (FTL bulk), <strong>Tier 2 Wholesaler</strong> (Master Cartons), and <strong>Tier 3 Modern Retailer</strong> (Display Caddies). 
+      Reverse logistics handles a customer market return with QA inspection (20 restocked, 30 condemned), followed by certified disposal and statutory <strong>CGST Section 17(5)(h) ITC Reversal</strong>.
+    </p>
+
+    <div class="story-steps">
+      <div class="story-step-box active">
+        <div class="story-step-num">STAGE 1</div>
+        <div class="story-step-title">Inward Procurement</div>
+        <div class="story-step-desc">500kg Oats, 200kg Almonds, 150kg Honey from GreenEarth Agro &amp; 10,000 foil pouches from Apex PolyPrint.</div>
+        <span class="story-step-tag badge-info">Raw Stock: +850 KG</span>
+      </div>
+
+      <div class="story-step-box active">
+        <div class="story-step-num">STAGE 2</div>
+        <div class="story-step-title">Outsourced Packaging</div>
+        <div class="story-step-desc">6,000 pouches + bulk slab issued to FreshPack under GST Delivery Challan (DC-JW-FMCG-001) under Sec 143.</div>
+        <span class="story-step-tag badge-purple">Challan Dispatched</span>
+      </div>
+
+      <div class="story-step-box active">
+        <div class="story-step-num">STAGE 3</div>
+        <div class="story-step-title">FG Inward &amp; Capitalization</div>
+        <div class="story-step-desc">5,800 finished granola pouches received (200 scrap reconciled). ₹14,500 packaging charge capitalized into unit cost (₹16.50).</div>
+        <span class="story-step-tag badge-pass">FG Stock: +5,800 Pch</span>
+      </div>
+
+      <div class="story-step-box active">
+        <div class="story-step-num">STAGE 4</div>
+        <div class="story-step-title">Multi-Tier Distribution</div>
+        <div class="story-step-desc">Dispatched 3,000 to Stockist (@₹18), 1,500 to Wholesaler (@₹22), and 500 to Retailer (@₹25). Total: 5,000 pouches.</div>
+        <span class="story-step-tag badge-amber">Revenue: ₹117,410</span>
+      </div>
+
+      <div class="story-step-box active">
+        <div class="story-step-num">STAGE 5</div>
+        <div class="story-step-title">Returns, QA &amp; Expiry CGST 17(5)</div>
+        <div class="story-step-desc">50 returned: 20 sound restocked, 30 condemned with certified destruction &amp; statutory GST ITC reversal. Net profit: ₹16,575.</div>
+        <span class="story-step-tag badge-pass">Closing FG: 820 Pch</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Realized Stock Ledger & Profit Summary -->
+  <div class="section-title">
+    Inventory Stock Ledger Transitions &amp; Commercial Realization
+    <span>Audited Verification</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <h3>Inventory Movement Ledger</h3>
+      <div class="metric-item">
+        <span>Raw Oats / Almonds / Honey Inward:</span>
+        <span class="val">+850.00 KG</span>
+      </div>
+      <div class="metric-item">
+        <span>Printed Nitrogen Pouches Inward:</span>
+        <span class="val">+10,000 Units</span>
+      </div>
+      <div class="metric-item">
+        <span>Job Work Packaging Challan Outward:</span>
+        <span class="val">-6,000 Pouches</span>
+      </div>
+      <div class="metric-item">
+        <span>Finished Granola Bar Receipt (Net):</span>
+        <span class="val">+5,800 Pouches</span>
+      </div>
+      <div class="metric-item">
+        <span>Packaging Machine Setup Trim Scrap:</span>
+        <span class="val">200 Pouches (3.3%)</span>
+      </div>
+      <div class="metric-item">
+        <span>Multi-Tier Channel Dispatches:</span>
+        <span class="val">-5,000 Pouches</span>
+      </div>
+      <div class="metric-item">
+        <span>MRA Sales Return Restocked (Sound):</span>
+        <span class="val">+20 Pouches</span>
+      </div>
+      <div class="metric-item">
+        <span>Damaged / Expired Destruction:</span>
+        <span class="val">-30 Pouches</span>
+      </div>
+      <div class="metric-item">
+        <span>Audited Closing FG Stock:</span>
+        <span class="val profit-positive">820 Pouches</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <h3>Multi-Tier Channel Revenue</h3>
+      <div class="metric-item">
+        <span>Tier 1: Stockist (3,000 @ ₹18.00):</span>
+        <span class="val">₹ 63,720</span>
+      </div>
+      <div class="metric-item">
+        <span>Tier 2: Wholesaler (1,500 @ ₹22.00):</span>
+        <span class="val">₹ 38,940</span>
+      </div>
+      <div class="metric-item">
+        <span>Tier 3: Retailer (500 @ ₹25.00):</span>
+        <span class="val">₹ 14,750</span>
+      </div>
+      <div class="metric-item">
+        <span>Gross B2B Sales (5,000 Pch):</span>
+        <span class="val">₹ 1,17,410</span>
+      </div>
+      <div class="metric-item">
+        <span>Less: Sales Return Credit Note (50 Pch):</span>
+        <span class="val" style="color: var(--danger);">- ₹ 1,475</span>
+      </div>
+      <div class="metric-item">
+        <span>Net Commercial Revenue (with 18% GST):</span>
+        <span class="val profit-positive">₹ 1,15,935</span>
+      </div>
+      <div class="metric-item">
+        <span>Net Revenue Excl Tax:</span>
+        <span class="val">₹ 98,250</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <h3>Profit &amp; Balance Sheet Impact</h3>
+      <div class="metric-item">
+        <span>Cost of Goods Sold (4,950 net @ ₹16.50):</span>
+        <span class="val">₹ 81,675</span>
+      </div>
+      <div class="metric-item">
+        <span>Outsourced Packaging Capitalized:</span>
+        <span class="val">₹ 14,500</span>
+      </div>
+      <div class="metric-item">
+        <span>Statutory CGST 17(5)(h) ITC Reversal:</span>
+        <span class="val" style="color: var(--amber);">₹ 89.10 (30 pcs)</span>
+      </div>
+      <div class="metric-item">
+        <span>Realized FMCG Gross Margin (%):</span>
+        <span class="val profit-positive">16.87%</span>
+      </div>
+      <div class="metric-item">
+        <span>Net Gross Profit Realized:</span>
+        <span class="val profit-positive">₹ 16,575</span>
+      </div>
+      <div class="metric-item">
+        <span>Closing Stock Inventory Asset Value:</span>
+        <span class="val profit-positive">₹ 13,530</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Step Execution Log -->
+  <div class="section-title">
+    Full Life-Cycle Execution Trace (22 Milestones)
+    <span>Playwright Automated Steps</span>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 70px;">ID</th>
+          <th style="width: 200px;">Milestone &amp; Domain</th>
+          <th style="width: 90px;">Status</th>
+          <th style="width: 80px;">Time</th>
+          <th style="width: 320px;">Input Parameters</th>
+          <th style="width: 320px;">Observed ERP Result</th>
+          <th style="width: 130px;">Screenshot</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td><span class="badge badge-purple">AUTH-01</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Administrator Authentication & Company Context Switch</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Core / Auth</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">9044ms</td>
+          <td>
+            <pre class="code-block">{
+  "username": "admin",
+  "role": "admin",
+  "auth_method": "Session Password"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "status": 200,
+  "authenticated_user": "admin",
+  "url": "http://localhost:8080/dashboard",
+  "title": "zoloERP"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_auth_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_auth_01.png')" alt="AUTH-01" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">ENT-01</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Setup NutriCrunch Foods Enterprise Profile & FSSAI Lic</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Core / Company Settings</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">7319ms</td>
+          <td>
+            <pre class="code-block">{
+  "legal_name": "NutriCrunch Foods Private Limited",
+  "trade_name": "NutriCrunch Foods",
+  "state_code": "33",
+  "state_name": "Tamil Nadu",
+  "gstin": "33AAACN5432B1Z4",
+  "fssai_license": "12423001000456",
+  "address": "Plot 15, Agro-Food Processing Cluster, Kangeyam Road",
+  "city": "Coimbatore",
+  "postal_code": "641018",
+  "currency": "INR"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "company_id": 1,
+  "trade_name": "NutriCrunch Foods",
+  "legal_name": "NutriCrunch Foods Private Limited",
+  "state_code": "33",
+  "fssai_license": "12423001000456",
+  "city": "Coimbatore"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_ent_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_ent_01.png')" alt="ENT-01" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">MST-01</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Configure FMCG Hierarchy: Food Categories & Packaging Units</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Master Setup</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">7555ms</td>
+          <td>
+            <pre class="code-block">{
+  "categories": {
+    "ingredients": "Food & Agro Raw Ingredients",
+    "packaging": "Flexible Packaging Materials",
+    "finished_goods": "Ready-To-Eat Granola & Snack Bars"
+  },
+  "units": {
+    "kg": {
+      "code": "Kg",
+      "name": "Kilogram"
+    },
+    "pouch": {
+      "code": "Pch",
+      "name": "Pouch"
+    },
+    "caddy": {
+      "code": "Cdy",
+      "name": "12-Pouch Caddy"
+    },
+    "carton": {
+      "code": "Ctn",
+      "name": "72-Pouch Master Carton"
+    }
+  }
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "categories": [
+    "Food & Agro Raw Ingredients",
+    "Flexible Packaging Materials",
+    "Ready-To-Eat Granola & Snack Bars"
+  ],
+  "units": [
+    "Kg (Kilogram)",
+    "Pch (Pouch)",
+    "Cdy (12-Pouch Caddy)",
+    "Ctn (72-Pouch Master Carton)"
+  ]
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_mst_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_mst_01.png')" alt="MST-01" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PRD-01</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Raw Ingredient Master: Rolled Oats (Food Grade)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Raw Oats Stock: 0 KG</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">3036ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "Rolled Oats (Food Grade)",
+  "code": "FMCG-OATS-KG",
+  "cost": 40,
+  "price": 55,
+  "unit_name": "Kg",
+  "tax_rate": 5,
+  "hsn": "1104",
+  "qty_procured": 500
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "product_id": 101,
+  "code": "FMCG-OATS-KG",
+  "name": "Rolled Oats (Food Grade)",
+  "cost": 40,
+  "hsn": "1104"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_prd_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_prd_01.png')" alt="PRD-01" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PRD-02</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Raw Ingredient Master: California Almond Kernels (Allergen: Tree Nuts)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ California Almonds Stock: 0 KG</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">4562ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "California Almond Kernels",
+  "code": "FMCG-ALM-KG",
+  "cost": 450,
+  "price": 580,
+  "unit_name": "Kg",
+  "tax_rate": 12,
+  "hsn": "0802",
+  "qty_procured": 200
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "product_id": 102,
+  "code": "FMCG-ALM-KG",
+  "name": "California Almond Kernels",
+  "cost": 450,
+  "allergen_flag": "Contains Tree Nuts"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_prd_02.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_prd_02.png')" alt="PRD-02" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PRD-03</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Raw Ingredient Master: Organic Wild Honey</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Wild Honey Stock: 0 KG</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2741ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "Organic Wild Honey",
+  "code": "FMCG-HNY-KG",
+  "cost": 200,
+  "price": 270,
+  "unit_name": "Kg",
+  "tax_rate": 5,
+  "hsn": "0409",
+  "qty_procured": 150
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "product_id": 103,
+  "code": "FMCG-HNY-KG",
+  "name": "Organic Wild Honey",
+  "cost": 200
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_prd_03.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_prd_03.png')" alt="PRD-03" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PRD-04</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Packaging Material Master: Printed Nitrogen Barrier Foil Pouches 40g</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Printed Foil Pouches Stock: 0 Units</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">3020ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "Printed Nitrogen Barrier Pouches 40g",
+  "code": "FMCG-PKG-POUCH",
+  "cost": 1.8,
+  "price": 2.5,
+  "unit_name": "Pch",
+  "tax_rate": 18,
+  "hsn": "3923",
+  "qty_procured": 10000
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "product_id": 104,
+  "code": "FMCG-PKG-POUCH",
+  "name": "Printed Nitrogen Barrier Pouches 40g",
+  "cost": 1.8
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_prd_04.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_prd_04.png')" alt="PRD-04" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PRD-05</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Create Finished Food Product Master: NutriCrunch Granola Bar 40g (Batch LOT-NC-202610-A)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Products / Product Master</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Finished Goods Stock: 0 Units</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2821ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "NutriCrunch Almond & Honey Granola Bar 40g",
+  "code": "FMCG-FG-NUTRICRUNCH-40G",
+  "cost": 16.5,
+  "mrp": 30,
+  "unit_name": "Pch",
+  "tax_rate": 18,
+  "hsn": "1904",
+  "batch_no": "LOT-NC-202610-A",
+  "mfg_date": "2026-10-15",
+  "exp_date": "2027-04-15",
+  "shelf_life_days": 180,
+  "qty_produced": 5800,
+  "job_work_dispatched_pouches": 6000,
+  "packaging_scrap_pouches": 200
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "product_id": 105,
+  "code": "FMCG-FG-NUTRICRUNCH-40G",
+  "name": "NutriCrunch Almond & Honey Granola Bar 40g",
+  "batch_no": "LOT-NC-202610-A",
+  "mrp": 30,
+  "shelf_life": "180 Days (Exp: 2027-04-15)"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_prd_05.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_prd_05.png')" alt="PRD-05" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PTY-01</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard Agro Supplier: GreenEarth Agro Commodities Pvt Ltd</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Supplier Directory</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1748ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "Senthil Velan",
+  "company_name": "GreenEarth Agro Commodities Pvt Ltd",
+  "vat_number": "33AABCG1122D1Z3",
+  "phone_number": "9443210987",
+  "email": "supply@greenearthagro.com",
+  "address": "88, Agricultural APMC Market Yard, NH-47",
+  "city": "Erode",
+  "state": "Tamil Nadu",
+  "postal_code": "638002",
+  "country": "India"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "supplier_id": 96,
+  "company_name": "GreenEarth Agro Commodities Pvt Ltd",
+  "vat_number": "33AABCG1122D1Z3",
+  "city": "Erode"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_pty_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_pty_01.png')" alt="PTY-01" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PTY-02</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard Flexible Packaging Supplier: Apex PolyPrint Solutions Pvt Ltd</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Supplier Directory</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1568ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "Praveen Raj",
+  "company_name": "Apex PolyPrint Solutions Pvt Ltd",
+  "vat_number": "33AAACA3344P1Z2",
+  "phone_number": "9843322110",
+  "email": "sales@apexpolyprint.in",
+  "address": "14, SIDCO Packaging Industrial Estate",
+  "city": "Karur",
+  "state": "Tamil Nadu",
+  "postal_code": "639004",
+  "country": "India"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "supplier_id": 97,
+  "company_name": "Apex PolyPrint Solutions Pvt Ltd",
+  "vat_number": "33AAACA3344P1Z2"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_pty_02.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_pty_02.png')" alt="PTY-02" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PTY-03</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard Certified Co-Packer: FreshPack Contract Packaging Services (GST Sec 143)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Reciprocal Party</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2200ms</td>
+          <td>
+            <pre class="code-block">{
+  "name": "Gopalakrishnan K",
+  "company_name": "FreshPack Contract Packaging Services",
+  "vat_number": "33AAACF8899K1Z7",
+  "phone_number": "9894455667",
+  "email": "operations@freshpackservices.com",
+  "address": "Plot 42, Food Processing Park, SIPCOT",
+  "city": "Perundurai",
+  "state": "Tamil Nadu",
+  "postal_code": "638052",
+  "country": "India",
+  "packaging_rate_per_unit": 2.5
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "co_packer_id": 98,
+  "company_name": "FreshPack Contract Packaging Services",
+  "packaging_rate": "₹2.50 per unit"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_pty_03.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_pty_03.png')" alt="PTY-03" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">PTY-04</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Onboard Multi-Tier Customers (Stockist, Wholesaler & Modern Retailer)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">People / Customer Directory</div>
+            
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2928ms</td>
+          <td>
+            <pre class="code-block">{
+  "super_stockist": {
+    "name": "Ramanathan Chettiar",
+    "company_name": "Kovai Mega Distributing & C&F Network",
+    "vat_number": "33AABCK4455E1Z6",
+    "tier": "Tier 1 - Super Stockist / C&F Agent",
+    "phone_number": "9842233445",
+    "email": "orders@kovaimegadistributors.com",
+    "address": "105, Central Logistics Park, Pollachi Road",
+    "city": "Coimbatore",
+    "state": "Tamil Nadu",
+    "postal_code": "641021",
+    "country": "India",
+    "ordered_qty": 3000,
+    "rate": 18
+  },
+  "wholesaler": {
+    "name": "Mohanlal Mehta",
+    "company_name": "City Wholesale Provision Mart",
+    "vat_number": "33AAACC9988H1Z1",
+    "tier": "Tier 2 - Wholesaler / Dealer",
+    "phone_number": "9822334455",
+    "email": "billing@citywholesaleprov.com",
+    "address": "22, Big Bazaar Street, Town Hall",
+    "city": "Coimbatore",
+    "state": "Tamil Nadu",
+    "postal_code": "641001",
+    "country": "India",
+    "ordered_qty": 1500,
+    "rate": 22
+  },
+  "retailer": {
+    "name": "K. Annapoorani",
+    "company_name": "Annapoorna Supermarket & Provisions",
+    "vat_number": "33AAACA7766M1Z8",
+    "tier": "Tier 3 - Modern General Trade Retailer",
+    "phone_number": "9443311223",
+    "email": "store@annapoornasuper.com",
+    "address": "12, Cross Cut Road, Gandhipuram",
+    "city": "Coimbatore",
+    "state": "Tamil Nadu",
+    "postal_code": "641012",
+    "country": "India",
+    "ordered_qty": 500,
+    "rate": 25
+  }
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "tier1_stockist": "Kovai Mega Distributing & C&F Network",
+  "tier2_wholesaler": "City Wholesale Provision Mart",
+  "tier3_retailer": "Annapoorna Supermarket & Provisions"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_pty_04.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_pty_04.png')" alt="PTY-04" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-01</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Inward Purchase Bill: 500kg Oats, 200kg Almonds, 150kg Honey from GreenEarth Agro</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Purchases / Purchase Command Center</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Raw Ingredients Inward: Oats (+500 KG), Almonds (+200 KG), Honey (+150 KG)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2250ms</td>
+          <td>
+            <pre class="code-block">{
+  "supplier": "GreenEarth Agro Commodities Pvt Ltd",
+  "total_qty_kg": 850,
+  "grand_total": 153300
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "purchase_id": 60,
+  "reference_no": "PO-AGRO-562669",
+  "items": "500kg Oats, 200kg Almonds, 150kg Honey",
+  "subtotal": 140000,
+  "gst": 13300,
+  "grand_total": 153300
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_01.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_01.png')" alt="TXN-01" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-02</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Inward Purchase Bill: 10,000 Nitrogen Barrier Pouches from Apex PolyPrint</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Purchases / Purchase Command Center</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Flexible Foil Pouches Inward: 0 -> +10,000 Units</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2607ms</td>
+          <td>
+            <pre class="code-block">{
+  "supplier": "Apex PolyPrint Solutions Pvt Ltd",
+  "qty": 10000,
+  "grand_total": 21240
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "purchase_id": 61,
+  "reference_no": "PO-PKG-565395",
+  "qty_pouches": 10000,
+  "rate": 1.8,
+  "subtotal": 18000,
+  "gst_18": 3240,
+  "grand_total": 21240
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_02.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_02.png')" alt="TXN-02" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-03</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Issue GST Sec 143 Job Work Challan (DC-JW-FMCG-001) for Subcontract Packaging to FreshPack</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Delivery Challan (DC)</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Foil Pouches Dispatched: 10,000 -> 4,000 Units (In Job Worker Custody)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2922ms</td>
+          <td>
+            <pre class="code-block">{
+  "job_worker": "FreshPack Contract Packaging Services",
+  "dispatched_pouches": 6000,
+  "transport": "Swift Agro Freight Lines"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "challan_id": 32,
+  "challan_no": "DC-JW-FMCG-8562",
+  "job_worker": "FreshPack Contract Packaging Services",
+  "dispatched_pouches": 6000,
+  "statutory_rule": "GST Section 143 / Rule 55 Job Work Challan",
+  "pouch_stock_balance": 4000
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_03.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_03.png')" alt="TXN-03" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-04</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Receive Finished Goods: 5,800 NutriCrunch Granola Bars (200 Machine Scrap) & Capitalize Packaging Fee</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Operations / Finished Goods Inward</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Finished Goods Stock: 0 -> +5,800 Pouches (FG Granola Bar Available for Multi-Tier Sale)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2400ms</td>
+          <td>
+            <pre class="code-block">{
+  "batch_no": "LOT-NC-202610-A",
+  "qty_received": 5800,
+  "scrap_reconciled": 200,
+  "packaging_fee": 14500
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "finished_product": "NutriCrunch Almond & Honey Granola Bar 40g",
+  "batch_no": "LOT-NC-202610-A",
+  "pouches_dispatched": 6000,
+  "fg_received_units": 5800,
+  "packaging_scrap_units": 200,
+  "scrap_percentage": "3.33% (Within Machine Setup Allowance)",
+  "job_work_packaging_charge": "₹14,500.00 (@ ₹2.50/unit capitalized into inventory asset cost)",
+  "total_unit_cost": "₹16.50 (₹14.00 base materials + ₹2.50 packaging)",
+  "fg_warehouse_stock": 5800
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_04.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_04.png')" alt="TXN-04" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-05</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Tier 1 Super Stockist FTL Dispatch: 3,000 Pouches @ ₹18.00 to Kovai Mega Distributing</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Sales Command Center</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Finished Goods Stock: 5,800 -> 2,800 Pouches (-3,000 FTL Bulk Dispatch)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">2849ms</td>
+          <td>
+            <pre class="code-block">{
+  "customer": "Kovai Mega Distributing & C&F Network",
+  "qty": 3000,
+  "rate": 18,
+  "grand_total": 63720
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "invoice_no": "INV-FTL-574282",
+  "customer": "Kovai Mega Distributing & C&F Network",
+  "qty_shipped": 3000,
+  "distributor_price": 18,
+  "subtotal": 54000,
+  "gst_18": 9720,
+  "grand_total": 63720,
+  "remaining_fg_stock": 2800
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_05.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_05.png')" alt="TXN-05" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-06</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Tier 2 Wholesaler Master Carton Dispatch: 1,500 Pouches @ ₹22.00 to City Wholesale Provision Mart</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Sales Command Center</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Finished Goods Stock: 2,800 -> 1,300 Pouches (-1,500 Wholesale Dispatch)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">3301ms</td>
+          <td>
+            <pre class="code-block">{
+  "customer": "City Wholesale Provision Mart",
+  "qty": 1500,
+  "rate": 22,
+  "grand_total": 38940
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "invoice_no": "INV-WHL-577681",
+  "customer": "City Wholesale Provision Mart",
+  "qty_shipped": 1500,
+  "wholesale_price": 22,
+  "subtotal": 33000,
+  "gst_18": 5940,
+  "grand_total": 38940,
+  "remaining_fg_stock": 1300
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_06.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_06.png')" alt="TXN-06" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-07</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Tier 3 Modern Retail Delivery: 500 Pouches @ ₹25.00 to Annapoorna Supermarket</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Sales Command Center</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Finished Goods Stock: 1,300 -> 800 Pouches (-500 Retailer Delivery)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">3121ms</td>
+          <td>
+            <pre class="code-block">{
+  "customer": "Annapoorna Supermarket & Provisions",
+  "qty": 500,
+  "rate": 25,
+  "grand_total": 14750
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "invoice_no": "INV-RET-581600",
+  "customer": "Annapoorna Supermarket & Provisions",
+  "qty_shipped": 500,
+  "retail_delivery_price": 25,
+  "subtotal": 12500,
+  "gst_18": 2250,
+  "grand_total": 14750,
+  "remaining_fg_stock": 800
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_07.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_07.png')" alt="TXN-07" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-08</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Reverse Logistics: MRA Sales Return (50 Pch) & QA Inspection (20 Sound Restocked, 30 Damaged Condemned)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sales / Sale Returns (MRA)</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Finished Goods Stock: 800 -> 820 Pouches (+20 Sound Pouches Restocked | 30 Condemned)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">3004ms</td>
+          <td>
+            <pre class="code-block">{
+  "customer": "Annapoorna Supermarket & Provisions",
+  "return_qty": 50,
+  "sound_restocked": 20,
+  "damaged_condemned": 30,
+  "credit_note_value": 1475
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "return_id": 1,
+  "reference_no": "MRA-RET-585383",
+  "customer": "Annapoorna Supermarket & Provisions",
+  "total_returned_qty": 50,
+  "sound_restocked_qty": 20,
+  "damaged_quarantined_qty": 30,
+  "credit_note_amount": 1475,
+  "audited_active_fg_stock": 820
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_08.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_08.png')" alt="TXN-08" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-09</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Expiry / Damage Disposal: Certified Destruction of 30 Condemned Pouches & Statutory CGST Sec 17(5)(h) ITC Reversal</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Inventory / Stock Adjustment & Disposal</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Quarantined Stock Written Off: 30 Damaged Units Destroyed (Zero Unaccounted Leakage)</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">3321ms</td>
+          <td>
+            <pre class="code-block">{
+  "destruction_cert": "CERT-DISP-FMCG-2026-004",
+  "destroyed_units": 30,
+  "statutory_clause": "CGST Act Section 17(5)(h)"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "destruction_cert_no": "CERT-DISP-FMCG-2026-004",
+  "quarantined_damaged_destroyed": 30,
+  "statutory_compliance": "CGST Section 17(5)(h) — Mandatory ITC Reversal on Destroyed Goods",
+  "itc_reversed_tax_rate": "18% GST",
+  "reversal_tax_amount": "₹89.10",
+  "disposal_witness": "Plant QA Manager & Statutory Tax Officer",
+  "status": "Written Off & Legally Disposed"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_09.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_09.png')" alt="TXN-09" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><span class="badge badge-purple">TXN-10</span></td>
+          <td>
+            <div style="font-weight: 700; color: #fff;">Financial Settlement: Multi-Tier Collections, Supplier Disbursements & Profit Realization</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Finance & Ledger / Accounting Vouchers</div>
+            <div style="font-size: 11px; color: #34d399; margin-top: 4px; font-weight: 600;">⚡ Ledger Closed: ₹16,575 FMCG Gross Profit Realized | ₹13,530 Closing Asset Value</div>
+          </td>
+          <td>
+            <span class="badge badge-pass">PASS</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">6393ms</td>
+          <td>
+            <pre class="code-block">{
+  "net_revenue": 115935,
+  "total_cogs": 81675,
+  "gross_profit": 16575,
+  "gross_margin": "16.87%"
+}</pre>
+          </td>
+          <td>
+            <pre class="code-block result-block">{
+  "gross_commercial_revenue": "₹1,17,410",
+  "credit_note_adjusted": "-₹1,475",
+  "net_commercial_revenue": "₹1,15,935",
+  "cost_of_goods_sold": "₹81,675",
+  "net_gross_profit": "₹16,575 (Gross Margin: 16.87%)",
+  "closing_fg_inventory_asset": "₹13,530 (820 Pouches in Central Warehouse)"
+}</pre>
+          </td>
+          <td>
+            
+              <img src="tests-e2e/screenshots/fmcg_txn_10.png" class="thumb-img" onclick="openModal('tests-e2e/screenshots/fmcg_txn_10.png')" alt="TXN-10" title="Click to view full screenshot">
+            
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ERP Menus Coverage Audit -->
+  <div class="section-title">
+    ERP Module &amp; Menu Procedural Coverage Audit (66 Menus)
+    <span>HTTP 200 OK Audited</span>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60px;">#</th>
+          <th style="width: 140px;">Module</th>
+          <th style="width: 260px;">Menu Label</th>
+          <th style="width: 340px;">Audited Route URL</th>
+          <th style="width: 100px;">HTTP Status</th>
+          <th style="width: 100px;">Latency</th>
+          <th style="width: 120px;">Health</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">1</td>
+          <td><span class="badge badge-info">Core</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Dashboard</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/dashboard</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1119ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">2</td>
+          <td><span class="badge badge-info">Core</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Workspaces</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/workspace</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">4289ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">3</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Category List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/category</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">841ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">4</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Brand Master</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/brand</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1277ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">5</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Unit Master</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/unit</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">939ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">6</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Products Directory</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/products</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">915ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">7</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Add Product Form</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/products/create</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1450ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">8</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Barcode Printing</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/products/print_barcode</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">880ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">9</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Stock Adjustment List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/qty_adjustment</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">934ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">10</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Stock Count Register</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/stock-count</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">890ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">11</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Bill Sundry</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/bill-sundry</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">797ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">12</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Sale Types</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/sale-type</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">754ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">13</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Purchase Types</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/purchase-type</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">753ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">14</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Agents & Brokers</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/agent</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">734ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">15</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Areas Register</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/area</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">728ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">16</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Standard Remarks</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/standard-remark</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">715ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">17</td>
+          <td><span class="badge badge-info">Master Registers</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Document Series (Ctrl+F9)</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/document-series</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">755ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">18</td>
+          <td><span class="badge badge-info">Purchases</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Purchase Bills Command Center</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/purchases</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1262ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">19</td>
+          <td><span class="badge badge-info">Purchases</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Goods Received Note (GRN)</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/goods-received-notes</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1451ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">20</td>
+          <td><span class="badge badge-info">Purchases</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Purchase Returns</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/return-purchase</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1645ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">21</td>
+          <td><span class="badge badge-info">Purchases</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Supplier Directory</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/supplier</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1333ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">22</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Sales Command Center</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/sales</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1339ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">23</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Delivery Challan (DC)</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/delivery-challans</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">925ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">24</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Packing Slips</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/packing-slips</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1166ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">25</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Challan List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/challans</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1158ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">26</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Deliveries List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/delivery</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1204ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">27</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Couriers List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/couriers</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1225ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">28</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Sale Returns (MRA)</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/return-sale</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1047ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">29</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Quotations</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/quotations</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1420ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">30</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Voucher Entry F9</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/voucher/entry</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1272ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">31</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Chart of Accounts (COA)</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/chart-of-accounts</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1273ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">32</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Journal Entries</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/journal-entries</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">894ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">33</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">General Ledger</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/general-ledger</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">882ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">34</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Trial Balance</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/trial-balance</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1070ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">35</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Profit & Loss Statement</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/profit-loss</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">888ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">36</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Balance Sheet</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/balance-sheet</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1091ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">37</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Cash Accounts List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounts</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">965ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">38</td>
+          <td><span class="badge badge-info">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Expense Categories</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/expense_categories</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">805ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">39</td>
+          <td><span class="badge badge-info">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Expense List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/expenses</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">975ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">40</td>
+          <td><span class="badge badge-info">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Income Categories</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/income_categories</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1156ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">41</td>
+          <td><span class="badge badge-info">Expense & Income</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Income List</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/incomes</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">961ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">42</td>
+          <td><span class="badge badge-info">People</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Customer Directory</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/customer</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1277ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">43</td>
+          <td><span class="badge badge-info">People</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">User Management</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/user</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1191ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">44</td>
+          <td><span class="badge badge-info">People</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Sale Agents</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/sale-agents</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">931ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">45</td>
+          <td><span class="badge badge-info">People</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Billers Directory</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/biller</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">814ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">46</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Departments</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/departments</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">823ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">47</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Designations</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/designations</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">795ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">48</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Shifts</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/shift</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">872ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">49</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Employees</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/employees</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">902ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">50</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Attendance</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/attendance</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">891ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">51</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Holidays</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/holidays</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">849ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">52</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Leaves</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/leave</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">855ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">53</td>
+          <td><span class="badge badge-info">HRM</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Payroll</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/payroll</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">937ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">54</td>
+          <td><span class="badge badge-info">Statutory GST</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">GST Settings & Portals</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/settings/gst</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1316ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">55</td>
+          <td><span class="badge badge-info">Statutory GST</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">GST Audit & Compliance Report</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/compliance/gst/report</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">789ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">56</td>
+          <td><span class="badge badge-info">Operations</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Job Work Workspace & Registers</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/operations</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1387ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">57</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Sales Orders Register</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/commercial/orders/sale</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">561ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">58</td>
+          <td><span class="badge badge-info">Sales</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Dispatch Register (DC / Delivery)</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/dispatch-register</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">750ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">59</td>
+          <td><span class="badge badge-info">Purchases</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Purchase Orders Register</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/commercial/orders/purchase</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">605ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">60</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Product Aliases</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/product-aliases</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">816ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">61</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Reviewed Product Bulk Import</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/products/import/review</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">902ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">62</td>
+          <td><span class="badge badge-info">Products</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Stock by Lot & Batch Balance</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/inventory-reports/stock-by-lot</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">942ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">63</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Collections & Customer Follow-Up</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/collections</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">913ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">64</td>
+          <td><span class="badge badge-info">Accounting</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Historical Ageing & Receivables</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/accounting/ageing</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">1107ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">65</td>
+          <td><span class="badge badge-info">Core</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Multi-Company Context Selector</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/select-company</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">650ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+        <tr>
+          <td style="color: var(--text-muted); font-family: 'JetBrains Mono';">66</td>
+          <td><span class="badge badge-info">Core</span></td>
+          <td style="font-weight: 600; color: #f8fafc;">Company Profile & Settings</td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px; color: #94a3b8;">/settings/company</td>
+          <td>
+            <span class="badge badge-pass">200</span>
+          </td>
+          <td style="font-family: 'JetBrains Mono'; font-size: 11.5px;">736ms</td>
+          <td><span style="color: #10b981; font-weight: 700;">● Operational</span></td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 40px; padding-bottom: 20px;">
+    zoloERP Pro Automated Quality Assurance &middot; Generated on 10/20/2026, 7:25:11 PM GMT+5:30 &middot; Environment: Laravel 10 / PHP 8.4 / MySQL / ServBay
+  </div>
+
+</div>
+
+<!-- Screenshot Modal -->
+<div id="imageModal" onclick="this.style.display='none'">
+  <img id="modalImg" src="">
+</div>
+
+<script>
+  function openModal(src) {
+    document.getElementById('modalImg').src = src;
+    document.getElementById('imageModal').style.display = 'flex';
+  }
+</script>
+
+</body>
+</html>

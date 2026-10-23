@@ -36,6 +36,8 @@
                     message += res.party.source === 'live_api'
                         ? ' Registered details filled.'
                         : ' Matches existing ' + (res.party.party_type || 'party') + ' "' + res.party.name + '"; empty fields filled.';
+                } else if (res.provider_message) {
+                    message += ' (' + res.provider_message + ')';
                 }
                 $status.text(message).removeClass('text-danger').addClass('text-success');
             })

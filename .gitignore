@@ -35,3 +35,7 @@ yarn-error.log
 /public/stock_count
 # Local database dumps never belong in the repository
 /database/backups/
+
+# Playwright temp run outputs
+/test-results/
+/tests-e2e/playwright-report/
