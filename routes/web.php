@@ -762,6 +762,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('chart-of-accounts', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'index'])->name('accounting.coa');
         Route::post('chart-of-accounts', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'store'])->name('accounting.coa.store');
         Route::put('chart-of-accounts/{id}', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'update'])->name('accounting.coa.update');
+        Route::delete('chart-of-accounts/{id}', [\App\Http\Controllers\Accounting\ChartOfAccountsController::class, 'destroy'])->name('accounting.coa.destroy');
 
         Route::get('journal-entries', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'index'])->name('accounting.journal-entries');
         Route::post('journal-entries', [\App\Http\Controllers\Accounting\JournalEntryController::class, 'store'])->name('accounting.journal-entries.store');

@@ -135,6 +135,9 @@
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
+<x-validation-error fieldName="accounting" />
+<x-validation-error fieldName="reason" />
+<x-validation-error fieldName="entry_date" />
 
 @php
     $totalEntriesCount = $entries->total();
@@ -272,15 +275,26 @@
                             <td>{{ Str::limit($entry->description, 50) }}</td>
                             <td class="text-right font-weight-bold text-dark font-monospace">₹ {{ number_format((float)$entry->total_debit, 2) }}</td>
                             <td class="text-right font-weight-bold text-dark font-monospace">₹ {{ number_format((float)$entry->total_credit, 2) }}</td>
+                            @php $isReversed = in_array($entry->id, $reversedIds); @endphp
                             <td>
-                                <span class="badge badge-success" style="font-size: 10.5px; padding: 4px 8px; border-radius: 4px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">
-                                    Posted
-                                </span>
+                                @if($isReversed)
+                                    <span class="badge badge-secondary" style="font-size: 10.5px; padding: 4px 8px; border-radius: 4px;">Reversed</span>
+                                @else
+                                    <span class="badge badge-success" style="font-size: 10.5px; padding: 4px 8px; border-radius: 4px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">
+                                        Posted
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-outline-primary view-entry-btn" data-id="{{ $entry->id }}" title="View Lines" style="height:26px; width:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:4px;">
                                     <i class="dripicons-preview"></i>
                                 </button>
+                                {{-- Posted journals are never edited or deleted; a manual one is cancelled by a reversing entry. Bill postings are corrected from the bill. --}}
+                                @if($entry->reference_type === 'manual' && !$entry->reversal_of_id && !$isReversed)
+                                    <button type="button" class="btn btn-sm btn-outline-danger reverse-entry-btn" data-url="{{ route('accounting.journal.reverse', $entry->id) }}" data-number="{{ $entry->entry_number }}" data-date="{{ $entry->entry_date->format('Y-m-d') }}" title="Reverse" style="height:26px; width:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:4px;">
+                                        <i class="dripicons-return"></i>
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -434,10 +448,51 @@
     </div>
 </div>
 
+<!-- Reverse Journal Modal -->
+<div id="reverseEntryModal" tabindex="-1" role="dialog" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
+            <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px;">
+                <h5 class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+                    <i class="dripicons-return mr-1"></i> Reverse Journal <span id="reverse-entry-number" class="font-monospace"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form id="reverseEntryForm" method="POST">
+                @csrf
+                <div class="modal-body" style="padding: 16px 20px;">
+                    <p class="text-muted mb-2" style="font-size: 12px;">Posts an equal and opposite entry; the original stays in the books for audit.</p>
+                    <div class="form-group mb-2">
+                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">Reversal Date <span class="text-danger">*</span></label>
+                        <input type="date" name="entry_date" class="form-control form-control-sm" required style="height:32px; font-size:12.5px;">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">Reason <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control form-control-sm" rows="2" maxlength="500" required style="font-size:12.5px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3" style="background:#f8fafc;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm font-weight-bold">Post Reversal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script type="text/javascript">
+    $(document).on('click', '.reverse-entry-btn', function() {
+        var $btn = $(this), $form = $('#reverseEntryForm'), today = new Date().toISOString().slice(0, 10);
+        $form.attr('action', $btn.attr('data-url'));
+        $form.find('[name=entry_date]').attr('min', $btn.attr('data-date')).val(today < $btn.attr('data-date') ? $btn.attr('data-date') : today);
+        $form.find('[name=reason]').val('');
+        $('#reverse-entry-number').text($btn.attr('data-number'));
+        $('#reverseEntryModal').modal('show');
+    });
+
     let lineIndex = 2;
 
     function calculateTotals() {

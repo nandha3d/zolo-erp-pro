@@ -1216,3 +1216,123 @@ User (Sweet Soil, no GSTIN) wanted to save legal name/address without a GSTIN. F
 - `gst/settings.blade.php`: Type adds "Unregistered (no GSTIN)", new State select, JS toggles GSTIN/State/Fetch. Browser-checked on Sweet Soil (not saved).
 - Test `GstSetupTest::test_unregistered_company_bills_without_gst_and_keeps_supplier_gst_in_cost`; `phpunit.compliance.xml` 83/83 OK.
 - Not done: Company profile / company create forms still offer only Regular/Composition; GST report screens still list an unregistered company's bills.
+
+## 49. Unregistered on Company Profile/Picker, Full-Width Dropdown Fix, Setup Guide Order (2026-10-20, uncommitted)
+
+- `CompanyProfileService::save` accepts `registration_type = unregistered` (GSTIN must be empty) and registers the branch as unregistered with the company state; the first unregistered period starts on the financial-year start (else today / `gst_effective_from`). Company create (`CompanyDirectoryService`) also installs the standard GST slabs for an unregistered company. Options added in `company/profile.blade.php` (plain-JS GSTIN toggle: jQuery loads after content) and both forms in `company/select.blade.php`.
+- Dropdown bug (menu as wide as the screen): Bootstrap adds `.position-static` to the toggle's parent when the dropdown boundary is not `scrollParent` (section 47 set `viewport`); on a selectpicker's body-level `.bs-container` that made the menu's `min-width:100%` use the page width. `zolo-erp-neo.css`: `.bootstrap-select.bs-container.position-static { position:absolute !important }`. Browser-checked: Company profile (keyboard + mouse), GST settings, Accounting mappings (12 menus) all attached.
+- `00_NEW_COMPANY_SETUP.md`: Products/Parties GST checks moved from step 4 to steps 9/10 (masters do not exist yet at step 4); unregistered-supplier note moved to step 10; GST type row in step 1; Unregistered in step 2.
+- Tests: `CompanyProfileTest::test_unregistered_type_registers_without_gstin_from_the_year_start_and_prints_an_invoice`; CompanyProfile + GstSetup 16/16.
+
+## 50. Ctrl+F9 Voucher Series Shortcut (2026-10-20, uncommitted)
+
+Ctrl+F9 was advertised (sidebar "Voucher Series (Ctl+F9)", series page title, voucher entry hint bar) but never bound. Added `voucher-series` (Ctrl+F9 → `document-series.index`, permission `sidebar_product` like the Masters menu, group Masters) to `DocumentShortcutRegistry`, so it also lists in the `?` help. `accounting-vouchers.js` F9 handler now ignores Ctrl/Alt/Shift (it swallowed Ctrl+F9 on the voucher hub); its include in `accounting/vouchers.blade.php` is now filemtime-versioned. Browser-checked from dashboard, voucher entry, sales, voucher hub. `DocumentEntryTest` 5/5. Note: plain F9 (Voucher Entry) is only bound on the voucher hub page, not globally, though the sidebar shows "Voucher Entry · F9".
+
+## 51. Voucher Series Editable (2026-10-20, uncommitted)
+
+`/document-series` had no edit UI (only Delete), and its create form offered reset monthly/never and padding 0, which `DocumentNumberService::reserve` rejects ("Series configuration or number range is invalid"), breaking every bill of that type.
+- New `DocumentNumberService::updateSeries` (admin only): unused series take any change; a used series (has reservations) keeps prefix/suffix/padding and its next number may only go up; setting a default clears the other default of the same branch/FY/type; switching off the only default is refused. `types()` exposes the numberable types.
+- `DocumentSeriesController` rewritten: requires company context; index lists the current branch + FY with a `used` flag; store validates (padding 1-18, type from `types()`, code unique per type) and calls `configure`; update calls `updateSeries`; destroy refuses used series and needs admin.
+- `master/series.blade.php`: Edit button + modal (live "prints as" preview, used series fields read-only), "Next number prints as" column, Used badge, create form limited to valid settings and all document types.
+- Tests: `DocumentNumberServiceTest::test_series_edit_changes_an_unused_series_and_keeps_a_used_one_as_printed`, `OptechMasterWebTest` series test extended (page + PUT). company config filter 21/21.
+- Guide step 7 now says where Master Registers is (sidebar › Sales, Purchases & Inventory, below Product).
+
+## 52. Settings Section Modernization & Zero-Scroll Viewport Containment (2026-10-20, uncommitted)
+
+User: "same modernized theme and others are required in the settings section too".
+- **Unified Navigation & Command Bar Architecture:**
+  - Created `<x-settings-command-bar active="...">` (`resources/views/components/settings-command-bar.blade.php`) and dedicated stylesheet `public/css/settings-workspace.css` (imported via `zolo-erp-neo.css`).
+  - Navigation strip provides responsive, high-contrast dark pills across all system configuration and master views: General, Company Profile, GST & Tax, Warehouse, Customer Group, Currency, Role Permission, Invoice Settings, POS Settings, Printers, Barcodes, Discount Plan, Discount, Custom Fields, Payment Gateways, Mail, SMS, SMS Template, Reward Point, and HRM. Retired `/setting/backup` link deliberately omitted.
+  - Page-specific primary actions render dynamically in the right slot (`$slot`), e.g. `+ Add Warehouse`, `+ Add Customer Group`, `+ Add Role`, `+ Add Currency`, `+ Add Printer`, `+ Add Barcode`, `+ Add Discount Plan`, `+ Add Discount`, `+ Add Field`, `+ New Template`, `+ Send SMS`.
+- **Zero-Scroll Viewport Architecture:**
+  - Extended zero-scroll rules in `public/css/zolo-erp-neo.css` and `settings-workspace.css`:
+    - `html:has(.settings-workspace-view)`, `body:has(.settings-workspace-view)` locked to `height: 100vh !important; max-height: 100vh !important; overflow: hidden !important;`.
+    - `#content` flex-clamped to `height: calc(100vh - 40px) !important; max-height: calc(100vh - 40px) !important; overflow: hidden !important; display: flex !important; flex-direction: column !important;`.
+    - `footer.main-footer` hidden completely on all settings workspace views.
+    - High-density `.settings-card-wrapper` and `.settings-form-card` fill available viewport height (`height: 100%; max-height: 100%; overflow: hidden; display: flex; flex-direction: column;`).
+    - Sticky dark slate table headers (`#0f172a`, `position: sticky; top: 0; z-index: 5`), alternating high-contrast zebra row striping (`#ffffff` vs `#f8fafc`), hover highlight (`#eef2ff`), and independent internal table scrolling (`overflow-y: auto`).
+    - Form views standardized with `.settings-form-card`, compact 30px inputs, clear uppercase labels, and full dark theme support (`body.dark-mode`).
+- **Modernized Settings Views (32 Views Refactored):**
+  1. `resources/views/backend/warehouse/create.blade.php` (`active="warehouse"`)
+  2. `resources/views/backend/customer_group/create.blade.php` (`active="customer_group"`)
+  3. `resources/views/backend/currency/index.blade.php` (`active="currency"`)
+  4. `resources/views/backend/tax/create.blade.php` (`active="gst"`)
+  5. `resources/views/backend/role/create.blade.php` (`active="role"`)
+  6. `resources/views/backend/printer/create.blade.php` (`active="printers"`)
+  7. `resources/views/backend/barcode/index.blade.php` (`active="barcode"`)
+  8. `resources/views/backend/barcode/create.blade.php` (`active="barcode"`)
+  9. `resources/views/backend/barcode/edit.blade.php` (`active="barcode"`)
+  10. `resources/views/backend/discount_plan/index.blade.php` (`active="discount_plan"`)
+  11. `resources/views/backend/discount_plan/create.blade.php` (`active="discount_plan"`)
+  12. `resources/views/backend/discount_plan/edit.blade.php` (`active="discount_plan"`)
+  13. `resources/views/backend/discount/index.blade.php` (`active="discount"`)
+  14. `resources/views/backend/discount/create.blade.php` (`active="discount"`)
+  15. `resources/views/backend/discount/edit.blade.php` (`active="discount"`)
+  16. `resources/views/backend/custom_field/index.blade.php` (`active="custom_field"`)
+  17. `resources/views/backend/custom_field/create.blade.php` (`active="custom_field"`)
+  18. `resources/views/backend/custom_field/edit.blade.php` (`active="custom_field"`)
+  19. `resources/views/backend/setting/invoice_setting/index.blade.php` (`active="invoice"`)
+  20. `resources/views/backend/setting/invoice_setting/create.blade.php` (`active="invoice"`)
+  21. `resources/views/backend/setting/invoice_setting/edit.blade.php` (`active="invoice"`)
+  22. `resources/views/backend/setting/general_setting.blade.php` (`active="general"`)
+  23. `resources/views/backend/setting/pos_setting.blade.php` (`active="pos"`)
+  24. `resources/views/backend/setting/mail_setting.blade.php` (`active="mail"`)
+  25. `resources/views/backend/setting/sms_setting.blade.php` (`active="sms"`)
+  26. `resources/views/backend/setting/create_sms.blade.php` (`active="sms"`)
+  27. `resources/views/backend/sms_templates/index.blade.php` (`active="sms_template"`)
+  28. `resources/views/backend/setting/payment-gateways.blade.php` (`active="payment_gateway"`)
+  29. `resources/views/backend/setting/reward_point_setting.blade.php` (`active="reward_point"`)
+  30. `resources/views/backend/setting/hrm_setting.blade.php` (`active="hrm"`)
+  31. `resources/views/backend/company/profile.blade.php` (`active="company"`)
+  32. `resources/views/backend/gst/settings.blade.php` (`active="gst"`)
+- **Real Browser Automated Verification (1536x730 Viewport):**
+  - Evaluated on dev server port 8080. Zero window scroll verified across 10 sample screens:
+    - `/warehouse`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`warehouse_settings_1792489993430.png`)
+    - `/currency`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`currency_settings_1792490043615.png`)
+    - `/customer_group`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`customer_group_settings_1792490072031.png`)
+    - `/role`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`role_settings_1792490079274.png`)
+    - `/printers`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`printers_settings_1792490086554.png`)
+    - `/barcodes`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`barcodes_settings_1792490096285.png`)
+    - `/setting/general_setting`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`general_settings_1792490107223.png`)
+    - `/setting/pos_setting`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`pos_settings_1792490116916.png`)
+    - `/settings/company`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`company_settings_1792490126009.png`)
+    - `/settings/gst`: `scrollHeight: 730`, `innerHeight: 730`, `scrollY: 0`, `isZeroScroll: true` (`gst_settings_1792490137857.png`)
+- **Fix & Regression Testing:**
+  - Fixed `CompanyProfileService` and `CompanyProfileTest` `effective_from` date formatting to normalize raw database dates to `Y-m-d`, preventing SQLite datetime string validation errors.
+  - Test suites passing: 31/31 tests, 205 assertions in `CompanyProfileTest`, `DocumentEntryTest`, and `OptechMasterWebTest`.
+
+
+## 53. SweetSoil (company 17) Item Masters (2026-10-23, dev DB data only, no code change)
+- Company 17 = Phoenicle Natures Private Limited / Sweet Soil, FMCG manufacturer, GST type **unregistered** (tax_registrations id 3), branch 5, FY 5 (2026-27), warehouse 8.
+- Created via `ProductMasterService::create` (unit PCS 14, category General 48, cost 0, `tax_method` 1 because an unregistered seller charges no GST, so price = MRP = bill total; switch to 2 (inclusive) once a GSTIN is saved):
+  - 180 `PS-100` Palm Sugar 100g ₹80, HSN 17029010, GST 5% (cat 26)
+  - 181 `RNM-150` Rose Neera Mix 150g ₹239, HSN 21069059, 5%
+  - 182 `RNM-100` Rose Neera Mix 100g ₹150, HSN 21069059, 5%
+  - 183 `PC-8` Palm Chocolate 8g ₹20, HSN 18069010, 5%
+  - 184 `PSY-135` Palm Syrup 135ml ₹99, **no HSN / GST rate yet** (user gave none)
+- GST 5% is an assumption (GST 2.0 rates, Sept 2025) awaiting user confirmation. `is_batch` left off although batch/expiry capability is on.
+- Remaining setup gaps: PAN blank, timezone UTC (should be Asia/Kolkata), no parties, no raw materials/BOM, bank account still named "Bank", only admin user, sale series prefix `MJ-`/`MJC-`, invoice terms/declaration empty.
+
+## 54. GST Settings Products/Codes/Rates Edit + Delete, Discount Delete (2026-10-23, uncommitted)
+User: Products tab looked empty and HSN/SAC list had no edit/delete; "check everywhere if we update there should be edit or delete option".
+- Products tab defaulted to `?products=missing`, so only incomplete products showed. Now defaults to **All products**, missing ones sorted first with a "Needs GST details" pill; the filter select submits on change; "Save products" moved to the card header (`form="gst-products-form"`) so it stays visible on long lists.
+- GST Rates: Actions column with **Edit** (modal → existing `rename` action: name + input credit) and **Delete** (`category-delete`, disabled/blocked while products use the rate; removes its `tax_rates` periods).
+- HSN/SAC: Products count column + **Edit** (loads row into the form, code read-only, "Update code") and **Delete** (`code-delete`, blocked while products or item groups `default_hsn_code` use it). Kind cannot change on a code in use. Logic in `GstSetupService::deleteCategory/saveCode/deleteCode/codeUsage`.
+- Discount Plan + Discount lists had Edit only (`DiscountController::destroy` was empty, `DiscountPlanController` had none). Added Delete (removes pivot links too).
+- Audit of other settings lists (warehouse, customer group, currency, tax, role, printer, barcode, custom field, invoice settings, SMS templates, series) — all already had edit + delete.
+- Tests: `GstSetupTest` (+ new edit/delete test; stale `GST Settings` heading assertion updated after section 52 removed the h1), new `DiscountDeleteTest`. 54/54 passing in Gst/Discount/CompanyProfile/DocumentEntry/OptechMaster/RemainingCompanyHardening. Browser-verified on :8080 for company 17.
+
+## 55. Master Registers discoverability + setup steps 7–9 guide (2026-10-23, uncommitted)
+- User could not find Master Registers. Sidebar entry exists (below Product, gated `$isAdmin || sidebar_product`) and renders for admin; Workspace › Settings (`workspace/setup.blade.php`) had no link. Added a "Master registers" panel there (series, sale/purchase types, bill sundry, agents, areas, remarks) and fixed its broken "Account mappings" link (`/accounting/semantic-mappings` → `route('accounting.semantic-mappings')`). Browser-verified, all links 200.
+- New doc `documents/process-guides/00A_SETUP_MASTERS_ACCOUNTS_ITEMS.md`: field-by-field steps 7 (series, types, sundry, agents, areas, remarks), 8 (COA, 31 role defaults from company 17, payment accounts, settlement links), 9 (units, product fields, alternate names, reviewed import columns, GST products tab). `00_NEW_COMPANY_SETUP.md` links it; freight role row corrected (4030 not 6050).
+- Known gaps documented, not fixed: master registers have add/delete only (no edit, hard delete); Bill Sundry list not pickable on bills (Charges tab = Freight + Bill Discount only); sale/purchase type ledger accounts, agent commission rate and remark default flag are stored but unused; Export/SEZ/Exempted types don't zero tax; customer form has no agent/area field (step 10 text says it does).
+
+## 56. Edit + Delete Audit Across Masters, Product, Purchase, Sales, Quotation, Accounting, Settings (2026-10-23)
+User: Sale Type Master (and other master registers) had only a delete button; "check complete master registers, product, purchase, sales, quotation, accounting, settings ... all edit and delete option".
+- Audit: Playwright crawl of every sidebar list on company 17 and 14 (scratch script, not committed) + code grep for empty lists. Already had edit+delete: product/category/unit/brand, sales and purchase bill lists, returns, quotations (DataTable options), transfers, expenses/incomes + categories, money transfers, accounts, customers, suppliers, users, billers, settings lists (section 54), voucher series, express vouchers. Role/currency hide delete only for system rows (by design). Stock count, reports, dispatch register = no row edit by design.
+- **Master registers** (sale/purchase types, bill sundry, agents, areas, remarks): controllers already had `update`; views lacked UI. Added pencil button per row (`data-record` JSON + `data-update-url`) and shared partials `master/partials/edit-script.blade.php` (reuses `#createModal`: PUT, fills fields by name, refreshes every bootstrap-select because the layout enhances all selects, restores create mode on close) and `master/partials/active-toggle.blade.php` (Active tick box, edit mode only).
+- **Delete guard**: trait `Concerns/BlocksDeleteOfUsedMaster` refuses delete of a sale type / purchase type / agent / area used on sales, purchases, DCs, GRNs, customers or suppliers (redirect `not_permitted`, JSON 422) → user deactivates instead.
+- **Chart of Accounts**: edit modal (name + description, the fields `update` allows) and new `DELETE accounting/chart-of-accounts/{id}` (`accounting.coa.destroy`), refused for system accounts, sub-accounts, postings/open items, linked payment account, role mapping, non-zero balance. System rows show no bin.
+- **Journal entries**: posted journals stay immutable (model blocks edits). Manual journals get a Reverse button (modal date + reason → existing `accounting.journal.reverse`); reversed ones show "Reversed". Bill-sourced journals are corrected from the bill.
+- Guide `00A_SETUP_MASTERS_ACCOUNTS_ITEMS.md` rules + step 8.1 updated.
+- Tests: new `MasterRegisterEditTest` (3, in `phpunit.documents-web.xml`), 2 new in `CompanyAccountingWebTest` (company suite). Browser-verified on :8080 company 17 (temp area created/edited/deleted, sale type + COA modals prefilled, no JS errors).

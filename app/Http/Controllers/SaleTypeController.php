@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\SaleType;
 use App\Services\Platform\CompanyContext;
+use App\Http\Controllers\Concerns\BlocksDeleteOfUsedMaster;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class SaleTypeController extends Controller
 {
+    use BlocksDeleteOfUsedMaster;
+
     private function context(Request $request): ?CompanyContext
     {
         return $request->attributes->get(CompanyContext::class);
@@ -106,6 +109,9 @@ class SaleTypeController extends Controller
     {
         $context = $this->context($request);
         $saleType = SaleType::when($context, fn($q) => $q->where('company_id', $context->companyId))->findOrFail($id);
+        if ($refusal = $this->refuseDeleteIfUsed($request, $saleType->id, ['sales' => 'sale_type_id', 'delivery_challans' => 'sale_type_id'], 'This sale type')) {
+            return $refusal;
+        }
         $saleType->delete();
 
         if ($request->ajax() || $request->wantsJson()) {

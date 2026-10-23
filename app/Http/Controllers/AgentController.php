@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Agent;
 use App\Services\Platform\CompanyContext;
+use App\Http\Controllers\Concerns\BlocksDeleteOfUsedMaster;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class AgentController extends Controller
 {
+    use BlocksDeleteOfUsedMaster;
+
     private function context(Request $request): ?CompanyContext
     {
         return $request->attributes->get(CompanyContext::class);
@@ -103,6 +106,12 @@ class AgentController extends Controller
     {
         $context = $this->context($request);
         $agent = Agent::when($context, fn($q) => $q->where('company_id', $context->companyId))->findOrFail($id);
+        if ($refusal = $this->refuseDeleteIfUsed($request, $agent->id, [
+            'sales' => 'agent_id', 'purchases' => 'agent_id', 'delivery_challans' => 'agent_id',
+            'goods_received_notes' => 'agent_id', 'customers' => 'agent_id', 'suppliers' => 'agent_id',
+        ], 'This agent')) {
+            return $refusal;
+        }
         $agent->delete();
 
         if ($request->ajax() || $request->wantsJson()) {

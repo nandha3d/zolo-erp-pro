@@ -50,6 +50,9 @@
                                 </span>
                             </td>
                             <td class="text-right">
+                                <button type="button" class="btn btn-sm btn-outline-primary js-master-edit" title="Edit" data-update-url="{{ route('standard-remark.update', $rm->id) }}" data-record='@json($rm)'>
+                                    <i class="dripicons-pencil"></i>
+                                </button>
                                 <form action="{{ route('standard-remark.destroy', $rm->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this remark?');">
                                     @csrf
                                     @method('DELETE')
@@ -105,6 +108,7 @@
                         <input type="checkbox" class="custom-control-input" id="is_default" name="is_default" value="1">
                         <label class="custom-control-label font-weight-bold" for="is_default">Auto-apply as default remark</label>
                     </div>
+                    @include('backend.master.partials.active-toggle')
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -115,3 +119,5 @@
     </div>
 </div>
 @endsection
+
+@include('backend.master.partials.edit-script', ['editTitle' => 'Edit Standard Remark'])

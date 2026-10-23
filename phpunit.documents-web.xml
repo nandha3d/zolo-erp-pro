@@ -5,6 +5,7 @@
     <file>tests/Feature/DocumentEntryWebTest.php</file>
     <file>tests/Feature/DocumentLayoutFixtureTest.php</file>
     <file>tests/Feature/OptechMasterWebTest.php</file>
+    <file>tests/Feature/MasterRegisterEditTest.php</file>
     <file>tests/Feature/NavigationWebTest.php</file>
     <file>tests/Feature/ProductAliasCostWebTest.php</file>
   </testsuite></testsuites>

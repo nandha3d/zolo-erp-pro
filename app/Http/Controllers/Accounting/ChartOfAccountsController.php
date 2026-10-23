@@ -85,4 +85,48 @@ class ChartOfAccountsController extends Controller
 
         return redirect()->back()->with('message', 'Account updated successfully.');
     }
+
+    public function destroy(Request $request, $id)
+    {
+        $context = app(CompanyContextResolver::class)->forActor();
+        abort_unless(app(CompanyContextResolver::class)->canManageFinancialYears($request->user()->id, $context->companyId), 403);
+
+        $blocker = DB::transaction(function () use ($id, $context) {
+            app(CompanyWriteGuard::class)->begin($context, null);
+            $account = ChartOfAccount::forCompany($context)->whereKey($id)->lockForUpdate()->firstOrFail();
+            $blocker = $this->deleteBlocker($account);
+            if (!$blocker) {
+                $account->delete();
+            }
+            return $blocker;
+        });
+
+        return $blocker
+            ? redirect()->back()->with('not_permitted', 'Account not deleted: '.$blocker)
+            : redirect()->back()->with('message', 'Account deleted successfully.');
+    }
+
+    /** Only an unused, user-created account may be deleted; anything the ledger points at stays. */
+    private function deleteBlocker(ChartOfAccount $account): ?string
+    {
+        if ($account->is_system) {
+            return 'system accounts are required by posting.';
+        }
+        if (ChartOfAccount::where('parent_id', $account->id)->exists()) {
+            return 'it has sub-accounts.';
+        }
+        if ($account->journalItems()->exists() || DB::table('account_open_items')->where('account_id', $account->id)->exists()) {
+            return 'it has postings.';
+        }
+        if (DB::table('accounts')->where('chart_of_account_id', $account->id)->exists()) {
+            return 'a cash/bank payment account is linked to it.';
+        }
+        if (DB::table('semantic_account_mappings')->where('company_id', $account->company_id)->where('account_id', $account->id)->exists()) {
+            return 'it is mapped to a posting role in Account Mappings.';
+        }
+        if (abs((float) $account->current_balance) > 0.004) {
+            return 'its balance is not zero.';
+        }
+        return null;
+    }
 }

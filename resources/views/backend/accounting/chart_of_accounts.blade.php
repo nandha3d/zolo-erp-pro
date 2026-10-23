@@ -232,6 +232,18 @@
                                 <a href="{{ route('accounting.general-ledger', ['account_id' => $acc->id]) }}" class="btn btn-sm btn-outline-primary" title="View Ledger" style="height:26px; width:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:4px;">
                                     <i class="dripicons-preview"></i>
                                 </a>
+                                <button type="button" class="btn btn-sm btn-outline-secondary coa-edit-btn" title="Edit" data-url="{{ route('accounting.coa.update', $acc->id) }}" data-code="{{ $acc->code }}" data-name="{{ $acc->name }}" data-description="{{ $acc->description }}" style="height:26px; width:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:4px;">
+                                    <i class="dripicons-pencil"></i>
+                                </button>
+                                @unless($acc->is_system)
+                                <form action="{{ route('accounting.coa.destroy', $acc->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete account {{ $acc->code }}? Accounts with postings, sub-accounts or links cannot be deleted.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" style="height:26px; width:26px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:4px;">
+                                        <i class="dripicons-trash"></i>
+                                    </button>
+                                </form>
+                                @endunless
                             </td>
                         </tr>
                     @endforeach
@@ -306,10 +318,52 @@
     </div>
 </div>
 
+<!-- Edit Account Modal -->
+<div id="editAccountModal" tabindex="-1" role="dialog" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
+            <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px;">
+                <h5 class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+                    <i class="dripicons-pencil mr-1"></i> Edit Ledger Account <span id="edit-account-code" class="font-monospace"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form id="editAccountForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body" style="padding: 16px 20px;">
+                    <div class="form-group mb-2">
+                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">Account Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control form-control-sm" required style="height:32px; font-size:12.5px;">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">Description</label>
+                        <textarea name="description" class="form-control form-control-sm" rows="2" style="font-size:12.5px;"></textarea>
+                        <small class="text-muted" style="font-size: 10.5px;">Code, type and parent are fixed once created so posted balances stay in the right group.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3" style="background:#f8fafc;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed;">Update Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script type="text/javascript">
+    $(document).on('click', '.coa-edit-btn', function() {
+        var $btn = $(this), $form = $('#editAccountForm');
+        $form.attr('action', $btn.attr('data-url'));
+        $form.find('[name=name]').val($btn.attr('data-name'));
+        $form.find('[name=description]').val($btn.attr('data-description'));
+        $('#edit-account-code').text($btn.attr('data-code'));
+        $('#editAccountModal').modal('show');
+    });
+
     $(document).ready(function() {
         $('#coa-table').DataTable({
             pageLength: 25,

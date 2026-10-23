@@ -121,6 +121,50 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
         $this->getJson('/accounting/general-ledger?account_id=3')->assertNotFound();
     }
 
+    public function test_ledger_accounts_are_editable_and_deletable_only_while_unused(): void
+    {
+        $this->get('/accounting/chart-of-accounts')->assertOk()->assertSee('coa-edit-btn', false)
+            ->assertSee('/accounting/chart-of-accounts/1', false);
+        $this->put('/accounting/chart-of-accounts/1', ['name' => 'Main cash', 'description' => 'Till'])->assertRedirect();
+        $this->assertSame('Main cash', ChartOfAccount::findOrFail(1)->name);
+
+        $spare = (new ChartOfAccount)->forceFill(['company_id' => $this->company->id, 'code' => '1099', 'name' => 'Spare',
+            'type' => 'asset', 'sub_type' => 'cash']);
+        $spare->save();
+        $system = (new ChartOfAccount)->forceFill(['company_id' => $this->company->id, 'code' => '1098', 'name' => 'Built in',
+            'type' => 'asset', 'sub_type' => 'cash', 'is_system' => true]);
+        $system->save();
+
+        $this->delete('/accounting/chart-of-accounts/3')->assertNotFound();
+        $this->delete('/accounting/chart-of-accounts/2')->assertSessionHas('not_permitted');
+        $this->delete('/accounting/chart-of-accounts/'.$system->id)->assertSessionHas('not_permitted');
+        $this->postJson('/accounting/journal-entries', ['entry_date' => '2026-10-03', 'description' => 'Uses cash',
+            'items' => [['chart_of_account_id' => 1, 'debit' => 8], ['chart_of_account_id' => $spare->id, 'credit' => 8]]])->assertRedirect();
+        $this->delete('/accounting/chart-of-accounts/'.$spare->id)->assertSessionHas('not_permitted');
+        $this->assertSame(4, ChartOfAccount::where('company_id', $this->company->id)->count());
+
+        $unused = (new ChartOfAccount)->forceFill(['company_id' => $this->company->id, 'code' => '1097', 'name' => 'Unused',
+            'type' => 'asset', 'sub_type' => 'cash']);
+        $unused->save();
+        $this->delete('/accounting/chart-of-accounts/'.$unused->id)->assertSessionHas('message');
+        $this->assertNull(ChartOfAccount::find($unused->id));
+    }
+
+    public function test_manual_journal_is_cancelled_by_reversal_from_the_list(): void
+    {
+        $this->postJson('/accounting/journal-entries', ['entry_date' => '2026-10-03', 'description' => 'Wrong entry',
+            'items' => [['chart_of_account_id' => 1, 'debit' => 8], ['chart_of_account_id' => 2, 'credit' => 8]]])->assertRedirect();
+        $entry = JournalEntry::firstOrFail();
+        $this->get('/accounting/journal-entries')->assertOk()->assertSee('reverse-entry-btn', false)
+            ->assertSee('/accounting/journal-entries/'.$entry->id.'/reverse', false);
+
+        $this->post('/accounting/journal-entries/'.$entry->id.'/reverse', ['entry_date' => '2026-10-04', 'reason' => 'Posted twice'])
+            ->assertRedirect()->assertSessionHas('message');
+        $this->assertSame(1, JournalEntry::where('reversal_of_id', $entry->id)->count());
+        $this->get('/accounting/journal-entries')->assertOk()->assertSee('Reversed')
+            ->assertDontSee('/accounting/journal-entries/'.$entry->id.'/reverse', false);
+    }
+
     public function test_account_and_mapping_writes_are_owned_atomic_and_admin_only(): void
     {
         $payload = ['code' => 'NEW', 'name' => 'Owned account', 'type' => 'asset', 'sub_type' => 'cash',

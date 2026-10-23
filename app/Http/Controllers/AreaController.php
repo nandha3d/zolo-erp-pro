@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use App\Services\Platform\CompanyContext;
+use App\Http\Controllers\Concerns\BlocksDeleteOfUsedMaster;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class AreaController extends Controller
 {
+    use BlocksDeleteOfUsedMaster;
+
     private function context(Request $request): ?CompanyContext
     {
         return $request->attributes->get(CompanyContext::class);
@@ -91,6 +94,9 @@ class AreaController extends Controller
     {
         $context = $this->context($request);
         $area = Area::when($context, fn($q) => $q->where('company_id', $context->companyId))->findOrFail($id);
+        if ($refusal = $this->refuseDeleteIfUsed($request, $area->id, ['delivery_challans' => 'area_id', 'customers' => 'area_id', 'suppliers' => 'area_id'], 'This area')) {
+            return $refusal;
+        }
         $area->delete();
 
         if ($request->ajax() || $request->wantsJson()) {

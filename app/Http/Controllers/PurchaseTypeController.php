@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\PurchaseType;
 use App\Services\Platform\CompanyContext;
+use App\Http\Controllers\Concerns\BlocksDeleteOfUsedMaster;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class PurchaseTypeController extends Controller
 {
+    use BlocksDeleteOfUsedMaster;
+
     private function context(Request $request): ?CompanyContext
     {
         return $request->attributes->get(CompanyContext::class);
@@ -106,6 +109,9 @@ class PurchaseTypeController extends Controller
     {
         $context = $this->context($request);
         $purchaseType = PurchaseType::when($context, fn($q) => $q->where('company_id', $context->companyId))->findOrFail($id);
+        if ($refusal = $this->refuseDeleteIfUsed($request, $purchaseType->id, ['purchases' => 'purchase_type_id', 'goods_received_notes' => 'purchase_type_id'], 'This purchase type')) {
+            return $refusal;
+        }
         $purchaseType->delete();
 
         if ($request->ajax() || $request->wantsJson()) {

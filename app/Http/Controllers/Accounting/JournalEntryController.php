@@ -46,8 +46,9 @@ class JournalEntryController extends Controller
 
         $entries = $query->orderBy('id', 'desc')->paginate(25);
         $accounts = ChartOfAccount::forCompany($context)->where('is_active', true)->orderBy('code')->get();
+        $reversedIds = JournalEntry::forCompany($context)->whereIn('reversal_of_id', $entries->pluck('id'))->pluck('reversal_of_id')->all();
 
-        return view('backend.accounting.journal_entries', compact('entries', 'accounts'));
+        return view('backend.accounting.journal_entries', compact('entries', 'accounts', 'reversedIds'));
     }
 
     /**
