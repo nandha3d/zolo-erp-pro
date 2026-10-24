@@ -4030,7 +4030,7 @@
     }
 
     // Bills always open in split view (entry + bill list); full width is a switch for this visit only.
-    // Only a register link (Pending Sales) opens the full-width list.
+    // Only a register link (view=orders) opens the full-width list.
     if (@json(request('view') === 'orders') && !fromDcId && !fromQuotationId) {
         switchWorkspaceMode('register');
     }

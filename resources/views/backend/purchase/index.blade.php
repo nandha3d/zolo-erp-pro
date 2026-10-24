@@ -18,7 +18,7 @@
         <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-purchases" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> Supplier GRN</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Transfers</a>
-        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('return-purchase.index') }}"><i class="dripicons-return"></i> Returns</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ config('commercial.enabled') && config('compliance.enabled') ? url('/compliance/returns') : route('return-purchase.index') }}"><i class="dripicons-return"></i> Returns</a>
     </div>
 
     <!-- Right Controls: Live Total, Details, Bill List, Add New, Hide Bar -->

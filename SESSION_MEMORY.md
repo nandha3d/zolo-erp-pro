@@ -1639,3 +1639,9 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - Job Work: one sidebar entry `#job-work-menu` -> /operations/job-work; `backend.partials.job-work-direction` switch (our material out | customer's material in) on hub and /trade/customer-jobs; detail page includes it with `direction => null` for the sidebar mark.
 - Playwright sidebar audit: 127 links, all highlight themselves (POS has no sidebar).
 - Open questions to user: Pending Sales (= Bills filtered to status Pending, overlaps Sales Orders) and duplicate Returns entries (Returns & notes vs legacy Returns lists).
+
+## 73. Duplicate Navigation Removed (2026-10-24)
+- Removed Pending Sales (sidebar + Sales tab bar; it was Bills filtered to Pending). Customer/Quotation/old Returns tab bars' "Sales Orders"/"Orders" now open real Sales Orders (`orders=1`) in commercial mode.
+- Returns: only "Returns & notes" (/compliance/returns, both sides; opens for returns-index or purchase-return-index). Old sidebar Returns (sale + purchase) show only when commercial+compliance are off; tab-bar Returns links on Sales/Purchase/Customer/Quotation pages point to Returns & notes.
+- Removed sidebar Add Product / Add Adjustment / Add Transfer (list pages have the Add button). Sidebar audit: 121 links, all highlight themselves.
+- Kept (not duplicates): Sale Agents (HRM staff) vs Agents & Brokers (bill brokers). Open question: legacy Summary Report vs ledger Profit & Loss.

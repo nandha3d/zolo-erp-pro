@@ -57,15 +57,11 @@
                     <li id="product-list-menu"><a href="{{route('products.index')}}">{{__('db.product_list')}}</a></li>
                     <li id="stock-by-lot-menu"><a href="{{route('inventory-reports.stock-by-lot')}}">Stock by lot</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('products-add'))
-                    <li id="product-create-menu"><a href="{{route('products.create')}}">{{__('db.add_product')}}</a></li>
-                @endif
                 @if($isAdmin || $canNavigate('print_barcode'))
                     <li id="printBarcode-menu"><a href="{{route('product.printBarcode')}}">{{__('db.print_barcode')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('adjustment'))
                     <li id="adjustment-list-menu"><a href="{{route('qty_adjustment.index')}}">{{__('db.Adjustment List')}}</a></li>
-                    <li id="adjustment-create-menu"><a href="{{route('qty_adjustment.create')}}">{{__('db.Add Adjustment')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('stock_count'))
                     <li id="stock-count-menu"><a href="{{route('stock-count.index')}}">{{__('db.Stock Count')}}</a></li>
@@ -114,7 +110,8 @@
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('purchase-return-index'))
+                {{-- The old per-side Returns lists are Returns & notes filtered to one side; only shown where that page is off. --}}
+                @if(!(config('commercial.enabled') && config('compliance.enabled')) && ($isAdmin || $canNavigate('purchase-return-index')))
                     <li id="purchase-return-menu"><a href="{{route('return-purchase.index')}}">Returns</a></li>
                 @endif
                 {{-- Suppliers are a party master and live once, under People beside Customers. --}}
@@ -132,13 +129,12 @@
             <ul id="sale" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('sales-index'))
                     @if(config('commercial.enabled') && config('compliance.enabled'))
-                        @if($isAdmin || $canNavigate('returns-index'))<li><a href="{{ url('/compliance/returns') }}">Returns & notes</a></li>@endif
+                        @if($isAdmin || $canNavigate('returns-index') || $canNavigate('purchase-return-index'))<li id="returns-notes-menu"><a href="{{ url('/compliance/returns') }}">Returns & notes</a></li>@endif
                         @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li><li><a href="{{ url('/compliance/gst/returns') }}">GST returns (3B, ITC-04, TDS)</a></li>@endif
                         @if($isAdmin)<li><a href="{{ url('/compliance/setup') }}">Tax & document settings</a></li>@endif
                     @endif
                     <li id="sale-list-menu"><a href="{{route('sales.index')}}">Bills</a></li>
                     @if(config('commercial.enabled'))<li><a href="{{ route('sales.index', ['orders' => 1]) }}">Sales Orders</a></li>@endif
-                    <li><a href="{{route('sales.index', ['view' => 'orders', 'sale_status' => 2])}}">Pending Sales</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('sales-add'))
                     <li><a href="{{route('sale.pos')}}">POS Terminal</a></li>
@@ -161,7 +157,7 @@
                     <li id="coupon-menu"><a href="{{route('coupons.index')}}">{{__('db.Coupon List')}}</a></li>
                 @endif
                 <li id="courier-menu"><a href="{{route('couriers.index')}}">{{__('db.Courier List')}}</a></li>
-                @if($isAdmin || $canNavigate('returns-index'))
+                @if(!(config('commercial.enabled') && config('compliance.enabled')) && ($isAdmin || $canNavigate('returns-index')))
                     <li id="sale-return-menu"><a href="{{route('return-sale.index')}}">Returns</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('quotes-index'))
@@ -189,9 +185,6 @@
             <ul id="transfer" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('transfers-index'))
                     <li id="transfer-list-menu"><a href="{{route('transfers.index')}}">{{__('db.Transfer List')}}</a></li>
-                @endif
-                @if($isAdmin || $canNavigate('transfers-add'))
-                    <li id="transfer-create-menu"><a href="{{route('transfers.create')}}">{{__('db.Add Transfer')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('transfers-import'))
                     <li id="transfer-import-menu"><a href="{{url('transfers/transfer_by_csv')}}">{{__('db.Import Transfer By CSV')}}</a></li>
