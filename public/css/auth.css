@@ -4,24 +4,22 @@
    ==================================================================== */
 
 :root {
-  --zolo-auth-bg: #070a12;
-  --zolo-auth-bg-gradient: radial-gradient(circle at 18% 15%, rgba(99, 102, 241, 0.16) 0%, transparent 45%),
-                           radial-gradient(circle at 82% 85%, rgba(6, 182, 212, 0.14) 0%, transparent 45%),
-                           radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.7) 0%, transparent 100%),
-                           #070a12;
-  --zolo-auth-surface: rgba(15, 23, 42, 0.82);
+  --zolo-auth-bg: #050811;
+  --zolo-auth-bg-gradient: radial-gradient(ellipse at 50% 50%, rgba(5, 8, 17, 0.45) 0%, rgba(5, 8, 17, 0.88) 100%),
+                           url('../images/erp-login-bg.jpg');
+  --zolo-auth-surface: rgba(13, 19, 33, 0.82);
   --zolo-auth-surface-border: rgba(255, 255, 255, 0.09);
-  --zolo-auth-border-glow: rgba(99, 102, 241, 0.35);
-  --zolo-auth-input-bg: rgba(13, 19, 33, 0.85);
+  --zolo-auth-border-glow: rgba(125, 40, 126, 0.45);
+  --zolo-auth-input-bg: rgba(10, 15, 28, 0.88);
   --zolo-auth-input-border: rgba(255, 255, 255, 0.12);
-  --zolo-auth-input-focus: #6366f1;
+  --zolo-auth-input-focus: #a855f7;
   --zolo-auth-text: #f8fafc;
   --zolo-auth-text-muted: #94a3b8;
   --zolo-auth-text-dim: #64748b;
-  --zolo-auth-primary: #6366f1;
-  --zolo-auth-primary-hover: #4f46e5;
-  --zolo-auth-primary-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #3b82f6 100%);
-  --zolo-auth-primary-glow: 0 8px 24px -4px rgba(99, 102, 241, 0.5);
+  --zolo-auth-primary: #7d287e;
+  --zolo-auth-primary-hover: #9333ea;
+  --zolo-auth-primary-gradient: linear-gradient(135deg, #7d287e 0%, #9333ea 50%, #6366f1 100%);
+  --zolo-auth-primary-glow: 0 8px 26px -4px rgba(125, 40, 126, 0.55);
   --zolo-radius-lg: 22px;
   --zolo-radius-md: 12px;
   --zolo-radius-sm: 8px;
@@ -36,6 +34,9 @@ body {
   font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--zolo-auth-bg);
   background-image: var(--zolo-auth-bg-gradient);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
   color: var(--zolo-auth-text);
   -webkit-font-smoothing: antialiased;
@@ -43,7 +44,7 @@ body {
   min-height: 100vh;
 }
 
-/* Background Subtle Dot-Grid Texture */
+/* Ambient backdrop depth and purple glow matching zolo brand */
 .login-page::before,
 .register-page::before {
   content: '';
@@ -52,8 +53,10 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background: 
+    radial-gradient(circle at 50% 38%, rgba(125, 40, 126, 0.18) 0%, transparent 60%),
+    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: auto, 32px 32px;
   pointer-events: none;
   z-index: 0;
 }
@@ -125,7 +128,41 @@ body {
 
 /* Brand Logo & Presentation */
 .zolo-auth-logo {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.zolo-brand-identity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+}
+
+.zolo-brand-identity:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.zolo-auth-brand-image {
+  height: 52px;
+  width: auto;
+  max-width: 250px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 6px 20px rgba(125, 40, 126, 0.45));
+}
+
+.zolo-auth-tagline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin: 14px 0 0;
+  display: block;
+  opacity: 0.9;
 }
 
 .zolo-brand-container {

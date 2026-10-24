@@ -15,18 +15,30 @@ $uri = urldecode(
 // built-in PHP web server. This provides a convenient way to test a Laravel
 // application without having installed a "real" web server software here.
 if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
-    // Only public code and fonts get validators; business documents keep their existing access path.
     $file = realpath(__DIR__.'/public'.$uri);
     $public = realpath(__DIR__.'/public').DIRECTORY_SEPARATOR;
-    $type = strtolower(pathinfo($uri, PATHINFO_EXTENSION));
-    $types = ['js' => 'application/javascript', 'css' => 'text/css', 'woff' => 'font/woff',
-        'woff2' => 'font/woff2', 'ttf' => 'font/ttf', 'eot' => 'application/vnd.ms-fontobject'];
-    if ($file && is_file($file) && str_starts_with($file, $public)
-        && preg_match('#^(css|js|vendor|fonts)/#', str_replace('\\', '/', substr($file, strlen($public))))
-        && isset($types[$type])) {
+    if ($file && is_file($file) && str_starts_with($file, $public)) {
+        $type = strtolower(pathinfo($uri, PATHINFO_EXTENSION));
+        $types = [
+            'js' => 'application/javascript', 
+            'css' => 'text/css', 
+            'woff' => 'font/woff',
+            'woff2' => 'font/woff2', 
+            'ttf' => 'font/ttf', 
+            'eot' => 'application/vnd.ms-fontobject',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'svg' => 'image/svg+xml',
+            'webp' => 'image/webp',
+            'ico' => 'image/x-icon',
+            'gif' => 'image/gif'
+        ];
+        if (isset($types[$type])) {
+            header('Content-Type: '.$types[$type]);
+        }
         $modified = filemtime($file);
         $etag = '"'.$modified.'-'.filesize($file).'"';
-        header('Content-Type: '.$types[$type]);
         $version = $modified.'-'.filesize($file);
         $versioned = ($_GET['v'] ?? '') === $version;
         header('Cache-Control: public, '.($versioned ? 'max-age=31536000, immutable' : 'max-age=0, must-revalidate'));

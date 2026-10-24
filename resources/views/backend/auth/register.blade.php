@@ -37,15 +37,13 @@
         <div class="form-outer">
           <div class="form-inner">
             <div class="zolo-auth-logo text-center mb-4">
-              <div class="zolo-brand-container">
-                <div class="zolo-brand-mark">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 6.5H20L10 17.5H20" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <div class="zolo-brand-badge">zolo<span class="zolo-accent">ERP</span></div>
-              </div>
-              <p class="zolo-auth-tagline">Create your zoloERP Account</p>
+              <a href="{{ url('/') }}" class="zolo-brand-identity" title="{{ $general_setting->site_title ?? 'zolo ERP' }}">
+                <img src="{{ asset('logo/zolo_erp_logo_dark.png') }}" 
+                     alt="{{ $general_setting->site_title ?? 'zolo ERP' }}" 
+                     class="zolo-auth-brand-image" 
+                     height="54">
+              </a>
+              <p class="zolo-auth-tagline">BUSINESS MADE SIMPLE</p>
             </div>
             <form method="POST" action="{{ route('register') }}">
                 @csrf

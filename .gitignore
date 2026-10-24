@@ -1,8 +1,9 @@
 /node_modules
 /public/hot
 /public/images/*
-# default product placeholder ships with the app
+# default product placeholder and auth background ship with the app
 !/public/images/zummXD2dvAtI.png
+!/public/images/erp-login-bg.jpg
 !/public/images/product/
 /public/images/product/*
 !/public/images/product/zummXD2dvAtI.png
