@@ -13,9 +13,9 @@
     $oneGodown = $page->pluck('warehouse')->unique()->count() === 1 ? $page->first()->warehouse : null;
 @endphp
 <style>
-#stock-lot-report { padding: 8px 14px 0; }
-#stock-lot-report .lot-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
-#stock-lot-report .lot-head h1 { font-size: 16px; font-weight: 700; margin: 0; white-space: nowrap; }
+/* Same card + dark header as the other Product & Inventory pages (product-workspace.css). */
+#stock-lot-report .lot-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04); padding: 6px 10px; }
+#stock-lot-report .lot-card .table-responsive { border: 0; box-shadow: none; border-radius: 0; }
 #stock-lot-report .lot-filters { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
 #stock-lot-report .lot-filters label { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #64748b; margin: 0 0 2px; }
 #stock-lot-report .lot-filters .form-control { height: 32px; font-size: 13px; padding: 3px 8px; }
@@ -24,17 +24,17 @@
 #stock-lot-report .lot-filters .btn { height: 32px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; }
 #stock-lot-report .lot-note { font-size: 11.5px; color: #64748b; margin: 0 0 6px; }
 #stock-lot-report .table { width: 100%; margin: 0; font-size: 13px; }
-#stock-lot-report .table th { white-space: nowrap; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #475569; vertical-align: middle; position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+#stock-lot-report .table th { white-space: nowrap; vertical-align: middle; position: sticky; top: 0; z-index: 1; }
 #stock-lot-report .table td { white-space: nowrap; vertical-align: middle; }
 #stock-lot-report .table td.lot-product { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 #stock-lot-report .table td.lot-product small { color: #64748b; margin-left: 4px; }
 #stock-lot-report caption { caption-side: top; padding: 0 0 4px; font-size: 11.5px; color: #64748b; }
-body.dark-mode #stock-lot-report .table th { background: #1e293b; color: #cbd5e1; }
+body.dark-mode #stock-lot-report .lot-card { background: #141c2e; border-color: #334155; }
 </style>
 <x-product-command-bar active="stock-by-lot"></x-product-command-bar>
-<section id="stock-lot-report" class="container-fluid">
+<section id="stock-lot-report" class="product-workspace-view">
+<div class="lot-card">
     <form class="lot-filters" method="get">
-        <div class="lot-head"><h1>Stock by lot</h1></div>
         <div><label for="lot-from">From</label><input id="lot-from" type="date" name="from" class="form-control f-date" value="{{ $filters['from'] }}" required></div>
         <div><label for="lot-to">To</label><input id="lot-to" type="date" name="to" class="form-control f-date" value="{{ $filters['to'] }}" required></div>
         <div><label for="lot-product">Product</label><select id="lot-product" name="product_id" class="form-control f-pick"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected(($filters['product_id'] ?? '') == $product->id)>{{ $product->name }}</option>@endforeach</select></div>
@@ -46,7 +46,7 @@ body.dark-mode #stock-lot-report .table th { background: #1e293b; color: #cbd5e1
     <p class="lot-note" title="Historical owned totals are unavailable. Owned now = warehouse now + customer custody now. GDNI is carried accrual value, not independent lot costing; inventory uses item weighted-average valuation.">
         <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong> (no history). Quantities are in each product's base unit.
     </p>
-    <div class="table-responsive"><table class="table table-striped table-sm">
+    <div class="table-responsive"><table class="table table-sm">
         <caption>
             {{ $rows->total() }} rows
             @if($oneGodown) · Godown: <strong>{{ $oneGodown }}</strong>@endif
@@ -62,5 +62,6 @@ body.dark-mode #stock-lot-report .table th { background: #1e293b; color: #cbd5e1
         </tr>@empty<tr><td colspan="{{ 4 + count($shown) }}">No stock movements or current customer custody match these filters.</td></tr>@endforelse</tbody>
     </table></div>
     {{ $rows->links() }}
+</div>
 </section>
 @endsection

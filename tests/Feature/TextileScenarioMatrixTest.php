@@ -481,8 +481,12 @@ class TextileScenarioMatrixTest extends ReturnsDocumentTestCase
         $first = $this->buy($yarn, 100000, 40, 'tds-first');
         $this->assertArrayNotHasKey('tds_194q', $first->fresh()->attributes_json ?? [], '₹40 lakh so far: below the ₹50 lakh threshold.');
         $second = $this->buy($yarn, 50000, 40, 'tds-second')->fresh();
-        $this->assertSame(['section' => '194Q', 'base' => 1000000, 'rate' => 0.1, 'amount' => 1000, 'pan' => 'ABCDE1234F', 'year_to_date' => 6000000],
-            array_map(fn ($v) => is_float($v) && floor($v) == $v ? (int) $v : $v, $second->attributes_json['tds_194q']), 'Only the ₹10 lakh above the threshold, at 0.1%.');
+        // MySQL JSON columns reorder object keys, so compare key-sorted.
+        $expected = ['section' => '194Q', 'base' => 1000000, 'rate' => 0.1, 'amount' => 1000, 'pan' => 'ABCDE1234F', 'year_to_date' => 6000000];
+        $actual = array_map(fn ($v) => is_float($v) && floor($v) == $v ? (int) $v : $v, $second->attributes_json['tds_194q']);
+        ksort($expected);
+        ksort($actual);
+        $this->assertSame($expected, $actual, 'Only the ₹10 lakh above the threshold, at 0.1%.');
         $this->assertEquals(-1000, $this->ledger('tds_payable'));
         $this->assertEquals(2100000 - 1000, DB::table('account_open_items')->where('source_type', 'purchase')->where('source_id', $second->id)->sum('open_amount'));
         $this->assertCount(1, app(\App\Services\Tax\Tds194qService::class)->register($this->context(), '2026-10-01', '2026-10-31'));
