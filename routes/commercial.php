@@ -35,3 +35,14 @@ Route::prefix('commercial')->middleware(['auth', 'company.context', RequireShare
         Route::post('{kind}/{id}/payments', [CommercialController::class, 'payment']);
         Route::post('purchase/{id}/receipts', [CommercialController::class, 'receive']);
     });
+
+// Textile trade: brokerage register, distributor route sheet, job work done for customers (principal-owned material).
+Route::prefix('trade')->middleware(['auth', 'company.context', RequireSharedCommercial::class, 'common'])->group(function () {
+    Route::get('brokerage', [\App\Http\Controllers\TextileTradeController::class, 'brokerage']);
+    Route::post('brokerage', [\App\Http\Controllers\TextileTradeController::class, 'bookBrokerage']);
+    Route::get('routes', [\App\Http\Controllers\TextileTradeController::class, 'routes']);
+    Route::get('customer-jobs', [\App\Http\Controllers\TextileTradeController::class, 'customerJobs']);
+    Route::get('customer-jobs/{id}', [\App\Http\Controllers\TextileTradeController::class, 'customerJob'])->whereNumber('id');
+    Route::post('customer-jobs/{action}/{id?}', [\App\Http\Controllers\TextileTradeController::class, 'customerJobAction'])
+        ->where(['action' => 'order|receive|return|bill', 'id' => '[0-9]+']);
+});

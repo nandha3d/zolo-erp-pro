@@ -57,8 +57,9 @@ class PaymentService
             if ($source instanceof Purchase && (int) $source->status === 4) {
                 throw new InvalidArgumentException('An unbilled purchase order cannot receive payment here.');
             }
+            [$discount, $tds] = $this->deductions($source, $data, $date, $amount);
             $outstanding = round((float) $source->grand_total - (float) $source->paid_amount, 4);
-            if ($amount > $outstanding) {
+            if (round($amount + $discount + $tds, 4) > $outstanding) {
                 throw new InvalidArgumentException('Payment exceeds the outstanding document amount.');
             }
             if ($date < $source->created_at->toDateString()) {
@@ -71,14 +72,40 @@ class PaymentService
                 'payment_reference' => $reservation->formatted_number, 'user_id' => $actor,
                 $type.'_id' => $source->id, 'account_id' => $accountId, 'amount' => $amount, 'change' => 0,
                 'paying_method' => $data['paying_method'] ?? 'Cash', 'payment_note' => $data['payment_note'] ?? null,
-            ]);
+            ] + ($discount || $tds ? ['discount' => $discount, 'discount_reason' => $data['discount_reason'] ?? null, 'tds_amount' => $tds] : []));
             $payment->save();
             $numbers->assign($reservation, $payment);
-            $paidAmount = round((float) $source->paid_amount + $amount, 4);
+            $paidAmount = round((float) $source->paid_amount + $amount + $discount + $tds, 4);
             $source->update(['paid_amount' => $paidAmount, 'payment_status' => $paidAmount >= (float) $source->grand_total ? 4 : 3]);
             $this->accountingService->postPaymentJournal($payment, $context, $actor, $data['idempotency_key'] ?? null);
 
             return $payment;
         });
+    }
+
+    /**
+     * Cash discount settles part of the bill without money (prompt-payment terms on the bill, or a stated reason).
+     * TDS is tax the customer deducted under 194Q and paid to the government on our behalf. Neither changes GST.
+     */
+    private function deductions(Sale|Purchase $source, array $data, string $date, float $amount): array
+    {
+        $discount = round((float) ($data['discount'] ?? 0), 4); $tds = round((float) ($data['tds_amount'] ?? 0), 4);
+        if ($discount < 0 || $tds < 0 || !is_finite($discount) || !is_finite($tds)) throw new InvalidArgumentException('Discount and TDS cannot be negative.');
+        if (($discount || $tds) && !\Illuminate\Support\Facades\Schema::hasColumn('payments', 'discount')) {
+            throw new InvalidArgumentException('Run the textile trade migration before recording cash discount or TDS.');
+        }
+        if ($tds && !$source instanceof Sale) throw new InvalidArgumentException('TDS on a supplier bill is deducted on the bill itself.');
+        if ($discount) {
+            $terms = $source->attributes_json ?? [];
+            if (isset($terms['cash_discount_percent'])) {
+                $last = \Carbon\CarbonImmutable::parse($source->created_at->toDateString())->addDays((int) ($terms['cash_discount_days'] ?? 0))->toDateString();
+                $allowed = round((float) $source->grand_total * (float) $terms['cash_discount_percent'] / 100, 2);
+                if ($date > $last) throw new InvalidArgumentException('Cash discount period ended on '.$last.'.');
+                if ($discount > $allowed + 0.005) throw new InvalidArgumentException('Cash discount exceeds the '.$terms['cash_discount_percent'].'% agreed on the bill (₹'.number_format($allowed, 2).').');
+            } elseif (trim((string) ($data['discount_reason'] ?? '')) === '') {
+                throw new InvalidArgumentException('Give a reason for a cash discount the bill does not offer.');
+            }
+        }
+        return [$discount, $tds];
     }
 }

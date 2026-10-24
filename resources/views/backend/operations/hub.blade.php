@@ -175,6 +175,7 @@
                                     <th>Product</th>
                                     <th>Pending Qty</th>
                                     <th>Inventory Value</th>
+                                    <th title="Section 143: inputs must come back within 1 year (capital goods 3 years) of the Material DC, or the DC becomes a deemed supply with GST and interest.">Sec 143 return by</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -184,10 +185,11 @@
                                         <td>{{ $products->firstWhere('id', $row['product_id'])?->name }}</td>
                                         <td><span class="badge badge-warning px-2 py-1 font-weight-bold">{{ $row['pending_qty'] }}</span></td>
                                         <td><strong>{{ $row['pending_value'] }}</strong></td>
+                                        <td>@isset($row['return_by'])<span class="badge {{ ['overdue' => 'badge-danger', 'due_soon' => 'badge-warning', 'ok' => 'badge-light'][$row['status']] }}">{{ \Carbon\Carbon::parse($row['return_by'])->format('d-m-Y') }} · {{ $row['status'] === 'overdue' ? abs($row['days_left']).' days overdue' : $row['days_left'].' days left' }}</span>@endisset</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted py-4">
+                                        <td colspan="5" class="text-center text-muted py-4">
                                             <i class="dripicons-checkmark text-success d-block mb-1 font-24"></i>
                                             No material pending outside with job workers.
                                         </td>
@@ -957,7 +959,7 @@
         <div class="ops-subcard">
             <div class="ops-subcard-header">
                 <span class="font-weight-bold font-13 text-dark"><i class="dripicons-gear mr-1"></i> Industry Business Profiles</span>
-                <span class="badge badge-primary px-2 py-1 font-11">Current: {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$profile['profile']][0] ?? $profile['profile'] }}@if(!empty($profile['subtype'])) &bull; {{ ucwords(str_replace('_',' ',$profile['subtype'])) }}@endif</span>
+                <span class="badge badge-primary px-2 py-1 font-11">Current: {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$profile['profile']][0] ?? $profile['profile'] }}@if(!empty($profile['subtype'])) &bull; {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($profile['subtype']) }}@endif</span>
             </div>
             <div class="ops-subcard-body">
                 <div class="row" style="gap: 12px; margin: 0;">
@@ -976,7 +978,7 @@
                                         <p class="text-muted small mb-1">Units: {!! implode(' &bull; ', array_map('e', \App\Services\Industry\IndustryCatalog::SETTINGS[$key]['units'])) !!}</p>
                                         @foreach($subtypes as $subtype=>$features)
                                             @if($features)
-                                                <p class="text-muted small mb-0">{{ ucwords(str_replace('_',' ',$subtype)) }} adds: {{ collect($features)->map(fn ($f) => \App\Services\Platform\CapabilityCatalog::DEFINITIONS[$f][0] ?? $f)->implode(', ') }}</p>
+                                                <p class="text-muted small mb-0">{{ \App\Services\Industry\IndustryCatalog::subtypeLabel($subtype) }} adds: {{ collect($features)->map(fn ($f) => \App\Services\Platform\CapabilityCatalog::DEFINITIONS[$f][0] ?? $f)->implode(', ') }}</p>
                                             @endif
                                         @endforeach
                                     </div>
@@ -986,7 +988,7 @@
                                         <div class="d-flex align-items-center" style="gap: 6px;">
                                             <select name="subtype" aria-label="Business subtype for {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$key][0] }}" class="form-control form-control-sm" style="width: 150px; height: 32px; font-size: 12px;">
                                                 @foreach($subtypes as $subtype=>$features)
-                                                    <option value="{{ $subtype }}" @selected($isCurrent && ($profile['subtype'] ?? null) === $subtype)>{{ ucwords(str_replace('_',' ',$subtype)) }}</option>
+                                                    <option value="{{ $subtype }}" @selected($isCurrent && ($profile['subtype'] ?? null) === $subtype)>{{ \App\Services\Industry\IndustryCatalog::subtypeLabel($subtype) }}</option>
                                                 @endforeach
                                             </select>
                                             <button type="submit" class="btn btn-sm {{ $isCurrent ? 'btn-primary' : 'btn-outline-secondary' }}" style="font-size: 12px; height: 32px; font-weight: 600;">

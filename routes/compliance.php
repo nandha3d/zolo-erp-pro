@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('settings/gst')->middleware(['auth', 'company.context', RequireCompliance::class, 'common'])->group(function () {
     Route::get('/', [\App\Http\Controllers\GstSettingsController::class, 'index'])->name('settings.gst');
     Route::post('{action}', [\App\Http\Controllers\GstSettingsController::class, 'save'])
-        ->where('action', 'registration|install|category|category-delete|rename|rate|code|code-delete|products|parties|party|print')->name('settings.gst.save');
+        ->where('action', 'registration|install|category|category-delete|rename|rate|code|code-delete|products|parties|party|print|garment-band|trade')->name('settings.gst.save');
 });
 
 Route::prefix('compliance')->middleware(['auth', 'company.context', RequireSharedCommercial::class, RequireCompliance::class, 'common'])
@@ -18,6 +18,9 @@ Route::prefix('compliance')->middleware(['auth', 'company.context', RequireShare
         Route::post('gst/lookup', [ComplianceController::class, 'lookup']);
         Route::get('gst/report', [ComplianceController::class, 'report']);
         Route::get('gst/export', [ComplianceController::class, 'export']);
+        Route::get('gst/returns', [ComplianceController::class, 'gstReturns'])->name('compliance.gst-returns');
+        Route::get('{format}/{source}/{id}', [ComplianceController::class, 'eDocument'])
+            ->where(['format' => 'einvoice|ewaybill', 'source' => 'sale|dispatch'])->name('compliance.e-document');
         Route::get('returns', [ComplianceController::class, 'notes']);
         Route::get('{kind}/{id}/return', [ComplianceController::class, 'returnForm']);
         Route::post('{kind}/{id}/notes', [ComplianceController::class, 'createNote']);

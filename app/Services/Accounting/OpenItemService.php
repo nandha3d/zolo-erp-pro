@@ -150,7 +150,8 @@ class OpenItemService
             $invoice = AccountOpenItem::forCompany($context)->where('branch_id', $context->branchId)
                 ->where('source_type', $type)->where('source_id', $sourceId)->where('account_id', $paymentItem->account_id)
                 ->where('original_amount', '>', 0)->sole();
-            $this->allocate($invoice->id, $paymentItem->id, (float) $payment->amount, $entry->entry_date->toDateString(), 'payment:'.$payment->id.':'.$paymentItem->id, $context, $entry->id, $entry->created_by);
+            $settled = (float) $payment->amount + (float) ($payment->discount ?? 0) + (float) ($payment->tds_amount ?? 0);
+            $this->allocate($invoice->id, $paymentItem->id, $settled, $entry->entry_date->toDateString(), 'payment:'.$payment->id.':'.$paymentItem->id, $context, $entry->id, $entry->created_by);
         }
     }
 

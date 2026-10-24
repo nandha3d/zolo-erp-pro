@@ -369,6 +369,22 @@ class AccountingService
         } else {
             return null;
         }
+        // Cash discount and customer TDS clear the bill without money; the party line carries the whole settlement.
+        $discount = (float) ($payment->discount ?? 0); $tds = (float) ($payment->tds_amount ?? 0);
+        if ($discount || $tds) {
+            $roles = array_keys(array_filter([$payment->sale_id ? 'discount_allowed' : 'discount_received' => $discount, 'tds_receivable' => $tds]));
+            app(\App\Services\Tax\GstSetupService::class)->ensureLedgers($context->companyId, $roles);
+            $account = fn (string $role) => $this->getAccount($role, $context, $actor)?->id
+                ?? throw new InvalidArgumentException('Configure an account for '.$role.' before posting.');
+            if ($payment->sale_id) {
+                if ($discount) $items[] = ['chart_of_account_id' => $account('discount_allowed'), 'debit' => $discount, 'credit' => 0, 'memo' => 'Cash discount allowed'];
+                if ($tds) $items[] = ['chart_of_account_id' => $account('tds_receivable'), 'debit' => $tds, 'credit' => 0, 'memo' => 'TDS deducted by customer (194Q)'];
+                $items[1]['credit'] = round($amount + $discount + $tds, 4);
+            } else {
+                $items[0]['debit'] = round($amount + $discount, 4);
+                $items[] = ['chart_of_account_id' => $account('discount_received'), 'debit' => 0, 'credit' => $discount, 'memo' => 'Cash discount received'];
+            }
+        }
 
         $source = $payment->sale_id ? Sale::visibleIn($context)->findOrFail($payment->sale_id)
             : Purchase::visibleIn($context)->findOrFail($payment->purchase_id);

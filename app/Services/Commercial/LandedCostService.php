@@ -19,6 +19,12 @@ class LandedCostService
         if (!in_array($method, ['value', 'quantity', 'weight', 'manual'], true)) {
             throw ValidationException::withMessages(['landed_cost_method' => 'Choose value, quantity, weight or manual.']);
         }
+        // Under GST freight is a taxed service line; ticked, its taxable value joins the goods' cost instead of expense.
+        $freightLines = [];
+        foreach ($lines as $i => $line) {
+            $service = in_array($products[$line['product_id']]->type, ['service', 'digital'], true);
+            if ($service && empty($data['job_work_receipt_id']) && (!empty($data['capitalise_services']) || !empty($line['attributes']['landed_cost']))) $freightLines[$i] = true;
+        }
         $weights = [];
         foreach ($lines as $i => $line) {
             $service = in_array($products[$line['product_id']]->type, ['service', 'digital'], true);
@@ -30,6 +36,10 @@ class LandedCostService
             };
         }
         $freight = $pricing->units((float) ($data['shipping_cost'] ?? 0));
+        foreach (array_keys($freightLines) as $i) $freight += $values[$i] + $adjustments[$i];
+        if ($freightLines && !array_filter($weights)) {
+            throw ValidationException::withMessages(['capitalise_services' => 'Freight can be added to item cost only on a bill that also has stock items.']);
+        }
         if ($method === 'manual') {
             $allocations = array_map(fn ($amount) => $pricing->units((float) $amount), $weights);
             if (array_sum($allocations) !== $freight) {
@@ -45,12 +55,13 @@ class LandedCostService
             $allocations = $this->spread($freight, $weights);
         }
         foreach ($lines as $i => &$line) {
-            $amount = $values[$i] + $adjustments[$i] + $allocations[$i];
+            $amount = isset($freightLines[$i]) ? 0 : $values[$i] + $adjustments[$i] + $allocations[$i];
             if ($amount < 0) {
                 throw ValidationException::withMessages(['landed_cost' => 'Landed cost cannot be negative.']);
             }
             $line['valuation_amount'] = $amount / 10000;
-            $line['attributes'] = array_merge($line['attributes'] ?? [], ['landed_cost_method' => $method, 'freight_amount' => $allocations[$i] / 10000]);
+            $line['attributes'] = array_merge($line['attributes'] ?? [], ['landed_cost_method' => $method, 'freight_amount' => $allocations[$i] / 10000]
+                + (isset($freightLines[$i]) ? ['capitalised_into_stock' => ($values[$i] + $adjustments[$i]) / 10000] : []));
         }
         return $lines;
     }

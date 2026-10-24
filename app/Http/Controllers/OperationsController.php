@@ -50,7 +50,7 @@ class OperationsController extends Controller
         $data['boms'] = Bom::forCompany($context)->orderByDesc('id')->limit(100)->get();
         $data['profile'] = app(IndustryProfileService::class)->settings($context);
         $data['processes'] = DB::table('process_types')->where('company_id', $context->companyId)->where('is_active', true)->get();
-        $data['pending'] = $area === 'job-work' ? app(JobWorkService::class)->pending($context, $actor) : [];
+        $data['pending'] = $area === 'job-work' ? app(JobWorkService::class)->deadlines($context, $actor) : [];
         $data['batchBalances'] = $area === 'stock' && in_array('inventory.batch_expiry', $data['navigation'])
             ? app(\App\Services\Industry\IndustryStockQueries::class)->batchBalances($context, $actor) : [];
         $data['shrinkage'] = $area === 'job-work' ? JobWorkReceipt::visibleIn($context)->whereNull('reversed_at')

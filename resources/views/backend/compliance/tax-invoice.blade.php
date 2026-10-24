@@ -46,6 +46,10 @@
         'Bale No.' => $d['transport']['bale_no'] ?? null,
         'Bales' => ($d['transport']['bale_count'] ?? null) ?: ($d['transport']['no_of_bales'] ?? null),
         'Bundles' => $d['transport']['bundle_count'] ?? null,
+        'Dispatched from' => $d['transport']['dispatched_from'] ?? null,
+        'Supply' => match ($d['transport']['supply_type'] ?? null) { 'export_lut' => 'Export under LUT, without IGST', 'export_igst' => 'Export with IGST paid',
+            'sez_lut' => 'SEZ supply under LUT, without IGST', 'sez_igst' => 'SEZ supply with IGST paid', default => null },
+        'LUT / Bond No.' => $d['transport']['lut_number'] ?? null,
     ], fn ($value) => $value !== null && $value !== '');
     $columns = 8 + ($discounted ? 1 : 0);
 @endphp

@@ -34,7 +34,7 @@ class OperationsBrowserFixtureTest extends OperationsTestCase
             warehouseId: 1, context: $this->context(), userId: 1));
         app(\App\Services\Industry\ProjectService::class)->create(['title' => '5kW rooftop', 'client_id' => 1,
             'site_address' => 'Fixture rooftop', 'system_kw' => 5, 'business_date' => '2026-10-03'], 'browser-site', $this->context(), 1);
-        $profiles->apply('textile', 'in_house_processing', $this->context(), 1);
+        $profiles->apply('textile', 'manufacturing', $this->context(), 1);
         $this->get('/operations/manufacturing')->assertOk();
         $this->get('/operations/production/'.$order->id)->assertOk();
         $this->get('/operations/job-work/'.$job->id)->assertOk();

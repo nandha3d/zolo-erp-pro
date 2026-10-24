@@ -324,6 +324,12 @@
                     <input type="text" name="station_to" id="hidden-station-to">
                     <input type="text" name="order_no" id="hidden-order-no">
                     <input type="number" name="credit_days" id="hidden-credit-days">
+                    <input type="number" name="shipping_cost" id="hidden-shipping-cost" step="0.0001" value="0">
+                    <input type="number" name="order_discount" id="hidden-order-discount" step="0.0001" value="0">
+                    <input type="hidden" name="capitalise_services" id="hidden-capitalise-services" value="">
+                    <input type="number" name="cash_discount_percent" id="hidden-cd-percent" step="0.01">
+                    <input type="number" name="cash_discount_days" id="hidden-cd-days">
+                    <input type="hidden" name="landed_cost_method" id="hidden-landed-cost-method" value="value">
                     <input type="text" name="note" id="hidden-note">
                     <select name="account_id" id="hidden-account-id">
                         @foreach($lims_account_list as $acc)
@@ -711,6 +717,14 @@
                                 <label>Credit Days</label>
                                 <input type="number" id="drawer-credit-days" class="form-control" placeholder="e.g. 30">
                             </div>
+                            <div class="col-md-3 form-group">
+                                <label for="drawer-cd-percent">Cash discount %</label>
+                                <input type="number" id="drawer-cd-percent" class="form-control" min="0" max="100" step="0.01" placeholder="e.g. 2">
+                            </div>
+                            <div class="col-md-3 form-group">
+                                <label for="drawer-cd-days">If paid within (days)</label>
+                                <input type="number" id="drawer-cd-days" class="form-control" min="0" max="365" placeholder="e.g. 7">
+                            </div>
                         </div>
                     </div>
 
@@ -723,6 +737,20 @@
                         <div class="form-group">
                             <label for="drawer-order-discount">Bill Discount (₹)</label>
                             <input type="number" id="drawer-order-discount" class="form-control" min="0" step="0.0001" value="0">
+                        </div>
+                        <div class="form-group mb-1">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="drawer-capitalise-services">
+                                <label class="custom-control-label" for="drawer-capitalise-services">Add freight to item cost</label>
+                            </div>
+                            <small class="text-muted">Under GST, enter freight / loading as a service line (e.g. SAC 996511) in the grid. Ticked, its value is spread over the stock items instead of going to expense; its GST stays as input credit.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="drawer-landed-cost-method">Split freight by</label>
+                            <select id="drawer-landed-cost-method" class="form-control">
+                                <option value="value">Item value</option>
+                                <option value="quantity">Quantity (metres / pieces)</option>
+                            </select>
                         </div>
                     </div>
 
@@ -874,6 +902,16 @@
                         <div class="col-md-6 mt-1">
                             <label>{{__('db.Change')}} : </label>
                             <p class="change ml-2">{{number_format(0, $general_setting->decimal, '.', '')}}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="add-payment-discount">Cash discount (₹)</label>
+                            <input type="number" id="add-payment-discount" name="discount" class="form-control" min="0" step="0.01" value="0"
+                                title="Prompt-payment discount. Within the % and days on the bill it is allowed; otherwise give a reason. GST on the bill does not change.">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="add-payment-discount-reason">Discount reason</label>
+                            <input type="text" id="add-payment-discount-reason" name="discount_reason" class="form-control" maxlength="255" placeholder="Only if the bill has no cash discount terms">
                         </div>
                         <div class="col-md-6 mt-1">
                             <label>{{__('db.Paid By')}}</label>
@@ -3582,6 +3620,12 @@
         $('#hidden-station-to').val($('#drawer-station-to').val());
         $('#hidden-order-no').val($('#drawer-order-no').val());
         $('#hidden-credit-days').val($('#drawer-credit-days').val());
+        $('#hidden-shipping-cost').val(Number($('#drawer-shipping-cost').val()) || 0);
+        $('#hidden-order-discount').val(Number($('#drawer-order-discount').val()) || 0);
+        $('#hidden-capitalise-services').val($('#drawer-capitalise-services').is(':checked') ? 1 : '');
+        $('#hidden-landed-cost-method').val($('#drawer-landed-cost-method').val());
+        $('#hidden-cd-percent').val($('#drawer-cd-percent').val());
+        $('#hidden-cd-days').val($('#drawer-cd-days').val());
         $('#hidden-note').val($('#drawer-note').val());
         $('#hidden-account-id').val($('#drawer-account-id').val());
         $('#input-paying-method').val($('#drawer-paying-method').val());

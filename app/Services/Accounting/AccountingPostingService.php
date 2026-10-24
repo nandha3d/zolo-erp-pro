@@ -183,6 +183,7 @@ class AccountingPostingService
             'delivery_challan' => \App\Models\DeliveryChallan::class,
             'customer_opening' => \App\Models\Customer::class, 'supplier_opening' => \App\Models\Supplier::class,
             'year_close' => \App\Models\Accounting\FiscalYear::class,
+            'brokerage' => \App\Models\Agent::class,
             default => throw new InvalidArgumentException('This source requires its company-owned accounting path.'),
         };
         if (empty($header['reference_id'])) {

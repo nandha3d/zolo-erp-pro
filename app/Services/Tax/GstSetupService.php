@@ -43,6 +43,13 @@ class GstSetupService
         'output_tax_igst' => ['2052', 'Output IGST', 'liability', '2000'],
         'output_tax_cess' => ['2053', 'Output GST Cess', 'liability', '2000'],
         'rounding' => ['6095', 'Round Off', 'expense', '6000'],
+        // Settlement and trade ledgers, created when first used.
+        'discount_allowed' => ['6096', 'Cash Discount Allowed', 'expense', '6000'],
+        'discount_received' => ['4095', 'Cash Discount Received', 'revenue', '4000'],
+        'tds_payable' => ['2070', 'TDS Payable', 'liability', '2000'],
+        'tds_receivable' => ['1320', 'TDS Receivable', 'asset', '1000'],
+        'commission_expense' => ['6097', 'Brokerage & Commission', 'expense', '6000'],
+        'commission_payable' => ['2071', 'Brokerage Payable', 'liability', '2000'],
     ];
 
     public static function available(): bool
@@ -154,7 +161,7 @@ class GstSetupService
                 $account = (new ChartOfAccount)->forceFill(['company_id' => $companyId, 'code' => $suffix ? $code.'-'.$suffix : $code,
                     'name' => $name, 'type' => $type, 'sub_type' => $role, 'is_system' => true, 'is_active' => true,
                     'parent_id' => ChartOfAccount::where('company_id', $companyId)->where('code', $parentCode)->value('id'),
-                    'description' => 'GST ledger for '.str_replace('_', ' ', $role)]);
+                    'description' => 'Posting ledger for '.str_replace('_', ' ', $role)]);
                 $account->save();
             }
             $mapping = \App\Models\Accounting\SemanticAccountMapping::where('company_id', $companyId)->where('semantic_role', $role)->first();
@@ -197,6 +204,10 @@ class GstSetupService
             Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
             abort_unless(DB::table('tax_categories')->where('company_id', $context->companyId)->where('id', $categoryId)->exists(), 404);
             $scope = ['company_id' => $context->companyId, 'tax_category_id' => $categoryId];
+            if (Schema::hasColumn('tax_rates', 'max_unit_value') && DB::table('tax_rates')->where($scope)->whereNull('effective_to')
+                ->where(fn ($q) => $q->whereNotNull('min_unit_value')->orWhereNotNull('max_unit_value'))->exists()) {
+                throw ValidationException::withMessages(['rate' => 'This rate has price bands; add a new GST rate for a change instead.']);
+            }
             if (DB::table('tax_rates')->where($scope)->where('effective_from', '>=', $from)->exists()) {
                 throw ValidationException::withMessages(['effective_from' => 'Choose a date after the latest rate period starts.']);
             }
@@ -205,6 +216,49 @@ class GstSetupService
             DB::table('tax_rates')->insert($scope + ['rate' => $rate, 'cess_rate' => $cess, 'effective_from' => $from,
                 'created_at' => now(), 'updated_at' => now()]);
         });
+    }
+
+    /**
+     * GST 2.0 (from 22 Sep 2025): apparel and made-ups sold at up to ₹2,500 a piece are 5%, above that 18%.
+     * One category with two value bands, so the invoice picks the rate from the line's per-piece price. Idempotent.
+     */
+    public const GARMENT_BAND = 'Garments by sale value (up to ₹2,500 5%, above 18%)';
+
+    public function installGarmentBands(CompanyContext $context, int $actor, string $from = '2025-09-22'): int
+    {
+        $this->authorize($context, $actor);
+        if (!Schema::hasColumn('tax_rates', 'max_unit_value')) throw ValidationException::withMessages(['rate' => 'Run the textile trade migration first.']);
+        return DB::transaction(function () use ($context, $from) {
+            $existing = DB::table('tax_categories')->where('company_id', $context->companyId)->where('name', self::GARMENT_BAND)->value('id');
+            if ($existing) return (int) $existing;
+            $id = DB::table('tax_categories')->insertGetId(['company_id' => $context->companyId, 'name' => self::GARMENT_BAND, 'supply_type' => 'taxable',
+                'input_credit_allowed' => true, 'created_at' => now(), 'updated_at' => now()]);
+            foreach ([[5, null, 2500], [18, 2500.01, null]] as [$rate, $min, $max]) {
+                DB::table('tax_rates')->insert(['company_id' => $context->companyId, 'tax_category_id' => $id, 'rate' => $rate, 'cess_rate' => 0,
+                    'min_unit_value' => $min, 'max_unit_value' => $max, 'effective_from' => $from, 'created_at' => now(), 'updated_at' => now()]);
+            }
+            return $id;
+        });
+    }
+
+    /** Letter of Undertaking for zero-rated exports/SEZ, and whether the company deducts TDS under 194Q (turnover over ₹10 crore). */
+    public function saveTradeSettings(array $data, CompanyContext $context, int $actor): void
+    {
+        $this->authorize($context, $actor);
+        $data = validator($data, ['lut_number' => 'nullable|string|max:50', 'lut_valid_from' => 'nullable|date_format:Y-m-d',
+            'lut_valid_to' => 'nullable|date_format:Y-m-d|after_or_equal:lut_valid_from', 'tds_194q' => 'sometimes|boolean'])->validate();
+        DB::transaction(function () use ($data, $context) {
+            $company = Company::lockForUpdate()->findOrFail($context->companyId);
+            $company->settings_json = ['gst_trade' => ['lut_number' => trim((string) ($data['lut_number'] ?? '')) ?: null,
+                'lut_valid_from' => $data['lut_valid_from'] ?? null, 'lut_valid_to' => $data['lut_valid_to'] ?? null,
+                'tds_194q' => (bool) ($data['tds_194q'] ?? false)]] + ($company->settings_json ?? []);
+            $company->save();
+        });
+    }
+
+    public static function tradeSettings(int $companyId): array
+    {
+        return (Company::find($companyId)?->settings_json['gst_trade'] ?? []) + ['lut_number' => null, 'lut_valid_from' => null, 'lut_valid_to' => null, 'tds_194q' => false];
     }
 
     public function createCategory(array $data, CompanyContext $context, int $actor): int

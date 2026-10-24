@@ -75,6 +75,7 @@
                 @endif
                 @if(config('operations.enabled') && in_array('operations.job_work', $enabledCapabilities, true))
                     <li id="job-work-product-menu"><a href="{{ url('/operations/job-work') }}">Job Work (Material DC / GRN)</a></li>
+                    <li id="customer-job-menu"><a href="{{ url('/trade/customer-jobs') }}">Job Work for Customers</a></li>
                 @endif
             </ul>
         </li>
@@ -133,7 +134,7 @@
                 @if($isAdmin || $canNavigate('sales-index'))
                     @if(config('commercial.enabled') && config('compliance.enabled'))
                         @if($isAdmin || $canNavigate('returns-index'))<li><a href="{{ url('/compliance/returns') }}">Returns & notes</a></li>@endif
-                        @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li>@endif
+                        @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li><li><a href="{{ url('/compliance/gst/returns') }}">GST returns (3B, ITC-04, TDS)</a></li>@endif
                         @if($isAdmin)<li><a href="{{ url('/compliance/setup') }}">Tax & document settings</a></li>@endif
                     @endif
                     <li id="sale-list-menu"><a href="{{route('sales.index')}}">Bills</a></li>
@@ -149,6 +150,10 @@
                 {{-- Existing dispatch owners share one register. --}}
                 @if($isAdmin || $canNavigate('packing_slip_challan') || $canNavigate('delivery') || $canNavigate('delivery-challans-index'))
                     <li id="dispatch-menu"><a href="{{route('dispatch-register.index')}}">Dispatch Register</a></li>
+                @endif
+                @if(config('commercial.enabled') && ($isAdmin || $canNavigate('sales-index')))
+                    <li id="brokerage-menu"><a href="{{ url('/trade/brokerage') }}">Brokerage (Agents)</a></li>
+                    @if(in_array('sales.route_distribution', $enabledCapabilities, true))<li id="route-sheet-menu"><a href="{{ url('/trade/routes') }}">Route Sheet</a></li>@endif
                 @endif
                 @if($isAdmin || $canNavigate('gift_card'))
                     <li id="gift-card-menu"><a href="{{route('gift_cards.index')}}">{{__('db.Gift Card List')}}</a></li>

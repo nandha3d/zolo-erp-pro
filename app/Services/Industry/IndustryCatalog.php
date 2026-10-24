@@ -11,10 +11,10 @@ final class IndustryCatalog
             'master_defaults' => ['barcode', 'brand', 'hsn_code', 'gst', 'mrp', 'shelf_life_days', 'reorder_level'],
             'labels' => [], 'reports' => ['batch_expiry', 'reorder', 'route_distribution']],
         'textile' => ['quantity_scale' => 3, 'units' => ['MTR', 'KGS', 'DOZ', 'PCS'], 'uqc' => 'MTR',
-            'labels' => ['dispatch' => 'Material DC', 'receipt' => 'Job Work GRN', 'warehouse' => 'Godown'],
+            'labels' => ['warehouse' => 'Godown'],
             'document_fields' => ['transporter', 'lr_no', 'lr_date', 'bale_count', 'bundle_count'],
             'print' => ['lines' => 68, 'columns' => 80], 'entry_aids' => ['previous_rates' => true, 'outstanding' => true, 'clone_invoice' => true, 'inline_party' => true, 'inline_item' => true, 'tracking' => true],
-            'reports' => ['job_work_pending', 'job_work_shrinkage', 'stock_lot', 'previous_rates']],
+            'reports' => ['stock_lot', 'previous_rates']],
         'timber' => ['quantity_scale' => 4, 'units' => ['PCS', 'CFT', 'CBM'], 'dimension_unit' => 'ft',
             'formula_version' => 'rectangular-v1', 'labels' => [], 'reports' => ['piece_volume', 'conversion_yield']],
         'solar' => ['quantity_scale' => 4, 'units' => ['PCS', 'KW'], 'labels' => ['project' => 'Site / Project'],
@@ -49,11 +49,42 @@ final class IndustryCatalog
         'fmcg' => [['REPACKING', 'Outsourced repacking', 5, true]],
     ];
 
+    /**
+     * Capabilities a business type adds on top of its profile preset. Applying a profile resets to the preset first,
+     * so switching type also hides what the previous type added. The first type is the default.
+     */
     public const SUBTYPES = [
         'general_trading' => ['trading' => []],
         'fmcg' => ['distribution' => [], 'manufacturer' => ['manufacturing.bom', 'manufacturing.production'], 'route_distribution' => ['sales.route_distribution']],
-        'textile' => ['wholesale' => [], 'in_house_processing' => ['manufacturing.bom', 'manufacturing.production']],
+        // Traders buy finished cloth and sell it on; only manufacturing sends material out for processing or makes goods.
+        'textile' => ['wholesale_distributor' => ['sales.route_distribution'], 'wholesale' => [], 'distributor' => ['sales.route_distribution'],
+            'manufacturing' => ['operations.job_work', 'manufacturing.bom', 'manufacturing.production']],
         'timber' => ['trading' => [], 'processor' => ['manufacturing.bom', 'manufacturing.production', 'operations.job_work']],
         'solar' => ['epc' => []],
     ];
+
+    public const SUBTYPE_LABELS = ['wholesale_distributor' => 'Wholesale & Distributor'];
+
+    /** Business type settings replace the profile's top-level setting of the same key. */
+    public const SUBTYPE_SETTINGS = [
+        'textile' => ['manufacturing' => [
+            'labels' => ['dispatch' => 'Material DC', 'receipt' => 'Job Work GRN', 'warehouse' => 'Godown'],
+            'reports' => ['job_work_pending', 'job_work_shrinkage', 'stock_lot', 'previous_rates'],
+        ]],
+    ];
+
+    /** Profile attributes a business type does not use; saved values are kept. Brand distributors do not deal in mill specs. */
+    public const SUBTYPE_HIDDEN_ATTRIBUTES = [
+        'textile' => ['distributor' => ['construction', 'gsm']],
+    ];
+
+    public static function subtypeLabel(?string $subtype): string
+    {
+        return self::SUBTYPE_LABELS[$subtype] ?? ucwords(str_replace('_', ' ', (string) $subtype));
+    }
+
+    public static function settings(string $profile, ?string $subtype): array
+    {
+        return array_replace(self::SETTINGS[$profile], self::SUBTYPE_SETTINGS[$profile][$subtype] ?? []);
+    }
 }

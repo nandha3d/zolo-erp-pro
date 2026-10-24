@@ -124,13 +124,13 @@
 </section>
 <script>
 (function () {
-    var subtypes = @json($subtypes);
+    var subtypes = @json($subtypes), subtypeLabels = @json(\App\Services\Industry\IndustryCatalog::SUBTYPE_LABELS);
     var industry = document.getElementById('cpf-industry'), subtype = document.getElementById('cpf-subtype');
     if (!industry) return;
     function fill() {
         var current = subtype.dataset.current; subtype.innerHTML = '';
         Object.keys(subtypes[industry.value] || {}).forEach(function (key) {
-            var option = new Option(key.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }), key);
+            var option = new Option(subtypeLabels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }), key);
             option.selected = key === current; subtype.appendChild(option);
         });
     }

@@ -30,7 +30,7 @@ class OperationsWebTest extends OperationsTestCase
 
     public function test_job_work_forms_printing_and_profiles_render_without_foreign_records(): void
     {
-        app(IndustryProfileService::class)->apply('textile', 'wholesale', $this->context(), 1);
+        app(IndustryProfileService::class)->apply('textile', 'manufacturing', $this->context(), 1);
         $material = $this->material(500); [$order, $dispatch] = $this->job($material);
         $this->get('/operations/job-work')->assertOk()->assertSee('Material outside');
         $this->get('/operations/job-work/'.$order->id)->assertOk()->assertSee('Send material')->assertSee('Receive and reconcile');

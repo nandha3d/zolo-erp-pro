@@ -20,7 +20,7 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
 
     public function test_grey_fabric_purchase_job_work_service_credit_sale_partial_receipt_and_print_reconcile(): void
     {
-        app(IndustryProfileService::class)->apply('textile', 'wholesale', $this->context(), 1);
+        app(IndustryProfileService::class)->apply('textile', 'manufacturing', $this->context(), 1);
         DB::table('units')->where('id', 1)->update(['unit_name' => 'MTR']);
         $fabric = $this->gstProduct(); $fabric->forceFill(['qty' => 0, 'unit_id' => 1])->save();
         DB::table('product_warehouse')->where('product_id', $fabric->id)->update(['qty' => 0]);
@@ -65,8 +65,8 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         $job = app(JobWorkService::class);
         $process = $job->configureProcess(['code' => 'GREY-DYE', 'name' => 'Dyeing - grey to dyed fabric', 'max_loss_percent' => 5, 'conversion' => true,
             'output_product_id' => $dyed->id, 'service_product_id' => $charge->id, 'service_rate' => 15], $this->context(), 1);
-        $this->assertSame([$dyed->id, $charge->id, 15.0], array_values(array_map(fn ($v) => is_numeric($v) && str_contains((string) $v, '.') ? (float) $v : (int) $v,
-            (array) DB::table('process_types')->where('id', $process)->first(['output_product_id', 'service_product_id', 'service_rate']))));
+        $saved = DB::table('process_types')->where('id', $process)->first(['output_product_id', 'service_product_id', 'service_rate']);
+        $this->assertSame([$dyed->id, $charge->id, 15.0], [(int) $saved->output_product_id, (int) $saved->service_product_id, (float) $saved->service_rate]);
         $average = fn ($product) => round(DB::table('stock_movement_lines')->where('product_id', $product->id)->sum('value')
             / max(0.0001, DB::table('stock_movement_lines')->where('product_id', $product->id)->sum('qty_base')), 4);
         $cycle = function (float $sent, float $accepted, string $key) use ($job, $process, $grey, $dyed) {
@@ -136,7 +136,7 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
     {
         $profiles = app(IndustryProfileService::class);
         $active = fn () => DB::table('process_types')->where('company_id', $this->company->id)->where('is_active', true)->orderBy('code')->pluck('code')->all();
-        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $profiles->apply('textile', 'manufacturing', $this->context(), 1);
         $this->assertTrue(DB::table('units')->where('company_id', $this->company->id)->where('unit_code', 'MTR')->exists(), 'Textile adds its meter unit.');
         $this->assertSame(['DYEING', 'FINISHING', 'GREY-DYE', 'PRINTING'], $active());
         request()->attributes->set(\App\Services\Platform\CompanyContext::class, $this->context());
@@ -149,7 +149,7 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         $this->assertSame('Warehouse', IndustryProfileService::label('warehouse', 'Warehouse'));
 
         $units = DB::table('units')->where('company_id', $this->company->id)->count();
-        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $profiles->apply('textile', 'manufacturing', $this->context(), 1);
         $this->assertSame(['DYEING', 'FINISHING', 'GREY-DYE', 'PRINTING'], $active(), 'Switching back offers them again.');
         $this->assertSame($units, DB::table('units')->where('company_id', $this->company->id)->count(), 'Preset units are added once.');
     }

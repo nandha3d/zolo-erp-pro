@@ -66,7 +66,10 @@ class GstProjectionService
         return $rows->map(function ($row) {
             $snapshot = json_decode($row->snapshot_json, true, 512, JSON_THROW_ON_ERROR);
             $outward = in_array($row->source_type, ['sale', 'sale_credit_note', 'sale_debit_note', 'sale_reversal'], true);
-            $section = !$outward ? 'inward' : (str_contains($row->source_type, 'note') ? ($snapshot['buyer_gstin'] ? 'cdnr' : 'cdnur') : ($snapshot['buyer_gstin'] ? 'b2b' : 'b2c'));
+            $zero = $snapshot['supply_type'] ?? 'domestic';
+            // GSTR-1: exports go to EXP, SEZ supplies to B2B with the SEZ flag; other sales by buyer registration.
+            $section = !$outward ? 'inward' : (str_contains($row->source_type, 'note') ? ($snapshot['buyer_gstin'] ? 'cdnr' : 'cdnur')
+                : (str_starts_with($zero, 'export') ? 'exp' : (str_starts_with($zero, 'sez') ? 'sez' : ($snapshot['buyer_gstin'] ? 'b2b' : 'b2c'))));
             return ['document_no' => $row->document_no, 'document_date' => $row->document_date, 'source_type' => $row->source_type,
                 'source_id' => $row->source_id, 'section' => $section, 'registration_gstin' => $row->registration_gstin, 'snapshot' => $snapshot];
         })->all();

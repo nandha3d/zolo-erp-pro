@@ -45,7 +45,7 @@ final class CapabilityCatalog
     public const PROFILES = [
         'general_trading' => ['General Trading', []],
         'fmcg' => ['FMCG', ['inventory.multi_uom', 'inventory.batch_expiry', 'inventory.damage_stock', 'sales.wholesale', 'communications.whatsapp']],
-        'textile' => ['Textile', ['inventory.multi_uom', 'sales.wholesale', 'operations.job_work', 'printing.dot_matrix', 'communications.whatsapp']],
+        'textile' => ['Textile', ['inventory.multi_uom', 'sales.wholesale', 'printing.dot_matrix', 'communications.whatsapp']],
         'timber' => ['Timber', ['inventory.multi_uom', 'inventory.dimension_tracking', 'inventory.lot_tracking', 'sales.wholesale']],
         'solar' => ['Solar', ['operations.projects', 'inventory.serial_tracking', 'operations.installation', 'manufacturing.bom', 'service.warranty_amc', 'communications.whatsapp']],
     ];
