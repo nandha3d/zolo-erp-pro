@@ -1544,3 +1544,20 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - CSS moved from `app-shell.css` to new `public/css/field-help.css`, linked from `layout/main`, `layout/top-head` (POS) and `company/select`; the script is now also loaded on POS and the company picker. Picker search label has `data-no-help`.
 - Chart of Accounts Opening Balance label has its own `data-help` (ledger opening, read-only).
 - Verified with a Playwright crawl of 130 menu/create pages: 0 entry labels without help (was 439 distinct labels). Add Account dialog takes typing; screenshots of COA modal, POS and company picker checked.
+
+## 65. Admin Login Screen Modernization & Deployed Credentials Clarification (2026-10-24, commit 6a1cdff, deployed)
+- **Admin credentials:**
+  - **Username:** `admin` (or Email: `admin@gmail.com`)
+  - **Password:** `admin` only on the local dev database. Production (erp.samuraibuiness.in) uses a random password stored in `/root/zolo-erp-credentials.txt` on the VPS.
+  - In user screenshot, login failed because user entered `animazondigital@gmail.com` (which was not in users table).
+- **Visual & Layout Defect Resolutions:**
+  1. **Horizontal Flex Layout Bug:** `.form-outer` previously had `d-flex align-items-center` without `flex-column`, which made `.form-inner` and `.copyrights` horizontal siblings, pushing the copyright notice to float awkwardly to the right of the card. Fixed by setting `.form-outer` to `flex-column` and placing copyrights centered below the card.
+  2. **Chrome Autofill White Background:** Added `-webkit-autofill` dark overrides (`-webkit-box-shadow: 0 0 0px 1000px #0e1526 inset !important; -webkit-text-fill-color: #f8fafc !important;`) preventing browser autofill from rendering bright white/grey input backgrounds and black text.
+  3. **Duplicate Raw Error Messages:** Removed duplicate `@if(session()->has('error'))` raw `<p>` elements from inside username and password field groups. Replaced with a unified, high-contrast, dismissible error banner at top of form with error icon, title, and clear text.
+  4. **Next-Gen SaaS Aesthetic:** Updated `public/css/auth.css` and `resources/views/backend/auth/login.blade.php`:
+     - Obsidian dark backdrop with subtle 28px dot-matrix grid and dual radial ambient glows.
+     - Ultra-sleek glassmorphic card with top neon gradient accent and multi-layer drop shadows.
+     - Clean modern labels, left input icons (`fa-user`, `fa-lock`), password toggle eye, and glowing gradient sign-in button.
+     - Centered SSL 256-bit security badge and copyright footer.
+     - Dynamic cache-busting `?v={{ filemtime(...) }}` added to CSS assets across auth views.
+  5. **Verification:** Browser subagent verified normal state, error state, and successful login with `admin` / `admin`. Feature tests (`WorkspaceSecurityTest`) 100% green (12 tests, 73 assertions).
