@@ -590,7 +590,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     </footer>
 
     <!-- notification modal (opened from All Notifications) -->
-    @if(Auth::check())
+    @if(!$companyContext || request()->routeIs('notifications.index'))
     <div id="notification-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog">
         <div class="modal-content">
@@ -732,7 +732,9 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     <!-- Category Modal -->
 
     <!-- expense modal -->
-    {{-- Expense and income use company-scoped models (warehouses, accounts); the other legacy modals stay off with a company selected. --}}
+    {{-- With a company selected, the expense and income modals render only on their own list pages (their Add buttons);
+         the other legacy modals stay off. --}}
+    @if(!$companyContext || request()->routeIs('expenses.index'))
     <div id="expense-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
@@ -846,8 +848,10 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
         </div>
       </div>
     </div>
+    @endif
     <!-- end expense modal -->
     <!-- income modal start -->
+    @if(!$companyContext || request()->routeIs('incomes.index'))
     <div id="income-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
@@ -921,8 +925,10 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
         </div>
       </div>
     </div>
+    @endif
     <!-- income modal end -->
 
+    @unless($companyContext)
     <!-- sale return modal -->
     <div id="add-sale-return" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog">
@@ -978,7 +984,6 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     <!-- end purchase return modal -->
 
     <!-- account modal -->
-    @unless($companyContext)
     <div id="account-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog">
         <div class="modal-content">
