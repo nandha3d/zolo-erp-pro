@@ -1,6 +1,7 @@
 @extends('backend.compliance.layout')
 @section('title','Job work for customers')
 @section('compliance_body')
+@include('backend.partials.job-work-direction', ['direction' => 'in'])
 <p class="cx-lead">For dyeing, printing or processing units: the customer's material stays theirs (not in your stock or books). Record what arrives on their challan, send it back on your return challan with the loss, and bill only the processing charge.</p>
 <div class="cx-grid">
     <div class="cx-card">

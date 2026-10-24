@@ -9,6 +9,7 @@
         $jwGrn = \App\Services\Industry\IndustryProfileService::label('receipt', 'Job Work GRN');
     @endphp
     <div class="ops-hub-view jw-hub-view">
+    @include('backend.partials.job-work-direction', ['direction' => 'out'])
     <!-- KPI Strip -->
     <div class="ops-kpi-strip">
         <div class="ops-kpi-box">

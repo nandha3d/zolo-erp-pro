@@ -1,6 +1,7 @@
 @extends('backend.compliance.layout')
 @section('title','Job order '.$order->reference_no)
 @section('compliance_body')
+@include('backend.partials.job-work-direction', ['direction' => null])
 @php $directions = ['received' => 'Received from customer', 'returned' => 'Returned processed', 'loss' => 'Process loss', 'billed' => 'Processing invoice']; @endphp
 <div class="cx-kpis mb-2 d-flex flex-wrap" style="gap:8px;">
     @foreach(['received' => 'Received', 'returned' => 'Returned', 'loss' => 'Loss', 'with_us' => 'Still with us', 'unbilled' => 'Returned, not billed'] as $key => $label)

@@ -1632,3 +1632,10 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - Stock by lot now uses `product-workspace-view` card + dark table header like the other Product & Inventory pages; duplicate page h1 dropped.
 - CI `MySQL / operations` failed on 194Q test: MySQL JSON columns reorder object keys; test now compares key-sorted arrays.
 - Local dev DB was missing migration `2026_10_24_000003` (Brokerage 503, "Run the textile trade migration first" on job work); applied.
+
+## 72. Dead Sidebar Links Fixed, Job Work Merged (2026-10-24)
+- 12 sidebar links had `href=""` + JS (hidden POST form or modal). Reports (Summary, Product, Sale, Sale chart, Payment, Purchase, Warehouse, User, Biller) are now plain GET links: routes accept GET+POST, `ReportController::reportDefaults()` fills month-to-date (and warehouse/user/biller) when opened bare; orphan click handlers removed from main layout.
+- Modals for expense/income/notification were inside `@unless($companyContext)` so they never rendered with a company selected (list-page buttons dead too). Expense/income modals now render (warehouse list via scoped `Warehouse` model; categories are global tables); notification modal always renders, opened from a new Send button on All Notifications (gated by CommercialPermission). Sidebar Add Expense / Add Income / Send Notification removed (duplicates of page buttons).
+- Job Work: one sidebar entry `#job-work-menu` -> /operations/job-work; `backend.partials.job-work-direction` switch (our material out | customer's material in) on hub and /trade/customer-jobs; detail page includes it with `direction => null` for the sidebar mark.
+- Playwright sidebar audit: 127 links, all highlight themselves (POS has no sidebar).
+- Open questions to user: Pending Sales (= Bills filtered to status Pending, overlaps Sales Orders) and duplicate Returns entries (Returns & notes vs legacy Returns lists).
