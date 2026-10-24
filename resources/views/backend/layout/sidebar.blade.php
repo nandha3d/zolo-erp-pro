@@ -428,9 +428,6 @@
                 @if($isAdmin || $role->id <= 2)
                     <li id="activity-log-menu"><a href="{{route('setting.activityLog')}}">{{__('db.Activity Log')}}</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('profit-loss'))
-                    <li id="profit-loss-report-menu"><a href="{{route('report.profitLoss')}}">{{__('db.Summary Report')}}</a></li>
-                @endif
                 @if($isAdmin || $canNavigate('best-seller'))
                     <li id="best-seller-report-menu"><a href="{{url('report/best_seller')}}">{{__('db.Best Seller')}}</a></li>
                 @endif
