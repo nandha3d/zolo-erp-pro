@@ -1,27 +1,61 @@
 /* ====================================================================
-   zoloERP Next-Gen Authentication Design System
-   Compatible with Modern SaaS Standards & Responsive Devices
+   zoloERP Pro Next-Gen Authentication Design System
+   Enterprise-Grade SaaS Aesthetics, Glassmorphism & High-Contrast Dark Mode
    ==================================================================== */
 
 :root {
-  --zolo-auth-bg: #090d16;
-  --zolo-auth-surface: rgba(15, 23, 42, 0.88);
-  --zolo-auth-border: rgba(255, 255, 255, 0.1);
-  --zolo-auth-border-focus: #6366f1;
-  --zolo-auth-text: #ffffff;
-  --zolo-auth-text-muted: #cbd5e1;
+  --zolo-auth-bg: #070a12;
+  --zolo-auth-bg-gradient: radial-gradient(circle at 18% 15%, rgba(99, 102, 241, 0.16) 0%, transparent 45%),
+                           radial-gradient(circle at 82% 85%, rgba(6, 182, 212, 0.14) 0%, transparent 45%),
+                           radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.7) 0%, transparent 100%),
+                           #070a12;
+  --zolo-auth-surface: rgba(15, 23, 42, 0.82);
+  --zolo-auth-surface-border: rgba(255, 255, 255, 0.09);
+  --zolo-auth-border-glow: rgba(99, 102, 241, 0.35);
+  --zolo-auth-input-bg: rgba(13, 19, 33, 0.85);
+  --zolo-auth-input-border: rgba(255, 255, 255, 0.12);
+  --zolo-auth-input-focus: #6366f1;
+  --zolo-auth-text: #f8fafc;
+  --zolo-auth-text-muted: #94a3b8;
+  --zolo-auth-text-dim: #64748b;
   --zolo-auth-primary: #6366f1;
   --zolo-auth-primary-hover: #4f46e5;
-  --zolo-auth-primary-glow: rgba(99, 102, 241, 0.45);
-  --zolo-radius: 14px;
+  --zolo-auth-primary-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #3b82f6 100%);
+  --zolo-auth-primary-glow: 0 8px 24px -4px rgba(99, 102, 241, 0.5);
+  --zolo-radius-lg: 22px;
+  --zolo-radius-md: 12px;
+  --zolo-radius-sm: 8px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--zolo-auth-bg);
+  background-image: var(--zolo-auth-bg-gradient);
+  background-attachment: fixed;
   color: var(--zolo-auth-text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Background Subtle Dot-Grid Texture */
+.login-page::before,
+.register-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .login-page,
@@ -32,43 +66,51 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--zolo-auth-bg);
-  background-image: 
-    radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.18) 0%, transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(6, 182, 212, 0.14) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.6) 0%, transparent 100%);
-  background-size: cover;
-  background-attachment: fixed;
-  padding: 30px 16px 80px;
+  padding: 40px 16px 80px;
+  z-index: 1;
 }
 
 .login-page .container,
 .register-page .container {
   max-width: 480px;
+  width: 100%;
   margin: 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
+/* Outer layout must be a vertical column */
 .login-page .form-outer,
 .register-page .form-outer {
   width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   margin: 0 auto;
 }
 
+/* Glassmorphic Auth Card */
 .login-page .form-inner,
 .register-page .form-inner {
+  width: 100%;
   background: var(--zolo-auth-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--zolo-auth-border);
-  border-radius: 20px;
-  padding: 42px 36px 36px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--zolo-auth-surface-border);
+  border-radius: var(--zolo-radius-lg);
+  padding: 44px 38px 36px;
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 40px -10px rgba(99, 102, 241, 0.12);
   text-align: center;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Sleek Neon Glow Top Bar */
 .login-page .form-inner::before,
 .register-page .form-inner::before {
   content: '';
@@ -77,39 +119,43 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #4f46e5, #06b6d4, #818cf8);
+  background: linear-gradient(90deg, #4f46e5 0%, #818cf8 35%, #06b6d4 70%, #38bdf8 100%);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.6);
 }
 
-/* Brand Logo */
+/* Brand Logo & Presentation */
 .zolo-auth-logo {
   margin-bottom: 28px;
 }
 
 .zolo-brand-container {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .zolo-brand-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
   color: #ffffff;
   flex-shrink: 0;
 }
 
 .zolo-brand-badge {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #f8fafc;
+  letter-spacing: -0.6px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .zolo-accent {
@@ -118,133 +164,277 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.zolo-pro-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-left: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .zolo-auth-tagline {
   font-size: 13px;
   color: var(--zolo-auth-text-muted);
-  margin-top: 6px;
+  margin-top: 8px;
+  margin-bottom: 0;
   font-weight: 500;
+  letter-spacing: -0.1px;
 }
 
-/* Form Groups & Inputs */
-.login-page form,
-.register-page form {
-  margin: 24px 0 16px;
-}
-
-.form-group-material {
-  position: relative;
-  margin-bottom: 22px;
+/* Modern Form Group & Labels */
+.form-group-modern {
+  margin-bottom: 20px;
   text-align: left;
 }
 
-.form-group-material input.input-material {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 14px 16px;
-  color: #f8fafc;
-  font-size: 14px;
-  font-weight: 400;
-  transition: all 0.2s ease;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.form-group-material input.input-material:focus {
-  border-color: var(--zolo-auth-border-focus);
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-}
-
-.form-group-material label.label-material {
-  position: absolute;
-  top: 15px;
-  left: 16px;
-  color: #94a3b8;
-  font-size: 14px;
-  pointer-events: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  margin: 0;
-  background: transparent;
-  padding: 0 4px;
-}
-
-.form-group-material label.label-material.active,
-.form-group-material input.input-material:focus ~ label.label-material {
-  top: -10px;
-  left: 12px;
+.modern-label {
+  display: block;
   font-size: 11.5px;
   font-weight: 600;
-  color: #818cf8;
-  background: #111827;
-  border-radius: 4px;
-  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--zolo-auth-text-muted);
+  margin-bottom: 7px;
 }
 
-#togglePassword {
+/* Input Wrapper with Crisp Left Icon */
+.input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-wrapper .input-icon {
   position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
+  left: 15px;
+  color: #64748b;
+  font-size: 14px;
+  pointer-events: none;
   transition: color 0.2s ease;
+  z-index: 3;
 }
 
-#togglePassword:hover {
-  color: #f8fafc;
+.input-icon-wrapper:focus-within .input-icon {
+  color: #818cf8;
 }
 
-/* Submit Button */
-.btn-primary.btn-block {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  border: none;
-  border-radius: 12px;
-  padding: 13px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
-  transition: all 0.2s ease;
+.modern-input {
+  width: 100% !important;
+  height: 46px !important;
+  background: var(--zolo-auth-input-bg) !important;
+  border: 1px solid var(--zolo-auth-input-border) !important;
+  border-radius: var(--zolo-radius-md) !important;
+  padding: 10px 16px 10px 42px !important;
+  color: var(--zolo-auth-text) !important;
+  font-size: 14px !important;
+  font-weight: 450 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.modern-input::placeholder {
+  color: #475569 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+.modern-input:focus {
+  background: rgba(17, 24, 39, 0.95) !important;
+  border-color: var(--zolo-auth-input-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* CRITICAL: Overriding Chrome / Safari / Edge Ugly White Autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #f8fafc !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0e1526 inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  color: #f8fafc !important;
+}
+
+/* Password Toggle Eye */
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  color: #64748b;
   cursor: pointer;
-  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 4;
 }
 
-.btn-primary.btn-block:hover {
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.55);
+.password-toggle-btn:hover {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Modern Submit Button */
+.btn-modern-submit {
+  width: 100%;
+  height: 48px;
+  background: var(--zolo-auth-primary-gradient) !important;
+  border: none !important;
+  border-radius: var(--zolo-radius-md) !important;
+  padding: 0 24px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  color: #ffffff !important;
+  box-shadow: var(--zolo-auth-primary-glow) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  margin-top: 18px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-modern-submit:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #2563eb 100%) !important;
+  box-shadow: 0 10px 30px -4px rgba(99, 102, 241, 0.65) !important;
   transform: translateY(-1px);
 }
 
-.btn-primary.btn-block:active {
+.btn-modern-submit:active {
   transform: translateY(0);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4) !important;
 }
 
-/* Auxiliary Links */
-.login-page a.forgot-pass,
-.register-page a.forgot-pass {
-  display: inline-block;
+.btn-modern-submit i {
+  transition: transform 0.2s ease;
+}
+
+.btn-modern-submit:hover i {
+  transform: translateX(3px);
+}
+
+/* Inline Forgot Password Link */
+.forgot-pass-inline {
   color: #818cf8;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 500;
   text-decoration: none;
-  margin-top: 14px;
   transition: color 0.2s ease;
 }
 
-.login-page a.forgot-pass:hover,
-.register-page a.forgot-pass:hover {
+.forgot-pass-inline:hover {
   color: #a5b4fc;
   text-decoration: underline;
 }
 
+/* Polished High-Contrast Alert Banners */
+.auth-alert {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+  border-radius: var(--zolo-radius-md) !important;
+  margin-bottom: 20px !important;
+  position: relative !important;
+  text-align: left !important;
+  border: 1px solid transparent !important;
+  animation: authAlertSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes authAlertSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-alert-danger {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.32) !important;
+  color: #fecaca !important;
+}
+
+.auth-alert-danger .auth-alert-icon {
+  color: #f87171 !important;
+}
+
+.auth-alert-success {
+  background: rgba(16, 185, 129, 0.14) !important;
+  border-color: rgba(16, 185, 129, 0.32) !important;
+  color: #a7f3d0 !important;
+}
+
+.auth-alert-success .auth-alert-icon {
+  color: #34d399 !important;
+}
+
+.auth-alert-icon {
+  font-size: 18px !important;
+  line-height: 1 !important;
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.auth-alert-content {
+  flex: 1 !important;
+}
+
+.auth-alert-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.1px !important;
+  line-height: 1.3 !important;
+  margin-bottom: 2px !important;
+}
+
+.auth-alert-message {
+  font-size: 12px !important;
+  opacity: 0.95 !important;
+  line-height: 1.4 !important;
+  color: #fca5a5 !important;
+}
+
+.auth-alert-success .auth-alert-message {
+  color: #a7f3d0 !important;
+}
+
+.auth-alert .close.auth-alert-close {
+  position: static !important;
+  padding: 0 0 0 10px !important;
+  color: inherit !important;
+  opacity: 0.7 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  text-shadow: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.auth-alert .close.auth-alert-close:hover {
+  opacity: 1 !important;
+}
+
+/* Secondary Actions / Register */
 .register-section {
   font-size: 13px;
-  color: #94a3b8;
-  margin-top: 18px;
+  color: var(--zolo-auth-text-muted);
+  margin-top: 22px;
   margin-bottom: 0;
 }
 
@@ -252,7 +442,8 @@ body {
   color: #38bdf8;
   font-weight: 600;
   text-decoration: none;
-  margin-left: 4px;
+  margin-left: 5px;
+  transition: color 0.2s ease;
 }
 
 .register-section a.signup:hover {
@@ -260,32 +451,34 @@ body {
   text-decoration: underline;
 }
 
-/* Alerts */
-.alert {
-  border-radius: 12px;
-  font-size: 13px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  border: none;
-  text-align: left;
-}
-
-.alert-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
-.alert-success {
-  background: rgba(16, 185, 129, 0.15);
-  color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-/* Copyrights Footer */
+/* Security Badge & Centered Footer */
 .copyrights {
-  margin-top: 24px;
+  margin-top: 26px;
   text-align: center;
+  width: 100%;
+}
+
+.auth-security-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+.security-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10b981;
+  border-radius: 50%;
+  margin-right: 7px;
+  box-shadow: 0 0 8px #10b981;
 }
 
 .copyrights p {
@@ -299,58 +492,95 @@ body {
   font-weight: 600;
 }
 
-/* Demo Switch Bar Floating Pill */
+/* Quick Demo Access Bar (Floating Glass Pill) */
 .switch-theme {
-  background: rgba(15, 23, 42, 0.9) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 16px;
-  padding: 12px 24px !important;
+  border-radius: 18px;
+  padding: 10px 20px !important;
   position: fixed;
   bottom: 20px !important;
   left: 50% !important;
   transform: translateX(-50%);
-  width: calc(100% - 40px);
-  max-width: 640px;
+  width: calc(100% - 32px);
+  max-width: 580px;
   z-index: 99;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .switch-theme .demo-label {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   color: #94a3b8;
   font-weight: 600;
-  margin-bottom: 6px;
 }
 
 .switch-theme .demo-btn {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  padding: 5px 14px;
+  padding: 5px 13px;
   margin: 2px 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #f1f5f9;
 }
 
-.switch-theme .demo-btn:hover {
+.switch-theme .demo-btn-admin {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+}
+
+.switch-theme .demo-btn-admin:hover {
+  background: rgba(99, 102, 241, 0.35);
+  color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-/* Responsive adjustments */
+.switch-theme .demo-btn-staff {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.35);
+  color: #a5f3fc;
+}
+
+.switch-theme .demo-btn-staff:hover {
+  background: rgba(6, 182, 212, 0.28);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.switch-theme .demo-btn-customer {
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+}
+
+.switch-theme .demo-btn-customer:hover {
+  background: rgba(148, 163, 184, 0.28);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Responsive Overrides */
 @media (max-width: 576px) {
+  .login-page,
+  .register-page {
+    padding: 24px 12px 100px;
+  }
+
   .login-page .form-inner,
   .register-page .form-inner {
-    padding: 32px 22px 26px;
-    border-radius: 16px;
+    padding: 32px 22px 28px;
+    border-radius: 18px;
   }
-  
+
   .switch-theme {
-    bottom: 10px !important;
-    padding: 10px 14px !important;
+    bottom: 12px !important;
+    padding: 8px 14px !important;
   }
 }

@@ -34,7 +34,7 @@
   <body>
     <div class="page login-page">
       <div class="container">
-        <div class="form-outer text-center d-flex align-items-center">
+        <div class="form-outer">
           <div class="form-inner">
             <div class="zolo-auth-logo text-center mb-4">
               <div class="zolo-brand-container">
