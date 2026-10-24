@@ -11,7 +11,6 @@
     <file>tests/Feature/PurchaseOrderLifecycleTest.php</file>
     <file>tests/Feature/MaterialDocumentPostingTest.php</file>
     <file>tests/Feature/MaterialDocumentIdentityTest.php</file>
-    <file>tests/Feature/CommercialLifecycleConcurrencyTest.php</file>
     <file>tests/Feature/RateHistoryTest.php</file>
     <file>tests/Feature/QuotationFollowUpTest.php</file>
     <file>tests/Feature/ProductAliasTest.php</file>

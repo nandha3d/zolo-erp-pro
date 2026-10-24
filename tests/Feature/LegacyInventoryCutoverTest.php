@@ -564,6 +564,20 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
 
     public function test_product_creation_posts_openings_once_and_ignores_client_projection_quantity(): void
     {
+        // Product creation checks that the category and units belong to the company.
+        $companyId = \App\Models\Company::value('id');
+        Schema::create('categories', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedBigInteger('company_id');
+            $table->string('name');
+        });
+        DB::table('categories')->insert(['id' => 1, 'company_id' => $companyId, 'name' => 'General']);
+        DB::table('units')->update(['company_id' => $companyId]);
+        Schema::table('products', function (Blueprint $table) {
+            foreach (['hsn_code', 'tax_category_id', 'negative_stock_policy'] as $column) {
+                if (!Schema::hasColumn('products', $column)) $table->string($column)->nullable();
+            }
+        });
         app(ProductController::class)->store($this->request([
             'name' => 'New product', 'code' => 'NEW', 'type' => 'standard', 'barcode_symbology' => 'C128',
             'category_id' => 1, 'unit_id' => 1, 'purchase_unit_id' => 1, 'sale_unit_id' => 1,

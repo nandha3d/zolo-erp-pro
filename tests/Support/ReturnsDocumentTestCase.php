@@ -38,6 +38,10 @@ abstract class ReturnsDocumentTestCase extends ComplianceTestCase
         }
         (require database_path('migrations/2026_09_19_000003_create_damage_stock_and_exchange_tables.php'))->up();
         (require database_path('migrations/2026_10_06_000002_extend_returns_and_document_delivery.php'))->up();
+        // Return screens list internal warehouses only (job-worker locations carry an order id).
+        if (!Schema::hasColumn('warehouses', 'external_job_order_id')) {
+            Schema::table('warehouses', fn (Blueprint $t) => $t->unsignedBigInteger('external_job_order_id')->nullable());
+        }
         DB::table('warehouses')->where('id', 2)->update(['company_id' => $this->company->id, 'branch_id' => $this->branch->id, 'is_quarantine' => true]);
         $this->app->bind(\App\Services\Platform\CapabilityService::class, fn () => new class extends \App\Services\Platform\CapabilityService {
             public function enabled(string $key, \App\Services\Platform\CompanyContext|int|null $company = null): bool { return true; }

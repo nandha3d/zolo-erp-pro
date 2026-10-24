@@ -14,7 +14,6 @@ class RateHistoryTest extends CommercialTestCase
     public function test_rate_context_provides_compatible_factors_and_frozen_currency_without_changing_quantities(): void
     {
         $item = $this->stock(100)->forceFill(['unit_id' => 1]); $item->save();
-        Schema::table('units', fn (Blueprint $t) => $t->boolean('is_active')->default(true));
         DB::table('units')->insert(['id' => 2, 'company_id' => $this->company->id, 'name' => 'Dozen', 'unit_code' => 'DOZ', 'unit_name' => 'Dozen', 'is_active' => true]);
         $bill = app(CommercialApplicationService::class)->create('purchase', $this->purchaseData($item, [
             'items' => [['product_id' => $item->id, 'qty' => 2, 'purchase_unit_id' => 2, 'net_unit_cost' => 120]]]), 'dozen-history', 1, $this->context());

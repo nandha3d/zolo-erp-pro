@@ -237,15 +237,15 @@ class CapabilityEngineTest extends CompanyContextTestCase
         request()->setUserResolver(fn () => User::findOrFail(1));
         $data = ['role' => (object) ['name' => 'Admin'], 'general_setting' => (object) ['modules' => 'manufacturing']];
         $disabled = view('backend.layout.sidebar', $data)->render();
-        $this->assertStringNotContainsString('id="manufacturing"', $disabled);
+        $this->assertStringNotContainsString('id="manufacturing-menu"', $disabled);
         $this->assertStringContainsString('id="sale-list-menu"', $disabled);
         $this->service->enable('manufacturing.bom', [], $this->context, 1);
         $this->service->enable('manufacturing.production', [], $this->context, 1);
         $enabled = view('backend.layout.sidebar', $data)->render();
-        $this->assertStringContainsString('id="manufacturing"', $enabled);
+        $this->assertStringContainsString('id="manufacturing-menu"', $enabled);
         $this->app->instance(CapabilityService::class, new CapabilityService);
         $gated = view('backend.layout.sidebar', $data)->render();
-        $this->assertStringNotContainsString('id="manufacturing"', $gated);
+        $this->assertStringNotContainsString('id="manufacturing-menu"', $gated);
         foreach (['damage-stock-menu', 'sale-exchange-menu', 'installment-menu', 'whatsapp'] as $id) {
             $this->assertStringNotContainsString('id="'.$id.'"', $gated);
         }

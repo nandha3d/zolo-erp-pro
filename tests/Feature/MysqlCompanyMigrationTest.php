@@ -116,6 +116,8 @@ class MysqlCompanyMigrationTest extends TestCase
     public function test_accounting_migration_resumes_committed_ddl_preserves_records_and_refuses_unsafe_rollback(): void
     {
         $this->assertSame(0, Artisan::call('migrate', ['--database' => 'erp_regression', '--force' => true]));
+        // Collection tracking references open items, so it rolls back first.
+        (require database_path('migrations/2026_10_19_000012_create_collection_tracking.php'))->down();
         $migration = require database_path('migrations/2026_10_04_000002_harden_accounting_and_create_open_items.php');
         $migration->down();
         DB::table('companies')->insert([

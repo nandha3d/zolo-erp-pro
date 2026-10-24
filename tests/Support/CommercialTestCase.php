@@ -25,8 +25,8 @@ abstract class CommercialTestCase extends CompanyErpServiceTestCase
             });
         }
         Schema::table('customers', function (Blueprint $t) { $t->decimal('credit_limit', 18, 4)->nullable(); $t->unsignedInteger('customer_group_id')->nullable(); });
-        Schema::table('units', function (Blueprint $t) { $t->string('unit_name')->nullable(); $t->string('unit_code')->nullable(); });
-        DB::table('units')->update(['unit_name' => 'PCS', 'unit_code' => 'PCS']);
+        Schema::table('units', function (Blueprint $t) { $t->string('unit_name')->nullable(); $t->string('unit_code')->nullable(); $t->boolean('is_active')->default(true); });
+        DB::table('units')->update(['unit_name' => 'PCS', 'unit_code' => 'PCS', 'is_active' => true]);
         Schema::table('products', function (Blueprint $t) {
             $t->boolean('is_active')->default(true);
             $t->unsignedInteger('unit_id')->nullable();

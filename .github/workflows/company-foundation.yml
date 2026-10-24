@@ -16,13 +16,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [company, commercial, compliance, operations, delivery, legacy-mysql]
+        suite: [company, commercial, concurrency, compliance, operations, delivery, legacy-mysql]
     services:
       mysql:
         image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: fixture-root-only
-          MYSQL_DATABASE: zolo_test_foundation
+          # The concurrency suite refuses any database but its own.
+          MYSQL_DATABASE: ${{ matrix.suite == 'concurrency' && 'zolo_test_textile_concurrency' || 'zolo_test_foundation' }}
           MYSQL_USER: zolo_test
           MYSQL_PASSWORD: fixture-only
         ports: ['3306:3306']
@@ -33,7 +34,7 @@ jobs:
       APP_ENV: testing
       APP_KEY: base64:dGVzdC1vbmx5LWF1ZGl0LWZpeHR1cmUta2V5LTEyMzQ=
       ERP_TEST_MYSQL: '1'
-      ERP_TEST_MYSQL_DATABASE: zolo_test_foundation
+      ERP_TEST_MYSQL_DATABASE: ${{ matrix.suite == 'concurrency' && 'zolo_test_textile_concurrency' || 'zolo_test_foundation' }}
       ERP_TEST_MYSQL_USER: zolo_test
       ERP_TEST_MYSQL_PASSWORD: fixture-only
       CACHE_DRIVER: array
