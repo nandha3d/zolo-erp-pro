@@ -47,7 +47,8 @@ body.dark-mode .product-workspace-view table.table tbody tr:hover td { backgroun
 /* Keep the bar on one line: drop the subtitle badge, then pill icons, as width shrinks. */
 @media (max-width: 1750px) { .product-command-bar .comm-title-badge { display: none; } }
 @media (max-width: 1750px) { .product-command-bar .comm-nav-pills .nav-link i { display: none; } }
-.product-command-bar .comm-nav-pills { flex-wrap: nowrap; }
+/* Pills wrap to a second line rather than slide under the action buttons on narrow screens. */
+.product-command-bar .comm-nav-pills { flex-wrap: wrap; flex: 0 1 auto; row-gap: 2px; }
 /* Product list filter panel: no empty card frame while the filters are closed. */
 .product-workspace-view .product-filter-card:not(:has(#filter-card[style*="block"])) { border: 0; margin: 0 !important; background: transparent; box-shadow: none; }
 .product-command-bar .comm-title-group { flex: none; }

@@ -28,7 +28,9 @@ class ComplianceController extends Controller
             'rates' => DB::table('tax_rates')->where($scope)->orderBy('effective_from')->get(),
             'profiles' => DB::table('print_profiles')->where($scope)->get(),
             'channels' => DB::table('document_channels')->where($scope)->get(['channel', 'is_active']),
-            'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->get(),
+            'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->whereNull('external_job_order_id')->get(),
+            'products' => \App\Models\Product::forCompany($context)->where('type', 'standard')->where('is_active', true)->orderBy('name')
+                ->get(['id', 'name', 'code', 'is_batch']),
             'policy' => \App\Models\Company::findOrFail($context->companyId)->settings_json['return_policy'] ?? null,
             'canManage' => app(\App\Services\Platform\CompanyContextResolver::class)->canManageFinancialYears($request->user()->id, $context->companyId)]);
     }
@@ -52,7 +54,35 @@ class ComplianceController extends Controller
         $from = $request->input('from', $year->start_date->toDateString()); $to = $request->input('to', $year->end_date->toDateString());
         $rows = app(GstProjectionService::class)->report($context, $from, $to);
         return $request->expectsJson() ? response()->json(['data' => $rows])
-            : view('backend.compliance.report', compact('context', 'rows', 'from', 'to'));
+            : view('backend.compliance.report', compact('context', 'rows', 'from', 'to') + $this->reviewSummary($rows));
+    }
+
+    /** Signed per-document, per-section and per-HSN totals of the posted snapshots, for the review screen only. */
+    private function reviewSummary(array $rows): array
+    {
+        $taxes = ['taxable_value', 'cgst', 'sgst', 'igst', 'cess'];
+        $documents = collect($rows)->map(function ($row) use ($taxes) {
+            $sign = ($row['snapshot']['sign'] ?? 1) < 0 ? -1 : 1;
+            $lines = collect($row['snapshot']['lines'] ?? []);
+            $inward = $row['section'] === 'inward';
+            return $row + array_combine($taxes, array_map(fn ($tax) => $sign * (float) $lines->sum($tax), $taxes)) + [
+                'sign' => $sign, 'total' => $sign * (float) ($row['snapshot']['grand_total'] ?? 0),
+                // The other party: the supplier on inward documents, the buyer on outward ones.
+                'party' => $inward ? ($row['snapshot']['seller_name'] ?? null) : ($row['snapshot']['buyer_name'] ?? null),
+                'party_gstin' => $inward ? ($row['snapshot']['seller_gstin'] ?? null) : ($row['snapshot']['buyer_gstin'] ?? null),
+                'place' => $row['snapshot']['place_of_supply'] ?? null];
+        });
+        $sum = fn ($set) => array_combine($taxes, array_map(fn ($tax) => round($set->sum($tax), 2), $taxes)) + ['count' => $set->count(), 'total' => round($set->sum('total'), 2)];
+        $hsn = $documents->where('section', '!=', 'inward')->flatMap(fn ($row) => collect($row['snapshot']['lines'] ?? [])
+            ->map(fn ($line) => ['key' => ($line['hsn_sac'] ?? '—').'|'.($line['rate'] ?? 0), 'hsn' => $line['hsn_sac'] ?? '—', 'rate' => (float) ($line['rate'] ?? 0)]
+                + array_combine($taxes, array_map(fn ($tax) => $row['sign'] * (float) ($line[$tax] ?? 0), $taxes))))
+            ->groupBy('key')->map(fn ($set) => ['hsn' => $set->first()['hsn'], 'rate' => $set->first()['rate']] + $sum($set))->sortBy('hsn')->values();
+        $outward = $documents->where('section', '!=', 'inward'); $inward = $documents->where('section', 'inward');
+        $tax = fn ($set) => $set->sum('cgst') + $set->sum('sgst') + $set->sum('igst') + $set->sum('cess');
+
+        return ['documents' => $documents->values(), 'sections' => $documents->groupBy('section')->map($sum), 'hsn' => $hsn,
+            'kpi' => ['outward_taxable' => $outward->sum('taxable_value'), 'output_tax' => $tax($outward),
+                'inward_taxable' => $inward->sum('taxable_value'), 'input_tax' => $tax($inward), 'net' => $tax($outward) - $tax($inward)]];
     }
 
     public function export(Request $request)

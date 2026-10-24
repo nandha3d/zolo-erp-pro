@@ -36,6 +36,22 @@ class SharedCommercialTest extends CommercialTestCase
         $this->assertEquals([$purchases[2]->id], \App\Models\Purchase::withLegacyPaymentStatus(2)->pluck('id')->all());
     }
 
+    public function test_credit_days_typed_on_the_bill_set_its_due_date_over_the_supplier_standard(): void
+    {
+        DB::table('suppliers')->where('id', 1)->update(['credit_days' => 30]);
+        $product = $this->stock();
+        $due = function (array $extra, string $key) use ($product) {
+            $purchase = app(PurchaseApplicationService::class)->create(new PurchaseCommand($this->purchaseData($product, $extra), $key, 1, $this->context()));
+            return json_decode((string) DB::table('purchases')->where('id', $purchase->id)->value('attributes_json'), true)['due_date'] ?? null;
+        };
+
+        $this->assertSame('2026-11-02', $due([], 'terms-standard'));
+        $this->assertSame('2026-11-17', $due(['credit_days' => 45], 'terms-typed'));
+        $this->assertSame('2026-10-03', $due(['credit_days' => 0], 'terms-cash'));
+        $this->expectException(ValidationException::class);
+        $due(['credit_days' => 5000], 'terms-too-long');
+    }
+
     private function sale(array $data, string $key = 'test-sale'): Sale
     {
         return app(SaleApplicationService::class)->create(new SaleCommand($data, $key, 1, $this->context()));

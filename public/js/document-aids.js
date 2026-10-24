@@ -20,31 +20,18 @@
     const text = (tag, value, className) => { const node = document.createElement(tag); node.textContent = value; if (className) node.className = className; return node; };
 
     /* ----------------------------------------------------------- previous rates */
+    // Shown as a hover title on the rate box so rows stay one line tall; Rate history holds the full list.
     if (aids.previous_rates && config.shared) {
         const cache = new Map();
         const rateOf = line => Number(purchase ? line.net_unit_cost : line.net_unit_price) || 0;
         const draw = (row, response) => {
-            row.find('.row-prev-rate').remove();
-            const lines = response.data || [];
-            if (!lines.length) return;
-            const line = lines[0];
-            const hint = $('<a class="row-prev-rate" role="button" tabindex="0">').text('Last ' + money(rateOf(line)) + ' × ' + Number(line.qty))
-                .attr('title', 'Previous rate for this party. Click to use it.');
-            const apply = () => {
-                const unit = config.units.find(unit => unit.unit_name === row.find('.row-unit-select').val());
-                const factor = Number(response.unit_factors?.[unit?.id]);
-                if (!(factor > 0) || !(Number(line.base_factor) > 0) || !response.currency || line.currency !== response.currency) {
-                    workspace.status('Previous rate requires compatible units and company currency.', true); return;
-                }
-                row.find('.row-rate').val((rateOf(line) / Number(line.base_factor) * factor).toFixed(4)).trigger('input');
-            };
-            hint.on('click', apply).on('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); apply(); } });
-            row.find('.row-rate').closest('td').append(hint);
+            const line = (response.data || [])[0];
+            row.find('.row-rate').attr('title', line ? 'Last rate for this party: ' + money(rateOf(line)) + ' × ' + Number(line.qty) : null);
         };
         const show = row => {
             const productId = Number(row.find('.row-product-id').val());
             const party = $(partySelector).val();
-            row.find('.row-prev-rate').remove();
+            row.find('.row-rate').removeAttr('title');
             if (!productId || !party) return;
             const key = party + ':' + productId;
             if (cache.has(key)) { draw(row, cache.get(key)); return; }

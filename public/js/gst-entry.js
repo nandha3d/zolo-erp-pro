@@ -24,12 +24,13 @@
     }).join('');
     var $gstField = $(
         '<div class="field-compact-item" id="gst-entry-field" style="width:250px;flex-shrink:0;">' +
-            '<label for="gst-place-of-supply">GST · Place of supply <span id="gst-mode-badge" class="badge badge-light" style="font-size:10px;"></span></label>' +
+            '<label for="gst-place-of-supply" data-help="State where the supply takes place. Same state as your company' +
+                ' = CGST+SGST, another state = IGST. Auto works it out from the GSTINs.|33 · Tamil Nadu">GST · Place of supply <span id="gst-mode-badge" class="badge badge-light" style="font-size:10px;"></span></label>' +
             '<div class="d-flex align-items-center" style="gap:6px;">' +
                 '<select id="gst-place-of-supply" name="gst[place_of_supply]" class="form-control">' +
                     '<option value="">Auto (' + (purchase ? 'your state' : 'party state') + ')</option>' + stateOptions +
                 '</select>' +
-                (purchase ? '<label class="mb-0 d-flex align-items-center" style="gap:3px;font-size:11px;white-space:nowrap;" title="Reverse charge: you pay the GST instead of the supplier">' +
+                (purchase ? '<label class="mb-0 d-flex align-items-center" style="gap:3px;font-size:11px;white-space:nowrap;" data-help="Reverse charge: you pay the GST to the government instead of the supplier, and claim it back as input credit.|Goods transport (GTA) freight, advocate fees">' +
                     '<input type="checkbox" id="gst-reverse-charge" name="gst[reverse_charge]" value="1"> RCM</label>' : '') +
             '</div>' +
         '</div>');

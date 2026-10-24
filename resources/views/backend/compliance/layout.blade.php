@@ -47,6 +47,59 @@
         background: #141c2e;
         border-color: #334155;
     }
+    /* Card, KPI, form and table pieces shared by GST review and Tax & document settings. */
+    .cx-lead { font-size: 12.5px; color: #64748b; margin: 0 0 10px; }
+    .cx-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; }
+    .cx-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(15, 23, 42, .04); min-width: 0; }
+    .cx-card h2 { font-size: 13.5px; font-weight: 700; color: #0f172a; margin: 0 0 4px; display: flex; align-items: center; gap: 6px; }
+    .cx-card h2 i { color: #7c3aed; }
+    .cx-card > p, .cx-help { font-size: 12px; color: #64748b; margin: 0 0 10px; }
+    .cx-form { display: grid; gap: 8px 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; }
+    .cx-form .cx-span { grid-column: 1 / -1; }
+    .cx-form label, .cx-field label { display: block; font-size: 11.5px; font-weight: 600; color: #334155; margin: 0 0 3px; }
+    .cx-form input:not([type=checkbox]):not([type=hidden]), .cx-form select, .cx-filter input, .cx-filter select {
+        width: 100%; height: 32px; font-size: 13px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f172a; }
+    .cx-form .bootstrap-select { width: 100% !important; }
+    .cx-form .bootstrap-select > .dropdown-toggle { height: 32px; font-size: 13px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
+    .cx-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+    .cx-btn { height: 32px; padding: 0 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; border: 1px solid #7c3aed; background: #7c3aed; color: #fff; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; text-decoration: none; cursor: pointer; }
+    .cx-btn:hover { background: #6d28d9; color: #fff; text-decoration: none; }
+    .cx-btn.ghost { background: #fff; color: #5b21b6; border-color: #c4b5fd; }
+    .cx-btn.ghost:hover { background: #f5f3ff; color: #5b21b6; }
+    .cx-btn.danger { background: #b91c1c; border-color: #b91c1c; }
+    .cx-kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12.5px; margin: 0; }
+    .cx-kv dt { color: #64748b; font-weight: 500; }
+    .cx-kv dd { margin: 0; color: #0f172a; font-weight: 600; overflow-wrap: anywhere; }
+    .cx-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #ede9fe; color: #6d28d9; white-space: nowrap; }
+    .cx-pill.ok { background: #dcfce7; color: #166534; }
+    .cx-pill.warn { background: #fef3c7; color: #92400e; }
+    .cx-pill.muted { background: #f1f5f9; color: #475569; }
+    .cx-kpis { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 10px; }
+    .cx-kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 12px; }
+    .cx-kpi span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #64748b; }
+    .cx-kpi b { display: block; font-size: 17px; color: #0f172a; font-variant-numeric: tabular-nums; }
+    .cx-kpi.accent { border-color: #c4b5fd; background: #faf5ff; }
+    .cx-filter { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+    .cx-filter .cx-field { width: 160px; }
+    .cx-table-wrap { overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+    .cx-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 0; }
+    .cx-table th { position: sticky; top: 0; z-index: 1; background: #0f172a; color: #e2e8f0; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 7px 10px; text-align: left; white-space: nowrap; }
+    .cx-table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    .cx-table .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .cx-table tfoot td { font-weight: 700; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+    .cx-table tr.cx-detail td { background: #fafafa; color: #475569; font-size: 12px; }
+    .cx-table .cx-toggle { cursor: pointer; color: #6d28d9; font-weight: 600; border: 0; background: none; padding: 0; }
+    .cx-tabs { display: flex; gap: 4px; margin: 0 0 8px; padding: 3px; background: #f1f5f9; border-radius: 8px; width: max-content; max-width: 100%; overflow-x: auto; }
+    .cx-tabs button { border: 0; background: none; padding: 4px 12px; font-size: 12.5px; font-weight: 600; color: #475569; border-radius: 6px; white-space: nowrap; }
+    .cx-tabs button.active { background: #7c3aed; color: #fff; }
+    .cx-tabs button .cx-count { font-size: 10.5px; opacity: .8; margin-left: 4px; }
+    body.dark-mode .cx-card, body.dark-mode .cx-kpi, body.dark-mode .cx-table-wrap { background: #141c2e; border-color: #334155; }
+    body.dark-mode .cx-card h2, body.dark-mode .cx-kpi b, body.dark-mode .cx-kv dd { color: #f8fafc; }
+    body.dark-mode .cx-form label, body.dark-mode .cx-field label { color: #94a3b8; }
+    body.dark-mode .cx-form input:not([type=checkbox]):not([type=hidden]), body.dark-mode .cx-form select, body.dark-mode .cx-filter input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+    body.dark-mode .cx-table td { border-color: #1e293b; }
+    body.dark-mode .cx-table tfoot td, body.dark-mode .cx-table tr.cx-detail td, body.dark-mode .cx-tabs { background: #0f172a; }
+    body.dark-mode .cx-kpi.accent { background: #1e1b2e; border-color: #6d28d9; }
 </style>
 
 @if(!empty($side))

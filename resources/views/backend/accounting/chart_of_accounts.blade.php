@@ -300,7 +300,7 @@
                         </select>
                     </div>
                     <div class="form-group mb-2">
-                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">Opening Balance</label>
+                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;" data-help="Balance of the ledger on the day you start. New ledgers start at zero; post a dated opening balance through the opening-balance migration.|0.00">Opening Balance</label>
                         <input type="number" step="0.01" name="opening_balance" readonly aria-describedby="opening-balance-policy" class="form-control form-control-sm" value="0.00" style="height:32px; font-size:12.5px; background:#f1f5f9;">
                         <small id="opening-balance-policy" class="text-muted" style="font-size: 10.5px;">New accounts start at zero. Dated opening balances require the separate opening-balance migration.</small>
                     </div>

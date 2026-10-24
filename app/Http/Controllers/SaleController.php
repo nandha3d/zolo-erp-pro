@@ -532,7 +532,8 @@ class SaleController extends Controller
                 $user = $sale->user;
                 $nestedData['id'] = $sale->id;
                 $nestedData['key'] = $key;
-                $nestedData['date'] = date(config('date_format').' h:i:s a', strtotime($sale->created_at));
+                // Business-date documents are stored at midnight; only show a clock time when one was recorded.
+                $nestedData['date'] = date(config('date_format').(date('H:i:s', strtotime($sale->created_at)) === '00:00:00' ? '' : ' h:i a'), strtotime($sale->created_at));
                 $nestedData['reference_no'] = $sale->reference_no;
                 $nestedData['bale_no'] = e($sale->attributes_json['bale_no'] ?? $sale->bale_no ?? '');
                 $nestedData['transport_name'] = e($sale->attributes_json['transport_name'] ?? $sale->transport_name ?? '');

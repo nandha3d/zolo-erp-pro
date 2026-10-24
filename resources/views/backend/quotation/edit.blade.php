@@ -416,8 +416,8 @@
 
 @push('scripts')
 <script type="text/javascript">
-    $("ul#quotation").siblings('a').attr('aria-expanded','true');
-    $("ul#quotation").addClass("show");
+    $("ul#sale").siblings('a').attr('aria-expanded','true');
+    $("ul#sale").addClass("show");
 
 // array data depend on warehouse
 var lims_product_array = [];

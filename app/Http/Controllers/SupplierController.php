@@ -99,7 +99,7 @@ class SupplierController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('suppliers-add')){
             $lims_customer_group_all = CustomerGroup::where('is_active',true)->get();
-            return view('backend.supplier.create', compact('lims_customer_group_all'));
+            return view('backend.supplier.create', compact('lims_customer_group_all') + $this->formMasters());
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -120,7 +120,7 @@ class SupplierController extends Controller
             ]);
         }
 
-        $request->validate(['opening_balance' => 'nullable|numeric|min:0']);
+        $request->validate(['opening_balance' => 'nullable|numeric|min:0'] + Supplier::purchaseDefaultRules());
         $openingBalance = (float) ($request->opening_balance ?? 0);
         $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
         $openings = app(\App\Services\Accounting\PartyOpeningBalanceService::class);
@@ -128,6 +128,7 @@ class SupplierController extends Controller
 
         $lims_supplier_data = $request->except('image');
         $lims_supplier_data['is_active'] = true;
+        $lims_supplier_data['purchase_defaults'] = Supplier::cleanPurchaseDefaults($request->input('purchase_defaults'));
         $image = $request->image;
         if ($image) {
             $imageName = app(\App\Services\Documents\PrivateFileStorage::class)->store($image, 'supplier');
@@ -248,10 +249,21 @@ class SupplierController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('suppliers-edit')){
             $lims_supplier_data = Supplier::findOrFail($id);
-            return view('backend.supplier.edit',compact('lims_supplier_data'));
+            return view('backend.supplier.edit', compact('lims_supplier_data') + $this->formMasters());
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+    }
+
+    /** Pick lists for the supplier form: this company's areas and agents, and GST state names. */
+    private function formMasters(): array
+    {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $scoped = fn (string $model) => $model::when($context, fn ($q) => $q->where('company_id', $context->companyId))
+            ->where('is_active', true)->orderBy('name')->get(['id', 'name']);
+
+        return ['areas' => $scoped(\App\Models\Area::class), 'agents' => $scoped(\App\Models\Agent::class),
+            'states' => \App\Services\Tax\Gstin::$states];
     }
 
     public function update(Request $request, $id)
@@ -261,11 +273,12 @@ class SupplierController extends Controller
 
             'email' => \App\Support\CompanyUnique::rules('suppliers', (int) $id),
             'image' => 'image|mimes:jpg,jpeg,png,gif|max:100000',
-        ]);
+        ] + Supplier::purchaseDefaultRules());
 
         $lims_supplier_data = Supplier::findOrFail($id);
 
         $input = $request->except('image');
+        if ($request->has('purchase_defaults')) $input['purchase_defaults'] = Supplier::cleanPurchaseDefaults($request->input('purchase_defaults'));
         $image = $request->image;
         if ($image) {
             $oldImage = $lims_supplier_data->image;

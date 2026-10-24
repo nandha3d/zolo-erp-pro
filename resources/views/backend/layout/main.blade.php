@@ -235,6 +235,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
   <!-- One-screen app shell: compact header, viewport-locked page, lists sized to fit -->
   <link rel="stylesheet" href="<?php echo versioned_asset('css/app-shell.css') ?>" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/field-help.css') ?>" type="text/css">
 
   @stack('css')
 
@@ -1329,6 +1330,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
   <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
   <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('js/table-polish.js') }}"></script>
   @endif
   @else
   <script type="text/javascript" src="<?php echo versioned_asset('vendor/jquery/jquery.min.js') ?>"></script>
@@ -1385,6 +1387,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.fixedHeader.min.js') }}"></script>
   <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/dataTables.responsive.min.js') }}"></script>
   <script type="text/javascript" src="{{ versioned_asset('vendor/datatable/responsive.bootstrap.min.js') }}"></script>
+  <script type="text/javascript" src="{{ versioned_asset('js/table-polish.js') }}"></script>
 
   <script type="text/javascript" src="{{ versioned_asset('js/barcode-qrcode-scanner_plugin.js') }}"></script>
 
@@ -1796,6 +1799,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   </script>
   <script type="text/javascript" src="<?php echo versioned_asset('js/sidebar-state.js') ?>"></script>
   <script type="text/javascript" src="<?php echo versioned_asset('js/app-shell.js') ?>"></script>
+  <script type="text/javascript" src="<?php echo versioned_asset('js/field-help.js') ?>"></script>
 </body>
 
 </html>

@@ -117,15 +117,13 @@
                 @if($isAdmin || $canNavigate('purchase-return-index'))
                     <li id="purchase-return-menu"><a href="{{route('return-purchase.index')}}">Returns</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('suppliers-index'))
-                    <li><a href="{{route('supplier.index')}}">Suppliers</a></li>
-                @endif
+                {{-- Suppliers are a party master and live once, under People beside Customers. --}}
             </ul>
         </li>
     @endif
 
     {{-- Sale Menu --}}
-    @if($isAdmin || $canNavigate('sidebar_sale') || $canNavigate('packing_slip_challan') || $canNavigate('delivery') || $canNavigate('delivery-challans-index'))
+    @if($isAdmin || $canNavigate('sidebar_sale') || $canNavigate('packing_slip_challan') || $canNavigate('delivery') || $canNavigate('delivery-challans-index') || $canNavigate('quotes-index'))
         <li>
             <a href="#sale" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-cart"></i>
@@ -163,7 +161,7 @@
                     <li id="sale-return-menu"><a href="{{route('return-sale.index')}}">Returns</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('quotes-index'))
-                    <li><a href="{{route('quotations.index')}}">Quotations</a></li>
+                    <li id="quotation-list-menu"><a href="{{route('quotations.index')}}">Quotations</a></li>
                 @endif
                 @if(in_array('sales.exchange', $enabledCapabilities, true))
                     <li id="sale-exchange-menu"><a href="{{route('exchange.index')}}">Product Exchange</a></li>
@@ -175,20 +173,7 @@
         </li>
     @endif
 
-    {{-- Quotation Menu --}}
-    @if($isAdmin || $canNavigate('sidebar_quotation'))
-        <li>
-            <a href="#quotation" aria-expanded="false" data-toggle="collapse">
-                <i class="dripicons-document"></i>
-                <span>{{__('db.Quotation')}}</span>
-            </a>
-            <ul id="quotation" class="collapse list-unstyled">
-                @if($isAdmin || $canNavigate('quotes-index'))
-                    <li id="quotation-list-menu"><a href="{{route('quotations.index')}}">{{__('db.Quotation List')}}</a></li>
-                @endif
-            </ul>
-        </li>
-    @endif
+    {{-- Quotations are a pre-sale document and live once, under Sales Command Center. --}}
 
     {{-- Transfer Menu --}}
     @if($isAdmin || $canNavigate('sidebar_transfer'))
@@ -434,17 +419,8 @@
         <li><a href="{{ url('/operations/profiles') }}"><i class="dripicons-gear"></i><span>Business profile</span></a></li>
     @endif
     @if(in_array('manufacturing.production', $enabledCapabilities, true))
-        <li>
-            <a href="#manufacturing" aria-expanded="false" data-toggle="collapse">
-                <i class="fa fa-industry"></i>
-                <span>{{__('db.Manufacturing')}}</span>
-            </a>
-            <ul id="manufacturing" class="collapse list-unstyled">
-                <li id="production-list-menu"><a href="{{url('/operations/manufacturing')}}">{{__('db.Production List')}}</a></li>
-                <li id="production-create-menu"><a href="{{url('/operations/manufacturing')}}">{{__('db.Add Production')}}</a></li>
-                <li id="recipe-menu"><a href="{{url('/operations/manufacturing')}}">{{__('db.Recipe')}}</a></li>
-            </ul>
-        </li>
+        {{-- BOMs, production orders and completion are tabs of one screen. --}}
+        <li id="manufacturing-menu"><a href="{{url('/operations/manufacturing')}}"><i class="fa fa-industry"></i><span>{{__('db.Manufacturing')}}: BOM &amp; Production</span></a></li>
     @endif
 
     <!-- SECTION: ANALYTICS & INTELLIGENCE -->

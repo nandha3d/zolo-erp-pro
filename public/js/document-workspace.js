@@ -218,10 +218,10 @@
         snapshot, restore, stable, reset, party: partyMeta, focus: focusFirst, inDocument, legacy: legacySnapshot,
         rows: document.getElementById('order-table-body'),
         handles: entry => entry.id === config.kind || (entry.id === 'purchase-order' && purchase && !!config.purchaseOrders),
-        closed: () => { grid.resetFormToNew(); grid.switchWorkspaceMode('register'); },
-        // Existing drafts are listed, but the register stays the workspace until one is chosen.
-        // A conversion link (?from_grn / from_dc / from_quotation) is the document being worked on, so it stays visible.
-        idle: hasTabs => { if (hasTabs && !/[?&]from_(grn|dc|quotation)=/.test(location.search)) grid.switchWorkspaceMode('register'); },
+        // Split view (blank bill + bill list) is the home screen: opening the page or closing a tab lands there,
+        // never on the full-width register. The blank bill becomes a draft tab only once the user types into it.
+        closed: () => { grid.resetFormToNew(); grid.switchWorkspaceMode('voucher'); },
+        idle: () => grid.switchWorkspaceMode('voucher'),
         startOptions: query => ({doc: query.get('doc') === 'order' ? 'order' : undefined}),
         localShortcuts: [
             {key: 'Alt+I', label: 'Focus item search'}, {key: 'F6', label: 'Create a new item'}, {key: 'Ctrl+Shift+F', label: 'Hide / show the top bar'},

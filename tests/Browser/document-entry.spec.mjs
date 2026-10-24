@@ -118,7 +118,8 @@ try {
     await openKind(page, 'purchase');
     const restored = await tabsOf(page);
     check('reload restores the server draft tabs', restored.length === 2 && restored.every(tab => tab.draftId), JSON.stringify(restored));
-    check('reload leaves the register as the workspace (no blank bill auto-opened)', await page.isVisible('#fullwidth-register-view') && !(await page.isVisible('#purchase-entry-form')));
+    check('reload opens split view (blank bill + list) without creating a draft tab', await page.isVisible('#purchase-entry-form') && !(await page.isVisible('#fullwidth-register-view'))
+        && (await tabsOf(page)).length === 2);
     await page.locator('.document-tab-open').first().click();
     await page.waitForFunction(() => window.zoloDocumentWorkspace.snapshot().form.lines.some(line => line.controls.some(c => c.value === 'ITEM-A')));
     check('a restored tab rebuilds its tracking after reload', (await snap(page)).form.lines[0].controls.some(c => c.value === 'BATCH-A'));

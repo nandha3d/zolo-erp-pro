@@ -8,7 +8,7 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-23 (+05:30) — edit/delete audit (section 56), merged origin/ui (sections 57-62)
+- **Last Updated:** 2026-10-24 (+05:30) — Add Account freeze fix + field help everywhere (section 64)
 - **Active Git Branch:** ui (synchronized with origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
@@ -1519,3 +1519,28 @@ User: Sale Type Master (and other master registers) had only a delete button; "c
   20. Complete Procedural Sweep: **66 / 66 primary ERP menus returned HTTP 200 OK**.
 - **Interactive HTML Report Generated:**
   - File: [`fmcg_food_erp_test_results.html`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/fmcg_food_erp_test_results.html) with full KPI summary cards, stock ledger transitions table, channel revenue breakdowns, step logs, modal screenshots, and audited menu latencies.
+
+---
+
+## 63. Purchase Entry Help/Terms/Party Defaults, Dark Fixes, Clean Tables Everywhere (2026-10-24, uncommitted)
+
+User feedback items 1-9 (purchase bill screen, theme, registers, product list):
+1. **"Last ₹x × qty" hint removed** from under each rate (`document-aids.js`): now a hover `title` on the rate box ("Last rate for this party: ..."); Rate history button keeps the list. `tests/Browser/document-aids.spec.mjs` updated; `.row-prev-rate` CSS removed.
+2. **Field help "i" icons**: `public/js/field-help.js` (loaded from `partials/command-center-form.blade.php`) turns `label[data-help="What it is.|Example"]` into an icon with a shared fixed tip. Purchase header labels carry help text; GST place of supply + RCM labels get it from `gst-entry.js`.
+3. **Terms editable**: `#header-credit-days` number input in the Terms strip, synced with `#hidden-credit-days`/`#drawer-credit-days`; blank = supplier standard (placeholder shows it). Cash/Bank/etc. hide it and post 0. Server: `CommercialApplicationService` due date now uses bill `credit_days` (validated 0-3650) before `party->credit_days`. Test `SharedCommercialTest::test_credit_days_typed_on_the_bill_set_its_due_date_over_the_supplier_standard`.
+4. **Supplier standard purchase terms**: migration `2026_10_24_000001_add_purchase_defaults_to_suppliers` (json `purchase_defaults`: payment_mode, nature, place_of_supply, reverse_charge, note), `Supplier::purchaseDefaultRules()/cleanPurchaseDefaults()`, "Purchase bill defaults" section in `supplier/partials/form.blade.php`. Purchase page reads `data-defaults` on the supplier option and applies them only on a user pick (`changed.bs.select` with numeric clickedIndex), never on bill/draft restore. Applied on dev DB.
+5. **Dark theme**: grid select chevrons tiled (dark `background:` shorthand reset repeat) — fixed; side panel search/filter inputs and bootstrap-select wrappers dark.
+6/8/9. **Tables everywhere**: `public/js/table-polish.js` (loaded in `layout/main.blade.php` after Responsive) — Responsive plugin made inert (no "+" child rows), rows one line, columns that do not fit auto-hidden (same-value-on-every-row first, then low-value, money/qty last, then greedy refill) as real DataTables visibility, labelled "Columns · N hidden" picker on every table, viewer choice saved per page in localStorage, refit via ResizeObserver. CSS in `app-shell.css` (one-line toolbar, centred). `app-shell.js fitWideTables` skips DataTables. Product list: no thumbnails (name escaped), duplicate Reviewed import button removed, nav pills wrap instead of sliding under actions, Product Details dialog redesigned (label grid, image only when real, IMEI column only when present). Sales register date drops midnight "12:00:00 am". Stock by lot rewritten: one-line filters, trimmed quantities, all-zero Custody/GDNI columns and single-godown column dropped with a caption note.
+- Dark theme also covers the full-width register (title, KPI cards, filter bar, table toolbar buttons, pager). Verified: SharedCommercial, CommercialUiWiring, TextileInventoryDefaults, OptechMasterWeb, CommercialBoundaries suites green (69 tests); browser spec document-aids.spec.mjs updated but not re-run.
+
+### 63b. Split view default, help everywhere (2026-10-24)
+- Bills (purchase/sales) always open in split view: `document-workspace.js` idle/closed now switch to 'voucher' (was full-width register when draft tabs existed). `tests/Browser/document-entry.spec.mjs` assertion updated.
+- Party details/Terms label column 84px -> 108px so the help icon is not hidden under the strip (container query in commercial-workspace.css).
+- `field-help.js` is global (main layout, after app-shell.js) with an ERP glossary (~150 terms) auto-attaching help to matching form labels on every page; explicit data-help wins; MutationObserver covers modals/ajax forms. CSS moved to app-shell.css. Checked 11 pages: icons present, none covered.
+
+## 64. Add Account Freeze Fix + Field Help on Every Entry Field (2026-10-24, uncommitted)
+- **Freeze root cause**: `commercial-workspace.css` (loaded by 54 views) forces `.modal-backdrop` to z-index 1050 and lifted only 11 named purchase/sales dialogs to 1055. Every other dialog on those pages (Chart of Accounts "Add Account", etc.) sat at Bootstrap's 1050, so the later-appended backdrop covered it and swallowed all clicks. Fix: the rule is now `.modal { z-index: 1055 !important; }`.
+- **Field help everywhere**: `field-help.js` glossary grew from ~150 to ~520 terms (accounting, vouchers, masters, HR, production, compliance, settings, invoice/barcode setup, company picker). Label matching ignores `(₹)`, `(Optional)`, `[+]`, trailing dots, `No.` and hint text in `small`/`kbd`/`.cp-opt`. Gateway/SMS credential labels (api_key, client_secret, ...) share one pattern-based help. Icon goes next to the words when the label wraps its field (bare text is wrapped in a span so stacked labels keep icon inline).
+- CSS moved from `app-shell.css` to new `public/css/field-help.css`, linked from `layout/main`, `layout/top-head` (POS) and `company/select`; the script is now also loaded on POS and the company picker. Picker search label has `data-no-help`.
+- Chart of Accounts Opening Balance label has its own `data-help` (ledger opening, read-only).
+- Verified with a Playwright crawl of 130 menu/create pages: 0 entry labels without help (was 439 distinct labels). Add Account dialog takes typing; screenshots of COA modal, POS and company picker checked.

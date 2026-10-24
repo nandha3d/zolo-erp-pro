@@ -170,7 +170,9 @@ class CommercialApplicationService
                 'type' => $kind === 'sale' ? 'dc' : 'grn', 'id' => $source->id,
                 'reference_no' => $kind === 'sale' ? $source->challan_no : $source->grn_no])->values()->all();
             if (!empty($data['round_off'])) $attributes['round_off'] = $data['round_off'];
-            $attributes['due_date'] = $data['due_date'] ?? CarbonImmutable::parse($date)->addDays((int) ($party->credit_days ?? 0))->toDateString();
+            // Terms typed on the bill win over the party's standard credit days.
+            $creditDays = is_numeric($data['credit_days'] ?? null) ? (int) $data['credit_days'] : (int) ($party->credit_days ?? 0);
+            $attributes['due_date'] = $data['due_date'] ?? CarbonImmutable::parse($date)->addDays(max(0, $creditDays))->toDateString();
             $dueDate = $attributes['due_date'];
             if (!is_string($dueDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $dueDate)
                 || !checkdate((int) substr($dueDate, 5, 2), (int) substr($dueDate, 8, 2), (int) substr($dueDate, 0, 4)) || $dueDate < $date) {
@@ -264,6 +266,7 @@ class CommercialApplicationService
             'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id']));
         if (isset($attributes['job_work_receipt_id'])) validator($attributes, ['job_work_receipt_id' => 'integer|min:1'])->validate();
         foreach (['bale_count', 'bundle_count', 'no_of_bales'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
+        if (isset($attributes['credit_days']) && $attributes['credit_days'] !== '') validator($attributes, ['credit_days' => 'integer|min:0|max:3650'])->validate();
         foreach ($attributes as $key => $value) {
             if ($value === null) {
                 unset($attributes[$key]);

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sweet Soil End-to-End</title>
+<style>
+:root {
+    --bg: #f6f4ee; --surface: #ffffff; --surface-2: #faf8f2; --ink: #1f2a1c; --muted: #66705f; --line: #e3dfd2;
+    --brand: #3f6b2a; --brand-soft: #e7f0de; --accent: #b4632b; --accent-soft: #f8e9dc; --good: #2f7a3b; --warn: #a15c00; --bad: #b3261e;
+    --shadow: 0 1px 2px rgba(31, 42, 28, .06), 0 4px 16px rgba(31, 42, 28, .05);
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #141812; --surface: #1c2219; --surface-2: #20271d; --ink: #e8ecdf; --muted: #a2ab97; --line: #323b2c;
+        --brand: #9cc97e; --brand-soft: #26341e; --accent: #e9a06a; --accent-soft: #3a2a1d; --good: #7fcf8a; --warn: #f0b45a; --bad: #ff8a80;
+        --shadow: none;
+    }
+}
+:root[data-theme="dark"] {
+    --bg: #141812; --surface: #1c2219; --surface-2: #20271d; --ink: #e8ecdf; --muted: #a2ab97; --line: #323b2c;
+    --brand: #9cc97e; --brand-soft: #26341e; --accent: #e9a06a; --accent-soft: #3a2a1d; --good: #7fcf8a; --warn: #f0b45a; --bad: #ff8a80;
+    --shadow: none;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.55 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+a { color: var(--brand); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+header.hero { background: var(--surface); border-bottom: 1px solid var(--line); }
+.hero .wrap { display: flex; gap: 18px; align-items: center; padding-top: 22px; padding-bottom: 22px; flex-wrap: wrap; }
+.hero img { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: #fff; border: 1px solid var(--line); }
+.hero h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.hero p { margin: 2px 0 0; color: var(--muted); }
+.pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--brand-soft); color: var(--brand); }
+.pill.accent { background: var(--accent-soft); color: var(--accent); }
+.pill.bad { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.meta { margin-left: auto; text-align: right; color: var(--muted); font-size: 12.5px; }
+.meta code { font-size: 12px; }
+nav.toc { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+nav.toc .wrap { display: flex; gap: 4px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; scrollbar-width: none; }
+nav.toc a { white-space: nowrap; text-decoration: none; color: var(--muted); padding: 5px 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+nav.toc a:hover { background: var(--surface); color: var(--ink); }
+section { padding: 28px 0 8px; }
+h2 { font-size: 18px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+h2 .step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--brand); color: var(--surface); font-size: 13px; }
+h3 { font-size: 14.5px; margin: 18px 0 8px; }
+.lead { color: var(--muted); margin: 0 0 14px; max-width: 820px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.pad { padding: 14px 16px; }
+.grid { display: grid; gap: 12px; }
+.kpis { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-top: 18px; }
+.kpi { padding: 12px 14px; }
+.kpi b { display: block; font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.kpi span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; margin-top: 18px; }
+.flow .node { position: relative; padding: 12px 14px 12px 14px; background: var(--surface); border: 1px solid var(--line); margin-right: 18px; border-radius: 12px; }
+.flow .node:not(:last-child)::after { content: ""; position: absolute; right: -15px; top: 50%; width: 12px; height: 12px; border-top: 2px solid var(--brand); border-right: 2px solid var(--brand); transform: translateY(-50%) rotate(45deg); }
+.flow .node:last-child { margin-right: 0; }
+.flow .node small { display: block; color: var(--accent); font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.flow .node strong { display: block; font-size: 13.5px; margin: 2px 0; }
+.flow .node em { font-style: normal; color: var(--muted); font-size: 12px; }
+.callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 18px 0 0; }
+.callout b { color: var(--accent); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-2); font-weight: 700; position: sticky; top: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tfoot td { font-weight: 700; background: var(--surface-2); border-top: 1px solid var(--line); }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+details { border-top: 1px dashed var(--line); }
+details summary { cursor: pointer; padding: 8px 10px; color: var(--brand); font-weight: 600; font-size: 12.5px; }
+details[open] summary { border-bottom: 1px dashed var(--line); }
+.two { grid-template-columns: 1fr 1fr; }
+.three { grid-template-columns: repeat(3, 1fr); }
+.bom h4 { margin: 0 0 6px; font-size: 13.5px; }
+.bom ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
+.bar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; min-width: 90px; }
+.bar i { display: block; height: 100%; background: var(--brand); border-radius: 999px; }
+.build { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); min-width: 120px; }
+.build i { display: block; height: 100%; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 6px 0 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8px; }
+ol.steps li { counter-increment: s; position: relative; padding: 10px 14px 10px 50px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+ol.steps li::before { content: counter(s); position: absolute; left: 14px; top: 10px; width: 24px; height: 24px; border-radius: 7px; background: var(--brand-soft); color: var(--brand); font-weight: 700; display: grid; place-items: center; font-size: 12.5px; }
+ol.steps .path { font-weight: 600; }
+.ok { color: var(--good); font-weight: 700; }
+footer { color: var(--muted); font-size: 12px; padding: 30px 0 40px; }
+code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; font-size: 12.5px; }
+@media (max-width: 900px) {
+    .flow { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .flow .node { margin-right: 0; }
+    .flow .node::after { display: none; }
+    .two, .three { grid-template-columns: 1fr; }
+    .meta { margin-left: 0; text-align: left; }
+}
+@media print { nav.toc { display: none; } details { display: block; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<header class="hero">
+    <div class="wrap">
+        <img src="../../public/images/company/company-17-20261020052855-4b111ab9.png" alt="">        <div>
+            <h1>Sweet Soil Demo: buy bulk → pack in-house → sell to 4 channels</h1>
+            <p>Phoenicle Natures Private Limited (Demo) · GSTIN 33AAKCP4821N1Z4 · Erode, Tamil Nadu</p>
+            <p style="margin-top:6px"><span class="pill">Live data from zoloERP</span> <span class="pill accent">Demo company SWEETSOIL_DEMO</span></p>
+        </div>
+        <div class="meta">
+            Generated 23 Oct 2026, 11:40 PM<br>
+            Refresh after app entries: <code>php artisan erp:demo-sweet-soil --report-only</code>
+        </div>
+    </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+    <a href="#flow">Flow</a><a href="#masters">1 · Masters</a><a href="#buy">2 · Buy</a><a href="#pack">3 · Pack &amp; label</a>
+    <a href="#sell">4 · Sell</a><a href="#collect">5 · Collect &amp; pay</a><a href="#stock">6 · Stock &amp; batches</a>
+    <a href="#books">7 · GST &amp; books</a><a href="#how">Do it in the app</a>
+</div></nav>
+
+<main class="wrap">
+<section id="flow">
+    <h2>The business in one line</h2>
+    <p class="lead">The manufacturer supplies the product in bulk. Sweet Soil fills it into its own pouches and bottles, labels it (FSSAI, batch, MRP, expiry) and sells it to four kinds of buyer.
+        Every number on this page is read from the posted documents, stock ledger and journals of the demo company.</p>
+    <div class="flow">
+        <div class="node"><small>Setup</small><strong>Masters</strong><em>14 items · 4 channels · 5 packing BOMs</em></div>
+        <div class="node"><small>Purchase</small><strong>Buy bulk + packing</strong><em>3 bills · ₹1,14,719</em></div>
+        <div class="node"><small>Production</small><strong>Pack &amp; label</strong><em>1,560 packs &amp; hampers · 5 batches</em></div>
+        <div class="node"><small>Sales</small><strong>Sell to 4 channels</strong><em>4 invoices · ₹99,815 + GST</em></div>
+        <div class="node"><small>Cash</small><strong>Collect &amp; pay</strong><em>7 receipts / payments</em></div>
+        <div class="node"><small>Control</small><strong>Stock, GST, books</strong><em>FEFO batches · trial balance balanced</em></div>
+    </div>
+    <div class="grid kpis">
+        <div class="card kpi"><span>Bought (incl. GST)</span><b>₹1,14,719</b></div>
+        <div class="card kpi"><span>Sales (taxable)</span><b>₹99,815</b></div>
+        <div class="card kpi"><span>Gross margin</span><b>₹36,500</b><span style="text-transform:none">36.6% of sales</span></div>
+        <div class="card kpi"><span>To collect</span><b>₹36,603</b></div>
+        <div class="card kpi"><span>To pay</span><b>₹6,551</b></div>
+        <div class="card kpi"><span>Stock on hand</span><b>₹46,285</b></div>
+    </div>
+    <div class="callout">
+        <b>Why no job work challan here?</b> The manufacturer owns the raw material and sells you finished bulk product, so it is a normal <b>purchase</b>.
+        Filling and labelling happen at your own unit, so it is an in-house <b>packing run (BOM)</b>, not job work.
+        You would need a job work DC (Sec 143, ITC-04) only if you sent <i>your own</i> material (for example, your printed pouches) to someone else's premises.
+    </div>
+</section>
+
+<section id="masters">
+    <h2><span class="step">1</span>Masters: channels, parties, items, packing recipes</h2>
+    <p class="lead">Each customer sits in a channel (customer group), so sales and margins can be read by channel. Finished goods are batch-tracked, so every pack carries a batch, expiry and MRP.</p>
+    <div class="grid two">
+        <div class="card table-scroll"><table>
+            <thead><tr><th>Customer</th><th>Channel</th><th>GSTIN</th><th class="n">Credit</th></tr></thead>
+            <tbody><tr><td>Kongu Natural Foods Distributors<div class="muted small">Coimbatore, Tamil Nadu</div></td><td><span class="pill">Wholesale / Distributor</span></td><td class="small">33AAHFK2231M1ZG</td><td class="n">30 days</td></tr><tr><td>Thulasi Organic Store<div class="muted small">Chennai, Tamil Nadu</div></td><td><span class="pill">Organic Store</span></td><td class="small">33ABCPT5567R1ZU</td><td class="n">15 days</td></tr><tr><td>Priya Raman (website order)<div class="muted small">Chennai, Tamil Nadu</div></td><td><span class="pill">Direct Customer</span></td><td class="small">Unregistered (B2C)</td><td class="n">Prepaid</td></tr><tr><td>Celebr8 Corporate Gifting Pvt Ltd<div class="muted small">Bengaluru, Karnataka</div></td><td><span class="pill">Corporate Gifting</span></td><td class="small">29AAJCC7781E1Z9</td><td class="n">21 days</td></tr></tbody>
+        </table></div>
+        <div class="card table-scroll"><table>
+            <thead><tr><th>Supplier</th><th>Supplies</th><th>GSTIN</th><th class="n">Credit</th></tr></thead>
+            <tbody><tr><td>Kongu Palm Products<div class="muted small">Erode</div></td><td class="small">Bulk product + chocolates (manufacturer)</td><td class="small">33AAGFK3345K1ZC</td><td class="n">30 days</td></tr><tr><td>Sri Murugan Flexi Packs<div class="muted small">Tiruppur</div></td><td class="small">Pouches, bottles, gift boxes</td><td class="small">33AAPFS9902L1ZM</td><td class="n">15 days</td></tr><tr><td>Sivakasi Label Printers<div class="muted small">Sivakasi</div></td><td class="small">Printed labels</td><td class="small">33BQZPS1124H1ZK</td><td class="n">15 days</td></tr></tbody>
+        </table></div>
+    </div>
+    <h3>Items</h3>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Code</th><th>Item</th><th>Category</th><th>Unit</th><th>HSN</th><th>GST</th><th>Batch</th><th class="n">MRP</th></tr></thead>
+        <tbody><tr><td class="small">BULK-PS</td><td>Palm Sugar - bulk</td><td class="muted small">Bulk product (from manufacturer)</td><td>KG</td><td class="small">17029010</td><td class="small">5%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">BULK-RNM</td><td>Rose Neera Mix - bulk</td><td class="muted small">Bulk product (from manufacturer)</td><td>KG</td><td class="small">21069059</td><td class="small">5%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">BULK-PSY</td><td>Palm Syrup - bulk</td><td class="muted small">Bulk product (from manufacturer)</td><td>LTR</td><td class="small">17029090</td><td class="small">5%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">PM-POUCH-100</td><td>Kraft zip pouch 100g</td><td class="muted small">Packing material</td><td>PCS</td><td class="small">39232990</td><td class="small">18%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">PM-POUCH-150</td><td>Kraft zip pouch 150g</td><td class="muted small">Packing material</td><td>PCS</td><td class="small">39232990</td><td class="small">18%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">PM-BOTTLE-135</td><td>Glass bottle 135ml with cap</td><td class="muted small">Packing material</td><td>PCS</td><td class="small">70109000</td><td class="small">18%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">PM-LABEL</td><td>Sweet Soil label (FSSAI, batch, MRP)</td><td class="muted small">Packing material</td><td>PCS</td><td class="small">48211020</td><td class="small">18%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">PM-GIFTBOX</td><td>Festive gift box</td><td class="muted small">Packing material</td><td>PCS</td><td class="small">48191010</td><td class="small">18%</td><td><span class="muted small">—</span></td><td class="n">—</td></tr><tr><td class="small">PS-100</td><td>Palm Sugar 100g</td><td class="muted small">Sweet Soil finished goods</td><td>PCS</td><td class="small">17029010</td><td class="small">5%</td><td><span class="pill">Batch + expiry</span></td><td class="n">₹80</td></tr><tr><td class="small">RNM-150</td><td>Rose Neera Mix 150g</td><td class="muted small">Sweet Soil finished goods</td><td>PCS</td><td class="small">21069059</td><td class="small">5%</td><td><span class="pill">Batch + expiry</span></td><td class="n">₹239</td></tr><tr><td class="small">RNM-100</td><td>Rose Neera Mix 100g</td><td class="muted small">Sweet Soil finished goods</td><td>PCS</td><td class="small">21069059</td><td class="small">5%</td><td><span class="pill">Batch + expiry</span></td><td class="n">₹150</td></tr><tr><td class="small">PSY-135</td><td>Palm Syrup 135ml</td><td class="muted small">Sweet Soil finished goods</td><td>PCS</td><td class="small">17029090</td><td class="small">5%</td><td><span class="pill">Batch + expiry</span></td><td class="n">₹99</td></tr><tr><td class="small">PC-8</td><td>Palm Chocolate 8g</td><td class="muted small">Sweet Soil finished goods</td><td>PCS</td><td class="small">18069010</td><td class="small">5%</td><td><span class="muted small">—</span></td><td class="n">₹20</td></tr><tr><td class="small">HAMPER-FEST</td><td>Sweet Soil Festive Hamper</td><td class="muted small">Sweet Soil finished goods</td><td>PCS</td><td class="small">21069099</td><td class="small">5%</td><td><span class="pill">Batch + expiry</span></td><td class="n">₹699</td></tr></tbody>
+    </table></div>
+    <h3>Packing recipes (BOMs)</h3>
+    <div class="grid three">
+                    <div class="card pad bom"><h4>10 × Palm Sugar 100g</h4><ul>
+                <li>1 KG Palm Sugar - bulk <span class="small">(+1% spillage)</span></li><li>10 PCS Kraft zip pouch 100g</li><li>10 PCS Sweet Soil label (FSSAI, batch, MRP)</li>            </ul></div>
+                    <div class="card pad bom"><h4>20 × Rose Neera Mix 150g</h4><ul>
+                <li>3 KG Rose Neera Mix - bulk <span class="small">(+1% spillage)</span></li><li>20 PCS Kraft zip pouch 150g</li><li>20 PCS Sweet Soil label (FSSAI, batch, MRP)</li>            </ul></div>
+                    <div class="card pad bom"><h4>10 × Rose Neera Mix 100g</h4><ul>
+                <li>1 KG Rose Neera Mix - bulk <span class="small">(+1% spillage)</span></li><li>10 PCS Kraft zip pouch 100g</li><li>10 PCS Sweet Soil label (FSSAI, batch, MRP)</li>            </ul></div>
+                    <div class="card pad bom"><h4>100 × Palm Syrup 135ml</h4><ul>
+                <li>13.5 LTR Palm Syrup - bulk <span class="small">(+1% spillage)</span></li><li>100 PCS Glass bottle 135ml with cap</li><li>100 PCS Sweet Soil label (FSSAI, batch, MRP)</li>            </ul></div>
+                    <div class="card pad bom"><h4>1 × Sweet Soil Festive Hamper</h4><ul>
+                <li>1 PCS Palm Sugar 100g</li><li>1 PCS Rose Neera Mix 150g</li><li>1 PCS Palm Syrup 135ml</li><li>5 PCS Palm Chocolate 8g</li><li>1 PCS Festive gift box</li>            </ul></div>
+            </div>
+</section>
+
+<section id="buy">
+    <h2><span class="step">2</span>Buy: bulk from the manufacturer, packing material from vendors</h2>
+    <p class="lead">Three purchase bills. All suppliers are in Tamil Nadu, so input tax is CGST + SGST and is claimed as ITC. Stock goes into the main warehouse at cost before GST.</p>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Bill</th><th>Date</th><th>Supplier (their invoice)</th><th class="n">Taxable</th><th class="n">CGST</th><th class="n">SGST</th><th class="n">Total</th><th class="n">Paid</th><th class="n">Balance</th></tr></thead>
+        <tbody>
+                    <tr><td><a href="http://127.0.0.1:8080/purchases">PUR-00001</a></td><td>05 Oct 2026</td><td>Kongu Palm Products <span class="muted small">(KPP/26-27/0418)</span></td>
+                <td class="n">₹91,500.00</td><td class="n">₹2,287.50</td><td class="n">₹2,287.50</td><td class="n">₹96,075.00</td><td class="n">₹96,075.00</td>
+                <td class="n"><span class="ok">Paid</span></td></tr>
+            <tr><td colspan="9" style="padding:0"><details><summary>4 lines</summary><table>
+                <tr><td>Palm Sugar - bulk</td><td class="n">100 KG</td><td class="n">@ ₹300.00</td><td class="n">₹30,000.00</td><td class="n muted">GST 5%</td></tr><tr><td>Rose Neera Mix - bulk</td><td class="n">60 KG</td><td class="n">@ ₹600.00</td><td class="n">₹36,000.00</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Syrup - bulk</td><td class="n">30 LTR</td><td class="n">@ ₹250.00</td><td class="n">₹7,500.00</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Chocolate 8g</td><td class="n">2,000 PCS</td><td class="n">@ ₹9.00</td><td class="n">₹18,000.00</td><td class="n muted">GST 5%</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/purchases">PUR-00002</a></td><td>05 Oct 2026</td><td>Sri Murugan Flexi Packs <span class="muted small">(SMF/1187)</span></td>
+                <td class="n">₹13,880.00</td><td class="n">₹1,249.20</td><td class="n">₹1,249.20</td><td class="n">₹16,378.40</td><td class="n">₹9,827.04</td>
+                <td class="n"><span class="pill warn">₹6,551.36</span></td></tr>
+            <tr><td colspan="9" style="padding:0"><details><summary>4 lines</summary><table>
+                <tr><td>Kraft zip pouch 100g</td><td class="n">1,200 PCS</td><td class="n">@ ₹3.50</td><td class="n">₹4,200.00</td><td class="n muted">GST 18%</td></tr><tr><td>Kraft zip pouch 150g</td><td class="n">400 PCS</td><td class="n">@ ₹4.20</td><td class="n">₹1,680.00</td><td class="n muted">GST 18%</td></tr><tr><td>Glass bottle 135ml with cap</td><td class="n">250 PCS</td><td class="n">@ ₹14.00</td><td class="n">₹3,500.00</td><td class="n muted">GST 18%</td></tr><tr><td>Festive gift box</td><td class="n">100 PCS</td><td class="n">@ ₹45.00</td><td class="n">₹4,500.00</td><td class="n muted">GST 18%</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/purchases">PUR-00003</a></td><td>06 Oct 2026</td><td>Sivakasi Label Printers <span class="muted small">(SLP-2291)</span></td>
+                <td class="n">₹1,920.00</td><td class="n">₹172.80</td><td class="n">₹172.80</td><td class="n">₹2,265.60</td><td class="n">₹2,265.60</td>
+                <td class="n"><span class="ok">Paid</span></td></tr>
+            <tr><td colspan="9" style="padding:0"><details><summary>1 line</summary><table>
+                <tr><td>Sweet Soil label (FSSAI, batch, MRP)</td><td class="n">1,600 PCS</td><td class="n">@ ₹1.20</td><td class="n">₹1,920.00</td><td class="n muted">GST 18%</td></tr>            </table></details></td></tr>
+                </tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="n">₹1,07,300.00</td><td class="n">₹3,709.50</td><td class="n">₹3,709.50</td><td class="n">₹1,14,719.00</td><td class="n">₹1,08,167.64</td><td class="n">₹6,551.36</td></tr></tfoot>
+    </table></div>
+</section>
+
+<section id="pack">
+    <h2><span class="step">3</span>Pack &amp; label under the Sweet Soil brand</h2>
+    <p class="lead">Each packing run uses up the bulk product, pouches/bottles and labels on its BOM, adds the packing labour, and books the branded packs into stock with a new batch, expiry and MRP.
+        The pack cost is calculated by the ERP from what was actually used, not typed in. Hampers are packed from finished packs; their batches are picked first-expiry-first-out (FEFO).</p>
+    <div class="legend"><span><i style="background:var(--brand)"></i>Material (bulk + packing)</span><span><i style="background:var(--accent)"></i>Packing labour</span></div>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Run</th><th>Date</th><th>Output</th><th>Batch</th><th>Expiry</th><th class="n">Packs</th><th class="n">Material</th><th class="n">Labour</th><th class="n">Cost / pack</th><th class="n">MRP</th><th>Cost build-up</th></tr></thead>
+        <tbody>
+                    <tr><td><a href="http://127.0.0.1:8080/operations/production/1">PRD-00001</a></td><td>07 Oct 2026</td><td>Palm Sugar 100g</td><td class="small">SS-PS-2610A</td><td class="small">06 Oct 2027</td>
+                <td class="n">900</td><td class="n">₹31,500.00</td><td class="n">₹720.00</td><td class="n"><b>₹35.80</b></td><td class="n">₹80</td>
+                <td><div class="build" title="Material ₹31,500.00 · Labour ₹720.00"><i style="width:97.765363128492%;background:var(--brand)"></i><i style="width:2.2346368715084%;background:var(--accent)"></i></div></td></tr>
+            <tr><td colspan="11" style="padding:0"><details><summary>Consumed for SS-PS-2610A</summary><table>
+                <tr><td>Palm Sugar - bulk</td><td class="n">90.9 KG</td><td class="n">₹27,270.00</td><td class="n muted">₹30.30 per pack</td></tr><tr><td>Kraft zip pouch 100g</td><td class="n">900 PCS</td><td class="n">₹3,150.00</td><td class="n muted">₹3.50 per pack</td></tr><tr><td>Sweet Soil label (FSSAI, batch, MRP)</td><td class="n">900 PCS</td><td class="n">₹1,080.00</td><td class="n muted">₹1.20 per pack</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/operations/production/2">PRD-00002</a></td><td>07 Oct 2026</td><td>Rose Neera Mix 150g</td><td class="small">SS-RNM150-2610A</td><td class="small">06 Jul 2027</td>
+                <td class="n">300</td><td class="n">₹28,890.00</td><td class="n">₹300.00</td><td class="n"><b>₹97.30</b></td><td class="n">₹239</td>
+                <td><div class="build" title="Material ₹28,890.00 · Labour ₹300.00"><i style="width:98.972250770812%;background:var(--brand)"></i><i style="width:1.0277492291881%;background:var(--accent)"></i></div></td></tr>
+            <tr><td colspan="11" style="padding:0"><details><summary>Consumed for SS-RNM150-2610A</summary><table>
+                <tr><td>Rose Neera Mix - bulk</td><td class="n">45.45 KG</td><td class="n">₹27,270.00</td><td class="n muted">₹90.90 per pack</td></tr><tr><td>Kraft zip pouch 150g</td><td class="n">300 PCS</td><td class="n">₹1,260.00</td><td class="n muted">₹4.20 per pack</td></tr><tr><td>Sweet Soil label (FSSAI, batch, MRP)</td><td class="n">300 PCS</td><td class="n">₹360.00</td><td class="n muted">₹1.20 per pack</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/operations/production/3">PRD-00003</a></td><td>07 Oct 2026</td><td>Rose Neera Mix 100g</td><td class="small">SS-RNM100-2610A</td><td class="small">06 Jul 2027</td>
+                <td class="n">100</td><td class="n">₹6,530.00</td><td class="n">₹80.00</td><td class="n"><b>₹66.10</b></td><td class="n">₹150</td>
+                <td><div class="build" title="Material ₹6,530.00 · Labour ₹80.00"><i style="width:98.789712556732%;background:var(--brand)"></i><i style="width:1.2102874432678%;background:var(--accent)"></i></div></td></tr>
+            <tr><td colspan="11" style="padding:0"><details><summary>Consumed for SS-RNM100-2610A</summary><table>
+                <tr><td>Rose Neera Mix - bulk</td><td class="n">10.1 KG</td><td class="n">₹6,060.00</td><td class="n muted">₹60.60 per pack</td></tr><tr><td>Kraft zip pouch 100g</td><td class="n">100 PCS</td><td class="n">₹350.00</td><td class="n muted">₹3.50 per pack</td></tr><tr><td>Sweet Soil label (FSSAI, batch, MRP)</td><td class="n">100 PCS</td><td class="n">₹120.00</td><td class="n muted">₹1.20 per pack</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/operations/production/4">PRD-00004</a></td><td>08 Oct 2026</td><td>Palm Syrup 135ml</td><td class="small">SS-PSY-2610A</td><td class="small">07 Apr 2027</td>
+                <td class="n">200</td><td class="n">₹9,857.50</td><td class="n">₹300.00</td><td class="n"><b>₹50.79</b></td><td class="n">₹99</td>
+                <td><div class="build" title="Material ₹9,857.50 · Labour ₹300.00"><i style="width:97.046517351711%;background:var(--brand)"></i><i style="width:2.9534826482894%;background:var(--accent)"></i></div></td></tr>
+            <tr><td colspan="11" style="padding:0"><details><summary>Consumed for SS-PSY-2610A</summary><table>
+                <tr><td>Palm Syrup - bulk</td><td class="n">27.27 LTR</td><td class="n">₹6,817.50</td><td class="n muted">₹34.09 per pack</td></tr><tr><td>Glass bottle 135ml with cap</td><td class="n">200 PCS</td><td class="n">₹2,800.00</td><td class="n muted">₹14.00 per pack</td></tr><tr><td>Sweet Soil label (FSSAI, batch, MRP)</td><td class="n">200 PCS</td><td class="n">₹240.00</td><td class="n muted">₹1.20 per pack</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/operations/production/5">PRD-00005</a></td><td>09 Oct 2026</td><td>Sweet Soil Festive Hamper</td><td class="small">SS-HMP-2610A</td><td class="small">07 Apr 2027</td>
+                <td class="n">60</td><td class="n">₹16,433.25</td><td class="n">₹900.00</td><td class="n"><b>₹288.89</b></td><td class="n">₹699</td>
+                <td><div class="build" title="Material ₹16,433.25 · Labour ₹900.00"><i style="width:94.807667344555%;background:var(--brand)"></i><i style="width:5.1923326554455%;background:var(--accent)"></i></div></td></tr>
+            <tr><td colspan="11" style="padding:0"><details><summary>Consumed for SS-HMP-2610A</summary><table>
+                <tr><td>Palm Sugar 100g</td><td class="n">60 PCS</td><td class="n">₹2,148.00</td><td class="n muted">₹35.80 per pack</td></tr><tr><td>Rose Neera Mix 150g</td><td class="n">60 PCS</td><td class="n">₹5,838.00</td><td class="n muted">₹97.30 per pack</td></tr><tr><td>Palm Syrup 135ml</td><td class="n">60 PCS</td><td class="n">₹3,047.25</td><td class="n muted">₹50.79 per pack</td></tr><tr><td>Palm Chocolate 8g</td><td class="n">300 PCS</td><td class="n">₹2,700.00</td><td class="n muted">₹45.00 per pack</td></tr><tr><td>Festive gift box</td><td class="n">60 PCS</td><td class="n">₹2,700.00</td><td class="n muted">₹45.00 per pack</td></tr>            </table></details></td></tr>
+                </tbody>
+    </table></div>
+</section>
+
+<section id="sell">
+    <h2><span class="step">4</span>Sell: wholesale, organic stores, direct customers, gifting companies</h2>
+    <p class="lead">Same stock, four price levels. The distributor buys Palm Sugar by the <b>case of 50</b>. The organic store gets a <b>12 + 1 free</b> launch scheme, and the free packs post at zero value.
+        The website customer pays MRP including GST. The Bengaluru gifting company is <b>inter-state, so IGST</b>; its hamper is a mixed supply taxed at the highest component rate (5%).
+        The batch on every invoice line was picked by FEFO.</p>
+    <h3>Channel profitability</h3>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Channel</th><th class="n">Invoices</th><th class="n">Sales (taxable)</th><th class="n">Cost of goods</th><th class="n">Gross margin</th><th>Margin %</th><th>GST</th><th class="n">Outstanding</th></tr></thead>
+        <tbody><tr><td><b>Wholesale / Distributor</b></td><td class="n">1</td><td class="n">₹43,720.00</td><td class="n">₹30,677.25</td><td class="n">₹13,042.75</td>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i style="width:55.700934579439%"></i></div><span class="small" style="min-width:42px;text-align:right">29.8%</span></div></td>
+            <td class="small">CGST + SGST</td><td class="n">₹22,953.00</td></tr><tr><td><b>Organic Store</b></td><td class="n">1</td><td class="n">₹28,880.00</td><td class="n">₹17,628.50</td><td class="n">₹11,251.50</td>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i style="width:72.897196261682%"></i></div><span class="small" style="min-width:42px;text-align:right">39%</span></div></td>
+            <td class="small">CGST + SGST</td><td class="n">—</td></tr><tr><td><b>Direct Customer</b></td><td class="n">1</td><td class="n">₹1,215.27</td><td class="n">₹565.18</td><td class="n">₹650.10</td>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i style="width:100%"></i></div><span class="small" style="min-width:42px;text-align:right">53.5%</span></div></td>
+            <td class="small">CGST + SGST</td><td class="n">—</td></tr><tr><td><b>Corporate Gifting</b></td><td class="n">1</td><td class="n">₹26,000.00</td><td class="n">₹14,444.38</td><td class="n">₹11,555.63</td>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="bar" style="flex:1"><i style="width:82.990654205607%"></i></div><span class="small" style="min-width:42px;text-align:right">44.4%</span></div></td>
+            <td class="small">IGST (inter-state)</td><td class="n">₹13,650.00</td></tr></tbody>
+        <tfoot><tr><td>All channels</td><td class="n">4</td><td class="n">₹99,815.27</td><td class="n">₹63,315.30</td><td class="n">₹36,499.97</td><td class="small">36.6%</td><td></td><td class="n">₹36,603.00</td></tr></tfoot>
+    </table></div>
+    <h3>Invoices</h3>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th class="n">Taxable</th><th class="n">CGST</th><th class="n">SGST</th><th class="n">IGST</th><th class="n">Total</th><th>Due</th><th class="n">Balance</th></tr></thead>
+        <tbody>
+                    <tr><td><a href="http://127.0.0.1:8080/sales">MJ-00001</a></td><td>10 Oct 2026</td><td>Kongu Natural Foods Distributors<div><span class="pill">Wholesale / Distributor</span></div></td>
+                <td class="n">₹43,720.00</td><td class="n">₹1,093.00</td><td class="n">₹1,093.00</td><td class="n">₹0.00</td><td class="n">₹45,906.00</td>
+                <td class="small">09 Nov 2026</td><td class="n"><span class="pill warn">₹22,953.00</span></td></tr>
+            <tr><td colspan="10" style="padding:0"><details><summary>3 lines · margin ₹13,042.75 on cost ₹30,677.25</summary><table>
+                <tr><td>Palm Sugar 100g</td><td class="small muted">17029010</td><td class="n">10 CASE</td><td class="n">@ ₹2,500.00</td><td class="n">₹25,000.00</td><td class="n muted">GST 5%</td></tr><tr><td>Rose Neera Mix 150g</td><td class="small muted">21069059</td><td class="n">100 PCS</td><td class="n">@ ₹150.00</td><td class="n">₹15,000.00</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Syrup 135ml</td><td class="small muted">17029090</td><td class="n">60 PCS</td><td class="n">@ ₹62.00</td><td class="n">₹3,720.00</td><td class="n muted">GST 5%</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/sales">MJ-00002</a></td><td>12 Oct 2026</td><td>Thulasi Organic Store<div><span class="pill">Organic Store</span></div></td>
+                <td class="n">₹28,880.00</td><td class="n">₹722.00</td><td class="n">₹722.00</td><td class="n">₹0.00</td><td class="n">₹30,324.00</td>
+                <td class="small">27 Oct 2026</td><td class="n"><span class="ok">Paid</span></td></tr>
+            <tr><td colspan="10" style="padding:0"><details><summary>6 lines · margin ₹11,251.50 on cost ₹17,628.50</summary><table>
+                <tr><td>Palm Sugar 100g</td><td class="small muted">17029010</td><td class="n">120 PCS</td><td class="n">@ ₹60.00</td><td class="n">₹7,200.00</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Sugar 100g <span class="pill accent">Free (scheme)</span></td><td class="small muted">17029010</td><td class="n">10 PCS</td><td class="n">@ ₹0.00</td><td class="n">₹0.00</td><td class="n muted">GST 5%</td></tr><tr><td>Rose Neera Mix 150g</td><td class="small muted">21069059</td><td class="n">60 PCS</td><td class="n">@ ₹175.00</td><td class="n">₹10,500.00</td><td class="n muted">GST 5%</td></tr><tr><td>Rose Neera Mix 100g</td><td class="small muted">21069059</td><td class="n">50 PCS</td><td class="n">@ ₹110.00</td><td class="n">₹5,500.00</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Syrup 135ml</td><td class="small muted">17029090</td><td class="n">40 PCS</td><td class="n">@ ₹72.00</td><td class="n">₹2,880.00</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Chocolate 8g</td><td class="small muted">18069010</td><td class="n">200 PCS</td><td class="n">@ ₹14.00</td><td class="n">₹2,800.00</td><td class="n muted">GST 5%</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/sales">MJ-00003</a></td><td>14 Oct 2026</td><td>Priya Raman (website order)<div><span class="pill">Direct Customer</span></div></td>
+                <td class="n">₹1,215.27</td><td class="n">₹30.38</td><td class="n">₹30.38</td><td class="n">₹0.00</td><td class="n">₹1,276.00</td>
+                <td class="small">14 Oct 2026</td><td class="n"><span class="ok">Paid</span></td></tr>
+            <tr><td colspan="10" style="padding:0"><details><summary>4 lines · margin ₹650.10 on cost ₹565.18</summary><table>
+                <tr><td>Palm Sugar 100g</td><td class="small muted">17029010</td><td class="n">5 PCS</td><td class="n">@ ₹76.19</td><td class="n">₹380.95</td><td class="n muted">GST 5%</td></tr><tr><td>Rose Neera Mix 150g</td><td class="small muted">21069059</td><td class="n">2 PCS</td><td class="n">@ ₹227.62</td><td class="n">₹455.24</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Syrup 135ml</td><td class="small muted">17029090</td><td class="n">2 PCS</td><td class="n">@ ₹94.29</td><td class="n">₹188.58</td><td class="n muted">GST 5%</td></tr><tr><td>Palm Chocolate 8g</td><td class="small muted">18069010</td><td class="n">10 PCS</td><td class="n">@ ₹19.05</td><td class="n">₹190.50</td><td class="n muted">GST 5%</td></tr>            </table></details></td></tr>
+                    <tr><td><a href="http://127.0.0.1:8080/sales">MJ-00004</a></td><td>16 Oct 2026</td><td>Celebr8 Corporate Gifting Pvt Ltd<div><span class="pill">Corporate Gifting</span></div></td>
+                <td class="n">₹26,000.00</td><td class="n">₹0.00</td><td class="n">₹0.00</td><td class="n">₹1,300.00</td><td class="n">₹27,300.00</td>
+                <td class="small">06 Nov 2026</td><td class="n"><span class="pill warn">₹13,650.00</span></td></tr>
+            <tr><td colspan="10" style="padding:0"><details><summary>1 line · margin ₹11,555.63 on cost ₹14,444.38</summary><table>
+                <tr><td>Sweet Soil Festive Hamper</td><td class="small muted">21069099</td><td class="n">50 PCS</td><td class="n">@ ₹520.00</td><td class="n">₹26,000.00</td><td class="n muted">GST 5%</td></tr>            </table></details></td></tr>
+                </tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="n">₹99,815.27</td><td class="n">₹1,845.38</td><td class="n">₹1,845.38</td><td class="n">₹1,300.00</td><td class="n">₹1,04,806.00</td><td></td><td class="n">₹36,603.00</td></tr></tfoot>
+    </table></div>
+</section>
+
+<section id="collect">
+    <h2><span class="step">5</span>Collect &amp; pay</h2>
+    <p class="lead">Receipts are matched against invoices and payments against bills, so whatever is still open shows up as an outstanding with its due date (from the party's credit days). UPI and NEFT post through the Bank account.</p>
+    <div class="grid two">
+        <div class="card table-scroll"><table>
+            <thead><tr><th>Voucher</th><th>Date</th><th>Against</th><th>Mode</th><th class="n">Amount</th></tr></thead>
+            <tbody><tr><td class="small">PAY-00003</td><td class="small">08 Oct 2026</td>
+                <td><span class="pill accent">Out</span> Sivakasi Label Printers<div class="muted small">PUR-00003</div></td>
+                <td class="small">Cash<div class="muted">Cash</div></td><td class="n">₹2,265.60</td></tr><tr><td class="small">REC-00001</td><td class="small">14 Oct 2026</td>
+                <td><span class="pill">In</span> Priya Raman (website order)<div class="muted small">MJ-00003</div></td>
+                <td class="small">Bank<div class="muted">UPI ref 4417</div></td><td class="n">₹1,276.00</td></tr><tr><td class="small">REC-00004</td><td class="small">16 Oct 2026</td>
+                <td><span class="pill">In</span> Celebr8 Corporate Gifting Pvt Ltd<div class="muted small">MJ-00004</div></td>
+                <td class="small">Bank<div class="muted">NEFT</div></td><td class="n">₹13,650.00</td></tr><tr><td class="small">PAY-00001</td><td class="small">18 Oct 2026</td>
+                <td><span class="pill accent">Out</span> Kongu Palm Products<div class="muted small">PUR-00001</div></td>
+                <td class="small">Bank<div class="muted">NEFT</div></td><td class="n">₹96,075.00</td></tr><tr><td class="small">PAY-00002</td><td class="small">18 Oct 2026</td>
+                <td><span class="pill accent">Out</span> Sri Murugan Flexi Packs<div class="muted small">PUR-00002</div></td>
+                <td class="small">Bank<div class="muted">NEFT</div></td><td class="n">₹9,827.04</td></tr><tr><td class="small">REC-00003</td><td class="small">20 Oct 2026</td>
+                <td><span class="pill">In</span> Kongu Natural Foods Distributors<div class="muted small">MJ-00001</div></td>
+                <td class="small">Bank<div class="muted">NEFT</div></td><td class="n">₹22,953.00</td></tr><tr><td class="small">REC-00002</td><td class="small">22 Oct 2026</td>
+                <td><span class="pill">In</span> Thulasi Organic Store<div class="muted small">MJ-00002</div></td>
+                <td class="small">Cheque<div class="muted">Cheque 000231</div></td><td class="n">₹30,324.00</td></tr></tbody>
+        </table></div>
+        <div class="card table-scroll"><table>
+            <thead><tr><th>Outstanding</th><th>Document</th><th>Due</th><th class="n">Open</th></tr></thead>
+            <tbody><tr><td><span class="pill accent">To pay</span><div>Sri Murugan Flexi Packs</div></td>
+                <td class="small">PUR-00002<div class="muted">of ₹16,378.40</div></td>
+                <td class="small">20 Oct 2026 <span class="pill bad">Overdue</span></td><td class="n">₹6,551.36</td></tr><tr><td><span class="pill">To collect</span><div>Celebr8 Corporate Gifting Pvt Ltd</div></td>
+                <td class="small">MJ-00004<div class="muted">of ₹27,300.00</div></td>
+                <td class="small">06 Nov 2026</td><td class="n">₹13,650.00</td></tr><tr><td><span class="pill">To collect</span><div>Kongu Natural Foods Distributors</div></td>
+                <td class="small">MJ-00001<div class="muted">of ₹45,906.00</div></td>
+                <td class="small">09 Nov 2026</td><td class="n">₹22,953.00</td></tr></tbody>
+        </table></div>
+    </div>
+</section>
+
+<section id="stock">
+    <h2><span class="step">6</span>Stock &amp; batches</h2>
+    <p class="lead">Bulk product and packing material go down as packs are made; packs go down as they are sold. Each batch shows how many days of shelf life it has left, so slow stock can be pushed before it expires.</p>
+    <h3>Batches (FEFO order)</h3>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Batch</th><th>Product</th><th>Packed</th><th>Expiry</th><th class="n">MRP</th><th class="n">In stock</th><th>Shelf life left</th></tr></thead>
+        <tbody><tr><td class="small">SS-PSY-2610A</td><td>Palm Syrup 135ml</td><td class="small">08 Oct 2026</td><td class="small">07 Apr 2027</td><td class="n">₹99</td><td class="n">38</td>
+            <td><span class="pill">166 days</span></td></tr><tr><td class="small">SS-HMP-2610A</td><td>Sweet Soil Festive Hamper</td><td class="small">09 Oct 2026</td><td class="small">07 Apr 2027</td><td class="n">₹699</td><td class="n">10</td>
+            <td><span class="pill">166 days</span></td></tr><tr><td class="small">SS-RNM150-2610A</td><td>Rose Neera Mix 150g</td><td class="small">07 Oct 2026</td><td class="small">06 Jul 2027</td><td class="n">₹239</td><td class="n">78</td>
+            <td><span class="pill">256 days</span></td></tr><tr><td class="small">SS-RNM100-2610A</td><td>Rose Neera Mix 100g</td><td class="small">07 Oct 2026</td><td class="small">06 Jul 2027</td><td class="n">₹150</td><td class="n">50</td>
+            <td><span class="pill">256 days</span></td></tr><tr><td class="small">SS-PS-2610A</td><td>Palm Sugar 100g</td><td class="small">07 Oct 2026</td><td class="small">06 Oct 2027</td><td class="n">₹80</td><td class="n">205</td>
+            <td><span class="pill">348 days</span></td></tr></tbody>
+    </table></div>
+    <h3>Stock summary</h3>
+    <div class="card table-scroll"><table>
+        <thead><tr><th>Item</th><th>Category</th><th class="n">In</th><th class="n">Out</th><th class="n">Closing</th><th class="n">Value</th></tr></thead>
+        <tbody><tr><td>Palm Sugar - bulk <span class="muted small">BULK-PS</span></td><td class="muted small">Bulk product (from manufacturer)</td><td class="n">100</td><td class="n">90.9</td><td class="n"><b>9.1</b> KG</td><td class="n">₹2,730.00</td></tr><tr><td>Rose Neera Mix - bulk <span class="muted small">BULK-RNM</span></td><td class="muted small">Bulk product (from manufacturer)</td><td class="n">60</td><td class="n">55.55</td><td class="n"><b>4.45</b> KG</td><td class="n">₹2,670.00</td></tr><tr><td>Palm Syrup - bulk <span class="muted small">BULK-PSY</span></td><td class="muted small">Bulk product (from manufacturer)</td><td class="n">30</td><td class="n">27.27</td><td class="n"><b>2.73</b> LTR</td><td class="n">₹682.50</td></tr><tr><td>Kraft zip pouch 100g <span class="muted small">PM-POUCH-100</span></td><td class="muted small">Packing material</td><td class="n">1,200</td><td class="n">1,000</td><td class="n"><b>200</b> PCS</td><td class="n">₹700.00</td></tr><tr><td>Kraft zip pouch 150g <span class="muted small">PM-POUCH-150</span></td><td class="muted small">Packing material</td><td class="n">400</td><td class="n">300</td><td class="n"><b>100</b> PCS</td><td class="n">₹420.00</td></tr><tr><td>Glass bottle 135ml with cap <span class="muted small">PM-BOTTLE-135</span></td><td class="muted small">Packing material</td><td class="n">250</td><td class="n">200</td><td class="n"><b>50</b> PCS</td><td class="n">₹700.00</td></tr><tr><td>Sweet Soil label (FSSAI, batch, MRP) <span class="muted small">PM-LABEL</span></td><td class="muted small">Packing material</td><td class="n">1,600</td><td class="n">1,500</td><td class="n"><b>100</b> PCS</td><td class="n">₹120.00</td></tr><tr><td>Festive gift box <span class="muted small">PM-GIFTBOX</span></td><td class="muted small">Packing material</td><td class="n">100</td><td class="n">60</td><td class="n"><b>40</b> PCS</td><td class="n">₹1,800.00</td></tr><tr><td>Palm Sugar 100g <span class="muted small">PS-100</span></td><td class="muted small">Sweet Soil finished goods</td><td class="n">900</td><td class="n">695</td><td class="n"><b>205</b> PCS</td><td class="n">₹7,339.00</td></tr><tr><td>Rose Neera Mix 150g <span class="muted small">RNM-150</span></td><td class="muted small">Sweet Soil finished goods</td><td class="n">300</td><td class="n">222</td><td class="n"><b>78</b> PCS</td><td class="n">₹7,589.40</td></tr><tr><td>Rose Neera Mix 100g <span class="muted small">RNM-100</span></td><td class="muted small">Sweet Soil finished goods</td><td class="n">100</td><td class="n">50</td><td class="n"><b>50</b> PCS</td><td class="n">₹3,305.00</td></tr><tr><td>Palm Syrup 135ml <span class="muted small">PSY-135</span></td><td class="muted small">Sweet Soil finished goods</td><td class="n">200</td><td class="n">162</td><td class="n"><b>38</b> PCS</td><td class="n">₹1,929.93</td></tr><tr><td>Palm Chocolate 8g <span class="muted small">PC-8</span></td><td class="muted small">Sweet Soil finished goods</td><td class="n">2,000</td><td class="n">510</td><td class="n"><b>1,490</b> PCS</td><td class="n">₹13,410.00</td></tr><tr><td>Sweet Soil Festive Hamper <span class="muted small">HAMPER-FEST</span></td><td class="muted small">Sweet Soil finished goods</td><td class="n">60</td><td class="n">50</td><td class="n"><b>10</b> PCS</td><td class="n">₹2,888.88</td></tr></tbody>
+        <tfoot><tr><td colspan="5">Closing stock value</td><td class="n">₹46,284.70</td></tr></tfoot>
+    </table></div>
+</section>
+
+<section id="books">
+    <h2><span class="step">7</span>GST &amp; books</h2>
+    <p class="lead">Nobody keyed in a journal: every bill, packing run, invoice and receipt posted its own entry. The packing run moves value from bulk and packing material into finished goods, and adds the labour.</p>
+    <div class="grid two">
+        <div class="card table-scroll"><table>
+            <thead><tr><th>GST for the period</th><th class="n">CGST</th><th class="n">SGST</th><th class="n">IGST</th><th class="n">Total</th></tr></thead>
+            <tbody>
+                <tr><td>Output tax (on sales)</td><td class="n">₹1,845.38</td><td class="n">₹1,845.38</td><td class="n">₹1,300.00</td><td class="n">₹4,990.76</td></tr>
+                <tr><td>Less input tax credit (on purchases)</td><td class="n">₹3,709.50</td><td class="n">₹3,709.50</td><td class="n">₹0.00</td><td class="n">₹7,419.00</td></tr>
+            </tbody>
+            <tfoot><tr><td colspan="4">ITC carried forward</td><td class="n">₹2,428.24</td></tr></tfoot>
+        </table>
+        <p class="pad small muted" style="margin:0">IGST output is set off first against IGST credit, then CGST and SGST credit (Sec 49). Check the final GSTR-3B figures in Compliance › GST report.</p></div>
+        <div class="card table-scroll"><table>
+            <thead><tr><th>Trial balance</th><th class="n">Debit</th><th class="n">Credit</th></tr></thead>
+            <tbody><tr><td>Cash on Hand / Cash Register <span class="muted small">1010</span></td><td class="n"></td><td class="n">₹2,265.60</td></tr><tr><td>Bank Accounts <span class="muted small">1020</span></td><td class="n">₹1,62,300.96</td><td class="n"></td></tr><tr><td>Accounts Receivable (Debtors) <span class="muted small">1100</span></td><td class="n">₹36,603.00</td><td class="n"></td></tr><tr><td>Merchandise Inventory Asset <span class="muted small">1200</span></td><td class="n">₹46,284.70</td><td class="n"></td></tr><tr><td>Input CGST <span class="muted small">1310</span></td><td class="n">₹3,709.50</td><td class="n"></td></tr><tr><td>Input SGST <span class="muted small">1311</span></td><td class="n">₹3,709.50</td><td class="n"></td></tr><tr><td>Accounts Payable (Creditors) <span class="muted small">2010</span></td><td class="n"></td><td class="n">₹6,551.36</td></tr><tr><td>Output CGST <span class="muted small">2050</span></td><td class="n"></td><td class="n">₹1,845.38</td></tr><tr><td>Output SGST <span class="muted small">2051</span></td><td class="n"></td><td class="n">₹1,845.38</td></tr><tr><td>Output IGST <span class="muted small">2052</span></td><td class="n"></td><td class="n">₹1,300.00</td></tr><tr><td>Owner&#039;s Capital / Share Capital <span class="muted small">3010</span></td><td class="n"></td><td class="n">₹2,00,000.00</td></tr><tr><td>Sales Revenue <span class="muted small">4010</span></td><td class="n"></td><td class="n">₹99,815.27</td></tr><tr><td>Cost of Goods Sold - Products <span class="muted small">5010</span></td><td class="n">₹63,315.30</td><td class="n"></td></tr><tr><td>Production Costs Absorbed <span class="muted small">5040</span></td><td class="n"></td><td class="n">₹2,300.00</td></tr><tr><td>Round Off <span class="muted small">6095</span></td><td class="n">₹0.03</td><td class="n"></td></tr></tbody>
+            <tfoot><tr><td>Total <span class="ok">✓ balanced</span></td><td class="n">₹3,15,922.99</td><td class="n">₹3,15,922.99</td></tr></tfoot>
+        </table></div>
+    </div>
+</section>
+
+<section id="how">
+    <h2>Do it yourself in zoloERP</h2>
+    <p class="lead">Open the picker at <a href="http://127.0.0.1:8080/select-company">http://127.0.0.1:8080/select-company</a> and choose <b>Phoenicle Natures Private Limited (Demo)</b>. The screens below hold the same documents. To run the next cycle, follow the same order.</p>
+    <ol class="steps">
+        <li><span class="path">Masters › Customers / Suppliers</span>: give every customer a channel (customer group) and credit days, and enter the GSTIN (state comes from it). <a href="http://127.0.0.1:8080/customer">Open</a></li>
+        <li><span class="path">Masters › Items</span>: one item per bulk product and packing material, plus each branded pack (batch-tracked, MRP, HSN, GST). Add a CASE unit (×50) for distributor packs. <a href="http://127.0.0.1:8080/products">Open</a></li>
+        <li><span class="path">Operations › Manufacturing › BOM</span>: one packing recipe per pack size (bulk kg + pouch + label, spillage %). <a href="http://127.0.0.1:8080/operations/manufacturing">Open</a></li>
+        <li><span class="path">Purchases › New bill (F2)</span>: the manufacturer's bulk invoice and the packing vendors' invoices, with their invoice numbers. <a href="http://127.0.0.1:8080/purchases">Open</a></li>
+        <li><span class="path">Operations › Manufacturing › Production</span>: plan the run, then complete it with the packed quantity, labour cost, batch no., mfg/expiry date and MRP. <a href="http://127.0.0.1:8080/operations/manufacturing">Open</a></li>
+        <li><span class="path">Sales › New invoice (F12)</span>: pick the customer and the channel price; batches fill in by FEFO; choose a scheme for free goods; IGST applies on its own for out-of-state buyers. <a href="http://127.0.0.1:8080/sales">Open</a></li>
+        <li><span class="path">Add payment on the invoice / bill</span>: record UPI/NEFT as Bank and cheques as Cheque, with the reference in the note.</li>
+        <li><span class="path">Reports</span>: <a href="http://127.0.0.1:8080/report/product-expiry">Product expiry</a> · <a href="http://127.0.0.1:8080/compliance/gst/report">GST report</a> · <a href="http://127.0.0.1:8080/accounting/trial-balance">Trial balance</a>. Then rerun <code>php artisan erp:demo-sweet-soil --report-only</code> to refresh this page.</li>
+    </ol>
+</section>
+</main>
+<footer class="wrap">
+    Demo data only: GSTINs are checksum-valid samples, not real registrations, and GST rates are illustrative, so confirm HSN rates with your CA. Your live company <b>SWEETSOIL</b> was not touched.
+    Generated by <code>erp:demo-sweet-soil</code> from company #18 on 23 Oct 2026, 11:40 PM.
+</footer>
+</body>
+</html>

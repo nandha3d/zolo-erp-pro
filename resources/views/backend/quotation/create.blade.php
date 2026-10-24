@@ -286,9 +286,9 @@
 @push('scripts')
 <script type="text/javascript">
 
-    $("ul#quotation").siblings('a').attr('aria-expanded','true');
-    $("ul#quotation").addClass("show");
-    $("ul#quotation #quotation-create-menu").addClass("active");
+    $("ul#sale").siblings('a').attr('aria-expanded','true');
+    $("ul#sale").addClass("show");
+    $("ul#sale #quotation-create-menu").addClass("active");
 
 var lims_product_array = [];
 var product_code = [];

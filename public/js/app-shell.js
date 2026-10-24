@@ -84,6 +84,52 @@
 
     document.querySelectorAll('[data-shell-steps]').forEach(initSteps);
 
+    /* ---------- Enter flow ---------- */
+    // Forms marked data-enter-flow: Enter moves to the next visible field in reading order, like Tab;
+    // Enter on the last field saves. Textareas keep Enter for new lines; buttons and links keep their own Enter.
+    // A select enhanced by bootstrap-select is reached through whichever part takes focus (the native select,
+    // or its toggle button in older builds): typing picks an option, Enter moves on, and inside an open list
+    // Enter still chooses the option.
+    var FIELDS = 'input:not([type=hidden]):not([type=submit]):not([type=button]):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled])';
+    var focusable = function (el) { return el && el.offsetParent !== null && el.tabIndex >= 0; };
+    function flowFields(form) {
+        var fields = [];
+        Array.prototype.forEach.call(form.querySelectorAll(FIELDS), function (el) {
+            var picker = el.closest('.bootstrap-select');
+            var target = focusable(el) ? el : (picker ? picker.querySelector('.dropdown-toggle') : null);
+            if (focusable(target) && fields.indexOf(target) < 0) fields.push(target);
+        });
+        return fields;
+    }
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.isComposing) return;
+        var field = event.target;
+        var form = field.closest && field.closest('form[data-enter-flow]');
+        if (!form || field.tagName === 'TEXTAREA') return;
+        var picker = field.closest('.bootstrap-select');
+        if (picker && (picker.classList.contains('show') || picker.classList.contains('open'))) return;
+        if (!field.matches(FIELDS) && !(picker && field.classList.contains('dropdown-toggle'))) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var fields = flowFields(form);
+        var at = fields.indexOf(field);
+        if (at < 0 && picker) at = fields.indexOf(picker.querySelector('select'));
+        var next = fields[at + 1];
+        if (next) { next.focus(); if (next.select && next.type !== 'file' && next.type !== 'checkbox') next.select(); return; }
+        if (form.requestSubmit) form.requestSubmit(); else form.submit();
+    }, true);
+    // A second Enter or click while the first save is still on its way must not post the form again.
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form.matches || !form.matches('form[data-enter-flow]')) return;
+        if (form.dataset.flowSubmitting) { event.preventDefault(); return; }
+        setTimeout(function () { if (!event.defaultPrevented) form.dataset.flowSubmitting = '1'; }, 0);
+    }, true);
+    // Back/forward cache restores the page as it was; let the form be saved again.
+    window.addEventListener('pageshow', function () {
+        document.querySelectorAll('form[data-enter-flow]').forEach(function (form) { delete form.dataset.flowSubmitting; });
+    });
+
     /* ---------- Page wrappers ---------- */
     // Wrappers styled min-height: calc(100vh - 40px) sit under a command bar and so overflowed by
     // that bar; inside the shell they grow to fill #content instead.
@@ -100,9 +146,10 @@
 
     /* ---------- Wide grids ---------- */
     // Tables wider than their box get compact type and wrapped headers so every column is in view.
+    // DataTables are left to table-polish.js, which keeps rows on one line and hides columns instead.
     function fitWideTables() {
         Array.prototype.forEach.call(content.querySelectorAll('table'), function (table) {
-            if (table.offsetParent === null || table.closest('.modal, .desk-grid-table, [data-no-fit]')) return;
+            if (table.offsetParent === null || table.closest('.modal, .desk-grid-table, [data-no-fit], .dataTables_wrapper')) return;
             var box = table.parentElement;
             if (table.classList.contains('shell-fit-wide')) return;
             if (table.scrollWidth > box.clientWidth + 2) table.classList.add('shell-fit-wide');

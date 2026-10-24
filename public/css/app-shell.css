@@ -259,3 +259,60 @@ html.app-shell #content .dataTables_wrapper { margin-top: 0 !important; }
 html.app-shell #content table.shell-fit-wide { font-size: 11.5px !important; }
 html.app-shell #content table.shell-fit-wide > thead > tr > th { white-space: normal !important; font-size: 10.5px !important; line-height: 1.2; padding: 6px 6px !important; vertical-align: bottom; }
 html.app-shell #content table.shell-fit-wide > tbody > tr > td { padding: 5px 6px !important; }
+
+/* ---------- DataTables, everywhere (table-polish.js) ----------
+   One toolbar line (page size · search · buttons, vertically centred), one-line rows, and the table kept inside its card. */
+html.app-shell #content .dataTables_wrapper.zolo-polished { max-width: 100%; }
+html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> .dataTables_length, > .dataTables_filter, > .dt-buttons),
+html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> div > .dataTables_length, > div > .dataTables_filter) {
+    display: flex !important; flex-wrap: wrap; align-items: center !important; gap: 6px 12px; margin: 0 0 6px !important;
+}
+html.app-shell #content .zolo-polished .dataTables_length,
+html.app-shell #content .zolo-polished .dataTables_filter,
+html.app-shell #content .zolo-polished .dt-buttons {
+    float: none !important; width: auto !important; display: inline-flex !important; align-items: center; gap: 4px; margin: 0 !important; padding: 0 !important; text-align: left !important;
+}
+html.app-shell #content .zolo-polished .dataTables_length label,
+html.app-shell #content .zolo-polished .dataTables_filter label { display: inline-flex !important; align-items: center; gap: 6px; margin: 0 !important; white-space: nowrap; font-size: 12px; }
+html.app-shell #content .zolo-polished .dataTables_length select { width: auto !important; min-width: 64px; height: 30px; padding: 2px 6px; }
+html.app-shell #content .zolo-polished .dataTables_filter input { height: 30px !important; width: 220px !important; margin: 0 !important; }
+html.app-shell #content .zolo-polished .dataTables_filter { margin-left: auto !important; }
+html.app-shell #content .zolo-polished .dt-buttons .btn { height: 30px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px !important; margin: 0 !important; }
+html.app-shell #content .zolo-polished .buttons-colvis { font-size: 12px; font-weight: 600; }
+html.app-shell #content .zolo-polished .zolo-hidden-count { font-size: 10px; font-weight: 700; color: #7c3aed; background: #f5f3ff; border-radius: 8px; padding: 1px 6px; }
+html.app-shell #content .zolo-polished table.dataTable > thead > tr > th,
+html.app-shell #content .zolo-polished table.dataTable > tbody > tr > td { white-space: nowrap !important; vertical-align: middle !important; }
+html.app-shell #content .zolo-polished table.dataTable > tbody > tr > td { padding-top: 7px !important; padding-bottom: 7px !important; }
+html.app-shell #content .zolo-polished table.dataTable > tbody > tr > td img { max-height: 28px; width: auto; }
+html.app-shell #content .zolo-polished .dataTables_info,
+html.app-shell #content .zolo-polished .dataTables_paginate { padding-top: 6px !important; }
+/* Responsive never collapses columns now; make sure its "+" control never shows. */
+html.app-shell table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child::before,
+html.app-shell table.dataTable.dtr-inline.collapsed > tbody > tr > th:first-child::before,
+html.app-shell table.dataTable > tbody > tr > td.dtr-control::before { display: none !important; }
+html.app-shell table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child { padding-left: 8px !important; cursor: auto; }
+body.dark-mode .zolo-polished .zolo-hidden-count { background: #2e1065; color: #c4b5fd; }
+
+/* Product details dialog: label/value grid, small image only when the product has one. */
+.product-details-dialog .pd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 14px; margin: 0; }
+.product-details-dialog .pd-grid dt, .product-details-dialog .pd-notes dt { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #64748b; margin: 0; }
+.product-details-dialog .pd-grid dd { margin: 1px 0 0; font-size: 13.5px; font-weight: 600; color: #0f172a; overflow-wrap: anywhere; }
+.product-details-dialog .pd-notes { margin-top: 10px; font-size: 13px; }
+.product-details-dialog .pd-image { width: 100%; max-height: 180px; object-fit: contain; border-radius: 8px; background: #f8fafc; }
+.product-details-dialog h5 { font-size: 13px; font-weight: 700; margin: 10px 0 6px; }
+.product-details-dialog .table { margin-bottom: 4px; font-size: 12.5px; }
+.product-details-dialog .table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.product-details-dialog .pd-serials { max-height: 90px; overflow-y: auto; overflow-wrap: anywhere; }
+body.dark-mode .product-details-dialog .pd-grid dd { color: #f8fafc; }
+/* Toolbars built from Bootstrap columns (e.g. '<"row"<"col-sm-6"lB><"col-sm-6"f>>'): size to content on one line. */
+html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> div > .dataTables_length, > div > .dataTables_filter) > [class*="col-"] {
+    flex: 0 1 auto !important; max-width: none !important; width: auto !important; padding: 0 !important;
+    display: flex !important; align-items: center !important; gap: 8px; min-height: 0;
+}
+html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> div > .dataTables_length, > div > .dataTables_filter) > [class*="col-"]:last-child { margin-left: auto; }
+html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> div > .dataTables_length, > div > .dataTables_filter) { margin-left: 0 !important; margin-right: 0 !important; }
+.product-details-dialog table.item-list:not(:has(tbody tr)) { display: none; }
+body.dark-mode .zolo-polished .buttons-colvis { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+body.dark-mode .zolo-polished .dataTables_paginate .paginate_button.disabled,
+body.dark-mode .zolo-polished .dataTables_paginate .page-item.disabled .page-link { background: transparent !important; color: #475569 !important; border-color: #334155 !important; }
+html.app-shell body.dark-mode #content .dataTables_wrapper.zolo-polished .dt-buttons .btn { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }

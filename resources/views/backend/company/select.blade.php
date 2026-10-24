@@ -17,6 +17,7 @@
     <title>Choose company · zoloERP</title>
     <link rel="stylesheet" href="{{ asset('css/zolo-erp-neo.css') }}">
     <link rel="stylesheet" href="{{ asset('css/company-picker.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/field-help.css') }}">
 </head>
 <body class="cp-body {{ $theme === 'dark' ? 'dark-mode' : '' }}">
 <header class="cp-top">
@@ -36,7 +37,7 @@
         </div>
         <div class="cp-actions">
             @if($directory['count'] > 3)
-                <label class="cp-search"><span class="cp-sr">Search companies</span>
+                <label class="cp-search" data-no-help><span class="cp-sr">Search companies</span>
                     <input id="cp-search" type="search" placeholder="Search companies" autocomplete="off"><kbd>/</kbd></label>
             @endif
             @if($isAdmin)
@@ -393,5 +394,6 @@
     if (first && !search) first.focus();
 })();
 </script>
+<script src="{{ versioned_asset('js/field-help.js') }}"></script>
 </body>
 </html>

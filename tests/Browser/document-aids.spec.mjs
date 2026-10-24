@@ -70,12 +70,9 @@ try {
         const suggestion = page.locator('.ui-autocomplete li, .ui-menu-item').first();
         await suggestion.waitFor({ timeout: SLOW });
         await suggestion.click();
-        await row.locator('.row-prev-rate').waitFor({ timeout: SLOW });
-        const hint = await row.locator('.row-prev-rate').textContent();
-        check(`${kind}: the previous rate for this party is offered on the row`, /Last ₹ (1000|1249)\.00 × 2/.test(hint), hint);
-        await row.locator('.row-prev-rate').click();
-        const applied = Number(await row.locator('.row-rate').inputValue());
-        check(`${kind}: clicking it applies that rate`, applied === (kind === 'purchase' ? 1000 : 1249), String(applied));
+        await page.waitForFunction(() => /Last rate for this party/.test(document.querySelector('#order-table-body tr.order-item-row:last-child .row-rate')?.title || ''), null, { timeout: SLOW });
+        const hint = await row.locator('.row-rate').getAttribute('title');
+        check(`${kind}: the previous rate for this party is a hover hint on the rate box`, /Last rate for this party: ₹ (1000|1249)\.00 × 2/.test(hint), hint);
 
         /* ------------------------------------------------------ stock tracking */
         await row.locator('.btn-edit-row').click();

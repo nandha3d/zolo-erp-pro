@@ -17,9 +17,6 @@
     @can('products-add')
         <a href="{{route('products.create')}}" class="btn btn-info add-product-btn btn-icon"><i class="dripicons-plus"></i> {{__('db.add_product')}}</a>
     @endcan
-    @can('products-import')
-        <a href="{{ route('products.import.index') }}" class="btn btn-secondary add-product-btn btn-icon"><i class="dripicons-copy"></i> Reviewed import</a>
-    @endcan
     @can('products-edit')
         @if(in_array('ecommerce',explode(',',$general_setting->modules)) )
             <a href="{{route('product.allProductInStock')}}" class="btn btn-secondary add-product-btn btn-icon"><i class="dripicons-stack"></i> {{__('db.All Product In Stock')}}</a>
@@ -158,21 +155,21 @@
 </section>
 
 <div id="product-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog">
+    <div role="document" class="modal-dialog modal-lg product-details-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="exampleModalLabel" class="modal-title">{{__('db.Product Details')}}</h5>
-          <button id="print-btn" type="button" class="btn btn-default btn-sm ml-3"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
-          <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+          <button id="print-btn" type="button" class="btn btn-default btn-sm ml-auto mr-2"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
+          <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close m-0"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
         </div>
         <div class="modal-body">
             <div class="row">
-                <div class="col-md-5" id="slider-content"></div>
-                <div class="col-md-5 offset-1" id="product-content"></div>
+                <div class="col-md-3" id="slider-content"></div>
+                <div class="col" id="product-content"></div>
                 @if($role_id <= 2)
                 <div class="col-md-12 mt-2" id="product-warehouse-section">
                     <h5>{{__('db.Warehouse Quantity')}}</h5>
-                    <table class="table table-bordered table-hover product-warehouse-list">
+                    <table class="table table-sm table-bordered table-hover product-warehouse-list">
                         <thead>
                         </thead>
                         <tbody>
@@ -326,38 +323,38 @@
         product[11] = product[11].replace(/@/g, '"');
         htmltext = slidertext = '';
 
-        htmltext = '<p>{{__("db.Type")}}: '+product[0]+
-            '</p><p>{{__("db.name")}}: '+product[1]+
-            '</p><p>{{__("db.Code")}}: '+product[2]+
-            '</p><p>{{__("db.Brand")}}: '+product[3]+
-            '</p><p>{{__("db.category")}}: '+product[4]+
-            '</p><p>{{__("db.Quantity")}}: '+product[17]+
-            '</p><p>{{__("db.Unit")}}: '+product[5]+
-            (role_id < 3 ? '</p><p>{{__("db.Cost")}}: '+product[6] : '') +
-            '</p><p>{{__("db.Price")}}: '+product[7]+
-            '</p><p>{{__("db.Tax")}}: '+product[8]+
-            '</p><p>{{__("db.Tax Method")}} : '+product[9]+
-            '</p><p>{{__("db.Alert Quantity")}} : '+product[10]+
-            '</p><p>{{__("db.Product Details")}}: </p>'+product[11];
+        // Compact label/value grid; blank values show as a dash so every row lines up.
+        var facts = [['{{__("db.Type")}}', product[0]], ['{{__("db.name")}}', product[1]], ['{{__("db.Code")}}', product[2]],
+            ['{{__("db.Brand")}}', product[3]], ['{{__("db.category")}}', product[4]], ['{{__("db.Quantity")}}', product[17]],
+            ['{{__("db.Unit")}}', product[5]]];
+        if (role_id < 3) facts.push(['{{__("db.Cost")}}', product[6]]);
+        facts.push(['{{__("db.Price")}}', product[7]], ['{{__("db.Tax")}}', product[8]], ['{{__("db.Tax Method")}}', product[9]],
+            ['{{__("db.Alert Quantity")}}', product[10]]);
+        htmltext = '<dl class="pd-grid">' + facts.map(function (f) {
+            var value = $('<span>').text(f[1] === null || f[1] === undefined || String(f[1]).trim() === '' ? '—' : f[1]).html();
+            return '<div><dt>' + f[0] + '</dt><dd>' + value + '</dd></div>';
+        }).join('') + '</dl>' + ($.trim($('<div>').html(product[11]).text()) ? '<div class="pd-notes"><dt>{{__("db.Product Details")}}</dt>' + product[11] + '</div>' : '');
 
-        if(product[18]) {
+        var realImage = product[18] && product[18] !== 'zummXD2dvAtI.png';
+        $('#slider-content').toggleClass('d-none', !realImage);
+        if(!realImage) {
+            slidertext = '';
+        }
+        else if(product[18]) {
             var product_image = product[18].split(",");
             if(product_image.length > 1) {
                 slidertext = '<div id="product-img-slider" class="carousel slide" data-ride="carousel"><div class="carousel-inner">';
                 for (var i = 0; i < product_image.length; i++) {
                     if(!i)
-                        slidertext += '<div class="carousel-item active"><img src="images/product/'+product_image[i]+'" height="300" width="100%"></div>';
+                        slidertext += '<div class="carousel-item active"><img src="images/product/'+product_image[i]+'" class="pd-image"></div>';
                     else
-                        slidertext += '<div class="carousel-item"><img src="images/product/'+product_image[i]+'" height="300" width="100%"></div>';
+                        slidertext += '<div class="carousel-item"><img src="images/product/'+product_image[i]+'" class="pd-image"></div>';
                 }
                 slidertext += '</div><a class="carousel-control-prev" href="#product-img-slider" data-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="sr-only">Previous</span></a><a class="carousel-control-next" href="#product-img-slider" data-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="sr-only">Next</span></a></div>';
             }
             else {
-                slidertext = '<img src="images/product/'+product[18]+'" height="300" width="100%">';
+                slidertext = '<img src="images/product/'+product[18]+'" class="pd-image">';
             }
-        }
-        else {
-            slidertext = '<img src="images/product/zummXD2dvAtI.png" height="300" width="100%">';
         }
         $("#combo-header").text('');
         $("table.item-list thead").remove();
@@ -452,21 +449,20 @@
                         var newBody = $("<tbody>");
                         var newRow = $("<tr>");
                         var productQty = 0;
-                        newRow.append('<th>{{__("db.Warehouse")}}</th><th>{{__("db.Batch No")}}</th><th>{{__("db.Expired Date")}}</th><th>{{__("db.Quantity")}}</th><th>{{__("db.IMEI or Serial Numbers")}}</th>');
+                        // Serial numbers get a column only when some godown actually holds them.
+                        var hasImei = imei_numbers.some(function (value) { return value && value !== 'N/A'; });
+                        newRow.append('<th>{{__("db.Warehouse")}}</th><th>{{__("db.Batch No")}}</th><th>{{__("db.Expired Date")}}</th><th class="text-right">{{__("db.Quantity")}}</th>' + (hasImei ? '<th>{{__("db.IMEI or Serial Numbers")}}</th>' : ''));
                         newHead.append(newRow);
                         $.each(warehouse, function(index) {
-                            // productQty += qty[index];
                             var newRow = $("<tr>");
                             var cols = '';
                             cols += '<td>' + warehouse[index] + '</td>';
                             cols += '<td>' + batch[index] + '</td>';
                             cols += '<td>' + expired_date[index] + '</td>';
-                            cols += '<td>' + qty[index] + '</td>';
-                            // console.log(imei_numbers);
-                            if (imei_numbers.length <= index) {
-                                cols += '<td style="max-height: 100px; overflow-y: auto; word-break: break-word; white-space: normal; display: block; padding-right: 10px;">' + 'N/A' + '</td>';
-                            } else {
-                                cols += '<td style="max-height: 100px; overflow-y: auto; word-break: break-word; white-space: normal; display: block; padding-right: 10px;">' + imei_numbers[index].split(',').join(",<br/>") + '</td>';
+                            cols += '<td class="text-right">' + qty[index] + '</td>';
+                            if (hasImei) {
+                                var serials = imei_numbers.length <= index || !imei_numbers[index] ? 'N/A' : imei_numbers[index].split(',').join(",<br/>");
+                                cols += '<td><div class="pd-serials">' + serials + '</div></td>';
                             }
 
                             newRow.append(cols);

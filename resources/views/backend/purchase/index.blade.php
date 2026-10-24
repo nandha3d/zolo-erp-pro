@@ -94,24 +94,24 @@
                     <!-- Compact Row 1: Bill No, Supplier Inv No, Dates, Party & Inline Info -->
                     <div class="fields-compact-row doc-row-a">
                         <div class="field-compact-item" style="width:140px;flex-shrink:0;">
-                            <label for="reference_no">Our Bill No</label>
+                            <label for="reference_no" data-help="Your own number for this purchase, given by the Series. Leave blank to auto-number.|PUR-00002">Our Bill No</label>
                             <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Auto series" autocomplete="off">
                         </div>
                         <div class="field-compact-item" style="width:165px;flex-shrink:0;">
-                            <label for="supplier_invoice_no">Supplier Bill No</label>
+                            <label for="supplier_invoice_no" data-help="Invoice number printed on the supplier's paper bill. Used to match GSTR-2B and stop double entry.|SMF/1187">Supplier Bill No</label>
                             <input type="text" id="supplier_invoice_no" name="supplier_invoice_no" class="form-control" placeholder="Paper invoice #">
                         </div>
                         <div class="field-compact-item" style="width:125px;flex-shrink:0;">
-                            <label for="supplier_invoice_date">Bill Date</label>
+                            <label for="supplier_invoice_date" data-help="Date printed on the supplier's invoice. GST input credit is claimed against this date.|24-10-2026">Bill Date</label>
                             <input type="date" id="supplier_invoice_date" name="supplier_invoice_date" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="field-compact-item" style="width:125px;flex-shrink:0;">
-                            <label for="created_at">Entry Date</label>
+                            <label for="created_at" data-help="Date the goods enter your books. Stock and accounts post on this date and the credit due date counts from it.|Today, or the day goods arrived">Entry Date</label>
                             <input type="date" id="created_at" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="field-compact-item" style="width:250px;flex-shrink:0;">
                             <div class="d-flex align-items-center justify-content-between">
-                                <label for="supplier_id">Party *</label>
+                                <label for="supplier_id" data-help="Supplier you bought from. Picking one fills GSTIN, address and the supplier's standard terms (payment, items, GST, remarks).|Sri Murugan Flexi Packs">Party *</label>
                                 <button type="button" class="btn btn-link p-0 btn-open-party-modal" id="btn-quick-new-party" data-party-type="supplier" style="font-size:9.5px;color:#7c3aed;font-weight:700;text-decoration:none;border:none;background:none;cursor:pointer;">+ New Party</button>
                             </div>
                             <select id="supplier_id" name="supplier_id" class="form-control selectpicker" data-live-search="true" data-container="body" title="Select Supplier" required>
@@ -122,14 +122,15 @@
                                         data-city="{{ $supplier->city ?? '' }}"
                                         data-state="{{ $supplier->state ?? '' }}"
                                         data-postal="{{ $supplier->postal_code ?? '' }}"
-                                        data-credit-days="{{ $supplier->credit_days ?? 0 }}">
+                                        data-credit-days="{{ $supplier->credit_days ?? 0 }}"
+                                        data-defaults="{{ json_encode($supplier->purchase_defaults ?: (object) []) }}">
                                         {{ $supplier->name }} ({{ $supplier->company_name ?? 'Individual' }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="field-compact-item doc-party-details">
-                        <label>Party details</label>
+                        <label data-help="Read from the supplier master. Credit = the supplier's standard credit days. Edit the supplier to change them.|GSTIN 33AAPFS9902L1ZM · Tiruppur">Party details</label>
                         <div class="party-info-compact-inline" id="party-info-card" style="display:flex;">
                             <span style="font-size:10px;font-weight:700;color:#475569;white-space:nowrap;">GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span></span>
                             <span style="font-size:10.5px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" id="party-address-text">Select a party to see GSTIN and address</span>
@@ -141,14 +142,14 @@
                     <!-- Compact Row 2: Tax Classification, Series, Warehouse, Quick Logistics Note -->
                     <div class="fields-compact-row doc-row-b">
                         <div class="field-compact-item doc-seg-item">
-                            <label>Payment</label>
+                            <label data-help="Cash = paid now, no due date. Credit = pay later within the Terms days.|Credit for monthly suppliers, Cash for counter buys">Payment</label>
                             <div class="pill-segmented-compact doc-segment" role="group" aria-label="Payment Mode">
                                 <button type="button" class="segment-btn" id="pill-mode-cash" data-mode="Cash">Cash</button>
                                 <button type="button" class="segment-btn active" id="pill-mode-credit" data-mode="Credit">Credit</button>
                             </div>
                         </div>
                         <div class="field-compact-item doc-seg-item">
-                            <label>Items</label>
+                            <label data-help="Product = stock goods, adds to inventory. Service = no stock (freight, labour, repairs). Mixed = both on one bill.|Product for pouches and bottles">Items</label>
                             <div class="pill-segmented-compact doc-segment" role="group" aria-label="Product Mode">
                                 <button type="button" class="segment-btn active" data-nature="product">Product</button>
                                 <button type="button" class="segment-btn" data-nature="service">Service</button>
@@ -170,7 +171,7 @@
                             </select>
                         </div>
                         <div class="field-compact-item" style="width:160px;flex-shrink:0;">
-                            <label for="series_id">Series</label>
+                            <label for="series_id" data-help="Numbering series that gives Our Bill No. Use separate series to keep e.g. imports apart.|Purchase → PUR-00001, PUR-00002">Series</label>
                             <select id="series_id" name="series_id" class="form-control">
                                 <option value="0">Purchase</option>
                                 @foreach($documentSeries as $ds)
@@ -179,7 +180,7 @@
                             </select>
                         </div>
                         <div class="field-compact-item" style="width:230px;flex-shrink:0;">
-                            <label for="form_warehouse_id">{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
+                            <label for="form_warehouse_id" data-help="Godown where the received stock is added.|Main godown">{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                             <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
                                 @foreach($lims_warehouse_list as $wh)
                                     <option value="{{ $wh->id }}">{{ $wh->name }}</option>
@@ -187,10 +188,10 @@
                             </select>
                         </div>
                         <div class="field-compact-item doc-terms">
-                        <label>Terms</label>
+                        <label for="header-credit-days" data-help="Credit days for this bill only; due date = entry date + days. Starts from the supplier's standard days. Cash bills have no credit.|30">Terms</label>
                         <div class="terms-compact-inline">
-                            <span><strong style="color:#0f172a;">Standard</strong></span>
-                            <span>Credit: <strong id="header-credit-days" style="color:#0f172a;">—</strong></span>
+                            <span id="terms-credit">Credit <input type="number" id="header-credit-days" class="terms-days-input" min="0" max="3650" step="1" inputmode="numeric" placeholder="—" aria-label="Credit days"> days</span>
+                            <span id="terms-cash" hidden><strong>Cash</strong> · paid now, no due date</span>
                             <a href="javascript:void(0)" id="btn-quick-logistics" style="color:#7c3aed;font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">
                                 + Transport &amp; Remarks &rarr;
                             </a>
@@ -3133,15 +3134,64 @@
             $('#party-credit-badge').text('Credit: ' + credit + ' days');
             $('#party-address-text').text(fullAddr || 'Address not registered');
             $('#party-info-card').slideDown(150);
-            $('#header-credit-days').text(credit ? (credit + ' days') : 'Standard');
+            $('#header-credit-days').attr('placeholder', credit);
         } else {
             $('#party-gst-badge').text('—');
             $('#party-address-text').text('Select a party to see GSTIN and address');
             $('#party-credit-badge').text('Credit: — days');
-            $('#header-credit-days').text('—');
+            $('#header-credit-days').attr('placeholder', '—');
         }
     }
     $('#supplier_id').on('change', updatePartyCard);
+
+    // --- Terms: credit days for this bill. Blank posts nothing, so the server uses the supplier's standard days. ---
+    function setCreditDays(value) {
+        $('#header-credit-days, #hidden-credit-days, #drawer-credit-days').val(value);
+    }
+    $('#header-credit-days').on('input change', function () {
+        $('#hidden-credit-days, #drawer-credit-days').val(this.value);
+    });
+    $('#drawer-credit-days').on('input change', function () {
+        $('#header-credit-days').val(this.value);
+    });
+    function syncTerms() {
+        var method = $('#input-paying-method').val() || 'Credit', cash = method !== 'Credit';
+        $('#terms-credit').prop('hidden', cash);
+        $('#terms-cash').prop('hidden', !cash).find('strong').text(method);
+        $('#header-credit-days').prop('disabled', cash);
+        if (cash) {
+            if (!$('#header-credit-days').is('[data-credit-before-cash]')) $('#header-credit-days').attr('data-credit-before-cash', $('#header-credit-days').val());
+            $('#hidden-credit-days, #drawer-credit-days').val(0);
+        } else if ($('#header-credit-days').is('[data-credit-before-cash]')) {
+            setCreditDays($('#header-credit-days').attr('data-credit-before-cash'));
+            $('#header-credit-days').removeAttr('data-credit-before-cash');
+        }
+    }
+    // The drawer's own handler copies its method into the form first, so read it on the next tick.
+    $('#drawer-paying-method').on('change', function () { setTimeout(syncTerms); });
+    $(document).on('command-center-reset', function () { $('#header-credit-days').removeAttr('data-credit-before-cash'); setCreditDays(''); setTimeout(syncTerms); });
+    $(document).on('command-center-loaded', function () { setTimeout(function () { $('#header-credit-days').val($('#hidden-credit-days').val()); syncTerms(); }); });
+
+    // --- Supplier standard terms: applied only when the user picks a supplier, never when a saved bill or draft restores one. ---
+    function applyPartyDefaults() {
+        var opt = $('#supplier_id option:selected');
+        if (!opt.val()) return;
+        var d = opt.data('defaults') || {};
+        $('#header-credit-days').removeAttr('data-credit-before-cash');
+        setCreditDays(opt.data('credit-days') || 0);
+        $('.pill-segmented-compact button[data-mode="' + (d.payment_mode || 'Credit') + '"]').trigger('click');
+        $('.pill-segmented-compact button[data-nature="' + (d.nature || 'product') + '"]').trigger('click');
+        $('#gst-place-of-supply').val(d.place_of_supply || '').trigger('change');
+        $('#gst-reverse-charge').prop('checked', !!d.reverse_charge).trigger('change');
+        if (d.note && !$('#drawer-note').val()) {
+            $('#drawer-note, #hidden-note').val(d.note);
+            $('#remarks-summary-preview').text('Remarks: ' + d.note.slice(0, 40) + (d.note.length > 40 ? '...' : ''));
+        }
+    }
+    // bootstrap-select passes the clicked index only for a user pick; programmatic .val().trigger('change') passes none.
+    $('#supplier_id').on('changed.bs.select', function (event, clickedIndex) {
+        if (typeof clickedIndex === 'number') applyPartyDefaults();
+    });
     // No party is preselected: drop the browser's implicit first-option pick so the strip matches the "Select Supplier" title.
     if (!$('#supplier_id option[selected]').length) $('#supplier_id').prop('selectedIndex', -1);
     updatePartyCard();
@@ -3555,6 +3605,7 @@
         var mode = $(this).data('mode');
         $('#input-paying-method, #drawer-paying-method').val(mode);
         $('#drawer-paying-method').selectpicker('refresh');
+        syncTerms();
     });
 
     // --- Side Panel Filtering Functions ---

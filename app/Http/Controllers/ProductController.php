@@ -271,21 +271,8 @@ class ProductController extends Controller
             $nestedData['id'] = $product->id;
             $nestedData['key'] = $key;
 
-            // Image
-            $product_image = explode(",", $product->image);
-            $product_image = htmlspecialchars($product_image[0]);
-            if ($product_image && $product_image != 'zummXD2dvAtI.png') {
-                if (file_exists("public/images/product/small/". $product_image)) {
-                    $nestedData['image'] = '<img src="'.url('images/product/small', $product_image).'" height="50" width="50">';
-                } else {
-                    $nestedData['image'] = '<img src="'.url('images/product', $product_image).'" height="50" width="50">';
-                }
-            } else {
-                $nestedData['image'] = '<img src="images/zummXD2dvAtI.png" height="50" width="50">';
-            }
-
-            $nestedData['name'] = '<div class="d-flex align-items-center">'.$nestedData['image'].'
-                                    <span style="color:#111;margin:0 10px;">'.$product->name.'</span></div>';
+            // Name only: thumbnails made every row two lines tall; the details dialog still shows real images.
+            $nestedData['name'] = '<span class="product-name-cell">'.e($product->name).'</span>';
             $nestedData['code'] = $product->code;
             $nestedData['brand'] = $product->brand->title ?? "N/A";
             $nestedData['category'] = $product->category->name ?? "N/A";

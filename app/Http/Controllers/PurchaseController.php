@@ -100,7 +100,7 @@ class PurchaseController extends Controller
             $todayPurchasesCount = Purchase::whereDate('created_at', date('Y-m-d'))->count();
             $totalPaid = Purchase::sum('paid_amount');
             $totalDue = Purchase::selectRaw('SUM(grand_total - paid_amount) as due')->value('due') ?? 0;
-            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number', 'tax_no', 'vat_number', 'address', 'city', 'state', 'postal_code', 'credit_days')->limit(200)->get();
+            $lims_supplier_list = Supplier::where('is_active', true)->select('id', 'name', 'company_name', 'phone_number', 'tax_no', 'vat_number', 'address', 'city', 'state', 'postal_code', 'credit_days', 'purchase_defaults')->limit(200)->get();
             $recent_bills = Purchase::with('supplier:id,name,company_name,phone_number')
                 ->latest('id')
                 ->limit(50)
