@@ -8,19 +8,19 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-24 (+05:30) — Add Account freeze fix + field help everywhere (section 64)
+- **Last Updated:** 2026-10-24 (+05:30) — Add Account freeze fix + field help everywhere (section 64); ui merged to main
+- **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
 - **Latest Commits:**
+  - `2e914f9` — "Merge origin/ui (FMCG e2e suite, GSTIN lookup details, party modal) into ui"
+  - `ff38594` — "Edit and guarded delete for master registers, ledgers and journals"
+  - `dade41c` — "Settings workspace modernization, GST code/rate edit+delete, discount delete, setup guide"
   - `4a7307d` — "feat(test-suite): add FMCG full life-cycle matrix, Playwright E2E suites & interactive HTML reports"
   - `6b0a310` — "Merge branch 'ui' of https://github.com/vigneshsinna/zolo-erp-pro into ui"
-  - `72e4d47` — "Support unregistered companies; fix dropdown placement"
-  - `87b7f8c` — "Add company/group edit and delete; polish bills and KPIs"
-  - `d8c035e` — "Post year-end close and party opening balances"
-  - `928d257` — "docs: record completed Textile P2 delivery"
-- **Working Tree State:** Clean; 22/22 FMCG and 13/13 Textile Playwright milestones passing; 66/66 menus audited HTTP 200 OK
+- **Working Tree State:** Clean; all migrations applied; 3/3 MasterRegisterEditTest passing
 - **Test Suite Status:** 100% green across all Playwright E2E test suites (FMCG & Textile) and PHPUnit feature suites
 - **Database & Server State:**
   - Database: MariaDB/MySQL running with all migrations applied up to `2026_10_17_000005_seed_missing_document_series`
