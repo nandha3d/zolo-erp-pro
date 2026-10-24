@@ -1,7 +1,9 @@
 # Production deployment (VPS)
 
-Every push to `main` deploys to **https://erp.samuraibuiness.in** through
-[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
+Every push to `main` runs the acceptance suites
+([`company-foundation.yml`](../.github/workflows/company-foundation.yml)). When they pass,
+[`deploy.yml`](../.github/workflows/deploy.yml) deploys that commit to **https://erp.samuraibuiness.in**.
+A failed suite blocks the deploy.
 
 ## How a deploy runs
 
