@@ -8,22 +8,25 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-24 (+05:30) — Add Account freeze fix + field help everywhere (section 64); ui merged to main
+- **Last Updated:** 2026-10-24 18:27:00 (+05:30) — Pulled latest from origin/ui (c78fd43), synced with nandha-origin/ui, applied 2026_10_24_000001 migration
 - **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`ui`, `enhanced-ui`)
 - **Latest Commits:**
-  - `2e914f9` — "Merge origin/ui (FMCG e2e suite, GSTIN lookup details, party modal) into ui"
-  - `ff38594` — "Edit and guarded delete for master registers, ledgers and journals"
-  - `dade41c` — "Settings workspace modernization, GST code/rate edit+delete, discount delete, setup guide"
-  - `4a7307d` — "feat(test-suite): add FMCG full life-cycle matrix, Playwright E2E suites & interactive HTML reports"
-  - `6b0a310` — "Merge branch 'ui' of https://github.com/vigneshsinna/zolo-erp-pro into ui"
-- **Working Tree State:** Clean; all migrations applied; 3/3 MasterRegisterEditTest passing
+  - `c78fd43` — "docs(session): record login redesign (section 65)"
+  - `6a1cdff` — "Redesign the admin login screen"
+  - `c8592dc` — "Bring CI back to green"
+  - `03cf15d` — "Keep storage directories in git so fresh clones boot"
+  - `1e1f2de` — "Deploy only after the acceptance suites pass on main"
+  - `51a1a74` — "Merge remote-tracking branch 'origin/ui' into ui"
+  - `341135d` — "Purchase terms and supplier defaults, field help, Sweet Soil demo"
+  - `894c7c2` — "Add GitHub Actions deploy to the production VPS"
+- **Working Tree State:** Clean; all migrations applied
 - **Test Suite Status:** 100% green across all Playwright E2E test suites (FMCG & Textile) and PHPUnit feature suites
 - **Database & Server State:**
-  - Database: MariaDB/MySQL running with all migrations applied up to `2026_10_17_000005_seed_missing_document_series`
+  - Database: MariaDB/MySQL running with all migrations applied up to `2026_10_24_000001_add_purchase_defaults_to_suppliers`
   - Web Server: Single instance on `http://localhost:8080` (bound to `0.0.0.0:8080 -t public server.php`)
 - **Chat & Transcript Backups:**
   - Raw JSONL: [`documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl`](file:///v:/pers/Freelance/zolo-erp-pro/documents/chat_backups/session_47d4cc38_raw_transcript_20261007.jsonl)
