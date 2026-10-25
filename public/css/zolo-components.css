@@ -1,0 +1,369 @@
+/**
+ * zoloERP components — one look for every button, field, dropdown, table, badge and tab.
+ * Colours come only from zolo-tokens.css. Loaded after page stylesheets.
+ * Selectors carry `html body` so they outrank page rules like `.modal-footer .btn-primary`
+ * regardless of load order (some pages link their CSS inside the body).
+ *
+ * Button roles (colour = meaning):
+ *   primary   Save / Submit / Add — filled brand purple   .btn-primary  (.btn-success maps here)
+ *   secondary Cancel / Back / Filter / Export — outlined   .btn-secondary .btn-default .btn-light
+ *             .btn-info .btn-warning .btn-dark .btn-outline-*  all map here
+ *   danger    Delete / Void — filled red                   .btn-danger   (.btn-outline-danger outlined)
+ *   ghost     row actions, inline links                    .btn-link
+ */
+
+/* ---------- Dark surfaces: the sidebar is always dark, so accents inside it use light purple ---------- */
+html body .side-navbar {
+  --z-primary: var(--zp-400);
+  --z-primary-hover: var(--zp-300);
+  --z-primary-text: var(--zp-300);
+  --z-primary-rgb: 195 122 196;
+  --neo-primary: var(--zp-400);
+  --neo-primary-hover: var(--zp-300);
+  --neo-primary-light: rgb(195 122 196 / 0.16);
+}
+
+/* ---------- Buttons: primary ---------- */
+html body .btn.btn-primary,
+html body .btn.btn-success {
+  background: var(--z-primary);
+  border-color: var(--z-primary);
+  color: var(--z-primary-contrast);
+  box-shadow: none;
+}
+html body .btn.btn-primary:hover,
+html body .btn.btn-success:hover,
+html body .btn.btn-primary:focus,
+html body .btn.btn-success:focus {
+  background: var(--z-primary-hover);
+  border-color: var(--z-primary-hover);
+  color: var(--z-primary-contrast);
+}
+html body .btn.btn-primary:active,
+html body .btn.btn-primary.active,
+html body .btn.btn-success:active,
+html body .btn.btn-success.active {
+  background: var(--z-primary-active);
+  border-color: var(--z-primary-active);
+  color: var(--z-primary-contrast);
+}
+
+/* ---------- Buttons: secondary ---------- */
+html body .btn.btn-secondary,
+html body .btn.btn-default,
+html body .btn.btn-light,
+html body .btn.btn-info,
+html body .btn.btn-warning,
+html body .btn.btn-dark,
+html body .btn.btn-outline-primary,
+html body .btn.btn-outline-secondary,
+html body .btn.btn-outline-success,
+html body .btn.btn-outline-info,
+html body .btn.btn-outline-warning,
+html body .btn.btn-outline-dark {
+  background: var(--z-surface);
+  border-color: var(--z-border-strong);
+  color: var(--z-text);
+  box-shadow: none;
+}
+html body .btn.btn-secondary:hover,
+html body .btn.btn-default:hover,
+html body .btn.btn-light:hover,
+html body .btn.btn-info:hover,
+html body .btn.btn-warning:hover,
+html body .btn.btn-dark:hover,
+html body .btn.btn-outline-primary:hover,
+html body .btn.btn-outline-secondary:hover,
+html body .btn.btn-outline-success:hover,
+html body .btn.btn-outline-info:hover,
+html body .btn.btn-outline-warning:hover,
+html body .btn.btn-outline-dark:hover {
+  background: var(--z-primary-soft);
+  border-color: var(--z-primary-border);
+  color: var(--z-primary-text);
+}
+/* Selected state inside segmented groups (Cash/Credit, Compact/Cozy/Large) */
+html body .btn.btn-secondary.active,
+html body .btn.btn-default.active,
+html body .btn.btn-light.active,
+html body .btn.btn-info.active,
+html body .btn.btn-outline-primary.active,
+html body .btn.btn-outline-secondary.active {
+  background: var(--z-primary);
+  border-color: var(--z-primary);
+  color: var(--z-primary-contrast);
+}
+
+/* ---------- Buttons: danger ---------- */
+html body .btn.btn-danger {
+  background: var(--z-danger-solid);
+  border-color: var(--z-danger-solid);
+  color: #ffffff;
+}
+html body .btn.btn-danger:hover,
+html body .btn.btn-danger:focus {
+  background: var(--z-danger-solid-hover);
+  border-color: var(--z-danger-solid-hover);
+  color: #ffffff;
+}
+html body .btn.btn-outline-danger {
+  background: var(--z-surface);
+  border-color: var(--z-danger-border);
+  color: var(--z-danger);
+}
+html body .btn.btn-outline-danger:hover {
+  background: var(--z-danger-soft);
+  border-color: var(--z-danger);
+  color: var(--z-danger);
+}
+
+/* ---------- Buttons: ghost ---------- */
+html body .btn.btn-link {
+  color: var(--z-primary-text);
+}
+html body .btn.btn-link:hover {
+  color: var(--z-primary-hover);
+}
+body.dark-mode .btn.btn-link:hover {
+  color: var(--z-primary-text);
+}
+html body .btn.btn-link.text-danger {
+  color: var(--z-danger);
+}
+
+/* ---------- Buttons: shared states ---------- */
+html body .btn:focus-visible {
+  outline: none;
+  box-shadow: var(--z-focus-ring);
+}
+html body .btn:disabled,
+html body .btn.disabled {
+  opacity: 0.55;
+}
+/* On dark (ink) bars, outline-light stays light */
+html body .btn.btn-outline-light {
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.35);
+  color: var(--z-on-ink);
+}
+html body .btn.btn-outline-light:hover {
+  background: rgb(255 255 255 / 0.12);
+  color: var(--z-on-ink);
+}
+
+/* ---------- Fields ---------- */
+html body .form-control,
+html body .bootstrap-select > .dropdown-toggle,
+html body .bootstrap-select > .btn.dropdown-toggle,
+html body .input-group-text,
+html body select.form-control,
+html body textarea.form-control {
+  background-color: var(--z-field-bg);
+  border-color: var(--z-field-border);
+  color: var(--z-field-text);
+}
+html body .input-group-text {
+  background-color: var(--z-surface-3);
+  color: var(--z-text-2);
+}
+html body .form-control::placeholder {
+  color: var(--z-field-placeholder);
+}
+html body .bootstrap-select > .dropdown-toggle.bs-placeholder,
+html body .bootstrap-select > .dropdown-toggle.bs-placeholder:hover {
+  color: var(--z-field-placeholder);
+}
+html body .bootstrap-select > .dropdown-toggle:hover {
+  background-color: var(--z-field-bg);
+  border-color: var(--z-primary-border);
+  color: var(--z-field-text);
+}
+html body .form-control:focus,
+html body .bootstrap-select > .dropdown-toggle:focus,
+html body .bootstrap-select.show > .dropdown-toggle {
+  background-color: var(--z-field-bg);
+  border-color: var(--z-primary);
+  box-shadow: var(--z-focus-ring);
+  color: var(--z-field-text);
+  outline: none !important;
+}
+html body .form-control:disabled,
+html body .form-control[readonly] {
+  background-color: var(--z-field-disabled-bg);
+  color: var(--z-text-2);
+}
+html body input[type="checkbox"],
+html body input[type="radio"],
+html body input[type="range"] {
+  accent-color: var(--z-primary);
+}
+
+/* ---------- Dropdown menus (Bootstrap, bootstrap-select, action menus) ---------- */
+html body .dropdown-menu {
+  background-color: var(--z-surface);
+  border-color: var(--z-border);
+  color: var(--z-text);
+}
+html body .dropdown-menu .dropdown-item,
+html body .dropdown-menu > li > a,
+html body .dropdown-menu > li > .btn-link {
+  color: var(--z-text);
+}
+html body .dropdown-menu .dropdown-item:hover,
+html body .dropdown-menu .dropdown-item:focus,
+html body .dropdown-menu > li > a:hover,
+html body .dropdown-menu > li > .btn-link:hover,
+html body .bootstrap-select .dropdown-menu li a:hover {
+  background-color: var(--z-primary-soft);
+  color: var(--z-primary-text);
+}
+html body .dropdown-menu .dropdown-item.active,
+html body .dropdown-menu .dropdown-item:active,
+html body .bootstrap-select .dropdown-menu li.selected > a,
+html body .bootstrap-select .dropdown-menu li.active > a,
+html body .bootstrap-select .dropdown-menu li a.active {
+  background-color: var(--z-primary);
+  color: var(--z-primary-contrast);
+}
+html body .dropdown-menu .dropdown-divider {
+  border-top-color: var(--z-border);
+}
+html body .dropdown-menu li.divider {
+  height: 0;
+  border-top: 1px solid var(--z-border);
+}
+html body .dropdown-menu > li > .btn-link.text-danger,
+html body .dropdown-menu > li > .btn-link.text-danger:hover {
+  color: var(--z-danger);
+}
+
+/* ---------- Tables ---------- */
+html body .table {
+  color: var(--z-text);
+}
+html body .table thead th,
+html body table.dataTable thead th {
+  background-color: var(--z-table-head-bg);
+  color: var(--z-table-head-text);
+  border-color: var(--z-table-head-bg);
+}
+html body .table td,
+html body .table th {
+  border-color: var(--z-table-border);
+}
+html body .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--z-table-stripe);
+}
+html body .table-hover tbody tr:hover,
+html body table.dataTable tbody tr:hover {
+  background-color: var(--z-table-hover);
+}
+html body table.dataTable tbody tr.selected {
+  background-color: var(--z-primary-soft-strong);
+}
+html body .table tfoot th,
+html body .table tfoot td {
+  background-color: var(--z-surface-3);
+  color: var(--z-text);
+}
+
+/* ---------- Pagination ---------- */
+html body .page-item .page-link {
+  background-color: var(--z-surface);
+  border-color: var(--z-border);
+  color: var(--z-text-2);
+}
+html body .page-item .page-link:hover {
+  background-color: var(--z-primary-soft);
+  color: var(--z-primary-text);
+}
+html body .page-item.active .page-link {
+  background-color: var(--z-primary);
+  border-color: var(--z-primary);
+  color: var(--z-primary-contrast);
+}
+
+/* ---------- Tabs and pills ---------- */
+html body .nav-pills .nav-link.active,
+html body .nav-pills .show > .nav-link {
+  background-color: var(--z-primary);
+  color: var(--z-primary-contrast);
+}
+html body .nav-tabs .nav-link.active,
+html body .nav-tabs .nav-item.show .nav-link {
+  border-bottom-color: var(--z-primary);
+  color: var(--z-primary-text);
+}
+
+/* ---------- Badges (status colour = meaning) ---------- */
+html body .badge-primary,
+html body .badge-purple {
+  background-color: var(--z-primary-soft);
+  border: 1px solid var(--z-primary-border);
+  color: var(--z-primary-text);
+}
+html body .badge-success {
+  background-color: var(--z-success-soft);
+  border: 1px solid var(--z-success-border);
+  color: var(--z-success);
+}
+html body .badge-warning {
+  background-color: var(--z-warning-soft);
+  border: 1px solid var(--z-warning-border);
+  color: var(--z-warning);
+}
+html body .badge-danger {
+  background-color: var(--z-danger-soft);
+  border: 1px solid var(--z-danger-border);
+  color: var(--z-danger);
+}
+html body .badge-info {
+  background-color: var(--z-info-soft);
+  border: 1px solid var(--z-info-border);
+  color: var(--z-info);
+}
+html body .badge-secondary,
+html body .badge-light,
+html body .badge-dark,
+html body .badge-neutral {
+  background-color: var(--z-surface-3);
+  border: 1px solid var(--z-border);
+  color: var(--z-text-2);
+}
+
+/* ---------- Alerts ---------- */
+html body .alert-success { background-color: var(--z-success-soft); border-color: var(--z-success-border); color: var(--z-success); }
+html body .alert-warning { background-color: var(--z-warning-soft); border-color: var(--z-warning-border); color: var(--z-warning); }
+html body .alert-danger  { background-color: var(--z-danger-soft);  border-color: var(--z-danger-border);  color: var(--z-danger); }
+html body .alert-info    { background-color: var(--z-info-soft);    border-color: var(--z-info-border);    color: var(--z-info); }
+html body .zolo-alert {
+  border-radius: var(--z-radius-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+html body .zolo-alert .zolo-alert-icon { font-size: 16px; flex-shrink: 0; margin-right: 6px; }
+html body .zolo-alert .zolo-alert-body { font-size: 13.5px; line-height: 1.4; }
+html body .zolo-alert .zolo-alert-title { font-size: 14px; }
+html body .zolo-alert .close { padding: 10px 12px; outline: none; opacity: 0.6; }
+
+/* ---------- x-ui.badge component shape ---------- */
+html body .zolo-badge {
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+html body .zolo-badge.zolo-badge-pill { border-radius: 9999px; }
+html body .zolo-badge .zolo-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 5px;
+  display: inline-block;
+}
+
+/* ---------- Links and selection ---------- */
+html body ::selection {
+  background: rgb(var(--z-primary-rgb) / 0.22);
+}

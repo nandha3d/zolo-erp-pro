@@ -85,8 +85,8 @@
         font-size: 12px;
     }
     .notes-grid-table thead tr th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -96,10 +96,10 @@
         white-space: nowrap;
     }
     .notes-grid-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     .notes-grid-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode .notes-grid-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -125,7 +125,7 @@
     }
     .note-ref-badge {
         font-weight: 700;
-        color: #7c3aed;
+        color: var(--z-primary, #7d287e);
     }
     .note-status-badge {
         font-size: 10.5px;
@@ -147,8 +147,8 @@
         border: 1px solid #bbf7d0;
     }
     .btn-approve-note {
-        background: #7c3aed;
-        border: 1px solid #6d28d9;
+        background: var(--z-primary, #7d287e);
+        border: 1px solid var(--z-primary-hover, #631f64);
         color: #ffffff;
         font-size: 11px;
         padding: 3px 10px;
@@ -160,7 +160,7 @@
         gap: 4px;
     }
     .btn-approve-note:hover {
-        background: #6d28d9;
+        background: var(--z-primary-hover, #631f64);
     }
     .btn-print-note {
         background: #ffffff;
@@ -240,7 +240,7 @@
             <div class="notes-kpi-title">Purchase Returns (Debit Notes)</div>
             <div class="notes-kpi-val">{{ $totalPurchaseNotes }} <small style="font-size:12px; font-weight:normal; color:#64748b;">(₹ {{ number_format($totalPurchaseAmt, 2) }})</small></div>
         </div>
-        <div style="background:#f3e8ff; color:#7c3aed; width:36px; height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+        <div style="background:var(--z-primary-soft, #fbf4fb); color:var(--z-primary, #7d287e); width:36px; height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
             <i class="dripicons-return" style="font-size:18px;"></i>
         </div>
     </div>

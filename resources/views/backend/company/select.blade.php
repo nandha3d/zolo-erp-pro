@@ -15,9 +15,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Choose company · zoloERP</title>
+    <link rel="stylesheet" href="{{ versioned_asset('css/zolo-tokens.css') }}">
     <link rel="stylesheet" href="{{ asset('css/zolo-erp-neo.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/company-picker.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/field-help.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/zolo-components.css') }}">
 </head>
 <body class="cp-body {{ $theme === 'dark' ? 'dark-mode' : '' }}">
 <header class="cp-top">

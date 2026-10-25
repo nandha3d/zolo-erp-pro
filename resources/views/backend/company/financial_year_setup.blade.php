@@ -9,9 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --primary-light: #eef2ff;
+            --primary: var(--z-primary, #7d287e);
+            --primary-hover: var(--z-primary-hover, #631f64);
+            --primary-light: var(--z-primary-soft, #fbf4fb);
             --success: #059669;
             --success-light: #ecfdf5;
             --success-border: #a7f3d0;
@@ -44,7 +44,7 @@
             margin-bottom: 1.5rem;
         }
         .brand-badge {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: linear-gradient(135deg, var(--z-primary, #7d287e), var(--z-primary, #7d287e));
             color: #ffffff;
             font-weight: 700;
             font-size: 1.1rem;
@@ -53,9 +53,9 @@
             letter-spacing: -0.02em;
             display: inline-flex;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 2px 8px rgb(var(--z-primary-rgb, 125 40 126) / 0.3);
         }
-        .brand-badge span { color: #a5b4fc; }
+        .brand-badge span { color: var(--z-primary-text, #7d287e); }
         .page-title {
             font-size: 1.75rem;
             font-weight: 700;
@@ -131,7 +131,7 @@
         .btn-proceed {
             background: var(--primary);
             color: #ffffff;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 2px 4px rgb(var(--z-primary-rgb, 125 40 126) / 0.25);
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
             white-space: nowrap;
@@ -139,7 +139,7 @@
         .btn-proceed:hover {
             background: var(--primary-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 4px 10px rgb(var(--z-primary-rgb, 125 40 126) / 0.35);
             color: #ffffff;
         }
         .btn-create {
@@ -262,7 +262,7 @@
         }
         input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+            box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb, 125 40 126) / 0.15);
         }
         .form-actions {
             display: flex;

@@ -31,8 +31,8 @@
         width: 100% !important;
     }
     .monthly-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -41,14 +41,14 @@
         border: none !important;
     }
     body.dark-mode .monthly-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     .monthly-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     .monthly-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode .monthly-table tbody tr:nth-child(even) {
         background: #141c2c;

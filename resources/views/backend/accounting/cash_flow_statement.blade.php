@@ -78,8 +78,8 @@
         width: 100% !important;
     }
     .cf-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -88,8 +88,8 @@
         border: none !important;
     }
     body.dark-mode .cf-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     .cf-table td {
         padding: 9px 12px !important;

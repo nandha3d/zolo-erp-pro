@@ -29,7 +29,7 @@
                             @if ($brand->image)
                                 <td>
                                     <img src="{{ url('images/brand', $brand->image) }}" height="50" width="50" style="object-fit: contain; border-radius: 8px;" onerror="this.onerror=null; this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
-                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center" style="display:none; color: #4f46e5; background: #eef2ff; border-radius: 8px; font-size: 13px; height: 40px; min-width: 40px;">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
+                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center" style="display:none; color: var(--z-primary, #7d287e); background: var(--z-primary-soft, #fbf4fb); border-radius: 8px; font-size: 13px; height: 40px; min-width: 40px;">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
                                 </td>
                             @else
                                 <td>

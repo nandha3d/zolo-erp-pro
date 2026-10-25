@@ -231,13 +231,16 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet"></noscript>
   @endif
 
-  <!-- zoloERP Design System -->
+  <!-- zoloERP Design System: tokens (brand colours) first, components after page CSS -->
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-tokens.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
   <!-- One-screen app shell: compact header, viewport-locked page, lists sized to fit -->
   <link rel="stylesheet" href="<?php echo versioned_asset('css/app-shell.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/field-help.css') ?>" type="text/css">
 
   @stack('css')
+
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-components.css') ?>" type="text/css">
 
   <!-- Sidebar links: fetch the page on hover so the click opens it without waiting on the server.
        Prefetch requests do not touch the session's previous URL (Laravel skips Sec-Purpose: prefetch). -->

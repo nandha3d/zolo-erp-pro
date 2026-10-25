@@ -66,8 +66,8 @@
         width: 100% !important;
     }
     #customer-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -77,14 +77,14 @@
         white-space: nowrap;
     }
     body.dark-mode #customer-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     #customer-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     #customer-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode #customer-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -163,7 +163,7 @@
     </ul>
     <div class="comm-actions">
         @can('customers-add')
-            <a href="{{route('customer.create')}}" class="btn btn-primary py-1 px-3" style="background:#7c3aed; border-color:#7c3aed; font-size:11.5px; border-radius:4px;">
+            <a href="{{route('customer.create')}}" class="btn btn-primary py-1 px-3" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); font-size:11.5px; border-radius:4px;">
                 <i class="dripicons-plus"></i> {{__('db.Add Customer')}}
             </a>
         @endcan
@@ -189,7 +189,7 @@
                 <div class="kpi-label">Total Active Customers</div>
                 <div class="kpi-number">{{ $totalCustCount }}</div>
             </div>
-            <div style="background:#ede9fe; color:#7c3aed; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+            <div style="background:var(--z-primary-soft, #fbf4fb); color:var(--z-primary, #7d287e); width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
                 <i class="dripicons-user-group" style="font-size:18px;"></i>
             </div>
         </div>
@@ -262,7 +262,7 @@
                     </div>
                 </div>
             </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
@@ -325,7 +325,7 @@
                     <textarea name="payment_note" rows="2" class="form-control"></textarea>
                 </div>
             </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
@@ -351,7 +351,7 @@
                         <label>{{__('db.Note')}}</label>
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
-                    <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;" id="submit-button">
+                    <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
                 {!! Form::close() !!}
             </div>
         </div>
@@ -403,7 +403,7 @@
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
                     <input type="hidden" name="deposit_id">
-                    <button type="submit" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;">{{__('db.update')}}</button>
+                    <button type="submit" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{__('db.update')}}</button>
                 {{ Form::close() }}
             </div>
         </div>
@@ -457,7 +457,7 @@
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
                     <input type="hidden" name="point_id">
-                    <button type="submit" class="btn btn-primary btn-block" style="background:#7c3aed; border-color:#7c3aed;">{{__('db.update')}}</button>
+                    <button type="submit" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{__('db.update')}}</button>
                 {{ Form::close() }}
             </div>
         </div>

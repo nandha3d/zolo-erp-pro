@@ -59,8 +59,8 @@
         border-spacing: 0;
     }
     .optech-grid-table thead th {
-        background: #0f766e;
-        color: #ffffff;
+        background: var(--z-table-head-bg, #022051);
+        color: var(--z-table-head-text, #ffffff);
         font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
@@ -74,7 +74,7 @@
         border: 1px solid #e2e8f0;
     }
     .optech-grid-table tbody tr:hover {
-        background-color: #f8fafc;
+        background-color: var(--z-table-stripe, #f8fafc);
     }
     .optech-dr-cr-select {
         font-weight: 800;
@@ -100,9 +100,9 @@
         border: 1px solid #fca5a5;
     }
     .optech-balance-cr {
-        background: #e0e7ff;
-        color: #3730a3;
-        border: 1px solid #a5b4fc;
+        background: var(--z-primary-soft, #fbf4fb);
+        color: var(--z-primary-hover, #631f64);
+        border: 1px solid var(--z-primary-text, #7d287e);
     }
     .optech-footer-card {
         background: #fdfaf4;

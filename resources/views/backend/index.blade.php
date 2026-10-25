@@ -106,8 +106,8 @@
 }
 
 /* Color Accents */
-.kpi-purple .zolo-kpi-icon { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-.kpi-purple .zolo-kpi-badge { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.kpi-purple .zolo-kpi-icon { background: rgb(var(--z-primary-rgb, 125 40 126) / 0.12); color: var(--z-primary, #7d287e); }
+.kpi-purple .zolo-kpi-badge { background: rgb(var(--z-primary-rgb, 125 40 126) / 0.12); color: var(--z-primary, #7d287e); }
 
 .kpi-blue .zolo-kpi-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
 .kpi-blue .zolo-kpi-badge { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
@@ -680,7 +680,7 @@
                     <!-- Quick Metric Badges -->
                     <div class="d-flex justify-content-around align-items-center pt-2 border-top border-secondary-subtle">
                         <div class="donut-legend-pill">
-                            <span class="donut-legend-dot" style="background: #6366f1;"></span>
+                            <span class="donut-legend-dot" style="background: var(--z-primary, #7d287e);"></span>
                             <span>Purchase: {{ $currency_symbol }}{{ number_format((float)$purchase, 0, '.', ',') }}</span>
                         </div>
                         <div class="donut-legend-pill">
@@ -754,11 +754,11 @@
         <div class="col-md-4 mb-2 mb-md-0">
             <div class="zolo-addon-pulse-card">
                 <div class="d-flex align-items-center">
-                    <div class="zolo-kpi-icon mr-2" style="background: rgba(99, 102, 241, 0.15); color: #6366f1;">
+                    <div class="zolo-kpi-icon mr-2" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.15); color: var(--z-primary, #7d287e);">
                         <i class="dripicons-gear"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #6366f1;">RMA Repair Service</div>
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--z-primary, #7d287e);">RMA Repair Service</div>
                         <div style="font-size: 13px; font-weight: 700; color: var(--neo-text-primary);">
                             {{ $addon_stats['repair_services_count'] ?? 0 }} Services Configured &bull; Live Bench
                         </div>

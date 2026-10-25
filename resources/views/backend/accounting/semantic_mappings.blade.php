@@ -66,8 +66,8 @@
         width: 100% !important;
     }
     .semantic-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -76,14 +76,14 @@
         border: none !important;
     }
     body.dark-mode .semantic-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     .semantic-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     .semantic-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode .semantic-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -148,7 +148,7 @@
             <li><a class="nav-link active" href="{{ route('accounting.semantic-mappings') }}"><i class="dripicons-gear"></i> Semantic Mappings</a></li>
         </ul>
         <div class="comm-actions">
-            <button type="submit" form="mapping-form" class="btn btn-primary btn-action-pill" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+            <button type="submit" form="mapping-form" class="btn btn-primary btn-action-pill" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
                 <i class="dripicons-checkmark"></i> Save Account Mappings
             </button>
         </div>
@@ -232,7 +232,7 @@
                 </table>
             </div>
             <div class="text-right pt-2 border-top">
-                <button type="submit" class="btn btn-primary px-4 btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed; height:32px;">Save Changes</button>
+                <button type="submit" class="btn btn-primary px-4 btn-sm font-weight-bold" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); height:32px;">Save Changes</button>
             </div>
         </form>
     </div>

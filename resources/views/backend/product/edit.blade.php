@@ -5,8 +5,8 @@
 @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
 @push('css')
 <style>
-.search_result, .search_result_addon {border:1px solid #e4e6fc;border-radius:5px;overflow-y: scroll;}
-.search_result > div, .search_result_addon > div, .selected_items > div, .selected_addons > div {border-top:1px solid #e4e6fc;cursor:pointer;display:flex;align-items:center;padding: 10px;position: relative;}
+.search_result, .search_result_addon {border:1px solid var(--z-primary-soft, #fbf4fb);border-radius:5px;overflow-y: scroll;}
+.search_result > div, .search_result_addon > div, .selected_items > div, .selected_addons > div {border-top:1px solid var(--z-primary-soft, #fbf4fb);cursor:pointer;display:flex;align-items:center;padding: 10px;position: relative;}
 .search_result > div > img, .search_result_addon > div > img, .selected_items > div > img, .selected_addons > div > img {margin-right: 10px;max-width: 40px;}
 .search_result > div h4, .search_result_addon > div h4, .selected_items > div h4, .selected_addons > div h4 {font-size: 0.9rem;}
 .search_result > div i,  .search_result_addon > div i, {color:#54b948;position:absolute;right:5px;top:30%}

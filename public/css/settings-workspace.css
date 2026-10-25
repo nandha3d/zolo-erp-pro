@@ -10,7 +10,7 @@
     justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
-    background: #0f172a;
+    background: var(--z-ink);
     border: 1px solid #1e293b;
     border-radius: 6px;
     padding: 3px 10px;
@@ -44,7 +44,7 @@
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 4px;
-    background: #1e293b;
+    background: var(--z-ink);
     color: #94a3b8;
     border: 1px solid #334155;
     white-space: nowrap;
@@ -60,7 +60,7 @@
     margin: 0;
     padding: 2px;
     list-style: none;
-    background: #1e293b;
+    background: var(--z-ink);
     border: 1px solid #334155;
     border-radius: 6px;
     min-width: 0;
@@ -90,9 +90,9 @@
 }
 
 .settings-command-bar .comm-nav-pills .nav-link.active {
-    background: #7c3aed !important;
+    background: var(--z-primary) !important;
     color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 1px 3px rgb(var(--z-primary-rgb) / 0.35);
 }
 
 .settings-command-bar .comm-actions {
@@ -118,20 +118,20 @@
 
 .settings-command-bar .comm-actions .btn-primary,
 .settings-command-bar .comm-actions .btn-info {
-    background: #7c3aed !important;
-    border-color: #7c3aed !important;
+    background: var(--z-primary) !important;
+    border-color: var(--z-primary) !important;
     color: #ffffff !important;
 }
 
 .settings-command-bar .comm-actions .btn-primary:hover,
 .settings-command-bar .comm-actions .btn-info:hover {
-    background: #6d28d9 !important;
+    background: var(--z-primary-hover) !important;
 }
 
 .settings-command-bar .comm-actions .btn-secondary,
 .settings-command-bar .comm-actions .btn-outline-secondary,
 .settings-command-bar .comm-actions .btn-default {
-    background: #1e293b !important;
+    background: var(--z-ink) !important;
     border: 1px solid #334155 !important;
     color: #cbd5e1 !important;
 }
@@ -244,8 +244,8 @@ body.dark-mode .settings-workspace-view > .table-responsive {
     position: sticky !important;
     top: 0 !important;
     z-index: 5 !important;
-    background: #0f172a !important;
-    color: #ffffff !important;
+    background: var(--z-table-head-bg) !important;
+    color: var(--z-table-head-text) !important;
     font-size: 10.5px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -257,8 +257,8 @@ body.dark-mode .settings-workspace-view > .table-responsive {
 
 body.dark-mode .settings-workspace-view table.dataTable thead th,
 body.dark-mode .settings-workspace-view table.table thead th {
-    background: #090d16 !important;
-    color: #f8fafc !important;
+    background: var(--z-table-head-bg) !important;
+    color: var(--z-table-head-text) !important;
 }
 
 .settings-workspace-view table.dataTable tbody td,
@@ -277,12 +277,12 @@ body.dark-mode .settings-workspace-view table.table tbody td {
 
 .settings-workspace-view table.dataTable tbody tr:nth-child(even),
 .settings-workspace-view table.table tbody tr:nth-child(even) {
-    background-color: #f8fafc;
+    background-color: var(--z-table-stripe);
 }
 
 .settings-workspace-view table.dataTable tbody tr:nth-child(odd),
 .settings-workspace-view table.table tbody tr:nth-child(odd) {
-    background-color: #ffffff;
+    background-color: var(--z-surface);
 }
 
 body.dark-mode .settings-workspace-view table.dataTable tbody tr:nth-child(even),
@@ -297,7 +297,7 @@ body.dark-mode .settings-workspace-view table.table tbody tr:nth-child(odd) {
 
 .settings-workspace-view table.dataTable tbody tr:hover,
 .settings-workspace-view table.table tbody tr:hover {
-    background-color: #eef2ff !important;
+    background-color: var(--z-primary-soft) !important;
 }
 
 body.dark-mode .settings-workspace-view table.dataTable tbody tr:hover,

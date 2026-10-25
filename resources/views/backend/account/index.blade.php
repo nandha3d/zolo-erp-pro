@@ -65,8 +65,8 @@
         width: 100% !important;
     }
     #account-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -76,14 +76,14 @@
         white-space: nowrap;
     }
     body.dark-mode #account-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     #account-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     #account-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode #account-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -156,7 +156,7 @@
             <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-document"></i> General Ledger</a></li>
         </ul>
         <div class="comm-actions">
-            <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#account-modal" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+            <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#account-modal" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
                 <i class="dripicons-plus"></i> {{ __('db.Add Account') }}
             </button>
         </div>
@@ -169,7 +169,7 @@
                 <div class="kpi-label">TOTAL ACCOUNTS</div>
                 <div class="kpi-number">{{ $totalAccountsCount }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-wallet" style="font-size:18px;"></i>
             </div>
         </div>

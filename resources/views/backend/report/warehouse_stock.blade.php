@@ -156,7 +156,7 @@
                 <div class="kpi-label">TOTAL STOCK ITEMS</div>
                 <div class="kpi-number">{{ number_format((float)$total_item, $general_setting->decimal, '.', '') }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-box" style="font-size:18px;"></i>
             </div>
         </div>
@@ -248,7 +248,7 @@
 
                     <div class="valuation-stat-box">
                         <span class="stat-label"><i class="dripicons-pulse text-info mr-1"></i> Projected Markup / Margin</span>
-                        <span class="stat-val" style="color:#7c3aed;">{{ number_format($profitMarginPercent, 1) }} %</span>
+                        <span class="stat-val" style="color:var(--z-primary, #7d287e);">{{ number_format($profitMarginPercent, 1) }} %</span>
                     </div>
                 </div>
             </div>

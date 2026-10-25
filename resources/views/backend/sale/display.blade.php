@@ -4,12 +4,12 @@
     body{font-family:'Inter',sans-serif}
     section.pos-section {padding: 10px 0}
     thead tr th {
-    background-color: #d6deff;
+    background-color: var(--z-primary-border, #ebcdeb);
     }
     svg {
         width: 20px;
         height: 20px;
-        stroke: #7c5cc4;
+        stroke: var(--z-primary, #7d287e);
     }
 </style>
 @endpush

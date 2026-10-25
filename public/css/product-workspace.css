@@ -2,22 +2,22 @@
    and the list in a card with the dark table header used across the command centers. */
 .comm-command-bar {
     display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;
-    background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 3px 10px; margin: 6px 12px 6px;
+    background: var(--z-ink); border: 1px solid #1e293b; border-radius: 6px; padding: 3px 10px; margin: 6px 12px 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); color: #f8fafc;
 }
 .comm-title-group { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .comm-title-group h1 { font-size: 13.5px; font-weight: 700; margin: 0; color: #f8fafc; line-height: 1.2; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
-.comm-title-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; white-space: nowrap; }
-.comm-nav-pills { display: flex; flex-wrap: wrap; gap: 3px; margin: 0; padding: 2px; list-style: none; background: #1e293b; border: 1px solid #334155; border-radius: 6px; }
+.comm-title-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--z-ink); color: #94a3b8; border: 1px solid #334155; white-space: nowrap; }
+.comm-nav-pills { display: flex; flex-wrap: wrap; gap: 3px; margin: 0; padding: 2px; list-style: none; background: var(--z-ink); border: 1px solid #334155; border-radius: 6px; }
 .comm-nav-pills .nav-link { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; color: #cbd5e1; display: flex; align-items: center; gap: 4px; text-decoration: none; white-space: nowrap; }
 .comm-nav-pills .nav-link:hover { background: #334155; color: #fff; }
-.comm-nav-pills .nav-link.active { background: #7c3aed !important; color: #fff !important; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.35); }
+.comm-nav-pills .nav-link.active { background: var(--z-primary) !important; color: #fff !important; box-shadow: 0 1px 3px rgb(var(--z-primary-rgb) / 0.35); }
 .comm-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .comm-actions .btn { height: 26px !important; min-height: 0 !important; font-size: 11.5px !important; font-weight: 600; padding: 0 10px !important; border-radius: 4px !important; display: inline-flex !important; align-items: center; gap: 4px; box-shadow: none !important; line-height: 1 !important; }
-.comm-actions .btn-primary, .comm-actions .btn-info { background: #7c3aed !important; border-color: #7c3aed !important; color: #fff !important; }
-.comm-actions .btn-primary:hover, .comm-actions .btn-info:hover { background: #6d28d9 !important; }
+.comm-actions .btn-primary, .comm-actions .btn-info { background: var(--z-primary) !important; border-color: var(--z-primary) !important; color: #fff !important; }
+.comm-actions .btn-primary:hover, .comm-actions .btn-info:hover { background: var(--z-primary-hover) !important; }
 .comm-actions .btn-secondary, .comm-actions .btn-outline-secondary, .comm-actions .btn-dark, .comm-actions .btn-warning {
-    background: #1e293b !important; border: 1px solid #334155 !important; color: #cbd5e1 !important;
+    background: var(--z-ink) !important; border: 1px solid #334155 !important; color: #cbd5e1 !important;
 }
 .comm-actions .btn-secondary:hover, .comm-actions .btn-outline-secondary:hover, .comm-actions .btn-dark:hover, .comm-actions .btn-warning:hover { background: #334155 !important; color: #fff !important; }
 
@@ -31,11 +31,11 @@
 .product-workspace-view .dataTables_wrapper { padding: 6px 10px; }
 .product-workspace-view .table-responsive > .dataTables_wrapper { border: 0; box-shadow: none; }
 .product-workspace-view table.table thead th {
-    background: #0f172a !important; color: #fff !important; border-color: #1e293b !important;
+    background: var(--z-table-head-bg) !important; color: var(--z-table-head-text) !important; border-color: #1e293b !important;
     font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
 }
-.product-workspace-view table.table tbody tr:nth-child(even) td { background: #f8fafc; }
-.product-workspace-view table.table tbody tr:hover td { background: #eef2ff; }
+.product-workspace-view table.table tbody tr:nth-child(even) td { background: var(--z-table-stripe); }
+.product-workspace-view table.table tbody tr:hover td { background: var(--z-primary-soft); }
 .product-workspace-view .dataTables_wrapper > .row:first-child { margin-bottom: 4px; align-items: center; }
 
 body.dark-mode .product-workspace-view .table-responsive,

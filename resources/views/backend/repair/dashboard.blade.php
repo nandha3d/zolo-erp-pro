@@ -30,14 +30,14 @@
         {{-- Metric Cards --}}
         <div class="row">
             <div class="col-md-3">
-                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4" style="border-left: 4px solid #6366f1 !important;">
+                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4" style="border-left: 4px solid var(--z-primary, #7d287e) !important;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted text-uppercase small font-weight-bold">Total Service Jobs</span>
-                            <h3 class="font-weight-bold mt-2 mb-0" style="color: #6366f1;">{{ $totalJobs }}</h3>
+                            <h3 class="font-weight-bold mt-2 mb-0" style="color: var(--z-primary, #7d287e);">{{ $totalJobs }}</h3>
                         </div>
-                        <div class="rounded-circle p-3" style="background: rgba(99, 102, 241, 0.1);">
-                            <i class="dripicons-clipboard" style="font-size: 1.5rem; color: #6366f1;"></i>
+                        <div class="rounded-circle p-3" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.1);">
+                            <i class="dripicons-clipboard" style="font-size: 1.5rem; color: var(--z-primary, #7d287e);"></i>
                         </div>
                     </div>
                 </div>

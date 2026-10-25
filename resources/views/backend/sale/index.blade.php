@@ -113,7 +113,7 @@
                         <div class="field-compact-item" style="width:250px;flex-shrink:0;">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="customer_id">Party *</label>
-                                <button type="button" class="btn btn-link p-0 btn-open-party-modal" id="btn-quick-new-party" data-party-type="customer" style="font-size:9.5px;color:#7c3aed;font-weight:700;text-decoration:none;border:none;background:none;cursor:pointer;">+ New Party</button>
+                                <button type="button" class="btn btn-link p-0 btn-open-party-modal" id="btn-quick-new-party" data-party-type="customer" style="font-size:9.5px;color:var(--z-primary, #7d287e);font-weight:700;text-decoration:none;border:none;background:none;cursor:pointer;">+ New Party</button>
                             </div>
                             <select id="customer_id" name="customer_id" class="form-control selectpicker" data-live-search="true" data-container="body" title="Select Customer" required>
                                 @foreach($lims_customer_list as $customer)
@@ -200,7 +200,7 @@
                         <div class="terms-compact-inline">
                             <span><strong style="color:#0f172a;">Standard</strong></span>
                             <span>Credit: <strong id="header-credit-days" style="color:#0f172a;">—</strong></span>
-                            <a href="javascript:void(0)" id="btn-quick-logistics" style="color:#7c3aed;font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">
+                            <a href="javascript:void(0)" id="btn-quick-logistics" style="color:var(--z-primary, #7d287e);font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">
                                 + Transport &amp; Remarks &rarr;
                             </a>
                         </div>
@@ -255,16 +255,16 @@
                                 <!-- Integrated In-Table Item Search Row -->
                                 <tr class="table-search-row" id="table-search-row">
                                     <td style="text-align:center;vertical-align:middle;width:36px;">
-                                        <i class="fa fa-barcode" style="font-size:15px;color:#7c3aed;" title="Scan Barcode (Alt+I)"></i>
+                                        <i class="fa fa-barcode" style="font-size:15px;color:var(--z-primary, #7d287e);" title="Scan Barcode (Alt+I)"></i>
                                     </td>
                                     <td style="vertical-align:middle;">
                                         <div class="table-search-input-wrap">
-                                            <i class="fa fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:#7c3aed;pointer-events:none;"></i>
+                                            <i class="fa fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--z-primary, #7d287e);pointer-events:none;"></i>
                                             <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (Alt+I)" autocomplete="off">
                                             <span class="table-search-f2-badge">Alt+I</span>
                                         </div>
                                     </td>
-                                    <td colspan="8" style="vertical-align:middle;font-size:11px;color:#6b21a8;font-style:italic;">
+                                    <td colspan="8" style="vertical-align:middle;font-size:11px;color:var(--z-primary-hover, #631f64);font-style:italic;">
                                         <span class="d-none d-md-inline">&larr; Scan barcode or type above to add item to voucher. Press Enter to add.</span>
                                     </td>
                                 </tr>
@@ -511,7 +511,7 @@
                 <span class="badge badge-secondary" style="font-size:10px;padding:3px 7px;">Full Register View</span>
             </div>
             <div class="d-flex align-items-center" style="gap:8px;">
-                <button type="button" class="btn btn-sm btn-primary py-1 px-3 font-weight-bold" id="btn-switch-voucher-mode" style="background:#7c3aed; border-color:#7c3aed; color:#ffffff;" title="Return to Split View (Voucher Entry + Bill List)">
+                <button type="button" class="btn btn-sm btn-primary py-1 px-3 font-weight-bold" id="btn-switch-voucher-mode" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#ffffff;" title="Return to Split View (Voucher Entry + Bill List)">
                     <i class="dripicons-view-thumb mr-1"></i> ⇄ Split View
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-success py-1 px-3 font-weight-bold" id="btn-fullwidth-new" title="Create New Sales Bill">
@@ -557,7 +557,7 @@
                     <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
                     <span class="comm-kpi-value">{{ number_format(($totalPaid ?? 0) + ($totalDue ?? 0), 2) }}</span>
                 </div>
-                <div class="comm-kpi-icon" style="background:#eef2ff; color:#4f46e5;">
+                <div class="comm-kpi-icon" style="background:var(--z-primary-soft, #fbf4fb); color:var(--z-primary, #7d287e);">
                     <i class="dripicons-archive"></i>
                 </div>
             </div>
@@ -825,7 +825,7 @@
             </div>
             <div class="modal-footer" style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:10px 18px;">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-save-drawer-details" data-dismiss="modal" style="background:#7c3aed; border-color:#7c3aed;">Apply Details</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-save-drawer-details" data-dismiss="modal" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">Apply Details</button>
             </div>
         </div>
     </div>
@@ -878,7 +878,7 @@
         <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
             <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
                 <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
-                    <i class="dripicons-pencil" style="color:#7c3aed;"></i> <span id="row-detail-modal-title">Item Details</span>
+                    <i class="dripicons-pencil" style="color:var(--z-primary, #7d287e);"></i> <span id="row-detail-modal-title">Item Details</span>
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
                     <span aria-hidden="true">&times;</span>
@@ -905,7 +905,7 @@
             </div>
             <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-save-row-detail" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-save-row-detail" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
                     Save Details
                 </button>
             </div>
@@ -920,7 +920,7 @@
             <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
                 <div>
                     <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin:0;">
-                        <i class="dripicons-menu" style="color:#7c3aed;"></i> Multi-Item Fast Batch Picker
+                        <i class="dripicons-menu" style="color:var(--z-primary, #7d287e);"></i> Multi-Item Fast Batch Picker
                     </h5>
                     <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
                         Select multiple products with quantities and insert them all at once into the voucher table.
@@ -962,7 +962,7 @@
             </div>
             <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-add-selected-items" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-add-selected-items" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
                     + Add Selected Items to Voucher
                 </button>
             </div>
@@ -973,7 +973,7 @@
             <div class="modal-header d-flex align-items-center justify-content-between">
                 <div>
                     <h5 class="modal-title font-weight-bold" style="font-size:15px;color:#0f172a;display:flex;align-items:center;gap:8px;margin:0;">
-                        <i class="fa fa-plus-circle" style="color:#7c3aed;font-size:18px;"></i> Add Product (Catalog Master)
+                        <i class="fa fa-plus-circle" style="color:var(--z-primary, #7d287e);font-size:18px;"></i> Add Product (Catalog Master)
                     </h5>
                     <span style="font-size:11.5px;color:#64748b;">The field labels marked with * are required. Once created, the item is immediately selected and added to the voucher.</span>
                 </div>
@@ -1293,7 +1293,7 @@
                 </div>
                 <div class="modal-footer d-flex align-items-center justify-content-between">
                     <button type="button" class="btn btn-sm btn-secondary comm-bottom-btn" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-quick-create-submit" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-quick-create-submit" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
                         <i class="dripicons-checkmark"></i> 💾 Save &amp; Add to Voucher
                     </button>
                 </div>
@@ -1322,7 +1322,7 @@
             </div>
             <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-cat" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-cat" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
                     Save Category
                 </button>
             </div>
@@ -1350,7 +1350,7 @@
             </div>
             <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-brand" style="background:#7c3aed;border-color:#7c3aed;font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-brand" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
                     Save Brand
                 </button>
             </div>
@@ -1381,7 +1381,7 @@
                     <!-- Top Options: Dual Nature & Customer Group (Cleanly Aligned Checkbox) -->
                     <div class="d-flex align-items-center justify-content-between mb-3 px-3 py-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
                         <label for="party-both-checkbox" class="d-flex align-items-center mb-0" style="cursor:pointer;gap:9px;user-select:none;">
-                            <input type="checkbox" id="party-both-checkbox" name="both" value="1" style="width:16px;height:16px;margin:0;accent-color:#7c3aed;cursor:pointer;">
+                            <input type="checkbox" id="party-both-checkbox" name="both" value="1" style="width:16px;height:16px;margin:0;accent-color:var(--z-primary, #7d287e);cursor:pointer;">
                             <span class="font-weight-bold" style="font-size:12.5px;color:#1e293b;">Both Customer and Supplier</span>
                             <small class="text-muted ml-1" style="font-size:11px;">(creates linked account for reciprocal trade)</small>
                         </label>
@@ -1414,7 +1414,7 @@
                                 <div class="input-group">
                                     <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase" placeholder="Enter 15-char GSTIN (e.g. 33AIUPN6412D1ZA)" maxlength="15" autocomplete="off" style="height:36px;font-size:13px;font-family:monospace;font-weight:700;letter-spacing:0.5px;">
                                     <div class="input-group-append">
-                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary" title="1-Click Auto-Fill all details from GST registry" style="background:#7c3aed;border-color:#7c3aed;height:36px;font-size:12px;padding:0 14px;font-weight:700;display:flex;align-items:center;gap:5px;">
+                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary" title="1-Click Auto-Fill all details from GST registry" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);height:36px;font-size:12px;padding:0 14px;font-weight:700;display:flex;align-items:center;gap:5px;">
                                             <i class="fa fa-bolt"></i> <span>Fetch Details</span>
                                         </button>
                                         <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary" title="Verify on official Government GST Portal" style="height:36px;font-size:12px;padding:0 11px;display:flex;align-items:center;">
@@ -1545,7 +1545,7 @@
                 </div>
                 <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 20px;border-top:1px solid #e2e8f0;">
                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="height:34px;padding:0 16px;border-radius:6px;font-weight:600;">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary" id="btn-save-party" style="background:#7c3aed;border-color:#7c3aed;height:34px;padding:0 22px;border-radius:6px;font-weight:700;font-size:13px;">
+                    <button type="submit" class="btn btn-sm btn-primary" id="btn-save-party" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);height:34px;padding:0 22px;border-radius:6px;font-weight:700;font-size:13px;">
                         <i class="dripicons-checkmark mr-1"></i> Submit
                     </button>
                 </div>
@@ -2095,7 +2095,7 @@
                             </div>
                         </div>
                         <div style="flex-shrink:0;">
-                            <span class="badge" style="background:#f3e8ff;color:#7c3aed;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">+ Add</span>
+                            <span class="badge" style="background:var(--z-primary-soft, #fbf4fb);color:var(--z-primary, #7d287e);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">+ Add</span>
                         </div>
                     </div>
                 `)
@@ -2328,7 +2328,7 @@
                                 </div>
                             </div>
                             <div style="flex-shrink:0;">
-                                <span class="badge" style="background:#f3e8ff;color:#7c3aed;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">Select</span>
+                                <span class="badge" style="background:var(--z-primary-soft, #fbf4fb);color:var(--z-primary, #7d287e);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">Select</span>
                             </div>
                         </div>
                     `)

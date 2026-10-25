@@ -66,8 +66,8 @@
         width: 100% !important;
     }
     .inv-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -76,14 +76,14 @@
         border: none !important;
     }
     body.dark-mode .inv-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     .inv-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     .inv-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode .inv-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -162,9 +162,9 @@
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">PHYSICAL STOCK VALUATION</div>
-                <div class="kpi-number" style="color: #7c3aed;">₹ {{ number_format($totalValuation, 2) }}</div>
+                <div class="kpi-number" style="color: var(--z-primary, #7d287e);">₹ {{ number_format($totalValuation, 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-wallet" style="font-size:18px;"></i>
             </div>
         </div>

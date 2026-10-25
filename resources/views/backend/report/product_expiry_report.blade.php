@@ -65,8 +65,8 @@
         width: 100% !important;
     }
     #report-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -76,14 +76,14 @@
         white-space: nowrap;
     }
     body.dark-mode #report-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     #report-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     #report-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode #report-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -159,7 +159,7 @@
                 <div class="kpi-label">TRACKED BATCHES</div>
                 <div class="kpi-number">{{ number_format($totalBatchCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-stack" style="font-size:18px;"></i>
             </div>
         </div>

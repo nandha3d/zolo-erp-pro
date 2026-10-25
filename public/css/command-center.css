@@ -16,11 +16,11 @@
     font-weight: 600;
 }
 .command-center-nav a[aria-current="page"], .command-center-nav a:hover {
-    background: #6d28d9;
+    background: var(--z-primary-hover);
     color: #fff;
     text-decoration: none;
 }
-.command-center-nav a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+.command-center-nav a:focus-visible { outline: 2px solid var(--z-primary); outline-offset: 2px; }
 .command-center-nav kbd { margin-left: 4px; font-size: 10px; }
 .dark-mode .command-center-nav { background: #141c2e; border-color: #334155; }
 .dark-mode .command-center-nav a { color: #e2e8f0; }
@@ -37,7 +37,7 @@
 }
 
 #party-outstanding-badge { font-size: 9.5px; font-weight: 700; white-space: nowrap; }
-#party-pending-link { font-size: 9.5px; font-weight: 700; color: #6d28d9; white-space: nowrap; cursor: pointer; }
+#party-pending-link { font-size: 9.5px; font-weight: 700; color: var(--z-primary-hover); white-space: nowrap; cursor: pointer; }
 dialog.document-pending-dialog { max-width: 720px; }
 dialog.document-pending-dialog table { width: 100%; margin-bottom: 10px; font-size: 12.5px; }
 dialog.document-pending-dialog th, dialog.document-pending-dialog td { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }

@@ -11,8 +11,8 @@
 
 /* Switch track */
 .custom-control-input:checked ~ .custom-control-label::before {
-    background-color: #7c5cc4; /* Green when active */
-    border-color: #7c5cc4;
+    background-color: var(--z-primary, #7d287e); /* Green when active */
+    border-color: var(--z-primary, #7d287e);
 }
 
 .custom-control-input:not(:checked) ~ .custom-control-label::before {

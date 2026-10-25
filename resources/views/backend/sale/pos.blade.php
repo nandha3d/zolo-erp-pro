@@ -25,7 +25,7 @@
     .pos-page [class=row] {margin-left:-10px;margin-right:-10px}
     .pos-page [class*=col-] {padding: 0 10px}
     .pos-page #myTable [class*=col-] {padding: .5rem}
-    .pos-page #myTable tr th {background: #d6deff;color:#303030}
+    .pos-page #myTable tr th {background: var(--z-primary-border, #ebcdeb);color:#303030}
     .product-btns{margin:0 -5px}
     .edit-product{white-space: break-spaces;font-size:13px;font-weight:500;text-align:left;padding:0 0!important}
     .edit-product i{color:#00cec9}
@@ -38,7 +38,7 @@
     .top-fields label {background:#FFF;font-size:11px;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;}
     .top-fields input,.top-fields .btn{font-size:13px;height:37px}
     .product-grid{align-items: center; display: flex;flex-wrap: wrap;padding: 0;margin: 0;width: 100%;}
-    .product-grid > div {border: 1px solid #e4e6fc;overflow: hidden;padding:.5rem;position: relative;max-width: 300px;min-width: 100px;vertical-align: top;width: calc(100%/4);}
+    .product-grid > div {border: 1px solid var(--z-primary-soft, #fbf4fb);overflow: hidden;padding:.5rem;position: relative;max-width: 300px;min-width: 100px;vertical-align: top;width: calc(100%/4);}
     .product-grid > div p {color: #303030;font-size:12px;font-weight: 500;margin: 10px 0 0;min-height: 36px;display: -webkit-box;-webkit-line-clamp: 2;overflow: hidden;text-overflow: ellipsis;-webkit-box-orient: vertical}
     .product-grid > div span {font-size: 12px}
     .more-payment-options.column-5{margin:0;padding:0}
@@ -105,11 +105,11 @@
     .loader{display: block;max-width: 100% !important; min-width: 100% !important;text-align: center;vertical-align: middle;width: 100% !important; margin-top: 50px}
     .product-grid .loader{margin-top: 25%;}
 
-    .loader svg path,.loader svg rect{fill: #7c5cc4;}
+    .loader svg path,.loader svg rect{fill: var(--z-primary, #7d287e);}
     nav.navbar a.menu-btn {display: flex;justify-content: center;align-items: center;}
     nav.navbar a {align-items: center;display: flex;}
     .right-sidebar li a svg{margin-right: 10px}
-    .nav-menu svg {width: 20px;height: 20px; stroke: #7c5cc4;vertical-align: middle}
+    .nav-menu svg {width: 20px;height: 20px; stroke: var(--z-primary, #7d287e);vertical-align: middle}
     #pos-layout .nav-menu {flex-wrap: wrap; max-width: 100%; min-width: 0;}
     .btn svg {vertical-align: middle; width: 16px}
     button.close svg {vertical-align: middle; width: 26px}
@@ -117,17 +117,17 @@
 
     .dropdown-toggle-no-arrow::after{display:none!important}
     .calculator{background-color:#fff;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,.2);width:240px}
-    .calculator .display{width:100%;height:50px;background-color:#f5f5f5;border:2px solid #7c5cc4;font-size:1.5em;text-align:right;padding:0 10px;margin-bottom:10px;border-radius:5px}
+    .calculator .display{width:100%;height:50px;background-color:#f5f5f5;border:2px solid var(--z-primary, #7d287e);font-size:1.5em;text-align:right;padding:0 10px;margin-bottom:10px;border-radius:5px}
     .calculator .buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .calculator .btn{height:40px;font-size:1em;border:none;border-radius:5px;cursor:pointer;transition:background-color .2s}
     .calculator .btn.number{background-color:#fff;color:#000;border:1px solid #ddd}
     .calculator .btn.operator{background-color:#f0f0f0;color:#000}
     .calculator .btn.action.ac{background-color:#d63031;color:#fff}
     .calculator .btn.action.ce{background-color:#e28d02;color:#fff}
-    .calculator .btn.equals{background-color:#7c5cc4;color:#fff;grid-column:span 2}
+    .calculator .btn.equals{background-color:var(--z-primary, #7d287e);color:#fff;grid-column:span 2}
     #product-results-container{background:#f5f6f7;position: absolute;overflow: hidden;max-height: 300px;overflow-y: auto;top:40px;width:100%;z-index:999999}
-    #product-results-container .product-img{border-radius: 3px; color: #7c5cc4;font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
-    #product-results-container .product-img:hover{background-color: #7c5cc4;color: #FFF}
+    #product-results-container .product-img{border-radius: 3px; color: var(--z-primary, #7d287e);font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
+    #product-results-container .product-img:hover{background-color: var(--z-primary, #7d287e);color: #FFF}
 </style>
 @endpush
 @section('content')
@@ -770,7 +770,7 @@
                     <div class="col-12 pl-0 pr-0">
                         <div class="search-box form-group mb-2">
                             <div class="input-group pos">
-                                <input style="border: 1px solid #7c5cc4;" type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control" autofocus />
+                                <input style="border: 1px solid var(--z-primary, #7d287e);" type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control" autofocus />
                                 <button type="button" class="btn btn-primary" onclick="barcode()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16"><path d="M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/></svg></button>
                             </div>
                             <div id="product-results-container">

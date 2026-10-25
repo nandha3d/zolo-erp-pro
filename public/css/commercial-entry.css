@@ -2,13 +2,13 @@
    zoloERP Commercial Desk Workspace Styling (Matching Modern ERP Desk UI)
    ========================================================================== */
 
-:root {
+:root, body {
     --desk-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --desk-sidebar-bg: #111827;
     --desk-sidebar-border: #1f2937;
     --desk-sidebar-text: #94a3b8;
     --desk-sidebar-text-hover: #f8fafc;
-    --desk-sidebar-active-pill: #7c3aed;
+    --desk-sidebar-active-pill: var(--z-primary);
     
     --desk-bg: #f8fafc;
     --desk-card-bg: #ffffff;
@@ -19,10 +19,10 @@
     --desk-text-muted: #64748b;
     --desk-text-light: #94a3b8;
     
-    --desk-primary: #7c3aed;
-    --desk-primary-hover: #6d28d9;
-    --desk-primary-light: #f5f3ff;
-    --desk-primary-border: #ddd6fe;
+    --desk-primary: var(--z-primary);
+    --desk-primary-hover: var(--z-primary-hover);
+    --desk-primary-light: var(--z-primary-soft);
+    --desk-primary-border: var(--z-primary-border);
     
     --desk-accent-blue: #2563eb;
     --desk-accent-green: #10b981;
@@ -124,7 +124,7 @@ html, body {
 
 .desk-sidebar-search input {
     width: 100%;
-    background: #1e293b;
+    background: var(--z-ink);
     border: 1px solid #334155;
     border-radius: 6px;
     color: #e2e8f0;
@@ -169,7 +169,7 @@ html, body {
 }
 
 .desk-nav-item:hover {
-    background-color: #1e293b;
+    background-color: var(--z-ink);
     color: var(--desk-sidebar-text-hover);
 }
 
@@ -218,7 +218,7 @@ html, body {
 
 .desk-subnav-item:hover {
     color: #ffffff;
-    background-color: #1e293b;
+    background-color: var(--z-ink);
 }
 
 .desk-subnav-item.active-pill {
@@ -249,7 +249,7 @@ html, body {
 }
 
 .desk-btn-ghost:hover {
-    background: #1e293b;
+    background: var(--z-ink);
     color: #ffffff;
 }
 
@@ -719,8 +719,8 @@ html, body {
 
 .side-bill-card:hover {
     border-color: var(--desk-primary-border);
-    background: #faf5ff;
-    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+    background: var(--z-primary-soft);
+    box-shadow: 0 2px 6px rgb(var(--z-primary-rgb) / 0.08);
 }
 
 .side-card-top {
@@ -884,13 +884,13 @@ html, body {
 }
 
 .segment-btn.active {
-    background: var(--desk-accent-blue);
+    background: var(--desk-primary);
     color: #ffffff;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 #pill-mode-credit.active {
-    background: var(--desk-accent-blue);
+    background: var(--desk-primary);
 }
 
 #pill-mode-cash.active {
@@ -1245,8 +1245,8 @@ html, body {
 
 /* Purple Header Bar Matching Screenshot */
 .desk-grid-table thead tr {
-    background: #7c3aed;
-    color: #ffffff;
+    background: var(--z-primary);
+    color: var(--z-table-head-text);
 }
 
 .desk-grid-table thead th {
@@ -1266,7 +1266,7 @@ html, body {
 }
 
 .desk-grid-table tbody tr:hover {
-    background: #faf5ff;
+    background: var(--z-primary-soft);
 }
 
 .desk-grid-table tbody td {
@@ -1487,7 +1487,7 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 1px 3px rgb(var(--z-primary-rgb) / 0.25);
     transition: all 0.15s;
 }
 

@@ -15,7 +15,7 @@
     .gst-step.ok { border-color: #a7f3d0; background: #f0fdf4; }
     .gst-step.todo { border-color: #fde68a; background: #fffbeb; }
     .gst-tabs .nav-link { font-size: 13px; font-weight: 600; color: #475569; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; }
-    .gst-tabs .nav-link.active { color: #4f46e5; border-bottom-color: #4f46e5; background: transparent; }
+    .gst-tabs .nav-link.active { color: var(--z-primary, #7d287e); border-bottom-color: var(--z-primary, #7d287e); background: transparent; }
     .gst-table { width: 100%; font-size: 13px; }
     .gst-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; position: sticky; top: 0; }
     .gst-table td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
@@ -24,7 +24,7 @@
     .gst-form label { font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 3px; display: block; }
     .gst-form .row > div { margin-bottom: 8px; }
     .gst-scroll { max-height: 60vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
-    .gst-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #4338ca; }
+    .gst-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--z-primary-soft, #fbf4fb); color: var(--z-primary-hover, #631f64); }
     .gst-pill.warn { background: #fef3c7; color: #92400e; }
     .gst-pill.muted { background: #f1f5f9; color: #475569; }
     .gst-muted { color: #64748b; font-size: 12px; }

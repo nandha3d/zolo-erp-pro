@@ -11,7 +11,7 @@
 ])
 
 @if($type === 'divider')
-    <li class="divider my-1" style="border-top: 1px solid var(--neo-border); opacity: 0.7;"></li>
+    <li class="divider my-1"></li>
 @elseif($type === 'modal')
     <li role="presentation">
         <button type="button" 

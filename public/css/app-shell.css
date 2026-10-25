@@ -173,8 +173,8 @@ html.app-shell #content table.table:not(.desk-grid-table) > tbody > tr > td .btn
     border: 0; border-radius: 6px; background: transparent; color: #475569; font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
 .shell-steps-nav [role="tab"]:hover { background: #e2e8f0; color: #0f172a; }
-.shell-steps-nav [role="tab"][aria-selected="true"] { background: #7c3aed; color: #fff; box-shadow: 0 1px 2px rgba(124, 58, 237, .35); }
-.shell-steps-nav [role="tab"]:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+.shell-steps-nav [role="tab"][aria-selected="true"] { background: var(--z-primary); color: #fff; box-shadow: 0 1px 2px rgb(var(--z-primary-rgb) / .35); }
+.shell-steps-nav [role="tab"]:focus-visible { outline: 2px solid var(--z-primary); outline-offset: 2px; }
 .shell-step-no {
     display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
     background: rgba(15, 23, 42, .08); font-size: 11px;
@@ -279,7 +279,7 @@ html.app-shell #content .zolo-polished .dataTables_filter input { height: 30px !
 html.app-shell #content .zolo-polished .dataTables_filter { margin-left: auto !important; }
 html.app-shell #content .zolo-polished .dt-buttons .btn { height: 30px; display: inline-flex; align-items: center; gap: 4px; padding: 0 8px !important; margin: 0 !important; }
 html.app-shell #content .zolo-polished .buttons-colvis { font-size: 12px; font-weight: 600; }
-html.app-shell #content .zolo-polished .zolo-hidden-count { font-size: 10px; font-weight: 700; color: #7c3aed; background: #f5f3ff; border-radius: 8px; padding: 1px 6px; }
+html.app-shell #content .zolo-polished .zolo-hidden-count { font-size: 10px; font-weight: 700; color: var(--z-primary); background: var(--z-primary-soft); border-radius: 8px; padding: 1px 6px; }
 html.app-shell #content .zolo-polished table.dataTable > thead > tr > th,
 html.app-shell #content .zolo-polished table.dataTable > tbody > tr > td { white-space: nowrap !important; vertical-align: middle !important; }
 html.app-shell #content .zolo-polished table.dataTable > tbody > tr > td { padding-top: 7px !important; padding-bottom: 7px !important; }
@@ -291,7 +291,7 @@ html.app-shell table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-chil
 html.app-shell table.dataTable.dtr-inline.collapsed > tbody > tr > th:first-child::before,
 html.app-shell table.dataTable > tbody > tr > td.dtr-control::before { display: none !important; }
 html.app-shell table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child { padding-left: 8px !important; cursor: auto; }
-body.dark-mode .zolo-polished .zolo-hidden-count { background: #2e1065; color: #c4b5fd; }
+body.dark-mode .zolo-polished .zolo-hidden-count { background: var(--z-primary-soft); color: var(--z-primary-text); }
 
 /* Product details dialog: label/value grid, small image only when the product has one. */
 .product-details-dialog .pd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 14px; margin: 0; }

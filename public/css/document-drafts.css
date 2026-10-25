@@ -3,12 +3,12 @@
 .document-tabs[hidden] { display: none; }
 .document-tab-list { display: flex; flex: 1 1 auto; gap: 4px; overflow-x: auto; min-width: 0; }
 .document-tab { display: inline-flex; align-items: stretch; flex: 0 0 auto; max-width: 240px; border: 1px solid #cbd5e1; border-radius: 6px 6px 0 0; background: #f8fafc; }
-.document-tab.is-active { background: #ede9fe; border-color: #7c3aed; }
+.document-tab.is-active { background: var(--z-primary-soft); border-color: var(--z-primary); }
 .document-tab.has-conflict { border-color: #d97706; background: #fffbeb; }
 .document-tab-open { max-width: 200px; padding: 3px 4px 3px 10px; overflow: hidden; border: 0; background: transparent; color: #0f172a; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .document-tab-close { width: 24px; border: 0; background: transparent; color: #64748b; font-size: 16px; line-height: 1; cursor: pointer; }
 .document-tab-close:hover, .document-tab-close:focus-visible { color: #b91c1c; }
-.document-tab-open:focus-visible, .document-tab-close:focus-visible, .document-tab-add:focus-visible { outline: 2px solid #7c3aed; outline-offset: -2px; }
+.document-tab-open:focus-visible, .document-tab-close:focus-visible, .document-tab-add:focus-visible { outline: 2px solid var(--z-primary); outline-offset: -2px; }
 .document-tab-add { width: 26px; height: 26px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; font-size: 16px; line-height: 1; cursor: pointer; }
 .document-tab-add:disabled { opacity: .45; cursor: not-allowed; }
 .document-tab-count { color: #64748b; font-size: 11px; }

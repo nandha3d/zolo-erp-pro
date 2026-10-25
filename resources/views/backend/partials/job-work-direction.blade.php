@@ -13,8 +13,8 @@
 .jw-direction a { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 4px; font-size: 12.5px; font-weight: 600; color: #475569; text-decoration: none; white-space: nowrap; }
 .jw-direction a small { font-size: 11px; font-weight: 500; color: #94a3b8; }
 .jw-direction a:hover { background: #e2e8f0; color: #0f172a; }
-.jw-direction a.active { background: #7c3aed; color: #fff; box-shadow: 0 1px 3px rgba(124, 58, 237, .35); }
-.jw-direction a.active small { color: #ddd6fe; }
+.jw-direction a.active { background: var(--z-primary, #7d287e); color: #fff; box-shadow: 0 1px 3px rgb(var(--z-primary-rgb, 125 40 126) / .35); }
+.jw-direction a.active small { color: var(--z-primary-border, #ebcdeb); }
 body.dark-mode .jw-direction { background: #1e293b; border-color: #334155; }
 body.dark-mode .jw-direction a { color: #cbd5e1; }
 body.dark-mode .jw-direction a:hover { background: #334155; color: #fff; }

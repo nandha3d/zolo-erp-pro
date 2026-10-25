@@ -8,8 +8,8 @@
         }
     }
     #product-results-container{background:#f5f6f7;position: absolute;overflow: hidden;max-height: 300px;overflow-y: auto;padding-top: 10px;top:40px;width:100%;z-index:999}
-    #product-results-container .product-img{border-radius: 3px; color: #7c5cc4;font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
-    #product-results-container .product-img:hover{background-color: #7c5cc4;color: #FFF}
+    #product-results-container .product-img{border-radius: 3px; color: var(--z-primary, #7d287e);font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
+    #product-results-container .product-img:hover{background-color: var(--z-primary, #7d287e);color: #FFF}
 </style>
 @endpush
 
@@ -97,7 +97,7 @@
                                         <label>{{__('db.Select Product')}}</label>
                                         <div class="search-box form-group mb-2" style="position:relative">
                                             <div class="input-group pos">
-                                                <input style="border: 1px solid #7c5cc4;" type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control" autofocus />
+                                                <input style="border: 1px solid var(--z-primary, #7d287e);" type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control" autofocus />
                                                 <button type="button" class="btn btn-primary" onclick="barcode()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16"><path d="M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/></svg></button>
                                             </div>
                                             <div id="product-results-container">

@@ -102,9 +102,9 @@
         background: #f1f5f9;
     }
     .desk-report-tabs .nav-link.active {
-        color: #7c3aed;
+        color: var(--z-primary, #7d287e);
         background: #ffffff;
-        border-bottom: 2px solid #7c3aed;
+        border-bottom: 2px solid var(--z-primary, #7d287e);
     }
     body.dark-mode .desk-report-tabs .nav-link {
         color: #94a3b8;
@@ -114,13 +114,13 @@
         background: #1e293b;
     }
     body.dark-mode .desk-report-tabs .nav-link.active {
-        color: #a78bfa;
+        color: var(--z-primary-text, #7d287e);
         background: #141c2e;
-        border-bottom: 2px solid #a78bfa;
+        border-bottom: 2px solid var(--z-primary-text, #7d287e);
     }
     .table-hover thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -130,14 +130,14 @@
         white-space: nowrap;
     }
     body.dark-mode .table-hover thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     .table-hover tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     .table-hover tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode .table-hover tbody tr:nth-child(even) {
         background: #141c2c;
@@ -225,7 +225,7 @@
                     {{ date('d M Y', strtotime($start_date)) }} — {{ date('d M Y', strtotime($end_date)) }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-calendar" style="font-size:18px;"></i>
             </div>
         </div>

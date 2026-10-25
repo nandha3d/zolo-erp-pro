@@ -66,7 +66,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 id="exampleModalLabel" class="modal-title">
-                        <span class="zolo-brand-mark" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.35);"><i class="dripicons-wallet" style="font-size:14px;"></i></span>
+                        <span class="zolo-brand-mark" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--z-primary, #7d287e),var(--z-primary, #7d287e));color:#fff;box-shadow:0 2px 8px rgb(var(--z-primary-rgb, 125 40 126) / 0.35);"><i class="dripicons-wallet" style="font-size:14px;"></i></span>
                         {{ __('db.Add Currency') }}
                     </h5>
                     <button type="button" data-dismiss="modal" aria-label="Close" class="close">
@@ -75,7 +75,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Dynamic Currency Auto-Fill Engine -->
-                    <div class="form-group zolo-preset-wrap" style="background: rgba(99, 102, 241, 0.06); border: 1.5px dashed var(--neo-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
+                    <div class="form-group zolo-preset-wrap" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.06); border: 1.5px dashed var(--neo-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
                         <label class="font-weight-bold" style="color: var(--neo-primary);"><i class="dripicons-swap mr-1"></i> Quick Select / Auto-Fill Currency</label>
                         <select id="create_currency_preset" class="form-control selectpicker" data-live-search="true" title="Search or pick currency (e.g. Indian Rupee, USD, EUR...)">
                             <option value="" disabled selected>{{ __('Select or search a currency...') }}</option>
@@ -167,7 +167,7 @@
                 @method('PUT')
                 <div class="modal-header">
                     <h5 id="exampleModalLabel" class="modal-title">
-                        <span class="zolo-brand-mark" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,0.35);"><i class="dripicons-document-edit" style="font-size:14px;"></i></span>
+                        <span class="zolo-brand-mark" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--z-primary, #7d287e),var(--z-primary, #7d287e));color:#fff;box-shadow:0 2px 8px rgb(var(--z-primary-rgb, 125 40 126) / 0.35);"><i class="dripicons-document-edit" style="font-size:14px;"></i></span>
                         {{ __('db.Update Currency') }}
                     </h5>
                     <button type="button" data-dismiss="modal" aria-label="Close" class="close">
@@ -176,7 +176,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Dynamic Currency Auto-Fill Engine for Edit -->
-                    <div class="form-group zolo-preset-wrap" style="background: rgba(99, 102, 241, 0.06); border: 1.5px dashed var(--neo-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
+                    <div class="form-group zolo-preset-wrap" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.06); border: 1.5px dashed var(--neo-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
                         <label class="font-weight-bold" style="color: var(--neo-primary);"><i class="dripicons-swap mr-1"></i> Quick Select / Auto-Fill Currency</label>
                         <select id="edit_currency_preset" class="form-control selectpicker" data-live-search="true" title="Search or pick currency (e.g. Indian Rupee, USD, EUR...)">
                             <option value="" disabled selected>{{ __('Select or search a currency...') }}</option>

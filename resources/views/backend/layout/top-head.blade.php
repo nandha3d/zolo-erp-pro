@@ -85,10 +85,12 @@
     @endif
 
     <!-- zoloERP Design System -->
+    <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-tokens.css') ?>" type="text/css">
     <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css" id="zolo-neo-style">
     <link rel="stylesheet" href="<?php echo versioned_asset('css/field-help.css') ?>" type="text/css">
 
     @stack('css')
+    <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-components.css') ?>" type="text/css">
 
     <!-- Custom CSS from general settings -->
     {!! $general_setting->pos_css !!}

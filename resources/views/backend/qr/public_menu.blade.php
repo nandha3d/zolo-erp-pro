@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $qr->title }} · {{ $general_setting->site_title ?? 'Menu' }}</title>
     <style>
-        :root { --accent: {{ preg_match('/^#[0-9a-fA-F]{3,8}$/', (string) $qr->theme_color) ? $qr->theme_color : '#4f46e5' }}; }
+        :root { --accent: {{ preg_match('/^#[0-9a-fA-F]{3,8}$/', (string) $qr->theme_color) ? $qr->theme_color : 'var(--z-primary, #7d287e)' }}; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f8fafc; color: #0f172a; }
         header { padding: 20px 16px; background: var(--accent); color: #fff; }

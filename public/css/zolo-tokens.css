@@ -1,0 +1,166 @@
+/**
+ * zoloERP design tokens — the one place colours are defined.
+ *
+ * Brand: "zolo" purple #7d287e and "ERP" navy #022051 (from public/logo/zolo_erp_logo.png).
+ * Layers: primitive scales (--zp-*, --zn-*) -> semantic roles (--z-*) used by every page.
+ * Pages and components use only the semantic --z-* roles, never hex values.
+ * Dark mode: body.dark-mode swaps the semantic roles; primitives never change.
+ * Declared on body too: a var() that points at another var() resolves where it is
+ * declared, so roles like --z-field-bg must be re-resolved on body to follow dark mode.
+ */
+
+:root, body {
+  /* ---- Primitives: brand purple ---- */
+  --zp-50: #fbf4fb;
+  --zp-100: #f5e6f5;
+  --zp-200: #ebcdeb;
+  --zp-300: #dba7dc;
+  --zp-400: #c37ac4;
+  --zp-500: #a752a8;
+  --zp-600: #8f3790;
+  --zp-700: #7d287e; /* brand */
+  --zp-800: #631f64;
+  --zp-900: #4a174b;
+  --zp-950: #2d0d2e;
+
+  /* ---- Primitives: brand navy ---- */
+  --zn-50: #eef3fa;
+  --zn-100: #dae4f3;
+  --zn-200: #b5c8e6;
+  --zn-300: #84a2d2;
+  --zn-400: #5179b8;
+  --zn-500: #2f5899;
+  --zn-600: #1b4280;
+  --zn-700: #0e3068;
+  --zn-800: #022051; /* brand */
+  --zn-900: #021840;
+  --zn-950: #010f2a;
+
+  /* ---- Primary (brand purple): Save/Submit buttons, active tabs, links, focus ---- */
+  --z-primary: var(--zp-700);
+  --z-primary-hover: var(--zp-800);
+  --z-primary-active: var(--zp-900);
+  --z-primary-rgb: 125 40 126;
+  --z-primary-contrast: #ffffff;
+  --z-primary-text: var(--zp-700);
+  --z-primary-soft: var(--zp-50);
+  --z-primary-soft-strong: var(--zp-100);
+  --z-primary-border: var(--zp-200);
+  --z-focus-ring: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.22);
+
+  /* ---- Ink (brand navy): table headers, dark command bars ---- */
+  --z-ink: var(--zn-800);
+  --z-ink-hover: var(--zn-700);
+  --z-on-ink: #ffffff;
+  --z-on-ink-muted: var(--zn-200);
+
+  /* ---- Neutrals ---- */
+  --z-bg: #f8fafc;
+  --z-surface: #ffffff;
+  --z-surface-2: #f8fafc;
+  --z-surface-3: #f1f5f9;
+  --z-border: #e2e8f0;
+  --z-border-strong: #cbd5e1;
+  --z-text: #0f172a;
+  --z-text-2: #475569;
+  --z-text-muted: #64748b;
+
+  /* ---- Fields (inputs, selects, dropdown toggles) ---- */
+  --z-field-bg: var(--z-surface);
+  --z-field-border: var(--z-border-strong);
+  --z-field-text: var(--z-text);
+  --z-field-placeholder: #94a3b8;
+  --z-field-disabled-bg: var(--z-surface-3);
+
+  /* ---- Tables ---- */
+  --z-table-head-bg: var(--z-ink);
+  --z-table-head-text: var(--z-on-ink);
+  --z-table-border: var(--z-border);
+  --z-table-stripe: var(--z-surface-2);
+  --z-table-hover: var(--z-primary-soft);
+
+  /* ---- Status (badges, alerts, amounts) — not for buttons except danger ---- */
+  --z-success: #059669;
+  --z-success-soft: #ecfdf5;
+  --z-success-border: #a7f3d0;
+  --z-warning: #b45309;
+  --z-warning-soft: #fffbeb;
+  --z-warning-border: #fde68a;
+  --z-danger: #dc2626;
+  --z-danger-hover: #b91c1c;
+  --z-danger-soft: #fef2f2;
+  --z-danger-border: #fecaca;
+  --z-danger-solid: #dc2626; /* Delete button fill, same in both modes */
+  --z-danger-solid-hover: #b91c1c;
+  --z-info: #0369a1;
+  --z-info-soft: #f0f9ff;
+  --z-info-border: #bae6fd;
+
+  /* ---- Sidebar ---- */
+  --z-sidebar-bg: var(--zn-900);
+  --z-sidebar-surface: var(--zn-800);
+  --z-sidebar-sub-bg: var(--zn-950);
+  --z-sidebar-text: #cbd5e1;
+  --z-sidebar-text-active: #ffffff;
+  --z-sidebar-active-bg: rgb(195 122 196 / 0.18);
+  --z-sidebar-active-border: var(--zp-400);
+
+  /* ---- Shape ---- */
+  --z-radius-sm: 6px;
+  --z-radius-md: 10px;
+}
+
+body.dark-mode {
+  --z-primary: #9a3f9b;
+  --z-primary-hover: #ad52ae;
+  --z-primary-active: #bd66be;
+  --z-primary-rgb: 154 63 155;
+  --z-primary-contrast: #ffffff;
+  --z-primary-text: #dfa4e0;
+  --z-primary-soft: rgb(154 63 155 / 0.18);
+  --z-primary-soft-strong: rgb(154 63 155 / 0.28);
+  --z-primary-border: rgb(223 164 224 / 0.35);
+  --z-focus-ring: 0 0 0 3px rgb(223 164 224 / 0.28);
+
+  --z-ink: #13234a;
+  --z-ink-hover: #1a2e5c;
+  --z-on-ink: #e2e8f0;
+  --z-on-ink-muted: #94a3b8;
+
+  --z-bg: #0b0f19;
+  --z-surface: #111827;
+  --z-surface-2: #151d2f;
+  --z-surface-3: #1e293b;
+  --z-border: #1e293b;
+  --z-border-strong: #334155;
+  --z-text: #f8fafc;
+  --z-text-2: #cbd5e1;
+  --z-text-muted: #94a3b8;
+
+  --z-field-bg: #0b0f19;
+  --z-field-placeholder: #64748b;
+  --z-field-disabled-bg: #1e293b;
+
+  --z-table-stripe: rgb(255 255 255 / 0.02);
+  --z-table-hover: rgb(154 63 155 / 0.12);
+
+  --z-success: #34d399;
+  --z-success-soft: rgb(16 185 129 / 0.15);
+  --z-success-border: rgb(52 211 153 / 0.35);
+  --z-warning: #fbbf24;
+  --z-warning-soft: rgb(245 158 11 / 0.15);
+  --z-warning-border: rgb(251 191 36 / 0.35);
+  --z-danger: #f87171;
+  --z-danger-hover: #fca5a5;
+  --z-danger-soft: rgb(239 68 68 / 0.15);
+  --z-danger-border: rgb(248 113 113 / 0.35);
+  --z-info: #38bdf8;
+  --z-info-soft: rgb(14 165 233 / 0.15);
+  --z-info-border: rgb(56 189 248 / 0.35);
+
+  --z-sidebar-bg: #060a14;
+  --z-sidebar-surface: #0f172a;
+  --z-sidebar-sub-bg: #090d16;
+  --z-sidebar-active-bg: rgb(154 63 155 / 0.24);
+  --z-sidebar-active-border: #dfa4e0;
+}

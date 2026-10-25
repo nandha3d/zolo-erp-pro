@@ -80,7 +80,7 @@
         table-layout: fixed;
     }
     .calendar-month-bar {
-        background: #0f172a;
+        background: var(--z-ink, #022051);
         color: #ffffff;
         padding: 10px 16px;
         border-radius: 6px;
@@ -93,8 +93,8 @@
         background: #090d16;
     }
     .calendar-table thead th {
-        background: #1e293b;
-        color: #f8fafc;
+        background: var(--z-table-head-bg, #022051);
+        color: var(--z-table-head-text, #ffffff);
         text-align: center;
         font-size: 11px;
         font-weight: 700;
@@ -104,7 +104,7 @@
         border-radius: 4px;
     }
     body.dark-mode .calendar-table thead th {
-        background: #141c2c;
+        background: var(--z-table-head-bg, #022051);
     }
     .calendar-table td {
         vertical-align: top;
@@ -145,18 +145,18 @@
         color: #94a3b8;
     }
     .today-pill {
-        background: #ede9fe;
-        color: #7c3aed;
+        background: var(--z-primary-soft, #fbf4fb);
+        color: var(--z-primary, #7d287e);
         font-weight: 800;
-        border: 1px solid #c4b5fd;
+        border: 1px solid var(--z-primary-text, #7d287e);
         padding: 1px 7px;
         border-radius: 12px;
         font-size: 11px;
     }
     body.dark-mode .today-pill {
         background: #3b0764;
-        color: #c4b5fd;
-        border-color: #6b21a8;
+        color: var(--z-primary-text, #7d287e);
+        border-color: var(--z-primary-hover, #631f64);
     }
     .metric-pill-total {
         background: #ecfdf5;
@@ -254,7 +254,7 @@
                     {{ date("F Y", strtotime($year.'-'.$month.'-01')) }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-calendar" style="font-size:18px;"></i>
             </div>
         </div>

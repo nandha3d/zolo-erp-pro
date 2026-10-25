@@ -67,8 +67,8 @@
         width: 100% !important;
     }
     #coa-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -78,14 +78,14 @@
         white-space: nowrap;
     }
     body.dark-mode #coa-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     #coa-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     #coa-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode #coa-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -141,7 +141,7 @@
             <li><a class="nav-link" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
         </ul>
         <div class="comm-actions">
-            <button type="button" class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#addAccountModal" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+            <button type="button" class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#addAccountModal" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
                 <i class="dripicons-plus"></i> Add Account
             </button>
         </div>
@@ -311,7 +311,7 @@
                 </div>
                 <div class="modal-footer border-0 p-3" style="background:#f8fafc;">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed;">Create Account</button>
+                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">Create Account</button>
                 </div>
             </form>
         </div>
@@ -344,7 +344,7 @@
                 </div>
                 <div class="modal-footer border-0 p-3" style="background:#f8fafc;">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed;">Update Account</button>
+                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">Update Account</button>
                 </div>
             </form>
         </div>

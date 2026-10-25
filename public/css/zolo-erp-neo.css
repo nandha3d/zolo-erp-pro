@@ -7,45 +7,47 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-:root {
+/* Colours come from zolo-tokens.css (brand). These --neo-* names are kept as aliases
+   for existing rules; declared on body too so dark mode re-resolves them. */
+:root, body {
   /* Core Color Tokens */
   --neo-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --neo-mono: 'JetBrains Mono', monospace;
 
-  --neo-primary: #4f46e5;
-  --neo-primary-hover: #4338ca;
-  --neo-primary-light: #eef2ff;
-  --neo-primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --neo-primary: var(--z-primary);
+  --neo-primary-hover: var(--z-primary-hover);
+  --neo-primary-light: var(--z-primary-soft);
+  --neo-primary-gradient: linear-gradient(var(--z-primary), var(--z-primary));
 
   --neo-success: #10b981;
-  --neo-success-light: #ecfdf5;
+  --neo-success-light: var(--z-success-soft);
   --neo-warning: #f59e0b;
-  --neo-warning-light: #fffbeb;
+  --neo-warning-light: var(--z-warning-soft);
   --neo-danger: #ef4444;
-  --neo-danger-light: #fef2f2;
+  --neo-danger-light: var(--z-danger-soft);
   --neo-info: #0ea5e9;
-  --neo-info-light: #f0f9ff;
+  --neo-info-light: var(--z-info-soft);
 
-  /* Neutrals (Slate scale) */
-  --neo-bg: #f8fafc;
-  --neo-surface: #ffffff;
-  --neo-surface-card: #ffffff;
-  --neo-border: #e2e8f0;
-  --neo-border-light: #f1f5f9;
-  --neo-text-primary: #0f172a;
-  --neo-text-secondary: #475569;
-  --neo-text-muted: #94a3b8;
+  /* Neutrals */
+  --neo-bg: var(--z-bg);
+  --neo-surface: var(--z-surface);
+  --neo-surface-card: var(--z-surface);
+  --neo-border: var(--z-border);
+  --neo-border-light: var(--z-surface-3);
+  --neo-text-primary: var(--z-text);
+  --neo-text-secondary: var(--z-text-2);
+  --neo-text-muted: var(--z-text-muted);
 
-  /* Side Panel in Light Mode: Distinct Modern Theme Color (Dark Slate Navy) */
-  --neo-sidebar-bg: #0f172a;
-  --neo-sidebar-surface: #1e293b;
+  /* Side panel */
+  --neo-sidebar-bg: var(--z-sidebar-bg);
+  --neo-sidebar-surface: var(--z-sidebar-surface);
   --neo-sidebar-border: rgba(255, 255, 255, 0.08);
-  --neo-sidebar-text: #cbd5e1;
-  --neo-sidebar-text-active: #ffffff;
+  --neo-sidebar-text: var(--z-sidebar-text);
+  --neo-sidebar-text-active: var(--z-sidebar-text-active);
   --neo-sidebar-text-muted: #94a3b8;
   --neo-sidebar-hover-bg: rgba(255, 255, 255, 0.06);
-  --neo-sidebar-active-bg: rgba(99, 102, 241, 0.18);
-  --neo-sidebar-active-border: #6366f1;
+  --neo-sidebar-active-bg: var(--z-sidebar-active-bg);
+  --neo-sidebar-active-border: var(--z-sidebar-active-border);
 
   /* Shadows & Radius */
   --neo-radius-sm: 6px;
@@ -56,35 +58,14 @@
   --neo-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
   --neo-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
   --neo-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --neo-shadow-glow: 0 0 15px rgba(79, 70, 229, 0.25);
+  --neo-shadow-glow: 0 0 15px rgb(var(--z-primary-rgb) / 0.25);
 }
 
-/* Dark Mode Tokens - Deep OLED Midnight Theme */
+/* Dark mode: only values without a semantic token; the rest follow zolo-tokens.css */
 body.dark-mode {
-  --neo-bg: #0b0f19;
-  --neo-surface: #111827;
-  --neo-surface-card: #151d2f;
-  --neo-border: #1e293b;
-  --neo-border-light: #1f2937;
-  --neo-text-primary: #f8fafc;
-  --neo-text-secondary: #cbd5e1;
-  --neo-text-muted: #64748b;
-  --neo-primary-light: rgba(79, 70, 229, 0.15);
-  --neo-success-light: rgba(16, 185, 129, 0.15);
-  --neo-warning-light: rgba(245, 158, 11, 0.15);
-  --neo-danger-light: rgba(239, 68, 68, 0.15);
-  --neo-info-light: rgba(14, 165, 233, 0.15);
-
-  /* Side Panel in Dark Mode */
-  --neo-sidebar-bg: #080c14;
-  --neo-sidebar-surface: #0f172a;
   --neo-sidebar-border: #1e293b;
-  --neo-sidebar-text: #cbd5e1;
-  --neo-sidebar-text-active: #ffffff;
   --neo-sidebar-text-muted: #64748b;
   --neo-sidebar-hover-bg: rgba(255, 255, 255, 0.04);
-  --neo-sidebar-active-bg: rgba(99, 102, 241, 0.22);
-  --neo-sidebar-active-border: #6366f1;
 }
 
 /* ====================================================================
@@ -144,7 +125,7 @@ nav.navbar a#toggle-btn.menu-btn:hover {
   background: var(--neo-bg) !important;
   border-color: var(--neo-primary) !important;
   color: var(--neo-primary) !important;
-  box-shadow: 0 4px 14px rgba(124, 92, 196, 0.22) !important;
+  box-shadow: 0 4px 14px rgb(var(--z-primary-rgb) / 0.22) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -459,12 +440,12 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 12px rgb(var(--z-primary-rgb) / 0.35);
   flex-shrink: 0;
 }
 
@@ -479,7 +460,7 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
 
 .zolo-brand-badge .zolo-accent,
 .zolo-brand-badge span {
-  color: #818cf8;
+  color: var(--z-primary-text);
   margin-left: 1px;
 }
 
@@ -548,8 +529,8 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
 #side-main-menu li#dashboard-menu a i,
 #side-main-menu a[href*="dashboard"] i,
 #side-main-menu i.dripicons-meter {
-  background: rgba(99, 102, 241, 0.18) !important;
-  color: #818cf8 !important;
+  background: rgb(var(--z-primary-rgb) / 0.18) !important;
+  color: var(--z-primary-text) !important;
 }
 
 #side-main-menu a[href="#product"] i,
@@ -578,8 +559,8 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
 
 #side-main-menu a[href="#transfer"] i,
 #side-main-menu i.dripicons-export {
-  background: rgba(168, 85, 247, 0.18) !important;
-  color: #c084fc !important;
+  background: rgb(var(--z-primary-rgb) / 0.18) !important;
+  color: var(--z-primary-text) !important;
 }
 
 #side-main-menu a[href="#accounting"] i,
@@ -603,8 +584,8 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
 
 #side-main-menu a[href="#people"] i,
 #side-main-menu i.dripicons-user {
-  background: rgba(129, 140, 248, 0.18) !important;
-  color: #a5b4fc !important;
+  background: rgb(var(--z-primary-rgb) / 0.18) !important;
+  color: var(--z-primary-text) !important;
 }
 
 #side-main-menu a[href="#hrm"] i,
@@ -648,7 +629,7 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
 
 .side-navbar li a[data-toggle="collapse"][aria-expanded="true"]::after {
   transform: rotate(45deg) !important;
-  color: var(--neo-primary, #6366f1) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   opacity: 1 !important;
 }
 
@@ -689,8 +670,8 @@ html[dir="rtl"] .side-navbar.hide ~ .page { margin-right: 0 !important; }
 
 .side-navbar ul.collapse li a:hover::before,
 .side-navbar ul.collapse li.active a::before {
-  background: #6366f1;
-  box-shadow: 0 0 6px #6366f1;
+  background: var(--z-primary);
+  box-shadow: 0 0 6px var(--z-primary);
 }
 
 /* ====================================================================
@@ -759,9 +740,9 @@ nav.navbar .nav-menu .dropdown > a:not(.btn-pos) {
 nav.navbar .nav-item > a:not(.btn-pos):hover,
 nav.navbar .nav-item a.nav-link:not(.btn-pos):hover,
 nav.navbar .nav-menu > li > a:not(.btn-pos):hover {
-  background: var(--neo-primary-light, #eef2ff) !important;
-  border-color: rgba(99, 102, 241, 0.2) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  border-color: rgb(var(--z-primary-rgb) / 0.2) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 nav.navbar .nav-item a:not(.btn-pos) i,
@@ -776,7 +757,7 @@ nav.navbar .nav-item a[data-toggle="tooltip"]:not(.btn-pos) i {
 
 nav.navbar .nav-item > a:not(.btn-pos):hover i,
 nav.navbar .nav-item a.nav-link:not(.btn-pos):hover i {
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 nav.navbar .nav-item > a span:not(.notification-number),
@@ -791,7 +772,7 @@ nav.navbar .nav-item a.dropdown-item span:not(.notification-number) {
 
 nav.navbar .nav-item > a:hover span:not(.notification-number),
 nav.navbar .nav-item a.nav-link:hover span:not(.notification-number) {
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 /* Specific button: '+' Quick Add Button in Navbar */
@@ -806,11 +787,11 @@ nav.navbar a.btn-pos[data-toggle="dropdown"],
   align-items: center !important;
   justify-content: center !important;
   border-radius: 10px !important;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
-  background-color: #4f46e5 !important;
+  background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%) !important;
+  background-color: var(--z-primary) !important;
   border: none !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28) !important;
+  box-shadow: 0 2px 8px rgb(var(--z-primary-rgb) / 0.28) !important;
 }
 
 nav.navbar .btn-pos[data-toggle="dropdown"] i,
@@ -829,14 +810,14 @@ nav.navbar a.btn-pos,
 .btn-pos,
 a.btn-pos,
 li.nav-item .btn-pos {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-  background-color: #4f46e5 !important;
+  background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%) !important;
+  background-color: var(--z-primary) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: var(--neo-radius-md, 10px) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
+  box-shadow: 0 2px 8px rgb(var(--z-primary-rgb) / 0.3) !important;
   padding: 7px 16px !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -855,11 +836,11 @@ nav.navbar a.btn-pos:hover,
 .btn-pos:hover,
 a.btn-pos:hover,
 li.nav-item .btn-pos:hover {
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45) !important;
+  box-shadow: 0 4px 14px rgb(var(--z-primary-rgb) / 0.45) !important;
   transform: translateY(-1px) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+  background: linear-gradient(135deg, var(--z-primary-hover) 0%, var(--z-primary) 100%) !important;
 }
 
 nav.navbar .nav-item a.btn-pos span,
@@ -1185,10 +1166,10 @@ li.nav-item .btn-pos i {
 .cp-btn-primary,
 .comm-items-btn-primary,
 .comm-bottom-btn-primary {
-  background: var(--neo-primary, #6366f1) !important;
-  border: 1px solid var(--neo-primary, #6366f1) !important;
+  background: var(--neo-primary, var(--z-primary)) !important;
+  border: 1px solid var(--neo-primary, var(--z-primary)) !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.25) !important;
+  box-shadow: 0 1px 3px rgb(var(--z-primary-rgb) / 0.25) !important;
 }
 
 .btn-primary:hover,
@@ -1197,10 +1178,10 @@ li.nav-item .btn-pos i {
 .cp-btn-primary:hover,
 .comm-items-btn-primary:hover,
 .comm-bottom-btn-primary:hover {
-  background: var(--neo-primary-hover, #4f46e5) !important;
-  border-color: var(--neo-primary-hover, #4f46e5) !important;
+  background: var(--neo-primary-hover, var(--z-primary)) !important;
+  border-color: var(--neo-primary-hover, var(--z-primary)) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 4px 14px rgb(var(--z-primary-rgb) / 0.35) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -1226,7 +1207,7 @@ li.nav-item .btn-pos i {
 .btn-light i,
 .zolo-btn-secondary i,
 .comm-items-btn:not(.comm-items-btn-primary) i {
-  color: var(--neo-primary, #6366f1) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 .btn-secondary:hover,
@@ -1237,11 +1218,11 @@ li.nav-item .btn-pos i {
 .zolo-btn-secondary:hover,
 .comm-items-btn:not(.comm-items-btn-primary):hover,
 .cp-btn:not(.cp-btn-primary):not(.cp-btn-danger):hover {
-  background: var(--neo-primary-light, #eef2ff) !important;
-  border-color: var(--neo-primary, #6366f1) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  border-color: var(--neo-primary, var(--z-primary)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 2px 8px rgb(var(--z-primary-rgb) / 0.15) !important;
 }
 
 /* Dark Mode Secondary & Utility Buttons */
@@ -1265,7 +1246,7 @@ body.dark-mode .btn-default i,
 body.dark-mode .btn-light i,
 body.dark-mode .zolo-btn-secondary i,
 body.dark-mode .comm-items-btn:not(.comm-items-btn-primary) i {
-  color: #818cf8 !important;
+  color: var(--z-primary-text) !important;
 }
 
 body.dark-mode .btn-secondary:hover,
@@ -1276,8 +1257,8 @@ body.dark-mode .btn-light:hover,
 body.dark-mode .zolo-btn-secondary:hover,
 body.dark-mode .comm-items-btn:not(.comm-items-btn-primary):hover,
 body.dark-mode .cp-btn:not(.cp-btn-primary):not(.cp-btn-danger):hover {
-  background: rgba(99, 102, 241, 0.18) !important;
-  border-color: #818cf8 !important;
+  background: rgb(var(--z-primary-rgb) / 0.18) !important;
+  border-color: var(--z-primary-text) !important;
   color: #ffffff !important;
 }
 
@@ -1344,15 +1325,15 @@ body.dark-mode .cp-btn:not(.cp-btn-primary):not(.cp-btn-danger):hover {
 
 .input-group > .input-group-append > .btn i,
 .input-group > .btn:not(:first-child) i {
-  color: var(--neo-primary, #6366f1) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   font-size: 14px !important;
 }
 
 .input-group > .input-group-append > .btn:hover,
 .input-group > .btn:not(:first-child):hover {
-  background: var(--neo-primary-light, #eef2ff) !important;
-  border-color: var(--neo-primary, #6366f1) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  border-color: var(--neo-primary, var(--z-primary)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 body.dark-mode .input-group > .input-group-append > .btn,
@@ -1364,13 +1345,13 @@ body.dark-mode .input-group > .btn:not(:first-child) {
 
 body.dark-mode .input-group > .input-group-append > .btn i,
 body.dark-mode .input-group > .btn:not(:first-child) i {
-  color: #818cf8 !important;
+  color: var(--z-primary-text) !important;
 }
 
 body.dark-mode .input-group > .input-group-append > .btn:hover,
 body.dark-mode .input-group > .btn:not(:first-child):hover {
-  background: rgba(99, 102, 241, 0.2) !important;
-  border-color: #818cf8 !important;
+  background: rgb(var(--z-primary-rgb) / 0.2) !important;
+  border-color: var(--z-primary-text) !important;
 }
 
 /* Form Controls & Inputs Uniformity */
@@ -1402,8 +1383,8 @@ input[type="email"]:focus,
 input[type="number"]:focus,
 input[type="date"]:focus {
   background-color: var(--neo-surface-card, #ffffff) !important;
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  border-color: var(--z-primary) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.15) !important;
   outline: none !important;
 }
 
@@ -1499,8 +1480,8 @@ select.zolo-select:focus,
 .cp-dialog select:focus,
 .bootstrap-select > .btn.dropdown-toggle:focus,
 .bootstrap-select.show > .btn.dropdown-toggle {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  border-color: var(--z-primary) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.15) !important;
   outline: none !important;
 }
 
@@ -1533,8 +1514,8 @@ body.dark-mode select.zolo-select:focus,
 body.dark-mode .cp-dialog select:focus,
 body.dark-mode .bootstrap-select > .btn.dropdown-toggle:focus,
 body.dark-mode .bootstrap-select.show > .btn.dropdown-toggle {
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+  border-color: var(--z-primary-text) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.25) !important;
 }
 
 /* Selectpicker Outer Wrapper Normalization */
@@ -1589,8 +1570,8 @@ div.bootstrap-select {
 
 .dropdown-menu .dropdown-item:hover,
 .bootstrap-select .dropdown-menu li a:hover {
-  background-color: var(--neo-primary-light, #eef2ff) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background-color: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 body.dark-mode .dropdown-menu,
@@ -1606,7 +1587,7 @@ body.dark-mode .bootstrap-select .dropdown-menu li a {
 
 body.dark-mode .dropdown-menu .dropdown-item:hover,
 body.dark-mode .bootstrap-select .dropdown-menu li a:hover {
-  background-color: rgba(99, 102, 241, 0.2) !important;
+  background-color: rgb(var(--z-primary-rgb) / 0.2) !important;
   color: #ffffff !important;
 }
 
@@ -1658,7 +1639,7 @@ body.dark-mode .template-box:hover {
   font-weight: 700 !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   margin-bottom: 4px !important;
   padding-bottom: 6px !important;
   border-bottom: 1px solid var(--neo-border, #e2e8f0) !important;
@@ -1666,7 +1647,7 @@ body.dark-mode .template-box:hover {
 
 body.dark-mode .zolo-section-box-header,
 body.dark-mode .cp-col-title {
-  color: #818cf8 !important;
+  color: var(--z-primary-text) !important;
   border-bottom-color: var(--neo-border, #1e293b) !important;
 }
 
@@ -1723,27 +1704,27 @@ body.dark-mode .cp-col-address .cp-col-title {
 
 .zolo-section-box-purple,
 .cp-col-compliance {
-  background-color: #faf4ff !important;
-  border: 1px solid #e5d3fd !important;
+  background-color: var(--z-primary-soft) !important;
+  border: 1px solid var(--z-primary-border) !important;
 }
 
 .zolo-section-box-purple .zolo-section-box-header,
 .cp-col-compliance .cp-col-title {
-  color: #7c3aed !important;
+  color: var(--z-primary) !important;
   border-bottom-color: #eedcff !important;
 }
 
 body.dark-mode .zolo-section-box-purple,
 body.dark-mode .cp-col-compliance {
-  background-color: #22163d !important;
-  border-color: rgba(168, 85, 247, 0.32) !important;
+  background-color: var(--z-primary-soft) !important;
+  border-color: rgb(var(--z-primary-rgb) / 0.32) !important;
   box-shadow: 0 2px 10px rgba(33, 22, 58, 0.5) !important;
 }
 
 body.dark-mode .zolo-section-box-purple .zolo-section-box-header,
 body.dark-mode .cp-col-compliance .cp-col-title {
-  color: #c084fc !important;
-  border-bottom-color: rgba(168, 85, 247, 0.25) !important;
+  color: var(--z-primary-text) !important;
+  border-bottom-color: rgb(var(--z-primary-rgb) / 0.25) !important;
 }
 
 .zolo-section-box-amber,
@@ -2008,7 +1989,7 @@ table.dataTable thead tr:first-child th:last-child {
   background-color: var(--neo-bg) !important;
   border-top: none !important;
   border-bottom: 2px solid var(--neo-border) !important;
-  color: #475569 !important;
+  color: var(--z-table-head-text) !important;
   font-size: 11.5px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
@@ -2021,8 +2002,8 @@ table.dataTable thead tr:first-child th:last-child {
 body.dark-mode .table thead th,
 body.dark-mode .neo-table thead th,
 body.dark-mode table.dataTable thead th {
-  background-color: #111827 !important;
-  color: #94a3b8 !important;
+  background-color: var(--z-table-head-bg) !important;
+  color: var(--z-table-head-text) !important;
   border-bottom-color: #1e293b !important;
 }
 
@@ -2045,11 +2026,11 @@ body.dark-mode table.dataTable tbody td {
 
 .table-hover tbody tr:hover td,
 table.dataTable.table-hover tbody tr:hover td {
-  background-color: rgba(99, 102, 241, 0.04) !important;
+  background-color: rgb(var(--z-primary-rgb) / 0.04) !important;
 }
 
 body.dark-mode .table-hover tbody tr:hover td {
-  background-color: rgba(99, 102, 241, 0.08) !important;
+  background-color: rgb(var(--z-primary-rgb) / 0.08) !important;
 }
 
 /* DataTables Controls: Length Select & Filter Search */
@@ -2078,7 +2059,7 @@ body.dark-mode .table-hover tbody tr:hover td {
 
 .dataTables_wrapper .dataTables_length select:focus {
   border-color: var(--neo-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.15) !important;
 }
 
 .dataTables_wrapper .dataTables_filter {
@@ -2110,7 +2091,7 @@ body.dark-mode .table-hover tbody tr:hover td {
 .dataTables_wrapper .dataTables_filter input:focus {
   width: 260px !important;
   border-color: var(--neo-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.15) !important;
 }
 
 /* DataTables Pagination & Info - Single Compact Box Normalization */
@@ -2161,19 +2142,19 @@ body.dark-mode .table-hover tbody tr:hover td {
 
 .dataTables_wrapper .dataTables_paginate .page-link:hover,
 .dataTables_wrapper .dataTables_paginate a.paginate_button:hover {
-  background: var(--neo-primary-light, #eef2ff) !important;
-  color: var(--neo-primary, #4f46e5) !important;
-  border-color: var(--neo-primary, #4f46e5) !important;
+  background: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
+  border-color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .page-item.active .page-link,
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,
 .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-  background: var(--neo-primary, #7c3aed) !important;
+  background: var(--neo-primary, var(--z-primary)) !important;
   color: #ffffff !important;
-  border-color: var(--neo-primary, #7c3aed) !important;
+  border-color: var(--neo-primary, var(--z-primary)) !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3) !important;
+  box-shadow: 0 2px 6px rgb(var(--z-primary-rgb) / 0.3) !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link,
@@ -2197,9 +2178,9 @@ body.dark-mode .table-hover tbody tr:hover td {
   align-items: center !important;
   justify-content: center !important;
   border-radius: 8px !important;
-  border: 1px solid rgba(99, 102, 241, 0.25) !important;
-  background: rgba(99, 102, 241, 0.08) !important;
-  color: #6366f1 !important;
+  border: 1px solid rgb(var(--z-primary-rgb) / 0.25) !important;
+  background: rgb(var(--z-primary-rgb) / 0.08) !important;
+  color: var(--z-primary) !important;
   font-size: 14px !important;
   transition: all 0.2s ease !important;
 }
@@ -2207,9 +2188,9 @@ body.dark-mode .table-hover tbody tr:hover td {
 .table td .btn-outline-primary:hover,
 .table td .btn-action:hover,
 .table td a.btn.btn-sm.btn-outline-primary:hover {
-  background: #6366f1 !important;
+  background: var(--z-primary) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 4px 10px rgb(var(--z-primary-rgb) / 0.35) !important;
   transform: translateY(-1px);
 }
 
@@ -2307,7 +2288,7 @@ div.dt-buttons a.btn:hover {
 .dt-buttons button.dt-button:hover i,
 div.dt-buttons button:hover span,
 div.dt-buttons button:hover i {
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 /* Distinct Vibrant Modern Accents for Export Types */
@@ -2337,7 +2318,7 @@ div.dt-buttons button:hover i {
 .dt-buttons button.buttons-collection i,
 .dt-buttons .buttons-colvis i,
 .dt-buttons button.buttons-colvis i {
-  color: #6366f1 !important; /* Indigo ColVis */
+  color: var(--z-primary) !important; /* Indigo ColVis */
 }
 
 /* Caret on column collection button */
@@ -2422,8 +2403,8 @@ ul.dt-button-collection.dropdown-menu a:hover,
 ul.dt-button-collection.dropdown-menu button:hover,
 .dt-button-collection button.dropdown-item:hover,
 .dt-button-collection a.dropdown-item:hover {
-  background-color: var(--neo-primary-light, #eef2ff) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background-color: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 div.dt-button-collection .dt-button:hover span,
@@ -2431,28 +2412,28 @@ ul.dt-button-collection.dropdown-menu a:hover span,
 ul.dt-button-collection.dropdown-menu button:hover span,
 .dt-button-collection button.dropdown-item:hover span,
 .dt-button-collection a.dropdown-item:hover span {
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   font-weight: 600 !important;
 }
 
 /* Active State for Visible Columns */
 div.dt-button-collection .dt-button.active,
 .dt-button-collection .buttons-columnVisibility.active {
-  background-color: rgba(99, 102, 241, 0.1) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background-color: rgb(var(--z-primary-rgb) / 0.1) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   font-weight: 600 !important;
 }
 
 div.dt-button-collection .dt-button.active span,
 .dt-button-collection .buttons-columnVisibility.active span {
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   font-weight: 600 !important;
 }
 
 div.dt-button-collection .dt-button.active::after,
 .dt-button-collection .buttons-columnVisibility.active::after {
   content: '✓';
-  color: var(--neo-primary, #4f46e5);
+  color: var(--neo-primary, var(--z-primary));
   font-weight: bold;
   margin-left: auto;
   padding-left: 8px;
@@ -2655,7 +2636,7 @@ input[type="email"].form-control:focus,
 input[type="password"].form-control:focus,
 textarea.form-control:focus {
   border-color: var(--neo-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.18) !important;
   background: var(--neo-surface) !important;
   outline: none !important;
 }
@@ -2677,7 +2658,7 @@ input[type="submit"].btn.btn-primary,
   font-size: 13.5px !important;
   font-weight: 600 !important;
   color: #ffffff !important;
-  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 3px 10px rgb(var(--z-primary-rgb) / 0.35) !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -2690,9 +2671,9 @@ input[type="submit"].btn.btn-primary,
 input[type="submit"].btn.btn-primary:hover,
 .modal-body input[type="submit"]:hover,
 .modal-footer .btn-primary:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+  background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-hover) 100%) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45) !important;
+  box-shadow: 0 6px 18px rgb(var(--z-primary-rgb) / 0.45) !important;
   color: #ffffff !important;
 }
 
@@ -2759,8 +2740,8 @@ div.bootstrap-select {
 .bootstrap-select > .dropdown-toggle:active,
 .bootstrap-select.show > .dropdown-toggle,
 .bootstrap-select.show > .btn.dropdown-toggle {
-  border-color: var(--neo-primary, #6366f1) !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
+  border-color: var(--neo-primary, var(--z-primary)) !important;
+  box-shadow: 0 0 0 2px rgb(var(--z-primary-rgb) / 0.18) !important;
   outline: none !important;
 }
 
@@ -2814,8 +2795,8 @@ ul.dropdown-menu.inner {
 .dropdown-menu .dropdown-item:hover,
 .dropdown-menu .dropdown-item:focus,
 .dropdown-menu .dropdown-item.active {
-  background: var(--neo-primary-light, #eef2ff) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
   font-weight: 600 !important;
 }
 
@@ -2888,7 +2869,7 @@ body.dark-mode .sidebar-heading {
   font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
@@ -2948,8 +2929,8 @@ body.dark-mode .zolo-kpi-card:hover {
 }
 
 .icon-purple {
-  background: rgba(139, 92, 246, 0.12);
-  color: #7c3aed;
+  background: rgb(var(--z-primary-rgb) / 0.12);
+  color: var(--z-primary);
 }
 
 .icon-orange {
@@ -2979,8 +2960,8 @@ body.dark-mode .zolo-kpi-card:hover {
 }
 
 .badge-purple {
-  background: rgba(139, 92, 246, 0.1);
-  color: #6d28d9;
+  background: rgb(var(--z-primary-rgb) / 0.1);
+  color: var(--z-primary-hover);
 }
 
 .badge-orange {
@@ -3030,13 +3011,13 @@ body.dark-mode .zolo-kpi-card:hover {
 
 /* Modern Welcome Banner Card */
 .zolo-banner-card {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+  background: linear-gradient(135deg, var(--z-primary-soft) 0%, var(--z-primary-hover) 40%, var(--z-primary-hover) 100%);
   border-radius: var(--neo-radius-lg);
   padding: 24px 28px;
   color: #ffffff;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.3);
+  box-shadow: 0 10px 25px -5px rgb(var(--z-primary-rgb) / 0.3);
   margin-bottom: 24px;
 }
 
@@ -3077,20 +3058,20 @@ body.dark-mode .zolo-kpi-card:hover {
 
 .zolo-banner-subtitle {
   font-size: 13.5px;
-  color: #c7d2fe;
+  color: var(--z-primary-border);
   margin-bottom: 0;
   font-weight: 400;
 }
 
 /* POS Radiant Top Action Button */
 .pos-top-btn {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
   font-size: 12.5px !important;
   border-radius: 20px !important;
   padding: 6px 16px !important;
-  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 2px 10px rgb(var(--z-primary-rgb) / 0.35) !important;
   border: none !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -3099,7 +3080,7 @@ body.dark-mode .zolo-kpi-card:hover {
 }
 
 .pos-top-btn:hover {
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.5) !important;
+  box-shadow: 0 4px 14px rgb(var(--z-primary-rgb) / 0.5) !important;
   transform: translateY(-1px) !important;
   color: #ffffff !important;
 }
@@ -3148,13 +3129,13 @@ body.dark-mode .zolo-kpi-card:hover {
 }
 
 .dataTables_wrapper .dataTables_length select:hover {
-  border-color: #a5b4fc !important;
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.1) !important;
+  border-color: var(--z-primary-text) !important;
+  box-shadow: 0 2px 6px rgb(var(--z-primary-rgb) / 0.1) !important;
 }
 
 .dataTables_wrapper .dataTables_length select:focus {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+  border-color: var(--z-primary) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.2) !important;
 }
 
 
@@ -3187,7 +3168,7 @@ body.dark-mode .zolo-kpi-card:hover {
 
 .dataTables_wrapper .dataTables_filter input:focus {
   border-color: var(--neo-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+  box-shadow: 0 0 0 3px rgb(var(--z-primary-rgb) / 0.2) !important;
 }
 
 /* ====================================================================
@@ -3296,8 +3277,8 @@ body.dark-mode .zolo-kpi-card:hover {
 }
 
 /* Color Accents for KPI cards */
-.kpi-purple .zolo-kpi-icon { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-.kpi-purple .zolo-kpi-badge { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.kpi-purple .zolo-kpi-icon { background: rgb(var(--z-primary-rgb) / 0.12); color: var(--z-primary); }
+.kpi-purple .zolo-kpi-badge { background: rgb(var(--z-primary-rgb) / 0.12); color: var(--z-primary); }
 
 .kpi-blue .zolo-kpi-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
 .kpi-blue .zolo-kpi-badge { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
@@ -3449,8 +3430,8 @@ body.dark-mode .zolo-kpi-card:hover {
 
 .dropdown-menu.edit-options li .btn-link:hover,
 .dropdown-menu.edit-options li a:hover {
-  background-color: var(--neo-primary-light, #eef2ff) !important;
-  color: var(--neo-primary, #4f46e5) !important;
+  background-color: var(--neo-primary-light, var(--z-primary-soft)) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 .dropdown-menu.edit-options li .btn-link i,
@@ -3464,7 +3445,7 @@ body.dark-mode .zolo-kpi-card:hover {
 
 .dropdown-menu.edit-options li .btn-link:hover i,
 .dropdown-menu.edit-options li a:hover i {
-  color: var(--neo-primary, #4f46e5) !important;
+  color: var(--neo-primary, var(--z-primary)) !important;
 }
 
 /* Dropup positioning for static menus only: Popper-placed menus ([x-placement]) already sit above the toggle via
@@ -3601,8 +3582,8 @@ section.dt-collection-active {
    ==================================================================== */
 .side-navbar,
 nav.side-navbar {
-  background-color: #0f172a !important;
-  background: #0f172a !important;
+  background-color: var(--z-sidebar-bg) !important;
+  background: var(--z-sidebar-bg) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #cbd5e1 !important;
 }
@@ -3633,7 +3614,7 @@ nav.side-navbar:not(.icon-only):not(.full-hide):not(.shrink) {
 }
 
 .side-navbar li a i {
-  color: #818cf8 !important;
+  color: var(--z-primary-text) !important;
   font-size: 16px !important;
   margin-right: 12px !important;
   width: 20px !important;
@@ -3649,8 +3630,8 @@ nav.side-navbar:not(.icon-only):not(.full-hide):not(.shrink) {
 
 .side-navbar li.active > a,
 .side-navbar li a[aria-expanded="true"] {
-  background: rgba(99, 102, 241, 0.15) !important;
-  color: #818cf8 !important;
+  background: rgb(var(--z-primary-rgb) / 0.15) !important;
+  color: var(--z-primary-text) !important;
   font-weight: 600 !important;
 }
 
@@ -3658,8 +3639,8 @@ nav.side-navbar:not(.icon-only):not(.full-hide):not(.shrink) {
 .side-navbar li ul,
 .side-navbar ul.collapse,
 .side-navbar .collapse {
-  background-color: #090d16 !important;
-  background: #090d16 !important;
+  background-color: var(--z-sidebar-sub-bg) !important;
+  background: var(--z-sidebar-sub-bg) !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   border-radius: 10px !important;
   padding: 6px !important;
@@ -4120,8 +4101,8 @@ body.dark-mode .desk-card-wrapper {
     position: sticky !important;
     top: 0 !important;
     z-index: 5 !important;
-    background: #0f172a !important;
-    color: #ffffff !important;
+    background: var(--z-table-head-bg) !important;
+    color: var(--z-table-head-text) !important;
     font-size: 10.5px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
@@ -4132,8 +4113,8 @@ body.dark-mode .desk-card-wrapper {
 }
 
 body.dark-mode .desk-card-wrapper table.dataTable thead th {
-    background: #090d16 !important;
-    color: #f8fafc !important;
+    background: var(--z-table-head-bg) !important;
+    color: var(--z-table-head-text) !important;
 }
 
 .desk-card-wrapper table.dataTable tbody td {
@@ -4149,11 +4130,11 @@ body.dark-mode .desk-card-wrapper table.dataTable tbody td {
 }
 
 .desk-card-wrapper table.dataTable tbody tr:nth-child(even) {
-    background-color: #f8fafc;
+    background-color: var(--z-table-stripe);
 }
 
 .desk-card-wrapper table.dataTable tbody tr:nth-child(odd) {
-    background-color: #ffffff;
+    background-color: var(--z-surface);
 }
 
 body.dark-mode .desk-card-wrapper table.dataTable tbody tr:nth-child(even) {
@@ -4165,7 +4146,7 @@ body.dark-mode .desk-card-wrapper table.dataTable tbody tr:nth-child(odd) {
 }
 
 .desk-card-wrapper table.dataTable tbody tr:hover {
-    background-color: #eef2ff !important;
+    background-color: var(--z-primary-soft) !important;
 }
 
 body.dark-mode .desk-card-wrapper table.dataTable tbody tr:hover {

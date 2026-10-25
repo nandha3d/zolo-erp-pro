@@ -65,8 +65,8 @@
         width: 100% !important;
     }
     #expense_category-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -76,14 +76,14 @@
         white-space: nowrap;
     }
     body.dark-mode #expense_category-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     #expense_category-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     #expense_category-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode #expense_category-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -143,7 +143,7 @@
             <li><a class="nav-link" href="{{ route('accounts.index') }}"><i class="dripicons-briefcase"></i> Accounts</a></li>
         </ul>
         <div class="comm-actions">
-            <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#createModal" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+            <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#createModal" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
                 <i class="dripicons-plus"></i> {{ __('db.Add Expense Category') }}
             </button>
             <button class="btn btn-outline-secondary btn-action-pill" data-toggle="modal" data-target="#importExpenseCategory">
@@ -159,7 +159,7 @@
                 <div class="kpi-label">TOTAL CATEGORIES</div>
                 <div class="kpi-number">{{ number_format($totalCatCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-list" style="font-size:18px;"></i>
             </div>
         </div>
@@ -255,7 +255,7 @@
             <input type="hidden" name="is_active" value="1">
             <div class="form-group mb-0 text-right">
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __('db.Cancel') }}</button>
-                <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed;">{{ __('db.submit') }}</button>
+                <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{ __('db.submit') }}</button>
             </div>
         </div>
         {{ Form::close() }}
@@ -287,7 +287,7 @@
         <input type="hidden" name="expense_category_id">
         <div class="form-group mb-0 text-right">
             <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __('db.Cancel') }}</button>
-            <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed;">{{ __('db.submit') }}</button>
+            <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{ __('db.submit') }}</button>
         </div>
       </div>
       {{ Form::close() }}
@@ -326,7 +326,7 @@
             </div>
             <div class="form-group mb-0 text-right">
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __('db.Cancel') }}</button>
-                <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#7c3aed; border-color:#7c3aed;">{{ __('db.submit') }}</button>
+                <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{ __('db.submit') }}</button>
             </div>
         </div>
         {{ Form::close() }}

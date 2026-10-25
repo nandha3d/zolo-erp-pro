@@ -34,7 +34,7 @@
             <div class="modal-header d-flex align-items-center justify-content-between p-3" style="border-bottom: 1px solid var(--neo-border); background: var(--neo-surface-card);">
                 <div class="d-flex align-items-center gap-2">
                     @if($icon)
-                        <span class="zolo-brand-mark mr-2" style="width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--neo-primary-gradient); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3);">
+                        <span class="zolo-brand-mark mr-2" style="width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--neo-primary-gradient); color: #fff; box-shadow: 0 2px 8px rgb(var(--z-primary-rgb, 125 40 126) / 0.3);">
                             <i class="{{ $icon }}" style="font-size: 14px;"></i>
                         </span>
                     @endif

@@ -123,7 +123,7 @@
                     {{ $start_month.' — '.date("F Y") }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ede9fe;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
                 <i class="dripicons-calendar" style="font-size:18px;"></i>
             </div>
         </div>

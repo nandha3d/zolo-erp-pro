@@ -31,8 +31,8 @@
         width: 100% !important;
     }
     .vh-table thead th {
-        background: #0f172a !important;
-        color: #ffffff !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
@@ -41,14 +41,14 @@
         border: none !important;
     }
     body.dark-mode .vh-table thead th {
-        background: #090d16 !important;
-        color: #f8fafc !important;
+        background: var(--z-table-head-bg, #022051) !important;
+        color: var(--z-table-head-text, #ffffff) !important;
     }
     .vh-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: var(--z-table-stripe, #f8fafc);
     }
     .vh-table tbody tr:nth-child(odd) {
-        background: #ffffff;
+        background: var(--z-surface, #ffffff);
     }
     body.dark-mode .vh-table tbody tr:nth-child(even) {
         background: #141c2c;
@@ -218,7 +218,7 @@
                     <div id="voucher-allocations"></div>
                     <span id="allocation-summary" class="text-muted small"></span>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm px-4 font-weight-bold" id="post-voucher" disabled style="background:#7c3aed; border-color:#7c3aed; height:34px;">
+                <button type="submit" class="btn btn-primary btn-sm px-4 font-weight-bold" id="post-voucher" disabled style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); height:34px;">
                     Post Voucher (Ctrl+Enter)
                 </button>
             </div>
@@ -291,7 +291,7 @@
                 </div>
                 <div class="modal-footer border-0 p-3" style="background:#f8fafc;">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="apply-allocations" style="background:#7c3aed; border-color:#7c3aed;">Apply Allocations</button>
+                    <button type="button" class="btn btn-primary btn-sm font-weight-bold" id="apply-allocations" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">Apply Allocations</button>
                 </div>
             </div>
         </div>

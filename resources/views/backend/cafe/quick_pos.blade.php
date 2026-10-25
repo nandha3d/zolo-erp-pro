@@ -16,7 +16,7 @@
 .cafe-item-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border-color: #6366f1;
+    border-color: var(--z-primary, #7d287e);
 }
 .cafe-cart-panel {
     background: #fff;

@@ -31,7 +31,7 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light navbar-laravel">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}" style="color: #7c5cc4; font-size: 18px; font-weight: bold;">
+                <a class="navbar-brand" href="{{ url('/') }}" style="color: var(--z-primary, #7d287e); font-size: 18px; font-weight: bold;">
                     {{$general_setting->site_title}}
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,11 +48,11 @@
                     <ul class="navbar-nav ml-auto">
                         <!-- Authentication Links -->
                         @guest
-                            <li><a class="nav-link" href="{{ route('login') }}" style="color: #7c5cc4;">{{ __('Login') }}</a></li>
-                            <li><a class="nav-link" href="{{ route('register') }}" style="color: #7c5cc4;">{{ __('Register') }}</a></li>
+                            <li><a class="nav-link" href="{{ route('login') }}" style="color: var(--z-primary, #7d287e);">{{ __('Login') }}</a></li>
+                            <li><a class="nav-link" href="{{ route('register') }}" style="color: var(--z-primary, #7d287e);">{{ __('Register') }}</a></li>
                         @else
                             <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre style="color: #7c5cc4;">
+                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre style="color: var(--z-primary, #7d287e);">
                                     {{ Auth::user()->name }} <span class="caret"></span>
                                 </a>
 

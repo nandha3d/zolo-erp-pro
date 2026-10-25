@@ -6,6 +6,7 @@
     <file>tests/Feature/OperationalConversionTest.php</file>
     <file>tests/Feature/IndustryProfilesTest.php</file>
     <file>tests/Feature/TextileInventoryDefaultsTest.php</file>
+    <file>tests/Unit/DesignTokensTest.php</file>
     <file>tests/Feature/IndustryFlowIntegrationTest.php</file>
     <file>tests/Feature/TextileScenarioMatrixTest.php</file>
     <file>tests/Feature/OperationsWebTest.php</file>

@@ -185,7 +185,7 @@
     .material-document-workspace .entry-bottom-bar .btn { padding: 4px 8px !important; font-size: 11px; }
 }
 .document-entry-screen input:focus-visible, .document-entry-screen select:focus-visible,
-.document-entry-screen textarea:focus-visible, .document-entry-screen button:focus-visible { outline: 2px solid #7c3aed; outline-offset: 1px; }
+.document-entry-screen textarea:focus-visible, .document-entry-screen button:focus-visible { outline: 2px solid var(--z-primary); outline-offset: 1px; }
 @media print {
     .classic-document-workspace .document-lines-row .table-responsive { overflow: visible; }
 }

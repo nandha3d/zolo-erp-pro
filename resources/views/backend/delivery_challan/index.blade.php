@@ -42,7 +42,7 @@
             @endif
         </ul>
         <div class="comm-actions">
-            <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle Challan List Panel" style="background:#7c3aed; border-color:#7c3aed; color:#fff;">
+            <button type="button" class="btn btn-primary py-1 px-3" id="toggle-drawer-btn" title="Toggle Challan List Panel" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
                 <i class="dripicons-view-list"></i> Challan list
             </button>
         </div>
@@ -64,7 +64,7 @@
                     <div class="entry-header-top d-flex align-items-center justify-content-between mb-2">
                         <div class="d-flex align-items-center gap-2">
                             <span class="entry-breadcrumb" id="entry-breadcrumb">Home / Selling / Customer DC / New</span>
-                            <span class="badge badge-light-primary px-2 py-1 ml-2" id="status-pill" style="font-weight:600;font-size:11px;background:#f3e8ff;color:#7c3aed;border:1px solid #d8b4fe;border-radius:4px;">Draft DC</span>
+                            <span class="badge badge-light-primary px-2 py-1 ml-2" id="status-pill" style="font-weight:600;font-size:11px;background:var(--z-primary-soft, #fbf4fb);color:var(--z-primary, #7d287e);border:1px solid var(--z-primary-text, #7d287e);border-radius:4px;">Draft DC</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                         </div>
@@ -72,7 +72,7 @@
 
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="entry-doc-icon"><i class="dripicons-box" style="color:#7c3aed;font-size:20px;"></i></div>
+                            <div class="entry-doc-icon"><i class="dripicons-box" style="color:var(--z-primary, #7d287e);font-size:20px;"></i></div>
                             <h2 class="entry-title mb-0" id="entry-title-text" style="font-size:17px;font-weight:700;color:#0f172a;">New Customer DC</h2>
                         </div>
                     </div>
@@ -206,7 +206,7 @@
                             <button type="button" class="btn btn-sm btn-outline-primary btn-compact" id="btn-create-item-modal" data-toggle="modal" data-target="#quick-create-item-modal">
                                 <i class="dripicons-plus"></i> Create item
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary btn-compact" id="btn-add-row" style="background:#7c3aed;border-color:#7c3aed;">
+                            <button type="button" class="btn btn-sm btn-primary btn-compact" id="btn-add-row" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);">
                                 <i class="dripicons-plus"></i> Add row
                             </button>
                         </div>
@@ -228,7 +228,7 @@
                     <!-- Purple Header 10-Column Items Table -->
                     <div class="table-responsive order-table-responsive" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff;">
                         <table class="table order-table mb-0 cozy" id="order-table" style="width: 100%;">
-                            <thead style="background: #7c3aed; color: #fff;">
+                            <thead style="background: var(--z-primary, #7d287e); color: #fff;">
                                 <tr>
                                     <th style="width: 40px; text-align: center;">#</th>
                                     <th>ITEM</th>
@@ -309,14 +309,14 @@
                         </div>
                         <div class="summary-metric text-right">
                             <span class="text-muted" style="font-size:10px;text-transform:uppercase;">GRAND TOTAL</span>
-                            <span class="font-weight-bold ml-1" id="disp-grand" style="font-size:15px;color:#7c3aed;">₹ 0.00</span>
+                            <span class="font-weight-bold ml-1" id="disp-grand" style="font-size:15px;color:var(--z-primary, #7d287e);">₹ 0.00</span>
                         </div>
 
                         <div class="d-flex align-items-center gap-2 ml-3">
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-discard" title="Discard Changes">
                                 <i class="dripicons-trash"></i> Discard
                             </button>
-                            <button type="submit" class="btn btn-sm btn-primary" id="btn-save" style="background:#7c3aed; border-color:#7c3aed; font-weight:600; padding:6px 16px;">
+                            <button type="submit" class="btn btn-sm btn-primary" id="btn-save" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); font-weight:600; padding:6px 16px;">
                                 <i class="dripicons-checkmark"></i> Save Challan
                             </button>
                             <button type="button" class="btn btn-sm btn-success" id="btn-convert-sale" style="display:none; font-weight:600;">
@@ -387,7 +387,7 @@
 <div class="modal fade" id="multi-item-modal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius:8px; border:1px solid #cbd5e1;">
-            <div class="modal-header py-2 px-3" style="background:#7c3aed; color:#fff;">
+            <div class="modal-header py-2 px-3" style="background:var(--z-primary, #7d287e); color:#fff;">
                 <h5 class="modal-title font-weight-bold" style="font-size:14px;"><i class="dripicons-checklist mr-1"></i> Fast Batch Item Picker</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
@@ -420,7 +420,7 @@
             </div>
             <div class="modal-footer py-2 px-3" style="background:#f8fafc;">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-add-selected-items" style="background:#7c3aed; border-color:#7c3aed;">Add Selected Items</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-add-selected-items" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">Add Selected Items</button>
             </div>
         </div>
     </div>
@@ -430,7 +430,7 @@
 <div class="modal fade" id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content" style="border-radius:8px; border:1px solid #cbd5e1;">
-            <div class="modal-header py-2 px-3" style="background:#7c3aed; color:#fff;">
+            <div class="modal-header py-2 px-3" style="background:var(--z-primary, #7d287e); color:#fff;">
                 <h5 class="modal-title font-weight-bold" style="font-size:14px;"><i class="dripicons-plus mr-1"></i> Quick Create Item</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
@@ -461,7 +461,7 @@
                 </div>
                 <div class="modal-footer py-2 px-3" style="background:#f8fafc;">
                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary" style="background:#7c3aed; border-color:#7c3aed;">Save & Add to Challan</button>
+                    <button type="submit" class="btn btn-sm btn-primary" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">Save & Add to Challan</button>
                 </div>
             </form>
         </div>
