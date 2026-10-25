@@ -1,0 +1,4 @@
+/* Page styles for: backend/customer/create.blade.php, backend/customer/edit.blade.php (moved from inline <style>). */
+.country-phone-group .bootstrap-select{
+    display: none !important
+}

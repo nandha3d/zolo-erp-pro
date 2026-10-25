@@ -1,0 +1,2 @@
+/* Page styles for: backend/customer_index.blade.php, backend/delivery/index.blade.php, backend/delivery/index_new.blade.php, backend/gift_card/index.blade.php, backend/product/index.blade.php, backend/quotation/index.blade.php, backend/return/index.blade.php, backend/return_purchase/index.blade.php, backend/sale/pos.blade.php, backend/stock_count/index.blade.php, backend/supplier/view.blade.php, backend/transfer/index.blade.php (moved from inline <style>). */
+@media print {.modal-dialog { max-width: 1000px;} }

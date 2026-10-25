@@ -594,15 +594,6 @@
 </div>
 
 
-<style>
-    .select2-container {
-        width: 100% !important;
-    }
-
-    span.selection {
-        width: 100%;
-    }
-</style>
 @endsection
 
 @push('scripts')
@@ -999,4 +990,8 @@
 
         });
     </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/hrm-payroll-index.css') }}">
 @endpush

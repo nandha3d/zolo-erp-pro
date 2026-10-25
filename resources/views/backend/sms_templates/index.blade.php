@@ -8,7 +8,7 @@
 <section class="settings-workspace-view">
     <div class="settings-card-wrapper">
         <div class="table-responsive">
-        <table id="template-table" class="table" style="width: 100%">
+        <table id="template-table" class="table u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>

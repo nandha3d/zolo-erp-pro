@@ -4,47 +4,7 @@
 <x-error-message key="not_permitted" />
 
 @push('css')
-<style>
-    /* One gateway per step; its fields two per row. */
-    .pg-step.is-active { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; align-content: start; }
-    .pg-step > h4, .pg-step > hr { grid-column: 1 / -1; }
-    .pg-step > h4 { font-size: 16px; margin: 0; }
-    .pg-step > hr { margin: 8px 0; }
-    .custom-switch {
-        padding-left: .5rem;
-    }
-
-    .custom-switch .custom-control-label::before {
-        left: -2.25rem;
-        width: 1.75rem;
-        pointer-events: all;
-        border-radius: .5rem;
-    }
-
-    .custom-switch .custom-control-label::after {
-        top: calc(.25rem + 2px);
-        left: calc(-2.25rem + 2px);
-        width: calc(1rem - 4px);
-        height: calc(1rem - 4px);
-        background-color: #adb5bd;
-        border-radius: .5rem;
-        transition: background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out, -webkit-transform .15s ease-in-out;
-        transition: transform .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-        transition: transform .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out, -webkit-transform .15s ease-in-out;
-    }
-
-    .custom-control-input:checked~.custom-control-label::before {
-        color: #fff;
-        border-color: #007bff;
-        background-color: #007bff;
-    }
-
-    .custom-switch .custom-control-input:checked~.custom-control-label::after {
-        background-color: #fff;
-        -webkit-transform: translateX(.75rem);
-        transform: translateX(.75rem);
-    }
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/setting-payment-gateways.css') }}">
 @endpush
 <x-settings-command-bar active="payment_gateway" />
 
@@ -62,7 +22,7 @@
                                 <h4 class="d-flex align-items-center justify-content-between">
                                     {{$pg->name}} {{__('db.Details')}}
 
-                                    <div style="width:200px">
+                                    <div class="u-w-200px">
                                         <select class="form-control" name="module_status[{{ $loop->index }}][]" multiple>
                                             @php
                                                 $modules = json_decode($pg->module_status, true);

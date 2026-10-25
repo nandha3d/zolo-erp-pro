@@ -28,12 +28,12 @@
                             <td>{{ $key }}</td>
                             @if ($brand->image)
                                 <td>
-                                    <img src="{{ url('images/brand', $brand->image) }}" height="50" width="50" style="object-fit: contain; border-radius: 8px;" onerror="this.onerror=null; this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
-                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center" style="display:none; color: var(--z-primary, #7d287e); background: var(--z-primary-soft, #fbf4fb); border-radius: 8px; font-size: 13px; height: 40px; min-width: 40px;">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
+                                    <img src="{{ url('images/brand', $brand->image) }}" height="50" width="50" onerror="this.onerror=null; this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" class="u-of-contain u-r-8px">
+                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center u-c-primary u-bg-primary-soft u-r-8px u-fs-13px u-h-40px u-minw-40px" style="display:none">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
                                 </td>
                             @else
                                 <td>
-                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center" style="display:inline-flex; color: #64748b; background: #f1f5f9; border-radius: 8px; font-size: 13px; height: 40px; min-width: 40px;">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
+                                    <span class="badge badge-light px-3 py-2 font-weight-bold align-items-center justify-content-center u-d-inline-flex u-c-text-muted u-bg-surface-3 u-r-8px u-fs-13px u-h-40px u-minw-40px">{{ strtoupper(substr($brand->title, 0, 2)) }}</span>
                                 </td>
                             @endif
                             <td>{{ $brand->title }}</td>
@@ -408,7 +408,7 @@
                                     // Display modern notification banner
                                     $('section .alert').remove();
                                     var alertMsg = typeof data === 'string' ? data : (data.message || 'Brand deleted successfully!');
-                                    var alertHtml = '<div class="alert alert-success alert-dismissible text-center fade show" role="alert" style="margin: 15px 0;">' +
+                                    var alertHtml = '<div class="alert alert-success alert-dismissible text-center fade show u-m-15px-0" role="alert">' +
                                         '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
                                         '<i class="dripicons-checkmark mr-1"></i> ' + alertMsg +
                                         '</div>';

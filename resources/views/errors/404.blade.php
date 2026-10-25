@@ -32,7 +32,7 @@
             <div class="row">
                 <div class="col-md-12 text-center">
                     <div class="error-icon">
-                        <span style="font-size: 60px;" class="material-symbols-outlined">sentiment_dissatisfied</span>
+                        <span class="material-symbols-outlined u-fs-60px">sentiment_dissatisfied</span>
                     </div>
                 </div>
                 <div class="col-md-6 offset-md-3  error-text text-center">
@@ -40,7 +40,7 @@
                     <h2 class="h1">{{__('db.Oh snap! We are lost')}}</h2>
                     <p class="lead">{{__('db.It seems we can not find what you are looking for Perhaps searching can help or go back to')}}
                     <br><br>
-                    <a class="button lg" style="background-color: #f5f6f7; border:1px solid #ddd; box-shadow:0 5px 10px rgba(44,44,44,0.1)" href="{{url('/')}}">{{__('db.Home')}}</a> </p>
+                    <a class="button lg u-bg-xf5f6f7 u-b-1px-solid-border u-sh-0-5px-10px-rgba-44-44-44-0_1" href="{{url('/')}}">{{__('db.Home')}}</a> </p>
                 </div>
             </div>
         </div>

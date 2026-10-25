@@ -1,147 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .income-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .income-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #income-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #income-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #income-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #income-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #income-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #income-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #income-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #income-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #income-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #income-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #income-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    #income-table tfoot th {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        padding: 8px 12px !important;
-        border-top: 2px solid #cbd5e1 !important;
-    }
-    body.dark-mode #income-table tfoot th {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-top-color: #475569 !important;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
@@ -168,7 +26,7 @@
         </ul>
         <div class="comm-actions">
             @if (in_array('incomes-add', $all_permission))
-                <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#income-modal" style="background:#059669; border-color:#059669; color:#fff;">
+                <button class="btn btn-primary btn-action-pill u-bg-success u-bc-success-border u-c-xffffff" data-toggle="modal" data-target="#income-modal">
                     <i class="dripicons-plus"></i> {{ __('db.Add Income') }}
                 </button>
             @endif
@@ -182,17 +40,17 @@
                 <div class="kpi-label">TOTAL INCOME RECORDS</div>
                 <div class="kpi-number">{{ number_format($totalIncomesCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#d1fae5;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-rocket" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-rocket u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL INCOME VALUE</div>
-                <div class="kpi-number" style="color:#059669;">₹ {{ number_format($totalIncomesSum, 2) }}</div>
+                <div class="kpi-number u-c-success">₹ {{ number_format($totalIncomesSum, 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-arrow-up" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-arrow-up u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
@@ -200,19 +58,19 @@
                 <div class="kpi-label">ACTIVE CATEGORIES</div>
                 <div class="kpi-number">{{ $incomeCategoriesCount }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-tags" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-tags u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">DATE WINDOW</div>
-                <div class="kpi-number" style="font-size:13px; font-weight:600; color:#475569;">
+                <div class="kpi-number u-fs-13px u-fw-600 u-c-text-2">
                     {{ date('d M Y', strtotime($starting_date)) }} — {{ date('d M Y', strtotime($ending_date)) }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-calendar u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -220,25 +78,25 @@
     <!-- Desk Single-Box Filter Card -->
     <div class="desk-filter-card">
         {!! Form::open(['route' => 'incomes.index', 'method' => 'get', 'class' => 'm-0']) !!}
-        <div class="row align-items-center" style="margin: 0 -6px;">
-            <div class="col-md-5" style="padding: 0 6px;">
+        <div class="row align-items-center u-m-0-6px">
+            <div class="col-md-5 u-p-0-6px">
                 <div class="form-group mb-0">
-                    <label class="font-weight-600 mb-1" style="font-size: 11px; text-transform: uppercase; color: #64748b;">
+                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">
                         {{ __('db.Choose Your Date') }}
                     </label>
                     <div class="input-group">
-                        <input type="text" class="daterangepicker-field form-control form-control-sm" value="{{ $starting_date }} To {{ $ending_date }}" required style="height:32px; font-size:12px;" />
+                        <input type="text" class="daterangepicker-field form-control form-control-sm u-h-32px u-fs-12px" value="{{ $starting_date }} To {{ $ending_date }}" required />
                         <input type="hidden" name="starting_date" value="{{ $starting_date }}" />
                         <input type="hidden" name="ending_date" value="{{ $ending_date }}" />
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 @if(\Auth::user()->role_id > 2) d-none @endif" style="padding: 0 6px;">
+            <div class="col-md-4 @if(\Auth::user()->role_id > 2) d-none @endif u-p-0-6px">
                 <div class="form-group mb-0">
-                    <label class="font-weight-600 mb-1" style="font-size: 11px; text-transform: uppercase; color: #64748b;">
+                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">
                         {{ __('db.Choose Warehouse') }}
                     </label>
-                    <select id="warehouse_id" name="warehouse_id" class="form-control form-control-sm" style="height:32px; font-size:12px;">
+                    <select id="warehouse_id" name="warehouse_id" class="form-control form-control-sm u-h-32px u-fs-12px">
                         <option value="0">{{ __('db.All Warehouse') }}</option>
                         @foreach ($lims_warehouse_list as $warehouse)
                             @if ($warehouse->id == $warehouse_id)
@@ -250,8 +108,8 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3 d-flex align-items-end" style="padding: 0 6px; margin-top: 18px;">
-                <button class="btn btn-primary btn-sm w-100" type="submit" style="height:32px; font-size:12px; font-weight:600;">
+            <div class="col-md-3 d-flex align-items-end u-p-0-6px u-mt-18px">
+                <button class="btn btn-primary btn-sm w-100 u-h-32px u-fs-12px u-fw-600" type="submit">
                     <i class="dripicons-search"></i> {{ __('db.submit') }}
                 </button>
             </div>
@@ -262,7 +120,7 @@
     <!-- Data Table Container -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="income-table" class="table income-list" style="width: 100%">
+            <table id="income-table" class="table income-list u-w-100pct">
                 <thead>
                     <tr>
                         <th class="not-exported"></th>
@@ -293,15 +151,15 @@
 <!-- Edit Income Modal -->
 <div id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
-            <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px;">
-                <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+        <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
+            <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
+                <h5 id="exampleModalLabel" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
                     <i class="dripicons-document-edit mr-1"></i> {{ __('db.Update Income') }}
                 </h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+                <button type="button" data-dismiss="modal" aria-label="Close" class="close u-c-xffffff u-op-0_8"><span aria-hidden="true">&times;</span></button>
             </div>
-            <div class="modal-body" style="padding: 16px 20px;">
-                <p class="italic text-muted mb-3" style="font-size: 11px;"><small>{{ __('db.The field labels marked with * are required input fields') }}.</small></p>
+            <div class="modal-body u-p-16px-20px">
+                <p class="italic text-muted mb-3 u-fs-11px"><small>{{ __('db.The field labels marked with * are required input fields') }}.</small></p>
                 {!! Form::open(['route' => ['incomes.update', 1], 'method' => 'put']) !!}
                 <?php
                     $lims_income_category_list = DB::table('income_categories')->where('is_active', true)->get();
@@ -315,37 +173,37 @@
                 ?>
                 <div class="form-group mb-2">
                     <input type="hidden" name="income_id">
-                    <label class="font-weight-600 mb-0" style="font-size: 11.5px; color: #475569;">{{ __('db.reference') }}</label>
-                    <p id="reference" class="font-weight-bold text-primary font-monospace mb-0" style="font-size: 13px;">{{ 'er-' . date('Ymd') . '-' . date('his') }}</p>
+                    <label class="font-weight-600 mb-0 u-fs-11_5px u-c-text-2">{{ __('db.reference') }}</label>
+                    <p id="reference" class="font-weight-bold text-primary font-monospace mb-0 u-fs-13px">{{ 'er-' . date('Ymd') . '-' . date('his') }}</p>
                 </div>
                 <div class="row">
                     <div class="col-md-6 form-group mb-2">
-                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.date') }}</label>
-                        <input type="text" name="created_at" class="form-control form-control-sm date" placeholder="{{ __('db.Choose date') }}" style="height:32px; font-size:12.5px;" />
+                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.date') }}</label>
+                        <input type="text" name="created_at" class="form-control form-control-sm date u-h-32px u-fs-12_5px" placeholder="{{ __('db.Choose date') }}" />
                     </div>
                     <div class="col-md-6 form-group mb-2">
-                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Income Category') }} *</label>
-                        <select name="income_category_id" class="form-control form-control-sm" required style="height:32px; font-size:12.5px;">
+                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Income Category') }} *</label>
+                        <select name="income_category_id" class="form-control form-control-sm u-h-32px u-fs-12_5px" required>
                             @foreach ($lims_income_category_list as $income_category)
                                 <option value="{{ $income_category->id }}">{{ $income_category->name . ' (' . $income_category->code . ')' }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-6 form-group mb-2">
-                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Warehouse') }} *</label>
-                        <select name="warehouse_id" class="form-control form-control-sm" required style="height:32px; font-size:12.5px;">
+                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Warehouse') }} *</label>
+                        <select name="warehouse_id" class="form-control form-control-sm u-h-32px u-fs-12_5px" required>
                             @foreach ($lims_warehouse_list as $warehouse)
                                 <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-6 form-group mb-2">
-                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Amount') }} *</label>
-                        <input type="number" name="amount" step="any" required class="form-control form-control-sm" style="height:32px; font-size:12.5px;">
+                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Amount') }} *</label>
+                        <input type="number" name="amount" step="any" required class="form-control form-control-sm u-h-32px u-fs-12_5px">
                     </div>
                     <div class="col-md-12 form-group mb-2">
-                        <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Account') }}</label>
-                        <select class="form-control form-control-sm" name="account_id" style="height:32px; font-size:12.5px;">
+                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Account') }}</label>
+                        <select class="form-control form-control-sm u-h-32px u-fs-12_5px" name="account_id">
                             @foreach ($lims_account_list as $account)
                                 @if ($account->is_default)
                                     <option selected value="{{ $account->id }}">{{ $account->name }} [{{ $account->account_no }}]</option>
@@ -357,12 +215,12 @@
                     </div>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Note') }}</label>
-                    <textarea name="note" rows="2" class="form-control form-control-sm" style="font-size:12.5px;"></textarea>
+                    <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Note') }}</label>
+                    <textarea name="note" rows="2" class="form-control form-control-sm u-fs-12_5px"></textarea>
                 </div>
                 <div class="form-group mb-0 text-right">
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __('db.Cancel') }}</button>
-                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#059669; border-color:#059669;">{{ __('db.submit') }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm font-weight-bold u-bg-success u-bc-success-border">{{ __('db.submit') }}</button>
                 </div>
                 {{ Form::close() }}
             </div>
@@ -605,4 +463,11 @@
         $('.buttons-delete').addClass('d-none');
 
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/income-index.css') }}">
 @endpush

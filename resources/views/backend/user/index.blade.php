@@ -1,65 +1,7 @@
 @extends('backend.layout.main') @section('content')
 
 @push('css')
-<style>
-/* Base container alignment */
-.custom-control.custom-switch {
-    display: inline-flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-/* Switch track */
-.custom-control-input:checked ~ .custom-control-label::before {
-    background-color: var(--z-primary, #7d287e); /* Green when active */
-    border-color: var(--z-primary, #7d287e);
-}
-
-.custom-control-input:not(:checked) ~ .custom-control-label::before {
-    background-color: #ddd; /* Red when inactive */
-    border-color: #ddd;
-}
-
-/* Switch knob */
-.custom-control-label::before {
-    height: 22px;
-    width: 40px;
-    border-radius: 20px;
-    background-color: #ccc;
-    border: 1px solid #aaa;
-    transition: background-color 0.25s, border-color 0.25s;
-}
-
-.custom-control-label::after {
-    top: 5px;
-    left: 2px;
-    width: 18px;
-    height: 18px;
-    background-color: #fff;
-    border-radius: 50%;
-    transition: transform 0.25s ease-in-out;
-}
-
-/* Move knob when checked */
-.custom-control-input:checked ~ .custom-control-label::after {
-    transform: translateX(18px);
-}
-
-/* Accessibility focus outline */
-.custom-control-input:focus ~ .custom-control-label::before {
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-/* Optional: hover effect */
-.custom-control-label:hover::before {
-    filter: brightness(0.95);
-}
-
-/* Optional: disable text selection */
-.custom-control-label {
-    user-select: none;
-}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/user-index.css') }}">
 @endpush
 
 <x-success-message key="message1" />

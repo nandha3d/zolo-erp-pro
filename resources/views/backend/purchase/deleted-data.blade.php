@@ -25,16 +25,16 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th><input type="checkbox" id="selectAll"></th>
-                                            <th style="width: 10%">Date</th>
-                                            <th style="width: 10%">Reference ID</th>
-                                            <th style="width: 10%">Created By</th>
-                                            <th style="width: 10%">Supplier</th>
-                                            <th style="width: 10%">Warehouse</th>
-                                            <th style="width: 10%">Payment Status</th>
-                                            <th style="width: 10%">Amount</th>
-                                            <th style="width: 10%">Due</th>
-                                            <th style="width: 10%">Deleted By</th>
-                                            <th style="width: 10%">Deleted At</th>
+                                            <th class="u-w-10pct">Date</th>
+                                            <th class="u-w-10pct">Reference ID</th>
+                                            <th class="u-w-10pct">Created By</th>
+                                            <th class="u-w-10pct">Supplier</th>
+                                            <th class="u-w-10pct">Warehouse</th>
+                                            <th class="u-w-10pct">Payment Status</th>
+                                            <th class="u-w-10pct">Amount</th>
+                                            <th class="u-w-10pct">Due</th>
+                                            <th class="u-w-10pct">Deleted By</th>
+                                            <th class="u-w-10pct">Deleted At</th>
                                         </tr>
                                     </thead>
                                     <tbody>

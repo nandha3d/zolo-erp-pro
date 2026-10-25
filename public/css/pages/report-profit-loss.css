@@ -1,0 +1,137 @@
+/* Page styles for: backend/report/profit_loss.blade.php (moved from inline <style>). */
+    .report-workspace-view {
+        padding: 12px 18px 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 40px);
+    }
+    body.dark-mode .report-workspace-view {
+        background: #0b0f19;
+    }
+    .kpi-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .kpi-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .kpi-card .kpi-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    body.dark-mode .kpi-card .kpi-number {
+        color: #f8fafc;
+    }
+    .desk-filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .desk-filter-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-fin-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        padding: 16px 18px;
+        margin-bottom: 14px;
+        height: calc(100% - 14px);
+    }
+    body.dark-mode .desk-fin-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-fin-card h3 {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    body.dark-mode .desk-fin-card h3 {
+        color: #f8fafc;
+    }
+    .desk-fin-card hr {
+        border-top: 1px solid #e2e8f0;
+        margin: 10px 0 14px;
+    }
+    body.dark-mode .desk-fin-card hr {
+        border-color: #334155;
+    }
+    .fin-line-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px dashed #f1f5f9;
+        font-size: 12px;
+        color: #475569;
+    }
+    body.dark-mode .fin-line-item {
+        border-color: #1e293b;
+        color: #94a3b8;
+    }
+    .fin-line-item:last-child {
+        border-bottom: none;
+    }
+    .fin-line-item .fin-val {
+        font-weight: 700;
+        color: #0f172a;
+        font-family: inherit;
+    }
+    body.dark-mode .fin-line-item .fin-val {
+        color: #f8fafc;
+    }
+    .btn-action-pill {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 12px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+    .net-profit-badge {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: #ffffff;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    .net-profit-badge h4 {
+        font-size: 24px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }

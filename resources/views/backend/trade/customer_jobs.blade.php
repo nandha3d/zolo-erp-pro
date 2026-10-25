@@ -16,9 +16,9 @@
             <div><button type="submit" class="cx-btn">Create job order</button></div>
         </form>
     </div>
-    <div class="cx-card" style="grid-column: span 2;">
+    <div class="cx-card u-gc-span-2">
         <h2><i class="dripicons-list"></i> Job orders</h2>
-        <div class="cx-table-wrap" style="max-height:60vh;overflow:auto;"><table class="cx-table">
+        <div class="cx-table-wrap u-maxh-60vh u-ov-auto"><table class="cx-table">
             <thead><tr><th>Order</th><th>Customer</th><th>Process</th><th class="text-right">Received</th><th class="text-right">Returned</th><th class="text-right">Loss</th><th class="text-right">With us</th><th class="text-right">To bill</th></tr></thead>
             <tbody>@forelse($orders as $o)<tr><td><a href="{{ url('/trade/customer-jobs/'.$o['id']) }}">{{ $o['reference_no'] }}</a></td><td>{{ $o['customer'] }}</td><td>{{ $o['process'] }}</td>
                 <td class="text-right">{{ $o['received'] }}</td><td class="text-right">{{ $o['returned'] }}</td><td class="text-right">{{ $o['loss'] }}</td><td class="text-right"><strong>{{ $o['with_us'] }}</strong></td><td class="text-right">{{ $o['unbilled'] }}</td></tr>

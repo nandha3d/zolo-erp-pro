@@ -164,7 +164,7 @@
 
                         <div class="col-md-12 text-center">
                             <h3 class="modal-title">{{ $general_setting->site_title }}</h3>
-                            <i style="font-size: 15px;">{{ __('db.Sale Details') }}</i>
+                            <i class="u-fs-15px">{{ __('db.Sale Details') }}</i>
                         </div>
                     </div>
                 </div>
@@ -287,15 +287,15 @@ function saleDetails(sale) {
         {{__('db.reference')}}: ${sale.reference}<br>
         {{__('db.Sale Status')}}: ${sale.sale_status}<br><br>
 
-        <div style="display:flex; justify-content:space-between; gap:20px; width:100%">
-            <div style="flex:1">
+        <div class="u-d-flex u-justify-space-between u-gap-20px u-w-100pct">
+            <div class="u-flex-1">
                 <strong>{{__('db.customer')}}</strong><br>
                 ${sale.customer_name}<br>
                 ${sale.customer_phone}<br>
                 ${sale.customer_address}<br><br>
             </div>
 
-            <div style="flex:1; text-align:right;">
+            <div class="u-flex-1 u-ta-right">
                 <strong>{{__('db.Warehouse')}}</strong><br>
                 ${sale.warehouse}
             </div>

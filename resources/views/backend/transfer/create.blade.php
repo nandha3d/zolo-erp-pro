@@ -515,9 +515,9 @@ function productSearch(data){
                         cols += '<td>' + data[0] + '<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button></td>';
                     cols += '<td>' + data[1] + '</td>';
                     if(data[15])
-                        cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" max="'+data[15]+'" step="any" required style="max-width: 70px"/></td>';
+                        cols += '<td><input type="number" class="form-control qty u-maxw-70px" name="qty[]" value="1" max="'+data[15]+'" step="any" required/></td>';
                     else
-                        cols += '<td><input type="number" class="form-control qty" name="qty[]" value="1" max="'+data[15]+'" step="any" required style="max-width: 70px"/></td>';
+                        cols += '<td><input type="number" class="form-control qty u-maxw-70px" name="qty[]" value="1" max="'+data[15]+'" step="any" required/></td>';
                     cols += '<td class="net_unit_cost"></td>';
                     cols += '<td class="tax"></td>';
                     cols += '<td class="sub-total"></td>';

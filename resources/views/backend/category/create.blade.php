@@ -13,7 +13,7 @@
 </x-product-command-bar>
 <section class="product-workspace-view">
     <div class="table-responsive">
-        <table id="category-table" class="table" style="width: 100%">
+        <table id="category-table" class="table u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>

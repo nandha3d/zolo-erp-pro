@@ -137,7 +137,7 @@
                                 <div class="form-group">
                                     <label>{{__('db.Department')}} *</label>
                                     <div class="input-group">
-                                        <div style="width:calc(100% - 40px);" class="input-group-prepend">
+                                        <div class="input-group-prepend u-w-calc-100pct-40px">
                                             <select class="form-control selectpicker" name="department_id" required>
                                                 <option value="" selected disabled>{{__('db.Select Department')}}</option>
                                                 @foreach($lims_department_list as $department)
@@ -157,7 +157,7 @@
                                 <div class="form-group">
                                     <label>{{__('db.Shift')}} *</label>
                                     <div class="input-group">
-                                        <div style="width:calc(100% - 40px);" class="input-group-prepend">
+                                        <div class="input-group-prepend u-w-calc-100pct-40px">
                                             <select class="form-control selectpicker" name="shift_id" required>
                                                 <option value="" selected disabled>{{__('db.Select Shift')}}</option>
                                                 @foreach($lims_shift_list as $shift)
@@ -177,7 +177,7 @@
                                 <div class="form-group">
                                     <label>{{__('db.Designation')}} *</label>
                                     <div class="input-group">
-                                        <div style="width:calc(100% - 40px);" class="input-group-prepend">
+                                        <div class="input-group-prepend u-w-calc-100pct-40px">
                                             <select class="form-control selectpicker" name="designation_id" required>
                                                 <option value="" selected disabled>{{__('db.Select Designation')}}</option>
                                                 @foreach($lims_designation_list as $designation)
@@ -232,7 +232,7 @@
                                         </label>
                                     </div>
 
-                                    <div id="sale-agent-section" class="border p-3 rounded" style="display: none;">
+                                    <div id="sale-agent-section" class="border p-3 rounded" style="display:none">
                                         <h5>{{ __('db.Sales Target') }}</h5>
                                         <div id="commission-wrapper">
                                             <div class="commission-row row mb-2">

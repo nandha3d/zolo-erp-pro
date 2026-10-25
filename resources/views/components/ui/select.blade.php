@@ -11,7 +11,7 @@
 
 <div class="form-group zolo-form-group mb-2">
     @if($label)
-        <label for="{{ $name }}" class="form-label font-weight-semibold" style="font-size: {{ $compact ? '11px' : '12.5px' }}; color: var(--neo-text-primary); margin-bottom: 4px; display: block;">
+        <label for="{{ $name }}" class="form-label font-weight-semibold u-c-neo-text-primary u-mb-4px u-d-block {{ $compact ? 'u-fs-11px' : 'u-fs-12_5px' }}">
             {{ $label }}
             @if($required)
                 <span class="text-danger">*</span>
@@ -33,11 +33,11 @@
     </select>
 
     @if($help)
-        <small class="form-text text-muted" style="font-size: 11px; margin-top: 3px;">{{ $help }}</small>
+        <small class="form-text text-muted u-fs-11px u-mt-3px">{{ $help }}</small>
     @endif
 
     @error($name)
-        <div class="text-danger mt-1 font-weight-medium" style="font-size: 11.5px;">
+        <div class="text-danger mt-1 font-weight-medium u-fs-11_5px">
             <i class="dripicons-warning mr-1"></i>{{ $message }}
         </div>
     @enderror

@@ -1,0 +1,9 @@
+/* Page styles for: backend/hrm/sale_agent/create.blade.php (moved from inline <style>). */
+        .is-invalid {
+            border: 2px solid red !important;
+            background-color: #ffe6e6;
+        }
+
+        .error-message {
+            font-size: 12px;
+        }

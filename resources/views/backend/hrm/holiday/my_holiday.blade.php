@@ -3,7 +3,7 @@
 <section>
 	<h4 class="text-center">{{__('db.My Holiday')}}</h4>
 	<div class="table-responsive mt-3">
-		<table class="table table-bordered" style="border-top: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+		<table class="table table-bordered u-bt-1px-solid-xdee2e6 u-bb-1px-solid-xdee2e6">
 			<thead>
 				<tr>
 					<th><a href="{{url('holidays/my-holiday/'.$prev_year.'/'.$prev_month)}}"><i class="fa fa-arrow-left"></i> {{__('db.Previous')}}</a></th>
@@ -32,10 +32,10 @@
 
 			    			if($flag){
 			    				if(($year.'-'.$month.'-'.$i == date('Y').'-'.date('m').'-'.(int)date('d')) && !$holidays[$i]) {
-			    					echo '<td><p style="color:red"><strong>'.$i.'</strong></p>';
+			    					echo '<td><p class="u-c-red"><strong>'.$i.'</strong></p>';
 			    				}
 			    				elseif($holidays[$i]){
-			    					echo '<td><p style="color:#006600"><strong>'.$i.'</strong></p><span style="width: 112px; height: 20px; border-top: 7px solid #66a3ff; border-bottom: 35px solid #66a3ff; color:white; font-size:11px;" class="text-center">'.$holidays[$i].'</span><br>';
+			    					echo '<td><p class="u-c-x006600"><strong>'.$i.'</strong></p><span class="text-center u-w-112px u-h-20px u-bt-7px-solid-x66a3ff u-bb-35px-solid-x66a3ff u-c-white u-fs-11px">'.$holidays[$i].'</span><br>';
 			    				}
 			    				else
 			    					echo '<td><p><strong>'.$i.'</strong></p>';
@@ -44,10 +44,10 @@
 			    			}
 			    			elseif($j == $start_day){
 			    				if(($year.'-'.$month.'-'.$i == date('Y').'-'.date('m').'-'.(int)date('d')) && !$holidays[$i]) {
-			    					echo '<td><p style="color:red"><strong>'.$i.'</strong></p>';
+			    					echo '<td><p class="u-c-red"><strong>'.$i.'</strong></p>';
 			    				}
 			    				elseif($holidays[$i]){
-			    					echo '<td><p style="color:#006600"><strong>'.$i.'</strong></p><span style="width: 112px; height: 20px; border-top: 7px solid #66a3ff; border-bottom: 35px solid #66a3ff; color:white; font-size:11px;" class="text-center">'.$holidays[$i].'</span><br>';
+			    					echo '<td><p class="u-c-x006600"><strong>'.$i.'</strong></p><span class="text-center u-w-112px u-h-20px u-bt-7px-solid-x66a3ff u-bb-35px-solid-x66a3ff u-c-white u-fs-11px">'.$holidays[$i].'</span><br>';
 			    				}
 			    				else
 			    					echo '<td><p><strong>'.$i.'</strong></p>';

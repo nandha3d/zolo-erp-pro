@@ -1,123 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .income-cat-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .income-cat-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #income_category-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #income_category-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #income_category-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #income_category-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #income_category-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #income_category-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #income_category-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #income_category-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #income_category-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #income_category-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #income_category-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-error-message key="code" />
 <x-success-message key="message" />
@@ -143,7 +25,7 @@
             <li><a class="nav-link" href="{{ route('accounts.index') }}"><i class="dripicons-briefcase"></i> Accounts</a></li>
         </ul>
         <div class="comm-actions">
-            <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#createModal" style="background:#059669; border-color:#059669; color:#fff;">
+            <button class="btn btn-primary btn-action-pill u-bg-success u-bc-success-border u-c-xffffff" data-toggle="modal" data-target="#createModal">
                 <i class="dripicons-plus"></i> {{ __('db.Add Income Category') }}
             </button>
         </div>
@@ -156,26 +38,26 @@
                 <div class="kpi-label">TOTAL CATEGORIES</div>
                 <div class="kpi-number">{{ number_format($totalCatCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#d1fae5;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-list" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-list u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL INCOMES LOGGED</div>
-                <div class="kpi-number" style="color:#059669;">{{ number_format($totalIncomeCount) }}</div>
+                <div class="kpi-number u-c-success">{{ number_format($totalIncomeCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-rocket" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-rocket u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">STATUS</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:600; color:#059669;">Active Master</div>
+                <div class="kpi-number u-fs-14px u-fw-600 u-c-success">Active Master</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -183,7 +65,7 @@
     <!-- Data Table Container -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="income_category-table" class="table" style="width:100%;">
+            <table id="income_category-table" class="table u-w-100pct">
                 <thead>
                     <tr>
                         <th class="not-exported"></th>
@@ -226,33 +108,33 @@
 <!-- Create Income Category Modal -->
 <div id="createModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog modal-dialog-centered">
-      <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
+      <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
         {!! Form::open(['route' => 'income_categories.store', 'method' => 'post', 'files' => true]) !!}
-        <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px;">
-          <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+        <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
+          <h5 id="exampleModalLabel" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
               <i class="dripicons-plus mr-1"></i> {{ __('db.Add Income Category') }}
           </h5>
-          <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+          <button type="button" data-dismiss="modal" aria-label="Close" class="close u-c-xffffff u-op-0_8"><span aria-hidden="true">&times;</span></button>
         </div>
-        <div class="modal-body" style="padding: 16px 20px;">
-          <p class="italic text-muted mb-3" style="font-size: 11px;"><small>{{ __('db.The field labels marked with * are required input fields') }}.</small></p>
+        <div class="modal-body u-p-16px-20px">
+          <p class="italic text-muted mb-3 u-fs-11px"><small>{{ __('db.The field labels marked with * are required input fields') }}.</small></p>
             <div class="form-group mb-3">
-                <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Code') }} *</label>
+                <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Code') }} *</label>
                 <div class="input-group">
                     {{ Form::text('code', null, ['required' => 'required', 'class' => 'form-control form-control-sm', 'placeholder' => __('db.Type income category code'), 'style' => 'height:32px; font-size:12.5px;']) }}
                     <div class="input-group-append">
-                        <button id="genbutton" type="button" class="btn btn-secondary btn-sm" style="font-size: 11px;">{{ __('db.Generate') }}</button>
+                        <button id="genbutton" type="button" class="btn btn-secondary btn-sm u-fs-11px">{{ __('db.Generate') }}</button>
                     </div>
                 </div>
             </div>
             <div class="form-group mb-3">
-                <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.name') }} *</label>
+                <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.name') }} *</label>
                 {{ Form::text('name', null, ['required' => 'required', 'class' => 'form-control form-control-sm', 'placeholder' => __('db.Type income category name'), 'style' => 'height:32px; font-size:12.5px;']) }}
             </div>
             <input type="hidden" name="is_active" value="1">
             <div class="form-group mb-0 text-right">
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __('db.Cancel') }}</button>
-                <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#059669; border-color:#059669;">{{ __('db.submit') }}</button>
+                <button type="submit" class="btn btn-primary btn-sm font-weight-bold u-bg-success u-bc-success-border">{{ __('db.submit') }}</button>
             </div>
         </div>
         {{ Form::close() }}
@@ -263,28 +145,28 @@
 <!-- Edit Income Category Modal -->
 <div id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
   <div role="document" class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1;">
+    <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
         {{ Form::open(['route' => ['income_categories.update', 1], 'method' => 'PUT', 'files' => true]) }}
-      <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px;">
-        <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+      <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
+        <h5 id="exampleModalLabel" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
             <i class="dripicons-document-edit mr-1"></i> {{ __('db.Update Income Category') }}
         </h5>
-        <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+        <button type="button" data-dismiss="modal" aria-label="Close" class="close u-c-xffffff u-op-0_8"><span aria-hidden="true">&times;</span></button>
       </div>
-      <div class="modal-body" style="padding: 16px 20px;">
-        <p class="italic text-muted mb-3" style="font-size: 11px;"><small>{{ __('db.The field labels marked with * are required input fields') }}.</small></p>
+      <div class="modal-body u-p-16px-20px">
+        <p class="italic text-muted mb-3 u-fs-11px"><small>{{ __('db.The field labels marked with * are required input fields') }}.</small></p>
             <div class="form-group mb-3">
-                <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.Code') }} *</label>
+                <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.Code') }} *</label>
                 {{ Form::text('code', null, ['required' => 'required', 'class' => 'form-control form-control-sm', 'placeholder' => __('db.Type income category code'), 'style' => 'height:32px; font-size:12.5px;']) }}
             </div>
             <div class="form-group mb-3">
-                <label class="font-weight-600 mb-1" style="font-size: 11.5px; color: #475569;">{{ __('db.name') }} *</label>
+                <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">{{ __('db.name') }} *</label>
                 {{ Form::text('name', null, ['required' => 'required', 'class' => 'form-control form-control-sm', 'placeholder' => __('db.Type income category name'), 'style' => 'height:32px; font-size:12.5px;']) }}
             </div>
         <input type="hidden" name="income_category_id">
         <div class="form-group mb-0 text-right">
             <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __('db.Cancel') }}</button>
-            <button type="submit" class="btn btn-primary btn-sm font-weight-bold" style="background:#059669; border-color:#059669;">{{ __('db.submit') }}</button>
+            <button type="submit" class="btn btn-primary btn-sm font-weight-bold u-bg-success u-bc-success-border">{{ __('db.submit') }}</button>
         </div>
       </div>
       {{ Form::close() }}
@@ -442,4 +324,11 @@
         ],
     } );
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/income-category-index.css') }}">
 @endpush

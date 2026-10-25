@@ -1,0 +1,24 @@
+/* Page styles for: backend/operations/job_work_challan.blade.php (moved from inline <style>). */
+@page { size: A4; margin: 8mm; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: #000; font: 10px/1.35 "DejaVu Sans", Arial, Helvetica, sans-serif; }
+.sheet { width: 194mm; margin: 12px auto; }
+.copy { page-break-after: always; } .copy:last-child { page-break-after: auto; }
+table { width: 100%; border-collapse: collapse; }
+td, th { padding: 3px 5px; vertical-align: top; }
+.box { border: 1px solid #000; }
+.box > tbody > tr > td, .box > thead > tr > th, .box > tbody > tr > th, .box > tfoot > tr > td { border: 1px solid #000; }
+.top td { border: 0; padding: 1px 0 3px; }
+.title { text-align: center; font-size: 13px; font-weight: bold; text-transform: uppercase; text-decoration: underline; }
+.sub { text-align: center; font-size: 9.5px; }
+.letterhead td { border: 0; vertical-align: middle; }
+.letterhead td.logo { width: 30mm; } .letterhead td.logo img { max-width: 28mm; max-height: 18mm; }
+.company { text-align: center; } .company h1 { margin: 0 0 2px; font-size: 18px; text-transform: uppercase; } .company p { margin: 0; }
+.label { font-weight: bold; text-decoration: underline; }
+.party { font-size: 12px; font-weight: bold; text-transform: uppercase; }
+.meta td { border: 0; padding: 1px 3px; } .meta td.k { white-space: nowrap; width: 38%; } .meta td.v { font-weight: bold; }
+.items th { background: #f2f2f2; font-size: 9.5px; text-align: center; }
+.num { text-align: right; white-space: nowrap; } .c { text-align: center; }
+.small { font-size: 9px; } .note { margin: 0 0 2px; }
+.sign td { border: 0; height: 52px; vertical-align: bottom; }
+.print-bar { text-align: center; margin: 10px; } @media print { .print-bar { display: none; } .sheet { margin: 0 auto; } }

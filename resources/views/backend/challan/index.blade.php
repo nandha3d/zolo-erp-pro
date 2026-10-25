@@ -50,7 +50,7 @@
         </div>
     </div>
     <div class="table-responsive">
-        <table id="challan-data-table" class="table challan-list" style="width: 100%">
+        <table id="challan-data-table" class="table challan-list u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>

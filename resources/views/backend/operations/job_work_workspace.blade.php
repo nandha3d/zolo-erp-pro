@@ -181,11 +181,11 @@
                     <table class="jw-form-lines-table" data-lines>
                         <thead>
                             <tr>
-                                <th style="min-width: 220px;">Product</th>
-                                <th style="min-width: 140px;">Quantity</th>
-                                <th style="min-width: 110px;">Unit</th>
-                                <th style="min-width: 140px;">Tracking</th>
-                                <th style="width: 40px;"></th>
+                                <th class="u-minw-220px">Product</th>
+                                <th class="u-minw-140px">Quantity</th>
+                                <th class="u-minw-110px">Unit</th>
+                                <th class="u-minw-140px">Tracking</th>
+                                <th class="u-w-40px"></th>
                             </tr>
                         </thead>
                         <tbody>

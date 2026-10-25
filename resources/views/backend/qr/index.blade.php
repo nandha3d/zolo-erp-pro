@@ -27,7 +27,7 @@
                 <div class="col-md-4 col-sm-6 mb-4">
                     <div class="card border-0 shadow-sm rounded-lg text-center p-4 h-100 bg-white">
                         <div class="mb-3">
-                            <img src="{{ $qr->qr_code_path }}" alt="QR Code" class="img-fluid rounded border p-2" style="max-width: 180px;">
+                            <img src="{{ $qr->qr_code_path }}" alt="QR Code" class="img-fluid rounded border p-2 u-maxw-180px">
                         </div>
                         <h5 class="font-weight-bold text-dark mb-1">{{ $qr->title }}</h5>
                         <p class="text-muted small mb-3">Slug: <code>/menu/{{ $qr->slug }}</code></p>
@@ -45,10 +45,10 @@
             @empty
                 <div class="col-12">
                     <div class="card border-0 shadow-sm rounded-lg p-5 text-center bg-white">
-                        <i class="dripicons-qr-code text-muted" style="font-size: 48px; opacity: 0.3;"></i>
+                        <i class="dripicons-qr-code text-muted u-fs-48px u-op-0_3"></i>
                         <h5 class="font-weight-bold text-dark mt-3">No Catalogue QR Codes Created</h5>
                         <p class="text-muted small">Generate your first digital menu or product catalogue QR code for table-side ordering.</p>
-                        <button type="button" class="btn btn-primary btn-sm mx-auto" data-toggle="modal" data-target="#createQrModal" style="width: 220px;">
+                        <button type="button" class="btn btn-primary btn-sm mx-auto u-w-220px" data-toggle="modal" data-target="#createQrModal">
                             + Generate QR Code
                         </button>
                     </div>
@@ -96,7 +96,7 @@
 
                     <div class="form-group mb-0">
                         <label class="font-weight-600 small">Brand Theme Accent Color</label>
-                        <input type="color" name="theme_color" class="form-control" value="#4f46e5" style="height: 42px;">
+                        <input type="color" name="theme_color" class="form-control u-h-42px" value="#4f46e5">
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-3 bg-light">

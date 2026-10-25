@@ -11,7 +11,7 @@
 
 <section class="settings-workspace-view">
     <div class="settings-card-wrapper">
-        <div class="table-responsive zolo-table-responsive" style="position: relative;">
+        <div class="table-responsive zolo-table-responsive u-pos-relative">
             <table id="currency-table" class="table">
             <thead>
                 <tr>
@@ -66,7 +66,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 id="exampleModalLabel" class="modal-title">
-                        <span class="zolo-brand-mark" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--z-primary, #7d287e),var(--z-primary, #7d287e));color:#fff;box-shadow:0 2px 8px rgb(var(--z-primary-rgb, 125 40 126) / 0.35);"><i class="dripicons-wallet" style="font-size:14px;"></i></span>
+                        <span class="zolo-brand-mark u-w-30px u-h-30px u-r-8px u-d-inline-flex u-items-center u-justify-center u-bg-linear-gradient-135deg-primary-primary u-c-xffffff u-sh-0-2px-8px-rgb-primary-rgb-0_35"><i class="dripicons-wallet u-fs-14px"></i></span>
                         {{ __('db.Add Currency') }}
                     </h5>
                     <button type="button" data-dismiss="modal" aria-label="Close" class="close">
@@ -75,8 +75,8 @@
                 </div>
                 <div class="modal-body">
                     <!-- Dynamic Currency Auto-Fill Engine -->
-                    <div class="form-group zolo-preset-wrap" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.06); border: 1.5px dashed var(--neo-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
-                        <label class="font-weight-bold" style="color: var(--neo-primary);"><i class="dripicons-swap mr-1"></i> Quick Select / Auto-Fill Currency</label>
+                    <div class="form-group zolo-preset-wrap u-bg-rgb-primary-rgb-0_06 u-b-1_5px-dashed-neo-border u-r-12px u-p-14px-16px u-mb-20px">
+                        <label class="font-weight-bold u-c-neo-primary"><i class="dripicons-swap mr-1"></i> Quick Select / Auto-Fill Currency</label>
                         <select id="create_currency_preset" class="form-control selectpicker" data-live-search="true" title="Search or pick currency (e.g. Indian Rupee, USD, EUR...)">
                             <option value="" disabled selected>{{ __('Select or search a currency...') }}</option>
                             <optgroup label="Popular & Major Currencies">
@@ -167,7 +167,7 @@
                 @method('PUT')
                 <div class="modal-header">
                     <h5 id="exampleModalLabel" class="modal-title">
-                        <span class="zolo-brand-mark" style="width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--z-primary, #7d287e),var(--z-primary, #7d287e));color:#fff;box-shadow:0 2px 8px rgb(var(--z-primary-rgb, 125 40 126) / 0.35);"><i class="dripicons-document-edit" style="font-size:14px;"></i></span>
+                        <span class="zolo-brand-mark u-w-30px u-h-30px u-r-8px u-d-inline-flex u-items-center u-justify-center u-bg-linear-gradient-135deg-primary-primary u-c-xffffff u-sh-0-2px-8px-rgb-primary-rgb-0_35"><i class="dripicons-document-edit u-fs-14px"></i></span>
                         {{ __('db.Update Currency') }}
                     </h5>
                     <button type="button" data-dismiss="modal" aria-label="Close" class="close">
@@ -176,8 +176,8 @@
                 </div>
                 <div class="modal-body">
                     <!-- Dynamic Currency Auto-Fill Engine for Edit -->
-                    <div class="form-group zolo-preset-wrap" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.06); border: 1.5px dashed var(--neo-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
-                        <label class="font-weight-bold" style="color: var(--neo-primary);"><i class="dripicons-swap mr-1"></i> Quick Select / Auto-Fill Currency</label>
+                    <div class="form-group zolo-preset-wrap u-bg-rgb-primary-rgb-0_06 u-b-1_5px-dashed-neo-border u-r-12px u-p-14px-16px u-mb-20px">
+                        <label class="font-weight-bold u-c-neo-primary"><i class="dripicons-swap mr-1"></i> Quick Select / Auto-Fill Currency</label>
                         <select id="edit_currency_preset" class="form-control selectpicker" data-live-search="true" title="Search or pick currency (e.g. Indian Rupee, USD, EUR...)">
                             <option value="" disabled selected>{{ __('Select or search a currency...') }}</option>
                             <optgroup label="Popular & Major Currencies">

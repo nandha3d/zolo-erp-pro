@@ -1,0 +1,4 @@
+/* Page styles for: backend/sale/pos.blade.php (moved from inline <style>). */
+.country-phone-group .bootstrap-select{
+    display: none !important
+}

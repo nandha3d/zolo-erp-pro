@@ -2,11 +2,7 @@
 
 @push('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.9/css/intlTelInput.css"/>
-<style>
-.country-phone-group .bootstrap-select{
-    display: none !important
-}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-create.css') }}">
 @endpush
 
 <x-error-message key="not_permitted" />

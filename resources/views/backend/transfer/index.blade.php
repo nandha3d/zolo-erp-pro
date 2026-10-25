@@ -1,11 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<style type="text/css">
-    .top-fields{margin-top:10px;position: relative;}
-    .top-fields label {background:#FFF;font-size:11px;font-weight:600;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;}
-    .top-fields input{font-size:13px;height:45px}
-</style>
-
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
@@ -63,7 +57,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="filter-loading" class="col-12 text-center my-2" style="display:none;">
+                <div id="filter-loading" class="col-12 text-center my-2" style="display:none">
                     <span class="spinner-border text-primary spinner-border-sm" role="status"></span>
                     <span>Loading results...</span>
                 </div>
@@ -76,7 +70,7 @@
         @endcan
     </div>
     <div class="table-responsive">
-        <table id="transfer-table" class="table transfer-list" style="width: 100%">
+        <table id="transfer-table" class="table transfer-list u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -121,7 +115,7 @@
                     <h3 id="exampleModalLabel" class="modal-title text-center container-fluid">{{$general_setting->site_title}}</h3>
                 </div>
                 <div class="col-md-12 text-center">
-                    <i style="font-size: 15px;">{{__('db.Transfer Details')}}</i>
+                    <i class="u-fs-15px">{{__('db.Transfer Details')}}</i>
                 </div>
             </div>
         </div>
@@ -220,7 +214,7 @@
         var a = window.open('');
         a.document.write('<html>');
         a.document.write('<body>');
-        a.document.write('<style>body{font-family: sans-serif;line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-center{text-align:center}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left}td{padding:10px}table,th,td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>');
+        a.document.write('<link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-quotation-index-2.css') }}"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}">');
         a.document.write(divContents);
         a.document.write('</body></html>');
         a.document.close();
@@ -496,4 +490,8 @@
 
 </script>
 <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/transfer-index.css') }}">
 @endpush

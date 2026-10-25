@@ -168,7 +168,7 @@
                                             <table id="myTable" class="table table-hover order-list">
                                                 <thead>
                                                     <tr>
-                                                        <th style="min-width: 30%">{{__('db.product')}}</th>
+                                                        <th class="u-minw-30pct">{{__('db.product')}}</th>
                                                         <th>{{__('db.Quantity')}}</th>
                                                         <th class="recieved-product-qty d-none">{{__('db.Recieved')}}</th>
                                                         <th>{{__('db.Net Unit Cost')}}</th>
@@ -362,7 +362,7 @@
                                     </div>
 
                                     {{-- Credit card fields --}}
-                                    <div class="row mt-2" id="card-element-row" style="display:none;">
+                                    <div class="row mt-2" id="card-element-row" style="display:none">
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <div class="card-element form-control"></div>
@@ -372,7 +372,7 @@
                                     </div>
 
                                     {{-- Cheque fields --}}
-                                    <div class="row" id="cheque-row" style="display:none;">
+                                    <div class="row" id="cheque-row" style="display:none">
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <label>{{__('db.Cheque Number')}} *</label>
@@ -984,7 +984,7 @@
                         batch_expiry += '<input type="text" class="form-control expired-date" name="expired_date[]" placeholder="{{__("db.Expired Date")}}" required/>';
                     }
                     cols += '<td>' + data[0] + ' (' + data[1] + ') <button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button><br>'+batch_expiry+'</td>';
-                    cols += '<td><input type="text" class="form-control qty" name="qty[]" step="any" value="1" required style="font-size:13px;max-width:50px;padding: 0 0;text-align:center"/></td>';
+                    cols += '<td><input type="text" class="form-control qty u-fs-13px u-maxw-50px u-p-0-0 u-ta-center" name="qty[]" step="any" value="1" required/></td>';
                     if($('select[name="status"]').val() == 1)
                         cols += '<td class="recieved-product-qty d-none"><input type="text" class="form-control recieved" name="recieved[]" value="1" /></td>';
                     else if($('select[name="status"]').val() == 2)

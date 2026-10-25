@@ -68,7 +68,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade text-center py-5" id="tab-cal">
-                        <i class="dripicons-calendar text-primary" style="font-size: 40px; opacity: 0.5;"></i>
+                        <i class="dripicons-calendar text-primary u-fs-40px u-op-0_5"></i>
                         <h6 class="font-weight-bold text-dark mt-3">Interactive Schedule Matrix</h6>
                         <p class="text-muted small">All appointments are synchronized with real-time staff rosters and operational hours.</p>
                     </div>

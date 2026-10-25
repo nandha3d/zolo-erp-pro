@@ -1,147 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .quotation-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .quotation-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #quotation-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #quotation-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #quotation-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #quotation-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #quotation-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #quotation-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #quotation-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #quotation-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #quotation-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #quotation-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #quotation-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    #quotation-table tfoot th {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        padding: 8px 12px !important;
-        border-top: 2px solid #cbd5e1 !important;
-    }
-    body.dark-mode #quotation-table tfoot th {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-top-color: #475569 !important;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
@@ -171,7 +29,7 @@
         </ul>
         <div class="comm-actions">
             @if(in_array("quotes-add", $all_permission))
-                <a href="{{ route('quotations.create') }}" class="btn btn-primary btn-action-pill" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
+                <a href="{{ route('quotations.create') }}" class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary u-c-xffffff">
                     <i class="dripicons-plus"></i> {{ __('db.Add Quotation') }}
                 </a>
             @endif
@@ -185,26 +43,26 @@
                 <div class="kpi-label">TOTAL QUOTATIONS</div>
                 <div class="kpi-number">{{ number_format($totalQuotesCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-document" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-document u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">PENDING / DRAFT</div>
-                <div class="kpi-number" style="color:#d97706;">{{ number_format($pendingQuotesCount) }}</div>
+                <div class="kpi-number u-c-warning">{{ number_format($pendingQuotesCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-clock" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-clock u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">SENT QUOTES</div>
-                <div class="kpi-number" style="color:#16a34a;">{{ number_format($sentQuotesCount) }}</div>
+                <div class="kpi-number u-c-success">{{ number_format($sentQuotesCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;">
-                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
@@ -212,8 +70,8 @@
                 <div class="kpi-label">ESTIMATED VALUE</div>
                 <div class="kpi-number">{{ $currencyCode }} {{ number_format($totalQuotesSum, 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-wallet u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -224,14 +82,14 @@
             <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-calendar"></i> {{__('db.Choose Your Date')}}</label>
                 <div class="input-group">
-                    <input type="text" class="daterangepicker-field form-control form-control-sm" style="height:30px; font-size:12px; width:210px;" value="{{$starting_date}} To {{$ending_date}}" required />
+                    <input type="text" class="daterangepicker-field form-control form-control-sm u-h-30px u-fs-12px u-w-210px" value="{{$starting_date}} To {{$ending_date}}" required />
                     <input type="hidden" name="starting_date" value="{{$starting_date}}" />
                     <input type="hidden" name="ending_date" value="{{$ending_date}}" />
                 </div>
             </div>
             <div class="form-group mr-2 mb-1 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-store"></i> {{__('db.Choose Warehouse')}}</label>
-                <select id="warehouse_id" name="warehouse_id" class="form-control form-control-sm" style="height:30px; font-size:12px; min-width:160px;">
+                <select id="warehouse_id" name="warehouse_id" class="form-control form-control-sm u-h-30px u-fs-12px u-minw-160px">
                     <option value="0">{{__('db.All Warehouse')}}</option>
                     @foreach($lims_warehouse_list as $warehouse)
                         @if($warehouse->id == $warehouse_id)
@@ -254,7 +112,7 @@
                 <label><input type="checkbox" name="follow_up_due" value="1" @checked(request()->boolean('follow_up_due'))> Follow-up due</label>
             </div>
             <div class="form-group mb-1">
-                <button class="btn btn-primary btn-sm btn-action-pill" id="filter-btn" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                <button class="btn btn-primary btn-sm btn-action-pill u-bg-ink u-bc-ink" id="filter-btn" type="submit">
                     <i class="fa fa-filter"></i> {{__('db.submit')}}
                 </button>
             </div>
@@ -264,7 +122,7 @@
     <!-- Main Table Container -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="quotation-table" class="table quotation-list" style="width: 100%">
+            <table id="quotation-table" class="table quotation-list u-w-100pct">
                 <thead>
                     <tr>
                         <th class="not-exported"></th>
@@ -301,7 +159,7 @@
 
 <div id="quotation-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog modal-lg">
-      <div class="modal-content" style="border-radius:8px; border:1px solid #cbd5e1; overflow:hidden;">
+      <div class="modal-content u-r-8px u-b-1px-solid-border-strong u-ov-hidden">
         <div class="container mt-3 pb-2 border-bottom">
             <div class="row align-items-center">
                 <div class="col-md-6 d-print-none d-flex align-items-center gap-2">
@@ -315,16 +173,16 @@
                     <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
                 </div>
                 <div class="col-md-12 text-center mt-2">
-                    <h4 id="exampleModalLabel" class="modal-title font-weight-bold" style="color:#0f172a;">{{$general_setting->site_title}}</h4>
-                    <span class="badge badge-secondary" style="font-size:11px; text-transform:uppercase;">{{__('db.Quotation Details')}}</span>
+                    <h4 id="exampleModalLabel" class="modal-title font-weight-bold u-c-text">{{$general_setting->site_title}}</h4>
+                    <span class="badge badge-secondary u-fs-11px u-tt-uppercase">{{__('db.Quotation Details')}}</span>
                 </div>
             </div>
         </div>
         <div id="quotation-content" class="modal-body">
         </div>
         <div class="px-3">
-            <table class="table table-bordered product-quotation-list" style="font-size:12px;">
-                <thead style="background:#0f172a; color:#ffffff;">
+            <table class="table table-bordered product-quotation-list u-fs-12px">
+                <thead class="u-bg-ink u-c-xffffff">
                     <th>#</th>
                     <th>{{__('db.product')}}</th>
                     <th>{{__('db.Batch No')}}</th>
@@ -338,7 +196,7 @@
                 </tbody>
             </table>
         </div>
-        <div id="quotation-footer" class="modal-body border-top pt-2" style="font-size:12px;"></div>
+        <div id="quotation-footer" class="modal-body border-top pt-2 u-fs-12px"></div>
       </div>
     </div>
 </div>
@@ -394,7 +252,7 @@
         var divContents = document.getElementById("quotation-details").innerHTML;
         var a = window.open('');
         a.document.write('<html>');
-        a.document.write('<body><style>body{font-family: sans-serif;line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-center{text-align:center}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left}td{padding:10px}table,th,td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>');
+        a.document.write('<body><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-quotation-index-2.css') }}"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}">');
         a.document.write(divContents);
         a.document.write('</body></html>');
         a.document.close();
@@ -662,4 +520,11 @@
         $('#quotation-details').modal('show');
     }
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/quotation-index.css') }}">
 @endpush

@@ -14,7 +14,7 @@
         <div class="row align-items-center mb-4">
             <div class="col-md-7 d-flex align-items-center">
                 @if(!empty($general_setting->site_logo))
-                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 48px; max-width: 140px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded u-maxh-48px u-maxw-140px u-of-contain" alt="{{$general_setting->site_title ?? 'Logo'}}">
                 @endif
                 <div>
                     <h3 class="font-weight-bold text-dark m-0">Water Supply &amp; Logistics</h3>

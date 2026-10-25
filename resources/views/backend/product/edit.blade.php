@@ -4,16 +4,7 @@
 
 @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
 @push('css')
-<style>
-.search_result, .search_result_addon {border:1px solid var(--z-primary-soft, #fbf4fb);border-radius:5px;overflow-y: scroll;}
-.search_result > div, .search_result_addon > div, .selected_items > div, .selected_addons > div {border-top:1px solid var(--z-primary-soft, #fbf4fb);cursor:pointer;display:flex;align-items:center;padding: 10px;position: relative;}
-.search_result > div > img, .search_result_addon > div > img, .selected_items > div > img, .selected_addons > div > img {margin-right: 10px;max-width: 40px;}
-.search_result > div h4, .search_result_addon > div h4, .selected_items > div h4, .selected_addons > div h4 {font-size: 0.9rem;}
-.search_result > div i,  .search_result_addon > div i, {color:#54b948;position:absolute;right:5px;top:30%}
-.search_result div:first-child, .search_result_addon div:first-child, {border-top:none}
-.selected_items .remove_item, .selected_addons .remove_item {position: absolute;right: 20px;top:20px};
-.delVarOption{display: flex;flex-direction: column;align-items: center;}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-product-create.css') }}">
 @endpush
 @endif
 
@@ -147,7 +138,7 @@
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="input-group" style="max-width: unset">
+                                                        <div class="input-group u-maxw-unset">
                                                             <input type="number"
                                                                 class="form-control qty"
                                                                 min="1"
@@ -159,8 +150,8 @@
                                                                 aria-label="Quantity">
 
                                                             <div class="input-group-append">
-                                                                <select name="combo_unit_id[]" style="width: 112px;"
-                                                                        class="btn btn-outline-secondary form-control combo_unit_id"
+                                                                <select name="combo_unit_id[]"
+                                                                        class="btn btn-outline-secondary form-control combo_unit_id u-w-112px"
                                                                         onchange="calculate_price()">
                                                                     @foreach ($combo_unit as $row)
                                                                         <option value="{{ $row->id }}"
@@ -352,8 +343,8 @@
                                     <div class="form-group">
                                         <label>{{ __('db.Warranty') }}</label>
                                         <div class="d-flex justify-content-between">
-                                            <input type="number" name="warranty" min="1" class="form-control" style="width: 48%;" placeholder="{{__('db.eg: 1')}}" value="{{ $lims_product_data->warranty }}">
-                                            <select name="warranty_type" class="form-control selectpicker" style="width: 48%;">
+                                            <input type="number" name="warranty" min="1" class="form-control u-w-48pct" placeholder="{{__('db.eg: 1')}}" value="{{ $lims_product_data->warranty }}">
+                                            <select name="warranty_type" class="form-control selectpicker u-w-48pct">
                                                 <option value="days" {{ $lims_product_data->warranty_type == 'days' ? 'selected' : '' }}>{{ __('db.Days') }}</option>
                                                 <option value="months" {{ $lims_product_data->warranty_type == 'months' ? 'selected' : '' }}>{{ __('db.Months') }}</option>
                                                 <option value="years" {{ $lims_product_data->warranty_type == 'years' ? 'selected' : '' }}>{{ __('db.Years') }}</option>
@@ -366,8 +357,8 @@
                                     <div class="form-group">
                                         <label>{{ __('db.Guarantee') }}</label>
                                         <div class="d-flex justify-content-between">
-                                            <input type="number" name="guarantee" min="1" class="form-control" style="width: 48%;" placeholder="{{__('db.eg: 1')}}" value="{{ $lims_product_data->guarantee }}">
-                                            <select name="guarantee_type" class="form-control selectpicker" style="width: 48%;">
+                                            <input type="number" name="guarantee" min="1" class="form-control u-w-48pct" placeholder="{{__('db.eg: 1')}}" value="{{ $lims_product_data->guarantee }}">
+                                            <select name="guarantee_type" class="form-control selectpicker u-w-48pct">
                                                 <option value="days" {{ $lims_product_data->guarantee_type == 'days' ? 'selected' : '' }}>{{ __('db.Days') }}</option>
                                                 <option value="months" {{ $lims_product_data->guarantee_type == 'months' ? 'selected' : '' }}>{{ __('db.Months') }}</option>
                                                 <option value="years" {{ $lims_product_data->guarantee_type == 'years' ? 'selected' : '' }}>{{ __('db.Years') }}</option>
@@ -578,7 +569,7 @@
                                                 <label>{{__('db.Value')}} *</label>
                                                 <input type="text" name="variant_value[]" class="type-variant form-control variant-field" value="{{$lims_product_data->variant_value[$key]}}">
                                             </div>
-                                            <div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;">
+                                            <div class="col-sm-1 form-group mt-2 u-d-flex u-dir-column u-items-center u-justify-end">
                                                 <button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button>
                                             </div>
                                         </div>
@@ -595,7 +586,7 @@
                                                 <label>{{__('db.Value')}} *</label>
                                                 <input type="text" name="variant_value[]" class="type-variant form-control variant-field">
                                             </div>
-                                            <div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;">
+                                            <div class="col-sm-1 form-group mt-2 u-d-flex u-dir-column u-items-center u-justify-end">
                                                 <button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button>
                                             </div>
                                         </div>
@@ -987,7 +978,7 @@
     // });
 
     $('.add-more-variant').on("click", function() {
-        var htmlText = '<div class="row"><div class="col-md-4 form-group mt-2"><label>Option *</label><input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc..."></div><div class="col-md-7 form-group mt-2"><label>Value *</label><input type="text" name="variant_value[]" class="type-variant form-control variant-field"></div><div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;"><button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button></div></div>';
+        var htmlText = '<div class="row"><div class="col-md-4 form-group mt-2"><label>Option *</label><input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc..."></div><div class="col-md-7 form-group mt-2"><label>Value *</label><input type="text" name="variant_value[]" class="type-variant form-control variant-field"></div><div class="col-sm-1 form-group mt-2 u-d-flex u-dir-column u-items-center u-justify-end"><button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button></div></div>';
         $("#variant-input-section").append(htmlText);
         $('.type-variant').tagsInput();
     });
@@ -1610,7 +1601,7 @@
                                 </div>
                             </td>`;
                         cols += `<td>
-                                    <div class="input-group" style="max-width: unset">
+                                    <div class="input-group u-maxw-unset">
                                         <input type="number"
                                             class="form-control qty"
                                             min="1"

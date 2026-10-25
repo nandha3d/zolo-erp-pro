@@ -12,7 +12,7 @@
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
-                <h3 class="font-weight-bold mb-1" style="color: var(--neo-text-primary, #1e293b);">
+                <h3 class="font-weight-bold mb-1 u-c-neo-text-primary">
                     <i class="dripicons-checklist mr-2 text-primary"></i>Project Tasks &amp; Milestones
                 </h3>
                 <p class="text-muted mb-0 small">Track action items, priority, assignments, and due dates</p>

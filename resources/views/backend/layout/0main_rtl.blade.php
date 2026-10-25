@@ -994,8 +994,8 @@
 
                       @if (!config('app.user_verified'))
                         @if ($language_setting_active)
-                            <li id="languages" style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
-                                <a href="{{route('languages')}}"> {{__('db.Languages')}} <span style="font-size: 16px;">→</span></i></a>
+                            <li id="languages" class="u-bg-xf0f0f0 u-p-10px u-r-5px">
+                                <a href="{{route('languages')}}"> {{__('db.Languages')}} <span class="u-fs-16px">→</span></i></a>
                             </li>
                         @endif
                     @endif
@@ -1023,7 +1023,7 @@
                       @if($empty_database_permission_active)
                       <li>
                         <a href="#" onclick="event.preventDefault(); var c = prompt('All business data of every company will be lost. Type DELETE ALL DATA to confirm.'); if (c === 'DELETE ALL DATA') { var f = document.getElementById('empty-database-form'); f.confirmation.value = c; f.submit(); }"><i class="dripicons-stack"></i> {{__('db.Empty Database')}}</a>
-                        <form id="empty-database-form" method="POST" action="{{ route('setting.emptyDatabase') }}" style="display: none;">@csrf<input type="hidden" name="confirmation" value=""></form>
+                        <form id="empty-database-form" method="POST" action="{{ route('setting.emptyDatabase') }}" style="display:none">@csrf<input type="hidden" name="confirmation" value=""></form>
                       </li>
                       @endif
                       <li>
@@ -1032,7 +1032,7 @@
                                          document.getElementById('logout-form').submit();"><i class="dripicons-power"></i>
                             {{__('db.logout')}}
                         </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">
                             @csrf
                         </form>
                       </li>

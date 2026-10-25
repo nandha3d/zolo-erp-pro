@@ -97,21 +97,21 @@
               <button type="button" data-dismiss="modal" aria-label="Close" class="close d-print-none" id="close-btn"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
           </div>
           <div class="modal-body">
-              <div class="gift-card" style="margin: 0 auto; max-width: 350px; position: relative; color:#fff;"><img src="{{url('images/gift_card/front.jpg')}}" width="350" height="200">
-                <div style="position: absolute; padding: 15px; top:0; left: 0; width: 350px;">
+              <div class="gift-card u-m-0-auto u-maxw-350px u-pos-relative u-c-xffffff"><img src="{{url('images/gift_card/front.jpg')}}" width="350" height="200">
+                <div class="u-pos-absolute u-p-15px u-top-0 u-left-0 u-w-350px">
                     <h3 class="d-inline">Gift Card</h3><h3 class="d-inline float-right">{{$currency->code}} <span id="balance"></span></h3>
-                    <p class="card-number" style="font-size: 28px;letter-spacing: 3px; margin-top: 15px;"></p>
-                    <p class="client" style="text-transform: capitalize;margin-bottom: 10px;"></p>
-                    <span class="valid" style="font-size: 11px;">Valid Thru</span>
-                    <p class="valid-date" style="font-size: 11px;"></p>
+                    <p class="card-number u-fs-28px u-ls-3px u-mt-15px"></p>
+                    <p class="client u-tt-capitalize u-mb-10px"></p>
+                    <span class="valid u-fs-11px">Valid Thru</span>
+                    <p class="valid-date u-fs-11px"></p>
                 </div>
               </div>
               <br>
-              <div class="gift-card" style="margin: 0 auto; max-width: 350px; position: relative; color:#fff;">
+              <div class="gift-card u-m-0-auto u-maxw-350px u-pos-relative u-c-xffffff">
                 <img src="{{url('images/gift_card/back.png')}}" width="350" height="200">
-                <div class="site-title" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">@if($general_setting->site_logo)
+                <div class="site-title u-pos-absolute u-top-50pct u-left-50pct u-tf-translate-50pct-50pct">@if($general_setting->site_logo)
                   <img src="{{url('logo', $general_setting->site_logo)}}" height="38px" width="38px">&nbsp;
-                  <span style="font-size: 25px;">@endif{{$general_setting->site_title}}</span>
+                  <span class="u-fs-25px">@endif{{$general_setting->site_title}}</span>
                 </div>
               </div>
           </div>
@@ -342,7 +342,7 @@
           var divToPrint=document.getElementById('viewModal');
           var newWin=window.open('','Print-Window');
           newWin.document.open();
-          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><style type="text/css">@media print {.modal-dialog { max-width: 1000px;} }</style><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
           newWin.document.close();
           setTimeout(function(){newWin.close();},10);
     });

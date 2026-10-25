@@ -16,7 +16,7 @@ class DesignTokensTest extends TestCase
     private const SKIP_CSS = ['app.css', 'auth.css', 'dropzone.css', 'custom-rtl.css', 'style.css', 'grasp_mobile_progress_circle-1.0.0.min.css'];
 
     // Emails and PDF/print templates cannot use CSS variables.
-    private const SKIP_VIEWS = '#/(mail|emails?)/|invoice|print|receipt|pdf|label|barcode|/auth/#i';
+    private const SKIP_VIEWS = '#/(mail|emails?)/|invoice|print|receipt|reciept|pdf|label|barcode|/auth/#i';
 
     public function test_app_stylesheets_use_brand_tokens_not_old_accents(): void
     {
@@ -56,5 +56,61 @@ class DesignTokensTest extends TestCase
         }
 
         $this->assertSame([], array_values(array_unique($offenders)), 'Use var(--z-primary*, fallback) in blade styles.');
+    }
+
+    public function test_blades_style_with_classes_not_inline_styles(): void
+    {
+        $offenders = [];
+        foreach ($this->appViews() as $rel => $html) {
+            // Allowed inline: display:none (JS show/hide state) and values computed by Blade (data, e.g. a bar width).
+            preg_match_all('#\sstyle="([^"]*)"#i', $html, $m);
+            foreach ($m[1] as $style) {
+                if (preg_match('/^\s*display\s*:\s*none\s*;?\s*$/i', $style) || str_contains($style, '{{')) {
+                    continue;
+                }
+                $offenders[] = "$rel: style=\"$style\"";
+            }
+            // Page CSS lives in public/css (pages/*.css), not in <style> blocks. Exceptions: colours from the database.
+            if (preg_match('#<style\b#i', $html) && ! in_array($rel, self::DYNAMIC_STYLE_VIEWS, true)) {
+                $offenders[] = "$rel: <style> block";
+            }
+        }
+
+        $this->assertSame([], $offenders, 'Use component classes (zolo-components.css) or utilities (zolo-utilities.css); page CSS goes in public/css/pages.');
+    }
+
+    public function test_layout_views_load_page_css_in_the_head(): void
+    {
+        $offenders = [];
+        foreach ($this->appViews() as $rel => $html) {
+            if (! preg_match("/@extends\(\s*'backend\.layout\.(main|top-head)'/", $html)) {
+                continue;
+            }
+            $body = preg_replace('#@push\(.*?@endpush|<script\b.*?</script>#s', '', $html);
+            if (preg_match('#<link\b[^>]*stylesheet#i', $body)) {
+                $offenders[] = $rel;
+            }
+        }
+
+        $this->assertSame([], $offenders, "Put page stylesheets in @push('css') so they load in <head>.");
+    }
+
+    // Public QR menu takes its theme colours from the company's settings.
+    private const DYNAMIC_STYLE_VIEWS = ['backend/qr/public_menu.blade.php'];
+
+    /** @return array<string, string> relative path => contents, app views only */
+    private function appViews(): array
+    {
+        $root = dirname(__DIR__, 2) . '/resources/views';
+        $views = [];
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root)) as $file) {
+            $path = str_replace('\\', '/', $file->getPathname());
+            if (! str_ends_with($path, '.blade.php') || preg_match(self::SKIP_VIEWS, $path) || str_contains($path, '/vendor/')) {
+                continue;
+            }
+            $views[substr($path, strlen($root) + 1)] = file_get_contents($path);
+        }
+
+        return $views;
     }
 }

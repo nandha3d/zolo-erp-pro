@@ -1,189 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .report-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .report-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 18px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-report-tabs {
-        display: flex;
-        gap: 6px;
-        border-bottom: 2px solid #e2e8f0;
-        margin-bottom: 16px;
-        padding-left: 0;
-        list-style: none;
-    }
-    body.dark-mode .desk-report-tabs {
-        border-color: #334155;
-    }
-    .desk-report-tabs .nav-link {
-        padding: 8px 16px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #64748b;
-        border: none;
-        border-radius: 6px 6px 0 0;
-        background: transparent;
-        transition: all 0.15s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: -2px;
-    }
-    .desk-report-tabs .nav-link:hover {
-        color: #0f172a;
-        background: #f1f5f9;
-    }
-    .desk-report-tabs .nav-link.active {
-        color: var(--z-primary, #7d287e);
-        background: #ffffff;
-        border-bottom: 2px solid var(--z-primary, #7d287e);
-    }
-    body.dark-mode .desk-report-tabs .nav-link {
-        color: #94a3b8;
-    }
-    body.dark-mode .desk-report-tabs .nav-link:hover {
-        color: #f8fafc;
-        background: #1e293b;
-    }
-    body.dark-mode .desk-report-tabs .nav-link.active {
-        color: var(--z-primary-text, #7d287e);
-        background: #141c2e;
-        border-bottom: 2px solid var(--z-primary-text, #7d287e);
-    }
-    .table-hover thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode .table-hover thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    .table-hover tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    .table-hover tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode .table-hover tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode .table-hover tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    .table-hover tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode .table-hover tbody tr:hover {
-        background: #27354f !important;
-    }
-    .table-hover td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode .table-hover td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    .table-hover tfoot th {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        padding: 8px 12px !important;
-        border-top: 2px solid #cbd5e1 !important;
-    }
-    body.dark-mode .table-hover tfoot th {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-top-color: #475569 !important;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-error-message key="not_permitted" />
 
@@ -221,39 +37,39 @@
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">REPORT TIMEFRAME</div>
-                <div class="kpi-number" style="font-size:13px; font-weight:600; color:#475569;">
+                <div class="kpi-number u-fs-13px u-fw-600 u-c-text-2">
                     {{ date('d M Y', strtotime($starting_date)) }} — {{ date('d M Y', strtotime($ending_date)) }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-calendar u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">CUSTOMER GROUP TIER</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700;">{{ $groupName }}</div>
+                <div class="kpi-number u-fs-14px u-fw-700">{{ $groupName }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-network" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-network u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">AUDITED SEGMENTS</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700;">4 Operations</div>
+                <div class="kpi-number u-fs-14px u-fw-700">4 Operations</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-list" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-list u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TIER AGGREGATION</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:600; color:#059669;">Verified Active</div>
+                <div class="kpi-number u-fs-14px u-fw-600 u-c-success">Verified Active</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -264,7 +80,7 @@
             <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-calendar"></i> {{ __('db.Choose Your Date') }}</label>
                 <div class="input-group">
-                    <input type="text" class="daterangepicker-field form-control form-control-sm" style="height:30px; font-size:12px; width:210px;"
+                    <input type="text" class="daterangepicker-field form-control form-control-sm u-h-30px u-fs-12px u-w-210px"
                         value="{{ $starting_date }} To {{ $ending_date }}" required />
                     <input type="hidden" name="starting_date" value="{{ $starting_date }}" />
                     <input type="hidden" name="ending_date" value="{{ $ending_date }}" />
@@ -272,14 +88,14 @@
             </div>
             <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-network"></i> {{ __('db.Customer Group') }}</label>
-                <select id="customer_group_id" name="customer_group_id" class="form-control form-control-sm" style="height:30px; font-size:12px; min-width:200px;">
+                <select id="customer_group_id" name="customer_group_id" class="form-control form-control-sm u-h-30px u-fs-12px u-minw-200px">
                     @foreach ($lims_customer_group_list as $customer_group)
                         <option value="{{ $customer_group->id }}">{{ $customer_group->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="form-group mb-1">
-                <button class="btn btn-primary btn-sm btn-action-pill" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                <button class="btn btn-primary btn-sm btn-action-pill u-bg-ink u-bc-ink" type="submit">
                     <i class="fa fa-filter"></i> {{ __('db.submit') }}
                 </button>
             </div>
@@ -308,7 +124,7 @@
         <div role="tabpanel" class="tab-pane fade show active" id="customer-group-sale">
             <div class="desk-card-wrapper">
                 <div class="table-responsive">
-                    <table id="sale-table" class="table table-hover" style="width: 100%">
+                    <table id="sale-table" class="table table-hover u-w-100pct">
                         <thead>
                             <tr>
                                 <th class="not-exported-sale"></th>
@@ -347,7 +163,7 @@
         <div role="tabpanel" class="tab-pane fade" id="customer-group-payment">
             <div class="desk-card-wrapper">
                 <div class="table-responsive">
-                    <table id="payment-table" class="table table-hover" style="width: 100%">
+                    <table id="payment-table" class="table table-hover u-w-100pct">
                         <thead>
                             <tr>
                                 <th class="not-exported-payment"></th>
@@ -380,7 +196,7 @@
         <div role="tabpanel" class="tab-pane fade" id="customer-group-quotation">
             <div class="desk-card-wrapper">
                 <div class="table-responsive">
-                    <table id="quotation-table" class="table table-hover" style="width: 100%">
+                    <table id="quotation-table" class="table table-hover u-w-100pct">
                         <thead>
                             <tr>
                                 <th class="not-exported-quotation"></th>
@@ -417,7 +233,7 @@
         <div role="tabpanel" class="tab-pane fade" id="customer-group-return">
             <div class="desk-card-wrapper">
                 <div class="table-responsive">
-                    <table id="return-table" class="table table-hover" style="width: 100%">
+                    <table id="return-table" class="table table-hover u-w-100pct">
                         <thead>
                             <tr>
                                 <th class="not-exported-return"></th>
@@ -986,4 +802,11 @@
     }
     
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-report-biller-report.css') }}">
 @endpush

@@ -8,24 +8,7 @@
     $d = fn (string $key) => old('purchase_defaults.'.$key, ($s->purchase_defaults ?? [])[$key] ?? null);
 @endphp
 @push('css')
-<style>
-    .supplier-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 14px; }
-    .supplier-form .sf-head { grid-column: 1 / -1; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--z-primary, #7d287e); border-bottom: 1px solid var(--z-primary-soft, #fbf4fb); padding: 4px 0 2px; margin-top: 2px; }
-    .supplier-form .sf-wide { grid-column: span 2; }
-    .supplier-form label { display: block; font-size: 11.5px; font-weight: 600; color: #334155; margin: 0 0 2px; }
-    .supplier-form .form-control { height: 30px; padding: 3px 8px; font-size: 13px; }
-    .supplier-form input[type=file].form-control { padding: 2px 6px; font-size: 12px; }
-    .supplier-form small { font-size: 11px; line-height: 1.25; }
-    .supplier-form .sf-check { display: flex; align-items: center; gap: 6px; height: 30px; margin-top: 18px; }
-    .supplier-form .sf-check label { margin: 0; }
-    .supplier-form .sf-note { font-size: 11.5px; color: #475569; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 5px 8px; }
-    body.dark-mode .supplier-form label { color: #94a3b8; }
-    body.dark-mode .supplier-form .sf-head { border-color: var(--z-primary-soft, #fbf4fb); }
-    body.dark-mode .supplier-form .sf-note { background: #111827; border-color: #334155; color: #94a3b8; }
-    .supplier-form-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
-    .supplier-form-actions .hint { font-size: 11.5px; color: #64748b; margin-left: auto; }
-    @media (max-width: 991px) { .supplier-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/supplier-partials-form.css') }}">
 @endpush
 
 <div class="supplier-form">
@@ -163,7 +146,7 @@
             </select>
         </div>
     @endif
-    <div class="sf-head">Purchase bill defaults <span class="text-muted font-weight-normal" style="text-transform:none;letter-spacing:0;">— filled in when you pick this supplier on a bill; blank = screen default</span></div>
+    <div class="sf-head">Purchase bill defaults <span class="text-muted font-weight-normal u-tt-none u-ls-0">— filled in when you pick this supplier on a bill; blank = screen default</span></div>
     <div>
         <label for="sup-def-payment">Payment</label>
         <select id="sup-def-payment" name="purchase_defaults[payment_mode]" class="form-control">

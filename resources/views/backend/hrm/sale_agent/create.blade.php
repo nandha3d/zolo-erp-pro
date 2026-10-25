@@ -312,14 +312,5 @@
         @endif
     </script>
 
-    <style>
-        .is-invalid {
-            border: 2px solid red !important;
-            background-color: #ffe6e6;
-        }
-
-        .error-message {
-            font-size: 12px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/hrm-sale-agent-create.css') }}">
 @endpush

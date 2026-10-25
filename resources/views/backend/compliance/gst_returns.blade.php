@@ -10,15 +10,8 @@
     $itcTables = ['itc04_4' => ['Table 4 · goods sent to job workers', $itc04['table_4_sent']], 'itc04_5a' => ['Table 5A · received back (with loss)', $itc04['table_5a_received_back']],
         'itc04_5c' => ['Table 5C · supplied from job worker premises', $itc04['table_5c_supplied_from_job_worker']]];
 @endphp
-<style>
-    .gst-returns { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: 10px; }
-    .gst-returns h3 { font-size: 12px; font-weight: 700; margin: 0 0 4px; color: #334155; }
-    .gst-returns .cx-table td, .gst-returns .cx-table th { padding: 4px 8px; white-space: nowrap; }
-    .gst-returns .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .gst-returns .cx-table-wrap { max-height: 34vh; overflow: auto; }
-    @media (max-width: 1100px) { .gst-returns { grid-template-columns: 1fr; } }
-</style>
-<div class="d-flex flex-wrap align-items-end justify-content-between mb-2" style="gap:10px;">
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/compliance-gst-returns.css') }}">
+<div class="d-flex flex-wrap align-items-end justify-content-between mb-2 u-gap-10px">
     <form method="GET" class="cx-filter" data-enter-flow>
         <div class="cx-field"><label for="ret-from">From</label><input id="ret-from" name="from" type="date" value="{{ $from }}" required></div>
         <div class="cx-field"><label for="ret-to">To</label><input id="ret-to" name="to" type="date" value="{{ $to }}" required></div>
@@ -59,7 +52,7 @@
         <h2><i class="dripicons-swap"></i> Form GST ITC-04 · job work</h2>
         <p class="cx-help">Half-yearly if turnover was over ₹5 crore, otherwise yearly. Shrinkage is reported as loss and waste in table 5A.</p>
         @foreach($itcTables as $key => [$title, $rows])
-            <h3 class="d-flex align-items-center" style="gap:6px;">{{ $title }} ({{ count($rows) }})
+            <h3 class="d-flex align-items-center u-gap-6px">{{ $title }} ({{ count($rows) }})
                 @if($rows)<a class="cx-btn ghost" href="{{ $q(['download' => $key, 'format' => 'csv']) }}">CSV</a>@endif</h3>
             @if($rows)
             <div class="cx-table-wrap mb-2"><table class="cx-table">

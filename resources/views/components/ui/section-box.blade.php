@@ -62,7 +62,7 @@
                 @endif
                 <span class="zolo-section-box-title">{!! $title !!}</span>
                 @if($subtitle)
-                    <small class="text-muted ml-2 font-weight-normal" style="font-size: 11px; text-transform: none;">{{ $subtitle }}</small>
+                    <small class="text-muted ml-2 font-weight-normal u-fs-11px u-tt-none">{{ $subtitle }}</small>
                 @endif
             </div>
             @if($actions)

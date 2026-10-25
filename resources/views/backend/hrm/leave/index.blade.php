@@ -112,7 +112,7 @@
                     <div class="form-group">
                         <label>{{ __('db.Leave Type') }} *</label>
                         <div class="input-group">
-                            <div style="width:calc(100% - 40px);" class="input-group-prepend">
+                            <div class="input-group-prepend u-w-calc-100pct-40px">
                                 <select class="form-control selectpicker" name="leave_types" id="leave_type_select"
                                     required>
                                     <option value="" selected disabled>{{ __('db.Leave Type') }}</option>

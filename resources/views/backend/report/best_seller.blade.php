@@ -1,88 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .report-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .report-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 18px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 20px 24px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-error-message key="not_permitted" />
 
@@ -119,39 +36,39 @@
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TIME WINDOW</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700; color:#475569;">
+                <div class="kpi-number u-fs-14px u-fw-700 u-c-text-2">
                     {{ $start_month.' — '.date("F Y") }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-calendar u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">WAREHOUSE SCOPE</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700;">{{ $warehouseName }}</div>
+                <div class="kpi-number u-fs-14px u-fw-700">{{ $warehouseName }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-store" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-store u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">CHART ENGINE</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700;">Top 5 Velocity</div>
+                <div class="kpi-number u-fs-14px u-fw-700">Top 5 Velocity</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-graph-bar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-graph-bar u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">METRIC STATUS</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:600; color:#059669;">Live Real-Time</div>
+                <div class="kpi-number u-fs-14px u-fw-600 u-c-success">Live Real-Time</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -162,7 +79,7 @@
             <input type="hidden" name="warehouse_id_hidden" value="{{ $warehouse_id }}">
             <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-store"></i> {{ __('db.Choose Warehouse') }}</label>
-                <select class="form-control form-control-sm" id="warehouse_id" name="warehouse_id" style="height:30px; font-size:12px; min-width:200px;">
+                <select class="form-control form-control-sm u-h-30px u-fs-12px u-minw-200px" id="warehouse_id" name="warehouse_id">
                     <option value="0">{{ __('db.All Warehouse') }}</option>
                     @foreach($lims_warehouse_list as $warehouse)
                         <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
@@ -170,7 +87,7 @@
                 </select>
             </div>
             <div class="form-group mb-1">
-                <button class="btn btn-primary btn-sm btn-action-pill" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                <button class="btn btn-primary btn-sm btn-action-pill u-bg-ink u-bc-ink" type="submit">
                     <i class="fa fa-filter"></i> {{ __('db.submit') }}
                 </button>
             </div>
@@ -179,7 +96,7 @@
 
     <!-- Chart Container Wrapper -->
     <div class="desk-card-wrapper">
-        <div style="max-width:960px; margin:0 auto;">
+        <div class="u-maxw-960px u-m-0-auto">
             @php
                 $color = '#7c3aed'; $color_rgba = 'rgba(124, 58, 237, 0.85)';
                 if($general_setting->theme == 'default.css'){
@@ -199,7 +116,7 @@
                     $color_rgba = 'rgba(100, 116, 139, 0.85)';
                 }
             @endphp
-            <canvas id="bestSeller" data-color="{{ $color }}" data-color_rgba="{{ $color_rgba }}" data-product="{{ json_encode($product) }}" data-sold_qty="{{ json_encode($sold_qty) }}" style="max-height: 440px;"></canvas>
+            <canvas id="bestSeller" data-color="{{ $color }}" data-color_rgba="{{ $color_rgba }}" data-product="{{ json_encode($product) }}" data-sold_qty="{{ json_encode($sold_qty) }}" class="u-maxh-440px"></canvas>
         </div>
     </div>
 </section>
@@ -219,4 +136,11 @@
 		$('#report-form').submit();
 	});
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/report-best-seller.css') }}">
 @endpush

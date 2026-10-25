@@ -2,133 +2,8 @@
 
 @push('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.9/css/intlTelInput.css"/>
-<style>
-.country-phone-group .bootstrap-select{
-    display: none !important
-}
-</style>
-<style type="text/css">
-    body{color: #303030;font-family:'Inter',sans-serif}
-    .bootstrap-select-sm .btn {font-size: 13px;padding: 3px 25px 3px 10px;height: 30px !important}
-    .minus,.plus {padding: .35rem .75rem}
-    .numkey.qty {font-size: 13px;padding: 0 0;max-width: 50px;text-align: center}
-    .sub-total{font-weight:500;}
-    .pos-page .container-fluid {padding: 0 15px}
-    .pos-page .side-navbar {top: 0}
-    section.pos-section {padding: 5px 0}
-    .pos-page .table-fixed {margin-bottom: 0}
-    .pos-text {line-height: 1.8}
-    .pos-page section header {padding: 0 0}
-    .pos .bootstrap-select button {padding-right: 21px !important}
-    .pos .bootstrap-select.form-control:not([class*=col-]) {width: 100px}
-    .pos-page .order-list .btn {padding: 2px 5px}
-    .pos-page [class=row] {margin-left:-10px;margin-right:-10px}
-    .pos-page [class*=col-] {padding: 0 10px}
-    .pos-page #myTable [class*=col-] {padding: .5rem}
-    .pos-page #myTable tr th {background: var(--z-primary-border, #ebcdeb);color:#303030}
-    .product-btns{margin:0 -5px}
-    .edit-product{white-space: break-spaces;font-size:13px;font-weight:500;text-align:left;padding:0 0!important}
-    .edit-product i{color:#00cec9}
-    .product-title span{font-size:12px}
-    .more-options{box-shadow: -5px 0px 10px 0px rgba(44,44,44,0.3);font-size:12px;margin:10px 0;padding-left:3px;padding-right:3px}
-    label{font-size:13px}
-    #tbody-id tr td {font-size:13px;padding: 0}
-    table,tr,td {border-collapse: collapse;}
-    .top-fields{margin-top:10px;position: relative;}
-    .top-fields label {background:#FFF;font-size:11px;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;}
-    .top-fields input,.top-fields .btn{font-size:13px;height:37px}
-    .product-grid{align-items: center; display: flex;flex-wrap: wrap;padding: 0;margin: 0;width: 100%;}
-    .product-grid > div {border: 1px solid var(--z-primary-soft, #fbf4fb);overflow: hidden;padding:.5rem;position: relative;max-width: 300px;min-width: 100px;vertical-align: top;width: calc(100%/4);}
-    .product-grid > div p {color: #303030;font-size:12px;font-weight: 500;margin: 10px 0 0;min-height: 36px;display: -webkit-box;-webkit-line-clamp: 2;overflow: hidden;text-overflow: ellipsis;-webkit-box-orient: vertical}
-    .product-grid > div span {font-size: 12px}
-    .more-payment-options.column-5{margin:0;padding:0}
-    #print-layout{padding: 0 0;margin: 0 0;}
-    .category-img p,.brand-img p{color: #5e5873;font-size:12px;font-weight:500}
-    .brand-img,.category-img{display:flex;flex-direction:column;justify-content:center;align-items:center;}
-    .brand-img img{max-width:70%}
-    .load-more{margin-top:15px}
-    .load-more:disabled{opacity:0.5}
-    .ui-helper-hidden-accessible{display:none!important}
-    .btn-custom{font-size:13px;}
-    #register-details-modal table tr td {padding: .35rem 0}
-    .totals .totals-title {color: #303030;}
-    @media (max-width: 500px) {
-        .product-grid > div {width: calc(100%/3);}
-    }
-    @media (max-width: 375px) {
-        .product-grid > div {width: calc(100%/2);}
-    }
-    @media all and (max-width:767px){
-        section.pos-section {padding: 0 5px}
-        nav.navbar{margin: 0 -10px}
-        .pos-form{padding:0 0 !important}
-        .payment-options {padding: 5px 0}
-        .payment-options .column-5{margin:5px 0;}
-        .payment-options .btn-sm{font-size:12px;}
-        .more-payment-options, .more-payment-options .btn-group{width:100%}
-        .more-payment-options.column-5{padding:0 5px;}
-        .product-btns{margin:0 -15px 10px -15px}
-        .product-btns .btn{font-size: 12px;}
-        .more-options{margin-top: 0;}
-        .transaction-list {height: 35vh;}
-        .filter-window{position:fixed;}
-    }
-
-    @media print {
-        .hidden-print {display: none !important;}
-    }
-
-    #print-layout * {font-size: 10px;line-height: 20px;font-family: 'Ubuntu', sans-serif;text-transform: capitalize;}
-    #print-layout .btn {padding: 7px 10px;text-decoration: none;border: none;display: block;text-align: center;margin: 7px;cursor:pointer;}
-
-    #print-layout .btn-info {background-color: #999;color: #FFF;}
-
-    #print-layout .btn-primary {background-color: #6449e7;color: #FFF;width: 100%;}
-    #print-layout td,
-    #print-layout th,
-    #print-layout tr,
-    #print-layout table {border-collapse: collapse;}
-    #print-layout tr {border-bottom: 1px dotted #ddd; display:block}
-    #print-layout td,#print-layout th {padding: 7px 0;}
-
-    #print-layout table {width: 100%;}
-
-    #print-layout .centered {display: block;text-align: center;align-content: center;}
-    #print-layout small{font-size:10px;}
-
-    @media print {
-        #print-layout * {font-size:10px!important;line-height: 20px;}
-        #print-layout table {width: 100%;margin: 0 0;}
-        #print-layout td,#print-layout th {padding: 5px 0;}
-        #print-layout .hidden-print {display: none !important;}
-    }
-    .loader{display: block;max-width: 100% !important; min-width: 100% !important;text-align: center;vertical-align: middle;width: 100% !important; margin-top: 50px}
-    .product-grid .loader{margin-top: 25%;}
-
-    .loader svg path,.loader svg rect{fill: var(--z-primary, #7d287e);}
-    nav.navbar a.menu-btn {display: flex;justify-content: center;align-items: center;}
-    nav.navbar a {align-items: center;display: flex;}
-    .right-sidebar li a svg{margin-right: 10px}
-    .nav-menu svg {width: 20px;height: 20px; stroke: var(--z-primary, #7d287e);vertical-align: middle}
-    #pos-layout .nav-menu {flex-wrap: wrap; max-width: 100%; min-width: 0;}
-    .btn svg {vertical-align: middle; width: 16px}
-    button.close svg {vertical-align: middle; width: 26px}
-    .bootstrap-select.btn-group > .dropdown-toggle{height: 37px}
-
-    .dropdown-toggle-no-arrow::after{display:none!important}
-    .calculator{background-color:#fff;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,.2);width:240px}
-    .calculator .display{width:100%;height:50px;background-color:#f5f5f5;border:2px solid var(--z-primary, #7d287e);font-size:1.5em;text-align:right;padding:0 10px;margin-bottom:10px;border-radius:5px}
-    .calculator .buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .calculator .btn{height:40px;font-size:1em;border:none;border-radius:5px;cursor:pointer;transition:background-color .2s}
-    .calculator .btn.number{background-color:#fff;color:#000;border:1px solid #ddd}
-    .calculator .btn.operator{background-color:#f0f0f0;color:#000}
-    .calculator .btn.action.ac{background-color:#d63031;color:#fff}
-    .calculator .btn.action.ce{background-color:#e28d02;color:#fff}
-    .calculator .btn.equals{background-color:var(--z-primary, #7d287e);color:#fff;grid-column:span 2}
-    #product-results-container{background:#f5f6f7;position: absolute;overflow: hidden;max-height: 300px;overflow-y: auto;top:40px;width:100%;z-index:999999}
-    #product-results-container .product-img{border-radius: 3px; color: var(--z-primary, #7d287e);font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
-    #product-results-container .product-img:hover{background-color: var(--z-primary, #7d287e);color: #FFF}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/sale-pos.css') }}">
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/sale-pos-2.css') }}">
 @endpush
 @section('content')
 
@@ -221,13 +96,13 @@
                             <!-- //Sale return -->
                             <li class="nav-item" data-toggle="tooltip" title="Sale Return">
                                 <a type="button" data-toggle="dropdown" aria-expanded="false" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg></a>
-                                <div class="dropdown-menu pl-3 pr-3" style="max-width: 250px;">
+                                <div class="dropdown-menu pl-3 pr-3 u-maxw-250px">
                                     <form method="GET" action="{{route('return-sale.create')}}"  target="_blank" accept-charset="UTF-8">
                                         <div class="form-group">
                                             <label>Sale Reference *</label>
                                             <div class="input-group">
                                                 <input type="text" name="reference_no" class="form-control">
-                                                <button type="submit" class="btn btn-primary btn-sm" data-toggle="tooltip"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" style="stroke:#FFF" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg></button>
+                                                <button type="submit" class="btn btn-primary btn-sm" data-toggle="tooltip"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" class="size-6 u-stroke-xfff"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg></button>
                                             </div>
                                         </div>
                                     </form>
@@ -356,7 +231,7 @@
 
                                             {{__('db.logout')}}
                                         </a>
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">
                                             @csrf
                                         </form>
                                     </li>
@@ -447,8 +322,8 @@
 
                         <div class="product-grid text-center">
 
-                            <div class="loader " title="4" style="border:none">
-                                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+                            <div class="loader u-b-none" title="4">
+                                <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" xml:space="preserve">
                                     <rect x="0" y="0" width="4" height="10" fill="#333">
                                     <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform>
                                     </rect>
@@ -564,7 +439,7 @@
                                         $customer_id = $lims_customer_list[0]->id;
                                         }
                                         @endphp
-                                        <select required name="customer_id" id="customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer..." style="width: 100px">
+                                        <select required name="customer_id" id="customer_id" class="selectpicker form-control u-w-100px" data-live-search="true" title="Select customer...">
                                             @foreach($lims_customer_list as $customer)
                                                 @php
                                                 $deposit[$customer->id] = $customer->deposit - $customer->expense;
@@ -672,7 +547,7 @@
                                         <div class="form-group">
                                             <label>{{__('db.Account')}}</label>
                                             <select required name="account_id" id="account_id" class="selectpicker form-control" data-live-search="true">
-                                                <option value="0" style="color: #A7B49E;">Select an Account</option>
+                                                <option value="0" class="u-c-xa7b49e">Select an Account</option>
                                                 @foreach($lims_account_list as $account)
                                                     <option @if($account->is_default == 1) selected @endif value="{{$account->id}}">{{$account->name}}</option>
                                                 @endforeach
@@ -770,13 +645,13 @@
                     <div class="col-12 pl-0 pr-0">
                         <div class="search-box form-group mb-2">
                             <div class="input-group pos">
-                                <input style="border: 1px solid var(--z-primary, #7d287e);" type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control" autofocus />
+                                <input type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control u-b-1px-solid-primary" autofocus />
                                 <button type="button" class="btn btn-primary" onclick="barcode()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16"><path d="M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/></svg></button>
                             </div>
                             <div id="product-results-container">
 
                             </div>
-                            <div id="no-results-message" style="background-color: #f5f6f7;color: #666; margin-top: 5px;padding: 3px 5px; display: none;">No results found</div>
+                            <div id="no-results-message" style="display:none" class="u-bg-xf5f6f7 u-c-text-muted u-mt-5px u-p-3px-5px">No results found</div>
                         </div>
                     </div>
                     <div class="table-responsive transaction-list">
@@ -794,7 +669,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="row" style="display: none;">
+                    <div class="row" style="display:none">
                         <div class="col-md-2">
                             <div class="form-group">
                                 <input type="hidden" name="total_qty" value="0" />
@@ -849,7 +724,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 totals" style="background-color:#f5f6f7;border-top: 2px solid #ebe9f1;padding-bottom: 7px;padding-top: 7px;">
+                    <div class="col-12 totals u-bg-xf5f6f7 u-bt-2px-solid-xebe9f1 u-pb-7px u-pt-7px">
                         <div class="row">
                             <div class="col-sm-4 col-6">
                                 <strong class="totals-title">{{__('db.Items')}}</strong><strong id="item">0 (0)</strong>
@@ -886,23 +761,23 @@
                             <div class="">
                                 @if(in_array("card",$options))
                                 <div class="column-5">
-                                    <button style="background: #0984e3" type="button" class="btn btn-sm btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="credit-card-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg> {{__('db.Card')}}</button>
+                                    <button type="button" class="btn btn-sm btn-custom payment-btn u-bg-x0984e3" data-toggle="modal" data-target="#add-payment" id="credit-card-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg> {{__('db.Card')}}</button>
                                 </div>
                                 @endif
                                 @if(in_array("cash",$options))
                                 <div class="column-5">
-                                    <button style="background: #00cec9" type="button" class="btn btn-sm btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="cash-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Cash')}}</button>
+                                    <button type="button" class="btn btn-sm btn-custom payment-btn u-bg-x00cec9" data-toggle="modal" data-target="#add-payment" id="cash-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Cash')}}</button>
                                 </div>
                                 @endif
                                 @if(in_array("razorpay",$options))
                                 <div class="column-5">
-                                    <button style="background: #2d2d2d" type="button"
-                                        class="btn btn-sm btn-custom payment-btn"
+                                    <button type="button"
+                                        class="btn btn-sm btn-custom payment-btn u-bg-x2d2d2d"
                                         data-toggle="modal" data-target="#add-payment"
                                         id="razorpay-btn" disabled="true">
                                         <!-- Razorpay SVG Icon -->
                                         <!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
-                                            fill="white" width="20" height="20" style="margin-right: 6px;">
+                                            fill="white" width="20" height="20" class="u-mr-6px">
                                             <path d="M344.7 80.4 137.6 416h83.8l207.1-335.6h-83.8zm-84.5 151.3-131.8 202h82.3l131.8-202h-82.3z"/>
                                         </svg> -->
                                         Razorpay
@@ -911,12 +786,12 @@
                                 @endif
                                 @if(in_array("credit",$options))
                                 <div class="column-5">
-                                    <button style="background: #f05969" type="button" class="btn btn-sm btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="credit-sale-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Credit Sale')}}</button>
+                                    <button type="button" class="btn btn-sm btn-custom payment-btn u-bg-xf05969" data-toggle="modal" data-target="#add-payment" id="credit-sale-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Credit Sale')}}</button>
                                 </div>
                                 @endif
 
                                 <div class="column-5">
-                                    <button style="background: #010429" type="button" class="btn btn-sm btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="multiple-payment-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Multiple Payment')}}</button>
+                                    <button type="button" class="btn btn-sm btn-custom payment-btn u-bg-x010429" data-toggle="modal" data-target="#add-payment" id="multiple-payment-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Multiple Payment')}}</button>
                                 </div>
                                 @if(in_array("installment",$options))
                                 <div class="column-5">
@@ -927,23 +802,23 @@
                                 @endif
                                 @if(in_array("cheque",$options))
                                 <div class="column-5">
-                                    <button style="background-color: #fd7272" type="button" class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="cheque-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Cheque')}}</button>
+                                    <button type="button" class="btn btn-sm btn-block btn-custom payment-btn u-bg-xfd7272" data-toggle="modal" data-target="#add-payment" id="cheque-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg> {{__('db.Cheque')}}</button>
                                 </div>
                                 @endif
                                 @if(in_array("gift_card",$options))
                                 <div class="column-5">
-                                    <button style="background-color: #5f27cd" type="button" class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="gift-card-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg> {{__('db.Gift Card')}}</button>
+                                    <button type="button" class="btn btn-sm btn-block btn-custom payment-btn u-bg-x5f27cd" data-toggle="modal" data-target="#add-payment" id="gift-card-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg> {{__('db.Gift Card')}}</button>
                                 </div>
                                 @endif
                                 @if(in_array("deposit",$options))
                                 <div class="column-5">
-                                    <button style="background-color: #b33771" type="button" class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="deposit-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16"><path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zM13 6v7h1V6zm2-1V4H1v1zm-.39 9H1.39l-.25 1h13.72z"/></svg> {{__('db.Deposit')}}</button>
+                                    <button type="button" class="btn btn-sm btn-block btn-custom payment-btn u-bg-xb33771" data-toggle="modal" data-target="#add-payment" id="deposit-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16"><path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zM13 6v7h1V6zm2-1V4H1v1zm-.39 9H1.39l-.25 1h13.72z"/></svg> {{__('db.Deposit')}}</button>
                                 </div>
                                 @endif
                                 @if(in_array("points",$options))
                                     @if($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active)
                                     <div class="column-5">
-                                        <button style="background-color: #319398" type="button" class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal" data-target="#add-payment" id="point-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" /></svg> {{__('db.Points')}}</button>
+                                        <button type="button" class="btn btn-sm btn-block btn-custom payment-btn u-bg-x319398" data-toggle="modal" data-target="#add-payment" id="point-btn" disabled="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" /></svg> {{__('db.Points')}}</button>
                                     </div>
                                     @endif
                                 @endif
@@ -972,13 +847,13 @@
                     </div>
                     @endif
                     <div class="column-5">
-                        <button style="background-color: #e28d02" type="button" class="btn btn-sm btn-custom" id="draft-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" /></svg> {{__('db.Draft')}}</button>
+                        <button type="button" class="btn btn-sm btn-custom u-bg-xe28d02" id="draft-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" /></svg> {{__('db.Draft')}}</button>
                     </div>
                     <div class="column-5">
-                        <button style="background-color: #d63031;" type="button" class="btn btn-sm btn-custom" id="cancel-btn" onclick="return confirmCancel()"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg> {{__('db.Cancel')}}</button>
+                        <button type="button" class="btn btn-sm btn-custom u-bg-xd63031" id="cancel-btn" onclick="return confirmCancel()"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg> {{__('db.Cancel')}}</button>
                     </div>
                     <div class="column-5">
-                        <button style="background-color: #ffc107;" type="button" class="btn btn-sm btn-custom" data-toggle="modal" data-target="#recentTransaction"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg> {{__('db.Recent Transaction')}}</button>
+                        <button type="button" class="btn btn-sm btn-custom u-bg-xffc107" data-toggle="modal" data-target="#recentTransaction"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg> {{__('db.Recent Transaction')}}</button>
                     </div>
                 </div>
 
@@ -1087,14 +962,14 @@
                                             @if ($lims_pos_setting_data && $lims_pos_setting_data->show_print_invoice)
                                                 <div class="form-check d-inline-block ml-3">
                                                     <input class="form-check-input" type="checkbox" name="print_invoice" id="print_invoice" checked>
-                                                    <label style="color:rgb(136, 136, 136);" class="form-check-label" for="print_invoice">
+                                                    <label class="form-check-label u-c-rgb-136-136-136" for="print_invoice">
                                                         {{ __('db.print_invoice') }}
                                                     </label>
                                                 </div>
                                             @endif
                                             <div class="form-check d-inline-block ml-3">
                                                 <input class="form-check-input" type="checkbox" name="send_whatsapp" id="send_whatsapp" checked>
-                                                <label style="color:rgb(136, 136, 136);" class="form-check-label" for="send_whatsapp">
+                                                <label class="form-check-label u-c-rgb-136-136-136" for="send_whatsapp">
                                                     {{ __('db.send_whatsapp_message') }}
                                                 </label>
                                             </div>
@@ -1460,7 +1335,7 @@
                                         <h3 id="exampleModalLabel" class="modal-title container-fluid">{{$general_setting->site_title}}</h3>
                                     </div>
                                     <div class="col-md-4 text-right">
-                                        <i style="font-size: 15px;">{{__('db.Sale Details')}}</i>
+                                        <i class="u-fs-15px">{{__('db.Sale Details')}}</i>
                                     </div>
                                 </div>
                             </div>
@@ -1838,7 +1713,7 @@
                                     <tr id="closing_row" style="display:none">
                                         <td><strong>{{__('db.Actual Cash')}}:</strong></td>
                                         <td class="text-right">
-                                            <input class="form-control" type="text" name="actual_cash" style="max-width:200px; text-align:right;float:right" value="" min="0"/>
+                                            <input class="form-control u-maxw-200px u-ta-right u-fl-right" type="text" name="actual_cash" value="" min="0"/>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1876,7 +1751,7 @@
                 </div>
 
                 <!-- Installment Fields (hidden until checked) -->
-                <div id="installmentFields" class="row" style="display: none;">
+                <div id="installmentFields" class="row" style="display:none">
                     <div class="col-md-4 mb-3">
                         <label class="form-label">{{__('db.Plan Name')}}</label>
                         <input type="text" class="form-control" name="installment_plan[name]" value="12 Months" placeholder="e.g., 6 Month Plan">
@@ -1919,9 +1794,9 @@
 </section>
 <section id="print-layout" class="">
 </section>
-<div style="width:100%;max-width:350px;position:fixed;top:5%;left:50%;transform:translateX(-50%);z-index:999">
+<div class="u-w-100pct u-maxw-350px u-pos-fixed u-top-5pct u-left-50pct u-tf-translatex-50pct u-z-999">
     <button type="button" class="btn btn-danger" id="closeScannerBtn" style="display:none"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
-    <div id="reader" style="width:100%;"></div>
+    <div id="reader" class="u-w-100pct"></div>
 </div>
 
 @endsection
@@ -1986,7 +1861,7 @@
             const lookupWarehouse = String(warehouse_id);
             const lookupTerm = search.trim();
             $results.css('padding', '0 10px 15px');
-            $results.html('<div class="loader " title="4" style="border:none;min-height:300px"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect></svg></div>');
+            $results.html('<div class="loader u-b-none u-minh-300px" title="4"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" xml:space="preserve"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect></svg></div>');
             $noResults.hide();
 
             search = btoa(unescape(encodeURIComponent(search)));
@@ -2700,7 +2575,7 @@
         }
 
         if(data[12]) {
-            cols += '<br><input style="font-size:13px;padding:3px 25px 3px 10px;height:30px !important" type="text" class="form-control batch-no" value="'+data[22]+'" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="'+data[21]+'"/>';
+            cols += '<br><input type="text" class="form-control batch-no u-fs-13px u-p-3px-25px-3px-10px u-h-30px" value="'+data[22]+'" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="'+data[21]+'"/>';
         }
         else {
             cols += '<input type="text" class="form-control batch-no d-none" disabled/> <input type="hidden" class="product-batch-id" name="product_batch_id[]"/>';
@@ -2708,14 +2583,14 @@
 
         cols += '</td>';
         cols += '<td class="col-sm-2 product-price d-none d-md-block"></td>';
-        cols += '<td class="col-sm-3" style="min-width:140px"><div class="input-group"><span class="input-group-btn">';
+        cols += '<td class="col-sm-3 u-minw-140px"><div class="input-group"><span class="input-group-btn">';
 
         // Always show delete button
-        cols += '<button type="button" class="ibtnDel btn btn-danger btn-sm mr-2" style="padding:5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button></span>';
+        cols += '<button type="button" class="ibtnDel btn btn-danger btn-sm mr-2 u-p-5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button></span>';
 
         // If no IMEI, show minus button
         if (!data[18] || data[18] == 'null') {
-            cols += '<button type="button" class="btn btn-default minus mr-1" style="padding:5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg></button>';
+            cols += '<button type="button" class="btn btn-default minus mr-1 u-p-5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg></button>';
         }
 
         // Input field
@@ -2723,7 +2598,7 @@
 
         // If no IMEI, show plus button
         if (!data[18] || data[18] == 'null') {
-            cols += '<button type="button" class="btn btn-default plus ml-1" style="padding:5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button>';
+            cols += '<button type="button" class="btn btn-default plus ml-1 u-p-5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button>';
         }
 
         cols += '</span></div></td>';
@@ -2854,7 +2729,7 @@
                                         ${product.name} (${product.code}) - ${product.price}
                                     </label>
                                 </div>
-                                <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" min="1" value="${qty}">
+                                <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm u-w-80px" min="1" value="${qty}">
                             </div>`;
                     });
                     modalContent += '</form>';
@@ -2970,7 +2845,7 @@
         var a = window.open('');
         a.document.write('<html>');
         a.document.write('<body>');
-        a.document.write('<style>body{line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left}td{padding:10px}table,th,td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>');
+        a.document.write('<link rel="stylesheet" href="{{ versioned_asset('css/pages/sale-pos-3.css') }}"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}">');
         a.document.write(divContents);
         a.document.write('</body></html>');
         a.document.close();
