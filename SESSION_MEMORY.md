@@ -1743,4 +1743,19 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - Automated PHPUnit suites green: 19/19 passing (124 assertions).
   - Browser visual validation: `new_company_dialog_light_spacious_1792910455456.png` (Light) and `new_company_dialog_dark_spacious_1792910496384.png` (Dark).
 
+## 77. Operations Right-Side Action Card Global Theme UI (2026-10-25)
+- **User Request**: "in the right maybe we can set a global theme UI to differentiate like in the 'Job work' box for all"
+- **Solution (Premium Soft Slate Theme)**:
+  - Differentiated the right-side action/creation drawer (`.ops-action-subcard` and `.ops-grid-2col > .ops-subcard:last-child`) from the left-side registers across all 5 Operations tabs (`Job Work`, `BOM & Production`, `Sites & Projects`, `Stock Tools`, `Business Profile`).
+  - **Light Mode UI**:
+    - Container: Soft slate background (`#f8fafc`), crisp border (`1px solid #cbd5e1`), subtle elevation shadow (`0 4px 16px rgba(15, 23, 42, 0.05)`), and top accent line (`3px solid #6366f1`).
+    - Header: Clean white header (`#ffffff`) with subtle bottom border (`#e2e8f0`), title badge icon container (`#eef2ff` / `#4f46e5`), and high-contrast segmented pills (`.ops-quick-pills`).
+    - Form Controls: Inputs, selects, and textareas styled with pure white backgrounds (`#ffffff !important`), crisp `#cbd5e1` borders, and focused purple glow (`#6366f1`).
+    - Submit Buttons: Vibrant indigo/purple gradient (`linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)`) with hover lift and shadow.
+  - **Dark Mode UI (`body.dark-mode`)**:
+    - Smoothly adapts with dark slate container (`#141c2e`), top accent line (`#818cf8`), dark header (`#0f172a`), dark segmented pills container (`#0b0f19`), high-contrast dark inputs (`#0b0f19` / `#334155`), and luminous button gradients.
+  - **Codebase Consistency**:
+    - Normalized `resources/views/backend/operations/hub.blade.php` right-side cards to `.ops-subcard.ops-action-subcard` with `.ops-quick-pills`.
+    - Automated tests: 12/12 passing (`JobWorkReturnsReworkTest`, `ManufacturingJobWorkTest`).
+    - Verified visually in browser across Light Mode, Dark Mode, and both Job Work and Manufacturing workspaces.
 

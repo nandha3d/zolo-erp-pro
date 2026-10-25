@@ -387,17 +387,74 @@ body.jw-zero-scroll-body .ops-workspace-view,
     text-decoration: none !important;
 }
 
-/* Quick Action Drawer & Segmented Pills */
-.ops-action-subcard .ops-subcard-body {
+/* ====================================================================
+ * Global Right-Side Action Card / Drawer Theme (Premium Soft Slate)
+ * Applied to .ops-action-subcard and .ops-grid-2col > .ops-subcard:last-child
+ * ==================================================================== */
+.ops-action-subcard,
+.ops-grid-2col > .ops-subcard:last-child {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-top: 3px solid #6366f1;
+    border-radius: 9px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ops-action-subcard .ops-subcard-header,
+.ops-grid-2col > .ops-subcard:last-child .ops-subcard-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    min-height: 38px;
+}
+
+.ops-action-subcard .ops-subcard-header .font-weight-bold,
+.ops-grid-2col > .ops-subcard:last-child .ops-subcard-header .font-weight-bold {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ops-action-subcard .ops-subcard-header i.fa,
+.ops-action-subcard .ops-subcard-header i[class^="dripicons-"],
+.ops-grid-2col > .ops-subcard:last-child .ops-subcard-header i.fa,
+.ops-grid-2col > .ops-subcard:last-child .ops-subcard-header i[class^="dripicons-"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: #eef2ff;
+    color: #4f46e5 !important;
+    border-radius: 5px;
+    font-size: 11px;
+}
+
+.ops-action-subcard .ops-subcard-body,
+.ops-grid-2col > .ops-subcard:last-child .ops-subcard-body {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 12px;
+    padding: 12px 14px;
     min-height: 0;
+    background: #f8fafc;
 }
 
 .ops-quick-pills {
     display: inline-flex;
-    background: #f1f5f9;
+    background: #e2e8f0;
     border-radius: 6px;
     padding: 2px;
     gap: 2px;
@@ -565,6 +622,85 @@ body.dark-mode .ops-quick-pills .nav-link { color: #94a3b8 !important; }
 body.dark-mode .ops-quick-pills .nav-link.active { background: #1e293b !important; color: #818cf8 !important; }
 body.dark-mode .btn-jw-open { background: #1e1b4b !important; color: #a5b4fc !important; border-color: #3730a3 !important; }
 body.dark-mode .btn-jw-open:hover { background: #4f46e5 !important; color: #ffffff !important; }
+
+/* Dark mode right-side action card theme */
+body.dark-mode .ops-action-subcard,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+    border-top: 3px solid #818cf8 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+body.dark-mode .ops-action-subcard .ops-subcard-header,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-subcard-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark-mode .ops-action-subcard .ops-subcard-header .font-weight-bold,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-subcard-header .font-weight-bold {
+    color: #f8fafc !important;
+}
+body.dark-mode .ops-action-subcard .ops-subcard-header i.fa,
+body.dark-mode .ops-action-subcard .ops-subcard-header i[class^="dripicons-"],
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-subcard-header i.fa,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-subcard-header i[class^="dripicons-"] {
+    background: #1e1b4b !important;
+    color: #a5b4fc !important;
+}
+body.dark-mode .ops-action-subcard .ops-subcard-body,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-subcard-body {
+    background: #141c2e !important;
+}
+body.dark-mode .ops-action-subcard .ops-quick-pills,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-quick-pills {
+    background: #0b0f19 !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .ops-action-subcard .ops-quick-pills .nav-link,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-quick-pills .nav-link {
+    color: #94a3b8 !important;
+}
+body.dark-mode .ops-action-subcard .ops-quick-pills .nav-link.active,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-quick-pills .nav-link.active {
+    background: #1e293b !important;
+    color: #818cf8 !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .ops-action-subcard .ops-form-compact label,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact label {
+    color: #94a3b8 !important;
+}
+body.dark-mode .ops-action-subcard .ops-form-compact .form-control,
+body.dark-mode .ops-action-subcard .ops-form-compact input,
+body.dark-mode .ops-action-subcard .ops-form-compact select,
+body.dark-mode .ops-action-subcard .ops-form-compact textarea,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact .form-control,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact input,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact select,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact textarea {
+    background: #0b0f19 !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+    box-shadow: none !important;
+}
+body.dark-mode .ops-action-subcard .ops-form-compact input:focus,
+body.dark-mode .ops-action-subcard .ops-form-compact select:focus,
+body.dark-mode .ops-action-subcard .ops-form-compact textarea:focus,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact input:focus,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact select:focus,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact textarea:focus {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2) !important;
+}
+body.dark-mode .ops-action-subcard .btn-ops-submit,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .btn-ops-submit {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3) !important;
+}
+body.dark-mode .ops-action-subcard .btn-ops-submit:hover,
+body.dark-mode .ops-grid-2col > .ops-subcard:last-child .btn-ops-submit:hover {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.45) !important;
+}
 
 /* ---------------------------------------------------------------- Job work workspace (order → Material DC → GRN → bill) */
 .jw-workspace {

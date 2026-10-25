@@ -534,16 +534,16 @@
         </div>
 
         <!-- Right: Actions (Plan Production / Create BOM) -->
-        <div class="ops-subcard">
+        <div class="ops-subcard ops-action-subcard">
             <div class="ops-subcard-header">
                 <div class="d-flex align-items-center justify-content-between w-100">
                     <span class="font-weight-bold text-dark font-13"><i class="fa fa-cogs text-primary mr-1"></i> Production Actions</span>
-                    <ul class="nav nav-pills" role="tablist" style="gap: 3px;">
+                    <ul class="nav nav-pills ops-quick-pills" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active py-1 px-2 font-11 rounded" data-toggle="pill" href="#act-plan">Plan Order</a>
+                            <a class="nav-link active" data-toggle="pill" href="#act-plan">Plan Order</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link py-1 px-2 font-11 rounded" data-toggle="pill" href="#act-bom">+ New BOM</a>
+                            <a class="nav-link" data-toggle="pill" href="#act-bom">+ New BOM</a>
                         </li>
                     </ul>
                 </div>
@@ -742,7 +742,7 @@
         </div>
 
         <!-- Right: Create Project Form -->
-        <div class="ops-subcard">
+        <div class="ops-subcard ops-action-subcard">
             <div class="ops-subcard-header">
                 <span class="font-weight-bold text-dark font-13"><i class="fa fa-plus-circle text-primary mr-1"></i> Create Site / Project</span>
             </div>
@@ -861,16 +861,16 @@
         </div>
 
         <!-- Right: Disposal & Schemes -->
-        <div class="ops-subcard">
+        <div class="ops-subcard ops-action-subcard">
             <div class="ops-subcard-header">
                 <div class="d-flex align-items-center justify-content-between w-100">
                     <span class="font-weight-bold text-dark font-13"><i class="fa fa-wrench text-primary mr-1"></i> Stock Tools</span>
-                    <ul class="nav nav-pills" role="tablist" style="gap: 3px;">
+                    <ul class="nav nav-pills ops-quick-pills" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active py-1 px-2 font-11 rounded" data-toggle="pill" href="#act-writeoff">Expired Disposal</a>
+                            <a class="nav-link active" data-toggle="pill" href="#act-writeoff">Expired Disposal</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link py-1 px-2 font-11 rounded" data-toggle="pill" href="#act-scheme">Qty Scheme</a>
+                            <a class="nav-link" data-toggle="pill" href="#act-scheme">Qty Scheme</a>
                         </li>
                     </ul>
                 </div>
@@ -1007,7 +1007,7 @@
         </div>
 
         <!-- Right: Product Attributes Configurator -->
-        <div class="ops-subcard">
+        <div class="ops-subcard ops-action-subcard">
             <div class="ops-subcard-header">
                 <span class="font-weight-bold text-dark font-13"><i class="dripicons-tags text-primary mr-1"></i> Product Industry Attributes</span>
             </div>
