@@ -8,13 +8,14 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-25 13:37:00 (+05:30) — Restored session; fixed token compliance and verified operations suite (section 80)
+- **Last Updated:** 2026-10-25 13:50:00 (+05:30) — Resolved blank screen on /dashboard (section 81)
 - **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/main, origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`main`, `ui`, `enhanced-ui`)
 - **Latest Commits:**
+  - `8c3cde4` — "fix(dashboard): resolve blank screen by placing @extends on line 1 before @section"
   - `1b7dba5` — "fix(tokens): use brand tokens for section box purple icon in neo css"
   - `d301699` — "feat(ui): enlarge section-box title typography, add 10px spacing, and integrate crisp vector SVG icons"
   - `4003731` — "One brand colour system for every page, light and dark"
@@ -1851,4 +1852,22 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   1. Continue eliminating inline `style=""` in blade templates (moving layout values to reusable classes; colours are already tokenized).
   2. Fold custom button classes (`cx-btn`, `cp-btn`, `nav-btn`, `bottom-btn`, `btn-ops-submit`...) into the 4 standardized token roles (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost`).
   3. Move body `<link>` style tags into `@push('css')`.
+
+---
+
+## 81. Resolution of Blank White Screen on Dashboard (`/dashboard`) (2026-10-25, commit 8c3cde4)
+- **User Defect Report:** User navigated to `http://zolo-erp-pro.test/dashboard` and encountered a completely blank white screen.
+- **Root Cause Analysis:**
+  - HTTP status returned 200 OK, but response payload was **0 bytes** (empty string).
+  - In `resources/views/backend/index.blade.php`, line 1 had `@section('charts', '1')` followed by `@extends('backend.layout.main')` on line 2.
+  - In Laravel Blade compilation, `@extends` must strictly be the first statement. Placing `@section` before `@extends` causes Blade's compiler to treat it as an inline section rather than an extending template, which silently causes `$__env->make('backend.layout.main')->render()` to fail rendering output to the main buffer, emitting 0 bytes of HTML.
+- **Fix Applied:**
+  - Placed `@extends('backend.layout.main')` as the very first line of `resources/views/backend/index.blade.php`.
+  - Cleared compiled view cache (`php artisan view:clear`).
+  - Added automated regression guard in `tests/Feature/DashboardSmokeTest.php` asserting HTTP 200, non-empty response, and presence of core executive dashboard markup (`dashboard-counts`).
+  - Audited all blade files across `resources/views` to verify no other views place directives before `@extends`.
+- **Verification:**
+  - `Tests\Feature\DashboardSmokeTest`: PASS (118,131 bytes rendered).
+  - Browser subagent visual verification: Rendered full dashboard at `http://zolo-erp-pro.test/dashboard`, verified all KPI cards (Revenue, Profit, Sale Total, Purchase Total, Expense, Receivables, Payables, Cash & Bank), quick action buttons, cash flow charts, and navigation bar. Screenshot captured: `initial_nav_dashboard_1792916289130.png`.
+
 
