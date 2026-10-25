@@ -12,8 +12,8 @@ class DesignTokensTest extends TestCase
 {
     private const OLD_ACCENTS = '/#(4f46e5|6366f1|7c3aed|7c5cc4|8b5cf6|4338ca|6d28d9|eef2ff|f5f3ff|c7d2fe)\b|rgba?\(\s*(99,\s*102,\s*241|79,\s*70,\s*229|124,\s*58,\s*237)\b/i';
 
-    // Third-party, login (own art direction) and compiled vendor-style sheets.
-    private const SKIP_CSS = ['app.css', 'auth.css', 'dropzone.css', 'custom-rtl.css', 'style.css', 'grasp_mobile_progress_circle-1.0.0.min.css'];
+    // The token file itself, third-party, login (own art direction) and compiled vendor-style sheets.
+    private const SKIP_CSS = ['zolo-tokens.css', 'app.css', 'auth.css', 'dropzone.css', 'custom-rtl.css', 'style.css', 'grasp_mobile_progress_circle-1.0.0.min.css'];
 
     // Emails and PDF/print templates cannot use CSS variables.
     private const SKIP_VIEWS = '#/(mail|emails?)/|invoice|print|receipt|reciept|pdf|label|barcode|/auth/#i';

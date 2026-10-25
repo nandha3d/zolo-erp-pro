@@ -8,13 +8,13 @@
 
 .u-acc-primary:where(:not(.bootstrap-select)) { accent-color: var(--z-primary) !important; }
 .u-b-1_5px-dashed-neo-border:where(:not(.bootstrap-select)) { border: 1.5px dashed var(--neo-border) !important; }
-.u-b-1px-solid-border:where(:not(.bootstrap-select)) { border: 1px solid var(--z-border) !important; }
 .u-b-1px-solid-border-strong:where(:not(.bootstrap-select)) { border: 1px solid var(--z-border-strong) !important; }
+.u-b-1px-solid-border:where(:not(.bootstrap-select)) { border: 1px solid var(--z-border) !important; }
 .u-b-1px-solid-danger-border:where(:not(.bootstrap-select)) { border: 1px solid var(--z-danger-border) !important; }
 .u-b-1px-solid-info-border:where(:not(.bootstrap-select)) { border: 1px solid var(--z-info-border) !important; }
 .u-b-1px-solid-neo-border:where(:not(.bootstrap-select)) { border: 1px solid var(--neo-border) !important; }
-.u-b-1px-solid-primary:where(:not(.bootstrap-select)) { border: 1px solid var(--z-primary) !important; }
 .u-b-1px-solid-primary-text:where(:not(.bootstrap-select)) { border: 1px solid var(--z-primary-text) !important; }
+.u-b-1px-solid-primary:where(:not(.bootstrap-select)) { border: 1px solid var(--z-primary) !important; }
 .u-b-1px-solid-success-border:where(:not(.bootstrap-select)) { border: 1px solid var(--z-success-border) !important; }
 .u-b-1px-solid-warning-border:where(:not(.bootstrap-select)) { border: 1px solid var(--z-warning-border) !important; }
 .u-b-none:where(:not(.bootstrap-select)) { border: none !important; }
@@ -40,27 +40,27 @@
 .u-bg-neo-bg:where(:not(.bootstrap-select)) { background: var(--neo-bg) !important; }
 .u-bg-neo-primary-gradient:where(:not(.bootstrap-select)) { background: var(--neo-primary-gradient) !important; }
 .u-bg-neo-primary-light:where(:not(.bootstrap-select)) { background: var(--neo-primary-light) !important; }
-.u-bg-neo-surface:where(:not(.bootstrap-select)) { background: var(--neo-surface) !important; }
 .u-bg-neo-surface-card:where(:not(.bootstrap-select)) { background: var(--neo-surface-card) !important; }
+.u-bg-neo-surface:where(:not(.bootstrap-select)) { background: var(--neo-surface) !important; }
 .u-bg-none:where(:not(.bootstrap-select)) { background: none !important; }
-.u-bg-primary:where(:not(.bootstrap-select)) { background: var(--z-primary) !important; }
 .u-bg-primary-soft:where(:not(.bootstrap-select)) { background: var(--z-primary-soft) !important; }
+.u-bg-primary:where(:not(.bootstrap-select)) { background: var(--z-primary) !important; }
 .u-bg-rgb-primary-rgb-0_06:where(:not(.bootstrap-select)) { background: rgb(var(--z-primary-rgb) / 0.06) !important; }
-.u-bg-rgb-primary-rgb-0_1:where(:not(.bootstrap-select)) { background: rgb(var(--z-primary-rgb) / 0.1) !important; }
 .u-bg-rgb-primary-rgb-0_15:where(:not(.bootstrap-select)) { background: rgb(var(--z-primary-rgb) / 0.15) !important; }
+.u-bg-rgb-primary-rgb-0_1:where(:not(.bootstrap-select)) { background: rgb(var(--z-primary-rgb) / 0.1) !important; }
 .u-bg-rgba-16-185-129-0_1:where(:not(.bootstrap-select)) { background: rgba(16, 185, 129, 0.1) !important; }
 .u-bg-rgba-2-132-199-0_15:where(:not(.bootstrap-select)) { background: rgba(2, 132, 199, 0.15) !important; }
 .u-bg-rgba-234-88-12-0_15:where(:not(.bootstrap-select)) { background: rgba(234, 88, 12, 0.15) !important; }
 .u-bg-rgba-245-158-11-0_1:where(:not(.bootstrap-select)) { background: rgba(245, 158, 11, 0.1) !important; }
 .u-bg-rgba-59-130-246-0_1:where(:not(.bootstrap-select)) { background: rgba(59, 130, 246, 0.1) !important; }
-.u-bg-success:where(:not(.bootstrap-select)) { background: var(--z-success) !important; }
 .u-bg-success-soft:where(:not(.bootstrap-select)) { background: var(--z-success-soft) !important; }
-.u-bg-surface:where(:not(.bootstrap-select)) { background: var(--z-surface) !important; }
+.u-bg-success:where(:not(.bootstrap-select)) { background: var(--z-success) !important; }
 .u-bg-surface-2:where(:not(.bootstrap-select)) { background: var(--z-surface-2) !important; }
 .u-bg-surface-3:where(:not(.bootstrap-select)) { background: var(--z-surface-3) !important; }
+.u-bg-surface:where(:not(.bootstrap-select)) { background: var(--z-surface) !important; }
 .u-bg-transparent:where(:not(.bootstrap-select)) { background: transparent !important; }
-.u-bg-warning:where(:not(.bootstrap-select)) { background: var(--z-warning) !important; }
 .u-bg-warning-soft:where(:not(.bootstrap-select)) { background: var(--z-warning-soft) !important; }
+.u-bg-warning:where(:not(.bootstrap-select)) { background: var(--z-warning) !important; }
 .u-bg-x00cec9:where(:not(.bootstrap-select)) { background: #00cec9 !important; }
 .u-bg-x010429:where(:not(.bootstrap-select)) { background: #010429 !important; }
 .u-bg-x0984e3:where(:not(.bootstrap-select)) { background: #0984e3 !important; }
@@ -88,8 +88,8 @@
 .u-bl-4px-solid-x3b82f6:where(:not(.bootstrap-select)) { border-left: 4px solid #3b82f6 !important; }
 .u-blw-4px:where(:not(.bootstrap-select)) { border-left-width: 4px !important; }
 .u-bt-1px-dashed-border:where(:not(.bootstrap-select)) { border-top: 1px dashed var(--z-border) !important; }
-.u-bt-1px-solid-border:where(:not(.bootstrap-select)) { border-top: 1px solid var(--z-border) !important; }
 .u-bt-1px-solid-border-strong:where(:not(.bootstrap-select)) { border-top: 1px solid var(--z-border-strong) !important; }
+.u-bt-1px-solid-border:where(:not(.bootstrap-select)) { border-top: 1px solid var(--z-border) !important; }
 .u-bt-1px-solid-neo-border:where(:not(.bootstrap-select)) { border-top: 1px solid var(--neo-border) !important; }
 .u-bt-1px-solid-xdee2e6:where(:not(.bootstrap-select)) { border-top: 1px solid #dee2e6 !important; }
 .u-bt-2px-solid-black:where(:not(.bootstrap-select)) { border-top: 2px solid black !important; }
@@ -101,15 +101,15 @@
 .u-c-neo-primary:where(:not(.bootstrap-select)) { color: var(--neo-primary) !important; }
 .u-c-neo-text-primary:where(:not(.bootstrap-select)) { color: var(--neo-text-primary, var(--z-text)) !important; }
 .u-c-neo-text-secondary:where(:not(.bootstrap-select)) { color: var(--neo-text-secondary) !important; }
-.u-c-primary:where(:not(.bootstrap-select)) { color: var(--z-primary) !important; }
+.u-c-page-text-muted:where(:not(.bootstrap-select)) { color: var(--text-muted) !important; }
 .u-c-primary-hover:where(:not(.bootstrap-select)) { color: var(--z-primary-hover) !important; }
+.u-c-primary:where(:not(.bootstrap-select)) { color: var(--z-primary) !important; }
 .u-c-red:where(:not(.bootstrap-select)) { color: red !important; }
 .u-c-rgb-136-136-136:where(:not(.bootstrap-select)) { color: rgb(136, 136, 136) !important; }
 .u-c-success:where(:not(.bootstrap-select)) { color: var(--z-success) !important; }
-.u-c-text:where(:not(.bootstrap-select)) { color: var(--z-text) !important; }
 .u-c-text-2:where(:not(.bootstrap-select)) { color: var(--z-text-2) !important; }
 .u-c-text-muted:where(:not(.bootstrap-select)) { color: var(--z-text-muted) !important; }
-.u-c-page-text-muted:where(:not(.bootstrap-select)) { color: var(--text-muted) !important; }
+.u-c-text:where(:not(.bootstrap-select)) { color: var(--z-text) !important; }
 .u-c-warning:where(:not(.bootstrap-select)) { color: var(--z-warning) !important; }
 .u-c-white:where(:not(.bootstrap-select)) { color: white !important; }
 .u-c-x004085:where(:not(.bootstrap-select)) { color: #004085 !important; }
@@ -121,15 +121,15 @@
 .u-cur-pointer:where(:not(.bootstrap-select)) { cursor: pointer !important; }
 .u-d-block:where(:not(.bootstrap-select)) { display: block !important; }
 .u-d-flex:where(:not(.bootstrap-select)) { display: flex !important; }
-.u-d-inline:where(:not(.bootstrap-select)) { display: inline !important; }
 .u-d-inline-block:where(:not(.bootstrap-select)) { display: inline-block !important; }
 .u-d-inline-flex:where(:not(.bootstrap-select)) { display: inline-flex !important; }
+.u-d-inline:where(:not(.bootstrap-select)) { display: inline !important; }
 .u-dir-column:where(:not(.bootstrap-select)) { flex-direction: column !important; }
 .u-ff-monospace:where(:not(.bootstrap-select)) { font-family: monospace !important; }
 .u-fl-right:where(:not(.bootstrap-select)) { float: right !important; }
-.u-flex-1:where(:not(.bootstrap-select)) { flex: 1 !important; }
 .u-flex-1-1-0:where(:not(.bootstrap-select)) { flex: 1 1 0 !important; }
 .u-flex-1-1-auto:where(:not(.bootstrap-select)) { flex: 1 1 auto !important; }
+.u-flex-1:where(:not(.bootstrap-select)) { flex: 1 !important; }
 .u-fs-0_72rem:where(:not(.bootstrap-select)) { font-size: 0.72rem !important; }
 .u-fs-0_82rem:where(:not(.bootstrap-select)) { font-size: 0.82rem !important; }
 .u-fs-0_85rem:where(:not(.bootstrap-select)) { font-size: 0.85rem !important; }
@@ -222,10 +222,10 @@
 .u-ls-0_5px:where(:not(.bootstrap-select)) { letter-spacing: 0.5px !important; }
 .u-ls-3px:where(:not(.bootstrap-select)) { letter-spacing: 3px !important; }
 .u-lst-none:where(:not(.bootstrap-select)) { list-style-type: none !important; }
-.u-m-0:where(:not(.bootstrap-select)) { margin: 0 !important; }
 .u-m-0-0-6px:where(:not(.bootstrap-select)) { margin: 0 0 6px !important; }
 .u-m-0-6px:where(:not(.bootstrap-select)) { margin: 0 -6px !important; }
 .u-m-0-auto:where(:not(.bootstrap-select)) { margin: 0 auto !important; }
+.u-m-0:where(:not(.bootstrap-select)) { margin: 0 !important; }
 .u-m-10px:where(:not(.bootstrap-select)) { margin: 10px !important; }
 .u-m-15px-0:where(:not(.bootstrap-select)) { margin: 15px 0 !important; }
 .u-m-auto:where(:not(.bootstrap-select)) { margin: auto !important; }
@@ -291,6 +291,7 @@
 .u-minw-7rem:where(:not(.bootstrap-select)) { min-width: 7rem !important; }
 .u-ml-30px:where(:not(.bootstrap-select)) { margin-left: -30px !important; }
 .u-ml-auto:where(:not(.bootstrap-select)) { margin-left: auto !important; }
+.u-mr-10px:where(:not(.bootstrap-select)) { margin-right: 10px !important; }
 .u-mr-6px:where(:not(.bootstrap-select)) { margin-right: 6px !important; }
 .u-mt-10px:where(:not(.bootstrap-select)) { margin-top: 10px !important; }
 .u-mt-15px:where(:not(.bootstrap-select)) { margin-top: 15px !important; }
@@ -317,7 +318,6 @@
 .u-ov-hidden:where(:not(.bootstrap-select)) { overflow: hidden !important; }
 .u-ov-visible:where(:not(.bootstrap-select)) { overflow: visible !important; }
 .u-ovy-auto:where(:not(.bootstrap-select)) { overflow-y: auto !important; }
-.u-p-0:where(:not(.bootstrap-select)) { padding: 0 !important; }
 .u-p-0-0:where(:not(.bootstrap-select)) { padding: 0 0 !important; }
 .u-p-0-10px:where(:not(.bootstrap-select)) { padding: 0 10px !important; }
 .u-p-0-11px:where(:not(.bootstrap-select)) { padding: 0 11px !important; }
@@ -326,12 +326,13 @@
 .u-p-0-16px:where(:not(.bootstrap-select)) { padding: 0 16px !important; }
 .u-p-0-22px:where(:not(.bootstrap-select)) { padding: 0 22px !important; }
 .u-p-0-6px:where(:not(.bootstrap-select)) { padding: 0 6px !important; }
+.u-p-0:where(:not(.bootstrap-select)) { padding: 0 !important; }
 .u-p-0_35rem-0_75rem:where(:not(.bootstrap-select)) { padding: 0.35rem 0.75rem !important; }
-.u-p-10px:where(:not(.bootstrap-select)) { padding: 10px !important; }
-.u-p-10px-16px:where(:not(.bootstrap-select)) { padding: 10px 16px !important; }
 .u-p-10px-16px-10px-0:where(:not(.bootstrap-select)) { padding: 10px 16px 10px 0 !important; }
+.u-p-10px-16px:where(:not(.bootstrap-select)) { padding: 10px 16px !important; }
 .u-p-10px-18px:where(:not(.bootstrap-select)) { padding: 10px 18px !important; }
 .u-p-10px-4px:where(:not(.bootstrap-select)) { padding: 10px 4px !important; }
+.u-p-10px:where(:not(.bootstrap-select)) { padding: 10px !important; }
 .u-p-12px-18px:where(:not(.bootstrap-select)) { padding: 12px 18px !important; }
 .u-p-12px-20px:where(:not(.bootstrap-select)) { padding: 12px 20px !important; }
 .u-p-14px-16px:where(:not(.bootstrap-select)) { padding: 14px 16px !important; }
@@ -352,8 +353,8 @@
 .u-p-4px-0:where(:not(.bootstrap-select)) { padding: 4px 0 !important; }
 .u-p-4px-6px:where(:not(.bootstrap-select)) { padding: 4px 6px !important; }
 .u-p-4px-8px:where(:not(.bootstrap-select)) { padding: 4px 8px !important; }
-.u-p-5px:where(:not(.bootstrap-select)) { padding: 5px !important; }
 .u-p-5px-8px:where(:not(.bootstrap-select)) { padding: 5px 8px !important; }
+.u-p-5px:where(:not(.bootstrap-select)) { padding: 5px !important; }
 .u-p-6px-12px:where(:not(.bootstrap-select)) { padding: 6px 12px !important; }
 .u-p-6px-16px:where(:not(.bootstrap-select)) { padding: 6px 16px !important; }
 .u-p-8px:where(:not(.bootstrap-select)) { padding: 8px !important; }
@@ -368,8 +369,8 @@
 .u-pr-8px:where(:not(.bootstrap-select)) { padding-right: 8px !important; }
 .u-pt-7px:where(:not(.bootstrap-select)) { padding-top: 7px !important; }
 .u-pt-8px:where(:not(.bootstrap-select)) { padding-top: 8px !important; }
-.u-r-10px:where(:not(.bootstrap-select)) { border-radius: 10px !important; }
 .u-r-10px-0-0-10px:where(:not(.bootstrap-select)) { border-radius: 10px 0 0 10px !important; }
+.u-r-10px:where(:not(.bootstrap-select)) { border-radius: 10px !important; }
 .u-r-12px:where(:not(.bootstrap-select)) { border-radius: 12px !important; }
 .u-r-4px:where(:not(.bootstrap-select)) { border-radius: 4px !important; }
 .u-r-50pct:where(:not(.bootstrap-select)) { border-radius: 50% !important; }
@@ -383,8 +384,8 @@
 .u-sh-0-10px-25px-rgba-0-0-0-0_15:where(:not(.bootstrap-select)) { box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important; }
 .u-sh-0-12px-30px-rgba-0-0-0-0_25:where(:not(.bootstrap-select)) { box-shadow: 0 12px 30px rgba(0,0,0,0.25) !important; }
 .u-sh-0-16px-40px-rgba-0-0-0-0_22:where(:not(.bootstrap-select)) { box-shadow: 0 16px 40px rgba(0,0,0,0.22) !important; }
-.u-sh-0-2px-8px-rgb-primary-rgb-0_3:where(:not(.bootstrap-select)) { box-shadow: 0 2px 8px rgb(var(--z-primary-rgb) / 0.3) !important; }
 .u-sh-0-2px-8px-rgb-primary-rgb-0_35:where(:not(.bootstrap-select)) { box-shadow: 0 2px 8px rgb(var(--z-primary-rgb) / 0.35) !important; }
+.u-sh-0-2px-8px-rgb-primary-rgb-0_3:where(:not(.bootstrap-select)) { box-shadow: 0 2px 8px rgb(var(--z-primary-rgb) / 0.3) !important; }
 .u-sh-0-2px-8px-rgba-0-0-0-0_03:where(:not(.bootstrap-select)) { box-shadow: 0 -2px 8px rgba(0,0,0,0.03) !important; }
 .u-sh-0-5px-10px-rgba-44-44-44-0_1:where(:not(.bootstrap-select)) { box-shadow: 0 5px 10px rgba(44,44,44,0.1) !important; }
 .u-sh-4px-0-20px-rgba-0-0-0-0_15:where(:not(.bootstrap-select)) { box-shadow: -4px 0 20px rgba(0,0,0,0.15) !important; }
@@ -478,6 +479,6 @@
 .u-w-calc-100pct-40px:where(:not(.bootstrap-select)) { width: calc(100% - 40px) !important; }
 .u-wrap-wrap:where(:not(.bootstrap-select)) { flex-wrap: wrap !important; }
 .u-ws-nowrap:where(:not(.bootstrap-select)) { white-space: nowrap !important; }
-.u-z-10:where(:not(.bootstrap-select)) { z-index: 10 !important; }
 .u-z-1065:where(:not(.bootstrap-select)) { z-index: 1065 !important; }
+.u-z-10:where(:not(.bootstrap-select)) { z-index: 10 !important; }
 .u-z-999:where(:not(.bootstrap-select)) { z-index: 999 !important; }
