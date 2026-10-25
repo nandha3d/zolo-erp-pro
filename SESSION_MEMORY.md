@@ -8,14 +8,19 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-25 11:30:00 (+05:30) — Upstream pull origin/main into ui (sections 66-74)
+- **Last Updated:** 2026-10-25 13:37:00 (+05:30) — Restored session; fixed token compliance and verified operations suite (section 80)
 - **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/main, origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`main`, `ui`, `enhanced-ui`)
 - **Latest Commits:**
-  - `1b1baf1` — "Drop Summary Report from the sidebar; Profit & Loss is the one P&L"
+  - `1b7dba5` — "fix(tokens): use brand tokens for section box purple icon in neo css"
+  - `d301699` — "feat(ui): enlarge section-box title typography, add 10px spacing, and integrate crisp vector SVG icons"
+  - `4003731` — "One brand colour system for every page, light and dark"
+  - `54fde10` — "feat(product): unify add product into single page with template sectionized boxes and zero scroll"
+  - `fd360f7` — "Give Operations right-side action cards one shared theme"
+  - `ad16cc5` — "Expand company dialog dimensions, add color differentiation per section box, and prevent field penetration"
   - `e97dae3` — "Render expense, income and notification modals only on their own pages"
   - `b668ed6` — "Remove duplicate navigation: Pending Sales, old Returns lists, Add entries"
   - `05ec2b7` — "Make every sidebar link open a real page; merge the two job work entries"
@@ -1831,3 +1836,19 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - `x-ui.badge` / `x-ui.alert` / `x-ui.action-item` divider: inline styles replaced by classes in zolo-components.css.
 - **Guard:** `tests/Unit/DesignTokensTest.php` (in `phpunit.operations.xml`, so CI runs it) fails if old accents return in app CSS or blade styles.
 - **Not yet done (next phases):** 2,864 inline `style=""` in 192 blades and 116 `<style>` blocks still exist (colours now tokenised, layout values remain) -> move to classes module by module (Sales/Purchase first); fold ~40 custom button classes (`cx-btn`, `cp-btn`, `nav-btn`, `bottom-btn`, `btn-ops-submit`...) into the 4 roles; move body `<link>`s into `@push('css')`.
+
+---
+
+## 80. Brand Token Alignment & Test Suite Verification (2026-10-25, commit 1b7dba5)
+- **Active Git Branch:** `ui` (working tree clean).
+- **Session Restored & Verified:**
+  - Mandatory initialization routine completed: `SESSION_MEMORY.md` read, git status on `ui` verified.
+  - Executed `DesignTokensTest`: Caught 2 hard-coded color offenders in `zolo-erp-neo.css:1798-1799` (introduced during Section 79 SVG icon commit `d301699`).
+  - Swapped hardcoded `#7c3aed` and `rgba(124, 58, 237, 0.12)` to `var(--z-primary-soft-strong)` and `var(--z-primary)` / `var(--z-primary-text)` in light and dark mode.
+  - `Tests\Unit\DesignTokensTest`: 2 passed (100% green).
+  - `phpunit.operations.xml`: 73 passed, 3 skipped (MySQL row-lock proof), 625 assertions 100% green.
+- **Next Steps / Active Backlog:**
+  1. Continue eliminating inline `style=""` in blade templates (moving layout values to reusable classes; colours are already tokenized).
+  2. Fold custom button classes (`cx-btn`, `cp-btn`, `nav-btn`, `bottom-btn`, `btn-ops-submit`...) into the 4 standardized token roles (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost`).
+  3. Move body `<link>` style tags into `@push('css')`.
+
