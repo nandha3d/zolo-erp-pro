@@ -1884,12 +1884,12 @@ section.forms:has(.product-single-screen-card) .container-fluid {
 
 .zolo-product-grid {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 10px !important;
   align-items: stretch !important;
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1200px) {
   .zolo-product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
@@ -1899,6 +1899,113 @@ section.forms:has(.product-single-screen-card) .container-fluid {
   .zolo-product-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
+}
+
+/* ==========================================================================
+   SEAMLESS INPUT GROUPS & INTEGRATED ICONS
+   ========================================================================== */
+.zolo-product-grid .input-group,
+.product-extended-details-container .input-group,
+.zolo-inventory-stripe .input-group {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+.zolo-product-grid .input-group-prepend,
+.product-extended-details-container .input-group-prepend,
+.zolo-product-grid .input-group-append,
+.product-extended-details-container .input-group-append {
+  display: flex !important;
+  align-items: stretch !important;
+  margin: 0 !important;
+}
+
+.zolo-product-grid .input-group-prepend .input-group-text,
+.product-extended-details-container .input-group-prepend .input-group-text {
+  height: 31px !important;
+  min-height: 31px !important;
+  padding: 0 9px !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--z-field-bg, #ffffff) !important;
+  border: 1px solid var(--z-field-border, #cbd5e1) !important;
+  border-right: none !important;
+  border-radius: 6px 0 0 6px !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  transition: border-color 0.15s ease, color 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+body.dark-mode .zolo-product-grid .input-group-prepend .input-group-text,
+body.dark-mode .product-extended-details-container .input-group-prepend .input-group-text {
+  background-color: #1e2640 !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+.zolo-product-grid .input-group-prepend + .form-control,
+.product-extended-details-container .input-group-prepend + .form-control {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: 1px solid var(--z-field-border, #cbd5e1) !important;
+}
+
+body.dark-mode .zolo-product-grid .input-group-prepend + .form-control,
+body.dark-mode .product-extended-details-container .input-group-prepend + .form-control {
+  border-left-color: #334155 !important;
+}
+
+.input-group:focus-within .input-group-text {
+  border-color: var(--z-primary) !important;
+  color: var(--z-primary) !important;
+}
+
+.input-group:focus-within .form-control {
+  border-color: var(--z-primary) !important;
+}
+
+.zolo-product-grid .input-group-append .btn,
+.product-extended-details-container .input-group-append .btn,
+.zolo-product-grid .input-group-append .input-group-text,
+.product-extended-details-container .input-group-append .input-group-text {
+  height: 31px !important;
+  min-height: 31px !important;
+  padding: 0 10px !important;
+  font-size: 11.5px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--z-field-border, #cbd5e1) !important;
+  border-left: none !important;
+  border-radius: 0 6px 6px 0 !important;
+  background-color: var(--z-surface-2, #f8fafc) !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  margin: 0 !important;
+}
+
+body.dark-mode .zolo-product-grid .input-group-append .btn,
+body.dark-mode .product-extended-details-container .input-group-append .btn,
+body.dark-mode .zolo-product-grid .input-group-append .input-group-text,
+body.dark-mode .product-extended-details-container .input-group-append .input-group-text {
+  background-color: #1e2640 !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+.input-group > .form-control:not(:last-child) {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.input-group > .bootstrap-select:not(:last-child) > .btn {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
 }
 
 .zolo-product-grid .zolo-section-box {
@@ -1934,7 +2041,8 @@ body.dark-mode .zolo-product-grid label {
   color: #94a3b8 !important;
 }
 
-.zolo-product-grid .form-control {
+.zolo-product-grid .form-control,
+.product-extended-details-container .form-control {
   height: 31px !important;
   min-height: 31px !important;
   padding: 2px 8px !important;
@@ -2058,10 +2166,251 @@ body.dark-mode .zolo-product-grid .dropzone {
   min-width: 0 !important;
 }
 
-/* Extended conditional sections below the top 4-box product grid:
-   Arranges conditional boxes in the same 4-column line as the primary top boxes.
-   If 3 boxes are enabled, the widest section (variants) occupies 2 grids, and the
-   other 2 boxes (initial stock, diff price) occupy 1 grid each on the exact same row. */
+/* ==========================================================================
+   INVENTORY & STOCK CONTROL HORIZONTAL STRIPE
+   Full-width control bar placed under top 3 primary boxes with toggle buttons
+   ========================================================================== */
+.zolo-inventory-stripe {
+  width: 100% !important;
+  margin-top: 10px !important;
+  margin-bottom: 8px !important;
+  padding: 8px 14px !important;
+  background: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  border-left: 4px solid #f59e0b !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 8px 14px !important;
+}
+
+body.dark-mode .zolo-inventory-stripe {
+  background: #182035 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-left-color: #f59e0b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.zolo-inventory-stripe-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.zolo-inventory-stripe-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 5px !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #d97706 !important;
+}
+
+.zolo-inventory-stripe-title {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  color: #b45309 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+body.dark-mode .zolo-inventory-stripe-title {
+  color: #fbbf24 !important;
+}
+
+.zolo-inventory-stripe-alert {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+}
+
+.zolo-inventory-stripe-alert label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.zolo-inventory-stripe-alert input {
+  width: 130px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 2px 8px !important;
+  font-size: 11.5px !important;
+  border-radius: 6px !important;
+}
+
+.zolo-inventory-stripe-divider {
+  width: 1px !important;
+  height: 24px !important;
+  background: var(--neo-border, #e2e8f0) !important;
+  flex-shrink: 0 !important;
+}
+
+body.dark-mode .zolo-inventory-stripe-divider {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.zolo-inventory-stripe-toggles {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  flex: 1 1 auto !important;
+}
+
+/* Individual Toggle Pill Button */
+.zolo-toggle-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 10px !important;
+  border-radius: 16px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  background: rgba(0, 0, 0, 0.02) !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  margin: 0 !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+}
+
+body.dark-mode .zolo-toggle-pill {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8 !important;
+}
+
+.zolo-toggle-pill:hover {
+  border-color: var(--z-primary) !important;
+  color: var(--neo-text-primary, #1e293b) !important;
+}
+
+body.dark-mode .zolo-toggle-pill:hover {
+  color: #f1f5f9 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.zolo-toggle-pill input[type="checkbox"] {
+  display: none !important;
+}
+
+.zolo-toggle-pill .pill-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #94a3b8 !important;
+  transition: background-color 0.15s ease, transform 0.15s ease !important;
+}
+
+/* Active / Checked States */
+.zolo-toggle-pill.is-active,
+.zolo-toggle-pill:has(input:checked) {
+  background: var(--z-primary-soft, #f5e6f5) !important;
+  border-color: var(--z-primary) !important;
+  color: var(--z-primary) !important;
+  font-weight: 600 !important;
+}
+
+body.dark-mode .zolo-toggle-pill.is-active,
+body.dark-mode .zolo-toggle-pill:has(input:checked) {
+  background: rgba(125, 40, 126, 0.2) !important;
+  border-color: var(--zp-400, #c37ac4) !important;
+  color: var(--zp-200, #ebcdeb) !important;
+}
+
+.zolo-toggle-pill.is-active .pill-dot,
+.zolo-toggle-pill:has(input:checked) .pill-dot {
+  background: var(--z-primary) !important;
+  transform: scale(1.3) !important;
+}
+
+/* Per-role active colors */
+.zolo-toggle-pill[data-role="amber"].is-active,
+.zolo-toggle-pill[data-role="amber"]:has(input:checked) {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+body.dark-mode .zolo-toggle-pill[data-role="amber"].is-active,
+body.dark-mode .zolo-toggle-pill[data-role="amber"]:has(input:checked) {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border-color: #fbbf24 !important;
+  color: #fde68a !important;
+}
+.zolo-toggle-pill[data-role="amber"].is-active .pill-dot,
+.zolo-toggle-pill[data-role="amber"]:has(input:checked) .pill-dot {
+  background: #f59e0b !important;
+}
+
+.zolo-toggle-pill[data-role="emerald"].is-active,
+.zolo-toggle-pill[data-role="emerald"]:has(input:checked) {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: #10b981 !important;
+  color: #047857 !important;
+}
+body.dark-mode .zolo-toggle-pill[data-role="emerald"].is-active,
+body.dark-mode .zolo-toggle-pill[data-role="emerald"]:has(input:checked) {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #34d399 !important;
+  color: #a7f3d0 !important;
+}
+.zolo-toggle-pill[data-role="emerald"].is-active .pill-dot,
+.zolo-toggle-pill[data-role="emerald"]:has(input:checked) .pill-dot {
+  background: #10b981 !important;
+}
+
+.zolo-toggle-pill[data-role="blue"].is-active,
+.zolo-toggle-pill[data-role="blue"]:has(input:checked) {
+  background: rgba(37, 99, 235, 0.1) !important;
+  border-color: #2563eb !important;
+  color: #1d4ed8 !important;
+}
+body.dark-mode .zolo-toggle-pill[data-role="blue"].is-active,
+body.dark-mode .zolo-toggle-pill[data-role="blue"]:has(input:checked) {
+  background: rgba(37, 99, 235, 0.2) !important;
+  border-color: #60a5fa !important;
+  color: #bfdbfe !important;
+}
+.zolo-toggle-pill[data-role="blue"].is-active .pill-dot,
+.zolo-toggle-pill[data-role="blue"]:has(input:checked) .pill-dot {
+  background: #2563eb !important;
+}
+
+.zolo-toggle-pill[data-role="rose"].is-active,
+.zolo-toggle-pill[data-role="rose"]:has(input:checked) {
+  background: rgba(225, 29, 72, 0.1) !important;
+  border-color: #e11d48 !important;
+  color: #be123c !important;
+}
+body.dark-mode .zolo-toggle-pill[data-role="rose"].is-active,
+body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
+  background: rgba(225, 29, 72, 0.2) !important;
+  border-color: #fb7185 !important;
+  color: #fecdd3 !important;
+}
+.zolo-toggle-pill[data-role="rose"].is-active .pill-dot,
+.zolo-toggle-pill[data-role="rose"]:has(input:checked) .pill-dot {
+  background: #e11d48 !important;
+}
+
+/* Extended conditional sections below the top primary grid:
+   Arranges conditional boxes in a 4-column balanced line.
+   If 3 boxes are enabled, the widest section occupies 2 grids, and the
+   other 2 boxes occupy 1 grid each on the exact same row. */
 .product-extended-details-container {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
@@ -2081,31 +2430,30 @@ body.dark-mode .zolo-product-grid .dropzone {
   }
 }
 
-/* Sections that occupy 1 grid (matching individual top primary boxes) */
+/* Sections that occupy 1 grid (matching individual columns) */
 .product-extended-details-container > #initial-stock-section,
-.product-extended-details-container > #diffPrice-section {
+.product-extended-details-container > #diffPrice-section,
+.product-extended-details-container > #imei-section {
   grid-column: span 1 !important;
-  width: 100% !important;
+  min-width: 0 !important;
 }
 
 /* Sections that need maximum width: occupy 2 grids in 4 columns */
-.product-extended-details-container > #variant-section {
-  grid-column: span 2 !important;
-  width: 100% !important;
-}
-
+.product-extended-details-container > #variant-section,
+.product-extended-details-container > #batch-section,
 .product-extended-details-container > #promo-container {
   grid-column: span 2 !important;
-  width: 100% !important;
+  min-width: 0 !important;
 }
 
 .product-extended-details-container > #combo {
   grid-column: span 4 !important;
-  width: 100% !important;
+  min-width: 0 !important;
 }
 
 @media (max-width: 1400px) {
   .product-extended-details-container > #variant-section,
+  .product-extended-details-container > #batch-section,
   .product-extended-details-container > #promo-container,
   .product-extended-details-container > #combo {
     grid-column: span 2 !important;
@@ -2115,7 +2463,9 @@ body.dark-mode .zolo-product-grid .dropzone {
 @media (max-width: 768px) {
   .product-extended-details-container > #initial-stock-section,
   .product-extended-details-container > #diffPrice-section,
+  .product-extended-details-container > #imei-section,
   .product-extended-details-container > #variant-section,
+  .product-extended-details-container > #batch-section,
   .product-extended-details-container > #promo-container,
   .product-extended-details-container > #combo {
     grid-column: span 1 !important;
@@ -2892,6 +3242,48 @@ textarea.form-control:focus {
 .form-control::placeholder {
   color: var(--neo-text-muted) !important;
   font-size: 13px !important;
+}
+
+/* Compact & Seamless Form Controls for Product Page */
+.zolo-product-grid .form-control,
+.zolo-product-grid input[type="text"].form-control,
+.zolo-product-grid input[type="number"].form-control,
+.product-extended-details-container .form-control,
+.product-extended-details-container input[type="text"].form-control,
+.product-extended-details-container input[type="number"].form-control,
+.zolo-inventory-stripe .form-control,
+.zolo-inventory-stripe input[type="number"].form-control {
+  height: 31px !important;
+  min-height: 31px !important;
+  padding: 2px 8px !important;
+  font-size: 11.5px !important;
+  border-radius: 6px !important;
+}
+
+.zolo-product-grid .input-group-prepend + .form-control,
+.zolo-product-grid .input-group-prepend + input[type="text"].form-control,
+.product-extended-details-container .input-group-prepend + .form-control,
+.product-extended-details-container .input-group-prepend + input[type="text"].form-control {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: 1px solid var(--z-field-border, #cbd5e1) !important;
+}
+
+body.dark-mode .zolo-product-grid .input-group-prepend + .form-control,
+body.dark-mode .zolo-product-grid .input-group-prepend + input[type="text"].form-control,
+body.dark-mode .product-extended-details-container .input-group-prepend + .form-control,
+body.dark-mode .product-extended-details-container .input-group-prepend + input[type="text"].form-control {
+  border-left-color: #334155 !important;
+}
+
+.zolo-product-grid .input-group-append > .btn,
+.product-extended-details-container .input-group-append > .btn,
+.zolo-product-grid .input-group-append > .input-group-text,
+.product-extended-details-container .input-group-append > .input-group-text {
+  height: 31px !important;
+  min-height: 31px !important;
+  padding: 0 8px !important;
+  border-radius: 0 6px 6px 0 !important;
 }
 
 /* Unified Buttons Across Platform */

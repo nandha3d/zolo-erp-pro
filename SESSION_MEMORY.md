@@ -1943,4 +1943,45 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
   - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles).
 
+---
+
+## 84. Product Create Architecture: 3 Top Boxes, Full-Width Inventory Stripe, Seamless Input Groups & Batch/IMEI Sections (2026-10-25, branch ui)
+- **User Feedback & Requirements:**
+  - "the icon and the input fields are not matching and its not seamless. the inventory and stock control can be a stripe under the primary boxes with full content width and make them as a toggle button. and the 3 primary boxes are occupying the top section, and then the strip of control toggle buttons, then the toggle boxes, also where are the batch & expiry, imei serial numbers, etc."
+- **Key Architectural Solutions:**
+  1. **Top Section (3 Primary Boxes):**
+     - Updated `.zolo-product-grid` from 4 columns to 3 columns (`repeat(3, minmax(0, 1fr))`).
+     - Box 1: Product Details (Blue accent, 403px width)
+     - Box 2: Pricing & Tax (Emerald accent, 403px width)
+     - Box 3: Media, Details & SEO (Purple accent, 403px width)
+     - Removed the cramped 4th box from the top grid, giving all 3 primary boxes ample room (~403px each on 1230px container) with zero cramping.
+  2. **Inventory & Stock Control Horizontal Full-Width Stripe:**
+     - Created `.zolo-inventory-stripe` with `width: 100%`, amber theme, full content width directly beneath the 3 top boxes.
+     - Header integrates an inline `Alert Quantity` input (`#alert_quantity`) on the right with comfortable 130px width.
+     - Controls rendered as modern interactive toggle buttons (`.zolo-toggle-pill`) with active state highlights, indicator dots, and semantic color accents (amber, emerald, blue, purple, rose).
+     - Active classes (`is-active`) dynamically synchronized in JavaScript on checkbox changes.
+  3. **Seamless Input Groups & Icons:**
+     - Root cause: General `.form-control` rule at line 3213 was imposing `padding: 9px 14px !important`, `border-radius: 10px !important`, and `font-size: 13.5px !important` over compact product inputs, breaking seam alignment with prepend icons and clipping date text (`25-10-20`).
+     - Added targeted overrides for `.zolo-product-grid`, `.product-extended-details-container`, and `.zolo-inventory-stripe`:
+       - Enforced uniform 31px height across inputs, prepends, appends, and select pickers.
+       - `.input-group-prepend .input-group-text`: `height: 31px`, `border-right: none`, `border-radius: 6px 0 0 6px`, matching field background in both light and dark mode.
+       - `.input-group-prepend + .form-control`: `border-top-left-radius: 0`, `border-bottom-left-radius: 0`, `border-left: 1px solid var(--z-field-border)`.
+       - Added `.input-group:focus-within` border synchronization.
+       - Added click delegation on prepend icons to focus adjacent inputs.
+  4. **Batch & Expiry and IMEI/Serial Number Extended Sections:**
+     - Added `#batch-section` (Warehouse | Batch No | Expired Date | Initial Qty) spanning 2 columns in the extended grid, toggled via `is_batch`.
+     - Added `#imei-section` (Warehouse | IMEI or Serial Numbers) spanning 1 column in the extended grid, toggled via `is_imei`.
+     - Initialized jQuery UI datepicker on `#batch-section .datepicker`.
+     - Handled persistence in `ProductController@store` to create `ProductBatch` and `Product_Warehouse` records when batch or IMEI data is submitted.
+- **Verification:**
+  - Automated Playwright verification (`scratch/verify_new_layout.js`):
+    - Top grid has exactly 3 boxes of 403px width each.
+    - Full-width stripe measures exactly 1230px with 10 toggle pill buttons.
+    - When 3 boxes enabled (`Initial Stock` [300px] + `Diff Price` [300px] + `Variants` [610px]), all align on the exact same horizontal row (`top: 748.3px`).
+    - Batch, IMEI, and Promotional Price sections toggle cleanly and display dates without clipping (`25-10-2026`).
+  - Dark mode verified cleanly across all boxes and stripe.
+  - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
+  - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).
+
+
 
