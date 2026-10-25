@@ -158,7 +158,7 @@
 <script type="text/javascript">
     $("ul#hrm").siblings('a').attr('aria-expanded','true');
     $("ul#hrm").addClass("show");
-    $("ul#hrm #dept-menu").addClass("active");
+    $("ul#hrm #overtime-menu").addClass("active");
 
     var overtime_id = [];
     var user_verified = <?php echo json_encode(config('app.user_verified')) ?>;

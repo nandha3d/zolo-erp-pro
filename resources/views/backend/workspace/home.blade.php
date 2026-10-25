@@ -39,7 +39,7 @@
                 <p class="zw-eyebrow">@if($company->group){{ $company->group->name }} <span aria-hidden="true">›</span> @endif<code>{{ $company->code }}</code></p>
                 <h1>{{ $name }}</h1>
                 <p class="zw-tags">
-                    <span class="zw-chip">{{ $industries[$industry] ?? 'General Trading' }}@if(!empty($current['subtype'])) · {{ ucwords(str_replace('_', ' ', $current['subtype'])) }}@endif</span>
+                    <span class="zw-chip">{{ $industries[$industry] ?? 'General Trading' }}@if(!empty($current['subtype'])) · {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($current['subtype']) }}@endif</span>
                     @if($company->trade_name && $company->legal_name !== $company->trade_name)<span class="zw-legal">{{ $company->legal_name }}</span>@endif
                 </p>
             </div>

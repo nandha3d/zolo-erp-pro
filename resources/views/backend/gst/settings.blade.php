@@ -127,6 +127,22 @@
                     </fieldset>
                 </form>
             </div>
+            <div class="gst-card">
+                <h2>Exports and TDS</h2>
+                <p class="gst-muted">The Letter of Undertaking (LUT, form RFD-11) lets you export or supply to SEZ without paying IGST. Turn on 194Q if your turnover last year was over ₹10 crore: you then deduct 0.1% TDS on purchases above ₹50 lakh a year from one supplier.</p>
+                @php $trade = \App\Services\Tax\GstSetupService::tradeSettings($company->id); @endphp
+                <form method="POST" action="{{ url('/settings/gst/trade') }}" class="gst-form">@csrf<input type="hidden" name="tab" value="registration">
+                    <fieldset @disabled(!$canManage)>
+                    <div class="row">
+                        <div class="col-md-3"><label for="trade-lut">LUT ARN / number</label><input id="trade-lut" name="lut_number" maxlength="50" value="{{ $trade['lut_number'] }}" placeholder="AD330326000123X"></div>
+                        <div class="col-md-2"><label for="trade-lut-from">Valid from</label><input id="trade-lut-from" name="lut_valid_from" type="date" value="{{ $trade['lut_valid_from'] }}"></div>
+                        <div class="col-md-2"><label for="trade-lut-to">Valid to</label><input id="trade-lut-to" name="lut_valid_to" type="date" value="{{ $trade['lut_valid_to'] }}"></div>
+                        <div class="col-md-3 d-flex align-items-end"><label class="mb-2"><input type="hidden" name="tds_194q" value="0"><input type="checkbox" name="tds_194q" value="1" @checked($trade['tds_194q'])> Deduct TDS under 194Q</label></div>
+                        <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100">Save</button></div>
+                    </div>
+                    </fieldset>
+                </form>
+            </div>
         </div>
 
         {{-- Rates --}}
@@ -185,6 +201,10 @@
                         <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100">Add GST rate</button></div>
                     </div>
                     <p class="gst-muted mb-0">Change a rate with a date instead of editing it, so older bills keep the rate they were posted with.</p>
+                </form>
+                <form method="POST" action="{{ url('/settings/gst/garment-band') }}" class="mt-2">@csrf<input type="hidden" name="tab" value="rates">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Add garment rate by sale value</button>
+                    <span class="gst-muted">One rate for apparel and made-ups: up to ₹2,500 a piece 5%, above 18% (GST 2.0, from 22-09-2025). The invoice picks the band from each line's price.</span>
                 </form>
                 @endif
                 @if($legacyTaxes)

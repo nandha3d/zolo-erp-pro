@@ -607,8 +607,15 @@ class ReportController extends Controller
         return view('backend.report.best_seller', compact('product', 'sold_qty', 'start_month', 'lims_warehouse_list', 'warehouse_id'));
     }
 
+    /** Sidebar links open these reports by GET with no filters: default to month to date. */
+    private function reportDefaults(Request $request, array $extra = []): void
+    {
+        $request->mergeIfMissing(['start_date' => date('Y-m-01'), 'end_date' => date('Y-m-d')] + $extra);
+    }
+
     public function profitLoss(Request $request)
     {
+        $this->reportDefaults($request);
         $start_date = $request['start_date'];
         $end_date = $request['end_date'];
         $query1 = array(
@@ -1289,6 +1296,7 @@ class ReportController extends Controller
 
     public function purchaseReport(Request $request)
     {
+        $this->reportDefaults($request, ['warehouse_id' => 0]);
         $data = $request->all();
         $start_date = $data['start_date'];
         $end_date = $data['end_date'];
@@ -1619,6 +1627,7 @@ class ReportController extends Controller
 
     public function saleReport(Request $request)
     {
+        $this->reportDefaults($request, ['warehouse_id' => 0]);
         $data = $request->all();
         $start_date = $data['start_date'];
         $end_date = $data['end_date'];
@@ -1858,6 +1867,7 @@ class ReportController extends Controller
 
     public function saleReportChart(Request $request)
     {
+        $this->reportDefaults($request, ['warehouse_id' => 0, 'time_period' => 'weekly']);
         $start_date = $request->start_date;
         $end_date = strtotime($request->end_date);
         $warehouse_id = $request->warehouse_id;
@@ -1898,6 +1908,7 @@ class ReportController extends Controller
 
     public function paymentReportByDate(Request $request)
     {
+        $this->reportDefaults($request);
         $data = $request->all();
         $start_date = $data['start_date'];
         $end_date = $data['end_date'];
@@ -2460,6 +2471,7 @@ class ReportController extends Controller
 
     public function userReport(Request $request)
     {
+        $this->reportDefaults($request, ['user_id' => Auth::id()]);
         $data = $request->all();
         $user_id = $data['user_id'];
         $start_date = $data['start_date'];
@@ -2470,6 +2482,7 @@ class ReportController extends Controller
 
     public function billerReport(Request $request)
     {
+        $this->reportDefaults($request, ['biller_id' => 0]);
         $data = $request->all();
         $biller_id = $data['biller_id'];
         $start_date = $data['start_date'];

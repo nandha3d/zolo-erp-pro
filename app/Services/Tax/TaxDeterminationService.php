@@ -38,23 +38,39 @@ class TaxDeterminationService
             $this->invalid('registration', 'GSTIN state differs from registration state.');
         }
         $gst = $data['gst'] ?? [];
+        $gst += array_filter(['supply_type' => $data['supply_type'] ?? null]);
         validator(['gst' => $gst], ['gst' => 'array', 'gst.place_of_supply' => 'nullable|string|size:2',
-            'gst.reverse_charge' => 'sometimes|boolean', 'gst.special_supply' => 'nullable|in:domestic'])->validate();
+            'gst.reverse_charge' => 'sometimes|boolean', 'gst.special_supply' => 'nullable|in:domestic',
+            'gst.supply_type' => 'nullable|in:domestic,export_lut,export_igst,sez_lut,sez_igst'])->validate();
+        // Exports and SEZ supplies are zero-rated (Sec 16 IGST Act): inter-state, without IGST under a valid LUT or with IGST paid.
+        $supply = $kind === 'sale' ? ($gst['supply_type'] ?? 'domestic') : 'domestic';
+        $export = str_starts_with($supply, 'export'); $zeroRated = $supply !== 'domestic'; $underLut = str_ends_with($supply, '_lut');
+        $lut = null;
+        if ($underLut) {
+            $trade = GstSetupService::tradeSettings($context->companyId);
+            if (!$trade['lut_number'] || ($trade['lut_valid_from'] && $date < $trade['lut_valid_from']) || ($trade['lut_valid_to'] && $date > $trade['lut_valid_to'])) {
+                $this->invalid('supply_type', 'Supply under LUT needs a Letter of Undertaking valid on '.$date.' (Settings › GST › Exports and TDS).');
+            }
+            $lut = $trade['lut_number'];
+        }
         $profile = DB::table('party_tax_profiles')->where('company_id', $context->companyId)
             ->where('party_type', $kind === 'sale' ? 'customer' : 'supplier')->where('party_id', $party->id)->first();
         // A party without a saved profile gets one from its master GSTIN/state, as the party form would.
-        $profile ??= app(GstSetupService::class)->syncParty($kind === 'sale' ? 'customer' : 'supplier', $party);
+        $profile ??= $export ? (object) ['gstin' => null, 'state_code' => '96', 'registration_type' => 'overseas']
+            : app(GstSetupService::class)->syncParty($kind === 'sale' ? 'customer' : 'supplier', $party);
         if (!$profile) $this->invalid('party', 'Enter the GSTIN or state of '.$party->name.' before GST billing.');
-        $partyState = Gstin::state($profile->state_code);
-        if ($profile->gstin && substr(Gstin::normalize($profile->gstin), 0, 2) !== $partyState) {
+        // An overseas buyer has no Indian state (code 96, Other Country) and no GSTIN.
+        $partyState = $export ? '96' : Gstin::state($profile->state_code);
+        if (!$export && $profile->gstin && substr(Gstin::normalize($profile->gstin), 0, 2) !== $partyState) {
             $this->invalid('party', 'Party GSTIN state differs from its address state.');
         }
-        if (($profile->registration_type !== 'unregistered') !== (bool) $profile->gstin) {
+        if (!$export && ($profile->registration_type !== 'unregistered') !== (bool) $profile->gstin) {
             $this->invalid('party', 'Party registration type and GSTIN disagree.');
         }
+        if ($supply !== 'domestic' && !$export && !$profile->gstin) $this->invalid('party', 'An SEZ unit or developer must have a GSTIN.');
         $sellerState = $kind === 'sale' ? $companyState : $partyState;
-        $place = Gstin::state($gst['place_of_supply'] ?? ($kind === 'sale' ? $partyState : $companyState));
-        $intra = $sellerState === $place;
+        $place = $export ? '96' : Gstin::state($gst['place_of_supply'] ?? ($kind === 'sale' ? $partyState : $companyState));
+        $intra = !$zeroRated && $sellerState === $place;
         if ($intra && in_array($sellerState, ['04', '26', '31', '35', '38'], true)) {
             $this->invalid('place_of_supply', 'Union-territory intra-state supply requires a reviewed UTGST posting adapter.');
         }
@@ -69,7 +85,7 @@ class TaxDeterminationService
         if ($discount > array_sum($basis)) $this->invalid('order_discount', 'GST discount exceeds taxable line value.');
         $discounts = self::spread($discount, $basis);
         if (!empty($data['shipping_cost'])) {
-            $this->invalid('shipping_cost', 'For GST, enter freight as a classified service line with its own tax category.');
+            $this->invalid('shipping_cost', 'For GST, enter freight as a classified service line with its own tax category; tick "Add freight to item cost" to include it in stock value.');
         }
         $sellerRegistered = $kind === 'sale' ? $registration->registration_type === 'regular' : $profile->registration_type === 'regular';
         $header = ['version' => 'gst-domestic-v1', 'registration_gstin' => $registration->gstin,
@@ -78,7 +94,8 @@ class TaxDeterminationService
             'seller_name' => $kind === 'sale' ? $registration->legal_name : $party->name,
             'buyer_name' => $kind === 'sale' ? $party->name : $registration->legal_name,
             'company_address' => $registration->address ?? '', 'party_address' => $party->address ?? '', 'seller_state' => $sellerState, 'place_of_supply' => $place,
-            'reverse_charge' => $reverse, 'registration_type' => $registration->registration_type];
+            'reverse_charge' => $reverse, 'registration_type' => $registration->registration_type]
+            + ($zeroRated ? ['supply_type' => $supply, 'lut_number' => $lut] : []);
         foreach ($data['items'] as $i => &$line) {
             $product = $products[$line['product_id']];
             $category = DB::table('tax_categories')->where('company_id', $context->companyId)->where('id', $product->tax_category_id)->first();
@@ -93,10 +110,14 @@ class TaxDeterminationService
             }
             $rates = DB::table('tax_rates')->where('company_id', $context->companyId)->where('tax_category_id', $category->id)
                 ->where('effective_from', '<=', $date)->where(fn ($q) => $q->whereNull('effective_to')->orWhere('effective_to', '>=', $date))->get();
-            if ($rates->count() !== 1) $this->invalid('tax_rate', $category->name.' has no single GST rate effective on '.$date.'.');
-            $rate = $rates->sole();
             $taxable = $basis[$i] - $discounts[$i];
-            $chargeable = $category->supply_type === 'taxable' && ($sellerRegistered || $reverse);
+            // Price-banded rates (garments: up to ₹2,500 a piece 5%, above 18%) pick the band by per-unit taxable value.
+            $unitValue = (float) $line['qty'] > 0 ? $taxable / 10000 / (float) $line['qty'] : 0.0;
+            $rates = $rates->filter(fn ($rate) => (!isset($rate->min_unit_value) || $rate->min_unit_value === null || $unitValue >= (float) $rate->min_unit_value - 0.00005)
+                && (!isset($rate->max_unit_value) || $rate->max_unit_value === null || $unitValue <= (float) $rate->max_unit_value + 0.00005));
+            if ($rates->count() !== 1) $this->invalid('tax_rate', $category->name.' has no single GST rate effective on '.$date.' for a unit value of ₹'.number_format($unitValue, 2).'.');
+            $rate = $rates->sole();
+            $chargeable = $category->supply_type === 'taxable' && ($sellerRegistered || $reverse) && !$underLut;
             $gstRate = $chargeable ? $pricing->number($rate->rate, 'rate') : 0;
             $cessRate = $chargeable ? $pricing->number($rate->cess_rate, 'cess_rate') : 0;
             if ($gstRate + $cessRate > 100) $this->invalid('rate', 'Total tax rate exceeds supported range.');
@@ -107,13 +128,14 @@ class TaxDeterminationService
                 'rate' => $gstRate, 'cess_rate' => $cessRate, 'cgst' => $cgst / 10000,
                 'sgst' => $intra ? ($tax - $cgst) / 10000 : 0, 'igst' => $intra ? 0 : $tax / 10000,
                 'cess' => $cess / 10000, 'hsn_sac' => $code, 'place_of_supply' => $place, 'reverse_charge' => $reverse,
-                'supply_type' => $category->supply_type, 'input_credit_allowed' => (bool) $category->input_credit_allowed && $registration->registration_type === 'regular',
+                'supply_type' => $zeroRated && $category->supply_type === 'taxable' ? 'zero_rated' : $category->supply_type, 'input_credit_allowed' => (bool) $category->input_credit_allowed && $registration->registration_type === 'regular',
                 'product_name' => $product->name, 'product_code' => $product->code, 'qty' => (float) $line['qty']];
             $line['_tax_snapshot'] = $snapshot;
             $line['tax_rate'] = $gstRate;
         }
         unset($line);
         $data['_tax_snapshot'] = $header;
+        if ($zeroRated) { $data['supply_type'] = $supply; $data['lut_number'] = $lut; }
         $data['order_tax_rate'] = 0;
         return $data;
     }

@@ -92,7 +92,9 @@ class PurchasePostingService
             }
             // A job worker's processing charge becomes part of the processed stock's cost (rest to COGS if already used).
             $capitalised = ['inventory' => 0, 'cogs' => 0];
-            if ($expense > 0 && !empty($purchase->attributes_json['job_work_receipt_id'])) {
+            // Unless the company books processing as a period expense for this bill (no inventory revaluation).
+            if ($expense > 0 && !empty($purchase->attributes_json['job_work_receipt_id'])
+                && ($purchase->attributes_json['job_work_charge_mode'] ?? 'capitalise') !== 'expense') {
                 $capitalised = app(\App\Services\JobWork\JobWorkCosting::class)->capitalise($purchase, $expense, $date, $context, $actor);
                 $expense -= $capitalised['inventory'] + $capitalised['cogs'];
             }
@@ -130,7 +132,13 @@ class PurchasePostingService
             foreach ($purchase->payments()->forCompany($context)->get() as $payment) {
                 $add($accounts->settlement($payment, $context, $actor), 0, (float) $payment->amount);
             }
-            $add('accounts_payable', 0, (float) $purchase->grand_total - (float) $purchase->paid_amount, true);
+            // 194Q TDS is withheld from the supplier and owed to the government; the supplier's balance shrinks by it.
+            $tds = app(\App\Services\Tax\Tds194qService::class)->forPurchase($purchase, $context);
+            if ($tds) {
+                app(\App\Services\Tax\GstSetupService::class)->ensureLedgers($context->companyId, ['tds_payable']);
+                $add('tds_payable', 0, (float) $tds['amount']);
+            }
+            $add('accounts_payable', 0, (float) $purchase->grand_total - (float) $purchase->paid_amount - (float) ($tds['amount'] ?? 0), true);
             if ($lines !== []) {
                 app(AccountingService::class)->postJournalEntry([
                     'entry_date' => $date, 'reference_type' => 'purchase', 'reference_id' => $purchase->id,
@@ -142,7 +150,8 @@ class PurchasePostingService
             if (config('compliance.enabled') && \Illuminate\Support\Facades\Schema::hasColumn('purchases', 'document_snapshot_json')) {
                 $purchase->forceFill(['document_snapshot_json' => app(\App\Services\Documents\DocumentRenderingService::class)->capture($purchase, 'purchase', $context)]);
             }
-            $purchase->forceFill(['posted_at' => now()])->save();
+            $purchase->forceFill(['posted_at' => now()] + ($tds ? ['attributes_json' => ['tds_194q' => $tds] + ($purchase->attributes_json ?? []),
+                'paid_amount' => round((float) $purchase->paid_amount + $tds['amount'], 4), 'payment_status' => 3] : []))->save();
             app(\App\Services\Tax\GstProjectionService::class)->record($purchase, 'purchase', $purchase->productPurchases->pluck('tax_snapshot_json')->all(), $context);
             return $purchase;
         });

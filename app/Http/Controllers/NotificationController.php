@@ -23,7 +23,8 @@ class NotificationController extends Controller
         app(CommercialPermission::class)->assert('all_notification', $context, Auth::id());
         $lims_notification_all = DB::table('notifications')->get()
             ->filter(fn ($row) => app(NotificationFileAccess::class)->canRead($row, $context, Auth::id()));
-        return view('backend.notification.index', compact('lims_notification_all'));
+        $canSend = app(CommercialPermission::class)->allows('send_notification', $context, Auth::id());
+        return view('backend.notification.index', compact('lims_notification_all', 'canSend'));
     }
     public function store(Request $request)
     {

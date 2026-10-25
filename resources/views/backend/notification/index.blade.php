@@ -5,8 +5,11 @@
 
 <section>
     <div class="card">
-        <div class="card-header mt-2">
-            <h3 class="text-center">{{__('db.Notification List')}}</h3>
+        <div class="card-header mt-2 d-flex align-items-center justify-content-between">
+            <h3 class="mb-0">{{__('db.Notification List')}}</h3>
+            @if($canSend)
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#notification-modal"><i class="dripicons-plus"></i> {{__('db.Send Notification')}}</button>
+            @endif
         </div>
     </div>
     <div class="table-responsive">

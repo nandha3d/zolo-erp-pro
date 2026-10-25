@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Every test referenced by tests/Support/textile_scenario_matrix.php. Run and render with:
+     php tests/Support/render_textile_matrix.php run -->
+
+<phpunit bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
+  <testsuites><testsuite name="Textile scenario matrix">
+    <file>tests/Feature/TextileScenarioMatrixTest.php</file>
+    <file>tests/Feature/IndustryFlowIntegrationTest.php</file>
+    <file>tests/Feature/IndustryProfilesTest.php</file>
+    <file>tests/Feature/TextileInventoryDefaultsTest.php</file>
+    <file>tests/Feature/TextileEntryContractTest.php</file>
+    <file>tests/Feature/ManufacturingJobWorkTest.php</file>
+    <file>tests/Feature/JobWorkReturnsReworkTest.php</file>
+    <file>tests/Feature/PurchaseOrderLifecycleTest.php</file>
+    <file>tests/Feature/MaterialDocumentPostingTest.php</file>
+    <file>tests/Feature/MaterialDocumentReturnsTest.php</file>
+    <file>tests/Feature/OrderAllocationLifecycleTest.php</file>
+    <file>tests/Feature/QuotationFollowUpTest.php</file>
+    <file>tests/Feature/SharedCommercialTest.php</file>
+    <file>tests/Feature/TaxComplianceTest.php</file>
+    <file>tests/Feature/GstSetupTest.php</file>
+    <file>tests/Feature/ReturnsDocumentsTest.php</file>
+    <file>tests/Feature/CollectionTrackingTest.php</file>
+    <file>tests/Feature/YearCloseAndOpeningBalanceTest.php</file>
+    <file>tests/Feature/InventoryMovementServiceTest.php</file>
+    <file>tests/Feature/ErpServiceStockLedgerTest.php</file>
+  </testsuite></testsuites>
+  <php><env name="APP_ENV" value="testing"/><env name="CACHE_DRIVER" value="array"/><env name="SESSION_DRIVER" value="array"/><env name="QUEUE_CONNECTION" value="sync"/><env name="ERP_SHARED_COMMERCIAL_ENABLED" value="false" force="true"/><env name="ERP_COMPLIANCE_ENABLED" value="false" force="true"/><env name="ERP_OPERATIONS_ENABLED" value="false" force="true"/><env name="ERP_BACKUP_ENABLED" value="false" force="true"/><env name="ERP_OPTIONAL_ACTIVATION_READY" value="false" force="true"/></php>
+</phpunit>

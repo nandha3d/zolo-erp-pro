@@ -333,6 +333,9 @@
                     <input type="text" name="station_to" id="hidden-station-to">
                     <input type="text" name="order_no" id="hidden-order-no">
                     <input type="number" name="credit_days" id="hidden-credit-days">
+                    <input type="number" name="cash_discount_percent" id="hidden-cd-percent" step="0.01">
+                    <input type="number" name="cash_discount_days" id="hidden-cd-days">
+                    <input type="hidden" name="supply_type" id="hidden-supply-type" value="">
                     <input type="text" name="sale_note" id="hidden-note">
                     <input type="text" name="staff_note" id="hidden-staff-note">
                     <select name="account_id" id="hidden-account-id">
@@ -740,9 +743,29 @@
                                 <input type="text" id="drawer-order-no" class="form-control form-control-sm" placeholder="Purchase/Work Order">
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4 mb-2">
+                                <label class="text-muted font-weight-bold">Credit Days</label>
+                                <input type="number" id="drawer-credit-days" class="form-control form-control-sm" placeholder="e.g. 30">
+                            </div>
+                            <div class="form-group col-md-4 mb-2">
+                                <label class="text-muted font-weight-bold" for="drawer-cd-percent">Cash discount %</label>
+                                <input type="number" id="drawer-cd-percent" class="form-control form-control-sm" min="0" max="100" step="0.01" placeholder="e.g. 2">
+                            </div>
+                            <div class="form-group col-md-4 mb-2">
+                                <label class="text-muted font-weight-bold" for="drawer-cd-days">If paid within (days)</label>
+                                <input type="number" id="drawer-cd-days" class="form-control form-control-sm" min="0" max="365" placeholder="e.g. 7">
+                            </div>
+                        </div>
                         <div class="form-group mb-2">
-                            <label class="text-muted font-weight-bold">Credit Days</label>
-                            <input type="number" id="drawer-credit-days" class="form-control form-control-sm" placeholder="e.g. 30">
+                            <label class="text-muted font-weight-bold" for="drawer-supply-type">Supply type</label>
+                            <select id="drawer-supply-type" class="form-control form-control-sm" title="Exports and SEZ supplies are zero-rated. Under LUT no IGST is charged; the LUT number comes from Settings › GST.">
+                                <option value="">Domestic</option>
+                                <option value="export_lut">Export under LUT (no IGST)</option>
+                                <option value="export_igst">Export with IGST paid</option>
+                                <option value="sez_lut">SEZ supply under LUT (no IGST)</option>
+                                <option value="sez_igst">SEZ supply with IGST paid</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1621,6 +1644,20 @@
                         <div class="col-md-4">
                             <label>{{__('db.Payment Receiver')}}</label>
                             <input type="text" name="payment_receiver" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="add-payment-discount">Cash discount (₹)</label>
+                            <input type="number" id="add-payment-discount" name="discount" class="form-control" min="0" step="0.01" value="0"
+                                title="Prompt-payment discount. Within the % and days on the bill it is allowed; otherwise give a reason. GST on the bill does not change.">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="add-payment-tds">TDS deducted by customer (₹)</label>
+                            <input type="number" id="add-payment-tds" name="tds_amount" class="form-control" min="0" step="0.01" value="0"
+                                title="Section 194Q: the buyer deducts 0.1% and pays it to the government; it shows in your Form 26AS.">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="add-payment-discount-reason">Discount reason</label>
+                            <input type="text" id="add-payment-discount-reason" name="discount_reason" class="form-control" maxlength="255" placeholder="Only if the bill has no cash discount terms">
                         </div>
                         <div class="col-md-4">
                             <label>{{ __('db.Payment Date') }}</label>
@@ -3764,6 +3801,9 @@
         $('#hidden-station-to').val($('#drawer-station-to').val());
         $('#hidden-order-no').val($('#drawer-order-no').val());
         $('#hidden-credit-days').val($('#drawer-credit-days').val());
+        $('#hidden-cd-percent').val($('#drawer-cd-percent').val());
+        $('#hidden-cd-days').val($('#drawer-cd-days').val());
+        $('#hidden-supply-type').val($('#drawer-supply-type').val());
         $('#hidden-note').val($('#drawer-note').val());
         $('#hidden-account-id').val($('#drawer-account-id').val());
         $('#input-paying-method').val($('#drawer-paying-method').val());
@@ -3990,7 +4030,7 @@
     }
 
     // Bills always open in split view (entry + bill list); full width is a switch for this visit only.
-    // Only a register link (Pending Sales) opens the full-width list.
+    // Only a register link (view=orders) opens the full-width list.
     if (@json(request('view') === 'orders') && !fromDcId && !fromQuotationId) {
         switchWorkspaceMode('register');
     }

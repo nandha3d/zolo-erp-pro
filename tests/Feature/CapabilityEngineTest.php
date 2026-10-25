@@ -40,7 +40,7 @@ class CapabilityEngineTest extends CompanyContextTestCase
         return [
             ['general_trading', []],
             ['fmcg', ['inventory.batch_expiry', 'inventory.multi_uom']],
-            ['textile', ['operations.job_work', 'printing.dot_matrix']],
+            ['textile', ['sales.wholesale', 'printing.dot_matrix']],
             ['timber', ['inventory.dimension_tracking']],
             ['solar', ['operations.projects', 'inventory.serial_tracking', 'operations.installation']],
         ];

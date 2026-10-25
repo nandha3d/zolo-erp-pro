@@ -17,6 +17,7 @@ abstract class ErpServiceTestCase extends TestCase
 {
     use UsesDisposableMysql;
     use CreatesInventoryLedgerFixtures;
+    use RecordsTestEvidence;
 
     protected function setUp(): void
     {
@@ -41,6 +42,7 @@ abstract class ErpServiceTestCase extends TestCase
 
     protected function tearDown(): void
     {
+        $this->recordEvidence();
         DB::purge('erp_regression');
         parent::tearDown();
     }

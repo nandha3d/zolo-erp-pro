@@ -116,7 +116,7 @@ class CompanyProfileTest extends ReturnsDocumentTestCase
         }
         $gstin = $this->gstin('29');
         $this->post('/company-picker/companies', ['company_group_id' => '', 'trade_name' => 'Weave Mills', 'legal_name' => 'Weave Mills LLP',
-            'code' => 'WEAVE', 'industry' => 'textile', 'subtype' => 'in_house_processing', 'address' => '7, Mill Street', 'city' => 'Bengaluru',
+            'code' => 'WEAVE', 'industry' => 'textile', 'subtype' => 'manufacturing', 'address' => '7, Mill Street', 'city' => 'Bengaluru',
             'state_code' => '29', 'postal_code' => '560001', 'gstin' => $gstin, 'timezone' => 'Asia/Kolkata', 'fy_start' => '2026-04-01',
             'fy_end' => '2027-03-31', 'logo' => UploadedFile::fake()->image('logo.png', 100, 50)])->assertSessionHasNoErrors()->assertRedirect();
 

@@ -57,15 +57,11 @@
                     <li id="product-list-menu"><a href="{{route('products.index')}}">{{__('db.product_list')}}</a></li>
                     <li id="stock-by-lot-menu"><a href="{{route('inventory-reports.stock-by-lot')}}">Stock by lot</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('products-add'))
-                    <li id="product-create-menu"><a href="{{route('products.create')}}">{{__('db.add_product')}}</a></li>
-                @endif
                 @if($isAdmin || $canNavigate('print_barcode'))
                     <li id="printBarcode-menu"><a href="{{route('product.printBarcode')}}">{{__('db.print_barcode')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('adjustment'))
                     <li id="adjustment-list-menu"><a href="{{route('qty_adjustment.index')}}">{{__('db.Adjustment List')}}</a></li>
-                    <li id="adjustment-create-menu"><a href="{{route('qty_adjustment.create')}}">{{__('db.Add Adjustment')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('stock_count'))
                     <li id="stock-count-menu"><a href="{{route('stock-count.index')}}">{{__('db.Stock Count')}}</a></li>
@@ -74,7 +70,7 @@
                     <li id="damage-stock-menu"><a href="{{route('damage-stock.index')}}">Damage Stock Audit</a></li>
                 @endif
                 @if(config('operations.enabled') && in_array('operations.job_work', $enabledCapabilities, true))
-                    <li id="job-work-product-menu"><a href="{{ url('/operations/job-work') }}">Job Work (Material DC / GRN)</a></li>
+                    <li id="job-work-menu"><a href="{{ url('/operations/job-work') }}">Job Work</a></li>
                 @endif
             </ul>
         </li>
@@ -114,7 +110,8 @@
                 @if($isAdmin || $canNavigate('purchases-import'))
                     <li id="purchase-import-menu"><a href="{{url('purchases/purchase_by_csv')}}">{{__('db.Import Purchase By CSV')}}</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('purchase-return-index'))
+                {{-- The old per-side Returns lists are Returns & notes filtered to one side; only shown where that page is off. --}}
+                @if(!(config('commercial.enabled') && config('compliance.enabled')) && ($isAdmin || $canNavigate('purchase-return-index')))
                     <li id="purchase-return-menu"><a href="{{route('return-purchase.index')}}">Returns</a></li>
                 @endif
                 {{-- Suppliers are a party master and live once, under People beside Customers. --}}
@@ -132,13 +129,12 @@
             <ul id="sale" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('sales-index'))
                     @if(config('commercial.enabled') && config('compliance.enabled'))
-                        @if($isAdmin || $canNavigate('returns-index'))<li><a href="{{ url('/compliance/returns') }}">Returns & notes</a></li>@endif
-                        @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li>@endif
+                        @if($isAdmin || $canNavigate('returns-index') || $canNavigate('purchase-return-index'))<li id="returns-notes-menu"><a href="{{ url('/compliance/returns') }}">Returns & notes</a></li>@endif
+                        @if($isAdmin || $canNavigate('gst-index'))<li><a href="{{ url('/compliance/gst/report') }}">GST review</a></li><li><a href="{{ url('/compliance/gst/returns') }}">GST returns (3B, ITC-04, TDS)</a></li>@endif
                         @if($isAdmin)<li><a href="{{ url('/compliance/setup') }}">Tax & document settings</a></li>@endif
                     @endif
                     <li id="sale-list-menu"><a href="{{route('sales.index')}}">Bills</a></li>
                     @if(config('commercial.enabled'))<li><a href="{{ route('sales.index', ['orders' => 1]) }}">Sales Orders</a></li>@endif
-                    <li><a href="{{route('sales.index', ['view' => 'orders', 'sale_status' => 2])}}">Pending Sales</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('sales-add'))
                     <li><a href="{{route('sale.pos')}}">POS Terminal</a></li>
@@ -150,6 +146,10 @@
                 @if($isAdmin || $canNavigate('packing_slip_challan') || $canNavigate('delivery') || $canNavigate('delivery-challans-index'))
                     <li id="dispatch-menu"><a href="{{route('dispatch-register.index')}}">Dispatch Register</a></li>
                 @endif
+                @if(config('commercial.enabled') && ($isAdmin || $canNavigate('sales-index')))
+                    <li id="brokerage-menu"><a href="{{ url('/trade/brokerage') }}">Brokerage (Agents)</a></li>
+                    @if(in_array('sales.route_distribution', $enabledCapabilities, true))<li id="route-sheet-menu"><a href="{{ url('/trade/routes') }}">Route Sheet</a></li>@endif
+                @endif
                 @if($isAdmin || $canNavigate('gift_card'))
                     <li id="gift-card-menu"><a href="{{route('gift_cards.index')}}">{{__('db.Gift Card List')}}</a></li>
                 @endif
@@ -157,7 +157,7 @@
                     <li id="coupon-menu"><a href="{{route('coupons.index')}}">{{__('db.Coupon List')}}</a></li>
                 @endif
                 <li id="courier-menu"><a href="{{route('couriers.index')}}">{{__('db.Courier List')}}</a></li>
-                @if($isAdmin || $canNavigate('returns-index'))
+                @if(!(config('commercial.enabled') && config('compliance.enabled')) && ($isAdmin || $canNavigate('returns-index')))
                     <li id="sale-return-menu"><a href="{{route('return-sale.index')}}">Returns</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('quotes-index'))
@@ -185,9 +185,6 @@
             <ul id="transfer" class="collapse list-unstyled">
                 @if($isAdmin || $canNavigate('transfers-index'))
                     <li id="transfer-list-menu"><a href="{{route('transfers.index')}}">{{__('db.Transfer List')}}</a></li>
-                @endif
-                @if($isAdmin || $canNavigate('transfers-add'))
-                    <li id="transfer-create-menu"><a href="{{route('transfers.create')}}">{{__('db.Add Transfer')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('transfers-import'))
                     <li id="transfer-import-menu"><a href="{{url('transfers/transfer_by_csv')}}">{{__('db.Import Transfer By CSV')}}</a></li>
@@ -255,9 +252,6 @@
                 @if($isAdmin || $canNavigate('expenses-index'))
                     <li id="exp-list-menu"><a href="{{route('expenses.index')}}">{{__('db.Expense List')}}</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('expenses-add'))
-                    <li><a id="add-expense" href="">{{__('db.Add Expense')}}</a></li>
-                @endif
             </ul>
         </li>
     @endif
@@ -273,9 +267,6 @@
                 <li id="income-cat-menu"><a href="{{route('income_categories.index')}}">{{__('db.Income Category')}}</a></li>
                 @if($isAdmin || $canNavigate('incomes-index'))
                     <li id="income-list-menu"><a href="{{route('incomes.index')}}">{{__('db.Income List')}}</a></li>
-                @endif
-                @if($isAdmin || $canNavigate('incomes-add'))
-                    <li><a id="add-income" href="">{{__('db.Add Income')}}</a></li>
                 @endif
             </ul>
         </li>
@@ -437,27 +428,11 @@
                 @if($isAdmin || $role->id <= 2)
                     <li id="activity-log-menu"><a href="{{route('setting.activityLog')}}">{{__('db.Activity Log')}}</a></li>
                 @endif
-                @if($isAdmin || $canNavigate('profit-loss'))
-                    <li id="profit-loss-report-menu">
-                        {!! Form::open(['route' => 'report.profitLoss', 'method' => 'post', 'id' => 'profitLoss-report-form']) !!}
-                            <input type="hidden" name="start_date" value="{{date('Y-m').'-'.'01'}}" />
-                            <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                            <a id="profitLoss-link" href="">{{__('db.Summary Report')}}</a>
-                        {!! Form::close() !!}
-                    </li>
-                @endif
                 @if($isAdmin || $canNavigate('best-seller'))
                     <li id="best-seller-report-menu"><a href="{{url('report/best_seller')}}">{{__('db.Best Seller')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('product-report'))
-                    <li id="product-report-menu">
-                        {!! Form::open(['route' => 'report.product', 'method' => 'get', 'id' => 'product-report-form']) !!}
-                            <input type="hidden" name="start_date" value="{{date('Y-m').'-'.'01'}}" />
-                            <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                            <input type="hidden" name="warehouse_id" value="0" />
-                            <a id="report-link" href="">{{__('db.Product Report')}}</a>
-                        {!! Form::close() !!}
-                    </li>
+                    <li id="product-report-menu"><a href="{{route('report.product')}}">{{__('db.Product Report')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('daily-sale'))
                     <li id="daily-sale-report-menu"><a href="{{url('report/daily_sale/'.date('Y').'/'.date('m'))}}">{{__('db.Daily Sale')}}</a></li>
@@ -472,48 +447,20 @@
                     <li id="monthly-purchase-report-menu"><a href="{{url('report/monthly_purchase/'.date('Y'))}}">{{__('db.Monthly Purchase')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('sale-report'))
-                    <li id="sale-report-menu">
-                        {!! Form::open(['route' => 'report.sale', 'method' => 'post', 'id' => 'sale-report-form']) !!}
-                            <input type="hidden" name="start_date" value="{{date('Y-m').'-'.'01'}}" />
-                            <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                            <input type="hidden" name="warehouse_id" value="0" />
-                            <a id="sale-report-link" href="">{{__('db.Sale Report')}}</a>
-                        {!! Form::close() !!}
-                    </li>
+                    <li id="sale-report-menu"><a href="{{route('report.sale')}}">{{__('db.Sale Report')}}</a></li>
                 @endif
                 <li id="challan-report-menu"><a href="{{route('report.challan')}}">{{__('db.Challan Report')}}</a></li>
                 @if($isAdmin || $canNavigate('sale-report-chart'))
-                    <li id="sale-report-chart-menu">
-                        {!! Form::open(['route' => 'report.saleChart', 'method' => 'post', 'id' => 'sale-report-chart-form']) !!}
-                            <input type="hidden" name="start_date" value="{{date('Y-m').'-'.'01'}}" />
-                            <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                            <input type="hidden" name="warehouse_id" value="0" />
-                            <input type="hidden" name="time_period" value="weekly" />
-                            <a id="sale-report-chart-link" href="">{{__('db.Sale Report Chart')}}</a>
-                        {!! Form::close() !!}
-                    </li>
+                    <li id="sale-report-chart-menu"><a href="{{route('report.saleChart')}}">{{__('db.Sale Report Chart')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('payment-report'))
-                    <li id="payment-report-menu">
-                        {!! Form::open(['route' => 'report.paymentByDate', 'method' => 'post', 'id' => 'payment-report-form']) !!}
-                            <input type="hidden" name="start_date" value="{{date('Y-m').'-'.'01'}}" />
-                            <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                            <a id="payment-report-link" href="">{{__('db.Payment Report')}}</a>
-                        {!! Form::close() !!}
-                    </li>
+                    <li id="payment-report-menu"><a href="{{route('report.paymentByDate')}}">{{__('db.Payment Report')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('purchase-report'))
-                    <li id="purchase-report-menu">
-                        {!! Form::open(['route' => 'report.purchase', 'method' => 'post', 'id' => 'purchase-report-form']) !!}
-                            <input type="hidden" name="start_date" value="{{date('Y-m').'-'.'01'}}" />
-                            <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                            <input type="hidden" name="warehouse_id" value="0" />
-                            <a id="purchase-report-link" href="">{{__('db.Purchase Report')}}</a>
-                        {!! Form::close() !!}
-                    </li>
+                    <li id="purchase-report-menu"><a href="{{route('report.purchase')}}">{{__('db.Purchase Report')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('warehouse-report'))
-                    <li id="warehouse-report-menu"><a id="warehouse-report-link" href="">{{__('db.Warehouse Report')}}</a></li>
+                    <li id="warehouse-report-menu"><a href="{{route('report.warehouse')}}">{{__('db.Warehouse Report')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('warehouse-stock-report'))
                     <li id="warehouse-stock-report-menu"><a href="{{route('report.warehouseStock')}}">{{__('db.Warehouse Stock Chart')}}</a></li>
@@ -528,10 +475,10 @@
                     <li id="daily-sale-objective-menu"><a href="{{route('report.dailySaleObjective')}}">{{__('db.Daily Sale Objective Report')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('user-report'))
-                    <li id="user-report-menu"><a id="user-report-link" href="">{{__('db.User Report')}}</a></li>
+                    <li id="user-report-menu"><a href="{{route('report.user')}}">{{__('db.User Report')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('biller-report'))
-                    <li id="biller-report-menu"><a id="biller-report-link" href="">{{__('db.Biller Report')}}</a></li>
+                    <li id="biller-report-menu"><a href="{{route('report.biller')}}">{{__('db.Biller Report')}}</a></li>
                 @endif
                 <li id="cash-register-report-menu"><a href="{{route('cashRegister.index')}}">{{__('db.Cash Register')}}</a></li>
             </ul>
@@ -585,9 +532,6 @@
                 @endif
                 @if($isAdmin || $canNavigate('all_notification'))
                     <li id="notification-list-menu"><a href="{{route('notifications.index')}}">{{__('db.All Notification')}}</a></li>
-                @endif
-                @if($isAdmin || $canNavigate('send_notification'))
-                    <li id="notification-menu"><a href="" id="send-notification">{{__('db.Send Notification')}}</a></li>
                 @endif
                 @if($isAdmin || $canNavigate('warehouse'))
                     <li id="warehouse-menu"><a href="{{route('warehouse.index')}}">{{__('db.Warehouse')}}</a></li>

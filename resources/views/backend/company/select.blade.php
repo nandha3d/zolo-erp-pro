@@ -104,7 +104,7 @@
                         <h3>{{ $company['name'] }}</h3>
                         @if($company['legal_name'] !== $company['name'])<p class="cp-legal">{{ $company['legal_name'] }}</p>@endif
                         <p class="cp-meta">
-                            <span class="cp-chip">{{ $industries[$company['industry']] ?? 'General Trading' }}@if($company['subtype']) · {{ ucwords(str_replace('_', ' ', $company['subtype'])) }}@endif</span>
+                            <span class="cp-chip">{{ $industries[$company['industry']] ?? 'General Trading' }}@if($company['subtype']) · {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($company['subtype']) }}@endif</span>
                             <code>{{ $company['code'] }}</code>
                         </p>
                         <div class="cp-fields">
@@ -300,14 +300,14 @@
 
 <script>
 (function () {
-    var subtypes = @json($subtypes);
+    var subtypes = @json($subtypes), subtypeLabels = @json(\App\Services\Industry\IndustryCatalog::SUBTYPE_LABELS);
     var industry = document.getElementById('cp-industry'), subtype = document.getElementById('cp-subtype');
     function fillSubtypes() {
         if (!industry) return;
         subtype.innerHTML = '';
         Object.keys(subtypes[industry.value] || {}).forEach(function (key) {
             var o = document.createElement('option');
-            o.value = key; o.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+            o.value = key; o.textContent = subtypeLabels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
             subtype.appendChild(o);
         });
     }

@@ -170,7 +170,8 @@ class JobWorkService
         $data['dispatch_id'] = $dispatchId;
         return app(OperationPosting::class)->run($kind === 'process' ? 'job_work_receipt' : 'job_work_material_return', JobWorkReceipt::class,
             'operations.job_work', 'job_work.receive', $data, $key, $context, $actor, function ($data, $date) use ($dispatchId, $kind, $context, $actor) {
-                validator($data, ['warehouse_id' => 'required|integer|min:1', 'lines' => 'required|array|min:1|max:500',
+                validator($data, ['warehouse_id' => 'required_without:direct_dispatch|nullable|integer|min:1', 'direct_dispatch' => 'sometimes|boolean',
+                    'lines' => 'required|array|min:1|max:500',
                     'lines.*.dispatch_line_id' => 'required|integer|min:1|distinct', 'lines.*.accepted_qty' => 'required|numeric|min:0',
                     'lines.*.rejected_qty' => 'required|numeric|min:0', 'lines.*.loss_qty' => 'required|numeric|min:0',
                     'rejected_warehouse_id' => 'nullable|integer|min:1', 'outputs' => 'sometimes|array|min:1|max:500'])->validate();
@@ -180,9 +181,15 @@ class JobWorkService
                     throw ValidationException::withMessages(['dispatch' => 'Receive an active dispatch on or after its date.']);
                 }
                 $guard = app(CompanyWriteGuard::class);
-                $warehouse = $guard->warehouse($data['warehouse_id'], $context, $actor);
-                if ($warehouse->external_job_order_id) throw ValidationException::withMessages(['warehouse_id' => 'Receive into an internal warehouse.']);
+                // Sec 143(1)(a): processed goods may be supplied to the customer straight from the job worker's premises.
+                // They stay in the job worker's location (still ours) until the invoice issues them from there.
+                $direct = $kind === 'process' && !empty($data['direct_dispatch']);
+                $warehouse = $guard->warehouse($direct ? $order->external_warehouse_id : $data['warehouse_id'], $context, $actor);
+                if ($warehouse->external_job_order_id && !$direct) throw ValidationException::withMessages(['warehouse_id' => 'Receive into an internal warehouse.']);
                 $policy = $order->details_json['process'];
+                if ($direct && (!$policy['conversion'] || empty($data['outputs']))) {
+                    throw ValidationException::withMessages(['direct_dispatch' => 'Direct dispatch to a customer needs processed output entered on the GRN.']);
+                }
                 // Unprocessed returns bring back the item that was sent. A rework GRN converts only when outputs are entered
                 // (rejected grey re-dyed), otherwise the reworked item comes back as itself (dyed fabric re-finished).
                 $rework = ($dispatch->purpose ?? 'process') === 'rework';
@@ -270,7 +277,7 @@ class JobWorkService
                     'details_json' => ['received_qty' => $received, 'loss_qty' => $lost, 'settled_qty' => $settled,
                         'loss_percent' => round($lost / $settled * 100, 4), 'rejected_movement_id' => $rejectedMovement?->id,
                         'rejected_warehouse_id' => $rejectedMovement ? (int) $data['rejected_warehouse_id'] : null,
-                        'process' => $policy, 'lots' => $lots], 'posted_at' => now()])->save();
+                        'process' => $policy, 'lots' => $lots] + ($direct ? ['direct_dispatch' => true] : []), 'posted_at' => now()])->save();
                 app(DocumentNumberService::class)->assign($number, $receipt);
                 return $receipt;
             });
@@ -308,7 +315,7 @@ class JobWorkService
                 if (($receipt->receipt_kind ?? 'process') === 'material_return') {
                     throw ValidationException::withMessages(['receipt' => 'Material returned unprocessed carries no processing charge.']);
                 }
-                validator($data, ['items' => 'required|array|min:1|max:500'])->validate();
+                validator($data, ['items' => 'required|array|min:1|max:500', 'charge_mode' => 'sometimes|in:capitalise,expense'])->validate();
                 foreach ($data['items'] as $line) {
                     $product = app(CompanyWriteGuard::class)->owned(\App\Models\Product::class, $line['product_id'] ?? null, $context, 'product_id');
                     if ($product->type !== 'service') throw ValidationException::withMessages(['items' => 'Job work bills accept service items only.']);
@@ -317,7 +324,7 @@ class JobWorkService
                     'supplier_id' => $order->job_worker_party_id, 'warehouse_id' => $receipt->warehouse_id,
                     'business_date' => $date, 'status' => 1, 'items' => $data['items'],
                     'note' => 'Job work '.$order->reference_no.' / '.$receipt->reference_no,
-                    'job_work_receipt_id' => $receipt->id,
+                    'job_work_receipt_id' => $receipt->id, 'job_work_charge_mode' => $data['charge_mode'] ?? 'capitalise',
                 ], 'job-work-bill:'.$key, $actor, $context));
                 DB::table('job_work_receipts')->where('id', $receiptId)->update(['service_purchase_id' => $purchase->id]);
                 return $receipt->fresh();
@@ -335,6 +342,27 @@ class JobWorkService
             ->groupBy('o.id', 'o.reference_no', 'o.job_worker_party_id', 'l.product_id')
             ->selectRaw('o.id AS order_id, o.reference_no, o.job_worker_party_id, l.product_id, SUM(l.qty_base) AS pending_qty, SUM(l.value) AS pending_value')
             ->havingRaw('ABS(SUM(l.qty_base)) > 0.00005')->get()->map(fn ($row) => (array) $row)->all();
+    }
+
+    /**
+     * Sec 143(3): inputs not back within 1 year (capital goods 3 years) of the first Material DC are a deemed supply on
+     * the DC date. Each pending row gets that deadline, the days left on $asOf, and ok / due_soon (60 days) / overdue.
+     */
+    public function deadlines(CompanyContext $context, int $actor, ?string $asOf = null): array
+    {
+        $asOf = \Carbon\CarbonImmutable::parse($asOf ?? now()->toDateString());
+        $capital = \Illuminate\Support\Facades\Schema::hasColumn('products', 'is_capital_goods');
+        return array_map(function (array $row) use ($context, $asOf, $capital) {
+            $sent = DB::table('job_work_dispatches as d')->join('job_work_dispatch_lines as l', 'l.dispatch_id', '=', 'd.id')
+                ->where('d.company_id', $context->companyId)->where('d.job_work_order_id', $row['order_id'])->whereNull('d.reversed_at')
+                ->where('l.product_id', $row['product_id'])->min('d.business_date')
+                ?? DB::table('job_work_orders')->where('id', $row['order_id'])->value('business_date');
+            $years = $capital && DB::table('products')->where('id', $row['product_id'])->value('is_capital_goods') ? 3 : 1;
+            $due = \Carbon\CarbonImmutable::parse(substr((string) $sent, 0, 10))->addYears($years);
+            $left = (int) $asOf->diffInDays($due, false);
+            return $row + ['sent_on' => substr((string) $sent, 0, 10), 'return_by' => $due->toDateString(), 'days_left' => $left,
+                'goods_kind' => $years === 3 ? 'capital_goods' : 'inputs', 'status' => $left < 0 ? 'overdue' : ($left <= 60 ? 'due_soon' : 'ok')];
+        }, $this->pending($context, $actor));
     }
 
     public function reverse(string $kind, int $id, string $date, string $reason, CompanyContext $context, int $actor)

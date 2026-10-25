@@ -25,7 +25,7 @@ class IndustryProfileService
         return DB::transaction(function () use ($profile, $subtype, $choices, $context, $actor) {
             app(CapabilityService::class)->applyProfile($profile, $context, $actor);
             foreach ($choices[$subtype] as $capability) app(CapabilityService::class)->enable($capability, [], $context, $actor);
-            DB::table('company_industry_settings')->where('company_id', $context->companyId)->update(['subtype' => $subtype]);
+            $this->useSubtype($profile, $subtype, $context->companyId);
             app(OperationPosting::class)->audit('profile_apply', $context->companyId, $context, $actor, compact('profile', 'subtype'));
             return $this->settings($context);
         }, 3);
@@ -34,18 +34,30 @@ class IndustryProfileService
     /** Called within CapabilityService's profile transaction, including the existing setup API. */
     public function installDefaults(string $profile, CompanyContext $context, int $actor): void
     {
-        $settings = IndustryCatalog::SETTINGS[$profile];
+        $subtype = array_key_first(IndustryCatalog::SUBTYPES[$profile]);
         DB::table('company_industry_settings')->updateOrInsert(['company_id' => $context->companyId], [
-            'profile_key' => $profile, 'subtype' => array_key_first(IndustryCatalog::SUBTYPES[$profile]),
-            'settings_json' => json_encode($settings, JSON_THROW_ON_ERROR), 'updated_by' => $actor, 'updated_at' => now(), 'created_at' => now(),
+            'profile_key' => $profile, 'subtype' => $subtype,
+            'settings_json' => json_encode(IndustryCatalog::settings($profile, $subtype), JSON_THROW_ON_ERROR), 'updated_by' => $actor, 'updated_at' => now(), 'created_at' => now(),
         ]);
         DB::table('product_attribute_definitions')->where('company_id', $context->companyId)->update(['enabled' => false]);
         foreach (IndustryCatalog::ATTRIBUTES[$profile] as $key => [$label, $type]) DB::table('product_attribute_definitions')->updateOrInsert([
             'company_id' => $context->companyId, 'key' => $key], ['label' => $label, 'type' => $type, 'profile_key' => $profile, 'enabled' => true]);
+        $this->useSubtype($profile, $subtype, $context->companyId);
         self::ensureProcesses($context->companyId, $profile);
         self::alignProcesses($context->companyId, $profile);
         self::ensureUnits($context->companyId, $profile);
         // Presets never change existing unit factors, stock flags, product values or company valuation policies.
+    }
+
+    /** Records the business type with its settings and shows only the profile attributes that type uses. */
+    public function useSubtype(string $profile, string $subtype, int $companyId): void
+    {
+        DB::table('company_industry_settings')->where('company_id', $companyId)->update(['subtype' => $subtype,
+            'settings_json' => json_encode(IndustryCatalog::settings($profile, $subtype), JSON_THROW_ON_ERROR)]);
+        $hidden = IndustryCatalog::SUBTYPE_HIDDEN_ATTRIBUTES[$profile][$subtype] ?? [];
+        foreach (array_keys(IndustryCatalog::ATTRIBUTES[$profile]) as $key) {
+            DB::table('product_attribute_definitions')->where('company_id', $companyId)->where('key', $key)->update(['enabled' => !in_array($key, $hidden, true)]);
+        }
     }
 
     /** Adds the industry's preset processes the company does not have yet; existing ones (and their edits) are kept. */

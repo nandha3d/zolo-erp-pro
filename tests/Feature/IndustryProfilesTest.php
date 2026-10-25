@@ -40,6 +40,34 @@ class IndustryProfilesTest extends OperationsTestCase
         $this->assertTrue(app(CapabilityService::class)->enabled('operations.job_work', $this->context()));
     }
 
+    public function test_textile_business_types_show_only_the_features_each_one_uses(): void
+    {
+        $profiles = app(IndustryProfileService::class); $capabilities = app(CapabilityService::class);
+        $on = fn () => array_values(array_filter(['sales.wholesale', 'sales.route_distribution', 'operations.job_work', 'manufacturing.production', 'printing.dot_matrix'],
+            fn ($key) => $capabilities->enabled($key, $this->context())));
+        $attributes = fn () => DB::table('product_attribute_definitions')->where('company_id', $this->company->id)->where('enabled', true)->orderBy('id')->pluck('key')->all();
+        $labels = function () { request()->attributes->remove('industry_labels'); request()->attributes->set(\App\Services\Platform\CompanyContext::class, $this->context());
+            return [IndustryProfileService::label('dispatch', 'Delivery Challan'), IndustryProfileService::label('receipt', 'GRN')]; };
+
+        $profiles->apply('textile', 'manufacturing', $this->context(), 1);
+        $this->assertSame(['sales.wholesale', 'operations.job_work', 'manufacturing.production', 'printing.dot_matrix'], $on());
+        $this->assertSame(['Material DC', 'Job Work GRN'], $labels());
+        $this->assertContains('gsm', $attributes());
+
+        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $this->assertSame(['sales.wholesale', 'printing.dot_matrix'], $on(), 'A trader does not send material out or produce.');
+        $this->assertSame(['Delivery Challan', 'GRN'], $labels());
+
+        $profiles->apply('textile', 'distributor', $this->context(), 1);
+        $this->assertSame(['sales.wholesale', 'sales.route_distribution', 'printing.dot_matrix'], $on());
+        $this->assertNotContains('gsm', $attributes()); $this->assertNotContains('construction', $attributes()); $this->assertContains('brand', $attributes());
+
+        $profiles->apply('textile', 'wholesale_distributor', $this->context(), 1);
+        $this->assertSame(['sales.wholesale', 'sales.route_distribution', 'printing.dot_matrix'], $on());
+        $this->assertContains('gsm', $attributes(), 'Switching type shows the attributes again.');
+        $this->assertSame('Wholesale & Distributor', \App\Services\Industry\IndustryCatalog::subtypeLabel('wholesale_distributor'));
+    }
+
     public function test_fmcg_fefo_and_ten_plus_one_scheme_issue_all_free_stock(): void
     {
         app(IndustryProfileService::class)->apply('fmcg', 'distribution', $this->context(), 1);

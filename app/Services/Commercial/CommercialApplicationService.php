@@ -162,9 +162,20 @@ class CommercialApplicationService
                 ? app(SaleService::class)->createSale($data, $actor, $context, deferPosting: true)
                 : app(PurchaseService::class)->createPurchase($data, $actor, $context, deferPosting: true);
             $attributes = $this->attributes($data);
+            // Cash discount terms typed on the bill win; otherwise the party master's standard terms apply.
+            if (!isset($attributes['cash_discount_percent']) && (float) ($party->cd_percent ?? 0) > 0) {
+                $attributes += ['cash_discount_percent' => (float) $party->cd_percent, 'cash_discount_days' => (int) ($party->cd_days ?? 0)];
+            }
             if (empty($attributes['bale_no']) && \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')
                 && DB::table('company_industry_settings')->where('company_id', $context->companyId)->value('profile_key') === 'textile') {
                 $attributes['bale_no'] = $document->reference_no;
+            }
+            if ($kind === 'sale' && \Illuminate\Support\Facades\Schema::hasColumn('warehouses', 'external_job_order_id')
+                && ($location = DB::table('warehouses')->find($data['warehouse_id'])) && $location->external_job_order_id) {
+                // Supplied straight from the job worker's premises (Sec 143(1)(a)); the invoice and e-way bill show it.
+                $worker = DB::table('job_work_orders as o')->join('suppliers as s', 's.id', '=', 'o.job_worker_party_id')
+                    ->where('o.id', $location->external_job_order_id)->first(['s.name', 's.company_name']);
+                $attributes['dispatched_from'] = trim(($worker->company_name ?? null ?: $worker->name ?? 'Job worker').', '.($location->address ?? ''), ', ');
             }
             if ($materials->isNotEmpty()) $attributes['source_documents'] = $materials->map(fn ($source) => [
                 'type' => $kind === 'sale' ? 'dc' : 'grn', 'id' => $source->id,
@@ -262,9 +273,13 @@ class CommercialApplicationService
 
     private function attributes(array $data): array
     {
-        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'sales_order_id', 'purchase_order_id', 'goods_receipt_no',
-            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id']));
+        $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'capitalise_services', 'sales_order_id', 'purchase_order_id', 'goods_receipt_no',
+            'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id',
+            'cash_discount_percent', 'cash_discount_days', 'job_work_charge_mode', 'supply_type', 'lut_number']));
         if (isset($attributes['job_work_receipt_id'])) validator($attributes, ['job_work_receipt_id' => 'integer|min:1'])->validate();
+        if (($attributes['cash_discount_percent'] ?? '') === '') unset($attributes['cash_discount_percent'], $attributes['cash_discount_days']);
+        validator($attributes, ['cash_discount_percent' => 'sometimes|numeric|gt:0|max:100', 'cash_discount_days' => 'sometimes|nullable|integer|min:0|max:365',
+            'job_work_charge_mode' => 'sometimes|in:capitalise,expense'])->validate();
         foreach (['bale_count', 'bundle_count', 'no_of_bales'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
         if (isset($attributes['credit_days']) && $attributes['credit_days'] !== '') validator($attributes, ['credit_days' => 'integer|min:0|max:3650'])->validate();
         foreach ($attributes as $key => $value) {

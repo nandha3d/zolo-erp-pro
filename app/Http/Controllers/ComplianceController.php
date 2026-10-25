@@ -85,6 +85,40 @@ class ComplianceController extends Controller
                 'inward_taxable' => $inward->sum('taxable_value'), 'input_tax' => $tax($inward), 'net' => $tax($outward) - $tax($inward)]];
     }
 
+    /** GSTR-3B, Form ITC-04 and the 194Q TDS register for a period, on one screen, with CSV / JSON downloads. */
+    public function gstReturns(Request $request)
+    {
+        $context = $this->permit($request, 'gst-index');
+        $year = \App\Models\Accounting\FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
+        $request->validate(['from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+            'download' => 'nullable|in:gstr3b,itc04_4,itc04_5a,itc04_5c,tds_194q', 'format' => 'nullable|in:json,csv']);
+        $from = $request->input('from', now()->startOfMonth()->max($year->start_date)->toDateString());
+        $to = $request->input('to', now()->endOfMonth()->min($year->end_date)->toDateString());
+        $returns = app(\App\Services\Tax\GstReturnsService::class);
+        $data = ['gstr3b' => $returns->gstr3b($context, $from, $to), 'itc04' => $returns->itc04($context, $from, $to),
+            'tds' => app(\App\Services\Tax\Tds194qService::class)->register($context, $from, $to)];
+        if ($download = $request->input('download')) {
+            $rows = match ($download) { 'gstr3b' => $data['gstr3b'], 'itc04_4' => $data['itc04']['table_4_sent'],
+                'itc04_5a' => $data['itc04']['table_5a_received_back'], 'itc04_5c' => $data['itc04']['table_5c_supplied_from_job_worker'], 'tds_194q' => $data['tds'] };
+            $name = $download.'-'.$from.'-'.$to;
+            return $request->input('format') === 'csv' && $download !== 'gstr3b'
+                ? response($returns->csv($rows), 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename="'.$name.'.csv"'])
+                : response()->json($rows)->header('Content-Disposition', 'attachment; filename="'.$name.'.json"');
+        }
+        return $request->expectsJson() ? response()->json($data) : view('backend.compliance.gst_returns', compact('context', 'from', 'to') + $data);
+    }
+
+    /** E-invoice JSON (IRP schema 1.1) for an invoice, or e-way bill JSON for an invoice or Material DC, to upload on the portal. */
+    public function eDocument(Request $request, string $format, string $source, int $id)
+    {
+        $context = $this->permit($request, 'gst-index');
+        $service = app(\App\Services\Tax\EDocumentService::class);
+        $json = $format === 'einvoice' ? $service->einvoice($id, $context)
+            : $service->ewayBill($source, $id, $context, $request->only(['transporter_id', 'distance_km', 'vehicle_number']));
+        return response()->json($json, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            ->header('Content-Disposition', 'attachment; filename="'.$format.'-'.$source.'-'.$id.'.json"');
+    }
+
     public function export(Request $request)
     {
         $context = $this->permit($request, 'gst-index');

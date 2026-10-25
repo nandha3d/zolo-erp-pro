@@ -294,7 +294,7 @@ class CompanyDirectoryService
             }
             app(IndustryProfileService::class)->installDefaults($profile, $context, $actor);
         }
-        DB::table('company_industry_settings')->where('company_id', $context->companyId)->update(['subtype' => $subtype]);
+        app(IndustryProfileService::class)->useSubtype($profile, $subtype, $context->companyId);
     }
 
     private function code(string $name, string $table): string

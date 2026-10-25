@@ -101,11 +101,11 @@ class TextileInventoryDefaultsTest extends OperationsTestCase
 
     public function test_bleaching_requires_configuration_then_preserves_customized_policy_on_replay(): void
     {
-        $profiles = app(IndustryProfileService::class); $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $profiles = app(IndustryProfileService::class); $profiles->apply('textile', 'manufacturing', $this->context(), 1);
         $process = DB::table('process_types')->where('company_id', $this->company->id)->where('code', 'BLEACHING')->first();
         $this->assertNotNull($process); $this->assertFalse((bool) $process->is_active); $this->assertEquals(0, $process->max_loss_percent);
         app(JobWorkService::class)->configureProcess(['code' => 'BLEACHING', 'name' => 'Our Bleaching', 'max_loss_percent' => 1.25, 'conversion' => true], $this->context(), 1);
-        $profiles->apply('textile', 'wholesale', $this->context(), 1);
+        $profiles->apply('textile', 'manufacturing', $this->context(), 1);
         $process = DB::table('process_types')->find($process->id);
         $this->assertSame('Our Bleaching', $process->name); $this->assertEquals(1.25, $process->max_loss_percent);
         $this->assertTrue((bool) $process->conversion); $this->assertTrue((bool) $process->is_active);

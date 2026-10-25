@@ -105,6 +105,9 @@ class GstSettingsController extends Controller
                     $company->save();
                 });
             }),
+            'garment-band' => tap('Garment rate by sale value added: up to ₹2,500 a piece 5%, above 18%. Assign it to garments and made-ups.',
+                fn () => $gst->installGarmentBands($context, $actor)),
+            'trade' => tap('Export and TDS settings saved.', fn () => $gst->saveTradeSettings($request->only(['lut_number', 'lut_valid_from', 'lut_valid_to', 'tds_194q']), $context, $actor)),
             'party' => tap('Party GST profile saved.', fn () => app(\App\Services\Tax\TaxSetupService::class)->save('party',
                 $request->only(['party_type', 'party_id', 'registration_type', 'gstin', 'state_code']), $context, $actor)),
             default => abort(404),

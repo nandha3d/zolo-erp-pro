@@ -74,7 +74,7 @@ class DocumentRenderingService
             'grand_total' => (float) $source->grand_total, 'source_number' => $note ? $source->attributes_json['source_no'] : null,
             'quantity_scale' => \Illuminate\Support\Facades\Schema::hasTable('company_industry_settings')
                 ? app(\App\Services\Industry\IndustryProfileService::class)->settings($context)['settings']['quantity_scale'] : 4,
-            'transport' => array_intersect_key($source->attributes_json ?? [], array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'bale_no', 'no_of_bales'])),
+            'transport' => array_intersect_key($source->attributes_json ?? [], array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'bale_no', 'no_of_bales', 'dispatched_from', 'supply_type', 'lut_number'])),
         ];
     }
 

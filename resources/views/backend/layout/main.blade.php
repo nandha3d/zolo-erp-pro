@@ -589,8 +589,8 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
       </div>
     </footer>
 
-    @unless($companyContext)
-    <!-- notification modal -->
+    <!-- notification modal (opened from All Notifications) -->
+    @if(!$companyContext || request()->routeIs('notifications.index'))
     <div id="notification-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog">
         <div class="modal-content">
@@ -642,7 +642,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
       </div>
     </div>
     <!-- end notification modal -->
-    @endunless
+    @endif
 
     <!-- Category Modal -->
     <div id="category-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
@@ -732,7 +732,9 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     <!-- Category Modal -->
 
     <!-- expense modal -->
-    @unless($companyContext)
+    {{-- With a company selected, the expense and income modals render only on their own list pages (their Add buttons);
+         the other legacy modals stay off. --}}
+    @if(!$companyContext || request()->routeIs('expenses.index'))
     <div id="expense-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
@@ -748,12 +750,12 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
             <?php
             $lims_expense_category_list = DB::table('expense_categories')->where('is_active', true)->get();
             if (Auth::user()->role_id > 2)
-              $lims_warehouse_list = DB::table('warehouses')->where([
+              $lims_warehouse_list = \App\Models\Warehouse::where([
                 ['is_active', true],
                 ['id', Auth::user()->warehouse_id]
               ])->get();
             else
-              $lims_warehouse_list = DB::table('warehouses')->where('is_active', true)->get();
+              $lims_warehouse_list = \App\Models\Warehouse::where('is_active', true)->get();
             $lims_account_list = \App\Models\Account::where('is_active', true)->get();
             ?>
             <div class="row">
@@ -846,8 +848,10 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
         </div>
       </div>
     </div>
+    @endif
     <!-- end expense modal -->
     <!-- income modal start -->
+    @if(!$companyContext || request()->routeIs('incomes.index'))
     <div id="income-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
@@ -863,12 +867,12 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
             <?php
             $lims_income_category_list = DB::table('income_categories')->where('is_active', true)->get();
             if (Auth::user()->role_id > 2)
-              $lims_warehouse_list = DB::table('warehouses')->where([
+              $lims_warehouse_list = \App\Models\Warehouse::where([
                 ['is_active', true],
                 ['id', Auth::user()->warehouse_id]
               ])->get();
             else
-              $lims_warehouse_list = DB::table('warehouses')->where('is_active', true)->get();
+              $lims_warehouse_list = \App\Models\Warehouse::where('is_active', true)->get();
             $lims_account_list = \App\Models\Account::where('is_active', true)->get();
             ?>
             <div class="row">
@@ -921,8 +925,10 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
         </div>
       </div>
     </div>
+    @endif
     <!-- income modal end -->
 
+    @unless($companyContext)
     <!-- sale return modal -->
     <div id="add-sale-return" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog">
@@ -1396,6 +1402,34 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   @stack('scripts')
 
   <script type="text/javascript">
+    // Pages mark their own sidebar entry; any page that does not gets the link whose URL best matches the current one.
+    $(function () {
+      setTimeout(function () {
+        var menu = $('#side-main-menu');
+        if (!menu.length || menu.find('li.active').not('.sidebar-heading').length) return;
+        var here = window.location, best = null, bestScore = 0;
+        menu.find('a[href]').each(function () {
+          var href = this.getAttribute('href');
+          if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+          var url;
+          try { url = new URL(this.href); } catch (e) { return; }
+          if (url.host !== here.host) return;
+          var path = url.pathname.replace(/\/+$/, '') || '/', current = here.pathname.replace(/\/+$/, '') || '/';
+          if (current !== path && current.indexOf(path === '/' ? '/' : path + '/') !== 0) return;
+          var params = new URLSearchParams(here.search), matched = 0, ok = true;
+          url.searchParams.forEach(function (value, key) { if (params.get(key) === value) matched++; else ok = false; });
+          if (!ok) return;
+          var score = path.length * 10 + (current === path ? 5 : 0) + matched;
+          if (score > bestScore) { best = this; bestScore = score; }
+        });
+        if (!best) return;
+        $(best).closest('li').addClass('active');
+        $(best).parents('ul.collapse').addClass('show').siblings('a').attr('aria-expanded', 'true');
+      }, 0);
+    });
+  </script>
+
+  <script type="text/javascript">
     $.ajaxSetup({
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -1618,21 +1652,6 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
       });
     });
 
-    $("a#add-expense").click(function(e) {
-      e.preventDefault();
-      $('#expense-modal').modal();
-    });
-
-    $("a#add-income").click(function(e) {
-      e.preventDefault();
-      $('#income-modal').modal();
-    });
-
-    $("a#send-notification").click(function(e) {
-      e.preventDefault();
-      $('#notification-modal').modal();
-    });
-
     $("a#add-account").click(function(e) {
       e.preventDefault();
       $('#account-modal').modal();
@@ -1641,50 +1660,6 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     $("a#account-statement").click(function(e) {
       e.preventDefault();
       $('#account-statement-modal').modal();
-    });
-
-    $("a#profitLoss-link").click(function(e) {
-      e.preventDefault();
-      $("#profitLoss-report-form").submit();
-    });
-
-    $("a#report-link").click(function(e) {
-      e.preventDefault();
-      $("#product-report-form").submit();
-    });
-
-    $("a#purchase-report-link").click(function(e) {
-      e.preventDefault();
-      $("#purchase-report-form").submit();
-    });
-
-    $("a#sale-report-link").click(function(e) {
-      e.preventDefault();
-      $("#sale-report-form").submit();
-    });
-    $("a#sale-report-chart-link").click(function(e) {
-      e.preventDefault();
-      $("#sale-report-chart-form").submit();
-    });
-
-    $("a#payment-report-link").click(function(e) {
-      e.preventDefault();
-      $("#payment-report-form").submit();
-    });
-
-    $("a#warehouse-report-link").click(function(e) {
-      e.preventDefault();
-      $('#warehouse-modal').modal();
-    });
-
-    $("a#user-report-link").click(function(e) {
-      e.preventDefault();
-      $('#user-modal').modal();
-    });
-
-    $("a#biller-report-link").click(function(e) {
-      e.preventDefault();
-      $('#biller-modal').modal();
     });
 
     $("a#customer-report-link").click(function(e) {

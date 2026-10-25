@@ -7,6 +7,8 @@
 <a href="{{ url('/compliance/documents/'.$kind.'/'.$id.'/print?format=thermal') }}">Thermal preview</a>
 <a href="{{ url('/compliance/documents/'.$kind.'/'.$id.'/print?format=dot_matrix') }}">Dot matrix text</a>
 <a href="{{ url('/compliance/documents/'.$kind.'/'.$id.'/print?format=a4&output=pdf') }}">PDF</a>
+@if($kind === 'sale')<a href="{{ url('/compliance/einvoice/sale/'.$id) }}" title="IRP schema 1.1 JSON to upload on the e-invoice portal">E-invoice JSON</a>
+<a href="{{ url('/compliance/ewaybill/sale/'.$id) }}" title="Bulk-generation JSON for the e-way bill portal">E-way bill JSON</a>@endif
 <a href="{{ url('/compliance/documents/'.$kind.'/'.$id.'/print?format=dot_matrix&output=escp') }}">ESC/P payload</a>
 </nav>
 @foreach($profiles as $profile)<p><a href="{{ url('/compliance/documents/'.$kind.'/'.$id.'/print?profile_id='.$profile->id) }}">{{ $profile->name }}</a></p>@endforeach

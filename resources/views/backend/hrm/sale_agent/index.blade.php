@@ -245,7 +245,7 @@
     <script type="text/javascript">
         $("ul#hrm").siblings('a').attr('aria-expanded', 'true');
         $("ul#hrm").addClass("show");
-        $("ul#hrm #employee-menu").addClass("active");
+        $("ul#hrm #sale-agent-menu").addClass("active");
 
         @if (config('database.connections.zoloerp_landlord'))
             if (localStorage.getItem("message")) {
