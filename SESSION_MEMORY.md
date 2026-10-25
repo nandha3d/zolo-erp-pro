@@ -1867,3 +1867,45 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - **Verification:**
   - `Tests\Feature\DashboardSmokeTest`: PASS (118,131 bytes rendered).
   - Browser subagent visual verification: Rendered full dashboard at `http://zolo-erp-pro.test/dashboard`, verified all KPI cards (Revenue, Profit, Sale Total, Purchase Total, Expense, Receivables, Payables, Cash & Bank), quick action buttons, cash flow charts, and navigation bar. Screenshot captured: `initial_nav_dashboard_1792916289130.png`.
+
+---
+
+## 82. Resolution of Checkbox Persistence, Full-Width Section Boxes & Universal Dropdown Width Normalization (2026-10-25, branch ui)
+- **User Defect Reports:**
+  1. Pull latest from `origin/ui`.
+  2. Clicking each product checkbox should enable a full-width section box with the **same width as the top container**.
+  3. The `Initial Stock` checkbox was automatically unchecking whenever other checkboxes (`is_batch`, `is_imei`, `is_variant`) were clicked.
+  4. Fix dropdowns that open full-screen / full-card width across the application (e.g., `#negative-stock-policy` and other dropdowns throughout the ERP).
+- **Root Cause Analysis:**
+  1. **Git Synchronization:** Merged incoming commits from `origin/ui` (`28aa003`, `d28aee2`, `3252084`). Resolved conflicts cleanly in `SESSION_MEMORY.md`, `zolo-erp-neo.css` (preserving nandha3d's per-section tints), and `product/create.blade.php`.
+  2. **Checkbox Persistence:** `is_batch`, `is_imei`, and `is_variant` event handlers in `backend/product/create.blade.php` contained calls to `initialStockUncheck()`, `$("#stock-section").hide(300)`, and `$("#featured").hide(300)`, automatically unchecking and hiding Initial Stock whenever a user toggled any variant, batch, or IMEI options.
+  3. **Section Box Widths:** `#initial-stock-section` and `#diffPrice-section` were constrained inside a `<div class="row" id="warehouse-details-row"><div class="col-md-6">` half-width layout instead of being direct full-width children of `.product-extended-details-container`. In `product/edit.blade.php`, `#diffPrice-section` was also restricted to `col-md-6`.
+  4. **Universal Full-Width Dropdowns:**
+     - In `public/js/front.js:48` and `front_rtl.js:44`, `$.fn.dropdown.Constructor.Default.boundary = 'viewport'` is configured globally.
+     - When Bootstrap 4 opens any dropdown with `boundary !== 'scrollParent'`, its internal `dropdown.js` executes `$(parent).addClass('position-static')`.
+     - In Bootstrap's stylesheet, `.position-static` is defined with `position: static !important;`.
+     - When the toggle's parent loses `position: relative`, its child `.dropdown-menu` (which has `position: absolute; left: 0; min-width: 100%`) can no longer calculate its offset or width relative to the input field; its nearest positioned ancestor becomes the entire `.card`, `.row`, or `<body>`, causing the menu to align to `left: 0` and stretch to 100% width of the card or viewport.
+     - Additionally, for body-level `.bs-container` elements created when `container: 'body'` is used, `bootstrap-select.min.css` applies `:not(.input-group) > .bootstrap-select.form-control:not([class*=col-]) { width: 100%; }`. Because `.bs-container` is a direct child of `<body>` and carries `.form-control`, it inherited `width: 100%` of `<body>` (1536px), and its menu took `min-width: 100%` (1536px).
+     - Furthermore, `$('select:not(...)').selectpicker({ container: 'body' })` in `front.js` was indiscriminately matching Laravel Debugbar select dropdowns (`phpdebugbar-datasets-switcher`).
+- **Fixes Applied:**
+  1. **Product Checkbox Handlers (`product/create.blade.php`):**
+     - Completely removed calls to `initialStockUncheck()`, `$("#stock-section").hide(300)`, and `$("#featured").hide(300)` from `is_batch`, `is_imei`, and `is_variant` change listeners.
+     - Toggling any combination of flags now preserves the checked state and visibility of Initial Stock and Featured.
+  2. **Section Box Layout Normalization (`product/create.blade.php` & `product/edit.blade.php`):**
+     - Eliminated `#warehouse-details-row` and `col-md-6` wrappers in `create.blade.php`.
+     - Made `#initial-stock-section` and `#diffPrice-section` direct full-width children (`class="w-100"`) inside `.product-extended-details-container`, exactly matching `#variant-section`, `#promo-container`, and `#combo`.
+     - In `product/edit.blade.php`, upgraded `#diffPrice-section` from `col-md-6` to `col-12`.
+  3. **Universal Dropdown Normalization (`zolo-components.css`, `zolo-erp-neo.css`, `front.js`, `front_rtl.js`):**
+     - Enforced `position: relative !important;` on `.bootstrap-select`, `.bootstrap-select.position-static`, `.btn-group.position-static`, `.dropdown.position-static`, `.dropup.position-static`, `.input-group-*.position-static`, and `.form-group.position-static` in both component and neo stylesheets.
+     - Constrained `body > .bs-container` and all `.bs-container` variants to `position: absolute !important; width: auto !important; min-width: 0 !important; max-width: min(100vw - 32px, 480px) !important; height: 0 !important; padding: 0 !important; margin: 0 !important; z-index: 99999 !important;`.
+     - Constrained `.dropdown-menu`, `.bootstrap-select .dropdown-menu`, and `.bs-container .dropdown-menu` to `max-width: min(100vw - 32px, 480px) !important; box-sizing: border-box !important;`.
+     - Added global event interceptor in `front.js` and `front_rtl.js` on `show.bs.dropdown shown.bs.dropdown` to dynamically strip `.position-static` from dropdown parents.
+     - Excluded `phpdebugbar` dropdowns from `$('select...').selectpicker()`.
+     - Added `selectpicker` class to `#negative-stock-policy` in `stock-policy.blade.php` and `profit_margin_type` in `create.blade.php` and `edit.blade.php`.
+- **Automated Verification:**
+  - Automated Playwright audit across `/products/create`, `/products`, `/purchases`, and `/sales`: verified 0 wide/misaligned dropdowns across all pages.
+  - Multi-checkbox verification: `isInitialChecked: true`, `initialSecVisible: true`, `diffPriceVisible: true`, `variantVisible: true`, with identical 1230px full-width containers (`sameWidth: true`).
+  - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
+  - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 100% green, 0 inline styles).
+  - Visual verification artifacts: `negative_stock_fixed.png`, `sections_extended_view.png`.
+

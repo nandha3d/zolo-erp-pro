@@ -1,6 +1,6 @@
+@extends('backend.layout.main')
 @section('rich-editor', '1')
 @section('image-upload', '1')
-@extends('backend.layout.main')
 
 @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
 @push('css')
@@ -142,29 +142,6 @@
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div id="combo" class="col-12">
-                                            <label>{{__('db.Combo Products')}}</label>
-                                            <div class="search-box input-group mb-2">
-                                                <button type="button" class="btn btn-secondary btn-sm"><i class="fa fa-barcode"></i></button>
-                                                <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="{{ __('db.Please type product code and select') }}" class="form-control" />
-                                            </div>
-                                            <div class="table-responsive">
-                                                <table id="myTable" class="table table-hover order-list">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>{{__('db.product')}}</th>
-                                                            <th>{{__('db.Wastage Percent')}}</th>
-                                                            <th>{{__('db.Quantity')}}</th>
-                                                            <th>{{__('db.Unit Cost')}}</th>
-                                                            <th>{{__('db.Unit Price')}}</th>
-                                                            <th>{{__('db.Sub total')}}</th>
-                                                            <th><i class="dripicons-trash"></i></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="combo_product_list_table"></tbody>
-                                                </table>
-                                            </div>
-                                        </div>
                                     </div>
                                 </x-ui.section-box>
 
@@ -184,7 +161,7 @@
                                         <div class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Profit Margin Type') }}</label>
-                                                <select name="profit_margin_type" class="form-control" required>
+                                                <select name="profit_margin_type" class="form-control selectpicker" required>
                                                     <option value="percentage">Percentage (%)</option>
                                                     <option value="flat">Flat</option>
                                                 </select>
@@ -253,7 +230,7 @@
                                             </div>
                                         </div>
 
-                                        @include('backend.product.partials.stock-policy', ['product' => null])
+                                        @include('backend.product.partials.stock-policy', ['product' => null, 'colClass' => 'col-6'])
 
                                         <!-- Warranty and Guarantee -->
                                         <div class="col-6">
@@ -296,7 +273,7 @@
                                                         <textarea rows="2" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif></textarea>
                                                     @elseif($field->type == 'select')
                                                         <?php $option_values = explode(",", $field->option_value); ?>
-                                                        <select class="form-control" name="{{str_replace(' ', '_', strtolower($field->name))}}" @if($field->is_required){{'required'}}@endif>
+                                                        <select class="form-control selectpicker" name="{{str_replace(' ', '_', strtolower($field->name))}}" @if($field->is_required){{'required'}}@endif>
                                                             @foreach($option_values as $value)
                                                                 <option value="{{$value}}" @if($value == $field->default_value){{'selected'}}@endif>{{$value}}</option>
                                                             @endforeach
@@ -383,123 +360,6 @@
                                         </div>
                                         @endif
                                     </div>
-
-                                    <!-- Expandable: Warehouse Initial Stock Table -->
-                                    <div class="col-12 px-0" id="initial-stock-section">
-                                        <label class="mt-2 mb-1 font-weight-bold small">{{__('db.Warehouse Initial Stock')}}</label>
-                                        <div class="table-responsive">
-                                            <table class="table table-hover table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>{{__('db.Warehouse')}}</th>
-                                                        <th>{{__('db.qty')}}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($lims_warehouse_list as $warehouse)
-                                                    <tr>
-                                                        <td>
-                                                            <input type="hidden" name="stock_warehouse_id[]" value="{{$warehouse->id}}">
-                                                            {{$warehouse->name}}
-                                                        </td>
-                                                        <td><input type="number" name="stock[]" min="0" class="form-control form-control-sm"></td>
-                                                    </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expandable: Different Warehouse Price Table -->
-                                    <div class="col-12 px-0" id="diffPrice-section">
-                                        <label class="mt-2 mb-1 font-weight-bold small">{{__('db.Different Warehouse Price')}}</label>
-                                        <div class="table-responsive">
-                                            <table id="diffPrice-table" class="table table-hover table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>{{__('db.Warehouse')}}</th>
-                                                        <th>{{__('db.Price')}}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($lims_warehouse_list as $warehouse)
-                                                    <tr>
-                                                        <td>
-                                                            <input type="hidden" name="warehouse_id[]" value="{{$warehouse->id}}">
-                                                            {{$warehouse->name}}
-                                                        </td>
-                                                        <td><input type="number" name="diff_price[]" class="form-control form-control-sm" placeholder="0.00"></td>
-                                                    </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expandable: Variant Section -->
-                                    <div class="col-12 px-0" id="variant-section">
-                                        <div id="variant-input-section">
-                                            <div class="row">
-                                                <div class="col-5 form-group mt-1">
-                                                    <label>{{__('db.Option')}} *</label>
-                                                    <input type="text" name="variant_option[]" class="form-control form-control-sm variant-field" placeholder="{{ __('db.Size, Color etc') }}">
-                                                </div>
-                                                <div class="col-5 form-group mt-1">
-                                                    <label>{{__('db.Value')}} *</label>
-                                                    <input type="text" name="variant_value[]" class="type-variant form-control form-control-sm variant-field">
-                                                </div>
-                                                <div class="col-2 form-group mt-1 d-flex align-items-end justify-content-center">
-                                                    <button type="button" class="delVarOption btn btn-danger btn-sm p-1"><i class="dripicons-cross"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn btn-info btn-xs add-more-variant my-1"><i class="dripicons-plus"></i> {{__('db.Add More Variant')}}</button>
-                                        <div class="table-responsive">
-                                            <table id="variant-table" class="table table-hover table-sm variant-list">
-                                                <thead>
-                                                    <tr>
-                                                        <th>{{__('db.name')}}</th>
-                                                        <th>{{__('db.Item Code')}}</th>
-                                                        <th>{{__('db.Additional Cost')}}</th>
-                                                        <th>{{__('db.Additional Price')}}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expandable: Promotional Price Details -->
-                                    <div class="row mt-2" id="promo-container">
-                                        <div class="col-12" id="promotion_price">
-                                            <div class="form-group">
-                                                <label>{{__('db.Promotional Price')}}</label>
-                                                <input type="number" name="promotion_price" class="form-control" step="any" placeholder="0.00" />
-                                            </div>
-                                        </div>
-                                        <div class="col-6" id="start_date">
-                                            <div class="form-group">
-                                                <label>{{__('db.Promotion Starts')}}</label>
-                                                <div class="input-group">
-                                                    <div class="input-group-prepend">
-                                                        <div class="input-group-text"><i class="dripicons-calendar"></i></div>
-                                                    </div>
-                                                    <input type="text" name="starting_date" id="starting_date" class="form-control" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-6" id="last_date">
-                                            <div class="form-group">
-                                                <label>{{__('db.Promotion Ends')}}</label>
-                                                <div class="input-group">
-                                                    <div class="input-group-prepend">
-                                                        <div class="input-group-text"><i class="dripicons-calendar"></i></div>
-                                                    </div>
-                                                    <input type="text" name="last_date" id="ending_date" class="form-control" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </x-ui.section-box>
 
                                 <!-- BOX 4: Media, Details & SEO (Purple) -->
@@ -570,6 +430,164 @@
                                     @endif
                                 </x-ui.section-box>
 
+                            </div>
+
+                            <!-- Extended Conditional Details Container (Rendered directly beneath the 4 top boxes when checkboxes are toggled) -->
+                            <div class="product-extended-details-container mt-2">
+                                <!-- Warehouse Initial Stock Section (Full width matching top container) -->
+                                <div id="initial-stock-section" class="w-100">
+                                    <x-ui.section-box variant="amber" title="{{__('db.Warehouse Initial Stock')}}" icon="inventory">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.Warehouse')}}</th>
+                                                        <th>{{__('db.qty')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($lims_warehouse_list as $warehouse)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="hidden" name="stock_warehouse_id[]" value="{{$warehouse->id}}">
+                                                            {{$warehouse->name}}
+                                                        </td>
+                                                        <td><input type="number" name="stock[]" min="0" class="form-control form-control-sm"></td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </x-ui.section-box>
+                                </div>
+
+                                <!-- Warehouse Differential Price Section (Full width matching top container) -->
+                                <div id="diffPrice-section" class="w-100">
+                                    <x-ui.section-box variant="emerald" title="{{__('db.Different Warehouse Price')}}" icon="pricing">
+                                        <div class="table-responsive">
+                                            <table id="diffPrice-table" class="table table-hover table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.Warehouse')}}</th>
+                                                        <th>{{__('db.Price')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($lims_warehouse_list as $warehouse)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="hidden" name="warehouse_id[]" value="{{$warehouse->id}}">
+                                                            {{$warehouse->name}}
+                                                        </td>
+                                                        <td><input type="number" name="diff_price[]" class="form-control form-control-sm" placeholder="0.00"></td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </x-ui.section-box>
+                                </div>
+
+                                <!-- Product Variants Section -->
+                                <div id="variant-section">
+                                    <x-ui.section-box variant="purple" title="{{__('db.Product Variants')}}" icon="tag">
+                                        <div id="variant-input-section">
+                                            <div class="row align-items-end">
+                                                <div class="col-md-4 form-group mb-2">
+                                                    <label class="font-weight-bold">{{__('db.Option')}} * <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Size, Color etc')}}"></i></label>
+                                                    <input type="text" name="variant_option[]" class="form-control form-control-sm variant-field" placeholder="{{ __('db.Size, Color etc') }}">
+                                                </div>
+                                                <div class="col-md-7 form-group mb-2">
+                                                    <label class="font-weight-bold">{{__('db.Value')}} * <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Enter variant value seperated by comma')}}"></i></label>
+                                                    <input type="text" name="variant_value[]" class="type-variant form-control form-control-sm variant-field">
+                                                </div>
+                                                <div class="col-md-1 form-group mb-2 text-center">
+                                                    <button type="button" class="delVarOption btn btn-danger btn-sm" title="{{__('db.delete')}}"><i class="dripicons-cross"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="my-2">
+                                            <button type="button" class="btn btn-info btn-xs add-more-variant"><i class="dripicons-plus"></i> {{__('db.Add More Variant')}}</button>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table id="variant-table" class="table table-hover table-sm variant-list mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.name')}}</th>
+                                                        <th>{{__('db.Item Code')}}</th>
+                                                        <th>{{__('db.Additional Cost')}}</th>
+                                                        <th>{{__('db.Additional Price')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </x-ui.section-box>
+                                </div>
+
+                                <!-- Promotional Price Section -->
+                                <div id="promo-container">
+                                    <x-ui.section-box variant="blue" title="{{__('db.Promotional Price')}}" icon="pricing">
+                                        <div class="row">
+                                            <div class="col-md-4" id="promotion_price">
+                                                <div class="form-group mb-0">
+                                                    <label class="font-weight-bold">{{__('db.Promotional Price')}}</label>
+                                                    <input type="number" name="promotion_price" class="form-control form-control-sm" step="any" placeholder="0.00" />
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4" id="start_date">
+                                                <div class="form-group mb-0">
+                                                    <label class="font-weight-bold">{{__('db.Promotion Starts')}}</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text"><i class="dripicons-calendar"></i></div>
+                                                        </div>
+                                                        <input type="text" name="starting_date" id="starting_date" class="form-control form-control-sm" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4" id="last_date">
+                                                <div class="form-group mb-0">
+                                                    <label class="font-weight-bold">{{__('db.Promotion Ends')}}</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text"><i class="dripicons-calendar"></i></div>
+                                                        </div>
+                                                        <input type="text" name="last_date" id="ending_date" class="form-control form-control-sm" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </x-ui.section-box>
+                                </div>
+
+                                <!-- Combo Products Section -->
+                                <div id="combo">
+                                    <x-ui.section-box variant="blue" title="{{__('db.Combo Products')}}" icon="box">
+                                        <div class="search-box input-group mb-2">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fa fa-barcode"></i></span>
+                                            </div>
+                                            <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="{{ __('db.Please type product code and select') }}" class="form-control form-control-sm" />
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table id="myTable" class="table table-hover order-list mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.product')}}</th>
+                                                        <th>{{__('db.Wastage Percent')}}</th>
+                                                        <th>{{__('db.Quantity')}}</th>
+                                                        <th>{{__('db.Unit Cost')}}</th>
+                                                        <th>{{__('db.Unit Price')}}</th>
+                                                        <th>{{__('db.Sub total')}}</th>
+                                                        <th class="text-center"><i class="dripicons-trash"></i></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="combo_product_list_table"></tbody>
+                                            </table>
+                                        </div>
+                                    </x-ui.section-box>
+                                </div>
                             </div>
 
                             <!-- Bottom Action Bar -->
@@ -791,6 +809,7 @@
     $("#variant-section").hide();
     $("#initial-stock-section").hide();
     $("#diffPrice-section").hide();
+    $("#promo-container").hide();
     $("#promotion_price").hide();
     $("#start_date").hide();
     $("#last_date").hide();
@@ -812,7 +831,7 @@
     });
 
     $('.add-more-variant').on("click", function() {
-        var htmlText = '<div class="row"><div class="col-md-4 form-group mt-2"><label>Option *</label><input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc..."></div><div class="col-md-7 form-group mt-2"><label>Value *</label><input type="text" name="variant_value[]" class="type-variant form-control variant-field"></div><div class="col-sm-1 form-group mt-2 u-d-flex u-dir-column u-items-center u-justify-end"><button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button></div></div>';
+        var htmlText = '<div class="row align-items-end"><div class="col-md-4 form-group mb-2"><label>Option *</label><input type="text" name="variant_option[]" class="form-control form-control-sm variant-field" placeholder="Size, Color etc..."></div><div class="col-md-7 form-group mb-2"><label>Value *</label><input type="text" name="variant_value[]" class="type-variant form-control form-control-sm variant-field"></div><div class="col-md-1 form-group mb-2 text-center"><button type="button" class="delVarOption btn btn-danger btn-sm"><i class="dripicons-cross"></i></button></div></div>';
         $("#variant-input-section").append(htmlText);
         $('.type-variant').tagsInput();
     });
@@ -1616,54 +1635,29 @@
         }
     });
 
-    function initialStockUncheck(){
-        $("input[name='is_initial_stock']").prop("checked", false);
-        $("input[name='featured']").prop("checked", false);
-        $("#initial-stock-section").hide(300);
-    }
-
     $("input[name='is_batch']").on("change", function () {
         if ($(this).is(':checked')) {
-            initialStockUncheck()
             $("#variant-option").hide(300);
-            $("#stock-section").hide(300);
-            $("#featured").hide(300);
-
         }
         else {
             $("#variant-option").show(300);
-            $("#stock-section").show(300);
-            $("#featured").show(300);
         }
-
     });
 
     $("input[name='is_imei']").on("change", function () {
-        if ($(this).is(':checked')) {
-            initialStockUncheck()
-            $("#stock-section").hide(300);
-            $("#featured").hide(300);
-        }
-        else {
-            $("#stock-section").show(300);
-            $("#featured").show(300);
-        }
-
+        // Toggle IMEI state without modifying initial stock or flags
     });
 
     $("input[name='is_variant']").on("change", function () {
         if ($(this).is(':checked')) {
-            initialStockUncheck()
             $("#variant-section").show(300);
             $("#batch-option").hide(300);
             $(".variant-field").prop("required", true);
-            $("#stock-section").hide(300);
         }
         else {
             $("#variant-section").hide(300);
             $("#batch-option").show(300);
             $(".variant-field").prop("required", false);
-            $("#stock-section").show(300);
         }
     });
 
@@ -1678,11 +1672,13 @@
     $( "#promotion" ).on( "change", function() {
         if ($(this).is(':checked')) {
             $("#starting_date").val($.datepicker.formatDate('dd-mm-yy', new Date()));
+            $("#promo-container").show(300);
             $("#promotion_price").show(300);
             $("#start_date").show(300);
             $("#last_date").show(300);
         }
         else {
+            $("#promo-container").hide(300);
             $("#promotion_price").hide(300);
             $("#start_date").hide(300);
             $("#last_date").hide(300);

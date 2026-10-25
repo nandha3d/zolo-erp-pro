@@ -2058,6 +2058,88 @@ body.dark-mode .zolo-product-grid .dropzone {
   min-width: 0 !important;
 }
 
+/* Extended conditional sections below the top 4-box product grid */
+.product-extended-details-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.product-extended-details-container .zolo-section-box {
+  margin-bottom: 0 !important;
+}
+
+.product-extended-details-container .table-responsive {
+  border: 1px solid var(--neo-border, #e2e8f0);
+  border-radius: var(--neo-radius-md, 8px);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.product-extended-details-container .table {
+  margin: 0 !important;
+}
+
+/* Tags Input (Variant values, Product tags) */
+.tagsinput {
+  background: var(--neo-input-bg, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: 6px !important;
+  min-height: 33px !important;
+  padding: 3px 6px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+body.dark-mode .tagsinput {
+  background: var(--neo-input-bg, #141c2e) !important;
+  border-color: var(--neo-border, #1e293b) !important;
+}
+
+.tagsinput .tag {
+  background: var(--z-primary) !important;
+  color: var(--z-primary-contrast, #ffffff) !important;
+  border-radius: 4px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  padding: 2px 22px 2px 8px !important;
+  margin: 0 !important;
+  line-height: 20px !important;
+  position: relative !important;
+}
+
+.tagsinput .tag .tag-remove {
+  color: #ffffff !important;
+  line-height: 24px !important;
+  width: 20px !important;
+  height: 20px !important;
+  top: 0 !important;
+  right: 2px !important;
+}
+
+.tagsinput .tag .tag-remove:after,
+.tagsinput .tag .tag-remove:before {
+  background: #ffffff !important;
+  width: 8px !important;
+  height: 2px !important;
+  top: 11px !important;
+  left: 6px !important;
+}
+
+.tagsinput div input {
+  color: var(--neo-text-primary, #0f172a) !important;
+  font-size: 11.5px !important;
+  height: 26px !important;
+  padding: 2px 4px !important;
+  margin: 0 !important;
+}
+
+body.dark-mode .tagsinput div input {
+  color: var(--neo-text-primary, #f1f5f9) !important;
+}
+
 /* ====================================================================
    TABLES & DATATABLES - MODERN INTELLIGENT ALIGNMENT
    ==================================================================== */
@@ -2086,15 +2168,15 @@ table.dataTable thead tr:first-child th:last-child {
 }
 
 .table thead th, .neo-table thead th, table.dataTable thead th {
-  background-color: var(--neo-bg) !important;
+  background-color: var(--z-table-head-bg) !important;
   border-top: none !important;
-  border-bottom: 2px solid var(--neo-border) !important;
+  border-bottom: 2px solid var(--z-table-head-bg) !important;
   color: var(--z-table-head-text) !important;
   font-size: 11.5px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
-  padding: 13px 18px !important;
+  padding: 11px 16px !important;
   vertical-align: middle !important;
   white-space: nowrap !important;
 }
@@ -3558,11 +3640,40 @@ body.dark-mode .zolo-kpi-card:hover {
   margin-bottom: 6px !important;
 }
 
-/* With the 'viewport' dropdown boundary Bootstrap marks the toggle's parent .position-static. A selectpicker menu
-   already lives in its own body-level .bs-container, so it must stay positioned: static, the menu's min-width:100%
-   was taken from the page and the list stretched across the whole screen. */
-.bootstrap-select.bs-container.position-static {
+/* With the 'viewport' dropdown boundary Bootstrap marks the toggle's parent .position-static.
+   Never allow dropdown wrappers or selectpickers to lose position: relative, otherwise their
+   .dropdown-menu attaches to the outer page/card and blows up across the entire screen width.
+   Similarly, any body-level .bs-container must stay position: absolute with high z-index. */
+.bootstrap-select,
+.bootstrap-select.position-static,
+div.bootstrap-select.position-static,
+.btn-group.position-static,
+.dropdown.position-static,
+.dropup.position-static,
+.input-group-prepend.position-static,
+.input-group-append.position-static,
+.input-group-btn.position-static,
+.form-group.position-static {
+  position: relative !important;
+}
+
+body > .bs-container,
+body > .bs-container.position-static,
+.bs-container,
+.bs-container.position-static,
+div.bs-container,
+div.bs-container.position-static,
+.bootstrap-select.bs-container,
+.bootstrap-select.bs-container.position-static,
+.bootstrap-select.bs-container.form-control {
   position: absolute !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: min(100vw - 32px, 480px) !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: 99999 !important;
 }
 
 /* Release overflow across ALL screen widths when any dropdown or collection is active */
@@ -3594,6 +3705,7 @@ body > .bs-container {
   border-radius: 12px !important;
   border: 1px solid var(--neo-border, #e2e8f0) !important;
   max-height: min(420px, calc(100vh - 160px)) !important;
+  max-width: min(100vw - 32px, 480px) !important;
 }
 
 /* The installed selectpicker uses Bootstrap 3's open state with Bootstrap 4's menu CSS. */
