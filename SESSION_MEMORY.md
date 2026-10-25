@@ -1909,3 +1909,38 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 100% green, 0 inline styles).
   - Visual verification artifacts: `negative_stock_fixed.png`, `sections_extended_view.png`.
 
+---
+
+## 83. 4-Column Balanced Grid Layout for Conditional Product Boxes (2026-10-25, branch ui)
+- **User Feedback & Requirement:**
+  - "i never wanted like this. no need full width box, instead of that, keep the boxes as like the primary boxes in the top, if 3 boxes, arrange them in the same line, whichever need maximum width then occupy 2 grids in 4 column, then the other 2 boxes wil be occupy each grids."
+- **Layout Architecture & Alignment Math:**
+  - The top primary container (`.zolo-product-grid`) uses a 4-column grid: `grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;`.
+  - The conditional container (`.product-extended-details-container`) mirrors this exact 4-column structure instead of stacking full-width cards:
+    - `#initial-stock-section`: `grid-column: span 1 !important;` (occupies Column 1, 300px width).
+    - `#diffPrice-section`: `grid-column: span 1 !important;` (occupies Column 2, 300px width).
+    - `#variant-section`: `grid-column: span 2 !important;` (occupies Columns 3 & 4, 610px width - maximum width for option, values, and variant table).
+    - `#promo-container`: `grid-column: span 2 !important;` (occupies 2 columns for price, start date, end date).
+    - `#combo`: `grid-column: span 4 !important;` (occupies 4 columns for combo search and table).
+  - Math check: `1 col (300px) + gap (10px) + 1 col (300px) + gap (10px) + 2 cols (610px) = 1230px` total container width.
+  - When all 3 boxes are enabled, all three start at the exact same vertical offset (`top: 674.77px`), creating a perfectly balanced 4-column second row directly beneath the primary 4 boxes.
+- **Modifications Applied:**
+  1. `resources/views/backend/product/create.blade.php`:
+     - Removed `class="w-100"` from `#initial-stock-section` and `#diffPrice-section`.
+  2. `public/css/zolo-erp-neo.css`:
+     - Converted `.product-extended-details-container` from `flex-direction: column` to CSS Grid:
+       `display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 10px !important; align-items: stretch !important;`.
+     - Added column spans for each section type (`span 1` for initial stock and diffPrice, `span 2` for variant and promo, `span 4` for combo).
+     - Added responsive breakpoints: `@media (max-width: 1400px)` -> 2 columns; `@media (max-width: 768px)` -> 1 column.
+     - Enforced `height: 100% !important; display: flex !important; flex-direction: column !important;` on `.zolo-section-box` and `.zolo-section-box-content` so cards stretch to equal height.
+- **Verification:**
+  - Automated Playwright measurement (`scratch/test_layout.js`):
+    - `initialStock.top = 674.77, width = 300`
+    - `diffPrice.top = 674.77, width = 300`
+    - `variant.top = 674.77, width = 610`
+    - All 3 boxes share the exact same top position (`top: 674.77px`) and fill 100% of the 1230px grid row without wrapping or stretching full-width.
+  - Verified across light mode (`three_boxes_same_line.png`, `three_boxes_extended_close.png`) and dark mode (`three_boxes_dark_mode.png`).
+  - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
+  - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles).
+
+

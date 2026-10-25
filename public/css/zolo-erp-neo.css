@@ -2058,15 +2058,81 @@ body.dark-mode .zolo-product-grid .dropzone {
   min-width: 0 !important;
 }
 
-/* Extended conditional sections below the top 4-box product grid */
+/* Extended conditional sections below the top 4-box product grid:
+   Arranges conditional boxes in the same 4-column line as the primary top boxes.
+   If 3 boxes are enabled, the widest section (variants) occupies 2 grids, and the
+   other 2 boxes (initial stock, diff price) occupy 1 grid each on the exact same row. */
 .product-extended-details-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+
+@media (max-width: 1400px) {
+  .product-extended-details-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-extended-details-container {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Sections that occupy 1 grid (matching individual top primary boxes) */
+.product-extended-details-container > #initial-stock-section,
+.product-extended-details-container > #diffPrice-section {
+  grid-column: span 1 !important;
+  width: 100% !important;
+}
+
+/* Sections that need maximum width: occupy 2 grids in 4 columns */
+.product-extended-details-container > #variant-section {
+  grid-column: span 2 !important;
+  width: 100% !important;
+}
+
+.product-extended-details-container > #promo-container {
+  grid-column: span 2 !important;
+  width: 100% !important;
+}
+
+.product-extended-details-container > #combo {
+  grid-column: span 4 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1400px) {
+  .product-extended-details-container > #variant-section,
+  .product-extended-details-container > #promo-container,
+  .product-extended-details-container > #combo {
+    grid-column: span 2 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-extended-details-container > #initial-stock-section,
+  .product-extended-details-container > #diffPrice-section,
+  .product-extended-details-container > #variant-section,
+  .product-extended-details-container > #promo-container,
+  .product-extended-details-container > #combo {
+    grid-column: span 1 !important;
+  }
 }
 
 .product-extended-details-container .zolo-section-box {
   margin-bottom: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.product-extended-details-container .zolo-section-box-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
 }
 
 .product-extended-details-container .table-responsive {

@@ -432,10 +432,10 @@
 
                             </div>
 
-                            <!-- Extended Conditional Details Container (Rendered directly beneath the 4 top boxes when checkboxes are toggled) -->
+                            <!-- Extended Conditional Details Container (4-column grid mirroring top primary boxes) -->
                             <div class="product-extended-details-container mt-2">
-                                <!-- Warehouse Initial Stock Section (Full width matching top container) -->
-                                <div id="initial-stock-section" class="w-100">
+                                <!-- Warehouse Initial Stock Section (1 grid column) -->
+                                <div id="initial-stock-section">
                                     <x-ui.section-box variant="amber" title="{{__('db.Warehouse Initial Stock')}}" icon="inventory">
                                         <div class="table-responsive">
                                             <table class="table table-hover table-sm">
@@ -461,8 +461,8 @@
                                     </x-ui.section-box>
                                 </div>
 
-                                <!-- Warehouse Differential Price Section (Full width matching top container) -->
-                                <div id="diffPrice-section" class="w-100">
+                                <!-- Warehouse Differential Price Section (1 grid column) -->
+                                <div id="diffPrice-section">
                                     <x-ui.section-box variant="emerald" title="{{__('db.Different Warehouse Price')}}" icon="pricing">
                                         <div class="table-responsive">
                                             <table id="diffPrice-table" class="table table-hover table-sm">
