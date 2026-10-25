@@ -1795,8 +1795,8 @@ body.dark-mode .zolo-section-box-emerald .zolo-section-box-icon {
 }
 
 .zolo-section-box-purple .zolo-section-box-icon {
-  background: rgba(124, 58, 237, 0.12) !important;
-  color: #7c3aed !important;
+  background: var(--z-primary-soft-strong) !important;
+  color: var(--z-primary) !important;
 }
 
 body.dark-mode .zolo-section-box-purple,
@@ -1813,8 +1813,8 @@ body.dark-mode .cp-col-compliance .cp-col-title {
 }
 
 body.dark-mode .zolo-section-box-purple .zolo-section-box-icon {
-  background: rgba(192, 132, 252, 0.18) !important;
-  color: #c084fc !important;
+  background: var(--z-primary-soft-strong) !important;
+  color: var(--z-primary-text) !important;
 }
 
 .zolo-section-box-amber,
