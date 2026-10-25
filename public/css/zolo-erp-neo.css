@@ -2269,34 +2269,36 @@ body.dark-mode .zolo-inventory-stripe-divider {
   flex: 1 1 auto !important;
 }
 
-/* Individual Toggle Pill Button */
+/* Individual Toggle Switch Button (matches iOS/Material modern toggle buttons) */
 .zolo-toggle-pill {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  padding: 4px 10px !important;
-  border-radius: 16px !important;
+  gap: 7px !important;
+  padding: 4px 10px 4px 5px !important;
+  border-radius: 20px !important;
   font-size: 11px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
   user-select: none !important;
   border: 1px solid var(--neo-border, #e2e8f0) !important;
-  background: rgba(0, 0, 0, 0.02) !important;
+  background: var(--z-field-bg, #ffffff) !important;
   color: var(--neo-text-secondary, #64748b) !important;
   margin: 0 !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   white-space: nowrap !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 
 body.dark-mode .zolo-toggle-pill {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #151c2e !important;
+  border-color: #27334d !important;
   color: #94a3b8 !important;
 }
 
 .zolo-toggle-pill:hover {
   border-color: var(--z-primary) !important;
   color: var(--neo-text-primary, #1e293b) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
 }
 
 body.dark-mode .zolo-toggle-pill:hover {
@@ -2308,6 +2310,41 @@ body.dark-mode .zolo-toggle-pill:hover {
   display: none !important;
 }
 
+/* Toggle Switch Track & Thumb (matching native toggle button image) */
+.zolo-switch-track {
+  width: 28px !important;
+  height: 16px !important;
+  border-radius: 999px !important;
+  background-color: #cbd5e1 !important;
+  position: relative !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+  transition: background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body.dark-mode .zolo-switch-track {
+  background-color: #334155 !important;
+}
+
+.zolo-switch-thumb {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background-color: #ffffff !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Active / Checked States: Knob slides to right, Track fills with color */
+.zolo-toggle-pill.is-active .zolo-switch-thumb,
+.zolo-toggle-pill:has(input:checked) .zolo-switch-thumb {
+  transform: translateX(12px) !important;
+}
+
+/* Fallback dot support if present */
 .zolo-toggle-pill .pill-dot {
   width: 6px !important;
   height: 6px !important;
@@ -2316,7 +2353,11 @@ body.dark-mode .zolo-toggle-pill:hover {
   transition: background-color 0.15s ease, transform 0.15s ease !important;
 }
 
-/* Active / Checked States */
+/* Default / Purple theme */
+.zolo-toggle-pill.is-active .zolo-switch-track,
+.zolo-toggle-pill:has(input:checked) .zolo-switch-track {
+  background-color: var(--z-primary) !important;
+}
 .zolo-toggle-pill.is-active,
 .zolo-toggle-pill:has(input:checked) {
   background: var(--z-primary-soft, #f5e6f5) !important;
@@ -2324,26 +2365,29 @@ body.dark-mode .zolo-toggle-pill:hover {
   color: var(--z-primary) !important;
   font-weight: 600 !important;
 }
-
 body.dark-mode .zolo-toggle-pill.is-active,
 body.dark-mode .zolo-toggle-pill:has(input:checked) {
   background: rgba(125, 40, 126, 0.2) !important;
   border-color: var(--zp-400, #c37ac4) !important;
   color: var(--zp-200, #ebcdeb) !important;
 }
-
 .zolo-toggle-pill.is-active .pill-dot,
 .zolo-toggle-pill:has(input:checked) .pill-dot {
   background: var(--z-primary) !important;
   transform: scale(1.3) !important;
 }
 
-/* Per-role active colors */
+/* Amber role (Initial Stock, Batch) */
+.zolo-toggle-pill[data-role="amber"].is-active .zolo-switch-track,
+.zolo-toggle-pill[data-role="amber"]:has(input:checked) .zolo-switch-track {
+  background-color: #f59e0b !important;
+}
 .zolo-toggle-pill[data-role="amber"].is-active,
 .zolo-toggle-pill[data-role="amber"]:has(input:checked) {
-  background: rgba(245, 158, 11, 0.12) !important;
+  background: rgba(245, 158, 11, 0.1) !important;
   border-color: #f59e0b !important;
   color: #b45309 !important;
+  font-weight: 600 !important;
 }
 body.dark-mode .zolo-toggle-pill[data-role="amber"].is-active,
 body.dark-mode .zolo-toggle-pill[data-role="amber"]:has(input:checked) {
@@ -2356,11 +2400,17 @@ body.dark-mode .zolo-toggle-pill[data-role="amber"]:has(input:checked) {
   background: #f59e0b !important;
 }
 
+/* Emerald role (Diff Price, Embedded Barcode, In Stock) */
+.zolo-toggle-pill[data-role="emerald"].is-active .zolo-switch-track,
+.zolo-toggle-pill[data-role="emerald"]:has(input:checked) .zolo-switch-track {
+  background-color: #10b981 !important;
+}
 .zolo-toggle-pill[data-role="emerald"].is-active,
 .zolo-toggle-pill[data-role="emerald"]:has(input:checked) {
-  background: rgba(16, 185, 129, 0.12) !important;
+  background: rgba(16, 185, 129, 0.1) !important;
   border-color: #10b981 !important;
   color: #047857 !important;
+  font-weight: 600 !important;
 }
 body.dark-mode .zolo-toggle-pill[data-role="emerald"].is-active,
 body.dark-mode .zolo-toggle-pill[data-role="emerald"]:has(input:checked) {
@@ -2373,11 +2423,17 @@ body.dark-mode .zolo-toggle-pill[data-role="emerald"]:has(input:checked) {
   background: #10b981 !important;
 }
 
+/* Blue role (IMEI, Promo Price, Addon) */
+.zolo-toggle-pill[data-role="blue"].is-active .zolo-switch-track,
+.zolo-toggle-pill[data-role="blue"]:has(input:checked) .zolo-switch-track {
+  background-color: #2563eb !important;
+}
 .zolo-toggle-pill[data-role="blue"].is-active,
 .zolo-toggle-pill[data-role="blue"]:has(input:checked) {
   background: rgba(37, 99, 235, 0.1) !important;
   border-color: #2563eb !important;
   color: #1d4ed8 !important;
+  font-weight: 600 !important;
 }
 body.dark-mode .zolo-toggle-pill[data-role="blue"].is-active,
 body.dark-mode .zolo-toggle-pill[data-role="blue"]:has(input:checked) {
@@ -2390,11 +2446,17 @@ body.dark-mode .zolo-toggle-pill[data-role="blue"]:has(input:checked) {
   background: #2563eb !important;
 }
 
+/* Rose role (Sync disable) */
+.zolo-toggle-pill[data-role="rose"].is-active .zolo-switch-track,
+.zolo-toggle-pill[data-role="rose"]:has(input:checked) .zolo-switch-track {
+  background-color: #e11d48 !important;
+}
 .zolo-toggle-pill[data-role="rose"].is-active,
 .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
   background: rgba(225, 29, 72, 0.1) !important;
   border-color: #e11d48 !important;
   color: #be123c !important;
+  font-weight: 600 !important;
 }
 body.dark-mode .zolo-toggle-pill[data-role="rose"].is-active,
 body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
@@ -2408,9 +2470,7 @@ body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
 }
 
 /* Extended conditional sections below the top primary grid:
-   Arranges conditional boxes in a 4-column balanced line.
-   If 3 boxes are enabled, the widest section occupies 2 grids, and the
-   other 2 boxes occupy 1 grid each on the exact same row. */
+   Arranges conditional boxes dynamically in a balanced row with NO gaps. */
 .product-extended-details-container {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
@@ -2418,32 +2478,37 @@ body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
   align-items: stretch !important;
 }
 
-@media (max-width: 1400px) {
-  .product-extended-details-container {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .product-extended-details-container {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-}
-
-/* Sections that occupy 1 grid (matching individual columns) */
-.product-extended-details-container > #initial-stock-section,
-.product-extended-details-container > #diffPrice-section,
-.product-extended-details-container > #imei-section {
+/* Dynamic Responsive Spans: never leave an empty gap in any row */
+.product-extended-details-container > .zolo-grid-span-1 {
   grid-column: span 1 !important;
   min-width: 0 !important;
 }
-
-/* Sections that need maximum width: occupy 2 grids in 4 columns */
-.product-extended-details-container > #variant-section,
-.product-extended-details-container > #batch-section,
-.product-extended-details-container > #promo-container {
+.product-extended-details-container > .zolo-grid-span-2 {
   grid-column: span 2 !important;
   min-width: 0 !important;
+}
+.product-extended-details-container > .zolo-grid-span-3 {
+  grid-column: span 3 !important;
+  min-width: 0 !important;
+}
+.product-extended-details-container > .zolo-grid-span-4 {
+  grid-column: span 4 !important;
+  min-width: 0 !important;
+}
+
+/* Default fallback grid spans if dynamic class not yet applied */
+.product-extended-details-container > #initial-stock-section,
+.product-extended-details-container > #diffPrice-section,
+.product-extended-details-container > #imei-section,
+.product-extended-details-container > #promo-container {
+  grid-column: span 1;
+  min-width: 0;
+}
+
+.product-extended-details-container > #variant-section,
+.product-extended-details-container > #batch-section {
+  grid-column: span 2;
+  min-width: 0;
 }
 
 .product-extended-details-container > #combo {
@@ -2451,23 +2516,36 @@ body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
   min-width: 0 !important;
 }
 
+/* Promotional Price in Single Grid - Vertically Arranged */
+.zolo-promo-vertical-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
 @media (max-width: 1400px) {
+  .product-extended-details-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .product-extended-details-container > .zolo-grid-span-2,
+  .product-extended-details-container > .zolo-grid-span-3,
+  .product-extended-details-container > .zolo-grid-span-4,
   .product-extended-details-container > #variant-section,
   .product-extended-details-container > #batch-section,
-  .product-extended-details-container > #promo-container,
   .product-extended-details-container > #combo {
     grid-column: span 2 !important;
   }
 }
 
 @media (max-width: 768px) {
-  .product-extended-details-container > #initial-stock-section,
-  .product-extended-details-container > #diffPrice-section,
-  .product-extended-details-container > #imei-section,
-  .product-extended-details-container > #variant-section,
-  .product-extended-details-container > #batch-section,
-  .product-extended-details-container > #promo-container,
-  .product-extended-details-container > #combo {
+  .product-extended-details-container {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .product-extended-details-container > div,
+  .product-extended-details-container > .zolo-grid-span-1,
+  .product-extended-details-container > .zolo-grid-span-2,
+  .product-extended-details-container > .zolo-grid-span-3,
+  .product-extended-details-container > .zolo-grid-span-4 {
     grid-column: span 1 !important;
   }
 }

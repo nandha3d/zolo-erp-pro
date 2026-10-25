@@ -375,80 +375,80 @@
                                 <div class="zolo-inventory-stripe-toggles">
                                     <label id="stock-section" class="zolo-toggle-pill" data-role="amber" for="chk_initial_stock" title="{{ __('db.Initial Stock') }}">
                                         <input type="checkbox" name="is_initial_stock" id="chk_initial_stock" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Initial Stock')}}</span>
                                     </label>
 
                                     <label id="variant-option" class="zolo-toggle-pill" data-role="purple" for="is-variant" title="{{ __('db.This product has variant') }}">
                                         <input name="is_variant" type="checkbox" id="is-variant" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.This product has variant')}}</span>
                                     </label>
 
                                     <label id="diffPrice-option" class="zolo-toggle-pill" data-role="emerald" for="is-diffPrice" title="{{ __('db.Different price by warehouse') }}">
                                         <input name="is_diffPrice" type="checkbox" id="is-diffPrice" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Different price by warehouse')}}</span>
                                     </label>
 
-                                    <label id="batch-option" class="zolo-toggle-pill" data-role="blue" for="is-batch" title="{{ __('db.Batch & expiry date') }}">
+                                    <label id="batch-option" class="zolo-toggle-pill" data-role="amber" for="is-batch" title="{{ __('db.Batch & expiry date') }}">
                                         <input name="is_batch" type="checkbox" id="is-batch" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Batch & expiry date')}}</span>
                                     </label>
 
                                     <label id="imei-option" class="zolo-toggle-pill" data-role="blue" for="is-imei" title="{{ __('db.IMEI / Serial numbers') }}">
                                         <input name="is_imei" type="checkbox" id="is-imei" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.IMEI / Serial numbers')}}</span>
                                     </label>
 
-                                    <label class="zolo-toggle-pill" data-role="rose" for="promotion" title="{{ __('db.Promotional Price') }}">
+                                    <label class="zolo-toggle-pill" data-role="blue" for="promotion" title="{{ __('db.Promotional Price') }}">
                                         <input name="promotion" type="checkbox" id="promotion" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Promotional Price')}}</span>
                                     </label>
 
-                                    <label id="featured" class="zolo-toggle-pill" for="chk_featured" title="{{ __('db.Featured') }}">
+                                    <label id="featured" class="zolo-toggle-pill" data-role="purple" for="chk_featured" title="{{ __('db.Featured') }}">
                                         <input type="checkbox" name="featured" id="chk_featured" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Featured')}}</span>
                                     </label>
 
-                                    <label class="zolo-toggle-pill" for="chk_embeded" title="{{ __('db.Embedded Barcode') }}">
+                                    <label class="zolo-toggle-pill" data-role="emerald" for="chk_embeded" title="{{ __('db.Embedded Barcode') }}">
                                         <input type="checkbox" name="is_embeded" id="chk_embeded" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Embedded Barcode')}}</span>
                                     </label>
 
                                     @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
-                                    <label class="zolo-toggle-pill is-active" for="is_online" title="{{ __('db.Sell Online') }}">
+                                    <label class="zolo-toggle-pill is-active" data-role="purple" for="is_online" title="{{ __('db.Sell Online') }}">
                                         <input name="is_online" type="checkbox" id="is_online" value="1" checked>
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Sell Online')}}</span>
                                     </label>
                                     @endif
 
                                     @if(in_array('ecommerce',explode(',',$general_setting->modules)))
-                                    <label class="zolo-toggle-pill is-active" for="in_stock" title="{{ __('db.In Stock') }}">
+                                    <label class="zolo-toggle-pill is-active" data-role="emerald" for="in_stock" title="{{ __('db.In Stock') }}">
                                         <input name="in_stock" type="checkbox" id="in_stock" value="1" checked>
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.In Stock')}}</span>
                                     </label>
                                     @endif
 
                                     @if (\Schema::hasColumn('products', 'woocommerce_product_id'))
-                                    <label class="zolo-toggle-pill" for="is_sync_disable" title="Disable WooCommerce">
+                                    <label class="zolo-toggle-pill" data-role="rose" for="is_sync_disable" title="Disable WooCommerce">
                                         <input name="is_sync_disable" type="checkbox" id="is_sync_disable" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>Disable WooCommerce</span>
                                     </label>
                                     @endif
 
                                     @if(in_array('restaurant',explode(',',$general_setting->modules)))
-                                    <label class="zolo-toggle-pill" for="is_addon" title="{{ __('db.This is topping') }}">
+                                    <label class="zolo-toggle-pill" data-role="blue" for="is_addon" title="{{ __('db.This is topping') }}">
                                         <input name="is_addon" type="checkbox" id="is_addon" value="1">
-                                        <span class="pill-dot"></span>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.This is topping')}}</span>
                                     </label>
                                     @endif
@@ -616,33 +616,27 @@
                                 <!-- Promotional Price Section -->
                                 <div id="promo-container">
                                     <x-ui.section-box variant="blue" title="{{__('db.Promotional Price')}}" icon="pricing">
-                                        <div class="row">
-                                            <div class="col-md-4" id="promotion_price">
-                                                <div class="form-group mb-0">
-                                                    <label class="font-weight-bold">{{__('db.Promotional Price')}}</label>
-                                                    <input type="number" name="promotion_price" class="form-control form-control-sm" step="any" placeholder="0.00" />
+                                        <div class="zolo-promo-vertical-form">
+                                            <div class="form-group mb-2" id="promotion_price">
+                                                <label class="font-weight-bold">{{__('db.Promotional Price')}}</label>
+                                                <input type="number" name="promotion_price" class="form-control form-control-sm" step="any" placeholder="0.00" />
+                                            </div>
+                                            <div class="form-group mb-2" id="start_date">
+                                                <label class="font-weight-bold">{{__('db.Promotion Starts')}}</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <div class="input-group-text"><i class="dripicons-calendar"></i></div>
+                                                    </div>
+                                                    <input type="text" name="starting_date" id="starting_date" class="form-control form-control-sm" />
                                                 </div>
                                             </div>
-                                            <div class="col-md-4" id="start_date">
-                                                <div class="form-group mb-0">
-                                                    <label class="font-weight-bold">{{__('db.Promotion Starts')}}</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <div class="input-group-text"><i class="dripicons-calendar"></i></div>
-                                                        </div>
-                                                        <input type="text" name="starting_date" id="starting_date" class="form-control form-control-sm" />
+                                            <div class="form-group mb-0" id="last_date">
+                                                <label class="font-weight-bold">{{__('db.Promotion Ends')}}</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <div class="input-group-text"><i class="dripicons-calendar"></i></div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4" id="last_date">
-                                                <div class="form-group mb-0">
-                                                    <label class="font-weight-bold">{{__('db.Promotion Ends')}}</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <div class="input-group-text"><i class="dripicons-calendar"></i></div>
-                                                        </div>
-                                                        <input type="text" name="last_date" id="ending_date" class="form-control form-control-sm" />
-                                                    </div>
+                                                    <input type="text" name="last_date" id="ending_date" class="form-control form-control-sm" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1432,6 +1426,7 @@
             $("#combo").hide(300);
             $("input[name='price']").prop('disabled',false);
         }
+        applyDynamicGridSpans();
     });
 
     $('select[name="unit_id"]').on('change', function() {
@@ -1723,17 +1718,17 @@
         else {
             $("#initial-stock-section").hide(300);
         }
+        applyDynamicGridSpans();
     });
 
     $("input[name='is_batch']").on("change", function () {
         if ($(this).is(':checked')) {
             $("#batch-section").show(300);
-            $("#variant-option").hide(300);
         }
         else {
             $("#batch-section").hide(300);
-            $("#variant-option").show(300);
         }
+        applyDynamicGridSpans();
     });
 
     $("input[name='is_imei']").on("change", function () {
@@ -1743,6 +1738,7 @@
         else {
             $("#imei-section").hide(300);
         }
+        applyDynamicGridSpans();
     });
 
     // Synchronize toggle pill visual active state
@@ -1771,22 +1767,23 @@
     $("input[name='is_variant']").on("change", function () {
         if ($(this).is(':checked')) {
             $("#variant-section").show(300);
-            $("#batch-option").hide(300);
             $(".variant-field").prop("required", true);
         }
         else {
             $("#variant-section").hide(300);
-            $("#batch-option").show(300);
             $(".variant-field").prop("required", false);
         }
+        applyDynamicGridSpans();
     });
 
     $("input[name='is_diffPrice']").on("change", function () {
         if ($(this).is(':checked')) {
             $("#diffPrice-section").show(300);
         }
-        else
+        else {
             $("#diffPrice-section").hide(300);
+        }
+        applyDynamicGridSpans();
     });
 
     $( "#promotion" ).on( "change", function() {
@@ -1803,7 +1800,156 @@
             $("#start_date").hide(300);
             $("#last_date").hide(300);
         }
+        applyDynamicGridSpans();
     });
+
+    function applyDynamicGridSpans() {
+        var isCombo = $('select[name="type"]').val() === 'combo';
+
+        var sections = [
+            {
+                id: 'initial-stock-section',
+                $el: $('#initial-stock-section'),
+                isWide: false,
+                active: !isCombo && $("input[name='is_initial_stock']").is(':checked')
+            },
+            {
+                id: 'diffPrice-section',
+                $el: $('#diffPrice-section'),
+                isWide: false,
+                active: !isCombo && $("input[name='is_diffPrice']").is(':checked')
+            },
+            {
+                id: 'imei-section',
+                $el: $('#imei-section'),
+                isWide: false,
+                active: !isCombo && $("input[name='is_imei']").is(':checked')
+            },
+            {
+                id: 'promo-container',
+                $el: $('#promo-container'),
+                isWide: false,
+                active: $("#promotion").is(':checked')
+            },
+            {
+                id: 'variant-section',
+                $el: $('#variant-section'),
+                isWide: true,
+                active: !isCombo && $("input[name='is_variant']").is(':checked')
+            },
+            {
+                id: 'batch-section',
+                $el: $('#batch-section'),
+                isWide: true,
+                active: !isCombo && $("input[name='is_batch']").is(':checked')
+            },
+            {
+                id: 'combo',
+                $el: $('#combo'),
+                isWide: true,
+                active: isCombo
+            }
+        ];
+
+        var spanClasses = 'zolo-grid-span-1 zolo-grid-span-2 zolo-grid-span-3 zolo-grid-span-4';
+        sections.forEach(function(s) {
+            if (s.$el.length) {
+                s.$el.removeClass(spanClasses);
+            }
+        });
+
+        var activeSections = sections.filter(function(s) {
+            return s.active && s.$el.length;
+        });
+
+        var count = activeSections.length;
+        if (count === 0) return;
+
+        if (isCombo) {
+            $('#combo').addClass('zolo-grid-span-4');
+            return;
+        }
+
+        if (count === 1) {
+            activeSections[0].$el.addClass('zolo-grid-span-4');
+        }
+        else if (count === 2) {
+            var wideList = activeSections.filter(function(s) { return s.isWide; });
+            var compactList = activeSections.filter(function(s) { return !s.isWide; });
+
+            if (wideList.length === 1 && compactList.length === 1) {
+                compactList[0].$el.addClass('zolo-grid-span-1');
+                wideList[0].$el.addClass('zolo-grid-span-3');
+            } else {
+                activeSections[0].$el.addClass('zolo-grid-span-2');
+                activeSections[1].$el.addClass('zolo-grid-span-2');
+            }
+        }
+        else if (count === 3) {
+            var wideList = activeSections.filter(function(s) { return s.isWide; });
+            var compactList = activeSections.filter(function(s) { return !s.isWide; });
+
+            if (wideList.length === 1 && compactList.length === 2) {
+                compactList[0].$el.addClass('zolo-grid-span-1');
+                compactList[1].$el.addClass('zolo-grid-span-1');
+                wideList[0].$el.addClass('zolo-grid-span-2');
+            } else if (wideList.length === 0) {
+                activeSections[0].$el.addClass('zolo-grid-span-2');
+                activeSections[1].$el.addClass('zolo-grid-span-1');
+                activeSections[2].$el.addClass('zolo-grid-span-1');
+            } else if (wideList.length === 2 && compactList.length === 1) {
+                wideList[0].$el.addClass('zolo-grid-span-2');
+                wideList[1].$el.addClass('zolo-grid-span-2');
+                compactList[0].$el.addClass('zolo-grid-span-4');
+            }
+        }
+        else if (count === 4) {
+            var wideList = activeSections.filter(function(s) { return s.isWide; });
+            var compactList = activeSections.filter(function(s) { return !s.isWide; });
+
+            if (wideList.length === 0) {
+                activeSections.forEach(function(s) {
+                    s.$el.addClass('zolo-grid-span-1');
+                });
+            } else if (wideList.length === 1) {
+                compactList[0].$el.addClass('zolo-grid-span-1');
+                compactList[1].$el.addClass('zolo-grid-span-1');
+                wideList[0].$el.addClass('zolo-grid-span-2');
+                compactList[2].$el.addClass('zolo-grid-span-4');
+            } else if (wideList.length === 2) {
+                wideList[0].$el.addClass('zolo-grid-span-2');
+                wideList[1].$el.addClass('zolo-grid-span-2');
+                compactList[0].$el.addClass('zolo-grid-span-2');
+                compactList[1].$el.addClass('zolo-grid-span-2');
+            }
+        }
+        else {
+            var rowRem = 4;
+            var rowItems = [];
+            activeSections.forEach(function(s, idx) {
+                var need = s.isWide ? 2 : 1;
+                if (need > rowRem) {
+                    if (rowRem > 0 && rowItems.length) {
+                        var last = rowItems[rowItems.length - 1];
+                        var curClass = last.$el.attr('class') || '';
+                        var curSpan = (curClass.match(/zolo-grid-span-(\d)/) || [0, 1])[1];
+                        last.$el.removeClass(spanClasses).addClass('zolo-grid-span-' + (parseInt(curSpan) + rowRem));
+                    }
+                    rowRem = 4;
+                    rowItems = [];
+                }
+                s.$el.addClass('zolo-grid-span-' + need);
+                rowRem -= need;
+                rowItems.push(s);
+                if (idx === activeSections.length - 1 && rowRem > 0 && rowItems.length) {
+                    var last = rowItems[rowItems.length - 1];
+                    var curClass = last.$el.attr('class') || '';
+                    var curSpan = (curClass.match(/zolo-grid-span-(\d)/) || [0, 1])[1];
+                    last.$el.removeClass(spanClasses).addClass('zolo-grid-span-' + (parseInt(curSpan) + rowRem));
+                }
+            });
+        }
+    }
 
     var starting_date = $('#starting_date');
     starting_date.datepicker({
@@ -2139,6 +2285,9 @@ $(document).on('click', '#create_unit', function (e) {
             }
         }
     });
+
+    // Initial calculation of dynamic responsive grid spans
+    applyDynamicGridSpans();
 });
 </script>
 

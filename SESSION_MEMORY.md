@@ -1983,5 +1983,41 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
   - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).
 
+---
+
+## 85. Toggle-Oriented Responsive Grid with Zero Empty Gaps & Modern Toggle Switch Buttons (2026-10-25, branch ui)
+- **User Feedback & Requirements:**
+  - "when i click other toggle buttons, 'this product has variant' hide and appears, also make use of the width responsively, make it as a toggle button. promotional price should be vertically arranged and keep it in single grid, and make all these boxes more dynamic, which means never have the gap in each line, if i toggle, make use of the space if nothing is there, then use the full width of that box. it should be toggle oriented responsive."
+- **Key Architectural Solutions:**
+  1. **Modern Toggle Switch Buttons (`.zolo-switch-track` & `.zolo-switch-thumb`):**
+     - Transformed each toggle pill in the Inventory & Stock Control stripe into authentic modern toggle switch buttons matching the provided reference (green/blue track with white circular knob).
+     - Track: 28px × 16px capsule, neutral inactive grey (`#cbd5e1` / `#334155`), transitions smoothly to active role colors (amber `#f59e0b`, emerald `#10b981`, blue `#2563eb`, purple `var(--z-primary)`, rose `#e11d48`).
+     - Thumb: 12px white circular knob with soft elevation, slides 12px to the right (`translateX(12px)`) on checked.
+  2. **Preventing "This product has variant" Hide/Reappear Glitch:**
+     - Removed legacy mutual exclusion JavaScript that was forcibly hiding `#variant-option` when `is_batch` checked and hiding `#batch-option` when `is_variant` checked.
+     - All toggle buttons remain reliably visible and stable.
+  3. **Vertically Arranged Single-Grid Promotional Price:**
+     - Converted `#promo-container` from horizontal 3-column row into `.zolo-promo-vertical-form` (vertical column of Promotional Price, Promotion Starts with calendar prepend, and Promotion Ends with calendar prepend).
+     - Constrained `#promo-container` to single grid (`span 1`), matching Initial Stock, Diff Price, and IMEI.
+  4. **Toggle-Oriented Dynamic Responsive Grid Spans (`applyDynamicGridSpans()`):**
+     - Developed dynamic layout packing algorithm to guarantee **ZERO empty gaps** in any row:
+       - **1 Box Active:** Expands to `span 4` (100% full container width, 1230px).
+       - **2 Boxes Active (1 Wide + 1 Compact, e.g., Initial Stock + Variants):** Wide section takes `span 3` (75%, 920px), compact section takes `span 1` (25%, 300px) -> Total = 4 columns (1230px, 100% width, zero right gap!).
+       - **2 Boxes Active (Both Compact or Both Wide):** Each takes `span 2` (50% each) -> Total = 4 columns (1230px, 100% width, zero gap!).
+       - **3 Boxes Active (1 Wide + 2 Compact, or 3 Compact):** Row 1 occupies all 4 columns (`1 + 1 + 2 = 4 cols` or `2 + 1 + 1 = 4 cols`) on the exact same row!
+       - **4 Boxes Active:** All 4 compact boxes occupy 1 column each (`1 + 1 + 1 + 1 = 4 cols`) on the same row with zero gap!
+- **Verification:**
+  - Automated Playwright verification (`scratch/test_dynamic_toggles.js`):
+    - Switch track and thumb verified present across all stripe controls.
+    - Single box: `width: 1230px`, `class: zolo-grid-span-4`.
+    - Initial Stock + Variants: Initial Stock is 300px (`span 1`), Variants is 920px (`span 3`), total width 1230px (zero gap).
+    - Variant option stays visible when Batch & Expiry is toggled.
+    - Promotional Price: `width: 300px`, `isVertical: true`.
+    - 3 boxes (Initial Stock + Diff Price + Variants) align on the exact same horizontal row (`top: 382.7px`, `allSameLine: true`).
+    - Verified across light and dark modes.
+  - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
+  - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).
+
+
 
 
