@@ -11,6 +11,7 @@
         'identity', 'blue' => 'zolo-section-box-blue cp-col-identity',
         'address', 'emerald', 'green' => 'zolo-section-box-emerald cp-col-address',
         'compliance', 'purple', 'violet' => 'zolo-section-box-purple cp-col-compliance',
+        'inventory', 'amber', 'orange', 'warning' => 'zolo-section-box-amber cp-col-inventory',
         default => '',
     };
 @endphp
@@ -22,7 +23,7 @@
                 @if($icon)
                     <span class="zolo-section-box-icon"><i class="{{ $icon }}"></i></span>
                 @endif
-                <span class="zolo-section-box-title">{{ $title }}</span>
+                <span class="zolo-section-box-title">{!! $title !!}</span>
                 @if($subtitle)
                     <small class="text-muted ml-2 font-weight-normal" style="font-size: 10px; text-transform: none;">{{ $subtitle }}</small>
                 @endif

@@ -23,483 +23,470 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.add_product')}}</h4>
+                <div class="card product-single-screen-card">
+                    <div class="card-header d-flex align-items-center justify-content-between py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 1.05rem;">{{__('db.add_product')}}</h4>
+                            <span class="text-muted small ml-2 font-italic">{{__('db.The field labels marked with * are required input fields')}}.</span>
+                        </div>
+                        <div class="card-header-actions d-flex align-items-center gap-2">
+                            <a href="{{route('products.index')}}" class="btn btn-sm btn-outline-secondary">{{__('db.Cancel')}}</a>
+                            <x-ui.button type="submit" variant="primary" size="sm" id="submit-btn" icon="dripicons-checkmark">{{__('db.add_product')}}</x-ui.button>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        <form id="product-form" data-shell-steps>
-                            <div class="row" data-step-title="Item">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Type')}} *</strong> </label>
-                                        <div class="input-group">
-                                            <select name="type" required class="form-control selectpicker" id="type">
-                                                <option value="standard">Standard</option>
-                                                <option value="combo">Combo</option>
-                                                <option value="digital">Digital</option>
-                                                <option value="service">Service</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Name')}} *</strong> </label>
-                                        <input type="text" name="name" class="form-control" id="name" aria-describedby="name" required>
-                                        <span class="validation-msg" id="name-error"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Code')}} *</strong> </label>
-                                        <div class="input-group">
-                                            <input type="text" name="code" class="form-control" id="code" aria-describedby="code" required>
-                                            <div class="input-group-append">
-                                                <button id="genbutton" type="button" class="btn btn-sm btn-default" title="{{__('db.Generate')}}"><i class="fa fa-refresh"></i></button>
+                    <div class="card-body p-2">
+                        <form id="product-form">
+                            <div class="zolo-product-grid">
+
+                                <!-- BOX 1: Primary Identity & Categorization (Blue) -->
+                                <x-ui.section-box variant="blue" title="{{__('db.Product Details')}}" icon="dripicons-box">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Product Type')}} *</label>
+                                                <select name="type" required class="form-control selectpicker" id="type">
+                                                    <option value="standard">Standard</option>
+                                                    <option value="combo">Combo</option>
+                                                    <option value="digital">Digital</option>
+                                                    <option value="service">Service</option>
+                                                </select>
                                             </div>
                                         </div>
-                                        <span class="validation-msg" id="code-error"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Barcode Symbology')}} *</strong> </label>
-                                        <div class="input-group">
-                                            <select name="barcode_symbology" required class="form-control selectpicker">
-                                                <option value="C128">Code 128</option>
-                                                <option value="C39">Code 39</option>
-                                                <option value="UPCA">UPC-A</option>
-                                                <option value="UPCE">UPC-E</option>
-                                                <option value="EAN8">EAN-8</option>
-                                                <option value="EAN13">EAN-13</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="digital" class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Attach File')}} *</strong> </label>
-                                        <div class="input-group">
-                                            <input type="file" id="file" name="file" class="form-control">
-                                        </div>
-                                        <span class="validation-msg"></span>
-                                    </div>
-                                </div>
-                                <div id="combo" class="col-md-12 mb-1">
-                                    <label>{{__('db.add_product')}}</label>
-                                    <div class="search-box input-group mb-3">
-                                        <button class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
-                                        <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="{{ __('db.Please type product code and select') }}" class="form-control" />
-                                    </div>
-                                    <label>{{__('db.Combo Products')}}</label>
-                                    <div class="table-responsive">
-                                        <table id="myTable" class="table table-hover order-list">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{__('db.product')}}</th>
-                                                    <th>{{__('db.Wastage Percent')}}</th>
-                                                    <th>{{__('db.Quantity')}}</th>
-                                                    <th>{{__('db.Unit Cost')}}</th>
-                                                    <th>{{__('db.Unit Price')}}</th>
-                                                    <th>{{__('db.Sub total')}}</th>
-                                                    <th><i class="dripicons-trash"></i></th>
-                                                </tr>
-
-                                            </thead>
-                                            <tbody class="combo_product_list_table">
-
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                {{-- <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Production Cost')}}</strong> </label>
-                                        <div class="input-group pos">
-                                            <input type="text" name="production_cost" class="form-control" placeholder="Enter production">
-                                      </div>
-                                    </div>
-                                </div> --}}
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Brand')}}</strong> </label>
-                                        <div class="input-group pos">
-                                          <select name="brand_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Brand...">
-                                            @foreach($lims_brand_list as $brand)
-                                                <option value="{{$brand->id}}">{{$brand->title}}</option>
-                                            @endforeach
-                                          </select>
-                                          <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addBrand"><i class="dripicons-plus"></i></button>
-                                      </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.category')}} *</strong> </label>
-                                        <div class="input-group pos">
-                                          <select name="category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Category...">
-                                            @foreach($lims_category_list as $category)
-                                                <option value="{{$category->id}}">{{$category->name}}</option>
-                                            @endforeach
-                                          </select>
-                                          <div class="input-group-append">
-                                            <button type="button" class="btn btn-default btn-sm category-model" data-toggle="modal" data-target="#category-modal"><i class="dripicons-plus"></i></button>
-                                          </div>
-                                        </div>
-                                      <span class="validation-msg"></span>
-                                    </div>
-                                </div>
-                                <div id="unit" class="col-md-12">
-                                    <div class="row ">
-                                        <div class="col-md-4 form-group">
-                                                <label>{{__('db.Product Unit')}} *</strong> </label>
-                                                <div class="input-group pos">
-                                                  <select required class="form-control selectpicker" name="unit_id">
-                                                    <option value="" disabled selected>Select Product Unit...</option>
-                                                    @foreach($lims_unit_list as $unit)
-                                                        @if($unit->base_unit==null)
-                                                            <option value="{{$unit->id}}">{{$unit->unit_name}}</option>
-                                                        @endif
-                                                    @endforeach
-                                                  </select>
-                                                  <div class="input-group-append">
-                                                    <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#createUnitModal"><i class="dripicons-plus"></i></button>
-                                                  </div>
-                                              </div>
-                                              <span class="validation-msg"></span>
-                                        </div>
-                                        <div class="col-md-4">
-                                                <label>{{__('db.Sale Unit')}}</strong> </label>
-                                                <div class="input-group pos">
-                                                  <select class="form-control selectpicker" name="sale_unit_id">
-                                                  </select>
-                                              </div>
-                                        </div>
-                                        <div class="col-md-4">
+                                        <div class="col-6">
                                             <div class="form-group">
-                                                <label>{{__('db.Purchase Unit')}}</strong> </label>
-                                                <div class="input-group pos">
-                                                    <select class="form-control selectpicker" name="purchase_unit_id">
+                                                <label>{{__('db.Barcode Symbology')}} *</label>
+                                                <select name="barcode_symbology" required class="form-control selectpicker">
+                                                    <option value="C128">Code 128</option>
+                                                    <option value="C39">Code 39</option>
+                                                    <option value="UPCA">UPC-A</option>
+                                                    <option value="UPCE">UPC-E</option>
+                                                    <option value="EAN8">EAN-8</option>
+                                                    <option value="EAN13">EAN-13</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label>{{__('db.Product Name')}} *</label>
+                                                <input type="text" name="name" class="form-control" id="name" aria-describedby="name" required placeholder="{{ __('db.Type product name') }}">
+                                                <span class="validation-msg text-danger small" id="name-error"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label>{{__('db.Product Code')}} *</label>
+                                                <div class="input-group">
+                                                    <input type="text" name="code" class="form-control" id="code" aria-describedby="code" required placeholder="{{ __('db.Enter or generate code') }}">
+                                                    <div class="input-group-append">
+                                                        <button id="genbutton" type="button" class="btn btn-sm btn-default" title="{{__('db.Generate')}}"><i class="fa fa-refresh"></i></button>
+                                                    </div>
+                                                </div>
+                                                <span class="validation-msg text-danger small" id="code-error"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Brand')}}</label>
+                                                <div class="input-group">
+                                                    <select name="brand_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Brand...') }}">
+                                                        @foreach($lims_brand_list as $brand)
+                                                            <option value="{{$brand->id}}">{{$brand->title}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addBrand" title="{{ __('db.Add Brand') }}"><i class="dripicons-plus"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.category')}} *</label>
+                                                <div class="input-group">
+                                                    <select name="category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Category...') }}">
+                                                        @foreach($lims_category_list as $category)
+                                                            <option value="{{$category->id}}">{{$category->name}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-default btn-sm category-model" data-toggle="modal" data-target="#category-modal" title="{{ __('db.Add Category') }}"><i class="dripicons-plus"></i></button>
+                                                    </div>
+                                                </div>
+                                                <span class="validation-msg text-danger small"></span>
+                                            </div>
+                                        </div>
+                                        <div id="unit" class="col-12">
+                                            <div class="row">
+                                                <div class="col-12 form-group">
+                                                    <label>{{__('db.Product Unit')}} *</label>
+                                                    <div class="input-group">
+                                                        <select required class="form-control selectpicker" name="unit_id">
+                                                            <option value="" disabled selected>{{ __('db.Select Product Unit...') }}</option>
+                                                            @foreach($lims_unit_list as $unit)
+                                                                @if($unit->base_unit==null)
+                                                                    <option value="{{$unit->id}}">{{$unit->unit_name}}</option>
+                                                                @endif
+                                                            @endforeach
+                                                        </select>
+                                                        <div class="input-group-append">
+                                                            <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#createUnitModal" title="{{ __('db.Add Unit') }}"><i class="dripicons-plus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                    <span class="validation-msg text-danger small"></span>
+                                                </div>
+                                                <div class="col-6 form-group">
+                                                    <label>{{__('db.Sale Unit')}}</label>
+                                                    <select class="form-control selectpicker" name="sale_unit_id"></select>
+                                                </div>
+                                                <div class="col-6 form-group">
+                                                    <label>{{__('db.Purchase Unit')}}</label>
+                                                    <select class="form-control selectpicker" name="purchase_unit_id"></select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="digital" class="col-12">
+                                            <div class="form-group">
+                                                <label>{{__('db.Attach File')}} *</label>
+                                                <input type="file" id="file" name="file" class="form-control">
+                                                <span class="validation-msg text-danger small"></span>
+                                            </div>
+                                        </div>
+                                        <div id="combo" class="col-12">
+                                            <label>{{__('db.Combo Products')}}</label>
+                                            <div class="search-box input-group mb-2">
+                                                <button type="button" class="btn btn-secondary btn-sm"><i class="fa fa-barcode"></i></button>
+                                                <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="{{ __('db.Please type product code and select') }}" class="form-control" />
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table id="myTable" class="table table-hover order-list">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>{{__('db.product')}}</th>
+                                                            <th>{{__('db.Wastage Percent')}}</th>
+                                                            <th>{{__('db.Quantity')}}</th>
+                                                            <th>{{__('db.Unit Cost')}}</th>
+                                                            <th>{{__('db.Unit Price')}}</th>
+                                                            <th>{{__('db.Sub total')}}</th>
+                                                            <th><i class="dripicons-trash"></i></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="combo_product_list_table"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </x-ui.section-box>
+
+                                <!-- BOX 2: Pricing, Margins & Tax (Emerald) -->
+                                <x-ui.section-box variant="emerald" title="{{__('db.Pricing & Tax')}}" icon="dripicons-tag">
+                                    <div class="row">
+                                        <div id="cost" class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Product Cost')}} *</label>
+                                                <input type="number" name="cost" required class="form-control" step="any" placeholder="0.00">
+                                                <div class="alert alert-warning very-small-text d-none p-1 position-absolute" id="product-cost-warning">
+                                                    Cost must be higher than 0!
+                                                </div>
+                                                <span class="validation-msg text-danger small"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Profit Margin Type') }}</label>
+                                                <select name="profit_margin_type" class="form-control" required>
+                                                    <option value="percentage">Percentage (%)</option>
+                                                    <option value="flat">Flat</option>
+                                                </select>
+                                                <span class="validation-msg text-danger small"></span>
+                                            </div>
+                                        </div>
+                                        <div id="profit_margin" class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Profit Margin')}}</label>
+                                                <input type="number" name="profit_margin" required class="form-control" step="0.01" placeholder="0.00">
+                                                <span class="validation-msg text-danger small"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Product Price')}} *</label>
+                                                <input type="number" name="price" required class="form-control" step="any" placeholder="0.00">
+                                                <div class="alert alert-warning very-small-text d-none p-1 position-absolute" id="product-price-warning">
+                                                    Price must be higher than Cost!
+                                                </div>
+                                                <span class="validation-msg text-danger small"></span>
+                                            </div>
+                                            <input type="hidden" name="qty" value="{{number_format(0, $general_setting->decimal, '.', '')}}">
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Wholesale Price')}}</label>
+                                                <input type="number" name="wholesale_price" class="form-control" step="any" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Daily Sale Objective')}} <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Minimum qty which must be sold in a day')}}"></i></label>
+                                                <input type="number" name="daily_sale_objective" class="form-control" step="any" placeholder="0">
+                                            </div>
+                                        </div>
+
+                                        @if(\App\Services\Tax\GstSetupService::usesGst())
+                                            @include('backend.product.partials.gst-fields', ['product' => null])
+                                        @else
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Product Tax')}}</label>
+                                                <div class="input-group">
+                                                    <select name="tax_id" class="selectpicker form-control">
+                                                        <option value="">No Tax</option>
+                                                        @foreach($lims_tax_list as $tax)
+                                                            <option value="{{$tax->id}}">{{$tax->name}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addTax"><i class="dripicons-plus"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
+
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{__('db.Tax Method')}} <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Exclusive: Poduct price = Actual product price + Tax Inclusive: Actual product price = Product price - Tax')}}"></i></label>
+                                                <select name="tax_method" class="form-control selectpicker">
+                                                    <option value="1">{{__('db.Exclusive')}}</option>
+                                                    <option value="2">{{__('db.Inclusive')}}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        @include('backend.product.partials.stock-policy', ['product' => null])
+
+                                        <!-- Warranty and Guarantee -->
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Warranty') }}</label>
+                                                <div class="input-group">
+                                                    <input type="number" name="warranty" min="1" class="form-control" placeholder="1">
+                                                    <select name="warranty_type" class="form-control selectpicker">
+                                                        <option value="days">{{ __('db.Days') }}</option>
+                                                        <option value="months" selected>{{ __('db.Months') }}</option>
+                                                        <option value="years">{{ __('db.Years') }}</option>
                                                     </select>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row" data-step-title="Price &amp; tax">
-                                <div id="cost" class="col-md-4">
-                                     <div class="form-group">
-                                        <label>{{__('db.Product Cost')}} *</strong> </label>
-                                        <input type="number" name="cost" required class="form-control" step="any">
-                                        <div class="alert alert-warning very-small-text d-none p-2 position-absolute" id="product-cost-warning">
-                                            Cost must be higher than 0!
-                                        </div>
-                                        <span class="validation-msg"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('db.Profit Margin Type') }}</label>
-                                        <select name="profit_margin_type" class="form-control" required>
-                                            <option value="percentage">Percentage (%)</option>
-                                            <option value="flat">Flat</option>
-                                        </select>
-                                        <span class="validation-msg"></span>
-                                    </div>
-                                </div>
-                                <div id="profit_margin" class="col-md-4">
-                                     <div class="form-group">
-                                        <label>{{__('db.Profit Margin')}}</strong> </label>
-                                        <input type="number" name="profit_margin" required class="form-control" step="0.01">
-                                        <span class="validation-msg"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Price')}} *</strong> </label>
-                                        <input type="number" name="price" required class="form-control" step="any">
-                                        <div class="alert alert-warning very-small-text d-none p-2 position-absolute" id="product-price-warning">
-                                            Price must be higher than Cost to make Profit!
-                                        </div>
-                                        <span class="validation-msg"></span>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="hidden" name="qty" value="{{number_format(0, $general_setting->decimal, '.', '')}}">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Wholesale Price')}}</strong> </label>
-                                        <input type="number" name="wholesale_price" class="form-control" step="any">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Daily Sale Objective')}}</strong></label> <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Minimum qty which must be sold in a day If not, you will be notified on dashboard But you have to set up the cron job properly for that Follow the documentation in that regard')}}"></i>
-                                        <input type="number" name="daily_sale_objective" class="form-control" step="any">
-                                    </div>
-                                </div>
-                                <div id="alert-qty" class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Alert Quantity')}}</strong> </label>
-                                        <input type="number" name="alert_quantity" class="form-control" step="any">
-                                    </div>
-                                </div>
-                                @include('backend.product.partials.stock-policy', ['product' => null])
-                                @if(\App\Services\Tax\GstSetupService::usesGst())
-                                @include('backend.product.partials.gst-fields', ['product' => null])
-                                @else
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Tax')}}</label>
-                                        <div class="input-group pos">
-
-                                        <select name="tax_id" class="selectpicker form-control" style="width: 100px">
-                                            <option value="">No Tax</option>
-                                            @foreach($lims_tax_list as $tax)
-                                                <option value="{{$tax->id}}">{{$tax->name}}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addTax"><i class="dripicons-plus"></i></button>
-                                    </div>
-                                    </div>
-                                </div>
-                                @endif
-
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Tax Method')}}</strong> </label> <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Exclusive: Poduct price = Actual product price + Tax Inclusive: Actual product price = Product price - Tax')}}"></i>
-                                        <select name="tax_method" class="form-control selectpicker">
-                                            <option value="1">{{__('db.Exclusive')}}</option>
-                                            <option value="2">{{__('db.Inclusive')}}</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <!-- Warranty and Guarantee [20-01-2025] -->
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('db.Warranty') }}</label>
-                                        <div class="d-flex justify-content-between">
-                                            <input type="number" name="warranty" min="1" class="form-control" style="width: 48%;" placeholder="{{ __('db.eg: 1') }}">
-                                            <select name="warranty_type" class="form-control selectpicker" style="width: 48%;">
-                                                <option value="days">{{ __('db.Days') }}</option>
-                                                <option value="months" selected>{{ __('db.Months') }}</option>
-                                                <option value="years">{{ __('db.Years') }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('db.Guarantee') }}</label>
-                                        <div class="d-flex justify-content-between">
-                                            <input type="number" name="guarantee" min="1" class="form-control" style="width: 48%;" placeholder="{{ __('db.eg: 1') }}">
-                                            <select name="guarantee_type" class="form-control selectpicker" style="width: 48%;">
-                                                <option value="days">{{ __('db.Days') }}</option>
-                                                <option value="months" selected>{{ __('db.Months') }}</option>
-                                                <option value="years">{{ __('db.Years') }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Warranty and Guarantee end -->
-
-                                @foreach($custom_fields as $field)
-                                @if(!$field->is_admin || \Auth::user()->role_id == 1)
-                                    <div class="{{'col-md-'.$field->grid_value}}">
-                                        <div class="form-group">
-                                            <label>{{$field->name}}</label>
-                                            @if($field->type == 'text')
-                                                <input type="text" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif>
-                                            @elseif($field->type == 'number')
-                                                <input type="number" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif>
-                                            @elseif($field->type == 'textarea')
-                                                <textarea rows="5" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif></textarea>
-                                            @elseif($field->type == 'checkbox')
-                                                <br>
-                                                <?php $option_values = explode(",", $field->option_value); ?>
-                                                @foreach($option_values as $value)
-                                                    <label>
-                                                        <input type="checkbox" name="{{str_replace(' ', '_', strtolower($field->name))}}[]" value="{{$value}}" @if($value == $field->default_value){{'checked'}}@endif @if($field->is_required){{'required'}}@endif> {{$value}}
-                                                    </label>
-                                                    &nbsp;
-                                                @endforeach
-                                            @elseif($field->type == 'radio_button')
-                                                <br>
-                                                <?php $option_values = explode(",", $field->option_value); ?>
-                                                @foreach($option_values as $value)
-                                                    <label class="radio-inline">
-                                                        <input type="radio" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$value}}" @if($value == $field->default_value){{'checked'}}@endif @if($field->is_required){{'required'}}@endif> {{$value}}
-                                                    </label>
-                                                    &nbsp;
-                                                @endforeach
-                                            @elseif($field->type == 'select')
-                                                <?php $option_values = explode(",", $field->option_value); ?>
-                                                <select class="form-control" name="{{str_replace(' ', '_', strtolower($field->name))}}" @if($field->is_required){{'required'}}@endif>
-                                                    @foreach($option_values as $value)
-                                                        <option value="{{$value}}" @if($value == $field->default_value){{'selected'}}@endif>{{$value}}</option>
-                                                    @endforeach
-                                                </select>
-                                            @elseif($field->type == 'multi_select')
-                                                <?php $option_values = explode(",", $field->option_value); ?>
-                                                <select class="form-control" name="{{str_replace(' ', '_', strtolower($field->name))}}[]" @if($field->is_required){{'required'}}@endif multiple>
-                                                    @foreach($option_values as $value)
-                                                        <option value="{{$value}}" @if($value == $field->default_value){{'selected'}}@endif>{{$value}}</option>
-                                                    @endforeach
-                                                </select>
-                                            @elseif($field->type == 'date_picker')
-                                                <input type="date" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                            </div>
-                            <div class="row" data-step-title="Stock">
-                                <div id="featured" class="col-md-4">
-                                    <div class="form-group mt-3">
-                                        <input type="checkbox" name="featured" value="1">&nbsp;
-                                        <label>{{__('db.Featured')}}</label>
-                                        <p class="italic">{{__('db.Featured product will be displayed in POS')}}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group mt-3">
-                                        <input type="checkbox" name="is_embeded" value="1">&nbsp;
-                                        <label>{{__('db.Embedded Barcode')}}</label>
-                                        <p class="italic">{{__('db.Check this if this product will be used in weight scale machine')}}</p>
-                                    </div>
-                                </div>
-                                <div id="stock-section" class="col-md-12">
-                                    <div class="form-group mt-3">
-                                        <input type="checkbox" name="is_initial_stock" value="1">&nbsp;
-                                        <label>{{__('db.Initial Stock')}}</label>
-                                        <p class="italic">{{__('db.This feature will not work for product with variants and batches')}}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-12" id="initial-stock-section">
-                                    <div class="table-responsive ml-2">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{__('db.Warehouse')}}</th>
-                                                    <th>{{__('db.qty')}}</th>
-                                                </tr>
-                                                @foreach($lims_warehouse_list as $warehouse)
-                                                <tr>
-                                                    <td>
-                                                        <input type="hidden" name="stock_warehouse_id[]" value="{{$warehouse->id}}">
-                                                        {{$warehouse->name}}
-                                                    </td>
-                                                    <td><input type="number" name="stock[]" min="0" class="form-control"></td>
-                                                </tr>
-                                                @endforeach
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row" data-step-title="Image &amp; details">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Image')}}</strong> </label> <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.You can upload multiple image Only jpeg, jpg, png, gif file can be uploaded First image will be base image')}}"></i>
-                                        <div id="imageUpload" class="dropzone"></div>
-                                        <span class="validation-msg" id="image-error"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>{{__('db.Product Details')}}</label>
-                                        <textarea name="product_details" class="form-control" rows="3"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row" data-step-title="Variants &amp; options">
-                                <div class="col-md-12 mt-3" id="variant-option">
-                                    <h5><input name="is_variant" type="checkbox" id="is-variant" value="1">&nbsp; {{__('db.This product has variant')}}</h5>
-                                </div>
-                                <div class="col-md-12" id="variant-section">
-                                    <div id="variant-input-section">
-                                        <div class="row">
-                                            <div class="col-md-4 form-group mt-2">
-                                                <label>{{__('db.Option')}} *</label>
-                                                <input type="text" name="variant_option[]" class="form-control variant-field" placeholder="{{ __('db.Size, Color etc') }}">
-                                            </div>
-                                            <div class="col-md-7 form-group mt-2">
-                                                <label>{{__('db.Value')}} *</label>
-                                                <input type="text" name="variant_value[]" class="type-variant form-control variant-field">
-                                            </div>
-                                            <div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;">
-                                                <button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button>
+                                        <div class="col-6">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Guarantee') }}</label>
+                                                <div class="input-group">
+                                                    <input type="number" name="guarantee" min="1" class="form-control" placeholder="1">
+                                                    <select name="guarantee_type" class="form-control selectpicker">
+                                                        <option value="days">{{ __('db.Days') }}</option>
+                                                        <option value="months" selected>{{ __('db.Months') }}</option>
+                                                        <option value="years">{{ __('db.Years') }}</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        @foreach($custom_fields as $field)
+                                        @if(!$field->is_admin || \Auth::user()->role_id == 1)
+                                            <div class="col-12">
+                                                <div class="form-group">
+                                                    <label>{{$field->name}}</label>
+                                                    @if($field->type == 'text')
+                                                        <input type="text" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif>
+                                                    @elseif($field->type == 'number')
+                                                        <input type="number" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif>
+                                                    @elseif($field->type == 'textarea')
+                                                        <textarea rows="2" name="{{str_replace(' ', '_', strtolower($field->name))}}" value="{{$field->default_value}}" class="form-control" @if($field->is_required){{'required'}}@endif></textarea>
+                                                    @elseif($field->type == 'select')
+                                                        <?php $option_values = explode(",", $field->option_value); ?>
+                                                        <select class="form-control" name="{{str_replace(' ', '_', strtolower($field->name))}}" @if($field->is_required){{'required'}}@endif>
+                                                            @foreach($option_values as $value)
+                                                                <option value="{{$value}}" @if($value == $field->default_value){{'selected'}}@endif>{{$value}}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @endforeach
                                     </div>
-                                    <div class="col-md-12 form-group">
-                                        <button type="button" class="btn btn-info add-more-variant"><i class="dripicons-plus"></i> {{__('db.Add More Variant')}}</button>
-                                    </div>
-                                    <div class="table-responsive ml-2">
-                                        <table id="variant-table" class="table table-hover variant-list">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{__('db.name')}}</th>
-                                                    <th>{{__('db.Item Code')}}</th>
-                                                    <th>{{__('db.Additional Cost')}}</th>
-                                                    <th>{{__('db.Additional Price')}}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 mt-2" id="diffPrice-option">
-                                    <h5><input name="is_diffPrice" type="checkbox" id="is-diffPrice" value="1">&nbsp; {{__('db.This product has different price for different warehouse')}}</h5>
-                                </div>
-                                <div class="col-md-6" id="diffPrice-section">
-                                    <div class="table-responsive ml-2">
-                                        <table id="diffPrice-table" class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{__('db.Warehouse')}}</th>
-                                                    <th>{{__('db.Price')}}</th>
-                                                </tr>
-                                                @foreach($lims_warehouse_list as $warehouse)
-                                                <tr>
-                                                    <td>
-                                                        <input type="hidden" name="warehouse_id[]" value="{{$warehouse->id}}">
-                                                        {{$warehouse->name}}
-                                                    </td>
-                                                    <td><input type="number" name="diff_price[]" class="form-control"></td>
-                                                </tr>
-                                                @endforeach
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 mt-3" id="batch-option">
-                                    <h5><input name="is_batch" type="checkbox" id="is-batch" value="1">&nbsp; {{__('db.This product has batch and expired date')}}</h5>
-                                </div>
-                                <div class="col-md-12 mt-3" id="imei-option">
-                                    <h5><input name="is_imei" type="checkbox" id="is-imei" value="1">&nbsp; {{__('db.This product has IMEI or Serial numbers')}}</h5>
-                                </div>
-                                <div class="col-md-12 mt-3">
-                                    <h5><input name="promotion" type="checkbox" id="promotion" value="1">&nbsp; {{__('db.Add Promotional Price')}}</h5>
-                                </div>
-                                <div class="col-md-12">
+                                </x-ui.section-box>
+
+                                <!-- BOX 3: Inventory & Options (Amber) -->
+                                <x-ui.section-box variant="amber" title="{{__('db.Inventory & Stock Control')}}" icon="dripicons-archive">
                                     <div class="row">
-                                        <div class="col-md-4" id="promotion_price">
-                                            <label>{{__('db.Promotional Price')}}</label>
-                                            <input type="number" name="promotion_price" class="form-control" step="any" />
+                                        <div id="alert-qty" class="col-12">
+                                            <div class="form-group">
+                                                <label>{{__('db.Alert Quantity')}}</label>
+                                                <input type="number" name="alert_quantity" class="form-control" step="any" placeholder="{{ __('db.Minimum alert qty') }}">
+                                            </div>
                                         </div>
-                                        <div class="col-md-4" id="start_date">
+                                    </div>
+
+                                    <label class="mt-1 mb-1 font-weight-bold" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neo-text-secondary);">{{ __('db.Product Flags & Controls') }}</label>
+                                    <div class="zolo-toggle-grid">
+                                        <div id="featured" class="zolo-toggle-item">
+                                            <input type="checkbox" name="featured" id="chk_featured" value="1">
+                                            <label for="chk_featured">{{__('db.Featured')}}</label>
+                                        </div>
+                                        <div class="zolo-toggle-item">
+                                            <input type="checkbox" name="is_embeded" id="chk_embeded" value="1">
+                                            <label for="chk_embeded">{{__('db.Embedded Barcode')}}</label>
+                                        </div>
+                                        <div id="stock-section" class="zolo-toggle-item">
+                                            <input type="checkbox" name="is_initial_stock" id="chk_initial_stock" value="1">
+                                            <label for="chk_initial_stock">{{__('db.Initial Stock')}}</label>
+                                        </div>
+                                        <div id="variant-option" class="zolo-toggle-item">
+                                            <input name="is_variant" type="checkbox" id="is-variant" value="1">
+                                            <label for="is-variant">{{__('db.This product has variant')}}</label>
+                                        </div>
+                                        <div id="diffPrice-option" class="zolo-toggle-item">
+                                            <input name="is_diffPrice" type="checkbox" id="is-diffPrice" value="1">
+                                            <label for="is-diffPrice">{{__('db.Different price by warehouse')}}</label>
+                                        </div>
+                                        <div id="batch-option" class="zolo-toggle-item">
+                                            <input name="is_batch" type="checkbox" id="is-batch" value="1">
+                                            <label for="is-batch">{{__('db.Batch & expiry date')}}</label>
+                                        </div>
+                                        <div id="imei-option" class="zolo-toggle-item">
+                                            <input name="is_imei" type="checkbox" id="is-imei" value="1">
+                                            <label for="is-imei">{{__('db.IMEI / Serial numbers')}}</label>
+                                        </div>
+                                        <div class="zolo-toggle-item">
+                                            <input name="promotion" type="checkbox" id="promotion" value="1">
+                                            <label for="promotion">{{__('db.Promotional Price')}}</label>
+                                        </div>
+
+                                        @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
+                                        <div class="zolo-toggle-item">
+                                            <input name="is_online" type="checkbox" id="is_online" value="1" checked>
+                                            <label for="is_online">{{__('db.Sell Online')}}</label>
+                                        </div>
+                                        @endif
+
+                                        @if(in_array('ecommerce',explode(',',$general_setting->modules)))
+                                        <div class="zolo-toggle-item">
+                                            <input name="in_stock" type="checkbox" id="in_stock" value="1" checked>
+                                            <label for="in_stock">{{__('db.In Stock')}}</label>
+                                        </div>
+                                        @endif
+
+                                        @if (\Schema::hasColumn('products', 'woocommerce_product_id'))
+                                        <div class="zolo-toggle-item">
+                                            <input name="is_sync_disable" type="checkbox" id="is_sync_disable" value="1">
+                                            <label for="is_sync_disable">Disable WooCommerce</label>
+                                        </div>
+                                        @endif
+
+                                        @if(in_array('restaurant',explode(',',$general_setting->modules)))
+                                        <div class="zolo-toggle-item">
+                                            <input name="is_addon" type="checkbox" id="is_addon" value="1">
+                                            <label for="is_addon">{{__('db.This is topping')}}</label>
+                                        </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- Expandable: Warehouse Initial Stock Table -->
+                                    <div class="col-12 px-0" id="initial-stock-section">
+                                        <label class="mt-2 mb-1 font-weight-bold small">{{__('db.Warehouse Initial Stock')}}</label>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.Warehouse')}}</th>
+                                                        <th>{{__('db.qty')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($lims_warehouse_list as $warehouse)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="hidden" name="stock_warehouse_id[]" value="{{$warehouse->id}}">
+                                                            {{$warehouse->name}}
+                                                        </td>
+                                                        <td><input type="number" name="stock[]" min="0" class="form-control form-control-sm"></td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Expandable: Different Warehouse Price Table -->
+                                    <div class="col-12 px-0" id="diffPrice-section">
+                                        <label class="mt-2 mb-1 font-weight-bold small">{{__('db.Different Warehouse Price')}}</label>
+                                        <div class="table-responsive">
+                                            <table id="diffPrice-table" class="table table-hover table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.Warehouse')}}</th>
+                                                        <th>{{__('db.Price')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($lims_warehouse_list as $warehouse)
+                                                    <tr>
+                                                        <td>
+                                                            <input type="hidden" name="warehouse_id[]" value="{{$warehouse->id}}">
+                                                            {{$warehouse->name}}
+                                                        </td>
+                                                        <td><input type="number" name="diff_price[]" class="form-control form-control-sm" placeholder="0.00"></td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Expandable: Variant Section -->
+                                    <div class="col-12 px-0" id="variant-section">
+                                        <div id="variant-input-section">
+                                            <div class="row">
+                                                <div class="col-5 form-group mt-1">
+                                                    <label>{{__('db.Option')}} *</label>
+                                                    <input type="text" name="variant_option[]" class="form-control form-control-sm variant-field" placeholder="{{ __('db.Size, Color etc') }}">
+                                                </div>
+                                                <div class="col-5 form-group mt-1">
+                                                    <label>{{__('db.Value')}} *</label>
+                                                    <input type="text" name="variant_value[]" class="type-variant form-control form-control-sm variant-field">
+                                                </div>
+                                                <div class="col-2 form-group mt-1 d-flex align-items-end justify-content-center">
+                                                    <button type="button" class="delVarOption btn btn-danger btn-sm p-1"><i class="dripicons-cross"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-info btn-xs add-more-variant my-1"><i class="dripicons-plus"></i> {{__('db.Add More Variant')}}</button>
+                                        <div class="table-responsive">
+                                            <table id="variant-table" class="table table-hover table-sm variant-list">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.name')}}</th>
+                                                        <th>{{__('db.Item Code')}}</th>
+                                                        <th>{{__('db.Additional Cost')}}</th>
+                                                        <th>{{__('db.Additional Price')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Expandable: Promotional Price Details -->
+                                    <div class="row mt-2" id="promo-container">
+                                        <div class="col-12" id="promotion_price">
+                                            <div class="form-group">
+                                                <label>{{__('db.Promotional Price')}}</label>
+                                                <input type="number" name="promotion_price" class="form-control" step="any" placeholder="0.00" />
+                                            </div>
+                                        </div>
+                                        <div class="col-6" id="start_date">
                                             <div class="form-group">
                                                 <label>{{__('db.Promotion Starts')}}</label>
                                                 <div class="input-group">
@@ -510,7 +497,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4" id="last_date">
+                                        <div class="col-6" id="last_date">
                                             <div class="form-group">
                                                 <label>{{__('db.Promotion Ends')}}</label>
                                                 <div class="input-group">
@@ -522,93 +509,66 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                @if (\Schema::hasColumn('products', 'woocommerce_product_id'))
-                                <div class="col-md-12 mt-3">
-                                    <h5><input name="is_sync_disable" type="checkbox" id="is_sync_disable" value="1">&nbsp; {{__('db.Disable Woocommerce Sync')}}</h5>
-                                </div>
-                                @endif
+                                </x-ui.section-box>
 
-                                @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
-                                <div class="col-md-12 mt-3">
-                                    <h5><input name="is_online" type="checkbox" id="is_online" value="1" checked>&nbsp; {{__('db.Sell Online')}}</h5>
-                                </div>
-                                @endif
-
-                                @if(in_array('restaurant',explode(',',$general_setting->modules)))
-                                <div class="col-md-12 mt-3">
-                                    <h5><input name="is_addon" type="checkbox" id="is_addon" value="1">&nbsp; {{__('db.This is topping')}} <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.Check this if the item is a topping or extra or add-on only to be served with a main course')}}"></i></h5>
-                                </div>
-                                @endif
-
-                                @if(in_array('ecommerce',explode(',',$general_setting->modules)))
-                                <div class="col-md-12 mt-3">
-                                    <h5><input name="in_stock" type="checkbox" id="in_stock" value="1" checked>&nbsp; {{__('db.In Stock')}}</h5>
-                                </div>
-                                <!-- <div class="col-md-12 mt-3 track_inventory" style="display:none">
-                                    <h5><input name="track_inventory" type="checkbox" id="track_inventory" value="0">&nbsp; {{__('db.Track Inventory')}}</h5>
-                                </div> -->
-                                @endif
-                            </div>
-                            @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
-                            <div class="row" data-step-title="Online &amp; SEO">
-                                <div class="col-12 mt-3">
+                                <!-- BOX 4: Media, Details & SEO (Purple) -->
+                                <x-ui.section-box variant="purple" title="{{__('db.Media, Details & SEO')}}" icon="dripicons-photo">
                                     <div class="form-group">
-                                        <label>{{__('db.Product Tags')}}</strong> </label>
-                                        <input type="text" name="tags" class="form-control" value="">
-                                        <span class="validation-msg" id="tags-error"></span>
+                                        <label>{{__('db.Product Image')}} <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.You can upload multiple image Only jpeg, jpg, png, gif file can be uploaded First image will be base image')}}"></i></label>
+                                        <div id="imageUpload" class="dropzone"></div>
+                                        <span class="validation-msg text-danger small" id="image-error"></span>
                                     </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <br/>
-                                    <h6>For SEO</h6>
-                                    <br>
-                                </div>
-                                <div class="col-md-12 form-group">
-                                    <label>{{ __('Meta Title') }} *</label>
-                                    <input type="text" name="meta_title" class="form-control" value="">
-                                </div>
-                                <div class="col-md-12 form-group">
-                                    <label>{{ __('Meta Description') }} *</label>
-                                    <input type="text" name="meta_description" class="form-control" value="">
-                                </div>
-                                <div class="col-md-12 form-group related-section">
-                                    <label>{{__('db.Related Products')}}</label>
-                                    <input type="text" id="search_products" class="form-control">
-                                    <div class="search_result"></div>
-                                    <h4 class="mt-5 mb-3">Selected Items</h4>
-                                    <div class="selected_items"></div>
-                                    <textarea class="selected_ids hidden no-tiny" name="products"></textarea>
-                                </div>
-                            </div>
-                            @endif
 
-                            @if(in_array('restaurant',explode(',',$general_setting->modules)))
-                            <div class="row" data-step-title="Restaurant">
-                                <div class="col-md-12 form-group extra-section">
-                                    <label>{{__('db.Extras')}}</label>
-                                    <input type="text" id="search_addons" class="form-control">
-                                    <div class="search_result_addon"></div>
-                                    <h4 class="mt-5 mb-3">Selected Extras</h4>
-                                    <div class="selected_addons"></div>
-                                    <textarea class="selected_addon_ids hidden no-tiny" name="extras"></textarea>
-                                </div>
-                                <div class="col-md-4 col-6">
-                                    <div class="form-group top-fields">
-                                        <label>{{__('db.Kitchen')}}</label>
-                                        <div class="input-group pos">
+                                    <div class="form-group">
+                                        <label>{{__('db.Product Details')}}</label>
+                                        <textarea name="product_details" class="form-control no-tiny" rows="2" placeholder="{{ __('db.Type product details') }}"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>{{__('db.Product Tags')}}</label>
+                                        <input type="text" name="tags" class="form-control" placeholder="Tag1, Tag2...">
+                                        <span class="validation-msg text-danger small" id="tags-error"></span>
+                                    </div>
+
+                                    @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
+                                    <div class="row">
+                                        <div class="col-6 form-group">
+                                            <label>{{ __('Meta Title') }} *</label>
+                                            <input type="text" name="meta_title" class="form-control" placeholder="{{ __('db.Meta Title') }}">
+                                        </div>
+                                        <div class="col-6 form-group">
+                                            <label>{{ __('Meta Description') }} *</label>
+                                            <input type="text" name="meta_description" class="form-control" placeholder="{{ __('db.Meta Description') }}">
+                                        </div>
+                                        <div class="col-12 form-group related-section">
+                                            <label>{{__('db.Related Products')}}</label>
+                                            <input type="text" id="search_products" class="form-control" placeholder="{{ __('db.Search related products...') }}">
+                                            <div class="search_result"></div>
+                                            <div class="selected_items mt-1"></div>
+                                            <textarea class="selected_ids hidden no-tiny" name="products" style="display:none;"></textarea>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    @if(in_array('restaurant',explode(',',$general_setting->modules)))
+                                    <div class="row">
+                                        <div class="col-12 form-group extra-section">
+                                            <label>{{__('db.Extras')}}</label>
+                                            <input type="text" id="search_addons" class="form-control" placeholder="{{ __('db.Search extras...') }}">
+                                            <div class="search_result_addon"></div>
+                                            <div class="selected_addons mt-1"></div>
+                                            <textarea class="selected_addon_ids hidden no-tiny" name="extras" style="display:none;"></textarea>
+                                        </div>
+                                        <div class="col-6 form-group">
+                                            <label>{{__('db.Kitchen')}}</label>
                                             <select id="kitchen_id" name="kitchen_id" class="selectpicker form-control" title="Select kitchen...">
                                                 @foreach($kitchen_list as $kitchen)
                                                 <option value="{{$kitchen->id}}">{{$kitchen->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 col-6">
-                                    <div class="form-group top-fields">
-                                        <label>{{__('db.Menu Type')}}</label>
-                                        <div class="input-group pos">
+                                        <div class="col-6 form-group">
+                                            <label>{{__('db.Menu Type')}}</label>
                                             <select required id="menu_type" name="menu_type[]" class="selectpicker form-control" multiple>
                                                 @foreach($menu_type_list as $menu_type)
                                                 <option value="{{$menu_type->id}}">{{$menu_type->name}}</option>
@@ -616,11 +576,20 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
+                                    @endif
+                                </x-ui.section-box>
+
                             </div>
-                            @endif
-                            <div class="form-group mt-3">
-                                <button type="submit" id="submit-btn" class="btn btn-primary">{{__('db.add_product')}}</button>
+
+                            <!-- Bottom Action Bar -->
+                            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                                <span class="text-muted small"><i class="dripicons-information mr-1"></i> {{ __('db.The field labels marked with * are required input fields') }}.</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="{{route('products.index')}}" class="btn btn-sm btn-outline-secondary">{{__('db.Cancel')}}</a>
+                                    <button type="button" class="btn btn-sm btn-primary zolo-btn-primary" onclick="$('#submit-btn').click();">
+                                        <i class="dripicons-checkmark mr-1"></i> {{__('db.add_product')}}
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>

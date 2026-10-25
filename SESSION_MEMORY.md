@@ -1743,6 +1743,8 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - Automated PHPUnit suites green: 19/19 passing (124 assertions).
   - Browser visual validation: `new_company_dialog_light_spacious_1792910455456.png` (Light) and `new_company_dialog_dark_spacious_1792910496384.png` (Dark).
 
+---
+
 ## 77. Operations Right-Side Action Card Global Theme UI (2026-10-25)
 - **User Request**: "in the right maybe we can set a global theme UI to differentiate like in the 'Job work' box for all"
 - **Solution (Premium Soft Slate Theme)**:
@@ -1758,4 +1760,31 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
     - Normalized `resources/views/backend/operations/hub.blade.php` right-side cards to `.ops-subcard.ops-action-subcard` with `.ops-quick-pills`.
     - Automated tests: 12/12 passing (`JobWorkReturnsReworkTest`, `ManufacturingJobWorkTest`).
     - Verified visually in browser across Light Mode, Dark Mode, and both Job Work and Manufacturing workspaces.
+
+---
+
+## 78. Add Product Single-Page Layout with Sectionized Color Boxes & Zero Scroll (2026-10-25)
+- **Elimination of Multi-Step Tabs:**
+  - Removed `data-shell-steps` and `data-step-title` pagination tabs (`1 Item`, `2 Price & tax`, `3 Stock`, `4 Image & details`, `5 Variants & options`, `6 Online & SEO`) from `resources/views/backend/product/create.blade.php`.
+  - Brought all product creation inputs across all steps into a single unified dashboard view.
+- **Sectionized Boxes from Component Template (`<x-ui.section-box>`):**
+  - Grouped all fields into 4 color-differentiated semantic boxes across a responsive 4-column desktop grid:
+    1. **Box 1 (Product Details - Blue):** Type, Name, Code (with refresh button), Barcode Symbology, Brand (+), Category (+), Base/Sale/Purchase Units (+), digital upload, and combo products table.
+    2. **Box 2 (Pricing & Tax - Emerald):** Cost, Margin Type, Profit Margin, Price, Wholesale Price, Daily Sale Objective, GST / Tax select (+), Tax Method, Stock Policy, Warranty, Guarantee, and custom fields.
+    3. **Box 3 (Inventory & Stock Control - Amber):** Alert Quantity, modern 2-column toggle grid (`Featured`, `Embedded Barcode`, `Initial Stock`, `Variants`, `Different Price`, `Batch & Expiry`, `IMEI`, `Promotional Price`, `Sell Online`, `In Stock`, etc.), and scroll-contained expandable tables.
+    4. **Box 4 (Media, Details & SEO - Purple):** Sleek Dropzone file upload, compact product details textarea (`no-tiny`), tags, SEO Meta Title, Meta Description, related products, and restaurant add-ons.
+- **Zero Scroll Desktop Fit (1920x945):**
+  - Engineered `.zolo-product-grid` in `public/css/zolo-erp-neo.css`: 4 balanced columns side-by-side with heights of ~400px - 440px.
+  - Sized controls to 31px height, compact 11px font weights, 1.5rem padding normalized to 10px, and tables constrained with `max-height: 140px; overflow-y: auto;`.
+  - The entire page comfortably fits inside a 1920x945 desktop viewport with zero vertical scroll on the main browser window.
+- **Component & Design System Architecture (Never Hardcode):**
+  - Extended `resources/views/components/ui/section-box.blade.php` to support `variant="amber|inventory"` alongside `blue`, `emerald`, and `purple`.
+  - Unescaped `{!! $title !!}` in section box header to cleanly render symbols like `&`.
+  - Removed ad-hoc inline styles, replacing them with standardized `.input-group` wrappers and centralized CSS tokens.
+- **Verification:**
+  - Automated tests: `WorkspaceSecurityTest` (12/12) & `CompanyProfileTest` (7/7) 100% green.
+  - Visual verification across Light & Dark themes via Playwright:
+    - Light Mode: `products_create_dark_mode_1792913233192.png` (zero tabs, 4 crisp pastel tinted boxes, single screen).
+    - Dark Mode: `products_create_dark_mode_verified_1792913296293.png` (radiant dark mode surface cards, color accents, zero scroll).
+
 
