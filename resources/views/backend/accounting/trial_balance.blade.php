@@ -2,136 +2,6 @@
 
 @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .tb-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .tb-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .tb-grid-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    .tb-grid-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode .tb-grid-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    .tb-grid-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    .tb-grid-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode .tb-grid-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode .tb-grid-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    .tb-grid-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode .tb-grid-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    .tb-grid-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode .tb-grid-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <section class="tb-workspace-view">
     <!-- Top Command Bar -->
@@ -159,21 +29,21 @@
     <!-- Filter Card -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.trial-balance') }}" method="GET" class="m-0">
-            <div class="row align-items-end" style="margin: 0 -6px;">
-                <div class="col-md-4" style="padding: 0 6px;">
-                    <label class="font-weight-600 mb-1" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Start Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm" value="{{ $startDate }}" style="height:32px; font-size:12px;">
+            <div class="row align-items-end u-m-0-6px">
+                <div class="col-md-4 u-p-0-6px">
+                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
+                    <input type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
                 </div>
-                <div class="col-md-4" style="padding: 0 6px;">
-                    <label class="font-weight-600 mb-1" style="font-size: 11px; text-transform: uppercase; color: #64748b;">End Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm" value="{{ $endDate }}" style="height:32px; font-size:12px;">
+                <div class="col-md-4 u-p-0-6px">
+                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
+                    <input type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
                 </div>
-                <div class="col-md-4 d-flex" style="padding: 0 6px;">
+                <div class="col-md-4 d-flex u-p-0-6px">
                     @include('backend.accounting.partials.branch_scope')
-                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2" style="height:32px; font-size:12px; font-weight:600;">
+                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2 u-h-32px u-fs-12px u-fw-600">
                         <i class="dripicons-search"></i> Generate Report
                     </button>
-                    <a href="{{ route('accounting.trial-balance') }}" class="btn btn-sm btn-outline-secondary" style="height:32px; font-size:12px; display:inline-flex; align-items:center;">Reset</a>
+                    <a href="{{ route('accounting.trial-balance') }}" class="btn btn-sm btn-outline-secondary u-h-32px u-fs-12px u-d-inline-flex u-items-center">Reset</a>
                 </div>
             </div>
         </form>
@@ -181,15 +51,15 @@
 
     <!-- Validation Banner -->
     @if($report['is_balanced'])
-        <div class="alert alert-success d-flex align-items-center mb-3 border-0 shadow-sm" style="background:#dcfce7; color:#15803d; border-radius: 8px;" role="alert">
-            <i class="dripicons-checkmark font-weight-bold mr-2" style="font-size: 18px;"></i>
+        <div class="alert alert-success d-flex align-items-center mb-3 border-0 shadow-sm u-bg-success-soft u-c-success u-r-8px" role="alert">
+            <i class="dripicons-checkmark font-weight-bold mr-2 u-fs-18px"></i>
             <div>
                 <strong>Balanced Trial Balance:</strong> Total Debits (₹ {{ number_format($report['total_debit'], 2) }}) exactly equal Total Credits (₹ {{ number_format($report['total_credit'], 2) }}).
             </div>
         </div>
     @else
-        <div class="alert alert-danger d-flex align-items-center mb-3 border-0 shadow-sm" style="background:#fee2e2; color:#b91c1c; border-radius: 8px;" role="alert">
-            <i class="dripicons-warning font-weight-bold mr-2" style="font-size: 18px;"></i>
+        <div class="alert alert-danger d-flex align-items-center mb-3 border-0 shadow-sm u-bg-danger-soft u-c-danger u-r-8px" role="alert">
+            <i class="dripicons-warning font-weight-bold mr-2 u-fs-18px"></i>
             <div>
                 <strong>Trial Balance Out of Balance:</strong> Difference of ₹ {{ number_format($report['difference'], 2) }} detected between debits and credits.
             </div>
@@ -201,41 +71,41 @@
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL DEBITS</div>
-                <div class="kpi-number" style="color:#0284c7;">₹ {{ number_format($report['total_debit'], 2) }}</div>
+                <div class="kpi-number u-c-info">₹ {{ number_format($report['total_debit'], 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-arrow-up" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-arrow-up u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL CREDITS</div>
-                <div class="kpi-number" style="color:#059669;">₹ {{ number_format($report['total_credit'], 2) }}</div>
+                <div class="kpi-number u-c-success">₹ {{ number_format($report['total_credit'], 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#d1fae5;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-arrow-down" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-arrow-down u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">DIFFERENCE</div>
-                <div class="kpi-number" style="color: {{ $report['is_balanced'] ? '#059669' : '#b91c1c' }};">
+                <div class="kpi-number {{ $report['is_balanced'] ? 'u-c-success' : 'u-c-danger' }}">
                     ₹ {{ number_format($report['difference'], 2) }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:{{ $report['is_balanced'] ? '#d1fae5' : '#fee2e2' }};display:flex;align-items:center;justify-content:center;color:{{ $report['is_balanced'] ? '#059669' : '#b91c1c' }};">
-                <i class="{{ $report['is_balanced'] ? 'dripicons-checkmark' : 'dripicons-warning' }}" style="font-size:18px;"></i>
+            <div class="z-icon-tile {{ $report['is_balanced'] ? 'z-tone-success' : 'z-tone-danger' }}">
+                <i class="{{ $report['is_balanced'] ? 'dripicons-checkmark' : 'dripicons-warning' }} u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">INTEGRITY STATUS</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:600; color: {{ $report['is_balanced'] ? '#059669' : '#b91c1c' }};">
+                <div class="kpi-number u-fs-14px u-fw-600 {{ $report['is_balanced'] ? 'u-c-success' : 'u-c-danger' }}">
                     {{ $report['is_balanced'] ? 'Fully Balanced' : 'Out of Balance' }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#475569;">
-                <i class="dripicons-scale" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-neutral">
+                <i class="dripicons-scale u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -244,12 +114,12 @@
     <div class="desk-card-wrapper">
         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
             <div>
-                <h5 class="font-weight-bold mb-0" style="color:#0f172a; font-size:15px;">{{ $general_setting->site_title ?? 'zoloERP' }} &bull; Trial Balance Statement</h5>
+                <h5 class="font-weight-bold mb-0 u-c-text u-fs-15px">{{ $general_setting->site_title ?? 'zoloERP' }} &bull; Trial Balance Statement</h5>
                 @if($startDate || $endDate)
                     <small class="text-muted">Period: {{ $startDate ?: 'Inception' }} to {{ $endDate ?: 'Present' }}</small>
                 @endif
             </div>
-            <span class="badge {{ $report['is_balanced'] ? 'badge-success' : 'badge-danger' }}" style="font-size: 11px; padding: 4px 8px; {{ $report['is_balanced'] ? 'background:#dcfce7; color:#15803d; border:1px solid #bbf7d0;' : 'background:#fee2e2; color:#b91c1c;' }}">
+            <span class="badge {{ $report['is_balanced'] ? 'badge-success' : 'badge-danger' }} u-fs-11px u-p-4px-8px {{ $report['is_balanced'] ? 'u-bg-success-soft u-c-success u-b-1px-solid-success-border' : 'u-bg-danger-soft u-c-danger' }}">
                 {{ $report['is_balanced'] ? 'Balanced Statement' : 'Discrepancy Detected' }}
             </span>
         </div>
@@ -257,11 +127,11 @@
             <table class="table tb-grid-table mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 15%;">Account Code</th>
+                        <th class="u-w-15pct">Account Code</th>
                         <th>Account Name</th>
-                        <th style="width: 15%;">Type</th>
-                        <th style="width: 20%;" class="text-right">Debit Balance</th>
-                        <th style="width: 20%;" class="text-right">Credit Balance</th>
+                        <th class="u-w-15pct">Type</th>
+                        <th class="text-right u-w-20pct">Debit Balance</th>
+                        <th class="text-right u-w-20pct">Credit Balance</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -279,8 +149,8 @@
                                     @elseif($row['type'] == 'liability') badge-soft-danger
                                     @elseif($row['type'] == 'equity') badge-soft-info
                                     @elseif($row['type'] == 'revenue') badge-soft-success
-                                    @else badge-soft-warning @endif"
-                                    style="padding: 3px 7px; font-size: 10.5px;">
+                                    @else badge-soft-warning @endif u-p-3px-7px u-fs-10_5px"
+                                   >
                                     {{ ucfirst($row['type']) }}
                                 </span>
                             </td>
@@ -297,11 +167,11 @@
                         </tr>
                     @endforelse
                 </tbody>
-                <tfoot style="background: #f1f5f9; font-weight: 700; color: #0f172a;">
+                <tfoot class="u-bg-surface-3 u-fw-700 u-c-text">
                     <tr>
-                        <td colspan="3" class="text-right" style="font-size: 11.5px;">TOTALS:</td>
-                        <td class="text-right font-monospace" style="color: #0284c7;">₹ {{ number_format($report['total_debit'], 2) }}</td>
-                        <td class="text-right font-monospace" style="color: #059669;">₹ {{ number_format($report['total_credit'], 2) }}</td>
+                        <td colspan="3" class="text-right u-fs-11_5px">TOTALS:</td>
+                        <td class="text-right font-monospace u-c-info">₹ {{ number_format($report['total_debit'], 2) }}</td>
+                        <td class="text-right font-monospace u-c-success">₹ {{ number_format($report['total_credit'], 2) }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -310,3 +180,10 @@
 </section>
 
 @endsection
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/accounting-trial-balance.css') }}">
+@endpush

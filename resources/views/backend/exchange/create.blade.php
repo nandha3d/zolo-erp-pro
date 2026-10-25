@@ -60,10 +60,10 @@
                         <table class="table table-bordered align-middle" id="returned-table">
                             <thead class="bg-light small uppercase">
                                 <tr>
-                                    <th style="width: 45%">Product</th>
-                                    <th style="width: 15%">Return Qty</th>
-                                    <th style="width: 20%">Unit Price</th>
-                                    <th style="width: 20%">Return Subtotal</th>
+                                    <th class="u-w-45pct">Product</th>
+                                    <th class="u-w-15pct">Return Qty</th>
+                                    <th class="u-w-20pct">Unit Price</th>
+                                    <th class="u-w-20pct">Return Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -126,10 +126,10 @@
                         <table class="table table-bordered align-middle" id="exchanged-table">
                             <thead class="bg-light small uppercase">
                                 <tr>
-                                    <th style="width: 45%">Select Replacement Product</th>
-                                    <th style="width: 15%">Quantity</th>
-                                    <th style="width: 20%">Unit Price</th>
-                                    <th style="width: 20%">Subtotal</th>
+                                    <th class="u-w-45pct">Select Replacement Product</th>
+                                    <th class="u-w-15pct">Quantity</th>
+                                    <th class="u-w-20pct">Unit Price</th>
+                                    <th class="u-w-20pct">Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody>

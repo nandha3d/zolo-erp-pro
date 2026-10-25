@@ -6,20 +6,20 @@
     'actions' => null,
 ])
 
-<div {{ $attributes->merge(['class' => $card ? 'card zolo-table-card' : 'zolo-table-wrapper']) }} style="{{ $card ? 'border: 1px solid var(--neo-border); border-radius: var(--neo-radius-lg); background: var(--neo-surface-card); box-shadow: var(--neo-shadow-xs); margin-bottom: 24px; overflow: visible;' : 'overflow: visible;' }}">
+<div {{ $attributes->merge(['class' => $card ? 'card zolo-table-card' : 'zolo-table-wrapper']) }}>
     @if($title || $actions)
-        <div class="card-header d-flex flex-wrap align-items-center justify-content-between p-3" style="border-bottom: 1px solid var(--neo-border); background: transparent;">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between p-3 u-bb-1px-solid-neo-border u-bg-transparent">
             @if($title)
                 <div class="d-flex align-items-center gap-2">
                     @if($icon)
-                        <span class="zolo-header-icon mr-2" style="width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--neo-primary-light); color: var(--neo-primary);">
-                            <i class="{{ $icon }}" style="font-size: 15px;"></i>
+                        <span class="zolo-header-icon mr-2 u-w-32px u-h-32px u-r-8px u-d-inline-flex u-items-center u-justify-center u-bg-neo-primary-light u-c-neo-primary">
+                            <i class="{{ $icon }} u-fs-15px"></i>
                         </span>
                     @endif
                     <div>
-                        <h4 class="m-0 font-weight-bold" style="font-size: 1rem; color: var(--neo-text-primary);">{{ $title }}</h4>
+                        <h4 class="m-0 font-weight-bold u-fs-1rem u-c-neo-text-primary">{{ $title }}</h4>
                         @if($subtitle)
-                            <small class="text-muted" style="font-size: 0.8rem;">{{ $subtitle }}</small>
+                            <small class="text-muted u-fs-0_8rem">{{ $subtitle }}</small>
                         @endif
                     </div>
                 </div>
@@ -33,8 +33,8 @@
         </div>
     @endif
 
-    <div class="card-body p-0 zolo-table-body" style="overflow: visible;">
-        <div class="table-responsive zolo-table-responsive" style="min-height: 280px; position: relative;">
+    <div class="card-body p-0 zolo-table-body u-ov-visible">
+        <div class="table-responsive zolo-table-responsive u-minh-280px u-pos-relative">
             {{ $slot }}
         </div>
     </div>

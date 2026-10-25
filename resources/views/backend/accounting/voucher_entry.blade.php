@@ -2,143 +2,6 @@
 
 @section('content')
 @include('backend.partials.document-entry-layout')
-<style>
-    .optech-voucher-wrapper {
-        background-color: #e8e4dc;
-        min-height: calc(100vh - 80px);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        color: #2c3e50;
-    }
-    .optech-shortcut-banner {
-        background: #1e3932;
-        color: #d1fae5;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-        padding: 5px 12px;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-    }
-    .optech-shortcut-banner kbd {
-        background: #064e3b;
-        color: #a7f3d0;
-        border: 1px solid #047857;
-        padding: 1px 5px;
-        border-radius: 3px;
-        font-family: inherit;
-        font-weight: 700;
-    }
-    .optech-header-card {
-        background: #fdfaf4;
-        border: 1px solid #d4cebe;
-        border-radius: 6px;
-        box-shadow: inset 0 1px 1px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.06);
-    }
-    .optech-vch-tabs .btn {
-        font-weight: 700;
-        font-size: 12px;
-        padding: 6px 14px;
-        border-radius: 4px;
-        border: 1px solid #cbd5e1;
-        transition: all 0.15s ease;
-    }
-    .optech-vch-tabs .btn.active {
-        background: #0f766e;
-        color: #ffffff;
-        border-color: #0f766e;
-        box-shadow: 0 2px 6px rgba(15,118,110,0.4);
-    }
-    .optech-vch-tabs .btn:not(.active) {
-        background: #ffffff;
-        color: #334155;
-    }
-    .optech-grid-table {
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    .optech-grid-table thead th {
-        background: var(--z-table-head-bg, #022051);
-        color: var(--z-table-head-text, #ffffff);
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        padding: 7px 10px;
-        border: 1px solid #0d6b63;
-    }
-    .optech-grid-table tbody td {
-        padding: 5px 8px;
-        vertical-align: middle;
-        border: 1px solid #e2e8f0;
-    }
-    .optech-grid-table tbody tr:hover {
-        background-color: var(--z-table-stripe, #f8fafc);
-    }
-    .optech-dr-cr-select {
-        font-weight: 800;
-        color: #1e293b;
-        background-color: #e2e8f0;
-        border: 1px solid #94a3b8;
-        border-radius: 4px;
-        font-size: 13px;
-        width: 65px;
-        text-align: center;
-    }
-    .optech-balance-badge {
-        font-size: 11px;
-        font-weight: 600;
-        padding: 2px 6px;
-        border-radius: 3px;
-        display: inline-block;
-        margin-top: 2px;
-    }
-    .optech-balance-dr {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-    }
-    .optech-balance-cr {
-        background: var(--z-primary-soft, #fbf4fb);
-        color: var(--z-primary-hover, #631f64);
-        border: 1px solid var(--z-primary-text, #7d287e);
-    }
-    .optech-footer-card {
-        background: #fdfaf4;
-        border: 1px solid #d4cebe;
-        border-radius: 6px;
-    }
-    .optech-total-box {
-        background: #f8fafc;
-        border: 2px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 10px 16px;
-    }
-    .optech-total-box.balanced {
-        border-color: #10b981;
-        background-color: #ecfdf5;
-    }
-    .optech-total-box.unbalanced {
-        border-color: #ef4444;
-        background-color: #fef2f2;
-    }
-    .inline-add-btn {
-        padding: 4px 8px;
-        font-size: 12px;
-        font-weight: bold;
-        line-height: 1;
-        background: #0f766e;
-        color: white;
-        border: none;
-        border-radius: 3px;
-    }
-    .inline-add-btn:hover {
-        background: #115e59;
-        color: white;
-    }
-</style>
-
 <div class="optech-voucher-wrapper p-3">
     <!-- Top Bar with Shortcuts matching Optech screen_05.jpg / screen_06.jpg -->
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -267,18 +130,18 @@
                 <table class="table optech-grid-table mb-0" id="voucherTable">
                     <thead>
                         <tr>
-                            <th style="width: 75px;" class="text-center">Type</th>
-                            <th style="width: 38%;">
+                            <th class="text-center u-w-75px">Type</th>
+                            <th class="u-w-38pct">
                                 Particulars (Ledger Account) *
                                 <button type="button" class="inline-add-btn ml-1" id="btnInlineAccount" title="Add Ledger (Alt+C)">[+]</button>
                             </th>
-                            <th style="width: 22%;">
+                            <th class="u-w-22pct">
                                 Partner / Sub-Ledger
                                 <span class="small text-light font-weight-normal">(if AR/AP)</span>
                             </th>
-                            <th style="width: 14%;" class="text-right">Debit (Rs.)</th>
-                            <th style="width: 14%;" class="text-right">Credit (Rs.)</th>
-                            <th style="width: 50px;" class="text-center">Action</th>
+                            <th class="text-right u-w-14pct">Debit (Rs.)</th>
+                            <th class="text-right u-w-14pct">Credit (Rs.)</th>
+                            <th class="text-center u-w-50px">Action</th>
                         </tr>
                     </thead>
                     <tbody id="voucherTableBody">
@@ -377,7 +240,7 @@
                         <label class="font-weight-bold text-muted small text-uppercase mb-0">General Narration / Remarks *</label>
                         <div class="d-flex align-items-center">
                             <span class="small text-muted mr-1">Quick Remark:</span>
-                            <select id="standardRemarkSelect" class="form-control form-control-sm py-0" style="width: 170px; height: 26px;">
+                            <select id="standardRemarkSelect" class="form-control form-control-sm py-0 u-w-170px u-h-26px">
                                 <option value="">-- Insert Remark --</option>
                                 @foreach($remarks as $rem)
                                     <option value="{{ $rem->remark }}">{{ $rem->title }}</option>
@@ -431,7 +294,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header bg-teal text-white py-2">
-                <h5 class="modal-title font-weight-bold" style="font-size: 15px;">Create Ledger Account (Alt+C)</h5>
+                <h5 class="modal-title font-weight-bold u-fs-15px">Create Ledger Account (Alt+C)</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <form id="formInlineAccount">
@@ -490,7 +353,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header bg-teal text-white py-2">
-                <h5 class="modal-title font-weight-bold" style="font-size: 15px;">Create Voucher Series</h5>
+                <h5 class="modal-title font-weight-bold u-fs-15px">Create Voucher Series</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <form id="formInlineSeries">
@@ -535,7 +398,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header bg-teal text-white py-2">
-                <h5 class="modal-title font-weight-bold" style="font-size: 15px;">Create Standard Remark</h5>
+                <h5 class="modal-title font-weight-bold u-fs-15px">Create Standard Remark</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <form id="formInlineRemark">
@@ -1048,3 +911,7 @@
 </script>
 @endpush
 @endsection
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/accounting-voucher-entry.css') }}">
+@endpush

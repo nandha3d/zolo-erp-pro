@@ -1,180 +1,6 @@
 @extends('backend.layout.main')
 @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .report-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .report-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 17px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .calendar-year-bar {
-        background: var(--z-ink, #022051);
-        color: #ffffff;
-        padding: 10px 16px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 14px;
-    }
-    body.dark-mode .calendar-year-bar {
-        background: #090d16;
-    }
-    .months-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 12px;
-    }
-    .month-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 14px;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-        transition: all 0.2s ease;
-    }
-    body.dark-mode .month-card {
-        background: #182235;
-        border-color: #334155;
-    }
-    .month-card:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
-    }
-    body.dark-mode .month-card:hover {
-        border-color: #475569;
-    }
-    .month-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-bottom: 8px;
-        margin-bottom: 8px;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    body.dark-mode .month-header {
-        border-bottom-color: #26334a;
-    }
-    .month-title {
-        font-size: 13px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .month-title {
-        color: #f8fafc;
-    }
-    .month-total-pill {
-        background: #ecfdf5;
-        color: #047857;
-        font-weight: 700;
-        font-size: 13px;
-        padding: 4px 8px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        border: 1px solid #a7f3d0;
-    }
-    body.dark-mode .month-total-pill {
-        background: #064e3b;
-        color: #6ee7b7;
-        border-color: #047857;
-    }
-    .month-metric-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 11px;
-        padding: 2px 0;
-        color: #64748b;
-    }
-    body.dark-mode .month-metric-row {
-        color: #94a3b8;
-    }
-    .month-metric-row strong {
-        color: #334155;
-    }
-    body.dark-mode .month-metric-row strong {
-        color: #cbd5e1;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-error-message key="not_permitted" />
 
@@ -236,30 +62,30 @@
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">ANNUAL WINDOW</div>
-                <div class="kpi-number" style="font-size:15px; font-weight:700; color:#475569;">
+                <div class="kpi-number u-fs-15px u-fw-700 u-c-text-2">
                     Year {{ $year }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-calendar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-calendar u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">WAREHOUSE SCOPE</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700;">{{ $warehouseName }}</div>
+                <div class="kpi-number u-fs-14px u-fw-700">{{ $warehouseName }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-store" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-store u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">ANNUAL GRAND TURNOVER</div>
-                <div class="kpi-number" style="color:#059669;">₹ {{ number_format($annualTotalSales, 2) }}</div>
+                <div class="kpi-number u-c-success">₹ {{ number_format($annualTotalSales, 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-wallet u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
@@ -267,8 +93,8 @@
                 <div class="kpi-label">TOTAL ANNUAL TAX</div>
                 <div class="kpi-number">₹ {{ number_format($annualTotalTax, 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-ticket" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-ticket u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
@@ -276,8 +102,8 @@
                 <div class="kpi-label">ACTIVE TRADING MONTHS</div>
                 <div class="kpi-number">{{ $activeMonths }} / 12 Months</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#475569;">
-                <i class="dripicons-pulse" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-neutral">
+                <i class="dripicons-pulse u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -288,7 +114,7 @@
             <input type="hidden" name="warehouse_id_hidden" value="{{ $warehouse_id }}">
             <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-store"></i> {{ __('db.Choose Warehouse') }}</label>
-                <select class="form-control form-control-sm selectpicker" id="warehouse_id" name="warehouse_id" style="height:30px; font-size:12px; min-width:200px;">
+                <select class="form-control form-control-sm selectpicker u-h-30px u-fs-12px u-minw-200px" id="warehouse_id" name="warehouse_id">
                     <option value="0">{{ __('db.All Warehouse') }}</option>
                     @foreach($lims_warehouse_list as $warehouse)
                         <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
@@ -296,7 +122,7 @@
                 </select>
             </div>
             <div class="form-group mb-1">
-                <button class="btn btn-primary btn-sm btn-action-pill" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                <button class="btn btn-primary btn-sm btn-action-pill u-bg-ink u-bc-ink" type="submit">
                     <i class="fa fa-filter"></i> {{ __('db.submit') }}
                 </button>
             </div>
@@ -306,13 +132,13 @@
     <!-- Annual Months Container Wrapper -->
     <div class="desk-card-wrapper">
         <div class="calendar-year-bar">
-            <a href="{{ url('report/monthly_sale/'.($year-1)) }}" class="btn btn-sm btn-outline-light btn-action-pill" style="border-color:rgba(255,255,255,0.3); color:#fff;">
+            <a href="{{ url('report/monthly_sale/'.($year-1)) }}" class="btn btn-sm btn-outline-light btn-action-pill u-bc-rgba-255-255-255-0_3 u-c-xffffff">
                 <i class="fa fa-chevron-left"></i> {{ __('db.Previous') }} ({{ $year - 1 }})
             </a>
             <div class="h5 font-weight-bold text-white mb-0 text-center">
                 <i class="dripicons-calendar mr-2"></i> Sales Turnover Calendar &mdash; Year {{ $year }}
             </div>
-            <a href="{{ url('report/monthly_sale/'.($year+1)) }}" class="btn btn-sm btn-outline-light btn-action-pill" style="border-color:rgba(255,255,255,0.3); color:#fff;">
+            <a href="{{ url('report/monthly_sale/'.($year+1)) }}" class="btn btn-sm btn-outline-light btn-action-pill u-bc-rgba-255-255-255-0_3 u-c-xffffff">
                 ({{ $year + 1 }}) {{ __('db.Next') }} <i class="fa fa-chevron-right"></i>
             </a>
         </div>
@@ -327,13 +153,13 @@
                 <div class="month-card">
                     <div class="month-header">
                         <span class="month-title">{{ $mName }} {{ $year }}</span>
-                        <a href="{{ url('report/daily_sale/'.$year.'/'.$mNumber) }}" class="btn btn-sm btn-link p-0 text-primary small" title="View Daily Breakdown" style="font-size:11px;">
+                        <a href="{{ url('report/daily_sale/'.$year.'/'.$mNumber) }}" class="btn btn-sm btn-link p-0 text-primary small u-fs-11px" title="View Daily Breakdown">
                             Daily <i class="fa fa-arrow-right"></i>
                         </a>
                     </div>
 
                     <div class="month-total-pill">
-                        <span style="font-size:10.5px; text-transform:uppercase; font-weight:600;">Total</span>
+                        <span class="u-fs-10_5px u-tt-uppercase u-fw-600">Total</span>
                         <span>₹ {{ $mSales }}</span>
                     </div>
 
@@ -368,7 +194,7 @@
                         </div>
                     @endif
                     @if(!$hasSales)
-                        <div class="text-center text-muted small py-2" style="font-size:11px;">
+                        <div class="text-center text-muted small py-2 u-fs-11px">
                             No sales recorded
                         </div>
                     @endif
@@ -397,4 +223,11 @@
         }
 	});
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-report-monthly-purchase.css') }}">
 @endpush

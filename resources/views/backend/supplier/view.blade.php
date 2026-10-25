@@ -150,7 +150,7 @@
                         </div>
                         <div class="col-md-12 text-center">
                             <h3 class="modal-title">{{$general_setting->site_title}}</h3>
-                            <i style="font-size: 15px;">{{__('db.Purchase Details')}}</i>
+                            <i class="u-fs-15px">{{__('db.Purchase Details')}}</i>
                         </div>
                     </div>
                 </div>
@@ -251,7 +251,7 @@
             var divContents = document.getElementById("purchase-details").innerHTML;
             var a = window.open('');
             a.document.write('<html>');
-            a.document.write('<body><style>body{font-family: sans-serif;line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-center{text-align:center}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left;}td{padding:10px}table, th, td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>');
+            a.document.write('<body><link rel="stylesheet" href="{{ versioned_asset('css/pages/supplier-view.css') }}"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}">');
             a.document.write(divContents);
             a.document.write('</body></html>');
             a.document.close();

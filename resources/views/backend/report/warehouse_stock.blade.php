@@ -2,119 +2,6 @@
 @extends('backend.layout.main')
 @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .report-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .report-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 17px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 20px 24px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .valuation-stat-box {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 14px 16px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    body.dark-mode .valuation-stat-box {
-        background: #182235;
-        border-color: #334155;
-    }
-    .valuation-stat-box .stat-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #475569;
-    }
-    body.dark-mode .valuation-stat-box .stat-label {
-        color: #94a3b8;
-    }
-    .valuation-stat-box .stat-val {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .valuation-stat-box .stat-val {
-        color: #f8fafc;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-error-message key="not_permitted" />
 
@@ -156,8 +43,8 @@
                 <div class="kpi-label">TOTAL STOCK ITEMS</div>
                 <div class="kpi-number">{{ number_format((float)$total_item, $general_setting->decimal, '.', '') }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-box" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-box u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
@@ -165,8 +52,8 @@
                 <div class="kpi-label">TOTAL QUANTITY</div>
                 <div class="kpi-number">{{ number_format((float)$total_qty, $general_setting->decimal, '.', '') }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-stack" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-stack u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
@@ -174,26 +61,26 @@
                 <div class="kpi-label">STOCK VALUE (BY COST)</div>
                 <div class="kpi-number">₹ {{ number_format((float)$total_cost, $general_setting->decimal, '.', '') }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-tag" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-tag u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">STOCK VALUE (BY PRICE)</div>
-                <div class="kpi-number" style="color:#2563eb;">₹ {{ number_format((float)$total_price, $general_setting->decimal, '.', '') }}</div>
+                <div class="kpi-number u-c-info">₹ {{ number_format((float)$total_price, $general_setting->decimal, '.', '') }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dbeafe;display:flex;align-items:center;justify-content:center;color:#2563eb;">
-                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-wallet u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">ESTIMATED PROFIT</div>
-                <div class="kpi-number" style="color:#059669;">₹ {{ number_format((float)$estimatedProfit, $general_setting->decimal, '.', '') }}</div>
+                <div class="kpi-number u-c-success">₹ {{ number_format((float)$estimatedProfit, $general_setting->decimal, '.', '') }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-graph-bar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-graph-bar u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -203,7 +90,7 @@
         {{ Form::open(['route' => 'report.warehouseStock', 'method' => 'get', 'id' => 'report-form', 'class' => 'form-inline d-flex align-items-center flex-wrap gap-2']) }}
             <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-store"></i> {{ __('db.Choose Warehouse') }}</label>
-                <select class="form-control form-control-sm selectpicker" id="warehouse_id" name="warehouse_id" style="height:30px; font-size:12px; min-width:220px;">
+                <select class="form-control form-control-sm selectpicker u-h-30px u-fs-12px u-minw-220px" id="warehouse_id" name="warehouse_id">
                     <option value="0">{{ __('db.All Warehouse') }}</option>
                     @foreach($lims_warehouse_list as $warehouse)
                         <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
@@ -211,7 +98,7 @@
                 </select>
             </div>
             <div class="form-group mb-1">
-                <button class="btn btn-primary btn-sm btn-action-pill" type="submit" style="background:#0f172a; border-color:#0f172a;">
+                <button class="btn btn-primary btn-sm btn-action-pill u-bg-ink u-bc-ink" type="submit">
                     <i class="fa fa-filter"></i> {{ __('db.submit') }}
                 </button>
             </div>
@@ -223,8 +110,8 @@
         <div class="row align-items-center">
             <!-- Left Column: Valuation Breakdown Details -->
             <div class="col-md-5">
-                <div style="padding: 10px 16px 10px 0;">
-                    <h5 class="font-weight-bold mb-3" style="color:#0f172a;">
+                <div class="u-p-10px-16px-10px-0">
+                    <h5 class="font-weight-bold mb-3 u-c-text">
                         <i class="dripicons-view-thumb text-primary mr-2"></i> Inventory Portfolio Valuation
                     </h5>
                     <p class="text-muted small mb-4">
@@ -238,24 +125,24 @@
 
                     <div class="valuation-stat-box">
                         <span class="stat-label"><i class="fa fa-circle text-primary mr-1"></i> Stock Value (By Retail Price)</span>
-                        <span class="stat-val" style="color:#2563eb;">₹ {{ number_format((float)$total_price, $general_setting->decimal, '.', '') }}</span>
+                        <span class="stat-val u-c-info">₹ {{ number_format((float)$total_price, $general_setting->decimal, '.', '') }}</span>
                     </div>
 
-                    <div class="valuation-stat-box" style="border-left: 3px solid #059669;">
+                    <div class="valuation-stat-box u-bl-3px-solid-success-border">
                         <span class="stat-label"><i class="fa fa-circle text-success mr-1"></i> Expected Gross Profit</span>
-                        <span class="stat-val" style="color:#059669;">₹ {{ number_format((float)$estimatedProfit, $general_setting->decimal, '.', '') }}</span>
+                        <span class="stat-val u-c-success">₹ {{ number_format((float)$estimatedProfit, $general_setting->decimal, '.', '') }}</span>
                     </div>
 
                     <div class="valuation-stat-box">
                         <span class="stat-label"><i class="dripicons-pulse text-info mr-1"></i> Projected Markup / Margin</span>
-                        <span class="stat-val" style="color:var(--z-primary, #7d287e);">{{ number_format($profitMarginPercent, 1) }} %</span>
+                        <span class="stat-val u-c-primary">{{ number_format($profitMarginPercent, 1) }} %</span>
                     </div>
                 </div>
             </div>
 
             <!-- Right Column: Pie Chart -->
             <div class="col-md-7">
-                <div style="max-width:440px; margin:0 auto; padding:10px;">
+                <div class="u-maxw-440px u-m-0-auto u-p-10px">
                     @php
                         $color = '#7c3aed'; $color_rgba = 'rgba(124, 58, 237, 0.85)';
                         if($general_setting->theme == 'default.css'){
@@ -298,4 +185,11 @@
 		$('#report-form').submit();
 	});
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/report-warehouse-stock.css') }}">
 @endpush

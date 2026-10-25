@@ -62,7 +62,7 @@
         <!-- sale table -->
         <div role="tabpanel" class="tab-pane fade show active" id="product-sale">
             <div class="table-responsive mb-4">
-                <table id="sale-table" class="table table-hover" style="width: 100%">
+                <table id="sale-table" class="table table-hover u-w-100pct">
                     <thead>
                         <tr>
                             <th class="not-exported-sale"></th>
@@ -81,7 +81,7 @@
         <!-- purchase table -->
         <div role="tabpanel" class="tab-pane fade" id="product-purchase">
             <div class="table-responsive mb-4">
-                <table id="purchase-table" class="table table-hover" style="width: 100%">
+                <table id="purchase-table" class="table table-hover u-w-100pct">
                     <thead>
                         <tr>
                             <th class="not-exported-purchase"></th>
@@ -111,7 +111,7 @@
         <!-- sale return table -->
         <div role="tabpanel" class="tab-pane fade" id="product-sale-return">
             <div class="table-responsive mb-4">
-                <table id="sale-return-table" class="table table-hover" style="width: 100%">
+                <table id="sale-return-table" class="table table-hover u-w-100pct">
                     <thead>
                         <tr>
                             <th class="not-exported-sale-return"></th>
@@ -130,7 +130,7 @@
         <!-- purchase return table -->
         <div role="tabpanel" class="tab-pane fade" id="product-purchase-return">
             <div class="table-responsive mb-4">
-                <table id="purchase-return-table" class="table table-hover" style="width: 100%">
+                <table id="purchase-return-table" class="table table-hover u-w-100pct">
                     <thead>
                         <tr>
                             <th class="not-exported-purchase-return"></th>

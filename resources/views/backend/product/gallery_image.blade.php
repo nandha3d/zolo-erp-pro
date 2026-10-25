@@ -9,7 +9,7 @@
             <input type="text" name="name" class="form-control" required>
             <label class="mt-2">Mobile:</label>
             <input type="text" name="mobile" class="form-control" required>
-            <span style="color: red;" id="mobile-error"></span>
+            <span id="mobile-error" class="u-c-red"></span>
             <label class="mt-2">Upload Image:</label>
             <div id="imageUpload" class="dropzone mt-2"></div>
             <button id="uploaderBtn" type="button" class="btn btn-primary">Save</button>

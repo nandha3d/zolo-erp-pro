@@ -9,7 +9,7 @@
         <button class="btn btn-info" data-toggle="modal" data-target="#create-modal"><i class="dripicons-plus"></i> {{__('db.Add Coupon')}}</button>
     </div>
     <div class="table-responsive">
-        <table id="coupon-table" class="table" style="width: 100%">
+        <table id="coupon-table" class="table u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -126,7 +126,7 @@
                           <div class="input-group">
                               <input type="number" name="amount" step="any" required class="form-control">&nbsp;&nbsp;
                               <div class="input-group-append mt-1">
-                                  <span class="icon-text" style="font-size: 22px;"><strong>%</strong></span>
+                                  <span class="icon-text u-fs-22px"><strong>%</strong></span>
                               </div>
                           </div>
                       </div>
@@ -185,7 +185,7 @@
                     <div class="input-group">
                         <input type="number" name="amount" step="any" required class="form-control">&nbsp;&nbsp;
                         <div class="input-group-append mt-1">
-                            <span class="icon-text" style="font-size: 22px;"><strong>%</strong></span>
+                            <span class="icon-text u-fs-22px"><strong>%</strong></span>
                         </div>
                     </div>
                 </div>

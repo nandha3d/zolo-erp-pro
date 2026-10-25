@@ -3,7 +3,7 @@
 <section>
 	<h4 class="text-center">{{__('db.My Transactions')}}</h4>
 	<div class="table-responsive mt-3">
-		<table class="table table-bordered" style="border-top: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+		<table class="table table-bordered u-bt-1px-solid-xdee2e6 u-bb-1px-solid-xdee2e6">
 			<thead>
 				<tr>
 					<th><a href="{{url('my-transactions/'.$prev_year.'/'.$prev_month)}}"><i class="fa fa-arrow-left"></i> {{__('db.Previous')}}</a></th>
@@ -32,7 +32,7 @@
 
 			    			if($flag){
 			    				if($year.'-'.$month.'-'.$i == date('Y').'-'.date('m').'-'.(int)date('d'))
-			    					echo '<td><p style="color:red"><strong>'.$i.'</strong></p>';
+			    					echo '<td><p class="u-c-red"><strong>'.$i.'</strong></p>';
 			    				else
 			    					echo '<td><p><strong>'.$i.'</strong></p>';
 
@@ -59,7 +59,7 @@
 			    			}
 			    			elseif($j == $start_day){
 			    				if($year.'-'.$month.'-'.$i == date('Y').'-'.date('m').'-'.(int)date('d'))
-			    					echo '<td><p style="color:red"><strong>'.$i.'</strong></p>';
+			    					echo '<td><p class="u-c-red"><strong>'.$i.'</strong></p>';
 			    				else
 			    					echo '<td><p><strong>'.$i.'</strong></p>';
 

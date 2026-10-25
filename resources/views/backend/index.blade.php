@@ -3,232 +3,7 @@
 @section('content')
 
 @push('css')
-<style>
-/* Compact Executive Command Center Overrides */
-.dashboard-counts {
-  padding: 0 !important;
-}
-.dashboard-counts .count-number,
-.compact-kpi .count-number,
-.zolo-kpi-value .count-number {
-  font-size: 1.45rem !important;
-  font-weight: 700 !important;
-  line-height: 1.2 !important;
-  font-variant-numeric: tabular-nums;
-  color: var(--neo-text-primary) !important;
-}
-.zolo-kpi-card {
-  padding: 13px 15px !important;
-  border-radius: 12px !important;
-  background: var(--neo-surface-card) !important;
-  border: 1px solid var(--neo-border) !important;
-  box-shadow: var(--neo-shadow-xs) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  height: 100% !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.zolo-kpi-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: var(--neo-shadow-sm) !important;
-  border-color: var(--neo-border-focus) !important;
-}
-.zolo-kpi-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  margin-bottom: 8px !important;
-}
-.zolo-kpi-icon {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  border-radius: 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 16px !important;
-}
-.zolo-kpi-badge {
-  font-size: 10.5px !important;
-  font-weight: 600 !important;
-  padding: 2px 7px !important;
-  border-radius: 12px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 3px !important;
-}
-.zolo-kpi-body {
-  display: flex !important;
-  flex-direction: column !important;
-}
-.zolo-kpi-value {
-  font-size: 1.45rem !important;
-  font-weight: 750 !important;
-  font-family: var(--neo-font) !important;
-  color: var(--neo-text-primary) !important;
-  line-height: 1.2 !important;
-  letter-spacing: -0.02em !important;
-  margin-bottom: 2px !important;
-  display: flex !important;
-  align-items: baseline !important;
-  gap: 2px !important;
-}
-/* KPI amounts take the card's value size (scaled down by fitKpiValues() when a figure is long) and never clip. */
-.dashboard-counts .zolo-kpi-value .count-number { font-size: inherit !important; line-height: inherit !important; }
-.dashboard-counts .zolo-kpi-value { min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; }
-.dashboard-counts .zolo-kpi-subtext { white-space: nowrap; gap: 6px; }
-.dashboard-counts .zolo-kpi-label { white-space: nowrap; }
-.zolo-kpi-currency {
-  font-size: 0.95rem !important;
-  font-weight: 600 !important;
-  opacity: 0.8 !important;
-  margin-right: 1px !important;
-}
-.zolo-kpi-label {
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  color: var(--neo-text-secondary) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-}
-.zolo-kpi-subtext {
-  font-size: 11px !important;
-  color: var(--neo-text-muted) !important;
-  margin-top: 4px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-}
-
-/* Color Accents */
-.kpi-purple .zolo-kpi-icon { background: rgb(var(--z-primary-rgb, 125 40 126) / 0.12); color: var(--z-primary, #7d287e); }
-.kpi-purple .zolo-kpi-badge { background: rgb(var(--z-primary-rgb, 125 40 126) / 0.12); color: var(--z-primary, #7d287e); }
-
-.kpi-blue .zolo-kpi-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-.kpi-blue .zolo-kpi-badge { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
-
-.kpi-cyan .zolo-kpi-icon { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
-.kpi-cyan .zolo-kpi-badge { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
-
-.kpi-emerald .zolo-kpi-icon { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-.kpi-emerald .zolo-kpi-badge { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-
-.kpi-orange .zolo-kpi-icon { background: rgba(249, 115, 22, 0.12); color: #f97316; }
-.kpi-orange .zolo-kpi-badge { background: rgba(249, 115, 22, 0.12); color: #f97316; }
-
-.kpi-rose .zolo-kpi-icon { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
-.kpi-rose .zolo-kpi-badge { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
-
-.kpi-amber .zolo-kpi-icon { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-.kpi-amber .zolo-kpi-badge { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-
-.kpi-teal .zolo-kpi-icon { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
-.kpi-teal .zolo-kpi-badge { background: rgba(20, 184, 166, 0.12); color: #14b8a6; }
-
-/* Constrained Chart Canvas Heights */
-.zolo-chart-box {
-  position: relative;
-  height: 250px !important;
-  max-height: 250px !important;
-  width: 100%;
-}
-.zolo-donut-box {
-  position: relative;
-  height: 220px !important;
-  max-height: 220px !important;
-  width: 100%;
-}
-.zolo-yearly-box {
-  position: relative;
-  height: 220px !important;
-  max-height: 220px !important;
-  width: 100%;
-}
-
-/* Quick Action Toolbar */
-.zolo-quick-actions-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-.zolo-quick-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px !important;
-  border-radius: 8px !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  border: 1px solid var(--neo-border) !important;
-  background: var(--neo-surface-card) !important;
-  color: var(--neo-text-primary) !important;
-  text-decoration: none !important;
-  transition: all 0.2s ease !important;
-}
-.zolo-quick-btn:hover {
-  background: var(--neo-primary-light) !important;
-  color: var(--neo-primary) !important;
-  border-color: var(--neo-primary) !important;
-  transform: translateY(-1px);
-}
-.zolo-quick-btn.primary {
-  background: var(--neo-primary-gradient) !important;
-  color: #ffffff !important;
-  border: none !important;
-  box-shadow: var(--neo-shadow-sm) !important;
-}
-.zolo-quick-btn.primary:hover {
-  box-shadow: var(--neo-shadow-glow) !important;
-  color: #ffffff !important;
-}
-
-/* Addon Pulse Cards */
-.zolo-addon-pulse-card {
-  background: var(--neo-surface-card);
-  border: 1px solid var(--neo-border);
-  border-radius: var(--neo-radius-md);
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.2s ease;
-  height: 100%;
-}
-.zolo-addon-pulse-card:hover {
-  border-color: var(--neo-primary);
-  transform: translateY(-1px);
-}
-.zolo-pulse-indicator {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-}
-
-/* Donut legend pills */
-.donut-legend-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--neo-text-secondary);
-}
-.donut-legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/index.css') }}">
 @endpush
 
 <x-success-message key="message" />
@@ -331,7 +106,7 @@
 
                 <!-- Executive Quick Action Bar -->
                 <div class="zolo-quick-actions-bar pt-2 mt-2 border-top border-secondary-subtle">
-                    <span class="text-muted mr-2" style="font-size: 11.5px; font-weight: 600;"><i class="dripicons-broadcast mr-1"></i>QUICK ACTIONS:</span>
+                    <span class="text-muted mr-2 u-fs-11_5px u-fw-600"><i class="dripicons-broadcast mr-1"></i>QUICK ACTIONS:</span>
                     <a href="{{ route('sale.pos') }}" class="zolo-quick-btn primary">
                         <i class="dripicons-shopping-bag"></i> POS Terminal
                     </a>
@@ -637,21 +412,21 @@
             <div class="card line-chart-example h-100 mb-0">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-pulse text-primary mr-2" style="font-size: 1.1rem;"></i>
-                        <h4 class="mb-0">{{ __('db.Cash Flow') }} <span class="text-muted" style="font-size: 12px; font-weight: 500;">(Last 6 Months)</span></h4>
+                        <i class="dripicons-pulse text-primary mr-2 u-fs-1_1rem"></i>
+                        <h4 class="mb-0">{{ __('db.Cash Flow') }} <span class="text-muted u-fs-12px u-fw-500">(Last 6 Months)</span></h4>
                     </div>
                     <span class="badge badge-success font-weight-semibold">Live Flow</span>
                 </div>
-                <div class="card-body pt-1 pb-2" style="overflow: hidden;">
-                    <div class="zolo-chart-box" style="position: relative; height: 230px; max-height: 230px; width: 100%; overflow: hidden;">
-                        <canvas id="cashFlow" height="230" style="max-height: 230px; width: 100%; display: block;"
+                <div class="card-body pt-1 pb-2 u-ov-hidden">
+                    <div class="zolo-chart-box u-pos-relative u-h-230px u-maxh-230px u-w-100pct u-ov-hidden">
+                        <canvas id="cashFlow" height="230"
                             data-color = "{{ $color }}"
                             data-color_rgba = "{{ $color_rgba }}"
                             data-recieved = "{{ json_encode($payment_recieved) }}"
                             data-sent = "{{ json_encode($payment_sent) }}"
                             data-month = "{{ json_encode($month) }}"
                             data-label1="{{ __('db.Payment Recieved') }}"
-                            data-label2="{{ __('db.Payment Sent') }}"></canvas>
+                            data-label2="{{ __('db.Payment Sent') }}" class="u-maxh-230px u-w-100pct u-d-block"></canvas>
                     </div>
                 </div>
             </div>
@@ -660,17 +435,17 @@
 
         @if ($monthly_summary)
         <div class="col-lg-5 col-md-12 mb-3">
-            <div class="card h-100 mb-0" style="overflow: hidden;">
+            <div class="card h-100 mb-0 u-ov-hidden">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-pie-chart text-primary mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-pie-chart text-primary mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">{{ date('F') }} {{ date('Y') }} Breakdown</h4>
                     </div>
                     <span class="badge badge-primary font-weight-semibold">Summary</span>
                 </div>
-                <div class="card-body pt-1 pb-2 d-flex flex-column justify-content-between" style="overflow: hidden;">
-                    <div class="zolo-donut-box" style="position: relative; height: 180px; max-height: 180px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        <canvas id="transactionChart" height="180" style="max-height: 180px; width: 100%; display: block;"
+                <div class="card-body pt-1 pb-2 d-flex flex-column justify-content-between u-ov-hidden">
+                    <div class="zolo-donut-box u-pos-relative u-h-180px u-maxh-180px u-w-100pct u-d-flex u-items-center u-justify-center u-ov-hidden">
+                        <canvas id="transactionChart" height="180" class="z-chart-canvas"
                             data-color = "{{ $color }}"
                             data-color_rgba = "{{ $color_rgba }}" data-revenue={{ $revenue }}
                             data-purchase={{ $purchase }} data-expense={{ $expense }}
@@ -680,15 +455,15 @@
                     <!-- Quick Metric Badges -->
                     <div class="d-flex justify-content-around align-items-center pt-2 border-top border-secondary-subtle">
                         <div class="donut-legend-pill">
-                            <span class="donut-legend-dot" style="background: var(--z-primary, #7d287e);"></span>
+                            <span class="donut-legend-dot u-bg-primary"></span>
                             <span>Purchase: {{ $currency_symbol }}{{ number_format((float)$purchase, 0, '.', ',') }}</span>
                         </div>
                         <div class="donut-legend-pill">
-                            <span class="donut-legend-dot" style="background: #10b981;"></span>
+                            <span class="donut-legend-dot u-bg-success"></span>
                             <span>Revenue: {{ $currency_symbol }}{{ number_format((float)$revenue, 0, '.', ',') }}</span>
                         </div>
                         <div class="donut-legend-pill">
-                            <span class="donut-legend-dot" style="background: #f59e0b;"></span>
+                            <span class="donut-legend-dot u-bg-warning"></span>
                             <span>Expense: {{ $currency_symbol }}{{ number_format((float)$expense, 0, '.', ',') }}</span>
                         </div>
                     </div>
@@ -710,12 +485,12 @@
         <div class="col-md-4 mb-2 mb-md-0">
             <div class="zolo-addon-pulse-card">
                 <div class="d-flex align-items-center">
-                    <div class="zolo-kpi-icon mr-2" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">
+                    <div class="zolo-kpi-icon mr-2 u-bg-rgba-2-132-199-0_15 u-c-info">
                         <i class="dripicons-truck"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #0284c7;">Water Logistics</div>
-                        <div style="font-size: 13px; font-weight: 700; color: var(--neo-text-primary);">
+                        <div class="u-fs-11px u-fw-700 u-tt-uppercase u-c-info">Water Logistics</div>
+                        <div class="u-fs-13px u-fw-700 u-c-neo-text-primary">
                             {{ $addon_stats['water_tankers'] ?? 0 }} Tankers Active &bull; {{ $addon_stats['water_trips_today'] ?? 0 }} Trips
                         </div>
                     </div>
@@ -732,12 +507,12 @@
         <div class="col-md-4 mb-2 mb-md-0">
             <div class="zolo-addon-pulse-card">
                 <div class="d-flex align-items-center">
-                    <div class="zolo-kpi-icon mr-2" style="background: rgba(234, 88, 12, 0.15); color: #ea580c;">
+                    <div class="zolo-kpi-icon mr-2 u-bg-rgba-234-88-12-0_15 u-c-warning">
                         <i class="dripicons-store"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #ea580c;">Bakery &amp; Cafe POS</div>
-                        <div style="font-size: 13px; font-weight: 700; color: var(--neo-text-primary);">
+                        <div class="u-fs-11px u-fw-700 u-tt-uppercase u-c-warning">Bakery &amp; Cafe POS</div>
+                        <div class="u-fs-13px u-fw-700 u-c-neo-text-primary">
                             {{ $addon_stats['open_drawers'] ?? 0 }} Active Drawers &bull; Fast Register
                         </div>
                     </div>
@@ -754,12 +529,12 @@
         <div class="col-md-4 mb-2 mb-md-0">
             <div class="zolo-addon-pulse-card">
                 <div class="d-flex align-items-center">
-                    <div class="zolo-kpi-icon mr-2" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.15); color: var(--z-primary, #7d287e);">
+                    <div class="zolo-kpi-icon mr-2 u-bg-rgb-primary-rgb-0_15 u-c-primary">
                         <i class="dripicons-gear"></i>
                     </div>
                     <div>
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--z-primary, #7d287e);">RMA Repair Service</div>
-                        <div style="font-size: 13px; font-weight: 700; color: var(--neo-text-primary);">
+                        <div class="u-fs-11px u-fw-700 u-tt-uppercase u-c-primary">RMA Repair Service</div>
+                        <div class="u-fs-13px u-fw-700 u-c-neo-text-primary">
                             {{ $addon_stats['repair_services_count'] ?? 0 }} Services Configured &bull; Live Bench
                         </div>
                     </div>
@@ -785,7 +560,7 @@
             <div class="card h-100 mb-0">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-swap text-primary mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-swap text-primary mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">{{ __('db.Recent Transaction') }}</h4>
                     </div>
                     <div class="badge badge-primary font-weight-semibold">{{ __('db.latest') }} 5</div>
@@ -881,7 +656,7 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-warning text-warning mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-warning text-warning mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">Critical Stock Alerts</h4>
                     </div>
                     @if($low_stock_count > 0)
@@ -906,12 +681,12 @@
                                 @foreach($low_stock_products as $item)
                                 <tr>
                                     <td>
-                                        <div class="font-weight-bold" style="font-size: 12.5px;">{{ $item->name }}</div>
+                                        <div class="font-weight-bold u-fs-12_5px">{{ $item->name }}</div>
                                         <small class="text-muted">[{{ $item->code }}]</small>
                                     </td>
                                     <td><span class="badge badge-secondary">{{ $item->warehouse_name }}</span></td>
                                     <td><span class="badge badge-danger">{{ $item->qty }}</span></td>
-                                    <td><span class="text-muted" style="font-size: 12px;">{{ $item->alert_quantity }}</span></td>
+                                    <td><span class="text-muted u-fs-12px">{{ $item->alert_quantity }}</span></td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -919,8 +694,8 @@
                     </div>
                     @else
                     <div class="text-center py-3 text-muted">
-                        <i class="dripicons-checkmark text-success mr-1" style="font-size: 20px;"></i>
-                        <p class="mb-0 mt-1" style="font-size: 12.5px;">All items are comfortably stocked above reorder thresholds.</p>
+                        <i class="dripicons-checkmark text-success mr-1 u-fs-20px"></i>
+                        <p class="mb-0 mt-1 u-fs-12_5px">All items are comfortably stocked above reorder thresholds.</p>
                     </div>
                     @endif
                 </div>
@@ -930,7 +705,7 @@
             <div class="card mb-0">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-star text-warning mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-star text-warning mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">{{ __('db.Best Seller') . ' ' . date('F') }}</h4>
                     </div>
                     <div class="badge badge-primary font-weight-semibold">{{ __('db.top') }} 5</div>
@@ -964,18 +739,18 @@
             <div class="card mb-0">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-calendar text-primary mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-calendar text-primary mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">{{ __('db.yearly report') }} &bull; Commercial Annual Velocity</h4>
                     </div>
                     <span class="badge badge-primary font-weight-semibold">{{ date('Y') }} Fiscal</span>
                 </div>
-                <div class="card-body pt-1 pb-2" style="overflow: hidden;">
-                    <div class="zolo-yearly-box" style="position: relative; height: 210px; max-height: 210px; width: 100%; overflow: hidden;">
-                        <canvas id="saleChart" height="210" style="max-height: 210px; width: 100%; display: block;"
+                <div class="card-body pt-1 pb-2 u-ov-hidden">
+                    <div class="zolo-yearly-box u-pos-relative u-h-210px u-maxh-210px u-w-100pct u-ov-hidden">
+                        <canvas id="saleChart" height="210"
                             data-sale_chart_value = "{{ json_encode($yearly_sale_amount) }}"
                             data-purchase_chart_value = "{{ json_encode($yearly_purchase_amount) }}"
                             data-label1="{{ __('db.Purchased Amount') }}"
-                            data-label2="{{ __('db.Sold Amount') }}"></canvas>
+                            data-label2="{{ __('db.Sold Amount') }}" class="u-maxh-210px u-w-100pct u-d-block"></canvas>
                     </div>
                 </div>
             </div>
@@ -986,7 +761,7 @@
             <div class="card mb-0 h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-trophy text-primary mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-trophy text-primary mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">{{ __('db.Best Seller') . ' ' . date('Y') . ' (' . __('db.qty') . ')' }}</h4>
                     </div>
                     <div class="badge badge-primary font-weight-semibold">{{ __('db.top') }} 5</div>
@@ -1009,7 +784,7 @@
             <div class="card mb-0 h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <i class="dripicons-jewel text-primary mr-2" style="font-size: 1.1rem;"></i>
+                        <i class="dripicons-jewel text-primary mr-2 u-fs-1_1rem"></i>
                         <h4 class="mb-0">{{ __('db.Best Seller') . ' ' . date('Y') . ' (' . __('db.Price') . ')' }}</h4>
                     </div>
                     <div class="badge badge-primary font-weight-semibold">{{ __('db.top') }} 5</div>

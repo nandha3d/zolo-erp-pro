@@ -16,20 +16,20 @@
     };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'card zolo-card']) }} style="border: 1px solid var(--neo-border); border-radius: var(--neo-radius-lg); background: var(--neo-surface-card); box-shadow: var(--neo-shadow-xs); margin-bottom: 24px; overflow: visible;">
+<div {{ $attributes->merge(['class' => 'card zolo-card']) }}>
     @if($title || $actions)
-        <div class="card-header d-flex flex-wrap align-items-center justify-content-between p-3" style="border-bottom: 1px solid var(--neo-border); background: transparent;">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between p-3 u-bb-1px-solid-neo-border u-bg-transparent">
             @if($title)
                 <div class="d-flex align-items-center gap-2">
                     @if($icon)
-                        <span class="zolo-header-icon mr-2" style="width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--neo-primary-light); color: var(--neo-primary);">
-                            <i class="{{ $icon }}" style="font-size: 15px;"></i>
+                        <span class="zolo-header-icon mr-2 u-w-34px u-h-34px u-r-8px u-d-inline-flex u-items-center u-justify-center u-bg-neo-primary-light u-c-neo-primary">
+                            <i class="{{ $icon }} u-fs-15px"></i>
                         </span>
                     @endif
                     <div>
-                        <h4 class="m-0 font-weight-bold" style="font-size: 1.05rem; color: var(--neo-text-primary);">{{ $title }}</h4>
+                        <h4 class="m-0 font-weight-bold u-fs-1_05rem u-c-neo-text-primary">{{ $title }}</h4>
                         @if($subtitle)
-                            <small class="text-muted d-block" style="font-size: 0.8rem; margin-top: 2px;">{{ $subtitle }}</small>
+                            <small class="text-muted d-block u-fs-0_8rem u-mt-2px">{{ $subtitle }}</small>
                         @endif
                     </div>
                 </div>
@@ -43,12 +43,12 @@
         </div>
     @endif
 
-    <div class="card-body {{ $bodyPadding }}" style="overflow: visible;">
+    <div class="card-body {{ $bodyPadding }} u-ov-visible">
         {{ $slot }}
     </div>
 
     @if($footer)
-        <div class="card-footer p-3" style="border-top: 1px solid var(--neo-border); background: var(--neo-bg); border-bottom-left-radius: var(--neo-radius-lg); border-bottom-right-radius: var(--neo-radius-lg);">
+        <div class="card-footer p-3 zolo-card-footer">
             {{ $footer }}
         </div>
     @endif

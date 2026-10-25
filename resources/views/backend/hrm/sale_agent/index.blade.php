@@ -204,21 +204,21 @@
                         </div>
                     </div>
 
-                    <div class="col-md-3 user-input" style="display:none;">
+                    <div class="col-md-3 user-input" style="display:none">
                         <div class="form-group">
                             <label>{{ __('db.UserName') }} *</label>
                             <input type="text" name="username" class="form-control">
                         </div>
                     </div>
 
-                    <div class="col-md-3 user-input" style="display:none;">
+                    <div class="col-md-3 user-input" style="display:none">
                         <div class="form-group">
                             <label>{{ __('db.Password') }} *</label>
                             <input type="password" name="password" class="form-control">
                         </div>
                     </div>
 
-                    <div class="col-md-3 user-role" style="display:none;">
+                    <div class="col-md-3 user-role" style="display:none">
                         <div class="form-group">
                             <label>{{ __('db.Role') }} *</label>
                             <select name="role_id" class="form-control">

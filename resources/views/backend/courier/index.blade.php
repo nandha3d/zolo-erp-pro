@@ -8,7 +8,7 @@
         <button class="btn btn-info" data-toggle="modal" data-target="#create-modal"><i class="dripicons-plus"></i> {{__('db.Add Courier')}}</button>
     </div>
     <div class="table-responsive">
-        <table id="courier-table" class="table" style="width: 100%">
+        <table id="courier-table" class="table u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>

@@ -17,7 +17,7 @@
     <!-- Operations Single-Screen Command Bar -->
     <div class="ops-command-bar">
         <div class="ops-command-title">
-            <span class="badge badge-primary px-2 py-1 text-uppercase font-weight-bold" style="font-size: 11px; border-radius: 6px; letter-spacing: 0.04em;">
+            <span class="badge badge-primary px-2 py-1 text-uppercase font-weight-bold u-fs-11px u-r-6px u-ls-0_04em">
                 <i class="fa fa-cogs mr-1"></i> Operations
             </span>
             <span class="text-muted small d-none d-md-inline">
@@ -61,7 +61,7 @@
     </div>
 
     @if(session('message'))
-        <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-2" role="alert" style="font-size: 13px;">
+        <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-2 u-fs-13px" role="alert">
             <i class="fa fa-check-circle mr-1"></i> {{ session('message') }}
             <button type="button" class="close p-2" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
@@ -70,7 +70,7 @@
     @endif
 
     @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-2" role="alert" style="font-size: 13px;">
+        <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-2 u-fs-13px" role="alert">
             <strong><i class="fa fa-exclamation-triangle mr-1"></i> Save failed. Please review:</strong>
             <ul class="mb-0 mt-1 pl-3">
                 @foreach($errors->all() as $error)

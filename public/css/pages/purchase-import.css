@@ -1,0 +1,32 @@
+/* Page styles for: backend/purchase/import.blade.php (moved from inline <style>). */
+    .pi-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 12px; padding: 0 12px; }
+    .pi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+    .pi-card h2 { font-size: 13.5px; font-weight: 700; margin: 0 0 10px; color: #0f172a; display: flex; align-items: center; gap: 6px; }
+    .pi-card h2 .num { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--z-primary-soft, #fbf4fb); color: var(--z-primary-hover, #631f64); font-size: 11px; }
+    .pi-card label { font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #334155; }
+    .pi-card .form-group { margin-bottom: 8px; }
+    .pi-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .pi-span { grid-column: 1 / -1; }
+    .pi-drop { position: relative; border: 1.5px dashed var(--z-primary-text, #7d287e); border-radius: 8px; background: var(--z-primary-soft, #fbf4fb); padding: 14px; text-align: center; cursor: pointer; transition: background .15s; }
+    .pi-drop.is-over { background: var(--z-primary-soft, #fbf4fb); }
+    .pi-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .pi-drop strong { display: block; font-size: 13px; color: var(--z-primary-hover, #631f64); }
+    .pi-drop span { font-size: 11.5px; color: #64748b; }
+    .pi-cols { width: 100%; font-size: 12px; border-collapse: collapse; }
+    .pi-cols th, .pi-cols td { padding: 4px 6px; border-bottom: 1px solid #f1f5f9; text-align: left; }
+    .pi-cols th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; background: #f8fafc; }
+    .pi-cols code { font-size: 11.5px; color: var(--z-primary-hover, #631f64); background: none; padding: 0; }
+    .pi-preview { max-height: 190px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-top: 8px; }
+    .pi-preview table { margin: 0; }
+    .pi-status { font-size: 12px; margin-top: 6px; }
+    .pi-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+    .pi-actions .hint { margin-left: auto; font-size: 11.5px; color: #64748b; }
+    .pi-note { font-size: 11.5px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 8px; margin-top: 8px; }
+    body.dark-mode .pi-card { background: #0f172a; border-color: #1e293b; }
+    body.dark-mode .pi-card h2 { color: #f8fafc; }
+    body.dark-mode .pi-card label { color: #94a3b8; }
+    body.dark-mode .pi-drop { background: #1e1b2e; border-color: var(--z-primary-hover, #631f64); }
+    body.dark-mode .pi-cols th { background: #111827; }
+    body.dark-mode .pi-cols th, body.dark-mode .pi-cols td { border-color: #1e293b; }
+    body.dark-mode .pi-note { background: #2a2110; border-color: #78350f; color: #fbbf24; }
+    @media (max-width: 991px) { .pi-grid { grid-template-columns: 1fr; } }

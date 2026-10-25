@@ -1,20 +1,20 @@
 @extends('backend.layout.main') 
 
 @section('navbar-center')
-<div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100" style="min-width:0; gap:8px;">
+<div class="comm-navbar-center-wrap d-flex align-items-center justify-content-between w-100 u-minw-0 u-gap-8px">
     <!-- Left Title & Mode Toggles -->
     <div class="comm-navbar-title-group">
         <span class="badge comm-title-badge">
             <i class="dripicons-download text-success"></i> Purchase Command Center
         </span>
-        <span style="color:#cbd5e1;font-size:12px;font-weight:600;">/</span>
+        <span class="u-c-xcbd5e1 u-fs-12px u-fw-600">/</span>
         <span id="doc-title-text" class="comm-doc-title">New Purchase Bill</span>
         <span id="doc-breadcrumb-mode" class="badge badge-primary doc-mode-pill">New</span>
 
     </div>
 
     <!-- Center Navigation Register Pills (Only on ultra-wide screens) -->
-    <div class="d-none d-xxl-flex align-items-center" style="gap:3px; flex-shrink:0;">
+    <div class="d-none d-xxl-flex align-items-center u-gap-3px u-shrink-0">
         <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-purchases" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> Supplier GRN</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Transfers</a>
@@ -24,7 +24,7 @@
     <!-- Right Controls: Live Total, Details, Bill List, Add New, Hide Bar -->
     <div class="comm-navbar-actions">
         <div class="header-grand-total-badge px-2">
-            <span style="font-size:9px; color:#92400e; font-weight:700;">TOTAL:</span>
+            <span class="u-fs-9px u-c-warning u-fw-700">TOTAL:</span>
             <span id="header-grand-total-display">₹ 0.00</span>
         </div>
         <button type="button" class="comm-nav-btn comm-nav-btn-secondary" id="btn-navbar-workspace-toggle" title="Toggle between Split View (Voucher + List) and Full Width Register">
@@ -47,18 +47,9 @@
 
 @section('content')
 
-<style type="text/css">
-    .btn-icon i { margin-right: 5px; }
-    .top-fields { margin-top: 10px; position: relative; }
-    .top-fields label { background: #FFF; font-size: 11px; font-weight: 600; margin-left: 10px; padding: 0 3px; position: absolute; top: -8px; z-index: 9; }
-    .top-fields input { font-size: 13px; height: 45px; }
-</style>
-
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
 <script>
     document.documentElement.classList.add('commercial-screen-lock');
     document.body.classList.add('commercial-screen-lock');
@@ -93,26 +84,26 @@
                 <div class="desk-card doc-primary-fields compact-fields mb-1">
                     <!-- Compact Row 1: Bill No, Supplier Inv No, Dates, Party & Inline Info -->
                     <div class="fields-compact-row doc-row-a">
-                        <div class="field-compact-item" style="width:140px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-140px u-shrink-0">
                             <label for="reference_no" data-help="Your own number for this purchase, given by the Series. Leave blank to auto-number.|PUR-00002">Our Bill No</label>
                             <input type="text" id="reference_no" name="reference_no" class="form-control" placeholder="Auto series" autocomplete="off">
                         </div>
-                        <div class="field-compact-item" style="width:165px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-165px u-shrink-0">
                             <label for="supplier_invoice_no" data-help="Invoice number printed on the supplier's paper bill. Used to match GSTR-2B and stop double entry.|SMF/1187">Supplier Bill No</label>
                             <input type="text" id="supplier_invoice_no" name="supplier_invoice_no" class="form-control" placeholder="Paper invoice #">
                         </div>
-                        <div class="field-compact-item" style="width:125px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-125px u-shrink-0">
                             <label for="supplier_invoice_date" data-help="Date printed on the supplier's invoice. GST input credit is claimed against this date.|24-10-2026">Bill Date</label>
                             <input type="date" id="supplier_invoice_date" name="supplier_invoice_date" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-                        <div class="field-compact-item" style="width:125px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-125px u-shrink-0">
                             <label for="created_at" data-help="Date the goods enter your books. Stock and accounts post on this date and the credit due date counts from it.|Today, or the day goods arrived">Entry Date</label>
                             <input type="date" id="created_at" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-                        <div class="field-compact-item" style="width:250px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-250px u-shrink-0">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="supplier_id" data-help="Supplier you bought from. Picking one fills GSTIN, address and the supplier's standard terms (payment, items, GST, remarks).|Sri Murugan Flexi Packs">Party *</label>
-                                <button type="button" class="btn btn-link p-0 btn-open-party-modal" id="btn-quick-new-party" data-party-type="supplier" style="font-size:9.5px;color:var(--z-primary, #7d287e);font-weight:700;text-decoration:none;border:none;background:none;cursor:pointer;">+ New Party</button>
+                                <button type="button" class="btn btn-link p-0 btn-open-party-modal u-fs-9_5px u-c-primary u-fw-700 u-tdec-none u-b-none u-bg-none u-cur-pointer" id="btn-quick-new-party" data-party-type="supplier">+ New Party</button>
                             </div>
                             <select id="supplier_id" name="supplier_id" class="form-control selectpicker" data-live-search="true" data-container="body" title="Select Supplier" required>
                                 @foreach($lims_supplier_list as $supplier)
@@ -131,10 +122,10 @@
                         </div>
                         <div class="field-compact-item doc-party-details">
                         <label data-help="Read from the supplier master. Credit = the supplier's standard credit days. Edit the supplier to change them.|GSTIN 33AAPFS9902L1ZM · Tiruppur">Party details</label>
-                        <div class="party-info-compact-inline" id="party-info-card" style="display:flex;">
-                            <span style="font-size:10px;font-weight:700;color:#475569;white-space:nowrap;">GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span></span>
-                            <span style="font-size:10.5px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" id="party-address-text">Select a party to see GSTIN and address</span>
-                            <span class="badge" id="party-credit-badge" style="background:#e0f2fe;color:#0369a1;font-size:9.5px;font-weight:600;white-space:nowrap;">Credit: 0 days</span>
+                        <div class="party-info-compact-inline u-d-flex" id="party-info-card">
+                            <span class="u-fs-10px u-fw-700 u-c-text-2 u-ws-nowrap">GSTIN: <span class="party-gst-badge" id="party-gst-badge">—</span></span>
+                            <span id="party-address-text" class="u-fs-10_5px u-c-text-2 u-ov-hidden u-tov-ellipsis u-ws-nowrap u-flex-1">Select a party to see GSTIN and address</span>
+                            <span class="badge u-bg-info-soft u-c-info u-fs-9_5px u-fw-600 u-ws-nowrap" id="party-credit-badge">Credit: 0 days</span>
                         </div>
                         </div>
                     </div>
@@ -156,7 +147,7 @@
                                 <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
                             </div>
                         </div>
-                        <div class="field-compact-item" style="width:230px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-230px u-shrink-0">
                             <label for="purchase_type_id">Tax Classification *</label>
                             <select id="purchase_type_id" name="purchase_type_id" class="form-control">
                                 <option value="0" data-tax-rate="" data-is-multi="1">GST • Multiple rates</option>
@@ -170,7 +161,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="field-compact-item" style="width:160px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-160px u-shrink-0">
                             <label for="series_id" data-help="Numbering series that gives Our Bill No. Use separate series to keep e.g. imports apart.|Purchase → PUR-00001, PUR-00002">Series</label>
                             <select id="series_id" name="series_id" class="form-control">
                                 <option value="0">Purchase</option>
@@ -179,7 +170,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="field-compact-item" style="width:230px;flex-shrink:0;">
+                        <div class="field-compact-item u-w-230px u-shrink-0">
                             <label for="form_warehouse_id" data-help="Godown where the received stock is added.|Main godown">{{ \App\Services\Industry\IndustryProfileService::label('warehouse', 'Warehouse') }} *</label>
                             <select id="form_warehouse_id" name="warehouse_id" class="form-control" required>
                                 @foreach($lims_warehouse_list as $wh)
@@ -192,7 +183,7 @@
                         <div class="terms-compact-inline">
                             <span id="terms-credit">Credit <input type="number" id="header-credit-days" class="terms-days-input" min="0" max="3650" step="1" inputmode="numeric" placeholder="—" aria-label="Credit days"> days</span>
                             <span id="terms-cash" hidden><strong>Cash</strong> · paid now, no due date</span>
-                            <a href="javascript:void(0)" id="btn-quick-logistics" style="color:var(--z-primary, #7d287e);font-weight:600;margin-left:auto;text-decoration:none;white-space:nowrap;">
+                            <a href="javascript:void(0)" id="btn-quick-logistics" class="u-c-primary u-fw-600 u-ml-auto u-tdec-none u-ws-nowrap">
                                 + Transport &amp; Remarks &rarr;
                             </a>
                         </div>
@@ -201,11 +192,11 @@
                 </div>
 
                 <!-- 3. ITEMS Section (Expanded to Fill All Available Viewport Space) -->
-                <div class="desk-card items-container mb-1" style="border-radius:6px;padding:0;overflow:hidden;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
+                <div class="desk-card items-container mb-1 u-r-6px u-p-0 u-ov-hidden u-flex-1-1-auto u-d-flex u-dir-column u-minh-0">
                     <div class="items-section-header">
-                        <div class="items-counter-group" style="display:flex;align-items:center;gap:6px;">
-                            <span class="items-title" style="font-weight:700;font-size:11.5px;color:#0f172a;">ITEMS</span>
-                            <span class="items-meta-badge text-muted" id="items-meta-count" style="font-size:10.5px;">0 line(s)</span>
+                        <div class="items-counter-group u-d-flex u-items-center u-gap-6px">
+                            <span class="items-title u-fw-700 u-fs-11_5px u-c-text">ITEMS</span>
+                            <span class="items-meta-badge text-muted u-fs-10_5px" id="items-meta-count">0 line(s)</span>
                         </div>
 
                         <div class="items-controls-group">
@@ -227,41 +218,41 @@
                     </div>
 
                     <!-- Items Grid Table (Expands to bottom summary bar) -->
-                    <div class="table-responsive" style="flex:1 1 auto;overflow-y:auto;min-height:200px;height:100%;margin:0;">
-                        <table class="desk-grid-table cozy table table-sm mb-0" id="order-table" style="width:100%;">
+                    <div class="table-responsive u-flex-1-1-auto u-ovy-auto u-minh-200px u-h-100pct u-m-0">
+                        <table class="desk-grid-table cozy table table-sm mb-0 u-w-100pct" id="order-table">
                             <thead>
-                                <tr style="background:#0f172a;color:#ffffff;font-size:11px;">
-                                    <th style="width:36px;text-align:center;">#</th>
-                                    <th style="min-width:240px;">ITEM</th>
-                                    <th style="width:110px;" title="Purchase type">TYPE</th>
-                                    <th style="width:75px;">UNIT</th>
-                                    <th style="width:95px;text-align:right;">RATE</th>
-                                    <th style="width:70px;text-align:center;">QTY</th>
-                                    <th style="width:100px;text-align:right;">AMOUNT</th>
-                                    <th style="width:90px;">TAX</th>
-                                    <th style="width:105px;text-align:right;">TOTAL</th>
-                                    <th style="width:65px;text-align:center;">ACTIONS</th>
+                                <tr class="u-bg-ink u-c-xffffff u-fs-11px">
+                                    <th class="u-w-36px u-ta-center">#</th>
+                                    <th class="u-minw-240px">ITEM</th>
+                                    <th title="Purchase type" class="u-w-110px">TYPE</th>
+                                    <th class="u-w-75px">UNIT</th>
+                                    <th class="u-w-95px u-ta-right">RATE</th>
+                                    <th class="u-w-70px u-ta-center">QTY</th>
+                                    <th class="u-w-100px u-ta-right">AMOUNT</th>
+                                    <th class="u-w-90px">TAX</th>
+                                    <th class="u-w-105px u-ta-right">TOTAL</th>
+                                    <th class="u-w-65px u-ta-center">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody id="order-table-body">
                                 <!-- Integrated In-Table Item Search Row -->
                                 <tr class="table-search-row" id="table-search-row">
-                                    <td style="text-align:center;vertical-align:middle;width:36px;">
-                                        <i class="fa fa-barcode" style="font-size:15px;color:var(--z-primary, #7d287e);" title="Scan Barcode (Alt+I)"></i>
+                                    <td class="u-ta-center u-va-middle u-w-36px">
+                                        <i class="fa fa-barcode u-fs-15px u-c-primary" title="Scan Barcode (Alt+I)"></i>
                                     </td>
-                                    <td style="vertical-align:middle;">
+                                    <td class="u-va-middle">
                                         <div class="table-search-input-wrap">
-                                            <i class="fa fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--z-primary, #7d287e);pointer-events:none;"></i>
+                                            <i class="fa fa-search u-pos-absolute u-left-9px u-top-50pct u-tf-translatey-50pct u-fs-11px u-c-primary u-pe-none"></i>
                                             <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (Alt+I)" autocomplete="off">
                                             <span class="table-search-f2-badge">Alt+I</span>
                                         </div>
                                     </td>
-                                    <td colspan="8" style="vertical-align:middle;font-size:11px;color:var(--z-primary-hover, #631f64);font-style:italic;">
+                                    <td colspan="8" class="u-va-middle u-fs-11px u-c-primary-hover u-fst-italic">
                                         <span class="d-none d-md-inline">&larr; Scan barcode or type above to add item to voucher. Press Enter to add.</span>
                                     </td>
                                 </tr>
                                 <tr class="empty-placeholder-row">
-                                    <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
+                                    <td colspan="10" class="text-center text-muted py-4 u-fs-12px">
                                         No items added yet. Scan barcode or search above, or click "+ Add row".
                                     </td>
                                 </tr>
@@ -273,12 +264,12 @@
 
                 <!-- 4. Fixed Bottom Action & Summary Bar (Matching Screenshot 3) -->
                 <div class="desk-summary-bottom-bar">
-                    <div class="d-flex align-items-center" style="gap:10px;">
+                    <div class="d-flex align-items-center u-gap-10px">
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-bottom-charges">
                             <span>Charges & remarks</span>
                             <span class="badge badge-light ml-1" id="charges-badge-count">0</span>
                         </button>
-                        <span class="text-muted d-none d-lg-inline" style="font-size:11px;" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
+                        <span class="text-muted d-none d-lg-inline u-fs-11px" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
                     </div>
 
                     <div class="bottom-action-buttons">
@@ -297,23 +288,23 @@
                     </div>
 
                     <div class="bottom-summary-totals">
-                        <div style="text-align:right;">
-                            <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">NET</div>
-                            <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-net-amount">₹ 0.00</div>
+                        <div class="u-ta-right">
+                            <div class="u-fs-9_5px u-fw-700 u-c-text-muted u-ls-0_04em">NET</div>
+                            <div id="display-net-amount" class="u-fs-13px u-fw-700 u-c-text">₹ 0.00</div>
                         </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:9.5px;font-weight:700;color:#64748b;letter-spacing:0.04em;">GST / TAX</div>
-                            <div style="font-size:13px;font-weight:700;color:#0f172a;" id="display-tax-amount">₹ 0.00</div>
+                        <div class="u-ta-right">
+                            <div class="u-fs-9_5px u-fw-700 u-c-text-muted u-ls-0_04em">GST / TAX</div>
+                            <div id="display-tax-amount" class="u-fs-13px u-fw-700 u-c-text">₹ 0.00</div>
                         </div>
-                        <div style="text-align:right;border-left:1px solid #cbd5e1;padding-left:14px;">
-                            <div style="font-size:9.5px;font-weight:800;color:#d97706;letter-spacing:0.04em;">GRAND TOTAL</div>
-                            <div style="font-size:15px;font-weight:800;color:#d97706;" id="display-grand-total">₹ 0.00</div>
+                        <div class="u-ta-right u-bl-1px-solid-border-strong u-pl-14px">
+                            <div class="u-fs-9_5px u-fw-800 u-c-warning u-ls-0_04em">GRAND TOTAL</div>
+                            <div id="display-grand-total" class="u-fs-15px u-fw-800 u-c-warning">₹ 0.00</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Hidden inputs for Optech details -->
-                <div style="display:none;">
+                <div style="display:none">
                     <input type="text" name="bale_no" id="hidden-bale-no">
                     <input type="number" name="no_of_bales" id="hidden-no-of-bales">
                     <input type="number" name="bundle_count" id="hidden-bundle-count">
@@ -389,9 +380,9 @@
                 </div>
 
                 <!-- Date Inputs (revealed if Date/Range selected) -->
-                <div class="side-date-picker-box" id="side-date-picker-box" style="display:none; padding:4px 0;">
-                    <input aria-label="From date" type="date" id="side-filter-date-val" class="form-control" style="height:28px; font-size:11px;" value="{{ date('Y-m-d') }}" />
-                    <input aria-label="To date" type="date" id="side-filter-date-end" class="form-control" style="height:28px; font-size:11px; display:none;" value="{{ date('Y-m-d') }}" />
+                <div class="side-date-picker-box u-p-4px-0" id="side-date-picker-box" style="display:none">
+                    <input aria-label="From date" type="date" id="side-filter-date-val" class="form-control u-h-28px u-fs-11px" value="{{ date('Y-m-d') }}" />
+                    <input aria-label="To date" type="date" id="side-filter-date-end" class="form-control u-h-28px u-fs-11px" style="display:none" value="{{ date('Y-m-d') }}" />
                 </div>
 
                 <!-- Dropdown Filters (Moved from Top Bar) -->
@@ -452,10 +443,10 @@
                                 <span class="side-card-amount">₹ {{ number_format($bill->grand_total ?? 0, 2) }}</span>
                             </div>
                             <div class="side-card-party">
-                                <i class="dripicons-user" style="font-size:10px; color:#94a3b8;"></i> {{ $supplierName }}
+                                <i class="dripicons-user u-fs-10px u-c-text-muted"></i> {{ $supplierName }}
                             </div>
                             <div class="side-card-bottom">
-                                <span class="side-card-date"><i class="dripicons-calendar" style="font-size:10px;"></i> {{ substr($bill->created_at ?? '', 0, 10) }}</span>
+                                <span class="side-card-date"><i class="dripicons-calendar u-fs-10px"></i> {{ substr($bill->created_at ?? '', 0, 10) }}</span>
                                 <span class="side-card-status {{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <div class="side-card-actions">
@@ -491,17 +482,17 @@
     </div>
 
     <!-- Full Width Register View (Initial Setup Before Changing to New UI) -->
-    <div class="comm-fullwidth-register" id="fullwidth-register-view" style="display: none;">
+    <div class="comm-fullwidth-register" id="fullwidth-register-view" style="display:none">
         <!-- Top Return & Action Bar -->
         <div class="comm-fullwidth-header-strip">
             <div class="d-flex align-items-center gap-2">
-                <h5 class="mb-0 font-weight-bold" style="font-size:14px;color:#0f172a;">
+                <h5 class="mb-0 font-weight-bold u-fs-14px u-c-text">
                     <i class="dripicons-list text-success mr-1"></i> {{ __('db.Purchase') }} Register &amp; Inward GRN
                 </h5>
-                <span class="badge badge-secondary" style="font-size:10px;padding:3px 7px;">Full Register View</span>
+                <span class="badge badge-secondary u-fs-10px u-p-3px-7px">Full Register View</span>
             </div>
-            <div class="d-flex align-items-center" style="gap:8px;">
-                <button type="button" class="btn btn-sm btn-primary py-1 px-3 font-weight-bold" id="btn-switch-voucher-mode" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#ffffff;" title="Return to Split View (Voucher Entry + Bill List)">
+            <div class="d-flex align-items-center u-gap-8px">
+                <button type="button" class="btn btn-sm btn-primary py-1 px-3 font-weight-bold u-bg-primary u-bc-primary u-c-xffffff" id="btn-switch-voucher-mode" title="Return to Split View (Voucher Entry + Bill List)">
                     <i class="dripicons-view-thumb mr-1"></i> ⇄ Split View
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-success py-1 px-3 font-weight-bold" id="btn-fullwidth-new" title="Create New Purchase Bill">
@@ -518,27 +509,27 @@
             <div class="comm-kpi-box">
                 <div class="comm-kpi-info">
                     <span class="comm-kpi-title">{{ __("Today's Purchases") }}</span>
-                    <span class="comm-kpi-value">{{ $todayPurchasesCount ?? 0 }} <small style="font-size:11px;font-weight:600;color:#64748b;">({{ number_format($todayPurchasesAmount ?? 0, 2) }})</small></span>
+                    <span class="comm-kpi-value">{{ $todayPurchasesCount ?? 0 }} <small class="u-fs-11px u-fw-600 u-c-text-muted">({{ number_format($todayPurchasesAmount ?? 0, 2) }})</small></span>
                 </div>
-                <div class="comm-kpi-icon" style="background:#f0fdf4; color:#16a34a;">
+                <div class="comm-kpi-icon u-bg-success-soft u-c-success">
                     <i class="dripicons-cart"></i>
                 </div>
             </div>
             <div class="comm-kpi-box">
                 <div class="comm-kpi-info">
                     <span class="comm-kpi-title">{{ __("Paid Outflow") }}</span>
-                    <span class="comm-kpi-value" style="color:#0284c7;">{{ number_format($totalPaid ?? 0, 2) }}</span>
+                    <span class="comm-kpi-value u-c-info">{{ number_format($totalPaid ?? 0, 2) }}</span>
                 </div>
-                <div class="comm-kpi-icon" style="background:#f0f9ff; color:#0284c7;">
+                <div class="comm-kpi-icon u-bg-info-soft u-c-info">
                     <i class="dripicons-checkmark"></i>
                 </div>
             </div>
             <div class="comm-kpi-box">
                 <div class="comm-kpi-info">
                     <span class="comm-kpi-title">{{ __("Due Payables") }}</span>
-                    <span class="comm-kpi-value" style="color:#ea580c;">{{ number_format($totalDue ?? 0, 2) }}</span>
+                    <span class="comm-kpi-value u-c-warning">{{ number_format($totalDue ?? 0, 2) }}</span>
                 </div>
-                <div class="comm-kpi-icon" style="background:#fff7ed; color:#ea580c;">
+                <div class="comm-kpi-icon u-bg-warning-soft u-c-warning">
                     <i class="dripicons-warning"></i>
                 </div>
             </div>
@@ -547,7 +538,7 @@
                     <span class="comm-kpi-title">{{ __("Total Invoiced") }}</span>
                     <span class="comm-kpi-value">{{ number_format(($totalPaid ?? 0) + ($totalDue ?? 0), 2) }}</span>
                 </div>
-                <div class="comm-kpi-icon" style="background:var(--z-primary-soft, #fbf4fb); color:var(--z-primary, #7d287e);">
+                <div class="comm-kpi-icon u-bg-primary-soft u-c-primary">
                     <i class="dripicons-archive"></i>
                 </div>
             </div>
@@ -565,7 +556,7 @@
                 </div>
                 <div class="filter-item @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
                     <label>{{__('db.Warehouse')}}:</label>
-                    <select id="warehouse_id" name="warehouse_id" class="form-control" style="width:130px;">
+                    <select id="warehouse_id" name="warehouse_id" class="form-control u-w-130px">
                         <option value="0">{{__('db.All Warehouse')}}</option>
                         @foreach($lims_warehouse_list as $warehouse)
                             <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
@@ -574,7 +565,7 @@
                 </div>
                 <div class="filter-item">
                     <label>{{__('db.Purchase Status')}}:</label>
-                    <select id="purchase-status" class="form-control" name="purchase_status" style="width:110px;">
+                    <select id="purchase-status" class="form-control u-w-110px" name="purchase_status">
                         <option value="0">{{__('db.All')}}</option>
                         <option value="1">{{__('db.Recieved')}}</option>
                         <option value="2">{{__('db.Partial')}}</option>
@@ -584,7 +575,7 @@
                 </div>
                 <div class="filter-item">
                     <label>{{__('db.Payment Status')}}:</label>
-                    <select id="payment-status" class="form-control" name="payment_status" style="width:100px;">
+                    <select id="payment-status" class="form-control u-w-100px" name="payment_status">
                         <option value="0">{{__('db.All')}}</option>
                         <option value="1">{{__('db.Due')}}</option>
                         <option value="2">{{__('db.Paid')}}</option>
@@ -597,7 +588,7 @@
 
             <!-- Sticky Header Table Viewport -->
             <div class="comm-table-viewport">
-                <table id="purchase-table" class="table purchase-list mt-0" style="width: 100%">
+                <table id="purchase-table" class="table purchase-list mt-0 u-w-100pct">
                     <thead>
                         <tr>
                             <th class="not-exported"></th>
@@ -823,7 +814,7 @@
                     <h3 id="exampleModalLabel" class="modal-title text-center container-fluid">{{$general_setting->site_title}}</h3>
                 </div>
                 <div class="col-md-12 text-center">
-                    <i style="font-size: 15px;">{{__('db.Purchase Details')}}</i>
+                    <i class="u-fs-15px">{{__('db.Purchase Details')}}</i>
                 </div>
             </div>
         </div>
@@ -1037,38 +1028,38 @@
 
 <!-- Row Detail Modal (Batch, Expiry, Serial/IMEI, Discount) -->
 <div id="row-detail-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
-    <div class="modal-dialog" style="max-width:480px;">
-        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-                <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
-                    <i class="dripicons-pencil" style="color:var(--z-primary, #7d287e);"></i> <span id="row-detail-modal-title">Item Details</span>
+    <div class="modal-dialog u-maxw-480px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <h5 class="modal-title u-fs-14px u-fw-700 u-c-text u-d-flex u-items-center u-gap-8px">
+                    <i class="dripicons-pencil u-c-primary"></i> <span id="row-detail-modal-title">Item Details</span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding:16px 18px;">
+            <div class="modal-body u-p-16px-18px">
                 <input type="hidden" id="modal-target-row-id" value="">
                 <div class="form-group mb-2">
-                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Batch Number</label>
-                    <input type="text" id="modal-row-batch" class="form-control form-control-sm" placeholder="e.g. BATCH-2026-01" style="height:32px;font-size:12px;">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Batch Number</label>
+                    <input type="text" id="modal-row-batch" class="form-control form-control-sm u-h-32px u-fs-12px" placeholder="e.g. BATCH-2026-01">
                 </div>
                 <div class="form-group mb-2">
-                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Expiry Date</label>
-                    <input type="date" id="modal-row-expire" class="form-control form-control-sm" style="height:32px;font-size:12px;">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Expiry Date</label>
+                    <input type="date" id="modal-row-expire" class="form-control form-control-sm u-h-32px u-fs-12px">
                 </div>
                 <div class="form-group mb-2">
-                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">IMEI / Serial Numbers</label>
-                    <textarea id="modal-row-imei" class="form-control form-control-sm" rows="2" placeholder="Comma separated IMEIs or serials" style="font-size:12px;"></textarea>
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">IMEI / Serial Numbers</label>
+                    <textarea id="modal-row-imei" class="form-control form-control-sm u-fs-12px" rows="2" placeholder="Comma separated IMEIs or serials"></textarea>
                 </div>
                 <div class="form-group mb-0">
-                    <label style="font-size:11px;font-weight:700;color:#475569;margin-bottom:2px;">Item Discount (₹)</label>
-                    <input type="number" id="modal-row-discount" class="form-control form-control-sm" placeholder="0.00" step="0.01" style="height:32px;font-size:12px;">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Item Discount (₹)</label>
+                    <input type="number" id="modal-row-discount" class="form-control form-control-sm u-h-32px u-fs-12px" placeholder="0.00" step="0.01">
                 </div>
             </div>
-            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-save-row-detail" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-save-row-detail">
                     Save Details
                 </button>
             </div>
@@ -1078,43 +1069,43 @@
 
 <!-- Multi-Item Selection Modal (Optech Grid) -->
 <div id="multi-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
-    <div class="modal-dialog modal-lg" style="max-width:850px;">
-        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+    <div class="modal-dialog modal-lg u-maxw-850px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
                 <div>
-                    <h5 class="modal-title" style="font-size:14px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;margin:0;">
-                        <i class="dripicons-menu" style="color:var(--z-primary, #7d287e);"></i> Multi-Item Fast Batch Picker
+                    <h5 class="modal-title u-fs-14px u-fw-700 u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
+                        <i class="dripicons-menu u-c-primary"></i> Multi-Item Fast Batch Picker
                     </h5>
-                    <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
+                    <div class="u-fs-11_5px u-c-text-muted u-mt-2px">
                         Select multiple products with quantities and insert them all at once into the voucher table.
                     </div>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding:14px 18px;">
+            <div class="modal-body u-p-14px-18px">
                 <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                    <div style="position:relative;flex:1;">
-                        <i class="fa fa-search text-muted" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;"></i>
-                        <input type="text" id="multi-item-filter" class="form-control form-control-sm" placeholder="Filter items by name or code..." style="padding-left:30px;height:32px;font-size:12px;">
+                    <div class="u-pos-relative u-flex-1">
+                        <i class="fa fa-search text-muted u-pos-absolute u-left-10px u-top-50pct u-tf-translatey-50pct u-fs-12px"></i>
+                        <input type="text" id="multi-item-filter" class="form-control form-control-sm u-pl-30px u-h-32px u-fs-12px" placeholder="Filter items by name or code...">
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge badge-light border" id="multi-item-count-badge" style="font-size:11px;padding:5px 8px;">0 selected</span>
+                        <span class="badge badge-light border u-fs-11px u-p-5px-8px" id="multi-item-count-badge">0 selected</span>
                     </div>
                 </div>
-                <div class="table-responsive" style="max-height:360px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
-                    <table class="table table-sm table-hover mb-0" id="multi-item-table" style="font-size:12px;">
-                        <thead style="background:#f1f5f9;position:sticky;top:0;z-index:10;">
+                <div class="table-responsive u-maxh-360px u-ovy-auto u-b-1px-solid-border u-r-6px">
+                    <table class="table table-sm table-hover mb-0 u-fs-12px" id="multi-item-table">
+                        <thead class="u-bg-surface-3 u-pos-sticky u-top-0 u-z-10">
                             <tr>
-                                <th style="width:36px;text-align:center;">
+                                <th class="u-w-36px u-ta-center">
                                     <input type="checkbox" id="multi-item-select-all">
                                 </th>
-                                <th style="min-width:240px;">Item Name</th>
-                                <th style="width:130px;">Item Code</th>
-                                <th style="width:110px;text-align:right;">Cost</th>
-                                <th style="width:90px;text-align:center;">Qty</th>
-                                <th style="width:70px;text-align:center;">Unit</th>
+                                <th class="u-minw-240px">Item Name</th>
+                                <th class="u-w-130px">Item Code</th>
+                                <th class="u-w-110px u-ta-right">Cost</th>
+                                <th class="u-w-90px u-ta-center">Qty</th>
+                                <th class="u-w-70px u-ta-center">Unit</th>
                             </tr>
                         </thead>
                         <tbody id="multi-item-tbody">
@@ -1123,9 +1114,9 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-add-selected-items" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-add-selected-items">
                     + Add Selected Items to Voucher
                 </button>
             </div>
@@ -1139,12 +1130,12 @@
         <div class="modal-content">
             <div class="modal-header d-flex align-items-center justify-content-between">
                 <div>
-                    <h5 class="modal-title font-weight-bold" style="font-size:15px;color:#0f172a;display:flex;align-items:center;gap:8px;margin:0;">
-                        <i class="fa fa-plus-circle" style="color:var(--z-primary, #7d287e);font-size:18px;"></i> Add Product (Catalog Master)
+                    <h5 class="modal-title font-weight-bold u-fs-15px u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
+                        <i class="fa fa-plus-circle u-c-primary u-fs-18px"></i> Add Product (Catalog Master)
                     </h5>
-                    <span style="font-size:11.5px;color:#64748b;">The field labels marked with * are required. Once created, the item is immediately selected and added to the voucher.</span>
+                    <span class="u-fs-11_5px u-c-text-muted">The field labels marked with * are required. Once created, the item is immediately selected and added to the voucher.</span>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:22px;outline:none;">
+                <button type="button" class="close u-fs-22px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -1178,7 +1169,7 @@
                                 <div class="input-group">
                                     <input type="text" id="quick-item-code" name="code" class="form-control" placeholder="e.g. ITM-1002" required autocomplete="off">
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-gen-code" title="Generate Random Code" style="height:34px;line-height:32px;padding:0 12px;font-size:11.5px;"><i class="fa fa-refresh"></i> Auto</button>
+                                        <button type="button" class="btn btn-outline-secondary u-h-34px u-lh-32px u-p-0-12px u-fs-11_5px" id="btn-quick-gen-code" title="Generate Random Code"><i class="fa fa-refresh"></i> Auto</button>
                                     </div>
                                 </div>
                             </div>
@@ -1211,7 +1202,7 @@
                                         @endif
                                     </select>
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-add-brand" title="Create Brand Inline" style="padding:0 10px;"><i class="dripicons-plus"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary u-p-0-10px" id="btn-quick-add-brand" title="Create Brand Inline"><i class="dripicons-plus"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -1229,7 +1220,7 @@
                                         @endif
                                     </select>
                                     <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary" id="btn-quick-add-category" title="Create Category Inline" style="padding:0 10px;"><i class="dripicons-plus"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary u-p-0-10px" id="btn-quick-add-category" title="Create Category Inline"><i class="dripicons-plus"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -1300,8 +1291,8 @@
                             <div class="compact-field-block">
                                 <label>Profit Margin</label>
                                 <div class="input-group">
-                                    <div class="input-group-prepend" style="width: 52px;">
-                                        <select id="quick-item-margin-type" name="profit_margin_type" class="form-control" style="padding:4px 6px;">
+                                    <div class="input-group-prepend u-w-52px">
+                                        <select id="quick-item-margin-type" name="profit_margin_type" class="form-control u-p-4px-6px">
                                             <option value="percentage" selected>%</option>
                                             <option value="flat">₹</option>
                                         </select>
@@ -1388,7 +1379,7 @@
                                 <label>Warranty</label>
                                 <div class="input-group">
                                     <input type="number" id="quick-item-warranty" name="warranty" class="form-control" placeholder="e.g. 1" min="1">
-                                    <div class="input-group-append" style="width: 105px;">
+                                    <div class="input-group-append u-w-105px">
                                         <select id="quick-item-warranty-type" name="warranty_type" class="form-control">
                                             <option value="months" selected>Months</option>
                                             <option value="years">Years</option>
@@ -1403,7 +1394,7 @@
                                 <label>Guarantee</label>
                                 <div class="input-group">
                                     <input type="number" id="quick-item-guarantee" name="guarantee" class="form-control" placeholder="e.g. 1" min="1">
-                                    <div class="input-group-append" style="width: 105px;">
+                                    <div class="input-group-append u-w-105px">
                                         <select id="quick-item-guarantee-type" name="guarantee_type" class="form-control">
                                             <option value="months" selected>Months</option>
                                             <option value="years">Years</option>
@@ -1453,14 +1444,14 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="compact-field-block mb-0">
-                                <textarea id="quick-item-details" name="product_details" class="form-control" rows="2" placeholder="Enter specifications, notes, or product description..." style="height:auto !important;min-height:56px;"></textarea>
+                                <textarea id="quick-item-details" name="product_details" class="form-control u-h-auto u-minh-56px" rows="2" placeholder="Enter specifications, notes, or product description..."></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer d-flex align-items-center justify-content-between">
                     <button type="button" class="btn btn-sm btn-secondary comm-bottom-btn" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-quick-create-submit" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
+                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-quick-create-submit">
                         <i class="dripicons-checkmark"></i> 💾 Save &amp; Add to Voucher
                     </button>
                 </div>
@@ -1470,26 +1461,26 @@
 </div>
 
 <!-- Quick Create Category Modal (Inline) -->
-<div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
-        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 12px 30px rgba(0,0,0,0.25);">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-                <h5 class="modal-title font-weight-bold" style="font-size:13.5px;color:#0f172a;margin:0;">
+<div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
+    <div class="modal-dialog modal-dialog-centered u-maxw-380px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-12px-30px-rgba-0-0-0-0_25">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <h5 class="modal-title font-weight-bold u-fs-13_5px u-c-text u-m-0">
                     <i class="dripicons-plus text-primary mr-1"></i> Create New Category
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:18px;outline:none;">
+                <button type="button" class="close u-fs-18px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding:16px 18px;">
+            <div class="modal-body u-p-16px-18px">
                 <div class="form-group mb-0">
-                    <label style="font-size:11.5px;font-weight:600;color:#334155;margin-bottom:4px;">Category Name *</label>
-                    <input type="text" id="quick-cat-name-input" class="form-control" placeholder="e.g. Raw Material, Yarn..." style="height:34px;font-size:12.5px;">
+                    <label class="u-fs-11_5px u-fw-600 u-c-text-2 u-mb-4px">Category Name *</label>
+                    <input type="text" id="quick-cat-name-input" class="form-control u-h-34px u-fs-12_5px" placeholder="e.g. Raw Material, Yarn...">
                 </div>
             </div>
-            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-cat" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-submit-quick-cat">
                     Save Category
                 </button>
             </div>
@@ -1498,26 +1489,26 @@
 </div>
 
 <!-- Quick Create Brand Modal (Inline) -->
-<div id="quick-create-brand-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
-        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 12px 30px rgba(0,0,0,0.25);">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-                <h5 class="modal-title font-weight-bold" style="font-size:13.5px;color:#0f172a;margin:0;">
+<div id="quick-create-brand-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
+    <div class="modal-dialog modal-dialog-centered u-maxw-380px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-12px-30px-rgba-0-0-0-0_25">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <h5 class="modal-title font-weight-bold u-fs-13_5px u-c-text u-m-0">
                     <i class="dripicons-plus text-primary mr-1"></i> Create New Brand
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:18px;outline:none;">
+                <button type="button" class="close u-fs-18px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding:16px 18px;">
+            <div class="modal-body u-p-16px-18px">
                 <div class="form-group mb-0">
-                    <label style="font-size:11.5px;font-weight:600;color:#334155;margin-bottom:4px;">Brand Title *</label>
-                    <input type="text" id="quick-brand-title-input" class="form-control" placeholder="e.g. Raymond, Vardhman..." style="height:34px;font-size:12.5px;">
+                    <label class="u-fs-11_5px u-fw-600 u-c-text-2 u-mb-4px">Brand Title *</label>
+                    <input type="text" id="quick-brand-title-input" class="form-control u-h-34px u-fs-12_5px" placeholder="e.g. Raymond, Vardhman...">
                 </div>
             </div>
-            <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:10px 18px;border-top:1px solid #e2e8f0;">
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
                 <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-sm btn-primary" id="btn-submit-quick-brand" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);font-weight:600;">
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-submit-quick-brand">
                     Save Brand
                 </button>
             </div>
@@ -1526,36 +1517,36 @@
 </div>
 
 <!-- Quick Create Party Modal (Inline Popup with All Options) -->
-<div id="quick-create-party-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left" style="z-index: 1065;">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 820px;">
-        <div class="modal-content" style="border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 16px 40px rgba(0,0,0,0.22);overflow:hidden;">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #e2e8f0;">
+<div id="quick-create-party-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
+    <div class="modal-dialog modal-dialog-centered u-maxw-820px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-16px-40px-rgba-0-0-0-0_22 u-ov-hidden">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-20px u-bb-1px-solid-border">
                 <div>
-                    <h5 class="modal-title font-weight-bold" style="font-size:14.5px;color:#0f172a;margin:0;">
+                    <h5 class="modal-title font-weight-bold u-fs-14_5px u-c-text u-m-0">
                         <span id="quick-party-modal-title"><i class="fa fa-truck text-primary mr-1"></i> Add Supplier</span>
                     </h5>
-                    <small class="text-muted italic d-block" style="font-size:11px;margin-top:2px;">The field labels marked with * are required input fields.</small>
+                    <small class="text-muted italic d-block u-fs-11px u-mt-2px">The field labels marked with * are required input fields.</small>
                 </div>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="font-size:20px;outline:none;">
+                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <form id="quick-create-party-form">
                 @csrf
                 <input type="hidden" id="party_type_input" name="party_type" value="supplier">
-                <div class="modal-body" style="padding:16px 22px;max-height:calc(85vh - 120px);overflow-y:auto;">
+                <div class="modal-body u-p-16px-22px u-maxh-calc-85vh-120px u-ovy-auto">
                     
                     <!-- Top Options: Dual Nature & Customer Group (Cleanly Aligned Checkbox) -->
-                    <div class="d-flex align-items-center justify-content-between mb-3 px-3 py-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-                        <label for="party-both-checkbox" class="d-flex align-items-center mb-0" style="cursor:pointer;gap:9px;user-select:none;">
-                            <input type="checkbox" id="party-both-checkbox" name="both" value="1" style="width:16px;height:16px;margin:0;accent-color:var(--z-primary, #7d287e);cursor:pointer;">
-                            <span class="font-weight-bold" style="font-size:12.5px;color:#1e293b;">Both Customer and Supplier</span>
-                            <small class="text-muted ml-1" style="font-size:11px;">(creates linked account for reciprocal trade)</small>
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-3 py-2 u-bg-surface-2 u-r-8px u-b-1px-solid-border">
+                        <label for="party-both-checkbox" class="d-flex align-items-center mb-0 u-cur-pointer u-gap-9px u-us-none">
+                            <input type="checkbox" id="party-both-checkbox" name="both" value="1" class="u-w-16px u-h-16px u-m-0 u-acc-primary u-cur-pointer">
+                            <span class="font-weight-bold u-fs-12_5px u-c-text">Both Customer and Supplier</span>
+                            <small class="text-muted ml-1 u-fs-11px">(creates linked account for reciprocal trade)</small>
                         </label>
-                        <div id="party-customer-group-col" style="display:none;">
-                            <div class="d-flex align-items-center" style="gap:8px;">
-                                <label style="font-size:11.5px;font-weight:700;color:#334155;white-space:nowrap;margin:0;">Customer Group *</label>
-                                <select id="party-customer-group-id" name="customer_group_id" class="form-control form-control-sm" style="height:30px;font-size:12px;width:150px;">
+                        <div id="party-customer-group-col" style="display:none">
+                            <div class="d-flex align-items-center u-gap-8px">
+                                <label class="u-fs-11_5px u-fw-700 u-c-text-2 u-ws-nowrap u-m-0">Customer Group *</label>
+                                <select id="party-customer-group-id" name="customer_group_id" class="form-control form-control-sm u-h-30px u-fs-12px u-w-150px">
                                     @if(isset($lims_customer_group_all) && count($lims_customer_group_all))
                                         @foreach($lims_customer_group_all as $cg)
                                             <option value="{{ $cg->id }}">{{ $cg->name }}</option>
@@ -1569,49 +1560,49 @@
                     </div>
 
                     <!-- Section 1: GSTIN Auto-Fill & Verification Hero Panel -->
-                    <div class="mb-3 p-3" style="background:#f1f5f9;border-radius:8px;border:1px solid #cbd5e1;">
+                    <div class="mb-3 p-3 u-bg-surface-3 u-r-8px u-b-1px-solid-border-strong">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <label class="font-weight-bold text-uppercase mb-0" style="font-size:11px;letter-spacing:0.4px;color:#334155;">
+                            <label class="font-weight-bold text-uppercase mb-0 u-fs-11px u-ls-0_4px u-c-text-2">
                                 <i class="fa fa-bolt text-warning mr-1"></i> GSTIN Auto-Fill & Statutory Verification
                             </label>
-                            <span id="party-modal-gst-badge" class="badge" style="display:none;font-size:10.5px;padding:3px 8px;"></span>
+                            <span id="party-modal-gst-badge" class="badge u-fs-10_5px u-p-3px-8px" style="display:none"></span>
                         </div>
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <div class="input-group">
-                                    <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase" placeholder="Enter 15-char GSTIN (e.g. 33AIUPN6412D1ZA)" maxlength="15" autocomplete="off" style="height:36px;font-size:13px;font-family:monospace;font-weight:700;letter-spacing:0.5px;">
+                                    <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase u-h-36px u-fs-13px u-ff-monospace u-fw-700 u-ls-0_5px" placeholder="Enter 15-char GSTIN (e.g. 33AIUPN6412D1ZA)" maxlength="15" autocomplete="off">
                                     <div class="input-group-append">
-                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary" title="1-Click Auto-Fill all details from GST registry" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);height:36px;font-size:12px;padding:0 14px;font-weight:700;display:flex;align-items:center;gap:5px;">
+                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary u-bg-primary u-bc-primary u-h-36px u-fs-12px u-p-0-14px u-fw-700 u-d-flex u-items-center u-gap-5px" title="1-Click Auto-Fill all details from GST registry">
                                             <i class="fa fa-bolt"></i> <span>Fetch Details</span>
                                         </button>
-                                        <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary" title="Verify on official Government GST Portal" style="height:36px;font-size:12px;padding:0 11px;display:flex;align-items:center;">
+                                        <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary u-h-36px u-fs-12px u-p-0-11px u-d-flex u-items-center" title="Verify on official Government GST Portal">
                                             <i class="fa fa-external-link"></i>
                                         </a>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="d-flex align-items-center" style="gap:6px;">
-                                    <span class="text-muted" style="font-size:11.5px;font-weight:600;white-space:nowrap;">PAN:</span>
-                                    <input type="text" id="party-pan-display" readonly placeholder="Auto from GSTIN" class="form-control form-control-sm text-uppercase" style="height:36px;font-size:12.5px;font-family:monospace;font-weight:700;background:#e2e8f0;color:#0f172a;">
+                                <div class="d-flex align-items-center u-gap-6px">
+                                    <span class="text-muted u-fs-11_5px u-fw-600 u-ws-nowrap">PAN:</span>
+                                    <input type="text" id="party-pan-display" readonly placeholder="Auto from GSTIN" class="form-control form-control-sm text-uppercase u-h-36px u-fs-12_5px u-ff-monospace u-fw-700 u-bg-surface-3 u-c-text">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Full-Width GSTIN Details & Badges Strip -->
-                        <div id="party-gst-preview-strip" class="mt-2 p-2" style="display:none;border-radius:6px;border:1px solid #cbd5e1;background:#ffffff;">
-                            <div class="d-flex align-items-center flex-wrap" style="gap:6px;">
-                                <span id="gst-strip-state" class="badge badge-info" style="font-size:11px;font-weight:600;padding:4px 8px;"></span>
-                                <span id="gst-strip-const" class="badge badge-dark" style="font-size:11px;font-weight:600;padding:4px 8px;"></span>
-                                <span id="gst-strip-tax" class="badge badge-primary" style="font-size:11px;font-weight:600;padding:4px 8px;"></span>
-                                <span id="gst-strip-status" class="badge" style="font-size:11px;font-weight:700;padding:4px 8px;display:none;"></span>
-                                <span id="gst-strip-taxpayer" class="badge badge-secondary" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
-                                <span id="gst-strip-regdate" class="badge badge-light border" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
-                                <span id="gst-strip-cancdate" class="badge badge-danger" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
-                                <span id="gst-strip-filing" class="badge badge-light border" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
-                                <span id="gst-strip-nature" class="badge badge-light border" style="font-size:11px;font-weight:600;padding:4px 8px;display:none;"></span>
+                        <div id="party-gst-preview-strip" class="mt-2 p-2 u-r-6px u-b-1px-solid-border-strong u-bg-surface" style="display:none">
+                            <div class="d-flex align-items-center flex-wrap u-gap-6px">
+                                <span id="gst-strip-state" class="badge badge-info u-fs-11px u-fw-600 u-p-4px-8px"></span>
+                                <span id="gst-strip-const" class="badge badge-dark u-fs-11px u-fw-600 u-p-4px-8px"></span>
+                                <span id="gst-strip-tax" class="badge badge-primary u-fs-11px u-fw-600 u-p-4px-8px"></span>
+                                <span id="gst-strip-status" class="badge u-fs-11px u-fw-700 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-taxpayer" class="badge badge-secondary u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-regdate" class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-cancdate" class="badge badge-danger u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-filing" class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-nature" class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
                             </div>
-                            <div id="gst-strip-msg" class="text-muted mt-2" style="font-size:11.5px;line-height:1.4;"></div>
+                            <div id="gst-strip-msg" class="text-muted mt-2 u-fs-11_5px u-lh-1_4"></div>
                         </div>
                     </div>
 
@@ -1620,13 +1611,13 @@
                         <div class="col-md-6">
                             <div class="compact-field-block">
                                 <label>Name / Contact Person *</label>
-                                <input type="text" id="party-name" name="name" class="form-control" placeholder="Contact or Person Name" required style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-name" name="name" class="form-control u-h-34px u-fs-12_5px" placeholder="Contact or Person Name" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="compact-field-block">
                                 <label>Company / Trade Name *</label>
-                                <input type="text" id="party-company-name" name="company_name" class="form-control" placeholder="Company / Trade Name" required style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-company-name" name="company_name" class="form-control u-h-34px u-fs-12_5px" placeholder="Company / Trade Name" required>
                             </div>
                         </div>
                     </div>
@@ -1636,19 +1627,19 @@
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Phone Number *</label>
-                                <input type="text" id="party-phone-number" name="phone_number" class="form-control" placeholder="Primary Phone" required style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-phone-number" name="phone_number" class="form-control u-h-34px u-fs-12_5px" placeholder="Primary Phone" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Email</label>
-                                <input type="email" id="party-email" name="email" class="form-control" placeholder="email@example.com" style="height:34px;font-size:12.5px;">
+                                <input type="email" id="party-email" name="email" class="form-control u-h-34px u-fs-12_5px" placeholder="email@example.com">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>WhatsApp Number</label>
-                                <input type="text" id="party-wa-number" name="wa_number" class="form-control" placeholder="WhatsApp Number" style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-wa-number" name="wa_number" class="form-control u-h-34px u-fs-12_5px" placeholder="WhatsApp Number">
                             </div>
                         </div>
                     </div>
@@ -1658,13 +1649,13 @@
                         <div class="col-md-8">
                             <div class="compact-field-block">
                                 <label>Street Address *</label>
-                                <input type="text" id="party-address" name="address" class="form-control" placeholder="Building / Street / Door No / Locality" required style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-address" name="address" class="form-control u-h-34px u-fs-12_5px" placeholder="Building / Street / Door No / Locality" required>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>City *</label>
-                                <input type="text" id="party-city" name="city" class="form-control" placeholder="City" required style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-city" name="city" class="form-control u-h-34px u-fs-12_5px" placeholder="City" required>
                             </div>
                         </div>
                     </div>
@@ -1673,19 +1664,19 @@
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>State *</label>
-                                <input type="text" id="party-state" name="state" class="form-control" placeholder="State" style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-state" name="state" class="form-control u-h-34px u-fs-12_5px" placeholder="State">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Postal / PIN Code</label>
-                                <input type="text" id="party-postal-code" name="postal_code" class="form-control" placeholder="PIN Code" style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-postal-code" name="postal_code" class="form-control u-h-34px u-fs-12_5px" placeholder="PIN Code">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Country</label>
-                                <input type="text" id="party-country" name="country" class="form-control" value="India" placeholder="Country" style="height:34px;font-size:12.5px;">
+                                <input type="text" id="party-country" name="country" class="form-control u-h-34px u-fs-12_5px" value="India" placeholder="Country">
                             </div>
                         </div>
                     </div>
@@ -1695,24 +1686,24 @@
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Credit Days</label>
-                                <input type="number" id="party-credit-days" name="credit_days" class="form-control" value="30" min="0" placeholder="30" style="height:34px;font-size:12.5px;">
+                                <input type="number" id="party-credit-days" name="credit_days" class="form-control u-h-34px u-fs-12_5px" value="30" min="0" placeholder="30">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="compact-field-block">
                                 <label>Opening Balance (Due) <i class="fa fa-info-circle text-muted" title="Amount due at start"></i></label>
-                                <input type="number" id="party-opening-balance" name="opening_balance" class="form-control" value="0" step="any" min="0" style="height:34px;font-size:12.5px;">
+                                <input type="number" id="party-opening-balance" name="opening_balance" class="form-control u-h-34px u-fs-12_5px" value="0" step="any" min="0">
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div id="party-form-error" class="alert alert-danger mb-0 py-1 px-2" style="display:none;font-size:11px;border-radius:6px;"></div>
+                            <div id="party-form-error" class="alert alert-danger mb-0 py-1 px-2 u-fs-11px u-r-6px" style="display:none"></div>
                         </div>
                     </div>
 
                 </div>
-                <div class="modal-footer d-flex align-items-center justify-content-between" style="background:#f8fafc;padding:12px 20px;border-top:1px solid #e2e8f0;">
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" style="height:34px;padding:0 16px;border-radius:6px;font-weight:600;">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary" id="btn-save-party" style="background:var(--z-primary, #7d287e);border-color:var(--z-primary, #7d287e);height:34px;padding:0 22px;border-radius:6px;font-weight:700;font-size:13px;">
+                <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-20px u-bt-1px-solid-border">
+                    <button type="button" class="btn btn-sm btn-secondary u-h-34px u-p-0-16px u-r-6px u-fw-600" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-h-34px u-p-0-22px u-r-6px u-fw-700 u-fs-13px" id="btn-save-party">
                         <i class="dripicons-checkmark mr-1"></i> Submit
                     </button>
                 </div>
@@ -1853,9 +1844,9 @@
             return $("<li>")
                 .append(`
                     <div class="custom-ac-item d-flex align-items-center justify-content-between">
-                        <div style="flex:1;min-width:0;padding-right:8px;">
+                        <div class="u-flex-1 u-minw-0 u-pr-8px">
                             <div class="item-title">${item.name}</div>
-                            <div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px;">
+                            <div class="u-fs-11px u-c-text-muted u-d-flex u-items-center u-gap-6px u-mt-2px">
                                 <span class="item-code-badge">${item.code}</span>
                                 <span>•</span>
                                 <span class="item-rate">${rateStr}</span>
@@ -1863,8 +1854,8 @@
                                 <span>${item.unit || 'Unit'}</span>
                             </div>
                         </div>
-                        <div style="flex-shrink:0;">
-                            <span class="badge" style="background:var(--z-primary-soft, #fbf4fb);color:var(--z-primary, #7d287e);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">+ Add</span>
+                        <div class="u-shrink-0">
+                            <span class="badge u-bg-primary-soft u-c-primary u-fs-10px u-fw-600 u-p-2px-6px u-r-4px">+ Add</span>
                         </div>
                     </div>
                 `)
@@ -2088,9 +2079,9 @@
                 return $("<li>")
                     .append(`
                         <div class="custom-ac-item d-flex align-items-center justify-content-between">
-                            <div style="flex:1;min-width:0;padding-right:8px;">
+                            <div class="u-flex-1 u-minw-0 u-pr-8px">
                                 <div class="item-title">${item.name}</div>
-                                <div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px;">
+                                <div class="u-fs-11px u-c-text-muted u-d-flex u-items-center u-gap-6px u-mt-2px">
                                     <span class="item-code-badge">${item.code}</span>
                                     <span>•</span>
                                     <span class="item-rate">${rateStr}</span>
@@ -2098,8 +2089,8 @@
                                     <span>${item.unit || 'Unit'}</span>
                                 </div>
                             </div>
-                            <div style="flex-shrink:0;">
-                                <span class="badge" style="background:var(--z-primary-soft, #fbf4fb);color:var(--z-primary, #7d287e);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;">Select</span>
+                            <div class="u-shrink-0">
+                                <span class="badge u-bg-primary-soft u-c-primary u-fs-10px u-fw-600 u-p-2px-6px u-r-4px">Select</span>
                             </div>
                         </div>
                     `)
@@ -2202,7 +2193,7 @@
 
         var tr = $(`
             <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}" data-batch-id="${Number(item.product_batch_id) || ''}">
-                <td style="text-align:center;font-weight:600;color:#64748b;vertical-align:middle;">${$('#order-table-body tr.order-item-row').length + 1}</td>
+                <td class="u-ta-center u-fw-600 u-c-text-muted u-va-middle">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
                     <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${escapeHtml(item.product_name || '')}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
                     <input type="hidden" name="product_id[]" class="row-product-id" value="${item.product_id || 0}">
@@ -2221,23 +2212,23 @@
                         ${unitList.map(u => `<option value="${escapeHtml(u.unit_name)}" ${u.unit_name === unitVal || u.unit_code === unitVal ? 'selected' : ''}>${escapeHtml(u.unit_name)}</option>`).join('')}
                     </select>
                 </td>
-                <td style="text-align:right;">
+                <td class="u-ta-right">
                     <input type="number" name="net_unit_cost[]" class="form-control form-control-sm row-rate text-right" value="${rate}" step="0.0001" min="0" required>
                     <input type="hidden" name="unit_cost[]" class="row-unit-cost-input" value="${rate.toFixed(decimalPlaces)}">
                     <input type="hidden" name="net_unit_price[]" class="row-net-unit-price" value="${rate.toFixed(decimalPlaces)}">
                     <input type="hidden" name="net_unit_margin[]" value="0">
                     <input type="hidden" name="net_unit_margin_type[]" value="percentage">
                 </td>
-                <td style="text-align:center;">
+                <td class="u-ta-center">
                     <input type="number" name="qty[]" class="form-control form-control-sm row-qty text-center" value="${qty}" step="any" min="0.01">
                     <input type="hidden" name="recieved[]" class="row-recieved-input" value="${qty}">
                 </td>
-                <td style="text-align:right;">
+                <td class="u-ta-right">
                     <input type="number" name="row_amount[]" class="form-control form-control-sm row-amount text-right" value="${amount.toFixed(decimalPlaces)}" step="0.01">
                     <input type="hidden" name="subtotal[]" class="row-subtotal-input" value="${lineTotal.toFixed(decimalPlaces)}">
                 </td>
                 <td>
-                    <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate" style="${isTaxLocked ? 'pointer-events:none;background-color:#f1f5f9;color:#475569;cursor:not-allowed;' : ''}">
+                    <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate ${isTaxLocked ? 'is-locked' : ''}">
                         <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
                         ${(function() {
                             var opts = '';
@@ -2257,11 +2248,11 @@
                     </select>
                     <input type="hidden" name="tax[]" class="row-tax-amount-input" value="${taxAmount.toFixed(decimalPlaces)}">
                 </td>
-                <td style="text-align:right;">
-                    <input type="number" class="form-control form-control-sm row-total text-right" value="${lineTotal.toFixed(decimalPlaces)}" step="0.01" readonly style="background:#f8fafc;font-weight:700;color:#059669;">
+                <td class="u-ta-right">
+                    <input type="number" class="form-control form-control-sm row-total text-right u-bg-surface-2 u-fw-700 u-c-success" value="${lineTotal.toFixed(decimalPlaces)}" step="0.01" readonly>
                 </td>
-                <td style="text-align:center; vertical-align:middle;">
-                    <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                <td class="u-ta-center u-va-middle">
+                    <div class="u-d-flex u-items-center u-justify-center u-gap-2px">
                         <button type="button" class="btn btn-sm btn-outline-primary btn-edit-row" title="Edit row details (batch, expiry, serial)">
                             <i class="dripicons-pencil"></i>
                         </button>
@@ -2309,22 +2300,22 @@
         allProducts.filter(matchesProductMode).forEach(function(p) {
             tbody.append(`
                 <tr class="multi-item-row" data-id="${p.id}" data-name="${escapeHtml((p.name || '').toLowerCase())}" data-code="${escapeHtml((p.code || '').toLowerCase())}">
-                    <td style="text-align:center;">
+                    <td class="u-ta-center">
                         <input type="checkbox" class="multi-item-check" data-product-id="${p.id}">
                     </td>
                     <td>
-                        <div style="font-weight:600;color:#0f172a;">${escapeHtml(p.name)}</div>
+                        <div class="u-fw-600 u-c-text">${escapeHtml(p.name)}</div>
                     </td>
                     <td>
                         <span class="badge badge-light border">${escapeHtml(p.code)}</span>
                     </td>
-                    <td style="text-align:right;font-weight:600;color:#059669;">
+                    <td class="u-ta-right u-fw-600 u-c-success">
                         ₹ ${Number(p.cost ?? p.price ?? 0).toFixed(decimalPlaces)}
                     </td>
-                    <td style="text-align:center;">
-                        <input type="number" class="form-control form-control-sm multi-item-qty text-center" value="1" min="1" style="height:24px;width:60px;margin:auto;font-size:11px;">
+                    <td class="u-ta-center">
+                        <input type="number" class="form-control form-control-sm multi-item-qty text-center u-h-24px u-w-60px u-m-auto u-fs-11px" value="1" min="1">
                     </td>
-                    <td style="text-align:center;color:#64748b;font-size:11px;">
+                    <td class="u-ta-center u-c-text-muted u-fs-11px">
                         ${escapeHtml(p.unit || 'Unit')}
                     </td>
                 </tr>
@@ -2717,7 +2708,7 @@
                         var sourceLabel = p.source === 'live_api' ? '✔ Live GST Registry match!' : '✔ Matched existing party in ERP!';
                         var detailMsg = '<span class="text-success font-weight-bold">' + sourceLabel + '</span> Registered trade name and full address loaded.';
                         if (p.legal_name && p.trade_name && p.legal_name !== p.trade_name) {
-                            detailMsg += ' <span class="text-muted d-block mt-1" style="font-size:11px;">Legal: <em>' + p.legal_name + '</em> | Trade: <em>' + p.trade_name + '</em></span>';
+                            detailMsg += ' <span class="text-muted d-block mt-1 u-fs-11px">Legal: <em>' + p.legal_name + '</em> | Trade: <em>' + p.trade_name + '</em></span>';
                         }
                         $('#gst-strip-msg').html(detailMsg);
                     } else if (res.provider_message) {
@@ -3104,7 +3095,7 @@
         if (rows.length === 0) {
             $('#order-table-body').append(`
                 <tr class="empty-placeholder-row">
-                    <td colspan="10" class="text-center text-muted py-4" style="font-size:12px;">
+                    <td colspan="10" class="text-center text-muted py-4 u-fs-12px">
                         No items added yet. Search or scan above or click "+ Add row".
                     </td>
                 </tr>
@@ -3861,3 +3852,9 @@
 @endpush
 
 @include('backend.partials.command-center-form', ['kind' => 'purchase'])
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-purchase-index.css') }}">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+@endpush

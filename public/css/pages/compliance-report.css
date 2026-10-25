@@ -1,0 +1,14 @@
+/* Page styles for: backend/compliance/report.blade.php (moved from inline <style>). */
+    /* One screen: filter + KPIs on top; return summary and HSN on the left, every document on the right. */
+    .gst-review { display: flex; flex-direction: column; height: calc(100vh - 40px - 76px); min-height: 420px; }
+    .gst-review .gst-top { display: flex; gap: 10px; align-items: end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 8px; }
+    .gst-review .cx-kpis { margin-bottom: 8px; }
+    .gst-review .gst-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 10px; }
+    .gst-review .gst-col { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+    .gst-review .gst-col > div { display: flex; flex-direction: column; min-height: 0; }
+    .gst-review .gst-col > div.grow { flex: 1 1 auto; }
+    .gst-review .gst-col .cx-table-wrap { min-height: 0; }
+    .gst-review .gst-col > div.grow .cx-table-wrap { flex: 1 1 auto; }
+    .gst-review h3 { font-size: 12px; font-weight: 700; margin: 0 0 4px; color: #334155; }
+    .gst-review .cx-table td, .gst-review .cx-table th { padding: 5px 8px; }
+    @media (max-width: 1100px) { .gst-review { height: auto; } .gst-review .gst-body { grid-template-columns: 1fr; } }

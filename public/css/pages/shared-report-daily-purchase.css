@@ -1,0 +1,188 @@
+/* Page styles for: backend/report/daily_purchase.blade.php, backend/report/daily_sale.blade.php (moved from inline <style>). */
+    .report-workspace-view {
+        padding: 12px 18px 24px;
+        background: #f8fafc;
+        min-height: calc(100vh - 40px);
+    }
+    body.dark-mode .report-workspace-view {
+        background: #0b0f19;
+    }
+    .kpi-summary-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .kpi-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .kpi-card .kpi-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .kpi-card .kpi-number {
+        font-size: 17px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    body.dark-mode .kpi-card .kpi-number {
+        color: #f8fafc;
+    }
+    .desk-filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+    body.dark-mode .desk-filter-card {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .desk-card-wrapper {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        padding: 16px;
+    }
+    body.dark-mode .desk-card-wrapper {
+        background: #141c2e;
+        border-color: #334155;
+    }
+    .calendar-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 4px;
+        table-layout: fixed;
+    }
+    .calendar-month-bar {
+        background: var(--z-ink, #022051);
+        color: #ffffff;
+        padding: 10px 16px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    body.dark-mode .calendar-month-bar {
+        background: #090d16;
+    }
+    .calendar-table thead th {
+        background: var(--z-table-head-bg, #022051);
+        color: var(--z-table-head-text, #ffffff);
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 8px 4px;
+        border-radius: 4px;
+    }
+    body.dark-mode .calendar-table thead th {
+        background: var(--z-table-head-bg, #022051);
+    }
+    .calendar-table td {
+        vertical-align: top;
+        padding: 8px;
+        min-height: 105px;
+        height: 105px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+    body.dark-mode .calendar-table td {
+        background: #182235;
+        border-color: #334155;
+        color: #cbd5e1;
+    }
+    .calendar-table td.empty-day {
+        background: #f8fafc;
+        border-color: #f1f5f9;
+        opacity: 0.45;
+    }
+    body.dark-mode .calendar-table td.empty-day {
+        background: #0f172a;
+        border-color: #1e293b;
+    }
+    .day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+    .day-number {
+        font-size: 13px;
+        font-weight: 700;
+        color: #334155;
+    }
+    body.dark-mode .day-number {
+        color: #94a3b8;
+    }
+    .today-pill {
+        background: var(--z-primary-soft, #fbf4fb);
+        color: var(--z-primary, #7d287e);
+        font-weight: 800;
+        border: 1px solid var(--z-primary-text, #7d287e);
+        padding: 1px 7px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+    body.dark-mode .today-pill {
+        background: #3b0764;
+        color: var(--z-primary-text, #7d287e);
+        border-color: var(--z-primary-hover, #631f64);
+    }
+    .metric-pill-total {
+        background: #ecfdf5;
+        color: #047857;
+        font-weight: 700;
+        font-size: 11.5px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        display: block;
+        margin-bottom: 4px;
+        border: 1px solid #a7f3d0;
+    }
+    body.dark-mode .metric-pill-total {
+        background: #064e3b;
+        color: #6ee7b7;
+        border-color: #047857;
+    }
+    .metric-sub-line {
+        font-size: 10px;
+        color: #64748b;
+        line-height: 1.35;
+        display: block;
+    }
+    body.dark-mode .metric-sub-line {
+        color: #94a3b8;
+    }
+    .btn-action-pill {
+        height: 28px !important;
+        font-size: 11px !important;
+        padding: 0 12px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }

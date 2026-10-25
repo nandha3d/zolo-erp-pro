@@ -1,13 +1,6 @@
 @extends('backend.layout.main')
 @section('content')
 
-<style type="text/css">
-    .btn-icon i{margin-right:5px}
-    .top-fields{margin-top:10px;position: relative;}
-    .top-fields label {background:#FFF;font-size:11px;font-weight:600;margin-left:10px;padding:0 3px;position:absolute;top:-8px;z-index:9;}
-    .top-fields input{font-size:13px;height:45px}
-</style>
-
 <x-success-message key="create_message" />
 <x-success-message key="import_message" />
 <x-error-message key="not_permitted" />
@@ -30,7 +23,7 @@
 <section class="product-workspace-view">
     <div class="container-fluid px-0">
         <div class="card mb-2 product-filter-card">
-            <div class="card-body" id="filter-card" style="display: none;">
+            <div class="card-body" id="filter-card" style="display:none">
                 <div class="row">
                     <div class="col-md-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
                         <div class="form-group top-fields">
@@ -119,7 +112,7 @@
                             </select>
                         </div>
                     </div>
-                    <div id="filter-loading" class="col-12 text-center my-2" style="display:none;">
+                    <div id="filter-loading" class="col-12 text-center my-2" style="display:none">
                         <span class="spinner-border text-primary spinner-border-sm" role="status"></span>
                         <span>Loading results...</span>
                     </div>
@@ -129,7 +122,7 @@
         </div>
     </div>
     <div class="table-responsive">
-        <table id="product-data-table" class="table pt-0" style="width: 100%">
+        <table id="product-data-table" class="table pt-0 u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -314,7 +307,7 @@
           var divToPrint=document.getElementById('product-details');
           var newWin=window.open('','Print-Window');
           newWin.document.open();
-          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><style type="text/css">@media print {.modal-dialog { max-width: 1000px;} }</style><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
           newWin.document.close();
           setTimeout(function(){newWin.close();},10);
     });
@@ -600,7 +593,7 @@
                 /*customize: function ( win ) {
                     $(win.document.body)
                         .prepend(
-                            '<img src="http://datatables.net/media/images/logo-fade.png" style="margin:10px;" />'
+                            '<img src="http://datatables.net/media/images/logo-fade.png" class="u-m-10px" />'
                         );
                 }*/
             },
@@ -745,4 +738,8 @@
     $('select').selectpicker();
 
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/product-index.css') }}">
 @endpush

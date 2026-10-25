@@ -12,7 +12,7 @@
     <div class="col-md-6 offset-md-3">
         <div class='wrapper'>
             <header>
-                <img src="{{ asset('install-assets/images/logo.png')}}" alt="Logo" style="max-width: 120px;"/>
+                <img src="{{ asset('install-assets/images/logo.png')}}" alt="Logo" class="u-maxw-120px"/>
                 <h1 class="text-center">zoloERP Auto Installer</h1>
             </header>
             <hr>

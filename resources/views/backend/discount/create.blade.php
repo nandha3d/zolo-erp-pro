@@ -92,7 +92,7 @@
                                 </div>
                                 <div class="col-md-4 form-group">
                                     <label>{{ __('db.Valid on the following days') }}</label>
-                                    <ul style="list-style-type: none; margin-left: -30px;">
+                                    <ul class="u-lst-none u-ml-30px">
                                         <li><input type="checkbox" name="days[]" value="Mon" checked>&nbsp; Monday</li>
                                         <li><input type="checkbox" name="days[]" value="Tue" checked>&nbsp; Tuesday</li>
                                         <li><input type="checkbox" name="days[]" value="Wed" checked>&nbsp; Wednesday

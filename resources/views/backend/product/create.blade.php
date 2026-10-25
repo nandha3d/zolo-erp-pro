@@ -4,16 +4,7 @@
 
 @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
 @push('css')
-<style>
-.search_result, .search_result_addon {border:1px solid var(--z-primary-soft, #fbf4fb);border-radius:5px;overflow-y: scroll;}
-.search_result > div, .search_result_addon > div, .selected_items > div, .selected_addons > div {border-top:1px solid var(--z-primary-soft, #fbf4fb);cursor:pointer;display:flex;align-items:center;padding: 10px;position: relative;}
-.search_result > div > img, .search_result_addon > div > img, .selected_items > div > img, .selected_addons > div > img {margin-right: 10px;max-width: 40px;}
-.search_result > div h4, .search_result_addon > div h4, .selected_items > div h4, .selected_addons > div h4 {font-size: 0.9rem;}
-.search_result > div i,  .search_result_addon > div i, {color:#54b948;position:absolute;right:5px;top:30%}
-.search_result div:first-child, .search_result_addon div:first-child, {border-top:none}
-.selected_items .remove_item, .selected_addons .remove_item {position: absolute;right: 20px;top:20px};
-.delVarOption{display: flex;flex-direction: column;align-items: center;}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-product-create.css') }}">
 @endpush
 @endif
 
@@ -26,7 +17,7 @@
                 <div class="card product-single-screen-card">
                     <div class="card-header d-flex align-items-center justify-content-between py-2">
                         <div class="d-flex align-items-center gap-2">
-                            <h4 class="mb-0 font-weight-bold" style="font-size: 1.05rem;">{{__('db.add_product')}}</h4>
+                            <h4 class="mb-0 font-weight-bold u-fs-1_05rem">{{__('db.add_product')}}</h4>
                             <span class="text-muted small ml-2 font-italic">{{__('db.The field labels marked with * are required input fields')}}.</span>
                         </div>
                         <div class="card-header-actions d-flex align-items-center gap-2">
@@ -329,7 +320,7 @@
                                         </div>
                                     </div>
 
-                                    <label class="mt-1 mb-1 font-weight-bold" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neo-text-secondary);">{{ __('db.Product Flags & Controls') }}</label>
+                                    <label class="mt-1 mb-1 font-weight-bold u-fs-11px u-tt-uppercase u-ls-0_05em u-c-neo-text-secondary">{{ __('db.Product Flags & Controls') }}</label>
                                     <div class="zolo-toggle-grid">
                                         <div id="featured" class="zolo-toggle-item">
                                             <input type="checkbox" name="featured" id="chk_featured" value="1">
@@ -545,7 +536,7 @@
                                             <input type="text" id="search_products" class="form-control" placeholder="{{ __('db.Search related products...') }}">
                                             <div class="search_result"></div>
                                             <div class="selected_items mt-1"></div>
-                                            <textarea class="selected_ids hidden no-tiny" name="products" style="display:none;"></textarea>
+                                            <textarea class="selected_ids hidden no-tiny" name="products" style="display:none"></textarea>
                                         </div>
                                     </div>
                                     @endif
@@ -557,7 +548,7 @@
                                             <input type="text" id="search_addons" class="form-control" placeholder="{{ __('db.Search extras...') }}">
                                             <div class="search_result_addon"></div>
                                             <div class="selected_addons mt-1"></div>
-                                            <textarea class="selected_addon_ids hidden no-tiny" name="extras" style="display:none;"></textarea>
+                                            <textarea class="selected_addon_ids hidden no-tiny" name="extras" style="display:none"></textarea>
                                         </div>
                                         <div class="col-6 form-group">
                                             <label>{{__('db.Kitchen')}}</label>
@@ -821,7 +812,7 @@
     });
 
     $('.add-more-variant').on("click", function() {
-        var htmlText = '<div class="row"><div class="col-md-4 form-group mt-2"><label>Option *</label><input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc..."></div><div class="col-md-7 form-group mt-2"><label>Value *</label><input type="text" name="variant_value[]" class="type-variant form-control variant-field"></div><div class="col-sm-1 form-group mt-2" style="display:flex;flex-direction:column;align-items:center;justify-content:end;"><button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button></div></div>';
+        var htmlText = '<div class="row"><div class="col-md-4 form-group mt-2"><label>Option *</label><input type="text" name="variant_option[]" class="form-control variant-field" placeholder="Size, Color etc..."></div><div class="col-md-7 form-group mt-2"><label>Value *</label><input type="text" name="variant_value[]" class="type-variant form-control variant-field"></div><div class="col-sm-1 form-group mt-2 u-d-flex u-dir-column u-items-center u-justify-end"><button type="button" class="delVarOption btn btn-danger btn-sm mr-3"><i class="dripicons-cross"></i></button></div></div>';
         $("#variant-input-section").append(htmlText);
         $('.type-variant').tagsInput();
     });
@@ -1402,7 +1393,7 @@
                                     </div>
                                 </td>`;
                         cols += `<td>
-                                    <div class="input-group" style="max-width: unset">
+                                    <div class="input-group u-maxw-unset">
                                         <input type="number"
                                             class="form-control qty"
                                             min="1"

@@ -1,135 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .account-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .account-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #account-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #account-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #account-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #account-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #account-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #account-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #account-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #account-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #account-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #account-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #account-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    #account-table tfoot th {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        padding: 8px 12px !important;
-        border-top: 2px solid #cbd5e1 !important;
-    }
-    body.dark-mode #account-table tfoot th {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-top-color: #475569 !important;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
@@ -156,7 +26,7 @@
             <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-document"></i> General Ledger</a></li>
         </ul>
         <div class="comm-actions">
-            <button class="btn btn-primary btn-action-pill" data-toggle="modal" data-target="#account-modal" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); color:#fff;">
+            <button class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary u-c-xffffff" data-toggle="modal" data-target="#account-modal">
                 <i class="dripicons-plus"></i> {{ __('db.Add Account') }}
             </button>
         </div>
@@ -169,28 +39,28 @@
                 <div class="kpi-label">TOTAL ACCOUNTS</div>
                 <div class="kpi-number">{{ $totalAccountsCount }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-wallet u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL AVAILABLE BALANCE</div>
-                <div class="kpi-number" style="color:#16a34a;">₹ {{ number_format($totalBalanceSum, 2) }}</div>
+                <div class="kpi-number u-c-success">₹ {{ number_format($totalBalanceSum, 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#16a34a;">
-                <i class="dripicons-coin" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-coin u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">PRIMARY DEFAULT ACCOUNT</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:700; color:#0f172a;">
+                <div class="kpi-number u-fs-14px u-fw-700 u-c-text">
                     {{ $defaultAccount ? $defaultAccount->name . ' (' . $defaultAccount->account_no . ')' : 'None Configured' }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -198,7 +68,7 @@
     <!-- Main Table Container -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="account-table" class="table" style="width: 100%">
+            <table id="account-table" class="table u-w-100pct">
                 <thead>
                     <tr>
                         <th class="not-exported"></th>
@@ -216,7 +86,7 @@
                     <tr>
                         <td>{{$key}}</td>
                         <td class="font-weight-bold font-monospace text-primary">{{ $account->account_no }}</td>
-                        <td><span class="font-weight-bold" style="color:#0f172a;">{{ $account->name }}</span></td>
+                        <td><span class="font-weight-bold u-c-text">{{ $account->name }}</span></td>
                         @if($account->initial_balance)
                             <td>{{ number_format((float)$account->initial_balance, $general_setting->decimal, '.', '')}}</td>
                         @else
@@ -274,8 +144,8 @@
 
 <div id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
-        <div class="modal-content" style="border-radius:8px; border:1px solid #cbd5e1; overflow:hidden;">
-            <div class="modal-header" style="background:#0f172a; color:#fff;">
+        <div class="modal-content u-r-8px u-b-1px-solid-border-strong u-ov-hidden">
+            <div class="modal-header u-bg-ink u-c-xffffff">
                 <h5 id="exampleModalLabel" class="modal-title font-weight-bold text-white">{{__('db.Update Account')}}</h5>
                 <button type="button" data-dismiss="modal" aria-label="Close" class="close text-white"><span aria-hidden="true">&times;</span></button>
             </div>
@@ -300,7 +170,7 @@
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
                     <div class="form-group text-right">
-                        <button type="submit" class="btn btn-primary btn-action-pill" style="background:#0f172a; border-color:#0f172a;">{{__('db.update')}}</button>
+                        <button type="submit" class="btn btn-primary btn-action-pill u-bg-ink u-bc-ink">{{__('db.update')}}</button>
                     </div>
                 {{ Form::close() }}
             </div>
@@ -464,4 +334,11 @@
     }
 
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/account-index.css') }}">
 @endpush

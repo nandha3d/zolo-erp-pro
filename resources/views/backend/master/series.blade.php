@@ -32,7 +32,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0" id="series-table">
-                    <thead class="bg-light text-muted text-uppercase" style="font-size: 11px;">
+                    <thead class="bg-light text-muted text-uppercase u-fs-11px">
                         <tr>
                             <th>Series Type</th>
                             <th>Series Name</th>

@@ -2,56 +2,19 @@
 @section('title', 'GST Settings')
 
 @section('content')
-<style>
-    .gst-wrap { padding: 12px 18px 28px; }
-    .gst-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-    .gst-head h1 { font-size: 18px; font-weight: 800; margin: 0; color: #0f172a; }
-    .gst-head p { margin: 2px 0 0; font-size: 12.5px; color: #64748b; }
-    .gst-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
-    .gst-card h2 { font-size: 14px; font-weight: 700; margin: 0 0 10px; color: #0f172a; }
-    .gst-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
-    .gst-step { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; background: #fff; font-size: 12.5px; }
-    .gst-step strong { display: block; font-size: 13px; color: #0f172a; }
-    .gst-step.ok { border-color: #a7f3d0; background: #f0fdf4; }
-    .gst-step.todo { border-color: #fde68a; background: #fffbeb; }
-    .gst-tabs .nav-link { font-size: 13px; font-weight: 600; color: #475569; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; }
-    .gst-tabs .nav-link.active { color: var(--z-primary, #7d287e); border-bottom-color: var(--z-primary, #7d287e); background: transparent; }
-    .gst-table { width: 100%; font-size: 13px; }
-    .gst-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; position: sticky; top: 0; }
-    .gst-table td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-    .gst-table input, .gst-table select, .gst-form input, .gst-form select, .gst-form textarea { font-size: 13px; height: 32px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f172a; width: 100%; }
-    .gst-form textarea { height: 60px; }
-    .gst-form label { font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 3px; display: block; }
-    .gst-form .row > div { margin-bottom: 8px; }
-    .gst-scroll { max-height: 60vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
-    .gst-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--z-primary-soft, #fbf4fb); color: var(--z-primary-hover, #631f64); }
-    .gst-pill.warn { background: #fef3c7; color: #92400e; }
-    .gst-pill.muted { background: #f1f5f9; color: #475569; }
-    .gst-muted { color: #64748b; font-size: 12px; }
-    body.dark-mode .gst-card, body.dark-mode .gst-step { background: #0f172a; border-color: #1e293b; }
-    body.dark-mode .gst-step.ok { background: #052e1a; border-color: #14532d; }
-    body.dark-mode .gst-step.todo { background: #2a1f05; border-color: #713f12; }
-    body.dark-mode .gst-head h1, body.dark-mode .gst-card h2, body.dark-mode .gst-step strong { color: #f8fafc; }
-    body.dark-mode .gst-table th { background: #111827; border-color: #1e293b; color: #94a3b8; }
-    body.dark-mode .gst-table td { border-color: #1e293b; color: #e2e8f0; }
-    body.dark-mode .gst-table input, body.dark-mode .gst-table select, body.dark-mode .gst-form input, body.dark-mode .gst-form select, body.dark-mode .gst-form textarea { background: #111827; border-color: #334155; color: #f8fafc; }
-    body.dark-mode .gst-form label { color: #94a3b8; }
-    body.dark-mode .gst-scroll { border-color: #1e293b; }
-</style>
-
 <x-settings-command-bar active="gst">
     @if($canManage)
-    <form method="POST" action="{{ url('/settings/gst/install') }}" style="display:inline-block; margin:0;">@csrf<input type="hidden" name="tab" value="rates">
+    <form method="POST" action="{{ url('/settings/gst/install') }}" class="u-d-inline-block u-m-0">@csrf<input type="hidden" name="tab" value="rates">
         <button class="btn btn-primary" type="submit"><i class="fa fa-magic mr-1"></i> Install standard GST setup</button>
     </form>
     @endif
 </x-settings-command-bar>
 
 <section class="settings-workspace-view">
-    <div class="gst-wrap" style="padding: 4px 6px; width: 100%; flex: 1 1 0; overflow-y: auto;">
-        <div class="gst-head" style="margin-bottom: 6px;">
+    <div class="gst-wrap u-p-4px-6px u-w-100pct u-flex-1-1-0 u-ovy-auto">
+        <div class="gst-head u-mb-6px">
             <div>
-                <p style="margin: 0; font-size: 12px; color: #64748b;">Products carry a GST rate and HSN/SAC. The app splits CGST + SGST or IGST from your state and the party's state.</p>
+                <p class="u-m-0 u-fs-12px u-c-text-muted">Products carry a GST rate and HSN/SAC. The app splits CGST + SGST or IGST from your state and the party's state.</p>
             </div>
         </div>
 
@@ -95,7 +58,7 @@
                         <div class="col-md-2"><label>Effective from *</label><input type="date" name="effective_from" required value="{{ old('effective_from', $registration->effective_from ?? now()->startOfYear()->toDateString()) }}"></div>
                         <div class="col-md-8"><label for="reg-address">Registered address *</label><textarea name="address" id="reg-address" maxlength="1000" required>{{ old('address', $registration->address ?? $companyAddress) }}</textarea></div>
                         <div class="col-md-2"><label for="reg-state">State *</label><select name="state_code" id="reg-state" @disabled($regType !== 'unregistered')><option value="">Choose…</option>@foreach($states as $code => $name)<option value="{{ $code }}" @selected(old('state_code', $registration->state_code ?? $company->state_code) == $code)>{{ $name }}</option>@endforeach</select></div>
-                        <div class="col-md-2 d-flex align-items-end flex-column" style="gap:6px;">
+                        <div class="col-md-2 d-flex align-items-end flex-column u-gap-6px">
                             <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="reg-lookup">Fetch from GSTIN</button>
                             <button type="submit" class="btn btn-primary btn-sm w-100">Save registration</button>
                         </div>
@@ -121,7 +84,7 @@
                         <div class="col-md-3"><label for="print-upi">UPI ID</label><input id="print-upi" name="upi_id" maxlength="100" value="{{ $print['upi_id'] ?? '' }}"></div>
                         <div class="col-md-3"><label for="print-signatory">Signature caption</label><input id="print-signatory" name="signatory" maxlength="100" placeholder="Authorised Signatory" value="{{ $print['signatory'] ?? '' }}"></div>
                         <div class="col-md-6"><label for="print-declaration">Declaration</label><input id="print-declaration" name="declaration" maxlength="500" placeholder="We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct." value="{{ $print['declaration'] ?? '' }}"></div>
-                        <div class="col-md-10"><label for="print-terms">Terms &amp; conditions (one per line)</label><textarea id="print-terms" name="terms" maxlength="2000" style="height:72px">{{ $print['terms'] ?? '' }}</textarea></div>
+                        <div class="col-md-10"><label for="print-terms">Terms &amp; conditions (one per line)</label><textarea id="print-terms" name="terms" maxlength="2000" class="u-h-72px">{{ $print['terms'] ?? '' }}</textarea></div>
                         <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100">Save print details</button></div>
                     </div>
                     </fieldset>
@@ -151,7 +114,7 @@
                 <h2>GST rates</h2>
                 <div class="gst-scroll">
                 <table class="gst-table">
-                    <thead><tr><th>Name</th><th>Type</th><th>GST %</th><th>Cess %</th><th>Since</th><th>Input credit</th><th>Products</th>@if($canManage)<th>Change rate from a date</th><th style="width:130px;">Actions</th>@endif</tr></thead>
+                    <thead><tr><th>Name</th><th>Type</th><th>GST %</th><th>Cess %</th><th>Since</th><th>Input credit</th><th>Products</th>@if($canManage)<th>Change rate from a date</th><th class="u-w-130px">Actions</th>@endif</tr></thead>
                     <tbody>
                     @forelse($categories as $category)
                         <tr>
@@ -166,10 +129,10 @@
                             @if($canManage)
                             <td>
                                 @if($category->supply_type === 'taxable')
-                                <form method="POST" action="{{ url('/settings/gst/rate') }}" class="d-flex" style="gap:4px;">@csrf<input type="hidden" name="tab" value="rates"><input type="hidden" name="id" value="{{ $category->id }}">
-                                    <input name="rate" type="number" step="0.01" min="0" max="100" placeholder="GST %" required style="width:72px;">
-                                    <input name="cess_rate" type="number" step="0.01" min="0" max="100" value="0" title="Cess %" style="width:60px;">
-                                    <input name="effective_from" type="date" required style="width:140px;">
+                                <form method="POST" action="{{ url('/settings/gst/rate') }}" class="d-flex u-gap-4px">@csrf<input type="hidden" name="tab" value="rates"><input type="hidden" name="id" value="{{ $category->id }}">
+                                    <input name="rate" type="number" step="0.01" min="0" max="100" placeholder="GST %" required class="u-w-72px">
+                                    <input name="cess_rate" type="number" step="0.01" min="0" max="100" value="0" title="Cess %" class="u-w-60px">
+                                    <input name="effective_from" type="date" required class="u-w-140px">
                                     <button class="btn btn-outline-primary btn-sm" type="submit">Save</button>
                                 </form>
                                 @else<span class="gst-muted">No tax charged</span>@endif
@@ -216,11 +179,11 @@
         {{-- Products --}}
         <div class="tab-pane fade" id="products" role="tabpanel">
             <div class="gst-card">
-                <div class="d-flex align-items-center justify-content-between mb-2" style="gap:8px;flex-wrap:wrap;">
+                <div class="d-flex align-items-center justify-content-between mb-2 u-gap-8px u-wrap-wrap">
                     <h2 class="mb-0">Product GST rate &amp; HSN/SAC</h2>
-                    <form method="GET" action="{{ url('/settings/gst') }}" class="d-flex gst-form" style="gap:6px;">
-                        <select name="products" style="width:170px;" onchange="this.form.submit()"><option value="all" @selected($productFilter === 'all')>All products</option><option value="missing" @selected($productFilter === 'missing')>Needs GST details</option></select>
-                        <input name="q" value="{{ request('q') }}" placeholder="Search name or code" style="width:200px;">
+                    <form method="GET" action="{{ url('/settings/gst') }}" class="d-flex gst-form u-gap-6px">
+                        <select name="products" onchange="this.form.submit()" class="u-w-170px"><option value="all" @selected($productFilter === 'all')>All products</option><option value="missing" @selected($productFilter === 'missing')>Needs GST details</option></select>
+                        <input name="q" value="{{ request('q') }}" placeholder="Search name or code" class="u-w-200px">
                         <input type="hidden" name="tab" value="products">
                         <button class="btn btn-outline-secondary btn-sm">Filter</button>
                         @if($products->isNotEmpty())<button type="submit" form="gst-products-form" class="btn btn-primary btn-sm text-nowrap">Save products</button>@endif
@@ -229,7 +192,7 @@
                 <form method="POST" action="{{ url('/settings/gst/products') }}" id="gst-products-form">@csrf<input type="hidden" name="tab" value="products">
                     <div class="gst-scroll">
                     <table class="gst-table">
-                        <thead><tr><th>Product</th><th>Type</th><th style="width:240px;">GST rate</th><th style="width:150px;">HSN / SAC</th></tr></thead>
+                        <thead><tr><th>Product</th><th>Type</th><th class="u-w-240px">GST rate</th><th class="u-w-150px">HSN / SAC</th></tr></thead>
                         <tbody>
                         @forelse($products as $product)
                             <tr>
@@ -263,13 +226,13 @@
                         <div class="col-md-2"><label>Code *</label><input name="code" id="code-code" maxlength="8" required inputmode="numeric"></div>
                         <div class="col-md-2"><label>Kind *</label><select name="kind" id="code-kind"><option value="hsn">Goods (HSN)</option><option value="sac">Service (SAC)</option></select></div>
                         <div class="col-md-5"><label>Description *</label><input name="description" id="code-description" maxlength="191" required></div>
-                        <div class="col-md-3 d-flex align-items-end" style="gap:6px;"><button class="btn btn-primary btn-sm w-100" type="submit" id="code-save">Save code</button>
-                            <button class="btn btn-outline-secondary btn-sm" type="button" id="code-cancel" style="display:none;">Cancel</button></div>
+                        <div class="col-md-3 d-flex align-items-end u-gap-6px"><button class="btn btn-primary btn-sm w-100" type="submit" id="code-save">Save code</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" id="code-cancel" style="display:none">Cancel</button></div>
                     </div>
                 </form>
                 @endif
                 <div class="gst-scroll">
-                <table class="gst-table"><thead><tr><th>Code</th><th>Kind</th><th>Description</th><th>Products</th>@if($canManage)<th style="width:130px;">Actions</th>@endif</tr></thead><tbody>
+                <table class="gst-table"><thead><tr><th>Code</th><th>Kind</th><th>Description</th><th>Products</th>@if($canManage)<th class="u-w-130px">Actions</th>@endif</tr></thead><tbody>
                     @forelse($codes as $code)
                         @php $used = (int) ($codeUsage[$code->code] ?? 0); @endphp
                         <tr><td>{{ $code->code }}</td><td>{{ strtoupper($code->kind) }}</td><td>{{ $code->description }}</td><td>{{ $used }}</td>
@@ -300,18 +263,18 @@
                 </div>
                 <p class="gst-muted">Filled from the GSTIN and state on each supplier/customer. Edit the party to change them; set Composition here.</p>
                 <div class="gst-scroll">
-                <table class="gst-table"><thead><tr><th>Party</th><th>GSTIN on master</th><th>GST profile</th>@if($canManage)<th style="width:330px;">Override</th>@endif</tr></thead><tbody>
+                <table class="gst-table"><thead><tr><th>Party</th><th>GSTIN on master</th><th>GST profile</th>@if($canManage)<th class="u-w-330px">Override</th>@endif</tr></thead><tbody>
                     @forelse($parties as $party)
                         <tr>
                             <td><strong>{{ $party->name }}</strong> <span class="gst-muted">{{ ucfirst($party->type) }}</span></td>
                             <td>{{ $party->gstin ?: '—' }}</td>
                             <td>@if($party->profile)<span class="gst-pill {{ $party->profile->registration_type === 'unregistered' ? 'muted' : '' }}">{{ ucfirst($party->profile->registration_type) }}</span> {{ $states[$party->profile->state_code] ?? $party->profile->state_code }}@else<span class="gst-pill warn">Missing — add GSTIN or state</span>@endif</td>
                             @if($canManage)
-                            <td><form method="POST" action="{{ url('/settings/gst/party') }}" class="d-flex" style="gap:4px;">@csrf<input type="hidden" name="tab" value="parties">
+                            <td><form method="POST" action="{{ url('/settings/gst/party') }}" class="d-flex u-gap-4px">@csrf<input type="hidden" name="tab" value="parties">
                                 <input type="hidden" name="party_type" value="{{ $party->type }}"><input type="hidden" name="party_id" value="{{ $party->id }}">
-                                <select name="registration_type" style="width:120px;">@foreach(['regular' => 'Regular', 'composition' => 'Composition', 'unregistered' => 'Unregistered'] as $value => $label)<option value="{{ $value }}" @selected(($party->profile->registration_type ?? '') === $value)>{{ $label }}</option>@endforeach</select>
+                                <select name="registration_type" class="u-w-120px">@foreach(['regular' => 'Regular', 'composition' => 'Composition', 'unregistered' => 'Unregistered'] as $value => $label)<option value="{{ $value }}" @selected(($party->profile->registration_type ?? '') === $value)>{{ $label }}</option>@endforeach</select>
                                 <input type="hidden" name="gstin" value="{{ $party->profile->gstin ?? '' }}">
-                                <select name="state_code" style="width:130px;">@foreach($states as $code => $name)<option value="{{ $code }}" @selected(($party->profile->state_code ?? '') === (string) $code)>{{ $name }}</option>@endforeach</select>
+                                <select name="state_code" class="u-w-130px">@foreach($states as $code => $name)<option value="{{ $code }}" @selected(($party->profile->state_code ?? '') === (string) $code)>{{ $name }}</option>@endforeach</select>
                                 <button class="btn btn-outline-secondary btn-sm">Save</button></form></td>
                             @endif
                         </tr>
@@ -340,7 +303,7 @@
             <div class="modal-header py-2"><h5 class="modal-title" id="rate-edit-title">Edit GST rate</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>
             <div class="modal-body">
                 <label for="rate-edit-name">Name *</label><input id="rate-edit-name" name="name" maxlength="191" required>
-                <div id="rate-edit-credit-wrap"><label class="d-flex align-items-center mt-2 mb-0" style="gap:6px;"><input type="checkbox" name="input_credit_allowed" value="1" id="rate-edit-credit" style="width:auto;height:auto;"> Input credit allowed</label></div>
+                <div id="rate-edit-credit-wrap"><label class="d-flex align-items-center mt-2 mb-0 u-gap-6px"><input type="checkbox" name="input_credit_allowed" value="1" id="rate-edit-credit" class="u-w-auto u-h-auto"> Input credit allowed</label></div>
                 <p class="gst-muted mt-2 mb-0">To change the percentage, use "Change rate from a date" so older bills keep their rate.</p>
             </div>
             <div class="modal-footer py-2"><button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save</button></div>
@@ -423,4 +386,8 @@
     });
 })();
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/gst-settings.css') }}">
 @endpush

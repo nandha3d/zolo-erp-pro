@@ -1,17 +1,6 @@
 @extends('backend.layout.top-head')
 @push('css')
-<style type="text/css">
-    body{font-family:'Inter',sans-serif}
-    section.pos-section {padding: 10px 0}
-    thead tr th {
-    background-color: var(--z-primary-border, #ebcdeb);
-    }
-    svg {
-        width: 20px;
-        height: 20px;
-        stroke: var(--z-primary, #7d287e);
-    }
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/sale-display.css') }}">
 @endpush
 
 @section('content')

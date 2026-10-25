@@ -15,19 +15,19 @@
             <table id="role-table" class="table table-hover">
             <thead>
                 <tr>
-                    <th class="not-exported" style="width: 3%;"></th>
+                    <th class="not-exported u-w-3pct"></th>
                     <th>{{__('db.name')}}</th>
                     <th>{{__('db.Description')}}</th>
-                    <th class="not-exported text-right" style="width: 10%;">{{__('db.action')}}</th>
+                    <th class="not-exported text-right u-w-10pct">{{__('db.action')}}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($lims_role_all as $key=>$role)
                 <tr>
-                    <td style="width: 3%;">{{$key}}</td>
+                    <td class="u-w-3pct">{{$key}}</td>
                     <td>{{ $role->name }}</td>
                     <td>{{ $role->description }}</td>
-                    <td class="text-right" style="width: 10%;">
+                    <td class="text-right u-w-10pct">
                         <div class="btn-group">
                             <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__('db.action')}}
                                 <span class="caret"></span>

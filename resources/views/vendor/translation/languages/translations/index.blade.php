@@ -55,8 +55,8 @@
                                         <td>{{ $value[config('app.locale')] }}</td>
                                         <td class="d-flex">
                                             <textarea class="edit_textarea form-control">{{ $value[$language] }}</textarea>
-                                            <button class="update_btn btn btn-primary btn-sm" style="display: none;" type="button" data-key="{{ $key }}" data-language="{{ $language }}" data-group="{{ $group }}" title="Update"><i class="dripicons-pencil" aria-hidden="true"></i></button><br>
-                                            <button class="check_icon btn btn-success btn-sm" style="display: none;"><i class="dripicons-checkmark" aria-hidden="true"></i></button>
+                                            <button class="update_btn btn btn-primary btn-sm" style="display:none" type="button" data-key="{{ $key }}" data-language="{{ $language }}" data-group="{{ $group }}" title="Update"><i class="dripicons-pencil" aria-hidden="true"></i></button><br>
+                                            <button class="check_icon btn btn-success btn-sm" style="display:none"><i class="dripicons-checkmark" aria-hidden="true"></i></button>
                                         </td>
                                     </tr>
                                 @endif

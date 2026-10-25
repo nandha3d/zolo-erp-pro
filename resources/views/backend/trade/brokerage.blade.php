@@ -12,7 +12,7 @@
 <div class="cx-card">
     <h2><i class="dripicons-user-group"></i> Invoices through agents</h2>
     <p class="cx-help">Brokerage is the agent's rate (Masters › Agents) on the value before GST. Booking posts brokerage expense to brokerage payable, less 2% TDS under 194H once an agent's brokerage for the year passes ₹20,000.</p>
-    <div class="cx-table-wrap" style="max-height:52vh;overflow:auto;"><table class="cx-table">
+    <div class="cx-table-wrap u-maxh-52vh u-ov-auto"><table class="cx-table">
         <thead><tr><th>Invoice</th><th>Date</th><th>Agent</th><th class="text-right">Value before GST</th><th class="text-right">Collected</th><th class="text-right">Base</th><th class="text-right">Rate</th><th class="text-right">Brokerage</th><th>Status</th></tr></thead>
         <tbody>
         @forelse($rows as $row)

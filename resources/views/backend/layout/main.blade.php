@@ -17,54 +17,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <meta name="robots" content="all,follow">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <!-- Critical Anti-FOUC Sidebar & Theme Rules: Render dark sidebar immediately on first paint with zero transitions -->
-  <style id="zolo-critical-sidebar-theme">
-    :root {
-      --neo-sidebar-bg: #0f172a;
-      --neo-sidebar-surface: #1e293b;
-      --neo-sidebar-border: rgba(255, 255, 255, 0.08);
-      --neo-sidebar-text: #cbd5e1;
-    }
-    .side-navbar,
-    nav.side-navbar {
-      background-color: #0f172a !important;
-      background: #0f172a !important;
-      color: #cbd5e1 !important;
-      width: 256px !important;
-      opacity: 1 !important;
-      transition: none !important;
-    }
-    .side-navbar ul,
-    .side-navbar li,
-    .side-navbar .side-menu,
-    .side-navbar .mCustomScrollBox,
-    .side-navbar .mCSB_container {
-      background-color: transparent !important;
-      background: transparent !important;
-    }
-    .side-navbar li a {
-      color: #cbd5e1 !important;
-    }
-    .side-navbar li ul,
-    .side-navbar ul.collapse,
-    .side-navbar .collapse {
-      background-color: #090d16 !important;
-      background: #090d16 !important;
-      border: 1px solid rgba(255, 255, 255, 0.06) !important;
-      border-radius: 10px !important;
-    }
-    .side-navbar li ul li a {
-      color: #94a3b8 !important;
-    }
-    .side-navbar .sidebar-heading {
-      color: #64748b !important;
-    }
-    @media (min-width: 1200px) {
-      .side-navbar.shrink {
-        width: 256px !important;
-        opacity: 1 !important;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ versioned_asset('css/pages/layout-main.css') }}">
   <!-- Bootstrap CSS-->
   <link rel="stylesheet" href="<?php echo versioned_asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css">
   <link rel="preload" href="<?php echo versioned_asset('vendor/bootstrap-toggle/css/bootstrap-toggle.min.css') ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -233,6 +186,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
 
   <!-- zoloERP Design System: tokens (brand colours) first, components after page CSS -->
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-tokens.css') ?>" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-utilities.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
   <!-- One-screen app shell: compact header, viewport-locked page, lists sized to fit -->
   <link rel="stylesheet" href="<?php echo versioned_asset('css/app-shell.css') ?>" type="text/css">
@@ -317,7 +271,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
         </a>
 
         @hasSection('navbar-center')
-          <div class="navbar-center-area flex-grow-1 mx-2 d-flex align-items-center justify-content-between overflow-hidden" style="min-width:0;">
+          <div class="navbar-center-area flex-grow-1 mx-2 d-flex align-items-center justify-content-between overflow-hidden u-minw-0">
             @yield('navbar-center')
           </div>
         @endif
@@ -527,8 +481,8 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
 
                 @if (!config('app.user_verified'))
                   @if ($language_setting_active)
-                      <li id="languages" style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
-                          <a href="{{route('languages')}}"> {{__('db.Languages')}} <span style="font-size: 16px;">→</span></i></a>
+                      <li id="languages" class="u-bg-xf0f0f0 u-p-10px u-r-5px">
+                          <a href="{{route('languages')}}"> {{__('db.Languages')}} <span class="u-fs-16px">→</span></i></a>
                       </li>
                   @endif
                 @endif
@@ -558,7 +512,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                 @if($empty_database_permission_active)
                 <li>
                   <a href="#" onclick="event.preventDefault(); var c = prompt('All business data of every company will be lost. Type DELETE ALL DATA to confirm.'); if (c === 'DELETE ALL DATA') { var f = document.getElementById('empty-database-form'); f.confirmation.value = c; f.submit(); }"><i class="dripicons-stack"></i> {{ __('db.Empty Database') }}</a>
-                  <form id="empty-database-form" method="POST" action="{{ route('setting.emptyDatabase') }}" style="display: none;">@csrf<input type="hidden" name="confirmation" value=""></form>
+                  <form id="empty-database-form" method="POST" action="{{ route('setting.emptyDatabase') }}" style="display:none">@csrf<input type="hidden" name="confirmation" value=""></form>
                 </li>
                 @endif
                 <li>
@@ -566,7 +520,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                                         document.getElementById('logout-form').submit();"><i class="dripicons-power"></i>
                     {{ __('db.logout') }}
                   </a>
-                  <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                  <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none">
                     @csrf
                   </form>
                 </li>
@@ -740,12 +694,12 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     @if(!$companyContext || request()->routeIs('expenses.index'))
     <div id="expense-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
-          <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px; border-bottom: none;">
-            <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+        <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong u-sh-0-10px-25px-5px-rgba-15-23-42-0_2">
+          <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px u-bb-none">
+            <h5 id="exampleModalLabel" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
               <i class="dripicons-wallet mr-1"></i> {{ __('Add Expense') }}
             </h5>
-            <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+            <button type="button" data-dismiss="modal" aria-label="Close" class="close u-c-xffffff u-op-0_8"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
             <p class="italic"><small>{{ __('The field labels marked with * are required input fields') }}.</small></p>
@@ -787,7 +741,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                 <label>{{ __('Amount') }} *</label>
                 <input type="number" name="amount" step="any" required class="form-control">
               </div>
-              <div class="col-md-12" id="employee-fields" style="display:none; width:100%" >
+              <div class="col-md-12 u-w-100pct" id="employee-fields" style="display:none" >
                 <div class="row">
                         <div class="col-md-6 form-group">
                             <label>{{ __('db.select Employee') }}</label>
@@ -857,12 +811,12 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     @if(!$companyContext || request()->routeIs('incomes.index'))
     <div id="income-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
       <div role="document" class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);">
-          <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px; border-bottom: none;">
-            <h5 id="exampleModalLabel" class="modal-title font-weight-bold" style="font-size: 15px; color:#fff;">
+        <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong u-sh-0-10px-25px-5px-rgba-15-23-42-0_2">
+          <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px u-bb-none">
+            <h5 id="exampleModalLabel" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
               <i class="dripicons-rocket mr-1"></i> {{ __('Add Income') }}
             </h5>
-            <button type="button" data-dismiss="modal" aria-label="Close" class="close" style="color:#fff; opacity:0.8;"><span aria-hidden="true">&times;</span></button>
+            <button type="button" data-dismiss="modal" aria-label="Close" class="close u-c-xffffff u-op-0_8"><span aria-hidden="true">&times;</span></button>
           </div>
           <div class="modal-body">
             <p class="italic"><small>{{ __('The field labels marked with * are required input fields') }}.</small></p>

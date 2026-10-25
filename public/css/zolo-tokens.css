@@ -105,6 +105,16 @@
   --z-sidebar-active-bg: rgb(195 122 196 / 0.18);
   --z-sidebar-active-border: var(--zp-400);
 
+  /* ---- Section tints (nandha3d's per-section colours: keep as designed) ---- */
+  --z-tint-violet-bg: #faf4ff;
+  --z-tint-violet-border: #e5d3fd;
+  --z-tint-violet-ink: #7c3aed;
+  --z-tint-violet-soft: rgba(124, 58, 237, 0.12);
+  --z-tint-violet-bg-dark: #22163d;
+  --z-tint-violet-border-dark: rgba(168, 85, 247, 0.32);
+  --z-tint-violet-ink-dark: #c084fc;
+  --z-tint-violet-line-dark: rgba(168, 85, 247, 0.25);
+
   /* ---- Shape ---- */
   --z-radius-sm: 6px;
   --z-radius-md: 10px;

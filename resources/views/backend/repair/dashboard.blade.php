@@ -12,7 +12,7 @@
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
-                <h3 class="font-weight-bold mb-1" style="color: var(--neo-text-primary, #1e293b);">
+                <h3 class="font-weight-bold mb-1 u-c-neo-text-primary">
                     <i class="dripicons-wrench mr-2 text-primary"></i>Repair &amp; Service Center
                 </h3>
                 <p class="text-muted mb-0 small">zoloERP Device Repair &amp; RMA Service Command Center</p>
@@ -30,55 +30,55 @@
         {{-- Metric Cards --}}
         <div class="row">
             <div class="col-md-3">
-                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4" style="border-left: 4px solid var(--z-primary, #7d287e) !important;">
+                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4 u-bl-4px-solid-primary">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted text-uppercase small font-weight-bold">Total Service Jobs</span>
-                            <h3 class="font-weight-bold mt-2 mb-0" style="color: var(--z-primary, #7d287e);">{{ $totalJobs }}</h3>
+                            <h3 class="font-weight-bold mt-2 mb-0 u-c-primary">{{ $totalJobs }}</h3>
                         </div>
-                        <div class="rounded-circle p-3" style="background: rgb(var(--z-primary-rgb, 125 40 126) / 0.1);">
-                            <i class="dripicons-clipboard" style="font-size: 1.5rem; color: var(--z-primary, #7d287e);"></i>
+                        <div class="rounded-circle p-3 u-bg-rgb-primary-rgb-0_1">
+                            <i class="dripicons-clipboard u-fs-1_5rem u-c-primary"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4" style="border-left: 4px solid #f59e0b !important;">
+                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4 u-bl-4px-solid-warning-border">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted text-uppercase small font-weight-bold">In-Progress / Bench</span>
-                            <h3 class="font-weight-bold mt-2 mb-0" style="color: #f59e0b;">{{ $inProgressJobs }}</h3>
+                            <h3 class="font-weight-bold mt-2 mb-0 u-c-warning">{{ $inProgressJobs }}</h3>
                         </div>
-                        <div class="rounded-circle p-3" style="background: rgba(245, 158, 11, 0.1);">
-                            <i class="dripicons-hourglass" style="font-size: 1.5rem; color: #f59e0b;"></i>
+                        <div class="rounded-circle p-3 u-bg-rgba-245-158-11-0_1">
+                            <i class="dripicons-hourglass u-fs-1_5rem u-c-warning"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4" style="border-left: 4px solid #10b981 !important;">
+                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4 u-bl-4px-solid-success-border">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted text-uppercase small font-weight-bold">Completed Jobs</span>
-                            <h3 class="font-weight-bold mt-2 mb-0" style="color: #10b981;">{{ $completedJobs }}</h3>
+                            <h3 class="font-weight-bold mt-2 mb-0 u-c-success">{{ $completedJobs }}</h3>
                         </div>
-                        <div class="rounded-circle p-3" style="background: rgba(16, 185, 129, 0.1);">
-                            <i class="dripicons-checkmark" style="font-size: 1.5rem; color: #10b981;"></i>
+                        <div class="rounded-circle p-3 u-bg-rgba-16-185-129-0_1">
+                            <i class="dripicons-checkmark u-fs-1_5rem u-c-success"></i>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4" style="border-left: 4px solid #3b82f6 !important;">
+                <div class="card card-neo border-0 shadow-sm rounded-lg p-3 mb-4 u-bl-4px-solid-x3b82f6">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted text-uppercase small font-weight-bold">Service Revenue</span>
-                            <h3 class="font-weight-bold mt-2 mb-0" style="color: #3b82f6;">
+                            <h3 class="font-weight-bold mt-2 mb-0 u-c-info">
                                 {{ $currency->code ?? '₹' }} {{ number_format($totalRevenue, 2) }}
                             </h3>
                         </div>
-                        <div class="rounded-circle p-3" style="background: rgba(59, 130, 246, 0.1);">
-                            <i class="dripicons-wallet" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                        <div class="rounded-circle p-3 u-bg-rgba-59-130-246-0_1">
+                            <i class="dripicons-wallet u-fs-1_5rem u-c-info"></i>
                         </div>
                     </div>
                 </div>

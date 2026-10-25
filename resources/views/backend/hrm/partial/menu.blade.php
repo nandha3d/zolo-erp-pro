@@ -16,7 +16,7 @@
 
 <section class="no-print mb-4">
     <nav class="navbar navbar-expand-lg navbar-light bg-white border rounded shadow-sm mt-3 mx-3">
-        <div class="container-fluid" style="background: #fffcf2">
+        <div class="container-fluid u-bg-xfffcf2">
 
             <a class="navbar-brand font-weight-bold text-primary" href="{{ route('hrm-panel') }}">
                 <i class="dripicons-wallet mr-2"></i> {{ __("db.HRM") }}
@@ -105,22 +105,4 @@
     </nav>
 </section>
 
-<style>
-    section {
-    padding: 0px !important;
-}
-.navbar-nav .nav-link {
-    color: #444;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border-radius: 5px;
-}
-.navbar-nav .nav-link:hover {
-    background-color: #f5f7ff;
-    color: #007bff;
-}
-.navbar-nav .nav-link.active {
-    color: #0798bd !important;
-    font-weight: 700;
-}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/hrm-partial-menu.css') }}">

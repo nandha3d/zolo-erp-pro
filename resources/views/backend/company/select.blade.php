@@ -16,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Choose company · zoloERP</title>
     <link rel="stylesheet" href="{{ versioned_asset('css/zolo-tokens.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/zolo-utilities.css') }}">
     <link rel="stylesheet" href="{{ asset('css/zolo-erp-neo.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/company-picker.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/field-help.css') }}">
@@ -221,8 +222,8 @@
                     Tax &amp; Currency
                 </span>
                 <div class="cp-row-2">
-                    <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase"></label>
-                    <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase"></label>
+                    <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" class="u-tt-uppercase"></label>
+                    <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" class="u-tt-uppercase"></label>
                 </div>
                 <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition">Composition</option><option value="unregistered">Unregistered (no GSTIN)</option></select></label>
                 <label>Currency<select name="base_currency_id">
@@ -244,7 +245,7 @@
             </div>
             <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
         </div>
-        <label>Type the short code <code data-fill="code"></code> to confirm<input type="text" name="confirm_code" required autocomplete="off" style="text-transform:uppercase"></label>
+        <label>Type the short code <code data-fill="code"></code> to confirm<input type="text" name="confirm_code" required autocomplete="off" class="u-tt-uppercase"></label>
         <div class="cp-dialog-actions"><button type="button" class="cp-btn" data-close>Cancel</button><button class="cp-btn cp-btn-danger">Delete company</button></div>
     </form>
 </dialog>
@@ -363,8 +364,8 @@
                     Tax &amp; Compliance
                 </span>
                 <div class="cp-row-2">
-                    <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase" value="{{ old('gstin') }}"></label>
-                    <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase" value="{{ old('pan') }}"></label>
+                    <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" value="{{ old('gstin') }}" class="u-tt-uppercase"></label>
+                    <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" value="{{ old('pan') }}" class="u-tt-uppercase"></label>
                 </div>
                 <div class="cp-row-2">
                     <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option><option value="unregistered" @selected(old('registration_type') === 'unregistered')>Unregistered</option></select></label>
@@ -372,7 +373,7 @@
                         @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == old('base_currency_id', $defaultCurrencyId))>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
                     </select></label>
                 </div>
-                <span class="cp-col-title" style="margin-top: 4px;">
+                <span class="cp-col-title u-mt-4px">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     Books &amp; Financial Year
                 </span>

@@ -1,0 +1,41 @@
+/* Page styles for: backend/layout/main.blade.php (moved from inline <style>). */
+    .side-navbar,
+    nav.side-navbar {
+      background-color: var(--z-sidebar-bg) !important;
+      background: var(--z-sidebar-bg) !important;
+      color: var(--z-sidebar-text) !important;
+      width: 256px !important;
+      opacity: 1 !important;
+      transition: none !important;
+    }
+    .side-navbar ul,
+    .side-navbar li,
+    .side-navbar .side-menu,
+    .side-navbar .mCustomScrollBox,
+    .side-navbar .mCSB_container {
+      background-color: transparent !important;
+      background: transparent !important;
+    }
+    .side-navbar li a {
+      color: var(--z-sidebar-text) !important;
+    }
+    .side-navbar li ul,
+    .side-navbar ul.collapse,
+    .side-navbar .collapse {
+      background-color: var(--z-sidebar-sub-bg) !important;
+      background: var(--z-sidebar-sub-bg) !important;
+      border: 1px solid rgba(255, 255, 255, 0.06) !important;
+      border-radius: 10px !important;
+    }
+    .side-navbar li ul li a {
+      color: #94a3b8 !important;
+    }
+    .side-navbar .sidebar-heading {
+      color: #64748b !important;
+    }
+    @media (min-width: 1200px) {
+      .side-navbar.shrink {
+        width: 256px !important;
+        opacity: 1 !important;
+      }
+    }

@@ -1,9 +1,5 @@
 @extends('backend.layout.main')
 @section('content')
-<link rel="stylesheet" href="{{ asset('css/commercial-workspace.css') }}">
-<style>
-.collections-workspace-view{padding:12px 18px;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto!important}.collections-workspace-view label{display:block;font-size:12px;margin-bottom:2px}.collections-workspace-view .form-control{min-height:28px!important;height:30px;font-size:12px}.collection-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.collection-card{padding:12px;border:1px solid #cbd5e1;border-radius:6px;background:var(--card-bg,#fff)}.collection-table{min-width:1000px;font-size:12px}.collection-table td{vertical-align:top}.collection-record-form{min-width:290px}.collection-record-form label{display:inline-block}.collection-history{max-height:160px;overflow:auto}.collection-error{color:#b91c1c;white-space:pre-wrap}
-</style>
 <section class="collections-workspace-view">
     <div class="comm-command-bar"><div class="comm-title-group"><h1>Collections</h1><span class="comm-title-badge">Follow-up, PDC register and preview</span></div><div class="comm-actions"><a class="btn btn-outline-primary btn-sm" href="{{ route('accounting.ageing') }}">Ageing and reconciliation</a><a class="btn btn-outline-secondary btn-sm" href="{{ route('accounting.vouchers') }}">Post receipt in Voucher Hub</a></div></div>
     @if(session('message'))<div role="status" class="alert alert-success">{{ session('message') }}</div>@endif
@@ -60,3 +56,8 @@
 </section>
 <script src="{{ asset('js/accounting-collections.js') }}?v={{ filemtime(public_path('js/accounting-collections.js')) }}"></script>
 @endsection
+
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/commercial-workspace.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/accounting-collections.css') }}">
+@endpush

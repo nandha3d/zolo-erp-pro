@@ -192,6 +192,13 @@ html body .form-control[readonly] {
   background-color: var(--z-field-disabled-bg);
   color: var(--z-text-2);
 }
+/* Locked by the app (e.g. tax rate fixed by the bill's tax class) */
+html body .form-control.is-locked {
+  pointer-events: none;
+  cursor: not-allowed;
+  background-color: var(--z-field-disabled-bg) !important;
+  color: var(--z-text-2) !important;
+}
 html body input[type="checkbox"],
 html body input[type="radio"],
 html body input[type="range"] {
@@ -346,6 +353,32 @@ html body .zolo-alert .zolo-alert-body { font-size: 13.5px; line-height: 1.4; }
 html body .zolo-alert .zolo-alert-title { font-size: 14px; }
 html body .zolo-alert .close { padding: 10px 12px; outline: none; opacity: 0.6; }
 
+/* ---------- x-ui.card / x-ui.table-container / x-ui.input ---------- */
+html body .zolo-card,
+html body .zolo-table-card {
+  border: 1px solid var(--z-border);
+  border-radius: var(--neo-radius-lg);
+  background: var(--z-surface);
+  box-shadow: var(--neo-shadow-xs);
+  margin-bottom: 24px;
+  overflow: visible;
+}
+html body .zolo-table-wrapper { overflow: visible; }
+html body .zolo-card-footer {
+  border-top: 1px solid var(--z-border);
+  background: var(--z-bg);
+  border-bottom-left-radius: var(--neo-radius-lg);
+  border-bottom-right-radius: var(--neo-radius-lg);
+}
+html body .zolo-input { font-size: 13.5px; border-radius: var(--z-radius-sm); }
+html body .zolo-input-addon {
+  background: var(--z-bg);
+  border-color: var(--z-border);
+  color: var(--z-text-2);
+  border-top-left-radius: var(--z-radius-sm);
+  border-bottom-left-radius: var(--z-radius-sm);
+}
+
 /* ---------- x-ui.badge component shape ---------- */
 html body .zolo-badge {
   border-radius: 6px;
@@ -363,7 +396,100 @@ html body .zolo-badge .zolo-badge-dot {
   display: inline-block;
 }
 
+/* ---------- Icon tile (KPI cards): <div class="z-icon-tile z-tone-info"><i ...></i></div> ---------- */
+html body .z-icon-tile {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+html body .z-tone-primary { background: var(--z-primary-soft-strong); color: var(--z-primary-text); }
+html body .z-tone-success { background: var(--z-success-soft); color: var(--z-success); }
+html body .z-tone-info    { background: var(--z-info-soft);    color: var(--z-info); }
+html body .z-tone-warning { background: var(--z-warning-soft); color: var(--z-warning); }
+html body .z-tone-danger  { background: var(--z-danger-soft);  color: var(--z-danger); }
+html body .z-tone-neutral { background: var(--z-surface-3);    color: var(--z-text-2); }
+/* Text-only tones (amounts, KPI numbers) */
+html body .z-tone-text-primary { color: var(--z-primary-text) !important; }
+html body .z-tone-text-success { color: var(--z-success) !important; }
+html body .z-tone-text-info    { color: var(--z-info) !important; }
+html body .z-tone-text-warning { color: var(--z-warning) !important; }
+html body .z-tone-text-danger  { color: var(--z-danger) !important; }
+html body .z-tone-text-neutral { color: var(--z-text-2) !important; }
+
 /* ---------- Links and selection ---------- */
 html body ::selection {
   background: rgb(var(--z-primary-rgb) / 0.22);
+}
+
+/* ---------- Custom button classes -> the same 4 roles ----------
+   Their own stylesheets keep size/shape but read colour from --zb-bg / --zb-fg / --zb-border,
+   which are set here per role and state. New buttons: use .btn + .btn-primary/-secondary/-danger/-link. */
+html body :is(.btn-grid-action, .density-btn, .segment-btn, .jw-seg-btn, .side-tab-btn, .desk-tab-btn, .btn-mode-split) {
+  --zb-bg: transparent; --zb-fg: var(--z-text-2); --zb-border: transparent;
+}
+html body :is(.btn-grid-action, .density-btn, .segment-btn, .jw-seg-btn, .side-tab-btn, .desk-tab-btn, .btn-mode-split):hover {
+  --zb-bg: var(--z-surface-3); --zb-fg: var(--z-text);
+}
+html body :is(.btn-action, .btn-jw-open, .btn-action-pill, .btn-charges-remarks, .btn-control-ghost, .btn-desk-action,
+  .btn-footer-action, .btn-print-note, .btn-exchange-note, .comm-items-btn, .comm-nav-btn-secondary, .cp-btn, .side-action-btn,
+  .side-icon-btn, .side-tool-btn, .zolo-btn-secondary, .zolo-quick-btn, .page-nav-btn, .btn-outline, .btn-edit-row) {
+  --zb-bg: var(--z-surface); --zb-fg: var(--z-text); --zb-border: var(--z-border-strong);
+}
+html body :is(.btn-action, .btn-jw-open, .btn-action-pill, .btn-charges-remarks, .btn-control-ghost, .btn-desk-action,
+  .btn-footer-action, .btn-print-note, .btn-exchange-note, .comm-items-btn, .comm-nav-btn-secondary, .cp-btn, .side-action-btn,
+  .side-icon-btn, .side-tool-btn, .zolo-btn-secondary, .zolo-quick-btn, .page-nav-btn, .btn-outline, .btn-edit-row):hover {
+  --zb-bg: var(--z-primary-soft); --zb-fg: var(--z-primary-text); --zb-border: var(--z-primary-border);
+}
+html body :is(.btn-approve-note, .btn-control-purple, .btn-create, .btn-footer-purple, .btn-ops-submit, .btn-proceed,
+  .comm-bottom-btn-primary, .comm-bottom-btn-success, .comm-items-btn-primary, .comm-nav-btn-primary, .comm-nav-btn-success,
+  .cp-btn-primary, .cx-btn, .jw-action-btn, .neo-btn-primary, .pos-top-btn, .zolo-btn-primary, .zw-btn, .btn-pos, .inline-add-btn) {
+  --zb-bg: var(--z-primary); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary);
+}
+html body :is(.btn-approve-note, .btn-control-purple, .btn-create, .btn-footer-purple, .btn-ops-submit, .btn-proceed,
+  .comm-bottom-btn-primary, .comm-bottom-btn-success, .comm-items-btn-primary, .comm-nav-btn-primary, .comm-nav-btn-success,
+  .cp-btn-primary, .cx-btn, .jw-action-btn, .neo-btn-primary, .pos-top-btn, .zolo-btn-primary, .zw-btn, .btn-pos, .inline-add-btn):hover {
+  --zb-bg: var(--z-primary-hover); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary-hover);
+}
+html body .cp-btn-danger { --zb-bg: var(--z-danger-solid); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid); }
+html body .cp-btn-danger:hover { --zb-bg: var(--z-danger-solid-hover); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid-hover); }
+html body .btn-delete-row { --zb-bg: transparent; --zb-fg: var(--z-danger); --zb-border: transparent; }
+html body .btn-delete-row:hover { --zb-bg: var(--z-danger-soft); --zb-fg: var(--z-danger); --zb-border: var(--z-danger-border); }
+/* Selected item in a segmented group or tab strip: filled primary */
+html body :is(.btn-grid-action, .density-btn, .segment-btn, .jw-seg-btn, .side-tab-btn, .desk-tab-btn, .btn-mode-split,
+  .btn-action, .btn-jw-open, .btn-action-pill, .btn-charges-remarks, .btn-control-ghost, .btn-desk-action, .btn-footer-action,
+  .btn-print-note, .btn-exchange-note, .comm-items-btn, .comm-nav-btn-secondary, .cp-btn, .side-action-btn, .side-icon-btn,
+  .side-tool-btn, .zolo-btn-secondary, .zolo-quick-btn, .page-nav-btn, .btn-outline, .btn-edit-row):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
+  --zb-bg: var(--z-primary); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary);
+}
+
+/* ---------- Chart canvas (not !important: Chart.js sizes the canvas inline at runtime) ---------- */
+html body .z-chart-canvas { max-height: 180px; width: 100%; display: block; }
+/* Modifier variants of custom buttons keep their meaning */
+html body .zolo-quick-btn.primary { --zb-bg: var(--z-primary); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary); }
+html body .zolo-quick-btn.primary:hover { --zb-bg: var(--z-primary-hover); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary-hover); }
+html body .cx-btn.ghost { --zb-bg: var(--z-surface); --zb-fg: var(--z-text); --zb-border: var(--z-border-strong); }
+html body .cx-btn.ghost:hover { --zb-bg: var(--z-primary-soft); --zb-fg: var(--z-primary-text); --zb-border: var(--z-primary-border); }
+html body .cx-btn.danger { --zb-bg: var(--z-danger-solid); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid); }
+html body .cx-btn.danger:hover { --zb-bg: var(--z-danger-solid-hover); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid-hover); }
+html body .side-action-btn.reverse { --zb-bg: var(--z-surface); --zb-fg: var(--z-danger); --zb-border: var(--z-danger-border); }
+html body .side-action-btn.reverse:hover { --zb-bg: var(--z-danger-solid); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid); }
+
+/* ---------- Dark mode: Bootstrap colour utilities and raw fields follow the tokens ---------- */
+body.dark-mode .text-dark,
+body.dark-mode .text-body,
+body.dark-mode .text-black { color: var(--z-text) !important; }
+body.dark-mode .text-secondary { color: var(--z-text-2) !important; }
+body.dark-mode .text-muted { color: var(--z-text-muted) !important; }
+body.dark-mode .bg-white { background-color: var(--z-surface) !important; }
+body.dark-mode .bg-light { background-color: var(--z-surface-2) !important; }
+body.dark-mode .border-light { border-color: var(--z-border) !important; }
+body.dark-mode :is(input:not([type]), input[type="text"], input[type="number"], input[type="email"], input[type="search"],
+  input[type="tel"], input[type="date"], input[type="password"], select, textarea):not(.form-control) {
+  background-color: var(--z-field-bg);
+  border-color: var(--z-field-border);
+  color: var(--z-field-text);
 }

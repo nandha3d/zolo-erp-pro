@@ -69,7 +69,7 @@
   </head>
 <body>
 
-<div style="max-width:800px;margin:0 auto">
+<div class="u-maxw-800px u-m-0-auto">
     <div class="hidden-print">
         <table>
             <tr>
@@ -157,11 +157,11 @@
         <br><br><br>
         <div class="row">
             <div class="col-md-6">
-                <hr style="border-top: 2px solid black">
+                <hr class="u-bt-2px-solid-black">
                 <p>Rider Signature</p>
             </div>
             <div class="col-md-6">
-                <hr style="border-top: 2px solid black">
+                <hr class="u-bt-2px-solid-black">
                 <p>Authorized Signature</p>
             </div>
         </div>

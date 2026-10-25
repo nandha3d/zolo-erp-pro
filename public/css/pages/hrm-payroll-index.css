@@ -1,0 +1,8 @@
+/* Page styles for: backend/hrm/payroll/index.blade.php (moved from inline <style>). */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    span.selection {
+        width: 100%;
+    }

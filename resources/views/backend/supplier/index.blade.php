@@ -1,237 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .supplier-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .supplier-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #supplier-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #supplier-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #supplier-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #supplier-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #supplier-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #supplier-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #supplier-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #supplier-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #supplier-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #supplier-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #supplier-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    .supplier-avatar-circle {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: var(--z-primary-soft, #fbf4fb);
-        color: var(--z-primary-hover, #631f64);
-        font-weight: 700;
-        font-size: 15px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid var(--z-primary-border, #ebcdeb);
-        box-shadow: 0 1px 2px rgb(var(--z-primary-rgb, 125 40 126) / 0.1);
-        text-transform: uppercase;
-    }
-    body.dark-mode .supplier-avatar-circle {
-        background: var(--z-primary-soft, #fbf4fb);
-        color: var(--z-primary-text, #7d287e);
-        border-color: var(--z-primary-hover, #631f64);
-    }
-    .supplier-name-title {
-        font-weight: 700;
-        color: #0f172a;
-        font-size: 13.5px;
-    }
-    body.dark-mode .supplier-name-title {
-        color: #f8fafc;
-    }
-    .supplier-meta-tag {
-        font-size: 11px;
-        color: #64748b;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        margin-right: 8px;
-    }
-    body.dark-mode .supplier-meta-tag {
-        color: #94a3b8;
-    }
-    .due-badge-pill {
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 9px;
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .due-has-balance {
-        background: #fef2f2;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-    }
-    body.dark-mode .due-has-balance {
-        background: #450a0a;
-        color: #fca5a5;
-        border-color: #7f1d1d;
-    }
-    .due-cleared {
-        background: #f0fdf4;
-        color: #15803d;
-        border: 1px solid #bbf7d0;
-    }
-    body.dark-mode .due-cleared {
-        background: #052e16;
-        color: #86efac;
-        border-color: #14532d;
-    }
-    .btn-action-pill {
-        height: 26px !important;
-        font-size: 11px !important;
-        padding: 0 10px !important;
-        border-radius: 4px !important;
-        border: 1px solid #cbd5e1 !important;
-        background: #ffffff !important;
-        color: #334155 !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 4px !important;
-        box-shadow: 0 1px 2px rgba(15,23,42,0.04) !important;
-    }
-    body.dark-mode .btn-action-pill {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-color: #475569 !important;
-    }
-    .btn-action-pill:hover {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
-    }
-    /* DataTables Single-Box Normalization */
-    .dataTables_wrapper .dataTables_length select,
-    .dataTables_wrapper .dataTables_filter input {
-        height: 28px !important;
-        font-size: 12px !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 5px !important;
-        padding: 2px 8px !important;
-        background: #ffffff !important;
-        color: #0f172a !important;
-    }
-    body.dark-mode .dataTables_wrapper .dataTables_length select,
-    body.dark-mode .dataTables_wrapper .dataTables_filter input {
-        background: #0f172a !important;
-        color: #f8fafc !important;
-        border-color: #334155 !important;
-    }
-    .dt-buttons .dt-button {
-        height: 28px !important;
-        line-height: 26px !important;
-        padding: 0 10px !important;
-        font-size: 11.5px !important;
-        border-radius: 5px !important;
-        border: 1px solid #cbd5e1 !important;
-        background: #ffffff !important;
-        color: #334155 !important;
-        margin-right: 4px !important;
-    }
-    body.dark-mode .dt-buttons .dt-button {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-color: #475569 !important;
-    }
-</style>
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
@@ -250,12 +18,12 @@
     </ul>
     <div class="comm-actions">
         @can('suppliers-add')
-            <a href="{{route('supplier.create')}}" class="btn btn-primary py-1 px-3" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); font-size:11.5px; border-radius:4px;">
+            <a href="{{route('supplier.create')}}" class="btn btn-primary py-1 px-3 u-bg-primary u-bc-primary u-fs-11_5px u-r-4px">
                 <i class="dripicons-plus"></i> {{__('db.Add Supplier')}}
             </a>
         @endcan
         @can('suppliers-import')
-            <a href="#" data-toggle="modal" data-target="#importSupplier" class="btn btn-outline-secondary py-1 px-3" style="font-size:11.5px; border-radius:4px;">
+            <a href="#" data-toggle="modal" data-target="#importSupplier" class="btn btn-outline-secondary py-1 px-3 u-fs-11_5px u-r-4px">
                 <i class="dripicons-upload"></i> {{__('db.Import Supplier')}}
             </a>
         @endcan
@@ -292,26 +60,26 @@
                 <div class="kpi-label">Total Suppliers</div>
                 <div class="kpi-number">{{ $totalSuppliersCount }}</div>
             </div>
-            <div style="background:var(--z-primary-soft, #fbf4fb); color:var(--z-primary, #7d287e); width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                <i class="dripicons-user" style="font-size:18px;"></i>
+            <div class="u-bg-primary-soft u-c-primary u-w-38px u-h-38px u-r-6px u-d-flex u-items-center u-justify-center">
+                <i class="dripicons-user u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">Vendors With Due</div>
-                <div class="kpi-number" style="color: {{ $suppliersWithDueCount > 0 ? '#dc2626' : '#16a34a' }};">{{ $suppliersWithDueCount }}</div>
+                <div class="kpi-number {{ $suppliersWithDueCount > 0 ? 'u-c-danger' : 'u-c-success' }}">{{ $suppliersWithDueCount }}</div>
             </div>
-            <div style="background:#fee2e2; color:#dc2626; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            <div class="u-bg-danger-soft u-c-danger u-w-38px u-h-38px u-r-6px u-d-flex u-items-center u-justify-center">
+                <i class="dripicons-wallet u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">Total Outstanding Due</div>
-                <div class="kpi-number" style="color: {{ $totalDueSum > 0 ? '#b91c1c' : '#15803d' }};">₹ {{ number_format($totalDueSum, 2) }}</div>
+                <div class="kpi-number {{ $totalDueSum > 0 ? 'u-c-danger' : 'u-c-success' }}">₹ {{ number_format($totalDueSum, 2) }}</div>
             </div>
-            <div style="background:#fef3c7; color:#d97706; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                <i class="fa fa-inr" style="font-size:18px;"></i>
+            <div class="u-bg-warning-soft u-c-warning u-w-38px u-h-38px u-r-6px u-d-flex u-items-center u-justify-center">
+                <i class="fa fa-inr u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -322,11 +90,11 @@
             <table id="supplier-table" class="table">
                 <thead>
                     <tr>
-                        <th class="not-exported" style="width:30px;"></th>
-                        <th style="width:60px; text-align:center;">{{__('db.Image')}}</th>
+                        <th class="not-exported u-w-30px"></th>
+                        <th class="u-w-60px u-ta-center">{{__('db.Image')}}</th>
                         <th>{{__('db.Supplier Details')}}</th>
-                        <th style="width:160px; text-align:right;">{{__('db.Total Due')}}</th>
-                        <th class="not-exported" style="width:100px; text-align:center;">{{__('db.action')}}</th>
+                        <th class="u-w-160px u-ta-right">{{__('db.Total Due')}}</th>
+                        <th class="not-exported u-w-100px u-ta-center">{{__('db.action')}}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -354,9 +122,9 @@
                     @endphp
                     <tr data-id="{{$supplier->id}}">
                         <td>{{$key}}</td>
-                        <td style="text-align:center;">
+                        <td class="u-ta-center">
                             @if($hasDiskImage)
-                                <img src="{{ route('documents.file', ['supplier', $supplier->image]) }}" class="rounded-circle border" width="42" height="42" style="object-fit:cover;" alt="{{ $supplier->name }}">
+                                <img src="{{ route('documents.file', ['supplier', $supplier->image]) }}" class="rounded-circle border u-of-cover" width="42" height="42" alt="{{ $supplier->name }}">
                             @else
                                 <div class="supplier-avatar-circle" title="{{ $supplier->name }}">
                                     {{ $initials }}
@@ -367,12 +135,12 @@
                             <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                 <span class="supplier-name-title">{{ $supplier->name }}</span>
                                 @if($supplier->company_name)
-                                    <span class="badge badge-light-primary px-2" style="font-size:11px; font-weight:600;">
+                                    <span class="badge badge-light-primary px-2 u-fs-11px u-fw-600">
                                         <i class="fa fa-building-o"></i> {{ $supplier->company_name }}
                                     </span>
                                 @endif
                                 @if($supplier->vat_number)
-                                    <span class="badge badge-light-secondary px-2" style="font-size:10px;">
+                                    <span class="badge badge-light-secondary px-2 u-fs-10px">
                                         GSTIN/VAT: {{ $supplier->vat_number }}
                                     </span>
                                 @endif
@@ -389,7 +157,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td style="text-align:right;">
+                        <td class="u-ta-right">
                             @if($totalDue > 0)
                                 <span class="due-badge-pill due-has-balance">
                                     <i class="fa fa-exclamation-circle"></i> ₹ {{ number_format($totalDue, 2) }}
@@ -400,7 +168,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td style="text-align:center;">
+                        <td class="u-ta-center">
                             <div class="btn-group">
                                 <button type="button" class="btn btn-action-pill dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     {{__('db.action')}} <i class="fa fa-angle-down"></i>
@@ -490,7 +258,7 @@
                 <label>{{__('db.Note')}}</label>
                 <textarea name="note" rows="3" class="form-control"></textarea>
             </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block u-bg-primary u-bc-primary" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
@@ -507,8 +275,8 @@
 	    </div>
 	    <div class="modal-body">
 	      <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-	       <p style="font-size:12px; color:#64748b;">{{__('db.The correct column order is')}} (name*, image, company_name*, vat_number, email*, phone_number*, address*, city*, state, postal_code, country) {{__('db.and you must follow this')}}.</p>
-           <p style="font-size:11px; color:#64748b;">{{__('db.To display Image it must be stored in')}} images/supplier {{__('db.directory')}}</p>
+	       <p class="u-fs-12px u-c-text-muted">{{__('db.The correct column order is')}} (name*, image, company_name*, vat_number, email*, phone_number*, address*, city*, state, postal_code, country) {{__('db.and you must follow this')}}.</p>
+           <p class="u-fs-11px u-c-text-muted">{{__('db.To display Image it must be stored in')}} images/supplier {{__('db.directory')}}</p>
 	        <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -523,7 +291,7 @@
                     </div>
                 </div>
             </div>
-	        <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
+	        <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block u-bg-primary u-bc-primary" id="submit-button">
 		</div>
 		{!! Form::close() !!}
 	  </div>
@@ -632,4 +400,11 @@
         $('.buttons-delete').addClass('d-none');
 
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/supplier-index.css') }}">
 @endpush

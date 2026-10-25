@@ -75,7 +75,7 @@
                     </li>
                 </ul>
             </div>
-            <div class="tab-content flex-fill d-flex flex-column min-h-0" style="overflow: hidden;">
+            <div class="tab-content flex-fill d-flex flex-column min-h-0 u-ov-hidden">
                 <!-- Tab: Orders -->
                 <div class="tab-pane fade show active h-100" id="tab-orders" role="tabpanel">
                     <div class="ops-table-responsive">
@@ -339,7 +339,7 @@
                                     <option value="1">Convert to other products (Recipe outputs)</option>
                                 </select>
                             </div>
-                            <p class="text-muted mb-1" style="font-size:11.5px;">Defaults pre-fill the receipt and the job worker's bill; they can be changed on each document and updated any time.</p>
+                            <p class="text-muted mb-1 u-fs-11_5px">Defaults pre-fill the receipt and the job worker's bill; they can be changed on each document and updated any time.</p>
                             <div class="form-group">
                                 <label>Default output item</label>
                                 <select name="output_product_id">
@@ -439,7 +439,7 @@
                     @endif
                 </ul>
             </div>
-            <div class="tab-content flex-fill d-flex flex-column min-h-0" style="overflow: hidden;">
+            <div class="tab-content flex-fill d-flex flex-column min-h-0 u-ov-hidden">
                 <!-- Tab: Production Orders -->
                 <div class="tab-pane fade show active h-100" id="tab-prod-orders" role="tabpanel">
                     <div class="ops-table-responsive">
@@ -640,17 +640,17 @@
                                                     @endforeach
                                                 </select>
                                             </td>
-                                            <td class="pr-1 pb-1" style="width: 70px;">
+                                            <td class="pr-1 pb-1 u-w-70px">
                                                 <input name="lines[0][qty]" type="number" step="0.0001" min="0.0001" required placeholder="Qty" class="form-control form-control-sm">
                                             </td>
-                                            <td class="pr-1 pb-1" style="width: 80px;">
+                                            <td class="pr-1 pb-1 u-w-80px">
                                                 <select name="lines[0][uom_id]" required class="form-control form-control-sm">
                                                     @foreach($units as $unit)
                                                         <option value="{{ $unit->id }}">{{ $unit->unit_name }}</option>
                                                     @endforeach
                                                 </select>
                                             </td>
-                                            <td class="pb-1" style="width: 45px;">
+                                            <td class="pb-1 u-w-45px">
                                                 <input name="lines[0][scrap_percent]" type="number" step="0.0001" min="0" max="100" value="0" placeholder="Scrap %" class="form-control form-control-sm">
                                             </td>
                                         </tr>
@@ -963,12 +963,12 @@
                 <span class="badge badge-primary px-2 py-1 font-11">Current: {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$profile['profile']][0] ?? $profile['profile'] }}@if(!empty($profile['subtype'])) &bull; {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($profile['subtype']) }}@endif</span>
             </div>
             <div class="ops-subcard-body">
-                <div class="row" style="gap: 12px; margin: 0;">
+                <div class="row u-gap-12px u-m-0">
                     @foreach(\App\Services\Industry\IndustryCatalog::SUBTYPES as $key=>$subtypes)
                         @php $isCurrent = ($profile['profile'] ?? null) === $key; @endphp
                         <div class="col-12 p-0">
                             <div class="card ops-profile-card border rounded-lg p-3 {{ $isCurrent ? 'is-current' : '' }}">
-                                <div class="d-flex align-items-center justify-content-between" style="gap: 12px;">
+                                <div class="d-flex align-items-center justify-content-between u-gap-12px">
                                     <div>
                                         <h5 class="mb-1 font-14 font-weight-bold">
                                             {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$key][0] }}
@@ -986,13 +986,13 @@
                                     <div>
                                         @include('backend.operations.form_start', ['formId'=>'profile-'.$key, 'action'=>'configure/profile'])
                                         <input type="hidden" name="profile" value="{{ $key }}">
-                                        <div class="d-flex align-items-center" style="gap: 6px;">
-                                            <select name="subtype" aria-label="Business subtype for {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$key][0] }}" class="form-control form-control-sm" style="width: 150px; height: 32px; font-size: 12px;">
+                                        <div class="d-flex align-items-center u-gap-6px">
+                                            <select name="subtype" aria-label="Business subtype for {{ \App\Services\Platform\CapabilityCatalog::PROFILES[$key][0] }}" class="form-control form-control-sm u-w-150px u-h-32px u-fs-12px">
                                                 @foreach($subtypes as $subtype=>$features)
                                                     <option value="{{ $subtype }}" @selected($isCurrent && ($profile['subtype'] ?? null) === $subtype)>{{ \App\Services\Industry\IndustryCatalog::subtypeLabel($subtype) }}</option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="btn btn-sm {{ $isCurrent ? 'btn-primary' : 'btn-outline-secondary' }}" style="font-size: 12px; height: 32px; font-weight: 600;">
+                                            <button type="submit" class="btn btn-sm {{ $isCurrent ? 'btn-primary' : 'btn-outline-secondary' }} u-fs-12px u-h-32px u-fw-600">
                                                 Apply
                                             </button>
                                         </div>

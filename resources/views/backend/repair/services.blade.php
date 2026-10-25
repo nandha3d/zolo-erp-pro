@@ -12,7 +12,7 @@
     <div class="container-fluid">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
-                <h3 class="font-weight-bold mb-1" style="color: var(--neo-text-primary, #1e293b);">
+                <h3 class="font-weight-bold mb-1 u-c-neo-text-primary">
                     <i class="dripicons-clipboard mr-2 text-primary"></i>Service Job Sheets
                 </h3>
                 <p class="text-muted mb-0 small">Manage electronics, mobile, computer &amp; appliance repair jobs</p>
@@ -58,7 +58,7 @@
                                     <td>
                                         <span class="font-weight-bold">{{ $svc->device_brand }}</span> {{ $svc->device_model }}
                                         @if($svc->imei_serial)
-                                            <div class="text-muted" style="font-size: 0.8rem;">SN: {{ $svc->imei_serial }}</div>
+                                            <div class="text-muted u-fs-0_8rem">SN: {{ $svc->imei_serial }}</div>
                                         @endif
                                     </td>
                                     <td><small>{{ Str::limit($svc->defects_reported, 45) }}</small></td>

@@ -1,0 +1,7 @@
+/* Page styles for: backend/compliance/gst_returns.blade.php (moved from inline <style>). */
+    .gst-returns { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: 10px; }
+    .gst-returns h3 { font-size: 12px; font-weight: 700; margin: 0 0 4px; color: #334155; }
+    .gst-returns .cx-table td, .gst-returns .cx-table th { padding: 4px 8px; white-space: nowrap; }
+    .gst-returns .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .gst-returns .cx-table-wrap { max-height: 34vh; overflow: auto; }
+    @media (max-width: 1100px) { .gst-returns { grid-template-columns: 1fr; } }

@@ -81,7 +81,7 @@
   <body class="pos-page" onload="myFunction()">
     <div id="loader"></div>
 
-      <div style="display:none;" id="content" class="animate-bottom">
+      <div style="display:none" id="content" class="animate-bottom">
           @yield('content')
       </div>
 

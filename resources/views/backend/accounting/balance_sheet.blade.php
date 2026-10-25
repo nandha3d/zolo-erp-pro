@@ -2,106 +2,6 @@
 
 @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .bs-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .bs-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-filter-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 14px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .desk-filter-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 18px 20px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .bs-table {
-        width: 100%;
-        margin-bottom: 16px;
-    }
-    .bs-table td {
-        padding: 6px 12px;
-        font-size: 13px;
-        vertical-align: middle;
-    }
-    .bs-table tfoot td {
-        padding: 8px 12px;
-        font-weight: 700;
-        border-top: 1px solid #cbd5e1;
-    }
-    body.dark-mode .bs-table tfoot td {
-        border-color: #475569;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 <section class="bs-workspace-view">
     <!-- Top Command Bar -->
@@ -129,17 +29,17 @@
     <!-- Filter Card -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.balance-sheet') }}" method="GET" class="m-0">
-            <div class="row align-items-end" style="margin: 0 -6px;">
-                <div class="col-md-6" style="padding: 0 6px;">
-                    <label class="font-weight-600 mb-1" style="font-size: 11px; text-transform: uppercase; color: #64748b;">As of Date</label>
-                    <input type="date" name="as_of_date" class="form-control form-control-sm" value="{{ $asOfDate }}" style="height:32px; font-size:12px;">
+            <div class="row align-items-end u-m-0-6px">
+                <div class="col-md-6 u-p-0-6px">
+                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">As of Date</label>
+                    <input type="date" name="as_of_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $asOfDate }}">
                 </div>
-                <div class="col-md-6 d-flex" style="padding: 0 6px;">
+                <div class="col-md-6 d-flex u-p-0-6px">
                     @include('backend.accounting.partials.branch_scope')
-                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2" style="height:32px; font-size:12px; font-weight:600;">
+                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2 u-h-32px u-fs-12px u-fw-600">
                         <i class="dripicons-search"></i> Update Statement
                     </button>
-                    <a href="{{ route('accounting.balance-sheet') }}" class="btn btn-sm btn-outline-secondary" style="height:32px; font-size:12px; display:inline-flex; align-items:center;">Today</a>
+                    <a href="{{ route('accounting.balance-sheet') }}" class="btn btn-sm btn-outline-secondary u-h-32px u-fs-12px u-d-inline-flex u-items-center">Today</a>
                 </div>
             </div>
         </form>
@@ -147,15 +47,15 @@
 
     <!-- Equation Check Banner -->
     @if($report['is_balanced'])
-        <div class="alert alert-success d-flex align-items-center mb-3 border-0 shadow-sm" style="background:#dcfce7; color:#15803d; border-radius: 8px;" role="alert">
-            <i class="dripicons-checkmark font-weight-bold mr-2" style="font-size: 18px;"></i>
+        <div class="alert alert-success d-flex align-items-center mb-3 border-0 shadow-sm u-bg-success-soft u-c-success u-r-8px" role="alert">
+            <i class="dripicons-checkmark font-weight-bold mr-2 u-fs-18px"></i>
             <div>
                 <strong>Accounting Equation Balanced:</strong> Total Assets (₹ {{ number_format($report['total_assets'], 2) }}) = Total Liabilities &amp; Equity (₹ {{ number_format($report['total_liabilities_and_equity'], 2) }}).
             </div>
         </div>
     @else
-        <div class="alert alert-danger d-flex align-items-center mb-3 border-0 shadow-sm" style="background:#fee2e2; color:#b91c1c; border-radius: 8px;" role="alert">
-            <i class="dripicons-warning font-weight-bold mr-2" style="font-size: 18px;"></i>
+        <div class="alert alert-danger d-flex align-items-center mb-3 border-0 shadow-sm u-bg-danger-soft u-c-danger u-r-8px" role="alert">
+            <i class="dripicons-warning font-weight-bold mr-2 u-fs-18px"></i>
             <div>
                 <strong>Equation Discrepancy:</strong> Difference of ₹ {{ number_format($report['difference'], 2) }} between Total Assets and Total Liabilities &amp; Equity.
             </div>
@@ -167,39 +67,39 @@
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL ASSETS</div>
-                <div class="kpi-number" style="color: #0284c7;">₹ {{ number_format($report['total_assets'], 2) }}</div>
+                <div class="kpi-number u-c-info">₹ {{ number_format($report['total_assets'], 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;color:#0284c7;">
-                <i class="dripicons-wallet" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-info">
+                <i class="dripicons-wallet u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL LIABILITIES</div>
-                <div class="kpi-number" style="color: #b91c1c;">₹ {{ number_format($report['total_liabilities'], 2) }}</div>
+                <div class="kpi-number u-c-danger">₹ {{ number_format($report['total_liabilities'], 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#b91c1c;">
-                <i class="dripicons-warning" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-danger">
+                <i class="dripicons-warning u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">TOTAL EQUITY</div>
-                <div class="kpi-number" style="color: var(--z-primary, #7d287e);">₹ {{ number_format($report['total_equity'], 2) }}</div>
+                <div class="kpi-number u-c-primary">₹ {{ number_format($report['total_equity'], 2) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-graph-bar" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-graph-bar u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">EQUATION STATUS</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:600; color: {{ $report['is_balanced'] ? '#059669' : '#b91c1c' }};">
+                <div class="kpi-number u-fs-14px u-fw-600 {{ $report['is_balanced'] ? 'u-c-success' : 'u-c-danger' }}">
                     {{ $report['is_balanced'] ? 'A = L + E (Balanced)' : 'Diff: ₹ ' . number_format($report['difference'], 2) }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:{{ $report['is_balanced'] ? '#d1fae5' : '#fee2e2' }};display:flex;align-items:center;justify-content:center;color:{{ $report['is_balanced'] ? '#059669' : '#b91c1c' }};">
-                <i class="{{ $report['is_balanced'] ? 'dripicons-checkmark' : 'dripicons-warning' }}" style="font-size:18px;"></i>
+            <div class="z-icon-tile {{ $report['is_balanced'] ? 'z-tone-success' : 'z-tone-danger' }}">
+                <i class="{{ $report['is_balanced'] ? 'dripicons-checkmark' : 'dripicons-warning' }} u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -211,19 +111,19 @@
             <div class="desk-card-wrapper h-100 d-flex flex-column justify-content-between">
                 <div>
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                        <h5 class="font-weight-bold mb-0" style="color: #0284c7; font-size: 15px;">ASSETS</h5>
-                        <span class="badge badge-primary" style="font-size: 10px;">Resources Owned</span>
+                        <h5 class="font-weight-bold mb-0 u-c-info u-fs-15px">ASSETS</h5>
+                        <span class="badge badge-primary u-fs-10px">Resources Owned</span>
                     </div>
                     <table class="bs-table mb-4">
                         <tbody>
                             @forelse($report['assets'] as $asset)
                                 <tr>
-                                    <td style="width: 70%;">
+                                    <td class="u-w-70pct">
                                         <span class="font-monospace text-muted mr-1">{{ $asset['code'] }}</span>
                                         <span class="font-weight-600">{{ $asset['name'] }}</span>
                                         <small class="text-muted d-block text-capitalize">{{ str_replace('_', ' ', $asset['sub_type']) }}</small>
                                     </td>
-                                    <td class="text-right font-weight-bold font-monospace align-middle" style="width: 30%;">
+                                    <td class="text-right font-weight-bold font-monospace align-middle u-w-30pct">
                                         ₹ {{ number_format($asset['balance'], 2) }}
                                     </td>
                                 </tr>
@@ -233,9 +133,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="p-3 rounded d-flex justify-content-between align-items-center" style="background:#f1f5f9; border-top: 2px solid #cbd5e1;">
-                    <h6 class="font-weight-bold mb-0" style="color:#0f172a; font-size: 13px;">TOTAL ASSETS</h6>
-                    <h5 class="font-weight-bold font-monospace mb-0" style="color:#0284c7; font-size: 17px;">₹ {{ number_format($report['total_assets'], 2) }}</h5>
+                <div class="p-3 rounded d-flex justify-content-between align-items-center u-bg-surface-3 u-bt-2px-solid-border-strong">
+                    <h6 class="font-weight-bold mb-0 u-c-text u-fs-13px">TOTAL ASSETS</h6>
+                    <h5 class="font-weight-bold font-monospace mb-0 u-c-info u-fs-17px">₹ {{ number_format($report['total_assets'], 2) }}</h5>
                 </div>
             </div>
         </div>
@@ -246,19 +146,19 @@
                 <div>
                     <!-- Liabilities Section -->
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                        <h5 class="font-weight-bold mb-0" style="color: #b91c1c; font-size: 15px;">LIABILITIES</h5>
-                        <span class="badge badge-danger" style="font-size: 10px;">Obligations Owed</span>
+                        <h5 class="font-weight-bold mb-0 u-c-danger u-fs-15px">LIABILITIES</h5>
+                        <span class="badge badge-danger u-fs-10px">Obligations Owed</span>
                     </div>
                     <table class="bs-table mb-3">
                         <tbody>
                             @forelse($report['liabilities'] as $liab)
                                 <tr>
-                                    <td style="width: 70%;">
+                                    <td class="u-w-70pct">
                                         <span class="font-monospace text-muted mr-1">{{ $liab['code'] }}</span>
                                         <span class="font-weight-600">{{ $liab['name'] }}</span>
                                         <small class="text-muted d-block text-capitalize">{{ str_replace('_', ' ', $liab['sub_type']) }}</small>
                                     </td>
-                                    <td class="text-right font-weight-bold font-monospace align-middle" style="width: 30%;">
+                                    <td class="text-right font-weight-bold font-monospace align-middle u-w-30pct">
                                         ₹ {{ number_format($liab['balance'], 2) }}
                                     </td>
                                 </tr>
@@ -276,18 +176,18 @@
 
                     <!-- Equity Section -->
                     <div class="d-flex justify-content-between align-items-center mt-4 mb-3 pb-2 border-bottom">
-                        <h5 class="font-weight-bold mb-0" style="color: var(--z-primary, #7d287e); font-size: 15px;">EQUITY</h5>
-                        <span class="badge badge-info" style="font-size: 10px;">Owner Capital &amp; Earnings</span>
+                        <h5 class="font-weight-bold mb-0 u-c-primary u-fs-15px">EQUITY</h5>
+                        <span class="badge badge-info u-fs-10px">Owner Capital &amp; Earnings</span>
                     </div>
                     <table class="bs-table mb-2">
                         <tbody>
                             @forelse($report['equity'] as $eq)
                                 <tr>
-                                    <td style="width: 70%;">
+                                    <td class="u-w-70pct">
                                         <span class="font-monospace text-muted mr-1">{{ $eq['code'] }}</span>
                                         <span class="font-weight-600">{{ $eq['name'] }}</span>
                                     </td>
-                                    <td class="text-right font-weight-bold font-monospace align-middle" style="width: 30%;">
+                                    <td class="text-right font-weight-bold font-monospace align-middle u-w-30pct">
                                         ₹ {{ number_format($eq['balance'], 2) }}
                                     </td>
                                 </tr>
@@ -303,9 +203,9 @@
                         </tfoot>
                     </table>
                 </div>
-                <div class="p-3 rounded d-flex justify-content-between align-items-center mt-3" style="background:#f1f5f9; border-top: 2px solid #cbd5e1;">
-                    <h6 class="font-weight-bold mb-0" style="color:#0f172a; font-size: 13px;">TOTAL LIABILITIES &amp; EQUITY</h6>
-                    <h5 class="font-weight-bold font-monospace mb-0" style="color:#0f172a; font-size: 17px;">₹ {{ number_format($report['total_liabilities_and_equity'], 2) }}</h5>
+                <div class="p-3 rounded d-flex justify-content-between align-items-center mt-3 u-bg-surface-3 u-bt-2px-solid-border-strong">
+                    <h6 class="font-weight-bold mb-0 u-c-text u-fs-13px">TOTAL LIABILITIES &amp; EQUITY</h6>
+                    <h5 class="font-weight-bold font-monospace mb-0 u-c-text u-fs-17px">₹ {{ number_format($report['total_liabilities_and_equity'], 2) }}</h5>
                 </div>
             </div>
         </div>
@@ -313,3 +213,10 @@
 </section>
 
 @endsection
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/accounting-balance-sheet.css') }}">
+@endpush

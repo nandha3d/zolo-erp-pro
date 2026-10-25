@@ -8,4 +8,4 @@
     $iconClass = $size === 'small' ? 'info-icon-sm' : 'info-icon';
 @endphp
 
-<span class="dripicons-information" data-toggle="tooltip" title="{{ $title }}" style="background-color:#cce5ff;border-radius:50%;color:#004085;display:inline-block;font-size: 15px;height:16px;line-height:1px;cursor: help;"></span>
+<span class="dripicons-information u-bg-xcce5ff u-r-50pct u-c-x004085 u-d-inline-block u-fs-15px u-h-16px u-lh-1px u-cur-help" data-toggle="tooltip" title="{{ $title }}"></span>

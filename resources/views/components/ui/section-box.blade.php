@@ -56,13 +56,13 @@
         <div class="zolo-section-box-header d-flex align-items-center justify-content-between">
             <div class="zolo-section-box-heading d-flex align-items-center">
                 @if($resolvedSvg)
-                    <span class="zolo-section-box-icon mr-2" style="margin-right: 10px !important;">{!! $resolvedSvg !!}</span>
+                    <span class="zolo-section-box-icon mr-2 u-mr-10px">{!! $resolvedSvg !!}</span>
                 @elseif($icon)
-                    <span class="zolo-section-box-icon mr-2" style="margin-right: 10px !important;"><i class="{{ $icon }}"></i></span>
+                    <span class="zolo-section-box-icon mr-2 u-mr-10px"><i class="{{ $icon }}"></i></span>
                 @endif
                 <span class="zolo-section-box-title">{!! $title !!}</span>
                 @if($subtitle)
-                    <small class="text-muted ml-2 font-weight-normal" style="font-size: 11px; text-transform: none;">{{ $subtitle }}</small>
+                    <small class="text-muted ml-2 font-weight-normal u-fs-11px u-tt-none">{{ $subtitle }}</small>
                 @endif
             </div>
             @if($actions)

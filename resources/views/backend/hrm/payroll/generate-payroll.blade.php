@@ -86,7 +86,7 @@
                                     <div class="card-body p-0">
                                         <table class="table table-bordered align-middle mb-0">
                                             <tr>
-                                                <td style="width:30%">
+                                                <td class="u-w-30pct">
                                                     <strong>{{ $employee->name }}</strong><br><br>
                                                     <b>{{ __("db.Leaves") }} :</b> {{ $employee->total_leaves ?? 0 }} {{ __("db.Days") }} <br><br>
                                                     <b>{{ __("db.Work Duration") }} :</b> {{ $employee->total_work_hours ?? '0.00' }} {{ __("db.Hours") }} <br><br>

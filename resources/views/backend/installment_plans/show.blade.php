@@ -2,25 +2,6 @@
 
 @section('content')
 
-<style>
-    .btn-icon i { margin-right: 5px; }
-    .top-fields { margin-top: 10px; position: relative; }
-    .top-fields label {
-        background: #FFF;
-        font-size: 11px;
-        font-weight: 600;
-        margin-left: 10px;
-        padding: 0 3px;
-        position: absolute;
-        top: -8px;
-        z-index: 9;
-    }
-    .top-fields input {
-        font-size: 13px;
-        height: 45px;
-    }
-</style>
-
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
@@ -50,7 +31,7 @@
                         <th class="text-center">Payment Date</th>
                         <th class="text-center w-25">Status</th>
                         <th class="text-center w-25">Amount</th>
-                        <th class="text-center" style="width: 130px;">Action</th>
+                        <th class="text-center u-w-130px">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -218,4 +199,8 @@ $(document).ready(function() {
     });
 });
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/installment-plans-show.css') }}">
 @endpush

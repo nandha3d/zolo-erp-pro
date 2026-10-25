@@ -1,16 +1,7 @@
 @extends('backend.layout.main') @section('content')
 @include('backend.partials.document-entry-layout')
 @push('css')
-<style>
-    @media print {
-        .hidden-print {
-            display: none !important;
-        }
-    }
-    #product-results-container{background:#f5f6f7;position: absolute;overflow: hidden;max-height: 300px;overflow-y: auto;padding-top: 10px;top:40px;width:100%;z-index:999}
-    #product-results-container .product-img{border-radius: 3px; color: var(--z-primary, #7d287e);font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
-    #product-results-container .product-img:hover{background-color: var(--z-primary, #7d287e);color: #FFF}
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-sale-create.css') }}">
 @endpush
 
 <x-error-message key="not_permitted" />
@@ -73,7 +64,7 @@
                                                     }
                                                 @endphp
                                                 @if($customer_active)
-                                                <select required name="customer_id" id="customer_id" class="selectpicker form-control" data-live-search="true" title="Select customer..." style="width: 100px" data-container="body">
+                                                <select required name="customer_id" id="customer_id" class="selectpicker form-control u-w-100px" data-live-search="true" title="Select customer..." data-container="body">
                                                 @foreach($lims_customer_list as $customer)
                                                     @php
                                                       $deposit[$customer->id] = $customer->deposit - $customer->expense;
@@ -227,15 +218,15 @@
                                 <div class="row mt-3 document-search-row">
                                     <div class="col-md-12">
                                         <label>{{__('db.Select Product')}}</label>
-                                        <div class="search-box form-group mb-2" style="position:relative">
+                                        <div class="search-box form-group mb-2 u-pos-relative">
                                             <div class="input-group pos">
-                                                <input style="border: 1px solid var(--z-primary, #7d287e);" type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control" autofocus />
+                                                <input type="text" name="product_code_name" id="product-search-input" placeholder="Scan/Search product by name/code/IMEI" class="form-control u-b-1px-solid-primary" autofocus />
                                                 <button type="button" class="btn btn-primary" onclick="barcode()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16"><path d="M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/></svg></button>
                                             </div>
                                             <div id="product-results-container">
 
                                             </div>
-                                            <div id="no-results-message" style="background-color: #f5f6f7;color: #666; margin-top: 5px;padding: 3px 5px; display: none;">No results found</div>
+                                            <div id="no-results-message" style="display:none" class="u-bg-xf5f6f7 u-c-text-muted u-mt-5px u-p-3px-5px">No results found</div>
                                         </div>
                                     </div>
                                 </div>
@@ -441,7 +432,7 @@
                                             <div class="form-group top-fields">
                                                 <label>{{__('db.Account')}}</label>
                                                 <select required name="account_id" id="account_id" class="selectpicker form-control" data-live-search="true" data-container="body">
-                                                    <option value="0" style="color: #A7B49E;">Select an Account</option>
+                                                    <option value="0" class="u-c-xa7b49e">Select an Account</option>
                                                     @foreach($lims_account_list as $account)
                                                         <option @if($account->is_default == 1) selected @endif value="{{$account->id}}">{{$account->name}}</option>
                                                     @endforeach
@@ -771,7 +762,7 @@
                     </div>
 
                     <!-- Installment Fields (hidden until checked) -->
-                    <div id="installmentFields" style="display: none;">
+                    <div id="installmentFields" style="display:none">
                         <div class="mb-3">
                             <label class="form-label">Plan Name</label>
                             <input type="text" class="form-control" name="installment_plan[name]" value="12 Months" placeholder="e.g., 6 Month Plan">
@@ -817,9 +808,9 @@
 <section id="print-layout">
 </section>
 
-<div style="width:100%;max-width:350px;position:fixed;top:5%;left:50%;transform:translateX(-50%);z-index:999">
+<div class="u-w-100pct u-maxw-350px u-pos-fixed u-top-5pct u-left-50pct u-tf-translatex-50pct u-z-999">
     <button type="button" class="btn btn-danger" id="closeScannerBtn" style="display:none"> X </button>
-    <div id="reader" style="width:100%;"></div>
+    <div id="reader" class="u-w-100pct"></div>
 </div>
 
 @endsection
@@ -859,7 +850,7 @@
             const lookupWarehouse = String(warehouse_id);
             const lookupTerm = search.trim();
             $results.css('padding', '0 10px 15px');
-            $results.html('<div class="loader " title="4" style="border:none;min-height:300px"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect></svg></div>');
+            $results.html('<div class="loader u-b-none u-minh-300px" title="4"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" xml:space="preserve"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect></svg></div>');
             $noResults.hide();
 
             search = btoa(unescape(encodeURIComponent(search)));
@@ -1605,7 +1596,7 @@ function addNewProduct(data){
     }
 
     if(data[12]) {
-        cols += '<br><input style="font-size:13px;padding:3px 25px 3px 10px;height:30px !important" type="text" class="form-control batch-no" value="'+data[22]+'" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="'+data[21]+'"/>';
+        cols += '<br><input type="text" class="form-control batch-no u-fs-13px u-p-3px-25px-3px-10px u-h-30px" value="'+data[22]+'" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="'+data[21]+'"/>';
     }
     else {
         cols += '<input type="text" class="form-control batch-no d-none" disabled/> <input type="hidden" class="product-batch-id" name="product_batch_id[]"/>';
@@ -1616,15 +1607,15 @@ function addNewProduct(data){
 
     // If no IMEI, show minus button
     if (!data[18] || data[18] == 'null') {
-        cols += '<button type="button" class="btn btn-default minus mr-1" style="padding:5px 8px"><i class="dripicons-minus"></i></button></span>';
+        cols += '<button type="button" class="btn btn-default minus mr-1 u-p-5px-8px"><i class="dripicons-minus"></i></button></span>';
     }
 
     // Input field
-    cols += '<input type="text" name="qty[]" class="form-control qty numkey input-number" style="font-size:13px;max-width:50px;padding: 0 0;text-align:center" step="any" value="'+data[15]+'" max="'+data[19]+'" required><span class="input-group-btn">';
+    cols += '<input type="text" name="qty[]" class="form-control qty numkey input-number u-fs-13px u-maxw-50px u-p-0-0 u-ta-center" step="any" value="'+data[15]+'" max="'+data[19]+'" required><span class="input-group-btn">';
 
     // If no IMEI, show plus button
     if (!data[18] || data[18] == 'null') {
-        cols += '<button type="button" class="btn btn-default plus ml-1" style="padding:5px 8px"><i class="dripicons-plus"></i></button>';
+        cols += '<button type="button" class="btn btn-default plus ml-1 u-p-5px-8px"><i class="dripicons-plus"></i></button>';
     }
 
     cols += '</span></div></td>';
@@ -1752,7 +1743,7 @@ function addNewProduct(data){
                                     ${product.name} (${product.code}) - ${product.price}
                                 </label>
                             </div>
-                            <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" min="1" value="${qty}">
+                            <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm u-w-80px" min="1" value="${qty}">
                         </div>`;
                 });
                 modalContent += '</form>';

@@ -32,7 +32,7 @@
             <div class="row">
                 <div class="col-md-12 text-center">
                     <div class="error-icon">
-                        <span style="font-size: 60px;" class="material-symbols-outlined">waving_hand</span>
+                        <span class="material-symbols-outlined u-fs-60px">waving_hand</span>
                     </div>
                 </div>
                 <div class="col-md-6 offset-md-3  error-text text-center">

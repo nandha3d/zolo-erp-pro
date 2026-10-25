@@ -227,10 +227,10 @@
                                     <div class="form-group">
                                         <label>{{__('db.Theme')}} *</label>
                                         <div class="row ml-1">
-                                            <div class="col-md-3 theme-option" data-color="default.css" style="background: var(--z-primary, #7d287e); min-height: 40px; max-width: 50px;" title="Purple"></div>&nbsp;&nbsp;
-                                            <div class="col-md-3 theme-option" data-color="green.css" style="background: #1abc9c; min-height: 40px;max-width: 50px;" title="Green"></div>&nbsp;&nbsp;
-                                            <div class="col-md-3 theme-option" data-color="blue.css" style="background: #3498db; min-height: 40px;max-width: 50px;" title="Blue"></div>&nbsp;&nbsp;
-                                            <div class="col-md-3 theme-option" data-color="dark.css" style="background: #34495e; min-height: 40px;max-width: 50px;" title="Dark"></div>
+                                            <div class="col-md-3 theme-option u-bg-primary u-minh-40px u-maxw-50px" data-color="default.css" title="Purple"></div>&nbsp;&nbsp;
+                                            <div class="col-md-3 theme-option u-bg-x1abc9c u-minh-40px u-maxw-50px" data-color="green.css" title="Green"></div>&nbsp;&nbsp;
+                                            <div class="col-md-3 theme-option u-bg-x3498db u-minh-40px u-maxw-50px" data-color="blue.css" title="Blue"></div>&nbsp;&nbsp;
+                                            <div class="col-md-3 theme-option u-bg-x34495e u-minh-40px u-maxw-50px" data-color="dark.css" title="Dark"></div>
                                         </div>
                                     </div>
                                 </div>

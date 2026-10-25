@@ -1,0 +1,18 @@
+/* Page styles for: backend/reports/stock-by-lot.blade.php (moved from inline <style>). */
+/* Same card + dark header as the other Product & Inventory pages (product-workspace.css). */
+#stock-lot-report .lot-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04); padding: 6px 10px; }
+#stock-lot-report .lot-card .table-responsive { border: 0; box-shadow: none; border-radius: 0; }
+#stock-lot-report .lot-filters { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
+#stock-lot-report .lot-filters label { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #64748b; margin: 0 0 2px; }
+#stock-lot-report .lot-filters .form-control { height: 32px; font-size: 13px; padding: 3px 8px; }
+#stock-lot-report .lot-filters .f-date { width: 128px; }
+#stock-lot-report .lot-filters .f-pick { width: 160px; }
+#stock-lot-report .lot-filters .btn { height: 32px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; }
+#stock-lot-report .lot-note { font-size: 11.5px; color: #64748b; margin: 0 0 6px; }
+#stock-lot-report .table { width: 100%; margin: 0; font-size: 13px; }
+#stock-lot-report .table th { white-space: nowrap; vertical-align: middle; position: sticky; top: 0; z-index: 1; }
+#stock-lot-report .table td { white-space: nowrap; vertical-align: middle; }
+#stock-lot-report .table td.lot-product { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+#stock-lot-report .table td.lot-product small { color: #64748b; margin-left: 4px; }
+#stock-lot-report caption { caption-side: top; padding: 0 0 4px; font-size: 11.5px; color: #64748b; }
+body.dark-mode #stock-lot-report .lot-card { background: #141c2e; border-color: #334155; }

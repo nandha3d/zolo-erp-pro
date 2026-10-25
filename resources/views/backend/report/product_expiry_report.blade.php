@@ -1,123 +1,5 @@
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .report-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .report-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 18px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #report-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #report-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #report-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #report-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #report-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #report-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #report-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #report-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #report-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #report-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #report-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    .btn-action-pill {
-        height: 28px !important;
-        font-size: 11px !important;
-        padding: 0 12px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-    }
-</style>
 
 @php
     $totalBatchCount = count($lims_product_data);
@@ -159,37 +41,37 @@
                 <div class="kpi-label">TRACKED BATCHES</div>
                 <div class="kpi-number">{{ number_format($totalBatchCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:var(--z-primary-soft, #fbf4fb);display:flex;align-items:center;justify-content:center;color:var(--z-primary, #7d287e);">
-                <i class="dripicons-stack" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-primary">
+                <i class="dripicons-stack u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">EXPIRED BATCHES</div>
-                <div class="kpi-number" style="color:#b91c1c;">{{ number_format($expiredCount) }}</div>
+                <div class="kpi-number u-c-danger">{{ number_format($expiredCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#b91c1c;">
-                <i class="dripicons-cross" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-danger">
+                <i class="dripicons-cross u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">EXPIRING SOON</div>
-                <div class="kpi-number" style="color:#d97706;">{{ number_format($nearExpiryCount) }}</div>
+                <div class="kpi-number u-c-warning">{{ number_format($nearExpiryCount) }}</div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;color:#d97706;">
-                <i class="dripicons-clock" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-warning">
+                <i class="dripicons-clock u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">COMPLIANCE</div>
-                <div class="kpi-number" style="font-size:14px; font-weight:600; color: {{ $expiredCount > 0 ? '#b91c1c' : '#059669' }};">
+                <div class="kpi-number u-fs-14px u-fw-600 {{ $expiredCount > 0 ? 'u-c-danger' : 'u-c-success' }}">
                     {{ $expiredCount > 0 ? 'Action Required' : 'All Batches Valid' }}
                 </div>
             </div>
-            <div style="width:36px;height:36px;border-radius:6px;background:#dcfce7;display:flex;align-items:center;justify-content:center;color:#059669;">
-                <i class="dripicons-checkmark" style="font-size:18px;"></i>
+            <div class="z-icon-tile z-tone-success">
+                <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -197,7 +79,7 @@
     <!-- Data Table Container -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="report-table" class="table table-hover" style="width:100%;">
+            <table id="report-table" class="table table-hover u-w-100pct">
                 <thead>
                     <tr>
                         <th class="not-exported"></th>
@@ -219,10 +101,10 @@
                                 $product->base_image = $images[0];
                                 ?>
                                 @if($product->base_image)
-                                    <img src="{{ url('images/product', $product->base_image) }}" height="48" width="48" style="object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                    <img src="{{ url('images/product', $product->base_image) }}" height="48" width="48" class="u-of-cover u-r-4px u-b-1px-solid-border">
                                 @else
-                                    <div style="width:48px; height:48px; background:#f1f5f9; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#94a3b8;">
-                                        <i class="dripicons-box" style="font-size:18px;"></i>
+                                    <div class="u-w-48px u-h-48px u-bg-surface-3 u-r-4px u-d-flex u-items-center u-justify-center u-c-text-muted">
+                                        <i class="dripicons-box u-fs-18px"></i>
                                     </div>
                                 @endif
                             </td>
@@ -231,11 +113,11 @@
                             <td><span class="badge badge-light border">{{ $product->batch_no }}</span></td>
                             <td>
                                 @if(date('Y-m-d') >= $product->expired_date)
-                                    <span class="badge badge-danger font-weight-bold" style="font-size: 11.5px; padding: 4px 8px;">
+                                    <span class="badge badge-danger font-weight-bold u-fs-11_5px u-p-4px-8px">
                                         Expired: {{ date($general_setting->date_format, strtotime($product->expired_date)) }}
                                     </span>
                                 @else
-                                    <span class="badge badge-warning font-weight-bold text-dark" style="font-size: 11.5px; padding: 4px 8px;">
+                                    <span class="badge badge-warning font-weight-bold text-dark u-fs-11_5px u-p-4px-8px">
                                         Expires: {{ date($general_setting->date_format, strtotime($product->expired_date)) }}
                                     </span>
                                 @endif
@@ -331,4 +213,11 @@
         ],
     });
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-report-product-expiry-report.css') }}">
 @endpush

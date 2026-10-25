@@ -1,38 +1,13 @@
 @extends('backend.layout.main')
 @section('content')
 
-<style>
-.cafe-pos-wrapper {
-    height: calc(100vh - 85px);
-    display: flex;
-    overflow: hidden;
-}
-.cafe-item-card {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-}
-.cafe-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border-color: var(--z-primary, #7d287e);
-}
-.cafe-cart-panel {
-    background: #fff;
-    border-left: 1px solid #e2e8f0;
-    display: flex;
-    flex-direction: column;
-}
-</style>
-
 <div class="cafe-pos-wrapper">
     <!-- Left: Product Grid & Category Filter -->
     <div class="flex-grow-1 p-4 overflow-auto">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex align-items-center">
                 @if(!empty($general_setting->site_logo))
-                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 40px; max-width: 120px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded u-maxh-40px u-maxw-120px u-of-contain" alt="{{$general_setting->site_title ?? 'Logo'}}">
                 @endif
                 <div>
                     <h4 class="font-weight-bold text-dark m-0">{{ $general_setting->site_title ?? 'Bakery & Cafe' }} &bull; Touch Counter POS</h4>
@@ -57,7 +32,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-2">
                             <span class="font-weight-bold text-primary">₹ {{ number_format($prod->price, 2) }}</span>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle p-1" style="width: 28px; height: 28px;">+</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle p-1 u-w-28px u-h-28px">+</button>
                         </div>
                     </div>
                 </div>
@@ -66,7 +41,7 @@
     </div>
 
     <!-- Right: Current Order Cart Panel -->
-    <div class="cafe-cart-panel p-4" style="width: 380px;">
+    <div class="cafe-cart-panel p-4 u-w-380px">
         <h5 class="font-weight-bold text-dark mb-3"><i class="dripicons-cart text-primary mr-1"></i> Current Order</h5>
         
         <div class="flex-grow-1 overflow-auto mb-3" id="cart-items-container">
@@ -76,7 +51,7 @@
                 </tbody>
             </table>
             <div id="empty-cart-msg" class="text-center text-muted py-5">
-                <i class="dripicons-shopping-bag" style="font-size: 32px; opacity: 0.3;"></i>
+                <i class="dripicons-shopping-bag u-fs-32px u-op-0_3"></i>
                 <p class="small mt-2">Tap any item on the left to add to ticket</p>
             </div>
         </div>
@@ -152,18 +127,18 @@ function renderCafeCart() {
             total += sub;
             let tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="width: 55%; vertical-align: middle;">
+                <td class="u-w-55pct u-va-middle">
                     <strong class="small">${item.name}</strong>
                     <div class="text-muted small">₹ ${item.price.toFixed(2)}</div>
                 </td>
-                <td style="width: 25%; vertical-align: middle;">
+                <td class="u-w-25pct u-va-middle">
                     <div class="d-flex align-items-center">
-                        <button type="button" class="btn btn-sm btn-light border p-0" style="width: 22px; height: 22px;" onclick="updateCafeQty(${item.id}, -1)">-</button>
+                        <button type="button" class="btn btn-sm btn-light border p-0 u-w-22px u-h-22px" onclick="updateCafeQty(${item.id}, -1)">-</button>
                         <span class="mx-2 small font-weight-bold">${item.qty}</span>
-                        <button type="button" class="btn btn-sm btn-light border p-0" style="width: 22px; height: 22px;" onclick="updateCafeQty(${item.id}, 1)">+</button>
+                        <button type="button" class="btn btn-sm btn-light border p-0 u-w-22px u-h-22px" onclick="updateCafeQty(${item.id}, 1)">+</button>
                     </div>
                 </td>
-                <td style="width: 20%; vertical-align: middle;" class="text-right font-weight-bold text-dark small">
+                <td class="text-right font-weight-bold text-dark small u-w-20pct u-va-middle">
                     ₹ ${sub.toFixed(2)}
                 </td>
             `;
@@ -188,3 +163,7 @@ function checkoutCafeOrder() {
 @endpush
 
 @endsection
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/cafe-quick-pos.css') }}">
+@endpush

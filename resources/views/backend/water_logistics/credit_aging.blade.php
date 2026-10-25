@@ -6,7 +6,7 @@
         <div class="row align-items-center mb-4">
             <div class="col-md-8 d-flex align-items-center">
                 @if(!empty($general_setting->site_logo))
-                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded" style="max-height: 44px; max-width: 140px; object-fit: contain;" alt="{{$general_setting->site_title ?? 'Logo'}}">
+                    <img src="{{url('logo', $general_setting->site_logo)}}" class="mr-3 rounded u-maxh-44px u-maxw-140px u-of-contain" alt="{{$general_setting->site_title ?? 'Logo'}}">
                 @endif
                 <div>
                     <h3 class="font-weight-bold text-dark m-0">Corporate B2B Credit Aging &amp; Overdue Recovery Board</h3>
@@ -23,21 +23,21 @@
         <!-- Aging Buckets Overview -->
         <div class="row mb-4">
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-lg p-3 bg-white border-left border-success" style="border-left-width: 4px !important;">
+                <div class="card border-0 shadow-sm rounded-lg p-3 bg-white border-left border-success u-blw-4px">
                     <span class="small text-muted font-weight-600">0 – 30 Days (Current Term)</span>
                     <h3 class="font-weight-bold text-success m-0 mt-1">₹ {{ number_format(collect($agingData)->where('bucket', '0-30')->sum('total_due'), 2) }}</h3>
                     <small class="text-muted">Standard ongoing billing cycle</small>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-lg p-3 bg-white border-left border-warning" style="border-left-width: 4px !important;">
+                <div class="card border-0 shadow-sm rounded-lg p-3 bg-white border-left border-warning u-blw-4px">
                     <span class="small text-muted font-weight-600">31 – 60 Days (Due For Follow-Up)</span>
                     <h3 class="font-weight-bold text-warning m-0 mt-1">₹ {{ number_format(collect($agingData)->where('bucket', '31-60')->sum('total_due'), 2) }}</h3>
                     <small class="text-muted">Statement reminder dispatched</small>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-lg p-3 bg-white border-left border-danger" style="border-left-width: 4px !important;">
+                <div class="card border-0 shadow-sm rounded-lg p-3 bg-white border-left border-danger u-blw-4px">
                     <span class="small text-muted font-weight-600">60+ Days (Critical Stalled Overdue)</span>
                     <h3 class="font-weight-bold text-danger m-0 mt-1">₹ {{ number_format(collect($agingData)->where('bucket', '60+')->sum('total_due'), 2) }}</h3>
                     <small class="text-danger font-weight-bold">Immediate recovery action required</small>

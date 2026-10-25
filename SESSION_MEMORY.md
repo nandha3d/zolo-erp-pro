@@ -1840,18 +1840,16 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 
 ---
 
-## 80. Brand Token Alignment & Test Suite Verification (2026-10-25, commit 1b7dba5)
-- **Active Git Branch:** `ui` (working tree clean).
-- **Session Restored & Verified:**
-  - Mandatory initialization routine completed: `SESSION_MEMORY.md` read, git status on `ui` verified.
-  - Executed `DesignTokensTest`: Caught 2 hard-coded color offenders in `zolo-erp-neo.css:1798-1799` (introduced during Section 79 SVG icon commit `d301699`).
-  - Swapped hardcoded `#7c3aed` and `rgba(124, 58, 237, 0.12)` to `var(--z-primary-soft-strong)` and `var(--z-primary)` / `var(--z-primary-text)` in light and dark mode.
-  - `Tests\Unit\DesignTokensTest`: 2 passed (100% green).
-  - `phpunit.operations.xml`: 73 passed, 3 skipped (MySQL row-lock proof), 625 assertions 100% green.
-- **Next Steps / Active Backlog:**
-  1. Continue eliminating inline `style=""` in blade templates (moving layout values to reusable classes; colours are already tokenized).
-  2. Fold custom button classes (`cx-btn`, `cp-btn`, `nav-btn`, `bottom-btn`, `btn-ops-submit`...) into the 4 standardized token roles (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost`).
-  3. Move body `<link>` style tags into `@push('css')`.
+## 80. No Inline Styles: Utilities, Page CSS Files, Button Roles (2026-10-25, branch ui)
+- **User request:** finish all remaining steps — no inline styles, every element from a template; keep nandha3d's per-section colours (x-ui.section-box) unchanged.
+- **CSS load order now:** `zolo-tokens.css` -> `zolo-utilities.css` (head, before neo) -> neo/app-shell -> `@stack('css')` (page CSS incl. `css/pages/*.css`) -> `zolo-components.css` -> settings custom_css.
+- **Inline styles:** 2,236 `style=""` in app views became classes. KPI icon tiles -> `z-icon-tile z-tone-{primary|success|info|warning|danger|neutral}`; text tones -> `z-tone-text-*`; everything else -> generated one-declaration utilities in `public/css/zolo-utilities.css` (`u-fs-12px`, `u-c-success`, `u-bg-info-soft`...; `!important` = old inline strength; selector `:where(:not(.bootstrap-select))` because bootstrap-select copies a select's classes onto its wrapper). Blade colour ternaries became class ternaries. Data arrays now carry `'tone'` instead of hex (chart_of_accounts stats, HomeController addon list). Allowed inline (guarded): `display:none` (JS show/hide reads/writes `style.display`) and Blade-computed values (`width:{{ $pct }}%`). Emails and print/PDF templates (mail, invoice, print, receipt/reciept, pdf, label, barcode) keep inline styles.
+- **`<style>` blocks:** 112 moved to `public/css/pages/<view>.css` (`shared-*` when several views had identical blocks). Left: `qr/public_menu` (theme colours from DB) and vendor/translation.
+- **Head loading:** views extending `backend.layout.main|top-head` put all page stylesheets in one `@push('css')` at the end of the view, in original order (no `<link rel=stylesheet>` left in body).
+- **Button roles:** ~55 custom button classes keep shape but read colours from `--zb-bg/--zb-fg/--zb-border`, set per role/state in zolo-components.css: primary (e.g. btn-ops-submit, cx-btn, cp-btn-primary, comm-*-btn-success, inline-add-btn), secondary (btn-action-pill, cp-btn, side-*-btn, zolo-quick-btn...), danger (cp-btn-danger, cx-btn.danger), danger-ghost (btn-delete-row, side-action-btn.reverse), segment (segment-btn, density-btn, jw-seg-btn, side-tab-btn, desk-tab-btn...; `.active` = primary fill). Modifiers: zolo-quick-btn.primary, cx-btn.ghost/.danger. Left alone: POS payment-method colours, menu-btn, comm-nav-btn base, desk sidebar ghost, nandha3d's section-box tints.
+- **Guard (`tests/Unit/DesignTokensTest.php`, in operations CI suite):** old accents, inline styles (except the allowed two), `<style>` blocks, body stylesheet links.
+- **Verification:** Playwright crawl of 123 sidebar pages (+ entry forms) at 1536x730, pixel diff per step vs baseline; only intended colour changes remained (accounting tones, buttons). Tests: operations 78/78 (3 skipped), AccountingWebTest, documents-web 37/37.
+- **nandha3d section tints restored (user: "don't change nandha3d's deliberate colour per section"):** the first token pass had turned the violet `zolo-section-box-purple` / `cp-col-compliance` tint into brand purple; it is back to nandha's exact values via fixed tokens `--z-tint-violet-*` in zolo-tokens.css (not mode-switched; his rules choose light/dark). Blue/emerald/amber boxes were never changed. `zolo-tokens.css` is skipped by the accent guard (it is the definition file).
 
 ---
 
@@ -1869,5 +1867,3 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - **Verification:**
   - `Tests\Feature\DashboardSmokeTest`: PASS (118,131 bytes rendered).
   - Browser subagent visual verification: Rendered full dashboard at `http://zolo-erp-pro.test/dashboard`, verified all KPI cards (Revenue, Profit, Sale Total, Purchase Total, Expense, Receivables, Payables, Cash & Bank), quick action buttons, cash flow charts, and navigation bar. Screenshot captured: `initial_nav_dashboard_1792916289130.png`.
-
-

@@ -84,10 +84,10 @@
                     </td>
                     <td>
                         @if($stock_count->final_file)
-                            <div style="cursor: pointer;" class="badge badge-success final-report" data-stock_count='["{{date($general_setting->date_format, strtotime($stock_count->created_at->toDateString()))}}", "{{$stock_count->reference_no}}", "{{$warehouse->name}}", "{{$type}}", "{{implode(", ", $category_name)}}", "{{implode(", ", $brand_name)}}", "{{$initial_file}}", "{{$final_file}}", "{{$stock_count->id}}"]'>{{__('db.Final Report')}}
+                            <div class="badge badge-success final-report u-cur-pointer" data-stock_count='["{{date($general_setting->date_format, strtotime($stock_count->created_at->toDateString()))}}", "{{$stock_count->reference_no}}", "{{$warehouse->name}}", "{{$type}}", "{{implode(", ", $category_name)}}", "{{implode(", ", $brand_name)}}", "{{$initial_file}}", "{{$final_file}}", "{{$stock_count->id}}"]'>{{__('db.Final Report')}}
                             </div>
                         @else
-                            <div style="cursor: pointer;" class="badge badge-primary finalize" data-id="{{$stock_count->id}}">{{__('db.Finalize')}}
+                            <div class="badge badge-primary finalize u-cur-pointer" data-id="{{$stock_count->id}}">{{__('db.Finalize')}}
                             </div>
                         @endif
                     </td>
@@ -206,7 +206,7 @@
                         <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close d-print-none"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
                     </div>
                     <div class="col-md-12 text-center">
-                        <i style="font-size: 15px;">{{__('db.Stock Count')}}</i>
+                        <i class="u-fs-15px">{{__('db.Stock Count')}}</i>
                     </div>
                 </div>
                 <br>
@@ -318,7 +318,7 @@
           var divToPrint=document.getElementById('stock-count-details');
           var newWin=window.open('','Print-Window');
           newWin.document.open();
-          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><style type="text/css">@media print {.modal-dialog { max-width: 1000px;} }</style><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
           newWin.document.close();
           setTimeout(function(){newWin.close();},10);
     });

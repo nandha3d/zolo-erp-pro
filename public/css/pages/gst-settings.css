@@ -1,0 +1,35 @@
+/* Page styles for: backend/gst/settings.blade.php (moved from inline <style>). */
+    .gst-wrap { padding: 12px 18px 28px; }
+    .gst-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .gst-head h1 { font-size: 18px; font-weight: 800; margin: 0; color: #0f172a; }
+    .gst-head p { margin: 2px 0 0; font-size: 12.5px; color: #64748b; }
+    .gst-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .gst-card h2 { font-size: 14px; font-weight: 700; margin: 0 0 10px; color: #0f172a; }
+    .gst-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .gst-step { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; background: #fff; font-size: 12.5px; }
+    .gst-step strong { display: block; font-size: 13px; color: #0f172a; }
+    .gst-step.ok { border-color: #a7f3d0; background: #f0fdf4; }
+    .gst-step.todo { border-color: #fde68a; background: #fffbeb; }
+    .gst-tabs .nav-link { font-size: 13px; font-weight: 600; color: #475569; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; }
+    .gst-tabs .nav-link.active { color: var(--z-primary, #7d287e); border-bottom-color: var(--z-primary, #7d287e); background: transparent; }
+    .gst-table { width: 100%; font-size: 13px; }
+    .gst-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; position: sticky; top: 0; }
+    .gst-table td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .gst-table input, .gst-table select, .gst-form input, .gst-form select, .gst-form textarea { font-size: 13px; height: 32px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f172a; width: 100%; }
+    .gst-form textarea { height: 60px; }
+    .gst-form label { font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 3px; display: block; }
+    .gst-form .row > div { margin-bottom: 8px; }
+    .gst-scroll { max-height: 60vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .gst-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--z-primary-soft, #fbf4fb); color: var(--z-primary-hover, #631f64); }
+    .gst-pill.warn { background: #fef3c7; color: #92400e; }
+    .gst-pill.muted { background: #f1f5f9; color: #475569; }
+    .gst-muted { color: #64748b; font-size: 12px; }
+    body.dark-mode .gst-card, body.dark-mode .gst-step { background: #0f172a; border-color: #1e293b; }
+    body.dark-mode .gst-step.ok { background: #052e1a; border-color: #14532d; }
+    body.dark-mode .gst-step.todo { background: #2a1f05; border-color: #713f12; }
+    body.dark-mode .gst-head h1, body.dark-mode .gst-card h2, body.dark-mode .gst-step strong { color: #f8fafc; }
+    body.dark-mode .gst-table th { background: #111827; border-color: #1e293b; color: #94a3b8; }
+    body.dark-mode .gst-table td { border-color: #1e293b; color: #e2e8f0; }
+    body.dark-mode .gst-table input, body.dark-mode .gst-table select, body.dark-mode .gst-form input, body.dark-mode .gst-form select, body.dark-mode .gst-form textarea { background: #111827; border-color: #334155; color: #f8fafc; }
+    body.dark-mode .gst-form label { color: #94a3b8; }
+    body.dark-mode .gst-scroll { border-color: #1e293b; }

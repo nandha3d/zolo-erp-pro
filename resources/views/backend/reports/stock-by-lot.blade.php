@@ -12,25 +12,6 @@
     $shown = array_diff_key($quantities, array_flip($zero));
     $oneGodown = $page->pluck('warehouse')->unique()->count() === 1 ? $page->first()->warehouse : null;
 @endphp
-<style>
-/* Same card + dark header as the other Product & Inventory pages (product-workspace.css). */
-#stock-lot-report .lot-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04); padding: 6px 10px; }
-#stock-lot-report .lot-card .table-responsive { border: 0; box-shadow: none; border-radius: 0; }
-#stock-lot-report .lot-filters { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
-#stock-lot-report .lot-filters label { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #64748b; margin: 0 0 2px; }
-#stock-lot-report .lot-filters .form-control { height: 32px; font-size: 13px; padding: 3px 8px; }
-#stock-lot-report .lot-filters .f-date { width: 128px; }
-#stock-lot-report .lot-filters .f-pick { width: 160px; }
-#stock-lot-report .lot-filters .btn { height: 32px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; }
-#stock-lot-report .lot-note { font-size: 11.5px; color: #64748b; margin: 0 0 6px; }
-#stock-lot-report .table { width: 100%; margin: 0; font-size: 13px; }
-#stock-lot-report .table th { white-space: nowrap; vertical-align: middle; position: sticky; top: 0; z-index: 1; }
-#stock-lot-report .table td { white-space: nowrap; vertical-align: middle; }
-#stock-lot-report .table td.lot-product { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
-#stock-lot-report .table td.lot-product small { color: #64748b; margin-left: 4px; }
-#stock-lot-report caption { caption-side: top; padding: 0 0 4px; font-size: 11.5px; color: #64748b; }
-body.dark-mode #stock-lot-report .lot-card { background: #141c2e; border-color: #334155; }
-</style>
 <x-product-command-bar active="stock-by-lot"></x-product-command-bar>
 <section id="stock-lot-report" class="product-workspace-view">
 <div class="lot-card">
@@ -40,7 +21,7 @@ body.dark-mode #stock-lot-report .lot-card { background: #141c2e; border-color: 
         <div><label for="lot-product">Product</label><select id="lot-product" name="product_id" class="form-control f-pick"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected(($filters['product_id'] ?? '') == $product->id)>{{ $product->name }}</option>@endforeach</select></div>
         <div><label for="lot-warehouse">Warehouse / Godown</label><select id="lot-warehouse" name="warehouse_id" class="form-control f-pick"><option value="">All branch warehouses</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected(($filters['warehouse_id'] ?? '') == $warehouse->id)>{{ $warehouse->name }}</option>@endforeach</select></div>
         <div><label for="lot-number">Lot (exact)</label><input id="lot-number" name="lot" maxlength="100" class="form-control f-pick" value="{{ $filters['lot'] ?? '' }}" placeholder="__unbatched__ for no lot"></div>
-        <div class="d-flex" style="gap:6px;"><button class="btn btn-primary">Apply</button><button name="export" value="csv" class="btn btn-outline-primary">Export all</button></div>
+        <div class="d-flex u-gap-6px"><button class="btn btn-primary">Apply</button><button name="export" value="csv" class="btn btn-outline-primary">Export all</button></div>
     </form>
     @if($errors->any())<div class="alert alert-danger py-1 mb-2" role="alert">{{ $errors->first() }}</div>@endif
     <p class="lot-note" title="Historical owned totals are unavailable. Owned now = warehouse now + customer custody now. GDNI is carried accrual value, not independent lot costing; inventory uses item weighted-average valuation.">
@@ -65,3 +46,7 @@ body.dark-mode #stock-lot-report .lot-card { background: #141c2e; border-color: 
 </div>
 </section>
 @endsection
+
+@push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/reports-stock-by-lot.css') }}">
+@endpush

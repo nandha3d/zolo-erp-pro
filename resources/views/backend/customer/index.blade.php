@@ -1,147 +1,6 @@
 @section('virtual-keyboard', '1')
 @extends('backend.layout.main') @section('content')
 
-<link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
-<link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
-
-<style>
-    .customer-workspace-view {
-        padding: 12px 18px 24px;
-        background: #f8fafc;
-        min-height: calc(100vh - 40px);
-    }
-    body.dark-mode .customer-workspace-view {
-        background: #0b0f19;
-    }
-    .kpi-summary-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-bottom: 14px;
-    }
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    }
-    body.dark-mode .kpi-card {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    .kpi-card .kpi-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 2px;
-    }
-    .kpi-card .kpi-number {
-        font-size: 19px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    body.dark-mode .kpi-card .kpi-number {
-        color: #f8fafc;
-    }
-    .desk-card-wrapper {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-        padding: 14px 16px;
-    }
-    body.dark-mode .desk-card-wrapper {
-        background: #141c2e;
-        border-color: #334155;
-    }
-    #customer-table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-    }
-    #customer-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-        font-size: 10.5px !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        padding: 9px 12px !important;
-        border: none !important;
-        white-space: nowrap;
-    }
-    body.dark-mode #customer-table thead th {
-        background: var(--z-table-head-bg, #022051) !important;
-        color: var(--z-table-head-text, #ffffff) !important;
-    }
-    #customer-table tbody tr:nth-child(even) {
-        background: var(--z-table-stripe, #f8fafc);
-    }
-    #customer-table tbody tr:nth-child(odd) {
-        background: var(--z-surface, #ffffff);
-    }
-    body.dark-mode #customer-table tbody tr:nth-child(even) {
-        background: #141c2c;
-    }
-    body.dark-mode #customer-table tbody tr:nth-child(odd) {
-        background: #1e293b;
-    }
-    #customer-table tbody tr:hover {
-        background: #e2e8f0 !important;
-    }
-    body.dark-mode #customer-table tbody tr:hover {
-        background: #27354f !important;
-    }
-    #customer-table td {
-        padding: 9px 12px !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-        vertical-align: middle !important;
-        font-size: 12.5px;
-    }
-    body.dark-mode #customer-table td {
-        border-color: #334155 !important;
-        color: #e2e8f0;
-    }
-    /* DataTables Single-Box Normalization */
-    .dataTables_wrapper .dataTables_length select,
-    .dataTables_wrapper .dataTables_filter input {
-        height: 28px !important;
-        font-size: 12px !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 5px !important;
-        padding: 2px 8px !important;
-        background: #ffffff !important;
-        color: #0f172a !important;
-    }
-    body.dark-mode .dataTables_wrapper .dataTables_length select,
-    body.dark-mode .dataTables_wrapper .dataTables_filter input {
-        background: #0f172a !important;
-        color: #f8fafc !important;
-        border-color: #334155 !important;
-    }
-    .dt-buttons .dt-button {
-        height: 28px !important;
-        line-height: 26px !important;
-        padding: 0 10px !important;
-        font-size: 11.5px !important;
-        border-radius: 5px !important;
-        border: 1px solid #cbd5e1 !important;
-        background: #ffffff !important;
-        color: #334155 !important;
-        margin-right: 4px !important;
-    }
-    body.dark-mode .dt-buttons .dt-button {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-color: #475569 !important;
-    }
-</style>
 
 <x-success-message key="create_message" />
 <x-success-message key="edit_message" />
@@ -163,12 +22,12 @@
     </ul>
     <div class="comm-actions">
         @can('customers-add')
-            <a href="{{route('customer.create')}}" class="btn btn-primary py-1 px-3" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e); font-size:11.5px; border-radius:4px;">
+            <a href="{{route('customer.create')}}" class="btn btn-primary py-1 px-3 u-bg-primary u-bc-primary u-fs-11_5px u-r-4px">
                 <i class="dripicons-plus"></i> {{__('db.Add Customer')}}
             </a>
         @endcan
         @can('customers-import')
-            <a href="#" data-toggle="modal" data-target="#importCustomer" class="btn btn-outline-secondary py-1 px-3" style="font-size:11.5px; border-radius:4px;">
+            <a href="#" data-toggle="modal" data-target="#importCustomer" class="btn btn-outline-secondary py-1 px-3 u-fs-11_5px u-r-4px">
                 <i class="dripicons-upload"></i> {{__('db.Import Customer')}}
             </a>
         @endcan
@@ -189,26 +48,26 @@
                 <div class="kpi-label">Total Active Customers</div>
                 <div class="kpi-number">{{ $totalCustCount }}</div>
             </div>
-            <div style="background:var(--z-primary-soft, #fbf4fb); color:var(--z-primary, #7d287e); width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                <i class="dripicons-user-group" style="font-size:18px;"></i>
+            <div class="u-bg-primary-soft u-c-primary u-w-38px u-h-38px u-r-6px u-d-flex u-items-center u-justify-center">
+                <i class="dripicons-user-group u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">Customer Deposits Balance</div>
-                <div class="kpi-number" style="color:#0284c7;">₹ {{ number_format($totalDepositSum, 2) }}</div>
+                <div class="kpi-number u-c-info">₹ {{ number_format($totalDepositSum, 2) }}</div>
             </div>
-            <div style="background:#e0f2fe; color:#0284c7; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                <i class="fa fa-money" style="font-size:18px;"></i>
+            <div class="u-bg-info-soft u-c-info u-w-38px u-h-38px u-r-6px u-d-flex u-items-center u-justify-center">
+                <i class="fa fa-money u-fs-18px"></i>
             </div>
         </div>
         <div class="kpi-card">
             <div>
                 <div class="kpi-label">Reward Points Balance</div>
-                <div class="kpi-number" style="color:#d97706;">{{ number_format($totalPointsSum, 0) }} pts</div>
+                <div class="kpi-number u-c-warning">{{ number_format($totalPointsSum, 0) }} pts</div>
             </div>
-            <div style="background:#fef3c7; color:#d97706; width:38px; height:38px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                <i class="dripicons-trophy" style="font-size:18px;"></i>
+            <div class="u-bg-warning-soft u-c-warning u-w-38px u-h-38px u-r-6px u-d-flex u-items-center u-justify-center">
+                <i class="dripicons-trophy u-fs-18px"></i>
             </div>
         </div>
     </div>
@@ -216,10 +75,10 @@
     <!-- Desk Table Card -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="customer-table" class="table customer-list" style="width: 100%">
+            <table id="customer-table" class="table customer-list u-w-100pct">
                 <thead>
                     <tr>
-                        <th class="not-exported" style="width:30px;"></th>
+                        <th class="not-exported u-w-30px"></th>
                         <th>{{__('db.Customer Group')}}</th>
                         <th>{{__('db.Customer Details')}}</th>
                         <th>{{__('db.Discount Plan')}}</th>
@@ -229,7 +88,7 @@
                         @foreach($custom_fields as $fieldName)
                         <th>{{$fieldName}}</th>
                         @endforeach
-                        <th class="not-exported" style="width:100px; text-align:center;">{{__('db.action')}}</th>
+                        <th class="not-exported u-w-100px u-ta-center">{{__('db.action')}}</th>
                     </tr>
                 </thead>
             </table>
@@ -247,7 +106,7 @@
         </div>
         <div class="modal-body">
           <p class="italic text-muted"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-           <p style="font-size:12px; color:#64748b;">{{__('db.The correct column order is')}} (customer_group*, name*, company_name, email, phone_number*, address*, city*, state, postal_code, country, deposit) {{__('db.and you must follow this')}}.</p>
+           <p class="u-fs-12px u-c-text-muted">{{__('db.The correct column order is')}} (customer_group*, name*, company_name, email, phone_number*, address*, city*, state, postal_code, country, deposit) {{__('db.and you must follow this')}}.</p>
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -262,7 +121,7 @@
                     </div>
                 </div>
             </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block u-bg-primary u-bc-primary" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
@@ -325,7 +184,7 @@
                     <textarea name="payment_note" rows="2" class="form-control"></textarea>
                 </div>
             </div>
-            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
+            <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block u-bg-primary u-bc-primary" id="submit-button">
         </div>
         {!! Form::close() !!}
       </div>
@@ -351,7 +210,7 @@
                         <label>{{__('db.Note')}}</label>
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
-                    <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);" id="submit-button">
+                    <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary btn-block u-bg-primary u-bc-primary" id="submit-button">
                 {!! Form::close() !!}
             </div>
         </div>
@@ -403,7 +262,7 @@
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
                     <input type="hidden" name="deposit_id">
-                    <button type="submit" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{__('db.update')}}</button>
+                    <button type="submit" class="btn btn-primary btn-block u-bg-primary u-bc-primary">{{__('db.update')}}</button>
                 {{ Form::close() }}
             </div>
         </div>
@@ -457,7 +316,7 @@
                         <textarea name="note" rows="3" class="form-control"></textarea>
                     </div>
                     <input type="hidden" name="point_id">
-                    <button type="submit" class="btn btn-primary btn-block" style="background:var(--z-primary, #7d287e); border-color:var(--z-primary, #7d287e);">{{__('db.update')}}</button>
+                    <button type="submit" class="btn btn-primary btn-block u-bg-primary u-bc-primary">{{__('db.update')}}</button>
                 {{ Form::close() }}
             </div>
         </div>
@@ -692,7 +551,7 @@
                             });
                             dt.draw(false);
                             $('section .alert').remove();
-                            var alertHtml = '<div class="alert alert-success alert-dismissible text-center fade show" role="alert" style="margin: 15px 0;">' +
+                            var alertHtml = '<div class="alert alert-success alert-dismissible text-center fade show u-m-15px-0" role="alert">' +
                                 '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
                                 '<i class="dripicons-checkmark mr-1"></i> ' + (data || 'Customer deleted successfully!') +
                                 '</div>';
@@ -775,4 +634,11 @@
   if(all_permission.indexOf("customers-delete") == -1)
         $('.buttons-delete').addClass('d-none');
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/customer-index.css') }}">
 @endpush

@@ -5,25 +5,7 @@
     $registration = $registrations->whereNull('effective_to')->first();
     $quarantine = $warehouses->where('is_quarantine', true);
 @endphp
-<style>
-    /* Everything on one screen: three columns of cards over a full-width stock-loss strip. */
-    .tax-settings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .tax-settings .cx-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-    .tax-settings .cx-wide { grid-column: 1 / -1; }
-    .tax-settings .cx-card { padding: 10px 12px; }
-    .tax-settings .cx-card h2 { margin-bottom: 6px; }
-    .tax-settings .cx-card > p { margin-bottom: 6px; font-size: 11.5px; }
-    .tax-settings .cx-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
-    .tax-settings .cx-form input:not([type=checkbox]):not([type=hidden]), .tax-settings .cx-form select { height: 30px; }
-    .tax-settings .cx-inline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
-    .tax-settings .cx-list { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
-    .tax-settings .cx-kv { grid-template-columns: auto 1fr auto 1fr; font-size: 12px; }
-    .tax-settings .loss-form { grid-template-columns: 130px minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.4fr) 100px minmax(0, 1fr) 110px minmax(0, 2fr) auto; }
-    @media (max-width: 1199px) {
-        .tax-settings { grid-template-columns: 1fr 1fr; }
-        .tax-settings .loss-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
-</style>
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/compliance-setup.css') }}">
 
 <div class="tax-settings">
     <div class="cx-col">
@@ -44,7 +26,7 @@
         <section class="cx-card">
             <h2><i class="dripicons-search"></i> Verify a GSTIN</h2>
             <form id="gst-lookup-form" class="cx-inline">
-                <div class="cx-field"><label for="lookup-gstin">Party GSTIN</label><input id="lookup-gstin" name="gstin" required minlength="15" maxlength="15" class="text-uppercase" placeholder="15-character GSTIN" style="width:100%;height:30px;font-size:13px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px"></div>
+                <div class="cx-field"><label for="lookup-gstin">Party GSTIN</label><input id="lookup-gstin" name="gstin" required minlength="15" maxlength="15" class="text-uppercase u-w-100pct u-h-30px u-fs-13px u-p-4px-8px u-b-1px-solid-border-strong u-r-6px" placeholder="15-character GSTIN"></div>
                 <button type="submit" class="cx-btn">Check</button>
             </form>
             <p id="gst-lookup-result" class="cx-help mt-1 mb-0" role="status" aria-live="polite">Shows registration status only; nothing is saved.</p>
@@ -69,7 +51,7 @@
             <ul class="cx-list">@forelse($quarantine as $w)<li><span class="cx-pill ok">{{ $w->name }}</span></li>@empty<li><span class="cx-pill warn">None yet</span></li>@endforelse</ul>
             <form method="POST" action="{{ url('/compliance/setup/quarantine') }}" class="cx-inline">@csrf
                 <div class="cx-field"><label for="quarantine-warehouse">Expired / damaged returns go to</label>
-                    <select id="quarantine-warehouse" name="warehouse_id" style="width:100%;height:30px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px">@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}">{{ $warehouse->name }}{{ $warehouse->is_quarantine ? ' · Quarantine' : '' }}</option>@endforeach</select></div>
+                    <select id="quarantine-warehouse" name="warehouse_id" class="u-w-100pct u-h-30px u-fs-13px u-b-1px-solid-border-strong u-r-6px">@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}">{{ $warehouse->name }}{{ $warehouse->is_quarantine ? ' · Quarantine' : '' }}</option>@endforeach</select></div>
                 <button type="submit" class="cx-btn">Mark</button>
             </form>
         </section>

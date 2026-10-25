@@ -1,0 +1,9 @@
+/* Page styles for: backend/sale/create.blade.php, backend/sale/edit.blade.php (moved from inline <style>). */
+    @media print {
+        .hidden-print {
+            display: none !important;
+        }
+    }
+    #product-results-container{background:#f5f6f7;position: absolute;overflow: hidden;max-height: 300px;overflow-y: auto;padding-top: 10px;top:40px;width:100%;z-index:999}
+    #product-results-container .product-img{border-radius: 3px; color: var(--z-primary, #7d287e);font-size:13px;padding-top:7px;padding-bottom:7px;text-align:left}
+    #product-results-container .product-img:hover{background-color: var(--z-primary, #7d287e);color: #FFF}
