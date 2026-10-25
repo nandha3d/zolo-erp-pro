@@ -174,9 +174,9 @@
         font-size: 11px !important;
         padding: 0 10px !important;
         border-radius: 4px !important;
-        border: 1px solid #cbd5e1 !important;
-        background: #ffffff !important;
-        color: #334155 !important;
+        border: 1px solid var(--zb-border) !important;
+        background: var(--zb-bg) !important;
+        color: var(--zb-fg) !important;
         font-weight: 600 !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -184,13 +184,13 @@
         box-shadow: 0 1px 2px rgba(15,23,42,0.04) !important;
     }
     body.dark-mode .btn-action-pill {
-        background: #1e293b !important;
-        color: #f8fafc !important;
-        border-color: #475569 !important;
+        background: var(--zb-bg) !important;
+        color: var(--zb-fg) !important;
+        border-color: var(--zb-border) !important;
     }
     .btn-action-pill:hover {
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
+        background: var(--zb-bg) !important;
+        color: var(--zb-fg) !important;
     }
     /* DataTables Single-Box Normalization */
     .dataTables_wrapper .dataTables_length select,

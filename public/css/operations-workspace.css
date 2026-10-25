@@ -371,18 +371,18 @@ body.jw-zero-scroll-body .ops-workspace-view,
     padding: 2px 8px !important;
     font-size: 11px !important;
     font-weight: 600 !important;
-    color: var(--z-primary) !important;
-    background: var(--z-primary-soft) !important;
-    border: 1px solid var(--z-primary-border) !important;
+    color: var(--zb-fg) !important;
+    background: var(--zb-bg) !important;
+    border: 1px solid var(--zb-border) !important;
     border-radius: 5px !important;
     text-decoration: none !important;
     transition: all 0.15s ease-in-out !important;
 }
 
 .btn-jw-open:hover {
-    background: var(--z-primary) !important;
-    color: #ffffff !important;
-    border-color: var(--z-primary) !important;
+    background: var(--zb-bg) !important;
+    color: var(--zb-fg) !important;
+    border-color: var(--zb-border) !important;
     transform: translateX(1px);
     text-decoration: none !important;
 }
@@ -527,8 +527,8 @@ body.jw-zero-scroll-body .ops-workspace-view,
 }
 
 .ops-form-compact .btn-ops-submit {
-    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%);
-    color: #ffffff;
+    background: var(--zb-bg);
+    color: var(--zb-fg);
     font-weight: 700;
     border: none;
     border-radius: 6px;
@@ -620,8 +620,8 @@ body.dark-mode .ops-kpi-icon.kpi-cyan { background: #082f49 !important; color: #
 body.dark-mode .ops-quick-pills { background: #0b0f19 !important; }
 body.dark-mode .ops-quick-pills .nav-link { color: #94a3b8 !important; }
 body.dark-mode .ops-quick-pills .nav-link.active { background: #1e293b !important; color: var(--z-primary-text) !important; }
-body.dark-mode .btn-jw-open { background: var(--z-primary-soft) !important; color: var(--z-primary-text) !important; border-color: var(--z-primary-hover) !important; }
-body.dark-mode .btn-jw-open:hover { background: var(--z-primary) !important; color: #ffffff !important; }
+body.dark-mode .btn-jw-open { background: var(--zb-bg) !important; color: var(--zb-fg) !important; border-color: var(--zb-border) !important; }
+body.dark-mode .btn-jw-open:hover { background: var(--zb-bg) !important; color: var(--zb-fg) !important; }
 
 /* Dark mode right-side action card theme */
 body.dark-mode .ops-action-subcard,
@@ -694,7 +694,7 @@ body.dark-mode .ops-grid-2col > .ops-subcard:last-child .ops-form-compact textar
 }
 body.dark-mode .ops-action-subcard .btn-ops-submit,
 body.dark-mode .ops-grid-2col > .ops-subcard:last-child .btn-ops-submit {
-    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%) !important;
+    background: var(--zb-bg) !important;
     box-shadow: 0 2px 6px rgb(var(--z-primary-rgb) / 0.3) !important;
 }
 body.dark-mode .ops-action-subcard .btn-ops-submit:hover,
@@ -1006,10 +1006,10 @@ body.dark-mode .ops-grid-2col > .ops-subcard:last-child .btn-ops-submit:hover {
 
 .jw-seg-btn {
     border: none;
-    background: transparent;
+    background: var(--zb-bg);
     font-size: 12.5px;
     font-weight: 600;
-    color: #475569;
+    color: var(--zb-fg);
     padding: 5px 14px;
     border-radius: 6px;
     cursor: pointer;
@@ -1020,13 +1020,13 @@ body.dark-mode .ops-grid-2col > .ops-subcard:last-child .btn-ops-submit:hover {
 }
 
 .jw-seg-btn:hover {
-    color: #0f172a;
-    background: #f1f5f9;
+    color: var(--zb-fg);
+    background: var(--zb-bg);
 }
 
 .jw-seg-btn.active {
-    background: var(--z-primary) !important;
-    color: #ffffff !important;
+    background: var(--zb-bg) !important;
+    color: var(--zb-fg) !important;
     box-shadow: 0 2px 4px rgb(var(--z-primary-rgb) / 0.2);
 }
 
@@ -1054,9 +1054,9 @@ body.dark-mode .ops-grid-2col > .ops-subcard:last-child .btn-ops-submit:hover {
 }
 
 .jw-toolbar-actions .jw-action-btn {
-    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary) 100%);
+    background: var(--zb-bg);
     border: none;
-    color: #ffffff;
+    color: var(--zb-fg);
     font-weight: 700;
     padding: 6px 14px;
     font-size: 12.5px;
@@ -1489,12 +1489,12 @@ body.dark-mode .jw-pipeline-stepper li.done {
 }
 
 body.dark-mode .jw-seg-btn {
-    color: #94a3b8;
+    color: var(--zb-fg);
 }
 
 body.dark-mode .jw-seg-btn:hover {
-    background: #1e293b;
-    color: #f8fafc;
+    background: var(--zb-bg);
+    color: var(--zb-fg);
 }
 
 body.dark-mode .jw-register.ops-table thead th {

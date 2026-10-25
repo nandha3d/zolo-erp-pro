@@ -54,11 +54,11 @@
     .cx-form .bootstrap-select { width: 100% !important; }
     .cx-form .bootstrap-select > .dropdown-toggle { height: 32px; font-size: 13px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
     .cx-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
-    .cx-btn { height: 32px; padding: 0 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--z-primary, #7d287e); background: var(--z-primary, #7d287e); color: #fff; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; text-decoration: none; cursor: pointer; }
-    .cx-btn:hover { background: var(--z-primary-hover, #631f64); color: #fff; text-decoration: none; }
-    .cx-btn.ghost { background: #fff; color: var(--z-primary-hover, #631f64); border-color: var(--z-primary-text, #7d287e); }
-    .cx-btn.ghost:hover { background: var(--z-primary-soft, #fbf4fb); color: var(--z-primary-hover, #631f64); }
-    .cx-btn.danger { background: #b91c1c; border-color: #b91c1c; }
+    .cx-btn { height: 32px; padding: 0 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; border: 1px solid var(--zb-border); background: var(--zb-bg); color: var(--zb-fg); display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; text-decoration: none; cursor: pointer; }
+    .cx-btn:hover { background: var(--zb-bg); color: var(--zb-fg); text-decoration: none; }
+    .cx-btn.ghost { background: var(--zb-bg); color: var(--zb-fg); border-color: var(--zb-border); }
+    .cx-btn.ghost:hover { background: var(--zb-bg); color: var(--zb-fg); }
+    .cx-btn.danger { background: var(--zb-bg); border-color: var(--zb-border); }
     .cx-kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12.5px; margin: 0; }
     .cx-kv dt { color: #64748b; font-weight: 500; }
     .cx-kv dd { margin: 0; color: #0f172a; font-weight: 600; overflow-wrap: anywhere; }

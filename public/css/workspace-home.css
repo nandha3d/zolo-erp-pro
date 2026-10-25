@@ -97,8 +97,8 @@ body.dark-mode .zw { --ind: #94a3b8; --ind-fmcg: #34d399; --ind-textile: #a78bfa
 .zw-company-fields { display: flex; gap: 8px; align-items: center; }
 .zw-company-fields select { flex: 1 1 0; min-width: 0; height: 32px; font-size: 12.5px; }
 .zw-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; margin: 0 0 0 auto; padding: 0 14px; border: 0; border-radius: var(--neo-radius-md);
-  background: var(--neo-primary); color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background .15s; }
-.zw-btn:hover { background: var(--neo-primary-hover); }
+  background: var(--zb-bg); color: var(--zb-fg); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background .15s; }
+.zw-btn:hover { background: var(--zb-bg); }
 .zw-current, .zw-note { align-self: flex-start; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
 .zw-current { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
 .zw-note { background: var(--neo-warning-light); color: var(--neo-warning); }

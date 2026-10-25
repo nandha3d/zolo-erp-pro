@@ -460,9 +460,36 @@ html body .btn-delete-row { --zb-bg: transparent; --zb-fg: var(--z-danger); --zb
 html body .btn-delete-row:hover { --zb-bg: var(--z-danger-soft); --zb-fg: var(--z-danger); --zb-border: var(--z-danger-border); }
 /* Selected item in a segmented group or tab strip: filled primary */
 html body :is(.btn-grid-action, .density-btn, .segment-btn, .jw-seg-btn, .side-tab-btn, .desk-tab-btn, .btn-mode-split,
-  .btn-action-pill, .cp-btn, .page-nav-btn, .side-tool-btn, .side-icon-btn):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
+  .btn-action, .btn-jw-open, .btn-action-pill, .btn-charges-remarks, .btn-control-ghost, .btn-desk-action, .btn-footer-action,
+  .btn-print-note, .btn-exchange-note, .comm-items-btn, .comm-nav-btn-secondary, .cp-btn, .side-action-btn, .side-icon-btn,
+  .side-tool-btn, .zolo-btn-secondary, .zolo-quick-btn, .page-nav-btn, .btn-outline, .btn-edit-row):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
   --zb-bg: var(--z-primary); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary);
 }
 
 /* ---------- Chart canvas (not !important: Chart.js sizes the canvas inline at runtime) ---------- */
 html body .z-chart-canvas { max-height: 180px; width: 100%; display: block; }
+/* Modifier variants of custom buttons keep their meaning */
+html body .zolo-quick-btn.primary { --zb-bg: var(--z-primary); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary); }
+html body .zolo-quick-btn.primary:hover { --zb-bg: var(--z-primary-hover); --zb-fg: var(--z-primary-contrast); --zb-border: var(--z-primary-hover); }
+html body .cx-btn.ghost { --zb-bg: var(--z-surface); --zb-fg: var(--z-text); --zb-border: var(--z-border-strong); }
+html body .cx-btn.ghost:hover { --zb-bg: var(--z-primary-soft); --zb-fg: var(--z-primary-text); --zb-border: var(--z-primary-border); }
+html body .cx-btn.danger { --zb-bg: var(--z-danger-solid); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid); }
+html body .cx-btn.danger:hover { --zb-bg: var(--z-danger-solid-hover); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid-hover); }
+html body .side-action-btn.reverse { --zb-bg: var(--z-surface); --zb-fg: var(--z-danger); --zb-border: var(--z-danger-border); }
+html body .side-action-btn.reverse:hover { --zb-bg: var(--z-danger-solid); --zb-fg: #ffffff; --zb-border: var(--z-danger-solid); }
+
+/* ---------- Dark mode: Bootstrap colour utilities and raw fields follow the tokens ---------- */
+body.dark-mode .text-dark,
+body.dark-mode .text-body,
+body.dark-mode .text-black { color: var(--z-text) !important; }
+body.dark-mode .text-secondary { color: var(--z-text-2) !important; }
+body.dark-mode .text-muted { color: var(--z-text-muted) !important; }
+body.dark-mode .bg-white { background-color: var(--z-surface) !important; }
+body.dark-mode .bg-light { background-color: var(--z-surface-2) !important; }
+body.dark-mode .border-light { border-color: var(--z-border) !important; }
+body.dark-mode :is(input:not([type]), input[type="text"], input[type="number"], input[type="email"], input[type="search"],
+  input[type="tel"], input[type="date"], input[type="password"], select, textarea):not(.form-control) {
+  background-color: var(--z-field-bg);
+  border-color: var(--z-field-border);
+  color: var(--z-field-text);
+}

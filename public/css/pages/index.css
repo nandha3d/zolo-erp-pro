@@ -161,27 +161,27 @@
   border-radius: 8px !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  border: 1px solid var(--neo-border) !important;
-  background: var(--neo-surface-card) !important;
-  color: var(--neo-text-primary) !important;
+  border: 1px solid var(--zb-border) !important;
+  background: var(--zb-bg) !important;
+  color: var(--zb-fg) !important;
   text-decoration: none !important;
   transition: all 0.2s ease !important;
 }
 .zolo-quick-btn:hover {
-  background: var(--neo-primary-light) !important;
-  color: var(--neo-primary) !important;
-  border-color: var(--neo-primary) !important;
+  background: var(--zb-bg) !important;
+  color: var(--zb-fg) !important;
+  border-color: var(--zb-border) !important;
   transform: translateY(-1px);
 }
 .zolo-quick-btn.primary {
-  background: var(--neo-primary-gradient) !important;
-  color: #ffffff !important;
+  background: var(--zb-bg) !important;
+  color: var(--zb-fg) !important;
   border: none !important;
   box-shadow: var(--neo-shadow-sm) !important;
 }
 .zolo-quick-btn.primary:hover {
   box-shadow: var(--neo-shadow-glow) !important;
-  color: #ffffff !important;
+  color: var(--zb-fg) !important;
 }
 
 /* Addon Pulse Cards */

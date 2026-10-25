@@ -120,35 +120,35 @@
             border: 1px solid transparent;
         }
         .btn-proceed {
-            background: var(--primary);
-            color: #ffffff;
+            background: var(--zb-bg);
+            color: var(--zb-fg);
             box-shadow: 0 2px 4px rgb(var(--z-primary-rgb, 125 40 126) / 0.25);
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
             white-space: nowrap;
         }
         .btn-proceed:hover {
-            background: var(--primary-hover);
+            background: var(--zb-bg);
             transform: translateY(-1px);
             box-shadow: 0 4px 10px rgb(var(--z-primary-rgb, 125 40 126) / 0.35);
-            color: #ffffff;
+            color: var(--zb-fg);
         }
         .btn-create {
-            background: var(--primary);
-            color: #ffffff;
+            background: var(--zb-bg);
+            color: var(--zb-fg);
             margin-top: 1.25rem;
         }
         .btn-create:hover {
-            background: var(--primary-hover);
+            background: var(--zb-bg);
         }
         .btn-outline {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
+            background: var(--zb-bg);
+            color: var(--zb-fg);
+            border: 1px solid var(--zb-border);
         }
         .btn-outline:hover {
-            background: #f1f5f9;
-            color: var(--text-dark);
+            background: var(--zb-bg);
+            color: var(--zb-fg);
         }
         /* Alerts */
         .alert-status {

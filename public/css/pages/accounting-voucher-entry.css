@@ -124,12 +124,12 @@
         font-size: 12px;
         font-weight: bold;
         line-height: 1;
-        background: #0f766e;
-        color: white;
+        background: var(--zb-bg);
+        color: var(--zb-fg);
         border: none;
         border-radius: 3px;
     }
     .inline-add-btn:hover {
-        background: #115e59;
-        color: white;
+        background: var(--zb-bg);
+        color: var(--zb-fg);
     }
