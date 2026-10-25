@@ -175,7 +175,7 @@
             <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
         </div>
         <div class="cp-dialog-columns">
-            <div class="cp-col">
+            <div class="cp-col cp-col-identity">
                 <span class="cp-col-title">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                     Business Identity
@@ -192,7 +192,7 @@
                 </div>
             </div>
 
-            <div class="cp-col">
+            <div class="cp-col cp-col-address">
                 <span class="cp-col-title">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                     Address &amp; Contact
@@ -213,7 +213,7 @@
                 <label>Website<input type="text" name="website" maxlength="191"></label>
             </div>
 
-            <div class="cp-col">
+            <div class="cp-col cp-col-compliance">
                 <span class="cp-col-title">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Tax &amp; Currency
@@ -311,7 +311,7 @@
             <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
         </div>
         <div class="cp-dialog-columns">
-            <div class="cp-col">
+            <div class="cp-col cp-col-identity">
                 <span class="cp-col-title">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                     Business Identity
@@ -334,7 +334,7 @@
                 </div>
             </div>
 
-            <div class="cp-col">
+            <div class="cp-col cp-col-address">
                 <span class="cp-col-title">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                     Address &amp; Contact
@@ -355,7 +355,7 @@
                 <label>Website<input type="text" name="website" maxlength="191" value="{{ old('website') }}"></label>
             </div>
 
-            <div class="cp-col">
+            <div class="cp-col cp-col-compliance">
                 <span class="cp-col-title">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     Tax &amp; Compliance

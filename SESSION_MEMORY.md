@@ -1715,3 +1715,32 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
     - `new_company_dialog_light_1792909953736.png` & `new_company_dialog_1792909427607.png`: Confirmed 3-column layout, distinct section box background, zero dual scrollbars, single-screen fit, and close button.
     - `add_product_form_light_1792909965097.png` & `product_create_form_verified_1792909888566.png`: Confirmed unified dropdowns, single clean chevron, and horizontally attached input-group buttons.
 
+---
+
+## 76. Spacious Dialog Height, Color Differentiated Section Boxes & Anti-Penetration Guard (2026-10-25)
+- **Spacious Layout & Increased Control Height:**
+  - Expanded `.cp-dialog-wide` to `min(1280px, calc(100vw - 32px))` with `padding: 24px 28px` and `gap: 18px`.
+  - Increased input and select height to 34px (`height: 34px !important; min-height: 34px !important; line-height: 32px !important; font-size: 12px !important`).
+  - Increased Address textarea height to 56px (`height: 56px !important; min-height: 56px !important`).
+  - Increased `.cp-col` internal padding to `16px 18px` with `gap: 10px` between field rows and comfortable label vertical margins.
+- **Zero Field Penetration & Boundary Containment:**
+  - Diagnosed that native `<select>` (with long Indian state names) and `<input type="file">` had intrinsic min-content widths causing grid columns to overflow past their bounding boxes.
+  - Standardized `.cp-row-2` to `grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 12px !important; width: 100% !important`.
+  - Added `min-width: 0 !important; max-width: 100% !important; width: 100% !important; box-sizing: border-box !important` across all dialog labels, inputs, selects, and textareas.
+  - Constrained `<input type="file">` with `overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;` and dedicated `::file-selector-button` styling. Both `State` and `Logo` are now 100% contained within their respective boxes.
+- **Color Differentiation for Section Boxes:**
+  - **Box 1 (Business Identity):**
+    - Light Mode: Cool Indigo/Blue tint `#f1f6fe`, border `#cce0fc`, royal blue title `#2563eb`.
+    - Dark Mode: Deep Midnight Blue `#0f1c3a`, border `rgba(59, 130, 246, 0.32)`, sky blue title `#60a5fa`.
+  - **Box 2 (Address & Contact):**
+    - Light Mode: Fresh Emerald/Mint tint `#f0faf5`, border `#bfead4`, emerald title `#059669`.
+    - Dark Mode: Dark Pine Emerald `#0b2622`, border `rgba(168, 85, 129, 0.32)`, radiant mint title `#34d399`.
+  - **Box 3 (Tax & Compliance / Books):**
+    - Light Mode: Royal Violet/Amethyst tint `#faf4ff`, border `#e5d3fd`, violet title `#7c3aed`.
+    - Dark Mode: Deep Royal Amethyst `#22163d`, border `rgba(168, 85, 247, 0.32)`, radiant amethyst title `#c084fc`.
+  - Integrated into reusable component architecture via `resources/views/components/ui/section-box.blade.php` with `variant="identity|address|compliance"`.
+- **Verification:**
+  - Automated PHPUnit suites green: 19/19 passing (124 assertions).
+  - Browser visual validation: `new_company_dialog_light_spacious_1792910455456.png` (Light) and `new_company_dialog_dark_spacious_1792910496384.png` (Dark).
+
+

@@ -3,9 +3,19 @@
     'subtitle' => null,
     'icon' => null,
     'actions' => null,
+    'variant' => 'default', // default, blue/identity, emerald/address, purple/compliance
 ])
 
-<div {{ $attributes->merge(['class' => 'zolo-section-box']) }}>
+@php
+    $variantClass = match($variant) {
+        'identity', 'blue' => 'zolo-section-box-blue cp-col-identity',
+        'address', 'emerald', 'green' => 'zolo-section-box-emerald cp-col-address',
+        'compliance', 'purple', 'violet' => 'zolo-section-box-purple cp-col-compliance',
+        default => '',
+    };
+@endphp
+
+<div {{ $attributes->merge(['class' => "zolo-section-box $variantClass"]) }}>
     @if($title || $icon || $actions)
         <div class="zolo-section-box-header d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-2">

@@ -147,25 +147,27 @@ body.dark-mode .cp-dialog {
 }
 
 .cp-dialog-wide {
-  width: min(1160px, calc(100vw - 32px)) !important;
-  max-width: 1160px !important;
+  width: min(1280px, calc(100vw - 32px)) !important;
+  max-width: 1280px !important;
 }
 
 .cp-dialog::backdrop {
-  background: rgba(10, 15, 28, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 15, 28, 0.7);
+  backdrop-filter: blur(5px);
 }
 
 .cp-dialog form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 18px 22px;
   margin: 0;
   box-sizing: border-box;
 }
 
 .cp-dialog-wide form {
+  padding: 24px 28px !important;
+  gap: 16px !important;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   overflow-x: hidden;
@@ -257,48 +259,112 @@ body.dark-mode .cp-dialog-close:hover {
    3-COLUMN SECTION BOX GRID FOR WIDE DIALOGS
    Sectionized with distinct light background color
    ==================================================================== */
+/* ====================================================================
+   3-COLUMN SECTION BOX GRID FOR WIDE DIALOGS
+   Spacious, Height Increased, Color Differentiated, Zero Field Penetration
+   ==================================================================== */
 .cp-dialog-columns {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  align-items: stretch;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .cp-col {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background-color: var(--neo-bg, #f8fafc) !important;
-  border: 1px solid var(--neo-border, #e2e8f0) !important;
-  border-radius: 10px;
-  padding: 10px 12px;
-  box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  border-radius: 12px !important;
+  padding: 16px 18px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  min-width: 0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.2s ease !important;
 }
 
-body.dark-mode .cp-col {
-  background-color: #141c2e !important;
-  border-color: #1e293b !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+/* --- Color Differentiation per Box --- */
+
+/* 1. Business Identity - Cool Indigo / Blue Tint */
+.cp-col-identity {
+  background: #f1f6fe !important;
+  border: 1px solid #cce0fc !important;
 }
 
+.cp-col-identity .cp-col-title {
+  color: #2563eb !important;
+  border-bottom-color: #dbe8fd !important;
+}
+
+body.dark-mode .cp-col-identity {
+  background: #0f1c3a !important;
+  border-color: rgba(59, 130, 246, 0.32) !important;
+  box-shadow: 0 2px 10px rgba(15, 29, 56, 0.5) !important;
+}
+
+body.dark-mode .cp-col-identity .cp-col-title {
+  color: #60a5fa !important;
+  border-bottom-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+/* 2. Address & Contact - Fresh Emerald / Mint Tint */
+.cp-col-address {
+  background: #f0faf5 !important;
+  border: 1px solid #bfead4 !important;
+}
+
+.cp-col-address .cp-col-title {
+  color: #059669 !important;
+  border-bottom-color: #d0f3e3 !important;
+}
+
+body.dark-mode .cp-col-address {
+  background: #0b2622 !important;
+  border-color: rgba(16, 185, 129, 0.32) !important;
+  box-shadow: 0 2px 10px rgba(12, 38, 34, 0.5) !important;
+}
+
+body.dark-mode .cp-col-address .cp-col-title {
+  color: #34d399 !important;
+  border-bottom-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+/* 3. Tax & Compliance + Books - Royal Violet / Amethyst Tint */
+.cp-col-compliance {
+  background: #faf4ff !important;
+  border: 1px solid #e5d3fd !important;
+}
+
+.cp-col-compliance .cp-col-title {
+  color: #7c3aed !important;
+  border-bottom-color: #eedcff !important;
+}
+
+body.dark-mode .cp-col-compliance {
+  background: #22163d !important;
+  border-color: rgba(168, 85, 247, 0.32) !important;
+  box-shadow: 0 2px 10px rgba(33, 22, 58, 0.5) !important;
+}
+
+body.dark-mode .cp-col-compliance .cp-col-title {
+  color: #c084fc !important;
+  border-bottom-color: rgba(168, 85, 247, 0.25) !important;
+}
+
+/* Section Header Titles */
 .cp-col-title {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  color: #4f46e5;
-  margin-bottom: 2px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--neo-border, #e2e8f0);
-}
-
-body.dark-mode .cp-col-title {
-  color: #818cf8;
-  border-bottom-color: #1e293b;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 2px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1.5px solid var(--neo-border, #e2e8f0);
 }
 
 .cp-col-title svg {
@@ -306,40 +372,58 @@ body.dark-mode .cp-col-title {
   flex-shrink: 0;
 }
 
+/* 2-Column Row with Zero Overlap Guarantee */
 .cp-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
+.cp-row-2 > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Labels with Comfortable Vertical Spacing */
 .cp-dialog label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--neo-text-secondary);
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: var(--neo-text-secondary, #475569) !important;
   margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 body.dark-mode .cp-dialog label {
-  color: #94a3b8;
+  color: #94a3b8 !important;
 }
 
-/* Inputs & Selects inside Dialog - Template Based */
+/* Increased Height Inputs & Selects - Clean & Confined */
 .cp-dialog input:not([type=checkbox]),
 .cp-dialog select {
-  height: 28px !important;
-  min-height: 28px !important;
-  padding: 0 8px !important;
-  font-size: 11.5px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  line-height: 32px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
   font-weight: 500 !important;
   border: 1px solid var(--neo-border, #cbd5e1) !important;
-  border-radius: 5px !important;
+  border-radius: 6px !important;
   background-color: #ffffff !important;
   color: #0f172a !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
 }
 
 body.dark-mode .cp-dialog input:not([type=checkbox]),
@@ -354,35 +438,76 @@ body.dark-mode .cp-dialog select {
 .cp-dialog textarea:focus {
   border-color: #6366f1 !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.22) !important;
 }
 
+/* Spacious Address Textarea */
 .cp-dialog textarea {
-  min-height: 44px;
-  height: 44px;
-  padding: 4px 8px;
-  font: inherit;
-  font-size: 11.5px;
-  resize: none;
-  border: 1px solid var(--neo-border, #cbd5e1);
-  border-radius: 5px;
-  background-color: #ffffff;
-  color: #0f172a;
-  box-sizing: border-box;
+  min-height: 56px !important;
+  height: 56px !important;
+  padding: 7px 10px !important;
+  font: inherit !important;
+  font-size: 12px !important;
+  resize: none !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 body.dark-mode .cp-dialog textarea {
-  background-color: #0f172a;
-  border-color: #334155;
-  color: #f8fafc;
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
 }
 
+/* Logo File Input - Strictly Confined, Never Penetrates Bounding Box */
 .cp-dialog input[type=file] {
-  padding: 2px 4px !important;
-  font-size: 10px !important;
-  height: 28px !important;
-  background: transparent !important;
+  padding: 3px 6px !important;
+  font-size: 11px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  line-height: 26px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
   border: 1px dashed var(--neo-border, #cbd5e1) !important;
+  border-radius: 6px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+.cp-dialog input[type=file]::file-selector-button {
+  height: 26px !important;
+  padding: 0 8px !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  margin-right: 6px !important;
+}
+
+body.dark-mode .cp-dialog input[type=file] {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .cp-dialog input[type=file]::file-selector-button {
+  background: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
 }
 .cp-dialog fieldset {
   margin: 0;
