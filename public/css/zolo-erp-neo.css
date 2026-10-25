@@ -1630,24 +1630,84 @@ body.dark-mode .template-box:hover {
   border-color: #334155 !important;
 }
 
-.zolo-section-box-header,
-.cp-col-title {
+.zolo-section-box-header {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em !important;
-  text-transform: uppercase !important;
-  color: var(--neo-primary, var(--z-primary)) !important;
-  margin-bottom: 4px !important;
+  justify-content: space-between !important;
+  margin-bottom: 8px !important;
   padding-bottom: 6px !important;
   border-bottom: 1px solid var(--neo-border, #e2e8f0) !important;
 }
 
+.cp-col-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 6px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid var(--neo-border, #e2e8f0) !important;
+}
+
+.cp-col-title svg {
+  margin-right: 8px !important;
+  width: 15px !important;
+  height: 15px !important;
+  flex-shrink: 0 !important;
+}
+
+.zolo-section-box-heading {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.zolo-section-box-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  border-radius: 7px !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+  margin-right: 10px !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+body.dark-mode .zolo-section-box-icon {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.zolo-section-box-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: currentColor !important;
+  display: block !important;
+}
+
+.zolo-section-box-icon i {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  display: block !important;
+}
+
+.zolo-section-box-title {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+}
+
 body.dark-mode .zolo-section-box-header,
 body.dark-mode .cp-col-title {
-  color: var(--z-primary-text) !important;
   border-bottom-color: var(--neo-border, #1e293b) !important;
 }
 
@@ -1664,6 +1724,11 @@ body.dark-mode .cp-col-title {
   border-bottom-color: #dbe8fd !important;
 }
 
+.zolo-section-box-blue .zolo-section-box-icon {
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: #2563eb !important;
+}
+
 body.dark-mode .zolo-section-box-blue,
 body.dark-mode .cp-col-identity {
   background-color: #0f1c3a !important;
@@ -1677,6 +1742,11 @@ body.dark-mode .cp-col-identity .cp-col-title {
   border-bottom-color: rgba(59, 130, 246, 0.25) !important;
 }
 
+body.dark-mode .zolo-section-box-blue .zolo-section-box-icon {
+  background: rgba(96, 165, 250, 0.18) !important;
+  color: #60a5fa !important;
+}
+
 .zolo-section-box-emerald,
 .cp-col-address {
   background-color: #f0faf5 !important;
@@ -1687,6 +1757,11 @@ body.dark-mode .cp-col-identity .cp-col-title {
 .cp-col-address .cp-col-title {
   color: #059669 !important;
   border-bottom-color: #d0f3e3 !important;
+}
+
+.zolo-section-box-emerald .zolo-section-box-icon {
+  background: rgba(5, 150, 105, 0.12) !important;
+  color: #059669 !important;
 }
 
 body.dark-mode .zolo-section-box-emerald,
@@ -1702,6 +1777,11 @@ body.dark-mode .cp-col-address .cp-col-title {
   border-bottom-color: rgba(16, 185, 129, 0.25) !important;
 }
 
+body.dark-mode .zolo-section-box-emerald .zolo-section-box-icon {
+  background: rgba(52, 211, 153, 0.18) !important;
+  color: #34d399 !important;
+}
+
 .zolo-section-box-purple,
 .cp-col-compliance {
   background-color: var(--z-primary-soft) !important;
@@ -1712,6 +1792,11 @@ body.dark-mode .cp-col-address .cp-col-title {
 .cp-col-compliance .cp-col-title {
   color: var(--z-primary) !important;
   border-bottom-color: #eedcff !important;
+}
+
+.zolo-section-box-purple .zolo-section-box-icon {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: #7c3aed !important;
 }
 
 body.dark-mode .zolo-section-box-purple,
@@ -1727,6 +1812,11 @@ body.dark-mode .cp-col-compliance .cp-col-title {
   border-bottom-color: rgb(var(--z-primary-rgb) / 0.25) !important;
 }
 
+body.dark-mode .zolo-section-box-purple .zolo-section-box-icon {
+  background: rgba(192, 132, 252, 0.18) !important;
+  color: #c084fc !important;
+}
+
 .zolo-section-box-amber,
 .cp-col-inventory {
   background-color: #fffdf5 !important;
@@ -1737,6 +1827,11 @@ body.dark-mode .cp-col-compliance .cp-col-title {
 .cp-col-inventory .cp-col-title {
   color: #b45309 !important;
   border-bottom-color: #fef3c7 !important;
+}
+
+.zolo-section-box-amber .zolo-section-box-icon {
+  background: rgba(217, 119, 6, 0.14) !important;
+  color: #b45309 !important;
 }
 
 body.dark-mode .zolo-section-box-amber,
@@ -1750,6 +1845,11 @@ body.dark-mode .zolo-section-box-amber .zolo-section-box-header,
 body.dark-mode .cp-col-inventory .cp-col-title {
   color: #fbbf24 !important;
   border-bottom-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+body.dark-mode .zolo-section-box-amber .zolo-section-box-icon {
+  background: rgba(251, 191, 36, 0.18) !important;
+  color: #fbbf24 !important;
 }
 
 /* ====================================================================

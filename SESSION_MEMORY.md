@@ -1787,6 +1787,39 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
     - Light Mode: `products_create_dark_mode_1792913233192.png` (zero tabs, 4 crisp pastel tinted boxes, single screen).
     - Dark Mode: `products_create_dark_mode_verified_1792913296293.png` (radiant dark mode surface cards, color accents, zero scroll).
 
+---
+
+## 79. Section Box Title Spacing, Enlarged Header Typography & Crisp Vector SVG Icons (2026-10-25)
+- **User Request**: "this is good, but the icon and the text on title has no space, also make it little larger with proper icon."
+- **Root Cause Analysis**:
+  - Bootstrap 4 does not support flex `gap-*` utilities without custom CSS; the previous inline header lacked guaranteed `margin-right` on the icon container, leaving 0px margin between the icon glyph and the title text.
+  - Legacy font-icon glyphs (`dripicons-box`, `dripicons-tag`, `dripicons-archive`, `dripicons-photo`) rendered with font clipping and lacked sharpness.
+- **Unified Component-Level Solution (`<x-ui.section-box>` & `zolo-erp-neo.css`)**:
+  - **Guaranteed Spacing:**
+    - Added `margin-right: 10px !important;` to `.zolo-section-box-icon` and `gap: 10px !important;` to `.zolo-section-box-heading`.
+  - **Enlarged Prominence:**
+    - Icon badge: Enlarged to `28px x 28px` with rounded corners (`border-radius: 7px`).
+    - Title text: Bumped to `font-size: 13.5px !important; font-weight: 700 !important; letter-spacing: 0.04em !important; text-transform: uppercase !important;`.
+  - **Proper Crisp Vector SVG Icons:**
+    - Mapped semantic shorthands directly inside `resources/views/components/ui/section-box.blade.php`:
+      - `box` / `cube` / `package`: Modern 3D isometric cube vector SVG (`16x16`, `stroke-width: 2.2`).
+      - `pricing` / `tag` / `price`: Modern vector price tag with hole punch SVG (`16x16`, `stroke-width: 2.2`).
+      - `inventory` / `layers` / `stock` / `archive`: Modern vector 3-tier inventory stack SVG (`16x16`, `stroke-width: 2.2`).
+      - `media` / `image` / `photo`: Modern vector picture frame with sun/mountain SVG (`16x16`, `stroke-width: 2.2`).
+    - Preserved fallback for custom raw SVGs and FontAwesome classes.
+  - **Themed Color-Tinted Badges:**
+    - Blue box (Product Details): `background: rgba(37, 99, 235, 0.12)`, text `#2563eb` (Dark: `rgba(96, 165, 250, 0.18)`, text `#60a5fa`).
+    - Emerald box (Pricing & Tax): `background: rgba(5, 150, 105, 0.12)`, text `#059669` (Dark: `rgba(52, 211, 153, 0.18)`, text `#34d399`).
+    - Amber box (Inventory & Stock Control): `background: rgba(217, 119, 6, 0.14)`, text `#b45309` (Dark: `rgba(251, 191, 36, 0.18)`, text `#fbbf24`).
+    - Purple box (Media, Details & SEO): `background: rgba(124, 58, 237, 0.12)`, text `#7c3aed` (Dark: `rgba(192, 132, 252, 0.18)`, text `#c084fc`).
+- **Verification:**
+  - Automated PHPUnit feature suites 100% green:
+    - `WorkspaceSecurityTest`: 12/12 passed (73 assertions).
+    - `CompanyProfileTest`: 7/7 passed (51 assertions).
+  - Browser subagent visual inspection:
+    - Verified DOM computed styles: 4 SVGs, 28px badges, `margin-right: 10px`, `font-size: 13.5px` (rendered ~15px computed with line height).
+    - Visual screenshots: `products_create_light_mode_1792914198010.png` (Light) and `products_create_dark_mode_1792914206243.png` (Dark) show perfectly spaced, crisp vector icons, bold headings, and zero page scrolling.
+
 
 
 ## 79. Brand Colour Tokens Across the Whole ERP (2026-10-25, branch ui)

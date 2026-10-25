@@ -39,7 +39,7 @@
                             <div class="zolo-product-grid">
 
                                 <!-- BOX 1: Primary Identity & Categorization (Blue) -->
-                                <x-ui.section-box variant="blue" title="{{__('db.Product Details')}}" icon="dripicons-box">
+                                <x-ui.section-box variant="blue" title="{{__('db.Product Details')}}" icon="box">
                                     <div class="row">
                                         <div class="col-6">
                                             <div class="form-group">
@@ -178,7 +178,7 @@
                                 </x-ui.section-box>
 
                                 <!-- BOX 2: Pricing, Margins & Tax (Emerald) -->
-                                <x-ui.section-box variant="emerald" title="{{__('db.Pricing & Tax')}}" icon="dripicons-tag">
+                                <x-ui.section-box variant="emerald" title="{{__('db.Pricing & Tax')}}" icon="pricing">
                                     <div class="row">
                                         <div id="cost" class="col-6">
                                             <div class="form-group">
@@ -319,7 +319,7 @@
                                 </x-ui.section-box>
 
                                 <!-- BOX 3: Inventory & Options (Amber) -->
-                                <x-ui.section-box variant="amber" title="{{__('db.Inventory & Stock Control')}}" icon="dripicons-archive">
+                                <x-ui.section-box variant="amber" title="{{__('db.Inventory & Stock Control')}}" icon="inventory">
                                     <div class="row">
                                         <div id="alert-qty" class="col-12">
                                             <div class="form-group">
@@ -512,7 +512,7 @@
                                 </x-ui.section-box>
 
                                 <!-- BOX 4: Media, Details & SEO (Purple) -->
-                                <x-ui.section-box variant="purple" title="{{__('db.Media, Details & SEO')}}" icon="dripicons-photo">
+                                <x-ui.section-box variant="purple" title="{{__('db.Media, Details & SEO')}}" icon="media">
                                     <div class="form-group">
                                         <label>{{__('db.Product Image')}} <i class="dripicons-question" data-toggle="tooltip" title="{{__('db.You can upload multiple image Only jpeg, jpg, png, gif file can be uploaded First image will be base image')}}"></i></label>
                                         <div id="imageUpload" class="dropzone"></div>
