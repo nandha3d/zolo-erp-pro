@@ -1682,3 +1682,36 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
 - **Static Asset Serving:**
   - Enhanced `server.php` to properly serve images (`png`, `jpg`, `svg`, `webp`, `ico`) when running with built-in PHP development server.
 - **Verification:** Verified in browser via browser subagent with full visual snapshot; login flow authenticated successfully with `admin` / `admin` to `/select-company`; `WorkspaceSecurityTest` 100% green (12 passed, 73 assertions).
+
+---
+
+## 75. Unified Design System, Dropdown & Button Templates, Zero-Scroll Sectionized Company Dialog (2026-10-25)
+- **Unified Component Template Engine:**
+  - Built new reusable Blade components:
+    - `resources/views/components/ui/select.blade.php`: Unified dropdown component supporting custom labels, options, error feedback, required indicators, and compact/normal styling.
+    - `resources/views/components/ui/button.blade.php`: Unified button component standardizing primary, secondary, danger, and utility button variants.
+    - `resources/views/components/ui/section-box.blade.php`: Unified section box component with distinct soft background, subtle border, header icons, titles, and actions.
+- **Universal Dropdown Template (`public/css/zolo-erp-neo.css`):**
+  - Standardized `.zolo-dropdown`, `select.form-control`, `select.zolo-select`, `.cp-dialog select`, and `.bootstrap-select > .btn.dropdown-toggle`.
+  - Height 36px (24px for compact command center bars), radius 8px, padding `0 30px 0 12px`, with clean embedded SVG chevron arrow (`background-repeat: no-repeat !important`, `background-position: right 10px center !important`).
+  - Hides legacy `.caret` / `.bs-caret` to eliminate duplicate or misaligned arrows.
+  - Supports dynamic container width and position without hardcoding.
+  - Both Light Mode (`#ffffff` bg, `#cbd5e1` border) and Dark Mode (`#0f172a` bg, `#1e293b` border, `#818cf8` focus ring).
+- **Universal Button Template (`public/css/zolo-erp-neo.css` & `commercial-workspace.css`):**
+  - Eliminated multicolor ad-hoc buttons across forms and toolbars.
+  - Standardized `.btn-primary`, `.zolo-btn-primary`, `.cp-btn-primary` to the signature brand gradient/solid (`#6366f1` / `#7c3aed`) with white text and subtle glow.
+  - Standardized `.btn-secondary`, `.zolo-btn-secondary`, `.comm-items-btn`, `.cp-btn` to clean surface background (`#ffffff` light, `#1e293b` dark), `#cbd5e1` border, dark text, and purple icons with smooth hover states.
+  - Standardized `.input-group` attached buttons (`+` next to Brand, Category, Unit, `↻` next to code) with `flex-wrap: nowrap !important;` so buttons never drop below inputs and remain horizontally aligned.
+- **Company Dialog Overhaul (`#dlg-company` & `#dlg-company-edit`):**
+  - **Zero Dual Scrollbar:** Eliminated Chromium's nested `<dialog>` + inner form double scrollbar defect by setting `overflow: hidden !important;` on `.cp-dialog`.
+  - **Single-Screen Fit:** Widened `.cp-dialog-wide` to `min(1160px, calc(100vw - 32px))` with a 3-column responsive layout (`Business Identity`, `Address & Contact`, `Tax & Compliance`) fitting all fields cleanly within desktop viewport height without vertical scrolling.
+  - **Sectionized with Distinct Light Background:** Added `.cp-col` section box template with soft `#f8fafc` tint in light mode and `#141c2e` in dark mode, 10px rounded corners, and semantic SVG icons (`Briefcase`, `Map-Pin`, `File-Text`, `Calendar`).
+  - **Unified Popup Header & Close Button:** Added `.cp-dialog-header` template with title, subtitle, and top-right `✕` close button across all modals (`#dlg-company`, `#dlg-company-edit`, `#dlg-company-delete`, `#dlg-group`, `#dlg-group-edit`, `#dlg-group-delete`).
+- **Browser & Automated Verification:**
+  - Automated PHPUnit tests:
+    - `WorkspaceSecurityTest`: 12/12 passing (73 assertions).
+    - `CompanyGroupIndustryTest` & `CompanyProfileTest`: 8/8 passing (55 assertions).
+  - Playwright browser subagent visual validation:
+    - `new_company_dialog_light_1792909953736.png` & `new_company_dialog_1792909427607.png`: Confirmed 3-column layout, distinct section box background, zero dual scrollbars, single-screen fit, and close button.
+    - `add_product_form_light_1792909965097.png` & `product_create_form_verified_1792909888566.png`: Confirmed unified dropdowns, single clean chevron, and horizontally attached input-group buttons.
+

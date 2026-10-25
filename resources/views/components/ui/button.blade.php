@@ -10,16 +10,16 @@
 
 @php
     $variantClass = match($variant) {
-        'primary' => 'btn-primary',
-        'secondary' => 'btn-secondary',
+        'primary' => 'btn-primary zolo-btn-primary',
+        'secondary' => 'btn-secondary zolo-btn-secondary',
         'success' => 'btn-success',
         'danger' => 'btn-danger',
         'warning' => 'btn-warning',
         'info' => 'btn-info',
-        'outline-primary' => 'btn-outline-primary',
-        'outline-secondary' => 'btn-outline-secondary',
+        'outline-primary' => 'btn-outline-primary zolo-btn-secondary',
+        'outline-secondary' => 'btn-outline-secondary zolo-btn-secondary',
         'ghost' => 'btn-link text-decoration-none',
-        default => 'btn-primary',
+        default => 'btn-primary zolo-btn-primary',
     };
 
     $sizeClass = match($size) {

@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Choose company · zoloERP</title>
     <link rel="stylesheet" href="{{ asset('css/zolo-erp-neo.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/company-picker.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/company-picker.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/field-help.css') }}">
 </head>
 <body class="cp-body {{ $theme === 'dark' ? 'dark-mode' : '' }}">
@@ -167,36 +167,66 @@
 <dialog id="dlg-company-edit" class="cp-dialog cp-dialog-wide" aria-labelledby="dlg-company-edit-title">
     <form method="post" action="" enctype="multipart/form-data">
         @csrf
-        <h2 id="dlg-company-edit-title">Edit company</h2>
-        <p class="cp-dialog-sub">Names, address, GSTIN and logo print on this company's bills. Industry and modules are changed inside the company under Business profile.</p>
-        <div class="cp-grid">
-            <label class="cp-span">Group<select name="company_group_id">
-                @foreach($manageableGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
-                <option value="">No group (independent)</option>
-            </select></label>
-            <span class="cp-section">Business</span>
-            <label>Display name<input type="text" name="trade_name" maxlength="191"></label>
-            <label>Legal name<input type="text" name="legal_name" required maxlength="191"></label>
-            <label>Short code<input type="text" name="code" required maxlength="50" pattern="[A-Za-z0-9_-]+"></label>
-            <label><span>New logo <span class="cp-opt">PNG/JPG, up to 1 MB; blank keeps the current one</span></span><input type="file" name="logo" accept="image/png,image/jpeg"></label>
-            <span class="cp-section">Address &amp; contact</span>
-            <label class="cp-span">Address<textarea name="address" maxlength="1000"></textarea></label>
-            <label>City<input type="text" name="city" maxlength="100"></label>
-            <label>State<select name="state_code">
-                <option value="">— Select —</option>
-                @foreach($states as $code => $name)<option value="{{ $code }}">{{ $name }} ({{ $code }})</option>@endforeach
-            </select></label>
-            <label>PIN code<input type="text" name="postal_code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"></label>
-            <label>Phone<input type="text" name="phone" maxlength="100"></label>
-            <label>Email<input type="email" name="email" maxlength="191"></label>
-            <label>Website<input type="text" name="website" maxlength="191"></label>
-            <span class="cp-section">Tax</span>
-            <label><span>GSTIN <span class="cp-opt">turns on GST billing</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase"></label>
-            <label><span>PAN <span class="cp-opt">taken from GSTIN if blank</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase"></label>
-            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition">Composition</option><option value="unregistered">Unregistered (no GSTIN)</option></select></label>
-            <label>Currency<select name="base_currency_id">
-                @foreach($currencies as $currency)<option value="{{ $currency->id }}">{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
-            </select></label>
+        <div class="cp-dialog-header">
+            <div class="cp-dialog-header-text">
+                <h2 id="dlg-company-edit-title">Edit company</h2>
+                <p class="cp-dialog-sub">Names, address, GSTIN and logo print on this company's bills. Industry and modules are changed inside the company under Business profile.</p>
+            </div>
+            <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
+        </div>
+        <div class="cp-dialog-columns">
+            <div class="cp-col">
+                <span class="cp-col-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    Business Identity
+                </span>
+                <label>Group<select name="company_group_id">
+                    @foreach($manageableGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
+                    <option value="">No group (independent)</option>
+                </select></label>
+                <label>Display name<input type="text" name="trade_name" maxlength="191"></label>
+                <label>Legal name<input type="text" name="legal_name" required maxlength="191"></label>
+                <div class="cp-row-2">
+                    <label>Short code<input type="text" name="code" required maxlength="50" pattern="[A-Za-z0-9_-]+"></label>
+                    <label><span>New logo <span class="cp-opt">PNG/JPG</span></span><input type="file" name="logo" accept="image/png,image/jpeg"></label>
+                </div>
+            </div>
+
+            <div class="cp-col">
+                <span class="cp-col-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Address &amp; Contact
+                </span>
+                <label>Address<textarea name="address" maxlength="1000" placeholder="Door no., street, area"></textarea></label>
+                <div class="cp-row-2">
+                    <label>City<input type="text" name="city" maxlength="100"></label>
+                    <label>State<select name="state_code">
+                        <option value="">— Select —</option>
+                        @foreach($states as $code => $name)<option value="{{ $code }}">{{ $name }} ({{ $code }})</option>@endforeach
+                    </select></label>
+                </div>
+                <div class="cp-row-2">
+                    <label>PIN code<input type="text" name="postal_code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"></label>
+                    <label>Phone<input type="text" name="phone" maxlength="100"></label>
+                </div>
+                <label>Email<input type="email" name="email" maxlength="191"></label>
+                <label>Website<input type="text" name="website" maxlength="191"></label>
+            </div>
+
+            <div class="cp-col">
+                <span class="cp-col-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Tax &amp; Currency
+                </span>
+                <div class="cp-row-2">
+                    <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase"></label>
+                    <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase"></label>
+                </div>
+                <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition">Composition</option><option value="unregistered">Unregistered (no GSTIN)</option></select></label>
+                <label>Currency<select name="base_currency_id">
+                    @foreach($currencies as $currency)<option value="{{ $currency->id }}">{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
+                </select></label>
+            </div>
         </div>
         <div class="cp-dialog-actions"><button type="button" class="cp-btn" data-close>Cancel</button><button class="cp-btn cp-btn-primary">Save changes</button></div>
     </form>
@@ -205,8 +235,13 @@
 <dialog id="dlg-company-delete" class="cp-dialog" aria-labelledby="dlg-company-delete-title">
     <form method="post" action="">
         @csrf
-        <h2 id="dlg-company-delete-title">Delete <span data-fill="name"></span>?</h2>
-        <p class="cp-dialog-sub">The company disappears from the company list for everyone and can't be opened. Its books, stock and documents are <strong>kept</strong>, and an administrator can restore it from <em>Deleted companies</em>.</p>
+        <div class="cp-dialog-header">
+            <div class="cp-dialog-header-text">
+                <h2 id="dlg-company-delete-title">Delete <span data-fill="name"></span>?</h2>
+                <p class="cp-dialog-sub">The company disappears from the company list for everyone and can't be opened. Its books, stock and documents are <strong>kept</strong>, and an administrator can restore it from <em>Deleted companies</em>.</p>
+            </div>
+            <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
+        </div>
         <label>Type the short code <code data-fill="code"></code> to confirm<input type="text" name="confirm_code" required autocomplete="off" style="text-transform:uppercase"></label>
         <div class="cp-dialog-actions"><button type="button" class="cp-btn" data-close>Cancel</button><button class="cp-btn cp-btn-danger">Delete company</button></div>
     </form>
@@ -215,7 +250,12 @@
 <dialog id="dlg-group-edit" class="cp-dialog" aria-labelledby="dlg-group-edit-title">
     <form method="post" action="">
         @csrf
-        <h2 id="dlg-group-edit-title">Edit group</h2>
+        <div class="cp-dialog-header">
+            <div class="cp-dialog-header-text">
+                <h2 id="dlg-group-edit-title">Edit group</h2>
+            </div>
+            <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
+        </div>
         <label>Group name<input type="text" name="name" required maxlength="255"></label>
         <label>Short code<input type="text" name="code" required maxlength="50" pattern="[A-Za-z0-9_-]+"></label>
         <div class="cp-dialog-actions"><button type="button" class="cp-btn" data-close>Cancel</button><button class="cp-btn cp-btn-primary">Save changes</button></div>
@@ -225,8 +265,13 @@
 <dialog id="dlg-group-delete" class="cp-dialog" aria-labelledby="dlg-group-delete-title">
     <form method="post" action="">
         @csrf
-        <h2 id="dlg-group-delete-title">Delete group <span data-fill="name"></span>?</h2>
-        <p class="cp-dialog-sub">Only the group is removed. Its <span data-fill="count"></span> companies stay as they are and move to <em>Independent companies</em>; their books are not touched.</p>
+        <div class="cp-dialog-header">
+            <div class="cp-dialog-header-text">
+                <h2 id="dlg-group-delete-title">Delete group <span data-fill="name"></span>?</h2>
+                <p class="cp-dialog-sub">Only the group is removed. Its <span data-fill="count"></span> companies stay as they are and move to <em>Independent companies</em>; their books are not touched.</p>
+            </div>
+            <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
+        </div>
         <div class="cp-dialog-actions"><button type="button" class="cp-btn" data-close>Cancel</button><button class="cp-btn cp-btn-danger">Delete group</button></div>
     </form>
 </dialog>
@@ -235,8 +280,13 @@
 <dialog id="dlg-group" class="cp-dialog" aria-labelledby="dlg-group-title">
     <form method="post" action="{{ route('company.groups.store') }}">
         @csrf
-        <h2 id="dlg-group-title">New group</h2>
-        <p class="cp-dialog-sub">A group holds related companies, for example MJ Group with its FMCG, timber and textile businesses. Each company keeps separate books.</p>
+        <div class="cp-dialog-header">
+            <div class="cp-dialog-header-text">
+                <h2 id="dlg-group-title">New group</h2>
+                <p class="cp-dialog-sub">A group holds related companies, for example MJ Group with its FMCG, timber and textile businesses. Each company keeps separate books.</p>
+            </div>
+            <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
+        </div>
         <label>Group name<input type="text" name="name" required maxlength="255" placeholder="MJ Group" value="{{ old('name') }}"></label>
         <label><span>Short code <span class="cp-opt">optional</span></span><input type="text" name="code" maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="MJ"></label>
         @if($ownCompanies->isNotEmpty())
@@ -253,45 +303,83 @@
 <dialog id="dlg-company" class="cp-dialog cp-dialog-wide" aria-labelledby="dlg-company-title">
     <form method="post" action="{{ route('company.companies.store') }}" enctype="multipart/form-data">
         @csrf
-        <h2 id="dlg-company-title">New company</h2>
-        <p class="cp-dialog-sub">Creates the company with a main branch, a main warehouse, a standard chart of accounts and its first financial year. Its name, address, GSTIN and logo print on its bills; change them later in Settings › Company profile.</p>
-        <div class="cp-grid">
-            <label class="cp-span">Group<select name="company_group_id">
-                @foreach($manageableGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
-                <option value="">No group (independent)</option>
-            </select></label>
-            <span class="cp-section">Business</span>
-            <label>Display name<input type="text" name="trade_name" maxlength="191" placeholder="Motumo FMCG" value="{{ old('trade_name') }}"></label>
-            <label>Legal name<input type="text" name="legal_name" required maxlength="191" placeholder="Motumo Foods Private Limited" value="{{ old('legal_name') }}"></label>
-            <label>Industry<select name="industry" id="cp-industry" required>
-                @foreach($industries as $key => $label)<option value="{{ $key }}" @selected(old('industry') === $key)>{{ $label }}</option>@endforeach
-            </select></label>
-            <label>Business type<select name="subtype" id="cp-subtype"></select></label>
-            <label><span>Short code <span class="cp-opt">optional</span></span><input type="text" name="code" maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="MOTUMO"></label>
-            <label><span>Logo <span class="cp-opt">PNG/JPG, up to 1 MB</span></span><input type="file" name="logo" accept="image/png,image/jpeg"></label>
-            <span class="cp-section">Address &amp; contact</span>
-            <label class="cp-span">Address<textarea name="address" maxlength="1000" placeholder="Door no., street, area">{{ old('address') }}</textarea></label>
-            <label>City<input type="text" name="city" maxlength="100" value="{{ old('city') }}"></label>
-            <label>State<select name="state_code">
-                <option value="">— Select —</option>
-                @foreach($states as $code => $name)<option value="{{ $code }}" @selected((string) old('state_code') === (string) $code)>{{ $name }} ({{ $code }})</option>@endforeach
-            </select></label>
-            <label>PIN code<input type="text" name="postal_code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" value="{{ old('postal_code') }}"></label>
-            <label>Phone<input type="text" name="phone" maxlength="100" value="{{ old('phone') }}"></label>
-            <label>Email<input type="email" name="email" maxlength="191" value="{{ old('email') }}"></label>
-            <label>Website<input type="text" name="website" maxlength="191" value="{{ old('website') }}"></label>
-            <span class="cp-section">Tax</span>
-            <label><span>GSTIN <span class="cp-opt">turns on GST billing</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase" value="{{ old('gstin') }}"></label>
-            <label><span>PAN <span class="cp-opt">taken from GSTIN if blank</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase" value="{{ old('pan') }}"></label>
-            <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option><option value="unregistered" @selected(old('registration_type') === 'unregistered')>Unregistered (no GSTIN)</option></select></label>
-            <label>Currency<select name="base_currency_id">
-                @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == old('base_currency_id', $defaultCurrencyId))>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
-            </select></label>
-            <span class="cp-section">Books</span>
-            <label>Time zone<input type="text" name="timezone" required value="{{ old('timezone', $defaults['timezone']) }}"></label>
-            <span></span>
-            <label>Financial year starts<input type="date" name="fy_start" required value="{{ old('fy_start', $defaults['fy_start']) }}"></label>
-            <label>Financial year ends<input type="date" name="fy_end" required value="{{ old('fy_end', $defaults['fy_end']) }}"></label>
+        <div class="cp-dialog-header">
+            <div class="cp-dialog-header-text">
+                <h2 id="dlg-company-title">New company</h2>
+                <p class="cp-dialog-sub">Creates the company with a main branch, a main warehouse, a standard chart of accounts and its first financial year. Its name, address, GSTIN and logo print on its bills; change them later in Settings › Company profile.</p>
+            </div>
+            <button type="button" class="cp-dialog-close" data-close aria-label="Close">&times;</button>
+        </div>
+        <div class="cp-dialog-columns">
+            <div class="cp-col">
+                <span class="cp-col-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    Business Identity
+                </span>
+                <label>Group<select name="company_group_id">
+                    @foreach($manageableGroups as $group)<option value="{{ $group['id'] }}">{{ $group['name'] }}</option>@endforeach
+                    <option value="">No group (independent)</option>
+                </select></label>
+                <label>Display name<input type="text" name="trade_name" maxlength="191" placeholder="Motumo FMCG" value="{{ old('trade_name') }}"></label>
+                <label>Legal name<input type="text" name="legal_name" required maxlength="191" placeholder="Motumo Foods Private Limited" value="{{ old('legal_name') }}"></label>
+                <div class="cp-row-2">
+                    <label>Industry<select name="industry" id="cp-industry" required>
+                        @foreach($industries as $key => $label)<option value="{{ $key }}" @selected(old('industry') === $key)>{{ $label }}</option>@endforeach
+                    </select></label>
+                    <label>Business type<select name="subtype" id="cp-subtype"></select></label>
+                </div>
+                <div class="cp-row-2">
+                    <label><span>Short code <span class="cp-opt">optional</span></span><input type="text" name="code" maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="MOTUMO" value="{{ old('code') }}"></label>
+                    <label><span>Logo <span class="cp-opt">PNG/JPG</span></span><input type="file" name="logo" accept="image/png,image/jpeg"></label>
+                </div>
+            </div>
+
+            <div class="cp-col">
+                <span class="cp-col-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Address &amp; Contact
+                </span>
+                <label>Address<textarea name="address" maxlength="1000" placeholder="Door no., street, area">{{ old('address') }}</textarea></label>
+                <div class="cp-row-2">
+                    <label>City<input type="text" name="city" maxlength="100" value="{{ old('city') }}"></label>
+                    <label>State<select name="state_code">
+                        <option value="">— Select —</option>
+                        @foreach($states as $code => $name)<option value="{{ $code }}" @selected((string) old('state_code') === (string) $code)>{{ $name }} ({{ $code }})</option>@endforeach
+                    </select></label>
+                </div>
+                <div class="cp-row-2">
+                    <label>PIN code<input type="text" name="postal_code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" value="{{ old('postal_code') }}"></label>
+                    <label>Phone<input type="text" name="phone" maxlength="100" value="{{ old('phone') }}"></label>
+                </div>
+                <label>Email<input type="email" name="email" maxlength="191" value="{{ old('email') }}"></label>
+                <label>Website<input type="text" name="website" maxlength="191" value="{{ old('website') }}"></label>
+            </div>
+
+            <div class="cp-col">
+                <span class="cp-col-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Tax &amp; Compliance
+                </span>
+                <div class="cp-row-2">
+                    <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" style="text-transform:uppercase" value="{{ old('gstin') }}"></label>
+                    <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" style="text-transform:uppercase" value="{{ old('pan') }}"></label>
+                </div>
+                <div class="cp-row-2">
+                    <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option><option value="unregistered" @selected(old('registration_type') === 'unregistered')>Unregistered</option></select></label>
+                    <label>Currency<select name="base_currency_id">
+                        @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == old('base_currency_id', $defaultCurrencyId))>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
+                    </select></label>
+                </div>
+                <span class="cp-col-title" style="margin-top: 4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Books &amp; Financial Year
+                </span>
+                <label>Time zone<input type="text" name="timezone" required value="{{ old('timezone', $defaults['timezone']) }}"></label>
+                <div class="cp-row-2">
+                    <label>FY starts<input type="date" name="fy_start" required value="{{ old('fy_start', $defaults['fy_start']) }}"></label>
+                    <label>FY ends<input type="date" name="fy_end" required value="{{ old('fy_end', $defaults['fy_end']) }}"></label>
+                </div>
+            </div>
         </div>
         <div class="cp-dialog-actions"><button type="button" class="cp-btn" data-close>Cancel</button><button class="cp-btn cp-btn-primary">Create company</button></div>
     </form>

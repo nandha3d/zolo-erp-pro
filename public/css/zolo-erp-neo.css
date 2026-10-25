@@ -1153,89 +1153,388 @@ li.nav-item .btn-pos i {
 /* ====================================================================
    BUTTONS & INPUTS
    ==================================================================== */
-.btn {
+/* ====================================================================
+   UNIFIED BUTTON TEMPLATE & PALETTE
+   Harmonious color system across all screens, modals and command centers
+   ==================================================================== */
+.btn,
+.zolo-btn,
+.cp-btn {
   font-family: var(--neo-font) !important;
   font-weight: 600 !important;
-  border-radius: var(--neo-radius-md) !important;
-  padding: 8px 18px !important;
-  font-size: 13.5px !important;
+  border-radius: var(--neo-radius-md, 8px) !important;
+  padding: 7px 16px !important;
+  font-size: 13px !important;
   letter-spacing: -0.01em;
-  transition: all 0.2s ease !important;
-}
-
-.btn-primary, .neo-btn-primary {
-  background: var(--neo-primary) !important;
-  border-color: var(--neo-primary) !important;
-  color: #fff !important;
-}
-
-.btn-primary:hover, .neo-btn-primary:hover {
-  background: var(--neo-primary-hover) !important;
-  border-color: var(--neo-primary-hover) !important;
-  box-shadow: var(--neo-shadow-glow) !important;
-  transform: translateY(-1px);
-}
-
-.neo-btn-glow {
-  background: var(--neo-primary-gradient) !important;
-  border: none !important;
-  color: #fff !important;
-  box-shadow: var(--neo-shadow-sm) !important;
-}
-
-.neo-btn-glow:hover {
-  box-shadow: var(--neo-shadow-glow) !important;
-  color: #fff !important;
-}
-
-.btn-info {
-  background: var(--neo-info) !important;
-  border-color: var(--neo-info) !important;
-}
-
-.btn-success {
-  background: var(--neo-success) !important;
-  border-color: var(--neo-success) !important;
-}
-
-.btn-danger {
-  background: var(--neo-danger) !important;
-  border-color: var(--neo-danger) !important;
-}
-
-/* Form Controls & Inputs Uniformity */
-.form-control, input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="date"], select {
-  font-family: var(--neo-font) !important;
-  background-color: var(--neo-surface-card, #ffffff) !important;
-  border: 1.5px solid var(--neo-border, #e2e8f0) !important;
-  border-radius: var(--neo-radius-md, 10px) !important;
-  color: var(--neo-text-primary, #0f172a) !important;
-  padding: 9px 14px !important;
-  font-size: 13.5px !important;
-  font-weight: 500 !important;
-  min-height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  line-height: normal !important;
+}
+
+/* 1. Primary Action Button Template */
+.btn-primary,
+.neo-btn-primary,
+.zolo-btn-primary,
+.cp-btn-primary,
+.comm-items-btn-primary,
+.comm-bottom-btn-primary {
+  background: var(--neo-primary, #6366f1) !important;
+  border: 1px solid var(--neo-primary, #6366f1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.25) !important;
+}
+
+.btn-primary:hover,
+.neo-btn-primary:hover,
+.zolo-btn-primary:hover,
+.cp-btn-primary:hover,
+.comm-items-btn-primary:hover,
+.comm-bottom-btn-primary:hover {
+  background: var(--neo-primary-hover, #4f46e5) !important;
+  border-color: var(--neo-primary-hover, #4f46e5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 2. Secondary & Utility Action Button Template (Clean Crisp Border & Surface) */
+.btn-secondary,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-default,
+.btn-light,
+.zolo-btn-secondary,
+.comm-items-btn:not(.comm-items-btn-primary),
+.cp-btn:not(.cp-btn-primary):not(.cp-btn-danger) {
+  background: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  color: var(--neo-text-primary, #1e293b) !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
-.form-control:focus, input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
+.btn-secondary i,
+.btn-outline-primary i,
+.btn-outline-secondary i,
+.btn-default i,
+.btn-light i,
+.zolo-btn-secondary i,
+.comm-items-btn:not(.comm-items-btn-primary) i {
+  color: var(--neo-primary, #6366f1) !important;
+}
+
+.btn-secondary:hover,
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+.btn-default:hover,
+.btn-light:hover,
+.zolo-btn-secondary:hover,
+.comm-items-btn:not(.comm-items-btn-primary):hover,
+.cp-btn:not(.cp-btn-primary):not(.cp-btn-danger):hover {
+  background: var(--neo-primary-light, #eef2ff) !important;
+  border-color: var(--neo-primary, #6366f1) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Dark Mode Secondary & Utility Buttons */
+body.dark-mode .btn-secondary,
+body.dark-mode .btn-outline-primary,
+body.dark-mode .btn-outline-secondary,
+body.dark-mode .btn-default,
+body.dark-mode .btn-light,
+body.dark-mode .zolo-btn-secondary,
+body.dark-mode .comm-items-btn:not(.comm-items-btn-primary),
+body.dark-mode .cp-btn:not(.cp-btn-primary):not(.cp-btn-danger) {
+  background: var(--neo-surface-card, #1e293b) !important;
+  border-color: var(--neo-border, #334155) !important;
+  color: var(--neo-text-primary, #f8fafc) !important;
+}
+
+body.dark-mode .btn-secondary i,
+body.dark-mode .btn-outline-primary i,
+body.dark-mode .btn-outline-secondary i,
+body.dark-mode .btn-default i,
+body.dark-mode .btn-light i,
+body.dark-mode .zolo-btn-secondary i,
+body.dark-mode .comm-items-btn:not(.comm-items-btn-primary) i {
+  color: #818cf8 !important;
+}
+
+body.dark-mode .btn-secondary:hover,
+body.dark-mode .btn-outline-primary:hover,
+body.dark-mode .btn-outline-secondary:hover,
+body.dark-mode .btn-default:hover,
+body.dark-mode .btn-light:hover,
+body.dark-mode .zolo-btn-secondary:hover,
+body.dark-mode .comm-items-btn:not(.comm-items-btn-primary):hover,
+body.dark-mode .cp-btn:not(.cp-btn-primary):not(.cp-btn-danger):hover {
+  background: rgba(99, 102, 241, 0.18) !important;
+  border-color: #818cf8 !important;
+  color: #ffffff !important;
+}
+
+/* 3. Danger Action Button Template */
+.btn-danger,
+.cp-btn-danger {
+  background: var(--neo-danger, #ef4444) !important;
+  border-color: var(--neo-danger, #ef4444) !important;
+  color: #ffffff !important;
+}
+
+.btn-danger:hover,
+.cp-btn-danger:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+}
+
+/* Input group appended buttons (+ next to Brand, Category, Unit, ↻ next to code) */
+.input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.input-group > .bootstrap-select,
+.input-group > div.bootstrap-select {
+  flex: 1 1 auto !important;
+  width: 1% !important;
+  min-width: 0 !important;
+}
+
+.input-group > .bootstrap-select:not(:last-child) > .btn.dropdown-toggle,
+.input-group > .form-control:not(:last-child) {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.input-group > .input-group-append {
+  display: flex !important;
+  flex: 0 0 auto !important;
+}
+
+.input-group > .input-group-append > .btn,
+.input-group > .btn:not(:first-child) {
+  flex: 0 0 auto !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: none !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  color: var(--neo-text-primary, #1e293b) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.18s ease !important;
+}
+
+.input-group > .input-group-append > .btn i,
+.input-group > .btn:not(:first-child) i {
+  color: var(--neo-primary, #6366f1) !important;
+  font-size: 14px !important;
+}
+
+.input-group > .input-group-append > .btn:hover,
+.input-group > .btn:not(:first-child):hover {
+  background: var(--neo-primary-light, #eef2ff) !important;
+  border-color: var(--neo-primary, #6366f1) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+}
+
+body.dark-mode .input-group > .input-group-append > .btn,
+body.dark-mode .input-group > .btn:not(:first-child) {
+  background: var(--neo-surface-card, #1e293b) !important;
+  border-color: var(--neo-border, #334155) !important;
+  color: #f8fafc !important;
+}
+
+body.dark-mode .input-group > .input-group-append > .btn i,
+body.dark-mode .input-group > .btn:not(:first-child) i {
+  color: #818cf8 !important;
+}
+
+body.dark-mode .input-group > .input-group-append > .btn:hover,
+body.dark-mode .input-group > .btn:not(:first-child):hover {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: #818cf8 !important;
+}
+
+/* Form Controls & Inputs Uniformity */
+.form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="date"] {
+  font-family: var(--neo-font) !important;
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: var(--neo-radius-md, 8px) !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  box-sizing: border-box !important;
+}
+
+.form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus {
   background-color: var(--neo-surface-card, #ffffff) !important;
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
   outline: none !important;
+}
+
+body.dark-mode .form-control,
+body.dark-mode input[type="text"],
+body.dark-mode input[type="password"],
+body.dark-mode input[type="email"],
+body.dark-mode input[type="number"],
+body.dark-mode input[type="date"] {
+  background-color: var(--neo-surface, #0f172a) !important;
+  border-color: var(--neo-border, #1e293b) !important;
+  color: var(--neo-text-primary, #f8fafc) !important;
 }
 
 /* Form group labels uniformity */
 .form-group label,
 label {
-  font-size: 12.5px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   color: var(--neo-text-secondary, #475569) !important;
-  margin-bottom: 6px !important;
+  margin-bottom: 5px !important;
   letter-spacing: -0.01em;
 }
 
-/* Selectpicker Uniformity & Double Box Elimination */
+body.dark-mode .form-group label,
+body.dark-mode label {
+  color: #94a3b8 !important;
+}
+
+/* ====================================================================
+   UNIFIED DROPDOWN TEMPLATE
+   Consistent across all native <select>, .form-control, .bootstrap-select
+   Width and position can be overridden freely per container
+   ==================================================================== */
+.zolo-dropdown,
+select.form-control,
+select.zolo-select,
+.cp-dialog select,
+.bootstrap-select > .btn.dropdown-toggle {
+  font-family: var(--neo-font) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: var(--neo-radius-md, 8px) !important;
+  padding: 0 30px 0 12px !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  line-height: 34px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 14px 14px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease !important;
+  box-sizing: border-box !important;
+  cursor: pointer;
+}
+
+/* Compact variant for dense command center bars */
+.dropdown-compact,
+.field-compact-item select.form-control,
+.doc-primary-fields select.form-control {
+  min-height: 24px !important;
+  height: 24px !important;
+  line-height: 22px !important;
+  font-size: 11px !important;
+  padding: 0 24px 0 8px !important;
+  border-radius: 4px !important;
+  background-size: 12px 12px !important;
+  background-position: right 6px center !important;
+}
+
+/* Hover & Focus States for Dropdowns */
+.zolo-dropdown:hover,
+select.form-control:hover,
+select.zolo-select:hover,
+.cp-dialog select:hover,
+.bootstrap-select > .btn.dropdown-toggle:hover {
+  border-color: #94a3b8 !important;
+}
+
+.zolo-dropdown:focus,
+select.form-control:focus,
+select.zolo-select:focus,
+.cp-dialog select:focus,
+.bootstrap-select > .btn.dropdown-toggle:focus,
+.bootstrap-select.show > .btn.dropdown-toggle {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+  outline: none !important;
+}
+
+/* Dark Mode Dropdown Styling */
+body.dark-mode .zolo-dropdown,
+body.dark-mode select.form-control,
+body.dark-mode select.zolo-select,
+body.dark-mode .cp-dialog select,
+body.dark-mode .bootstrap-select > .btn.dropdown-toggle {
+  background-color: var(--neo-surface, #0f172a) !important;
+  border-color: var(--neo-border, #1e293b) !important;
+  color: var(--neo-text-primary, #f8fafc) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 14px 14px !important;
+}
+
+body.dark-mode .zolo-dropdown:hover,
+body.dark-mode select.form-control:hover,
+body.dark-mode select.zolo-select:hover,
+body.dark-mode .cp-dialog select:hover,
+body.dark-mode .bootstrap-select > .btn.dropdown-toggle:hover {
+  border-color: #475569 !important;
+}
+
+body.dark-mode .zolo-dropdown:focus,
+body.dark-mode select.form-control:focus,
+body.dark-mode select.zolo-select:focus,
+body.dark-mode .cp-dialog select:focus,
+body.dark-mode .bootstrap-select > .btn.dropdown-toggle:focus,
+body.dark-mode .bootstrap-select.show > .btn.dropdown-toggle {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Selectpicker Outer Wrapper Normalization */
 .bootstrap-select,
 .bootstrap-select.form-control,
 div.bootstrap-select {
@@ -1246,30 +1545,126 @@ div.bootstrap-select {
   padding: 0 !important;
   margin: 0 !important;
   outline: none !important;
+  width: 100% !important;
 }
 
-.bootstrap-select > .btn.dropdown-toggle {
-  height: 36px !important;
-  min-height: 36px !important;
-  border: 1px solid var(--neo-border, #cbd5e1) !important;
-  border-radius: var(--neo-radius-md, 8px) !important;
-  background-color: var(--neo-surface-card, #ffffff) !important;
-  color: var(--neo-text-primary, #0f172a) !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  padding: 6px 12px !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+.bootstrap-select .dropdown-toggle .filter-option {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
 }
 
-.bootstrap-select > .btn.dropdown-toggle:focus,
-.bootstrap-select.show > .btn.dropdown-toggle {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
-  outline: none !important;
+.bootstrap-select .dropdown-toggle::after,
+.bootstrap-select .dropdown-toggle .caret,
+.bootstrap-select .dropdown-toggle .bs-caret {
+  display: none !important;
+}
+
+/* Unified Dropdown Menu */
+.dropdown-menu,
+.bootstrap-select .dropdown-menu {
+  background-color: var(--neo-surface-card, #ffffff) !important;
+  border: 1px solid var(--neo-border, #cbd5e1) !important;
+  border-radius: var(--neo-radius-md, 10px) !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08) !important;
+  padding: 6px !important;
+  z-index: 99999 !important;
+}
+
+.dropdown-menu .dropdown-item,
+.bootstrap-select .dropdown-menu li a {
+  border-radius: 6px !important;
+  padding: 7px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--neo-text-primary, #0f172a) !important;
+  transition: all 0.15s ease !important;
+}
+
+.dropdown-menu .dropdown-item:hover,
+.bootstrap-select .dropdown-menu li a:hover {
+  background-color: var(--neo-primary-light, #eef2ff) !important;
+  color: var(--neo-primary, #4f46e5) !important;
+}
+
+body.dark-mode .dropdown-menu,
+body.dark-mode .bootstrap-select .dropdown-menu {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .dropdown-menu .dropdown-item,
+body.dark-mode .bootstrap-select .dropdown-menu li a {
+  color: #f8fafc !important;
+}
+
+body.dark-mode .dropdown-menu .dropdown-item:hover,
+body.dark-mode .bootstrap-select .dropdown-menu li a:hover {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* ====================================================================
+   UNIFIED SECTION BOX TEMPLATE
+   Light background color for section boxes across popups & forms
+   ==================================================================== */
+.zolo-section-box,
+.cp-col,
+.template-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  background-color: var(--neo-bg, #f8fafc) !important;
+  border: 1px solid var(--neo-border, #e2e8f0) !important;
+  border-radius: var(--neo-radius-lg, 12px) !important;
+  padding: 13px 15px !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+  transition: all 0.2s ease !important;
+}
+
+body.dark-mode .zolo-section-box,
+body.dark-mode .cp-col,
+body.dark-mode .template-box {
+  background-color: var(--neo-surface-card, #141c2e) !important;
+  border-color: var(--neo-border, #1e293b) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.zolo-section-box:hover,
+.cp-col:hover,
+.template-box:hover {
+  border-color: #cbd5e1 !important;
+}
+
+body.dark-mode .zolo-section-box:hover,
+body.dark-mode .cp-col:hover,
+body.dark-mode .template-box:hover {
+  border-color: #334155 !important;
+}
+
+.zolo-section-box-header,
+.cp-col-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--neo-primary, #4f46e5) !important;
+  margin-bottom: 4px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid var(--neo-border, #e2e8f0) !important;
+}
+
+body.dark-mode .zolo-section-box-header,
+body.dark-mode .cp-col-title {
+  color: #818cf8 !important;
+  border-bottom-color: var(--neo-border, #1e293b) !important;
 }
 
 /* ====================================================================
