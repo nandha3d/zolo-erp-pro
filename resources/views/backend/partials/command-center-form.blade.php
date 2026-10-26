@@ -23,4 +23,5 @@ $commandCenterFormConfig = [
 <link rel="stylesheet" href="{{ versioned_asset('css/commercial-assistance.css') }}">
 <script src="{{ versioned_asset('js/commercial-assistance.js') }}"></script>
 <script src="{{ versioned_asset('js/commercial-orders.js') }}"></script>
+<script src="{{ versioned_asset('js/quick-product-modal.js') }}"></script>
 @endpush

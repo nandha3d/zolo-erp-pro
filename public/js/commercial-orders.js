@@ -76,51 +76,142 @@
                 });
         }
 
+        let returnsGeneration = 0;
+        function fetchSideReturns() {
+            const current = ++returnsGeneration;
+            const $status = $('#side-returns-status');
+            const $cards = $('#side-returns-cards');
+            $status.text('Loading returns…');
+            $cards.empty();
+
+            $.getJSON('/compliance/returns', { side: kind })
+                .done(response => {
+                    if (current !== returnsGeneration) return;
+                    const items = (kind === 'sale') ? (response.data?.sales || []) : (response.data?.purchases || []);
+                    let count = 0;
+                    items.forEach(ret => {
+                        count++;
+                        const isAwaiting = (ret.status === 'awaiting_approval');
+                        const statusClass = isAwaiting ? 'partial' : 'received';
+                        const statusLabel = isAwaiting ? 'Awaiting Approval' : (ret.status || 'Posted');
+                        const partyName = ret.supplier ? (ret.supplier.company_name || ret.supplier.name) : (ret.customer ? ret.customer.name : (kind === 'sale' ? 'Customer' : 'Supplier'));
+                        const dateStr = ret.created_at ? (typeof ret.created_at === 'string' ? ret.created_at.substring(0, 10) : '') : '';
+                        const totalAmt = parseFloat(ret.grand_total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        const docKind = (kind === 'sale' ? 'sale_note' : 'purchase_note');
+
+                        const $card = $('<div class="side-bill-card side-return-card">').attr('data-return-id', ret.id);
+                        $card.html(`
+                            <div class="side-card-top">
+                                <strong class="side-card-ref">${ret.reference_no || ('#' + ret.id)}</strong>
+                                <span class="side-card-status ${statusClass}">${statusLabel}</span>
+                            </div>
+                            <div class="side-card-party">
+                                <i class="dripicons-user u-fs-10px u-c-text-muted"></i> ${partyName}
+                            </div>
+                            <div class="side-card-bottom">
+                                <span class="side-card-date">${dateStr}</span>
+                                <span class="side-card-total font-weight-bold">₹ ${totalAmt}</span>
+                            </div>
+                            <div class="side-card-actions">
+                                <a href="/compliance/documents/${docKind}/${ret.id}" target="_blank" class="side-action-btn view" title="View return details">
+                                    <i class="dripicons-preview"></i> Details
+                                </a>
+                                ${isAwaiting ? `
+                                    <a href="javascript:void(0)" class="side-action-btn edit btn-side-approve-return" data-return-id="${ret.id}" title="Approve & Post Note">
+                                        <i class="dripicons-checkmark"></i> Approve
+                                    </a>
+                                ` : ''}
+                            </div>
+                        `);
+                        $cards.append($card);
+                    });
+                    $status.text(count ? 'Showing ' + count + ' returns' : 'No returns recorded.');
+                })
+                .fail(xhr => {
+                    if (current === returnsGeneration) $status.text(error(xhr));
+                });
+        }
+
         function switchCommercialTab(mode) {
             activeCommercialMode = mode;
             const isOrders = (mode === 'orders');
+            const isReturns = (mode === 'returns');
             
             // 1. Update Tabs Active Indicator
             const $billsTab = $('[data-nav-tab="bills"]');
             const $ordersTab = $('[data-nav-tab="orders"], [data-order-register]');
+            const $returnsTab = $('[data-nav-tab="returns"], [data-return-register]');
             
-            if (isOrders) {
-                $billsTab.removeAttr('aria-current');
+            $billsTab.removeAttr('aria-current');
+            $ordersTab.removeAttr('aria-current');
+            $returnsTab.removeAttr('aria-current');
+
+            if (isReturns) {
+                $returnsTab.attr('aria-current', 'page');
+                if (window.history && window.history.pushState) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('returns', '1');
+                    url.searchParams.delete('orders');
+                    url.searchParams.delete('view');
+                    window.history.pushState({ mode: 'returns' }, '', url.toString());
+                }
+            } else if (isOrders) {
                 $ordersTab.attr('aria-current', 'page');
                 if (window.history && window.history.pushState) {
                     const url = new URL(window.location.href);
                     url.searchParams.set('orders', '1');
+                    url.searchParams.delete('returns');
                     url.searchParams.delete('view');
                     window.history.pushState({ mode: 'orders' }, '', url.toString());
                 }
             } else {
-                $ordersTab.removeAttr('aria-current');
                 $billsTab.attr('aria-current', 'page');
                 if (window.history && window.history.pushState) {
                     const url = new URL(window.location.href);
                     url.searchParams.delete('orders');
+                    url.searchParams.delete('returns');
                     url.searchParams.delete('view');
                     window.history.pushState({ mode: 'bills' }, '', url.toString());
                 }
             }
 
             // 2. Breadcrumbs & Title
+            const returnDocTitle = (kind === 'sale' ? 'New Sales Return' : 'New Purchase Return');
             const orderDocTitle = (kind === 'sale' ? 'New Sales Order' : 'New Purchase Order');
             const billDocTitle = (kind === 'sale' ? 'New Sales Bill' : 'New Purchase Bill');
-            $('#doc-title-text').text(isOrders ? orderDocTitle : billDocTitle);
-            $('#doc-breadcrumb-mode').text(isOrders ? 'Order' : 'New');
+
+            $('#doc-title-text').text(isReturns ? returnDocTitle : (isOrders ? orderDocTitle : billDocTitle));
+            $('#doc-breadcrumb-mode').text(isReturns ? 'Return' : (isOrders ? 'Order' : 'New'));
 
             // 3. Document Field Labels
-            $('label[for="reference_no"]').text(isOrders ? (kind === 'sale' ? 'Our Order No' : 'Our PO No') : 'Our Bill No');
-            $('#reference_no').attr('placeholder', isOrders ? 'Auto series (PO-...)' : 'Auto series');
-            $('label[for="supplier_invoice_no"]').text(isOrders ? 'Quotation / Ref #' : 'Supplier Bill No');
-            $('label[for="supplier_invoice_date"]').text(isOrders ? 'PO Date' : 'Bill Date');
-            $('label[for="created_at"]').text(isOrders ? 'Delivery Date' : 'Entry Date');
-            $('label[for="issue_date"]').text(isOrders ? 'Order Date' : 'Bill Date');
-            $('label[for="entry_date"]').text(isOrders ? 'Delivery Date' : 'Entry Date');
+            if (isReturns) {
+                $('label[for="reference_no"]').text(kind === 'sale' ? 'Our Credit Note #' : 'Our Debit Note #');
+                $('#reference_no').attr('placeholder', 'Auto series (DN-... / CN-...)');
+                $('label[for="supplier_invoice_no"]').text(kind === 'sale' ? 'Original Inv #' : 'Original Bill / Ref #');
+                $('label[for="supplier_invoice_date"]').text('Return Date');
+                $('label[for="created_at"]').text('Entry Date');
+                $('label[for="issue_date"]').text('Return Date');
+                $('label[for="entry_date"]').text('Entry Date');
+            } else if (isOrders) {
+                $('label[for="reference_no"]').text(kind === 'sale' ? 'Our Order No' : 'Our PO No');
+                $('#reference_no').attr('placeholder', 'Auto series (PO-...)');
+                $('label[for="supplier_invoice_no"]').text('Quotation / Ref #');
+                $('label[for="supplier_invoice_date"]').text('PO Date');
+                $('label[for="created_at"]').text('Delivery Date');
+                $('label[for="issue_date"]').text('Order Date');
+                $('label[for="entry_date"]').text('Delivery Date');
+            } else {
+                $('label[for="reference_no"]').text('Our Bill No');
+                $('#reference_no').attr('placeholder', 'Auto series');
+                $('label[for="supplier_invoice_no"]').text('Supplier Bill No');
+                $('label[for="supplier_invoice_date"]').text('Bill Date');
+                $('label[for="created_at"]').text('Entry Date');
+                $('label[for="issue_date"]').text('Bill Date');
+                $('label[for="entry_date"]').text('Entry Date');
+            }
 
             // 4. Form status value & Cash toggle
-            const statusVal = isOrders ? (kind === 'sale' ? '2' : '4') : '1';
+            const statusVal = isOrders ? (kind === 'sale' ? '2' : '4') : (isReturns ? '4' : '1');
             $('#purchase-status-val, #sale-status-val').val(statusVal);
             $(form).find('[name="status"], [name="sale_status"]').val(statusVal);
             if (isOrders) {
@@ -133,21 +224,29 @@
             }
 
             // 5. Save Button Styling & Text
-            const saveText = isOrders
-                ? '<i class="dripicons-document-edit"></i> Save ' + (kind === 'sale' ? 'Sales Order' : 'Purchase Order')
-                : '<i class="dripicons-document-edit"></i> Save';
+            const saveText = isReturns
+                ? '<i class="dripicons-document-edit"></i> Save ' + (kind === 'sale' ? 'Sales Return' : 'Purchase Return')
+                : (isOrders
+                    ? '<i class="dripicons-document-edit"></i> Save ' + (kind === 'sale' ? 'Sales Order' : 'Purchase Order')
+                    : '<i class="dripicons-document-edit"></i> Save');
             $('#btn-form-save').html(saveText);
 
             // 6. Side Drawer Content
-            if (isOrders) {
+            if (isReturns) {
+                $('.comm-drawer-title').html('<i class="dripicons-return text-warning"></i> ' + (kind === 'sale' ? 'Sales Returns' : 'Purchase Returns'));
+                $('#side-bill-list, #side-order-list').addClass('d-none');
+                $('.side-dropdown-filters, .side-panel-filter-label, .side-panel-series-filter, .side-filter-tabs').addClass('d-none');
+                $('#side-return-list').removeClass('d-none');
+                fetchSideReturns();
+            } else if (isOrders) {
                 $('.comm-drawer-title').html('<i class="dripicons-clipboard text-primary"></i> ' + (kind === 'sale' ? 'Sales Orders' : 'Purchase Orders'));
-                $('#side-bill-list').addClass('d-none');
+                $('#side-bill-list, #side-return-list').addClass('d-none');
                 $('.side-dropdown-filters, .side-panel-filter-label, .side-panel-series-filter, .side-filter-tabs').addClass('d-none');
                 $('#side-order-list').removeClass('d-none');
                 fetchSideOrders();
             } else {
                 $('.comm-drawer-title').html('<i class="dripicons-view-list text-success"></i> ' + (kind === 'sale' ? 'Sales list' : 'Purchase list'));
-                $('#side-order-list').addClass('d-none');
+                $('#side-order-list, #side-return-list').addClass('d-none');
                 $('.side-dropdown-filters, .side-panel-filter-label, .side-panel-series-filter, .side-filter-tabs').removeClass('d-none');
                 $('#side-bill-list').removeClass('d-none');
             }
@@ -241,6 +340,11 @@
             switchCommercialTab('orders');
         });
 
+        $(document).on('click', '[data-return-register], [data-nav-tab="returns"]', function (event) {
+            event.preventDefault();
+            switchCommercialTab('returns');
+        });
+
         $(document).on('click', '[data-nav-tab="bills"]', function (event) {
             event.preventDefault();
             switchCommercialTab('bills');
@@ -281,11 +385,34 @@
             resetNewOrder();
         });
 
+        $(document).on('click', '#btn-side-new-return', function (e) {
+            e.preventDefault();
+            if (window.commandCenterGrid?.resetFormToNew) {
+                window.commandCenterGrid.resetFormToNew();
+            }
+            switchCommercialTab('returns');
+        });
+
+        $(document).on('click', '.btn-side-approve-return', function (e) {
+            e.preventDefault();
+            const returnId = $(this).data('return-id');
+            if (!returnId) return;
+            if (!confirm('Approve and post this note?')) return;
+            $.ajax({
+                url: '/compliance/' + kind + '/notes/' + returnId + '/approve',
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': token }
+            }).done(() => {
+                feedback('Return note approved and posted.');
+                fetchSideReturns();
+            }).fail(xhr => feedback(error(xhr)));
+        });
+
         $(document).on('change', '#side-orders-all-toggle', function () {
             fetchSideOrders();
         });
 
-        // Intercept form submission when in orders mode to guarantee order status and payment=0
+        // Intercept form submission when in orders or returns mode
         $('#btn-form-save').on('click', function (e) {
             if (activeCommercialMode === 'orders') {
                 $('#input-paying-method').val('Credit');
@@ -293,13 +420,25 @@
                 const statusVal = (kind === 'sale' ? '2' : '4');
                 $('#purchase-status-val, #sale-status-val').val(statusVal);
                 $(form).find('[name="status"], [name="sale_status"]').val(statusVal);
+            } else if (activeCommercialMode === 'returns') {
+                const statusVal = '4';
+                $('#purchase-status-val, #sale-status-val').val(statusVal);
+                $(form).find('[name="status"], [name="sale_status"]').val(statusVal);
             }
         });
 
         // Window popstate navigation
         window.addEventListener('popstate', function (event) {
-            const isOrders = new URLSearchParams(window.location.search).get('orders') === '1' || new URLSearchParams(window.location.search).get('view') === 'orders';
-            switchCommercialTab(isOrders ? 'orders' : 'bills');
+            const params = new URLSearchParams(window.location.search);
+            const isReturns = params.get('returns') === '1' || params.get('view') === 'returns';
+            const isOrders = params.get('orders') === '1' || params.get('view') === 'orders';
+            if (isReturns) {
+                switchCommercialTab('returns');
+            } else if (isOrders) {
+                switchCommercialTab('orders');
+            } else {
+                switchCommercialTab('bills');
+            }
         });
 
         // Initialize state on page load
@@ -307,6 +446,8 @@
         const linked = params.get(kind === 'sale' ? 'sales_order_id' : 'purchase_order_id');
         if (linked) {
             load(Number(linked));
+        } else if (params.get('returns') === '1' || params.get('view') === 'returns') {
+            switchCommercialTab('returns');
         } else if (params.get('orders') === '1' || params.get('view') === 'orders') {
             switchCommercialTab('orders');
         }

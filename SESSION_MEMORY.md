@@ -8,7 +8,7 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-25 13:50:00 (+05:30) — Resolved blank screen on /dashboard (section 81)
+- **Last Updated:** 2026-10-26 10:20:00 (+05:30) — Unified Add Product Modal & In-Place Returns Tab (section 87)
 - **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/main, origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
@@ -2041,3 +2041,46 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - Browser subagent verified zero popups when clicking `Purchase Orders`, clean in-place tab switching, seamless return to `Bills`, and zero top lines on all popups.
   - `php artisan test --filter=PurchaseOrderLifecycleTest`: PASS (5 tests, 28 assertions).
   - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).
+
+---
+
+## 87. Unified Add Product Popup Across All Commercial/Material Pages & In-Place Returns Workspace (2026-10-26, branch ui)
+- **User Feedback & Requirements:**
+  - "when we goto add product, it goes to the old type add product, but what we wanted is, we need same page as a popup in all the places, here some UI, there some UI is not good, make it unify, we have a dedicated add product page in the product section, we have to make the same as a popup. also the return must be in the same window as like the purchase and purchase order."
+- **Key Architectural Solutions:**
+  1. **Shared Unified Add Product Modal Partial (`backend.product.partials.quick_create_modal`):**
+     - Completely unified the "+ Create item" modal across all commercial (`/purchases`, `/sales`) and material movement (`/goods-received-notes`, `/delivery-challans`) screens.
+     - Exactly mirrors the design system and layout of the dedicated `/products/create` page:
+       - **Top 3 Primary Cards (`<x-ui.section-box>`):** Product Details (Blue accent), Pricing & Tax (Emerald accent), Media, Details & SEO (Purple accent).
+       - **Full-Width Inventory Stripe (`.zolo-inventory-stripe`):** Amber theme with modern toggle switch buttons (`.zolo-switch-track` & `.zolo-switch-thumb`), indicator dots, semantic color accents, and an inline Alert Quantity input.
+       - **Dynamic Responsive Extended Grid (`.quick-product-extended-details-container`):** Toggles Initial Stock, Warehouse Price Difference, Variants & Attributes, Batch & Expiry, IMEI / Serial Numbers, and Promotional Price with zero gaps using dynamic column span packing (`applyQuickModalDynamicGridSpans()`).
+       - **Inline Sub-Modals & Master Creation:** Inline [+] modal creation for Category (`#quick-create-category-modal`) and Brand (`#quick-create-brand-modal`) via AJAX (`/categories/quick-store`, `/brands/quick-store`).
+       - **Smart Pricing & Margin Sync:** Two-way reactive calculation between Cost, Profit Margin, and Selling Price.
+       - **Random Code Generator:** Instant code generation (`#btn-quick-code-gen`) with duplicate prevention.
+     - Modularized client-side behavior into `public/js/quick-product-modal.js`.
+     - Replaced disparate legacy modals across:
+       - `resources/views/backend/purchase/index.blade.php`
+       - `resources/views/backend/sale/index.blade.php`
+       - `resources/views/backend/goods_received_note/index.blade.php`
+       - `resources/views/backend/delivery_challan/index.blade.php`
+       - `resources/views/backend/partials/command-center-form.blade.php`
+     - Updated `material-document.js` to serialize the unified modal's full payload to `POST /products/quick-store`.
+  2. **In-Place Returns Tab Navigation & Workspace (Zero Popups / Redirects):**
+     - Enhanced `switchCommercialTab(mode)` in `commercial-orders.js` to support `mode === 'returns'`.
+     - In the top command center navigation bar (`command-center-nav.blade.php`):
+       - Added `data-return-register` and `data-nav-tab="returns"`.
+       - Clicking `Returns` switches the workspace in-place without page reload or popup:
+         - Updates URL query string to `?returns=1` via `window.history.pushState`.
+         - Updates active tab pill to `aria-current="page"`.
+         - Switches workspace title to `New Purchase Return` (or `New Sales Return`) with mode badge `Return`.
+         - Updates field labels to `Debit Note #` (or `Credit Note #`), `Original Bill / Inv #`, `Return Date`.
+         - Changes primary submit button to `Save Purchase Return` (or `Save Sales Return`).
+       - Right-side drawer transforms into `#side-return-list`, dynamically fetching recent returns via `GET /compliance/returns?side=...` with customer/supplier relationships.
+       - Provides direct action links (`Details`, `Approve`) and `#btn-side-new-return`.
+       - Supports complete browser history back/forward navigation (`popstate`).
+- **Verification:**
+  - `php -d memory_limit=512M artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).
+  - `php -d memory_limit=512M artisan test --filter=PurchaseOrderLifecycleTest`: PASS (5 tests, 28 assertions).
+  - `php -d memory_limit=512M artisan test --filter=ComplianceHttpTest`: PASS (5 tests, 45 assertions).
+  - Visual verification via browser subagent confirmed identical popup UI across `/purchases`, `/sales`, `/goods-received-notes`, `/delivery-challans`, and smooth in-place tab switching for Returns and Orders.
+

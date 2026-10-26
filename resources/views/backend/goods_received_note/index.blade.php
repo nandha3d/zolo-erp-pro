@@ -382,47 +382,8 @@
     </div>
 </div>
 
-<!-- On-The-Fly Quick Item Creation Modal -->
-<div class="modal fade" id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content u-r-8px u-b-1px-solid-border-strong">
-            <div class="modal-header py-2 px-3 u-bg-primary u-c-xffffff">
-                <h5 class="modal-title font-weight-bold u-fs-14px"><i class="dripicons-plus mr-1"></i> Quick Create Item</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-            </div>
-            <form id="quick-create-item-form">
-                <div class="modal-body p-3">
-                    <div class="form-group mb-2">
-                        <label class="font-weight-bold u-fs-11px">Item Name <span class="text-danger">*</span></label>
-                        <input type="text" id="quick-item-name" class="form-control form-control-sm" required placeholder="e.g. Cotton Grey Fabric 40s">
-                    </div>
-                    <div class="form-group mb-2">
-                        <label class="font-weight-bold u-fs-11px">Item Code / Barcode</label>
-                        <input type="text" id="quick-item-code" class="form-control form-control-sm" placeholder="Auto-generated if empty">
-                    </div>
-                    <div class="row gx-2 gy-2">
-                        <div class="col-6">
-                            <div class="form-group mb-2">
-                                <label class="font-weight-bold u-fs-11px">Cost Rate (₹)</label>
-                                <input type="number" step="0.01" id="quick-item-cost" class="form-control form-control-sm" value="0.00">
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="form-group mb-2">
-                                <label class="font-weight-bold u-fs-11px">Selling Rate (₹)</label>
-                                <input type="number" step="0.01" id="quick-item-price" class="form-control form-control-sm" value="0.00">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer py-2 px-3 u-bg-surface-2">
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary u-bg-primary u-bc-primary">Save & Add to GRN</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Unified Executive Add Product Modal (Catalog Master) -->
+@include('backend.product.partials.quick_create_modal')
 
 @include('backend.partials.material-party-modal', ['partyType' => 'supplier'])
 @endsection
@@ -471,6 +432,7 @@
     <script type="application/json" id="material-document-data">@json($materialConfig)</script>
     <script src="{{ asset('js/document-drafts.js') }}?v={{ filemtime(public_path('js/document-drafts.js')) }}"></script>
     <script src="{{ asset('js/material-document.js') }}?v={{ filemtime(public_path('js/material-document.js')) }}"></script>
+    <script src="{{ versioned_asset('js/quick-product-modal.js') }}"></script>
 @endpush
 
 @push('css')

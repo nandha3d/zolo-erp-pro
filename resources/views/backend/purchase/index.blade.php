@@ -491,6 +491,20 @@
                     <div id="side-orders-status" class="small text-muted mb-2 px-1" role="status"></div>
                     <div id="side-orders-cards"></div>
                 </div>
+
+                <!-- Purchase Returns Side List (Active in Returns mode) -->
+                <div class="side-list-container d-none" id="side-return-list">
+                    <div class="side-orders-header d-flex justify-content-between align-items-center mb-2 px-1">
+                        <span class="small text-muted font-weight-bold">
+                            Recent Returns / Debit Notes
+                        </span>
+                        <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold" id="btn-side-new-return">
+                            <i class="dripicons-plus"></i> New Return
+                        </button>
+                    </div>
+                    <div id="side-returns-status" class="small text-muted mb-2 px-1" role="status"></div>
+                    <div id="side-returns-cards"></div>
+                </div>
             </div>
         </aside>
     </div>
@@ -1138,341 +1152,8 @@
     </div>
 </div>
 
-<!-- Executive Spacious Add Product Modal (Catalog Master) -->
-<div id="quick-create-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left compact-add-product-modal">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header d-flex align-items-center justify-content-between">
-                <div>
-                    <h5 class="modal-title font-weight-bold u-fs-15px u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
-                        <i class="fa fa-plus-circle u-c-primary u-fs-18px"></i> Add Product (Catalog Master)
-                    </h5>
-                    <span class="u-fs-11_5px u-c-text-muted">The field labels marked with * are required. Once created, the item is immediately selected and added to the voucher.</span>
-                </div>
-                <button type="button" class="close u-fs-22px u-ol-none" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="quick-create-item-form">
-                <div class="modal-body">
-                    <!-- Section 1: Identification (3 columns) -->
-                    <div class="compact-modal-section-title">
-                        <i class="dripicons-information"></i> 1. Product Identification
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Product Type *</label>
-                                <select id="quick-item-type" name="type" class="form-control" required>
-                                    <option value="standard" selected>Standard</option>
-                                    <option value="combo">Combo</option>
-                                    <option value="digital">Digital</option>
-                                    <option value="service">Service</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Product Name *</label>
-                                <input type="text" id="quick-item-name" name="name" class="form-control" placeholder="e.g. Cotton Grey Yarn 40s" required autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Product Code *</label>
-                                <div class="input-group">
-                                    <input type="text" id="quick-item-code" name="code" class="form-control" placeholder="e.g. ITM-1002" required autocomplete="off">
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary u-h-34px u-lh-32px u-p-0-12px u-fs-11_5px" id="btn-quick-gen-code" title="Generate Random Code"><i class="fa fa-refresh"></i> Auto</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Barcode Symbology *</label>
-                                <select id="quick-item-symbology" name="barcode_symbology" class="form-control" required>
-                                    <option value="C128" selected>Code 128</option>
-                                    <option value="C39">Code 39</option>
-                                    <option value="UPCA">UPC-A</option>
-                                    <option value="UPCE">UPC-E</option>
-                                    <option value="EAN8">EAN-8</option>
-                                    <option value="EAN13">EAN-13</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Brand</label>
-                                <div class="input-group">
-                                    <select id="quick-item-brand" name="brand_id" class="form-control">
-                                        <option value="">Select Brand...</option>
-                                        @if(isset($lims_brand_list))
-                                            @foreach($lims_brand_list as $b)
-                                                <option value="{{ $b->id }}">{{ $b->title }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary u-p-0-10px" id="btn-quick-add-brand" title="Create Brand Inline"><i class="dripicons-plus"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Category *</label>
-                                <div class="input-group">
-                                    <select id="quick-item-category" name="category_id" class="form-control" required>
-                                        <option value="" disabled selected>Select Category...</option>
-                                        @if(isset($lims_category_list))
-                                            @foreach($lims_category_list as $cat)
-                                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-secondary u-p-0-10px" id="btn-quick-add-category" title="Create Category Inline"><i class="dripicons-plus"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @include('backend.product.partials.stock-policy', ['product' => null])
-                    <!-- Section 2: Units of Measure (3 columns) -->
-                    <div class="compact-modal-section-title">
-                        <i class="dripicons-box"></i> 2. Units of Measure
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Product Unit *</label>
-                                <select id="quick-item-unit" name="unit_id" class="form-control" required>
-                                    @if(isset($lims_unit_list) && count($lims_unit_list))
-                                        @foreach($lims_unit_list as $u)
-                                            <option value="{{ $u->id }}" {{ $loop->first ? 'selected' : '' }}>{{ $u->unit_name }} ({{ $u->unit_code }})</option>
-                                        @endforeach
-                                    @else
-                                        <option value="1" selected>Piece (Pc)</option>
-                                        <option value="2">Kilogram (Kg)</option>
-                                        <option value="3">Meter (Mtr)</option>
-                                        <option value="4">Box (Box)</option>
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Sale Unit</label>
-                                <select id="quick-item-sale-unit" name="sale_unit_id" class="form-control">
-                                    @if(isset($lims_unit_list) && count($lims_unit_list))
-                                        @foreach($lims_unit_list as $u)
-                                            <option value="{{ $u->id }}">{{ $u->unit_name }} ({{ $u->unit_code }})</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="compact-field-block">
-                                <label>Purchase Unit</label>
-                                <select id="quick-item-purchase-unit" name="purchase_unit_id" class="form-control">
-                                    @if(isset($lims_unit_list) && count($lims_unit_list))
-                                        @foreach($lims_unit_list as $u)
-                                            <option value="{{ $u->id }}">{{ $u->unit_name }} ({{ $u->unit_code }})</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 3: Cost, Pricing & Margins (4 columns) -->
-                    <div class="compact-modal-section-title">
-                        <i class="dripicons-tag"></i> 3. Cost, Pricing &amp; Margins
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Product Cost (₹) *</label>
-                                <input type="number" id="quick-item-cost" name="cost" class="form-control" placeholder="0.00" step="any" min="0" required value="0.00">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Profit Margin</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend u-w-52px">
-                                        <select id="quick-item-margin-type" name="profit_margin_type" class="form-control u-p-4px-6px">
-                                            <option value="percentage" selected>%</option>
-                                            <option value="flat">₹</option>
-                                        </select>
-                                    </div>
-                                    <input type="number" id="quick-item-margin" name="profit_margin" class="form-control" placeholder="25.00" step="0.01" value="25.00">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Product Price (₹) *</label>
-                                <input type="number" id="quick-item-price" name="price" class="form-control" placeholder="0.00" step="any" min="0" required value="0.00">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Wholesale Price (₹)</label>
-                                <input type="number" id="quick-item-wholesale" name="wholesale_price" class="form-control" placeholder="0.00" step="any" min="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Daily Sale Objective</label>
-                                <input type="number" id="quick-item-daily-sale" name="daily_sale_objective" class="form-control" placeholder="e.g. 10" step="any">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Alert Quantity</label>
-                                <input type="number" id="quick-item-alert-qty" name="alert_quantity" class="form-control" placeholder="10" step="any">
-                            </div>
-                        </div>
-                        @php $quickGstRates = \App\Services\Tax\GstSetupService::usesGst() ? app(\App\Services\Tax\GstSetupService::class)->currentRates() : null; @endphp
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>{{ $quickGstRates !== null ? 'GST Rate' : 'Product Tax' }}</label>
-                                @if($quickGstRates !== null)
-                                <select id="quick-item-tax" name="tax_category_id" class="form-control" data-gst="1">
-                                    <option value="" data-rate="0">Not set</option>
-                                    @foreach($quickGstRates as $rateId => $gstRate)
-                                        <option value="{{ $rateId }}" data-rate="{{ $gstRate['rate'] }}" {{ $gstRate['name'] === 'GST 18%' ? 'selected' : '' }}>{{ $gstRate['name'] }}</option>
-                                    @endforeach
-                                </select>
-                                @else
-                                <select id="quick-item-tax" name="tax_id" class="form-control">
-                                    <option value="" data-rate="0">No Tax (0%)</option>
-                                    @if(isset($lims_tax_list))
-                                        @foreach($lims_tax_list as $tax)
-                                            <option value="{{ $tax->id }}" data-rate="{{ $tax->rate }}" {{ $tax->rate == 18 ? 'selected' : '' }}>{{ $tax->name }} ({{ $tax->rate }}%)</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @endif
-                            </div>
-                        </div>
-                        @if($quickGstRates !== null)
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>HSN / SAC</label>
-                                <input type="text" id="quick-item-hsn" name="hsn_code" class="form-control" maxlength="8" inputmode="numeric" placeholder="e.g. 3004 or 998313">
-                            </div>
-                        </div>
-                        @endif
-                        <div class="col-md-3">
-                            <div class="compact-field-block">
-                                <label>Tax Method</label>
-                                <select id="quick-item-tax-method" name="tax_method" class="form-control">
-                                    <option value="1" selected>Exclusive</option>
-                                    <option value="2">Inclusive</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 4: Warranty & Guarantee -->
-                    <div class="compact-modal-section-title">
-                        <i class="dripicons-shield"></i> 4. Warranty &amp; Guarantee
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="compact-field-block">
-                                <label>Warranty</label>
-                                <div class="input-group">
-                                    <input type="number" id="quick-item-warranty" name="warranty" class="form-control" placeholder="e.g. 1" min="1">
-                                    <div class="input-group-append u-w-105px">
-                                        <select id="quick-item-warranty-type" name="warranty_type" class="form-control">
-                                            <option value="months" selected>Months</option>
-                                            <option value="years">Years</option>
-                                            <option value="days">Days</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="compact-field-block">
-                                <label>Guarantee</label>
-                                <div class="input-group">
-                                    <input type="number" id="quick-item-guarantee" name="guarantee" class="form-control" placeholder="e.g. 1" min="1">
-                                    <div class="input-group-append u-w-105px">
-                                        <select id="quick-item-guarantee-type" name="guarantee_type" class="form-control">
-                                            <option value="months" selected>Months</option>
-                                            <option value="years">Years</option>
-                                            <option value="days">Days</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section 5: Inventory Tracking & POS Options -->
-                    <div class="compact-modal-section-title">
-                        <i class="dripicons-checklist"></i> 5. Inventory Tracking &amp; POS Options
-                    </div>
-                    <div class="compact-modal-checkbox-group">
-                        <label class="compact-modal-checkbox-item">
-                            <input type="checkbox" id="quick-item-is-batch" name="is_batch" value="1">
-                            <span>Batch &amp; Expired Date</span>
-                        </label>
-                        <label class="compact-modal-checkbox-item">
-                            <input type="checkbox" id="quick-item-is-imei" name="is_imei" value="1">
-                            <span>IMEI or Serial Numbers</span>
-                        </label>
-                        <label class="compact-modal-checkbox-item">
-                            <input type="checkbox" id="quick-item-featured" name="featured" value="1">
-                            <span>Featured in POS</span>
-                        </label>
-                        <label class="compact-modal-checkbox-item">
-                            <input type="checkbox" id="quick-item-is-embeded" name="is_embeded" value="1">
-                            <span>Embedded Barcode (Scale)</span>
-                        </label>
-                        <label class="compact-modal-checkbox-item">
-                            <input type="checkbox" id="quick-item-is-online" name="is_online" value="1" checked>
-                            <span>Sell Online</span>
-                        </label>
-                        <label class="compact-modal-checkbox-item">
-                            <input type="checkbox" id="quick-item-in-stock" name="in_stock" value="1" checked>
-                            <span>In Stock</span>
-                        </label>
-                    </div>
-
-                    <!-- Section 6: Product Details -->
-                    <div class="compact-modal-section-title">
-                        <i class="dripicons-document"></i> 6. Product Details &amp; Specification
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="compact-field-block mb-0">
-                                <textarea id="quick-item-details" name="product_details" class="form-control u-h-auto u-minh-56px" rows="2" placeholder="Enter specifications, notes, or product description..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex align-items-center justify-content-between">
-                    <button type="button" class="btn btn-sm btn-secondary comm-bottom-btn" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-primary comm-bottom-btn comm-bottom-btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-quick-create-submit">
-                        <i class="dripicons-checkmark"></i> 💾 Save &amp; Add to Voucher
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Unified Executive Add Product Modal (Catalog Master) -->
+@include('backend.product.partials.quick_create_modal')
 
 <!-- Quick Create Category Modal (Inline) -->
 <div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
@@ -2861,12 +2542,12 @@
             warranty_type: $('#quick-item-warranty-type').val() || 'months',
             guarantee: $('#quick-item-guarantee').val() || null,
             guarantee_type: $('#quick-item-guarantee-type').val() || 'months',
-            is_batch: $('#quick-item-is-batch').is(':checked') ? 1 : 0,
-            is_imei: $('#quick-item-is-imei').is(':checked') ? 1 : 0,
-            featured: $('#quick-item-featured').is(':checked') ? 1 : 0,
-            is_embeded: $('#quick-item-is-embeded').is(':checked') ? 1 : 0,
-            is_online: $('#quick-item-is-online').is(':checked') ? 1 : 0,
-            in_stock: $('#quick-item-in-stock').is(':checked') ? 1 : 0,
+            is_batch: $('#quick-create-item-form [name="is_batch"]').is(':checked') ? 1 : 0,
+            is_imei: $('#quick-create-item-form [name="is_imei"]').is(':checked') ? 1 : 0,
+            featured: $('#quick-create-item-form [name="featured"]').is(':checked') ? 1 : 0,
+            is_embeded: $('#quick-create-item-form [name="is_embeded"]').is(':checked') ? 1 : 0,
+            is_online: $('#quick-create-item-form [name="is_online"]').is(':checked') ? 1 : 0,
+            in_stock: $('#quick-create-item-form [name="in_stock"]').is(':checked') ? 1 : 0,
             product_details: $('#quick-item-details').val() || null,
         };
 

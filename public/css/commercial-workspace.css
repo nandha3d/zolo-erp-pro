@@ -2766,34 +2766,34 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
  * Executive Spacious Add Product Modal (Catalog Master)
  * ==================================================================== */
 .compact-add-product-modal .modal-dialog {
-    max-width: 1080px !important;
-    width: 95% !important;
-    margin: 1.5rem auto !important;
+    max-width: 1280px !important;
+    width: 96% !important;
+    margin: 1.25rem auto !important;
 }
 
 .compact-add-product-modal .modal-content {
     border-radius: 12px !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid var(--z-border, #cbd5e1) !important;
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15) !important;
     overflow: hidden !important;
 }
 
 .compact-add-product-modal .modal-header {
-    background: #f8fafc !important;
-    padding: 14px 22px !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    background: var(--z-surface-2, #f8fafc) !important;
+    padding: 12px 20px !important;
+    border-bottom: 1px solid var(--z-border, #e2e8f0) !important;
 }
 
 .compact-add-product-modal .modal-body {
-    padding: 16px 22px !important;
-    max-height: calc(85vh - 120px) !important;
+    padding: 12px 18px !important;
+    max-height: calc(88vh - 110px) !important;
     overflow-y: auto !important;
 }
 
 .compact-add-product-modal .modal-footer {
-    background: #f8fafc !important;
-    padding: 12px 22px !important;
-    border-top: 1px solid #e2e8f0 !important;
+    background: var(--z-surface-2, #f8fafc) !important;
+    padding: 10px 20px !important;
+    border-top: 1px solid var(--z-border, #e2e8f0) !important;
 }
 
 .compact-field-block {

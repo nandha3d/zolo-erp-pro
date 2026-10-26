@@ -186,10 +186,15 @@
     $('#quick-create-item-form').on('submit', function (event) {
         event.preventDefault();
         const $button = $(this).find('[type="submit"]').prop('disabled', true);
-        $.ajax({url: config.productUrl, method: 'POST', dataType: 'json', data: {
-            _token: config.token, name: $('#quick-item-name').val(), code: $('#quick-item-code').val(),
-            price: $('#quick-item-price').val(), cost: $('#quick-item-cost').val()
-        }}).done(result => {
+        const formArray = $(this).serializeArray();
+        const postData = { _token: config.token };
+        formArray.forEach(f => { postData[f.name] = f.value; });
+        if (!postData.name) postData.name = $('#quick-item-name').val();
+        if (!postData.code) postData.code = $('#quick-item-code').val();
+        if (!postData.price) postData.price = $('#quick-item-price').val() || '0';
+        if (!postData.cost) postData.cost = $('#quick-item-cost').val() || '0';
+
+        $.ajax({url: config.productUrl, method: 'POST', dataType: 'json', data: postData}).done(result => {
             products.unshift(result.product);
             addRow({product_id: result.product.id});
             $('#multi-item-tbody').prepend($('<tr class="multi-item-row">').append(
