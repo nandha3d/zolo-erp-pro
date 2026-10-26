@@ -507,6 +507,25 @@ class CommercialController extends Controller
             'is_online' => 'nullable|boolean',
             'in_stock' => 'nullable|boolean',
             'product_details' => 'nullable|string',
+            'promotion' => 'nullable|boolean',
+            'promotion_price' => 'nullable|numeric|min:0',
+            'starting_date' => 'nullable|date',
+            'last_date' => 'nullable|date',
+            'is_diffPrice' => 'nullable|boolean',
+            'is_variant' => 'nullable|boolean',
+            'is_initial_stock' => 'nullable|boolean',
+            'stock_warehouse_id' => 'nullable|array',
+            'stock' => 'nullable|array',
+            'warehouse_id' => 'nullable|array',
+            'diff_price' => 'nullable|array',
+            'batch_warehouse_id' => 'nullable|array',
+            'batch_no' => 'nullable|array',
+            'expired_date' => 'nullable|array',
+            'batch_qty' => 'nullable|array',
+            'imei_warehouse_id' => 'nullable|array',
+            'imei_number' => 'nullable|array',
+            'variant_option' => 'nullable|array',
+            'variant_value' => 'nullable|array',
         ]);
 
         $context = $request->attributes->get(CompanyContext::class) ?? abort(409, 'Choose a company first.');
@@ -587,6 +606,108 @@ class CommercialController extends Controller
             'qty' => 0,
             'is_active' => 1,
         ], $validated, $context);
+
+        // Extended promotional pricing
+        if (!empty($validated['promotion'])) {
+            $product->promotion = 1;
+            $product->promotion_price = $validated['promotion_price'] ?? null;
+            $product->starting_date = !empty($validated['starting_date']) ? date('Y-m-d', strtotime($validated['starting_date'])) : null;
+            $product->last_date = !empty($validated['last_date']) ? date('Y-m-d', strtotime($validated['last_date'])) : null;
+            $product->save();
+        }
+
+        // Extended differential warehouse pricing
+        if (!empty($validated['is_diffPrice']) && !empty($validated['diff_price']) && !empty($validated['warehouse_id'])) {
+            $product->is_diffPrice = 1;
+            $product->save();
+            foreach ($validated['diff_price'] as $key => $diffPrice) {
+                if ($diffPrice !== null && $diffPrice !== '' && !empty($validated['warehouse_id'][$key])) {
+                    \App\Models\Product_Warehouse::updateOrCreate([
+                        'product_id' => $product->id,
+                        'warehouse_id' => $validated['warehouse_id'][$key],
+                        'company_id' => $context->companyId,
+                    ], [
+                        'price' => (float)$diffPrice,
+                        'qty' => 0,
+                    ]);
+                }
+            }
+        }
+
+        // Extended batch and expiry date
+        if (!empty($validated['is_batch']) && !empty($validated['batch_no']) && !empty($validated['batch_warehouse_id'])) {
+            foreach ($validated['batch_warehouse_id'] as $key => $warehouseId) {
+                $batchNo = trim($validated['batch_no'][$key] ?? '');
+                if ($batchNo !== '') {
+                    $expiredDate = !empty($validated['expired_date'][$key]) ? date('Y-m-d', strtotime($validated['expired_date'][$key])) : null;
+                    $batchQty = (float)($validated['batch_qty'][$key] ?? 0);
+                    $productBatch = \App\Models\ProductBatch::firstOrCreate([
+                        'product_id' => $product->id,
+                        'batch_no' => $batchNo,
+                        'company_id' => $context->companyId,
+                    ], [
+                        'expired_date' => $expiredDate,
+                        'qty' => $batchQty,
+                    ]);
+                    if ($batchQty > 0 || $warehouseId) {
+                        \App\Models\Product_Warehouse::updateOrCreate([
+                            'product_id' => $product->id,
+                            'warehouse_id' => $warehouseId,
+                            'company_id' => $context->companyId,
+                        ], [
+                            'product_batch_id' => $productBatch->id,
+                            'qty' => $batchQty,
+                            'price' => $product->price,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Extended IMEI / Serial numbers
+        if (!empty($validated['is_imei']) && !empty($validated['imei_number']) && !empty($validated['imei_warehouse_id'])) {
+            foreach ($validated['imei_warehouse_id'] as $key => $warehouseId) {
+                $imei = trim($validated['imei_number'][$key] ?? '');
+                if ($imei !== '') {
+                    \App\Models\Product_Warehouse::updateOrCreate([
+                        'product_id' => $product->id,
+                        'warehouse_id' => $warehouseId,
+                        'company_id' => $context->companyId,
+                    ], [
+                        'imei_number' => $imei,
+                        'price' => $product->price,
+                    ]);
+                }
+            }
+        }
+
+        // Extended initial stock
+        if (!empty($validated['is_initial_stock']) && !empty($validated['stock']) && !empty($validated['stock_warehouse_id'])) {
+            foreach ($validated['stock_warehouse_id'] as $key => $warehouseId) {
+                $initialStock = (float)($validated['stock'][$key] ?? 0);
+                if ($initialStock > 0) {
+                    \App\Models\Product_Warehouse::updateOrCreate([
+                        'product_id' => $product->id,
+                        'warehouse_id' => $warehouseId,
+                        'company_id' => $context->companyId,
+                    ], [
+                        'qty' => $initialStock,
+                        'price' => $product->price,
+                    ]);
+                }
+            }
+        }
+
+        // Extended variants
+        if (!empty($validated['is_variant'])) {
+            $product->is_variant = 1;
+            if (!empty($validated['variant_option']) && !empty($validated['variant_value'])) {
+                $product->variant_option = json_encode(array_values(array_filter($validated['variant_option'])));
+                $product->variant_value = json_encode(array_values(array_filter($validated['variant_value'])));
+            }
+            $product->save();
+        }
+
         if ($rate = app(\App\Services\Tax\GstSetupService::class)->rateFor($product)) $taxRate = $rate['rate'];
 
         return response()->json([

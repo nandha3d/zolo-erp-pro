@@ -2741,46 +2741,33 @@
         var btn = $('#btn-quick-create-submit');
         btn.prop('disabled', true).text('Saving...');
 
-        var postData = {
-            _token: '{{ csrf_token() }}',
-            name: name,
-            code: code,
-            type: $('#quick-item-type').val() || 'standard',
-            barcode_symbology: $('#quick-item-symbology').val() || 'C128',
-            brand_id: $('#quick-item-brand').val() || null,
-            category_id: $('#quick-item-category').val() || null,
-            unit_id: unitId,
-            sale_unit_id: $('#quick-item-sale-unit').val() || unitId,
-            purchase_unit_id: $('#quick-item-purchase-unit').val() || unitId,
-            cost: cost,
-            price: price,
-            profit_margin: parseFloat($('#quick-item-margin').val()) || null,
-            profit_margin_type: $('#quick-item-margin-type').val() || 'percentage',
-            wholesale_price: parseFloat($('#quick-item-wholesale').val()) || null,
-            daily_sale_objective: parseFloat($('#quick-item-daily-sale').val()) || null,
-            alert_quantity: parseFloat($('#quick-item-alert-qty').val()) || null,
-            tax_id: $('#quick-item-tax').data('gst') ? null : ($('#quick-item-tax').val() || null),
-            tax_category_id: $('#quick-item-tax').data('gst') ? ($('#quick-item-tax').val() || null) : undefined,
-            hsn_code: $('#quick-item-hsn').val() || undefined,
-            negative_stock_policy: $('#negative-stock-policy').val() || '',
-            tax_method: $('#quick-item-tax-method').val() || 1,
-            warranty: $('#quick-item-warranty').val() || null,
-            warranty_type: $('#quick-item-warranty-type').val() || 'months',
-            guarantee: $('#quick-item-guarantee').val() || null,
-            guarantee_type: $('#quick-item-guarantee-type').val() || 'months',
-            is_batch: $('#quick-create-item-form [name="is_batch"]').is(':checked') ? 1 : 0,
-            is_imei: $('#quick-create-item-form [name="is_imei"]').is(':checked') ? 1 : 0,
-            featured: $('#quick-create-item-form [name="featured"]').is(':checked') ? 1 : 0,
-            is_embeded: $('#quick-create-item-form [name="is_embeded"]').is(':checked') ? 1 : 0,
-            is_online: $('#quick-create-item-form [name="is_online"]').is(':checked') ? 1 : 0,
-            in_stock: $('#quick-create-item-form [name="in_stock"]').is(':checked') ? 1 : 0,
-            product_details: $('#quick-item-details').val() || null,
-        };
+        var formData = new FormData(this);
+        formData.set('_token', '{{ csrf_token() }}');
+        formData.set('name', name);
+        formData.set('code', code);
+        formData.set('cost', cost);
+        formData.set('price', price);
+        formData.set('unit_id', unitId || '');
+        formData.set('sale_unit_id', $('#quick-item-sale-unit').val() || unitId || '');
+        formData.set('purchase_unit_id', $('#quick-item-purchase-unit').val() || unitId || '');
+        formData.set('tax_method', $('#quick-item-tax-method').val() || 1);
+        if ($('#quick-item-tax').data('gst')) {
+            formData.set('tax_category_id', $('#quick-item-tax').val() || '');
+            formData.delete('tax_id');
+        } else {
+            formData.set('tax_id', $('#quick-item-tax').val() || '');
+            formData.delete('tax_category_id');
+        }
+        ['is_batch', 'is_imei', 'featured', 'is_embeded', 'is_online', 'in_stock', 'is_initial_stock', 'is_diffPrice', 'is_variant', 'promotion'].forEach(function(k) {
+            formData.set(k, $('#quick-create-item-form [name="' + k + '"]').is(':checked') ? 1 : 0);
+        });
 
         $.ajax({
             type: 'POST',
             url: '{{ route("products.quick-store") }}',
-            data: postData,
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function(res) {
                 btn.prop('disabled', false).html('<i class="dripicons-checkmark"></i> 💾 Save & Add to Voucher');
                 var p = (res && res.product) ? res.product : {
