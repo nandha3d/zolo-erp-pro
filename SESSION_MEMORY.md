@@ -2018,6 +2018,26 @@ User feedback items 1-9 (purchase bill screen, theme, registers, product list):
   - `php artisan test --filter=ProductCreateSmokeTest`: PASS (1 test, 10 assertions).
   - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).
 
+---
 
-
-
+## 86. Modal Top Line Removal Across All Popups & In-Place Tab-Based Purchase Orders Workspace (2026-10-26, branch ui)
+- **User Feedback & Requirements:**
+  - "remove the top line in all the popups. also what is purchase order, whether it cant be same like the purchase bill? when i click the purchase order, do not go to popup, instead of that, make relevant UI by replacing the current UI, same process like a tab. make it more simple."
+- **Key Architectural Solutions:**
+  1. **Complete Removal of Modal Top Accent Lines (`.modal-content::before`):**
+     - Neutralized `.modal-content::before`, `.modal-content::after`, `.modal-dialog::before`, `.modal-dialog::after`, `.modal-header::before`, and `.modal-header::after` across all dialogs with `display: none !important; content: none !important;`.
+     - Popups now have clean, unified, executive borders without decorative colored lines.
+  2. **Conceptual Unification of Purchase Order & Purchase Bill:**
+     - Clarified that a Purchase Order (PO) is an official intent/commitment document sent by a buyer to a supplier prior to delivery. It carries no financial accounting impact (no inventory addition, no AP debt, no tax liability) until received.
+     - Confirmed that PO and Purchase Bill can and should share the exact same clean voucher layout (Supplier, PO#, Dates, Warehouse, Items Grid, Totals) to eliminate user learning curves.
+  3. **Seamless In-Place Tab Replacement for Purchase Orders (Zero Popups):**
+     - Replaced the popup modal click handler in `commercial-orders.js` and `command-center-nav.blade.php` with `switchCommercialTab(mode)`:
+       - Clicking `Purchase Orders` tab highlights it with `aria-current="page"`, updates URL to `?orders=1` via pushState without reloading, updates title to `New Purchase Order [Order]`, updates labels to `Our PO No`, `Quotation / Ref #`, `PO Date`, `Delivery Date`, sets status to `4`, and changes save button to `Save Purchase Order`.
+       - Right-side drawer transforms from the bill list to the `Purchase Orders` list (`#side-order-list`), featuring order cards with status badges, remaining quantities to bill/deliver, and direct `⚡ Load to bill`, `Details`, and `Cancel` buttons.
+       - Clicking `⚡ Load to bill` on any order automatically switches the workspace back to the `Bills` tab and preloads all open lines into the bill voucher.
+       - Clicking `Bills` tab returns the workspace to `New Purchase Bill [New]` with `Our Bill No`, `Bill Date`, `Entry Date`, and `Save` button.
+       - Hidden `#commercial-orders` toolbar button to prevent cluttering the items row.
+- **Verification:**
+  - Browser subagent verified zero popups when clicking `Purchase Orders`, clean in-place tab switching, seamless return to `Bills`, and zero top lines on all popups.
+  - `php artisan test --filter=PurchaseOrderLifecycleTest`: PASS (5 tests, 28 assertions).
+  - `php artisan test --filter=DesignTokensTest`: PASS (4 tests, 4 assertions, 0 inline styles, 0 forbidden accents).

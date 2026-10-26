@@ -3196,15 +3196,14 @@ div.dt-button-collection .dt-button.active::after,
   color: var(--neo-text-primary) !important;
 }
 
-.modal-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3.5px;
-  background: var(--neo-primary-gradient);
-  z-index: 2;
+.modal-content::before,
+.modal-content::after,
+.modal-dialog::before,
+.modal-dialog::after,
+.modal-header::before,
+.modal-header::after {
+  display: none !important;
+  content: none !important;
 }
 
 .modal-header {
