@@ -15,6 +15,7 @@
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`main`, `ui`, `enhanced-ui`)
 - **Latest Commits:**
+  - `0ba9bf6` — "feat(commercial): unify add product modal into popup mirroring catalog create and make returns tab in-place"
   - `8c3cde4` — "fix(dashboard): resolve blank screen by placing @extends on line 1 before @section"
   - `1b7dba5` — "fix(tokens): use brand tokens for section box purple icon in neo css"
   - `d301699` — "feat(ui): enlarge section-box title typography, add 10px spacing, and integrate crisp vector SVG icons"
