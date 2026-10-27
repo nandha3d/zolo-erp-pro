@@ -216,7 +216,7 @@
         a.document.write('<body>');
         a.document.write('<link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-quotation-index-2.css') }}"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}">');
         a.document.write(divContents);
-        a.document.write('</body></html>');
+        a.document.write('<\\/body><\\/html>');
         a.document.close();
         setTimeout(function(){a.close();},10);
         a.print();

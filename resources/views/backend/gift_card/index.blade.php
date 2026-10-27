@@ -342,7 +342,7 @@
           var divToPrint=document.getElementById('viewModal');
           var newWin=window.open('','Print-Window');
           newWin.document.open();
-          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'<\\/body>');
           newWin.document.close();
           setTimeout(function(){newWin.close();},10);
     });

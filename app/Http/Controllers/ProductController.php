@@ -128,6 +128,7 @@ class ProductController extends Controller
         ];
 
         $is_recipe = $request->input('is_recipe');
+        $all_permission = (array) ($request->input('all_permission') ?? []);
         $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
         $request->validate(['warehouse_id' => 'nullable|integer|min:0', 'stock_filter' => 'nullable|in:all,with,without']);
         $warehouse_id = (int) $filtered_data['warehouse_id'];
@@ -331,19 +332,19 @@ class ProductController extends Controller
                         <button type="button" class="btn btn-link view"><i class="fa fa-eye"></i> '.__('db.View').'</button>
                     </li>';
 
-            if(in_array("products-edit", $request['all_permission']))
+            if(in_array("products-edit", $all_permission))
                 $nestedData['options'] .= '<li>
                     <a href="'.route('products.edit', $product->id).'" class="btn btn-link"><i class="fa fa-edit"></i> '.__('db.edit').'</a>
                 </li>';
 
-            if(in_array("product_history", $request['all_permission']))
+            if(in_array("product_history", $all_permission))
                 $nestedData['options'] .= \Form::open(["route" => "products.history", "method" => "GET"] ).'
                     <li>
                         <input type="hidden" name="product_id" value="'.$product->id.'" />
                         <button type="submit" class="btn btn-link"><i class="dripicons-checklist"></i> '.__("db.Product History").'</button>
                     </li>'.\Form::close();
 
-            if(in_array("print_barcode", $request['all_permission'])) {
+            if(in_array("print_barcode", $all_permission)) {
                 $product_info = $product->code.' ('.$product->name.')';
                 $nestedData['options'] .= \Form::open(["route" => "product.printBarcode", "method" => "GET"] ).'
                     <li>
@@ -352,7 +353,7 @@ class ProductController extends Controller
                     </li>'.\Form::close();
             }
 
-            if(in_array("products-delete", $request['all_permission']))
+            if(in_array("products-delete", $all_permission))
                 $nestedData['options'] .= \Form::open(["route" => ["products.destroy", $product->id], "method" => "DELETE"] ).'
                     <li>
                     <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="fa fa-trash"></i> '.__("db.delete").'</button>

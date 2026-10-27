@@ -307,7 +307,7 @@
           var divToPrint=document.getElementById('product-details');
           var newWin=window.open('','Print-Window');
           newWin.document.open();
-          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'</body>');
+          newWin.document.write('<link rel="stylesheet" href="<?php echo asset('vendor/bootstrap/css/bootstrap.min.css') ?>" type="text/css"><link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-index-2.css') }}"><body onload="window.print()">'+divToPrint.innerHTML+'<\\/body>');
           newWin.document.close();
           setTimeout(function(){newWin.close();},10);
     });
@@ -657,7 +657,7 @@
             "processing": true,
             "serverSide": true,
             "ajax":{
-                url:"products/product-data",
+                url:"{{ url('products/product-data') }}",
                 data: function (d) {
                     d.all_permission = all_permission;
                     d.warehouse_id = $('#warehouse_id').val();

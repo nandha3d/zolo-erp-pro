@@ -2225,3 +2225,29 @@ Open: PO on company 23 blocks with "Set a valid HSN code for 3200 cc" — produc
     - `tests/Feature/TextileMasterSeederTest.php`: 1 passed, 154 assertions.
     - Full regression suites: 100% passing across Optech and Product Options combinatorial test matrices.
 
+---
+
+## 99. Resolution of Empty Products List & Script Injection Hardening (2026-10-27, branch ui)
+- **User Request:** "no products in the list?" with screenshot of `http://zolo-erp-pro.test/products` showing an empty table header with no rows.
+- **Root Cause Analysis:**
+  1. **Premature Script Termination by Dev Server Injector:**
+     - In `resources/views/backend/product/index.blade.php` line 310, the print popup handler contained:
+       `newWin.document.write('...<body onload="window.print()">'+divToPrint.innerHTML+'</body>');`
+     - Laravel Herd Studio (or local development proxies) injects their debugging toolbars by doing a substring replacement before `</body>` in the HTTP response HTML (`</script><div id="herd-ai-root"></div>...</body>`).
+     - Because `</body>` appeared literally inside a JavaScript `<script>` tag in `@push('scripts')`, Herd replaced that occurrence, introducing an unescaped `</script>` tag directly in the middle of JavaScript code!
+     - The browser immediately terminated parsing the `<script>` tag at line 310. All subsequent JavaScript—including `productDetails()` and `$('#product-data-table').DataTable({...})`—was dumped raw into the HTML DOM as broken attributes (`tempimage="new"`, `canvas="document.createElement..."`).
+     - This produced compile-time `SyntaxError: Invalid or unexpected token`, completely preventing DataTables from initializing.
+  2. **Secondary API Vulnerability Guard:**
+     - In `ProductController::productData()`, `$request['all_permission']` was queried via `in_array()` without checking whether it was null, which would throw a fatal PHP 8 `TypeError` if omitted in API requests.
+- **Fixes Applied:**
+  1. In `resources/views/backend/product/index.blade.php`, replaced literal `'</body>'` with `'<\/body>'` and switched AJAX URL to `{{ url('products/product-data') }}`.
+  2. Proactively audited and escaped `</body>` and `</html>` strings across all print scripts in the application (`stock_count/index.blade.php`, `print_barcode_rongta.blade.php`, `gift_card/index.blade.php`, `customer_index.blade.php`, `transfer/index.blade.php`, `supplier/view.blade.php`, `return_purchase/index.blade.php`, `return/index.blade.php`, `quotation/index.blade.php`, `delivery/index.blade.php`, `delivery/index_new.blade.php`, `sale/pos.blade.php`).
+  3. In `ProductController::productData()`, safeguarded `$all_permission = (array) ($request->input('all_permission') ?? []);`.
+- **Verification & Evidence:**
+  - Automated Playwright browser test loaded `http://zolo-erp-pro.test/products` with active session:
+    - Zero console errors, zero syntax errors.
+    - `Is DataTable initialized on #product-data-table? true`.
+    - All 10 initial paginated products (and 14 total textile items across pages) rendered cleanly with stock, prices, codes, and action dropdowns.
+    - Verified visual layout via browser screenshot `products_working.png`.
+  - Automated PHPUnit tests: All 43 textile tests passed (498 assertions).
+
