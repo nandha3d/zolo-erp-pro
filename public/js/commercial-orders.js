@@ -429,16 +429,9 @@
 
         // Window popstate navigation
         window.addEventListener('popstate', function (event) {
-            const params = new URLSearchParams(window.location.search);
-            const isReturns = params.get('returns') === '1' || params.get('view') === 'returns';
-            const isOrders = params.get('orders') === '1' || params.get('view') === 'orders';
-            if (isReturns) {
-                switchCommercialTab('returns');
-            } else if (isOrders) {
-                switchCommercialTab('orders');
-            } else {
-                switchCommercialTab('bills');
-            }
+            if (new URLSearchParams(window.location.search).get('returns') === '1') return; // commercial-returns.js owns that tab
+            const isOrders = new URLSearchParams(window.location.search).get('orders') === '1' || new URLSearchParams(window.location.search).get('view') === 'orders';
+            switchCommercialTab(isOrders ? 'orders' : 'bills');
         });
 
         // Initialize state on page load

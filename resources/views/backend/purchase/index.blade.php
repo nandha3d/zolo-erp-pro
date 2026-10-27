@@ -18,7 +18,7 @@
         <a class="comm-nav-btn comm-nav-btn-secondary active" id="tab-all-purchases" href="javascript:void(0)"><i class="dripicons-list"></i> All</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('goods-received-notes.index') }}"><i class="dripicons-box"></i> Supplier GRN</a>
         <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ route('transfers.index') }}"><i class="dripicons-swap"></i> Transfers</a>
-        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ config('commercial.enabled') && config('compliance.enabled') ? url('/compliance/returns') : route('return-purchase.index') }}"><i class="dripicons-return"></i> Returns</a>
+        <a class="comm-nav-btn comm-nav-btn-secondary" href="{{ config('commercial.enabled') && config('compliance.enabled') ? route('purchases.index', ['returns' => 1]) : route('return-purchase.index') }}"><i class="dripicons-return"></i> Returns</a>
     </div>
 
     <!-- Right Controls: Live Total, Details, Bill List, Add New, Hide Bar -->
@@ -59,7 +59,16 @@
 <section class="commercial-workspace-view">
 @include('backend.partials.command-center-nav', ['kind' => 'purchase'])
     <!-- 2-Column Command Center Grid: Main Entry Workspace + Side Bill List Panel -->
-    <div class="comm-split-grid" id="comm-split-grid">
+    @php
+        // Returns tab (debit / credit note against a posted bill) lives in this workspace when shared commercial + compliance are on.
+        $returnsTab = config('commercial.enabled') && config('compliance.enabled') && (function () {
+            try {
+                return app(\App\Services\Commercial\CommercialPermission::class)->allows('purchase-return-add',
+                    app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
+            } catch (\Illuminate\Auth\Access\AuthorizationException) { return false; }
+        })();
+    @endphp
+    <div class="comm-split-grid{{ $returnsTab && request('returns') == 1 ? ' is-returns' : '' }}" id="comm-split-grid">
         <!-- Main: Purchase Entry Workspace (Matching Screenshot 3) -->
         <div class="comm-entry-workspace" id="comm-entry-workspace">
             <form id="purchase-entry-form" method="POST" action="{{ route('purchases.store') }}" enctype="multipart/form-data">
@@ -331,6 +340,10 @@
             </form>
         </div>
 
+        @if($returnsTab)
+            @include('backend.commercial.returns-workspace', ['kind' => 'purchase'])
+        @endif
+
         <!-- Right / Dockable Side Panel: Purchase List with Screenshot 2 Filters & Dropdowns -->
         <aside class="comm-drawer-card desk-bill-list-panel" id="comm-drawer" aria-label="Transaction List Panel">
             <div class="comm-drawer-header">
@@ -464,6 +477,11 @@
                                 <a href="javascript:void(0)" class="side-action-btn copy btn-side-copy" data-id="{{ $bill->id }}" title="Copy this purchase into a new draft" hidden>
                                     <i class="dripicons-copy"></i> Copy
                                 </a>
+                                @if($returnsTab && $bill->posted_at && !$bill->reversed_at)
+                                <a href="javascript:void(0)" class="side-action-btn edit btn-side-return" data-id="{{ $bill->id }}" title="Return goods or adjust value: make a debit note against this bill">
+                                    <i class="dripicons-return"></i> Return
+                                </a>
+                                @endif
                                 @if($canReverseBills && !$bill->reversed_at && !$isDraft && $bill->branch_id)
                                 <a href="{{ url('/commercial/purchase/'.$bill->id.'/reverse') }}" class="side-action-btn reverse" title="Reverse: cancel this purchase, its stock goes out and its journal is reversed; the bill stays in history" aria-label="Reverse purchase">
                                     <i class="dripicons-return"></i>
@@ -491,20 +509,9 @@
                     <div id="side-orders-status" class="small text-muted mb-2 px-1" role="status"></div>
                     <div id="side-orders-cards"></div>
                 </div>
-
-                <!-- Purchase Returns Side List (Active in Returns mode) -->
-                <div class="side-list-container d-none" id="side-return-list">
-                    <div class="side-orders-header d-flex justify-content-between align-items-center mb-2 px-1">
-                        <span class="small text-muted font-weight-bold">
-                            Recent Returns / Debit Notes
-                        </span>
-                        <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold" id="btn-side-new-return">
-                            <i class="dripicons-plus"></i> New Return
-                        </button>
-                    </div>
-                    <div id="side-returns-status" class="small text-muted mb-2 px-1" role="status"></div>
-                    <div id="side-returns-cards"></div>
-                </div>
+                @if($returnsTab)
+                    @include('backend.commercial.returns-side', ['kind' => 'purchase'])
+                @endif
             </div>
         </aside>
     </div>
@@ -1412,6 +1419,7 @@
 
 @push('scripts')
 <script src="{{ asset('js/commercial-product-lookup.js') }}"></script>
+@if($returnsTab)<script src="{{ versioned_asset('js/commercial-returns.js') }}"></script>@endif
 <script type="text/javascript">
 (function() {
     'use strict';
@@ -3537,6 +3545,7 @@
 
 @push('css')
     <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-purchase-index.css') }}">
+    @if($returnsTab)<link rel="stylesheet" href="{{ versioned_asset('css/pages/commercial-returns.css') }}">@endif
     <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
     <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
 @endpush
