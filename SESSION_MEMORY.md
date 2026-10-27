@@ -2322,3 +2322,40 @@ User: test everything end to end (purchase, sales, GRN, DC, job work) and especi
   2. `resources/views/backend/sale/index.blade.php` — removed duplicate `#side-order-list` declaration.
   3. `SESSION_MEMORY.md` — consolidated sections 94-100 from collaborator with sections 101-106 from local.
 - Verified database migrations, seeders, and catalog items.
+
+---
+
+## 108. Database Migration Audit, ERP Health Diagnostic & Legacy Commercial Documents Repair (2026-10-27, branch ui)
+- **User Request:** "and check all the migrations are done properly. because some of the items are not working as like the collaborators version."
+- **Audit & Root Cause Analysis:**
+  1. **Database Migrations Check:**
+     - Verified all 66+ migrations via `php artisan migrate:status`. All upstream and local migrations had executed.
+  2. **Discrepancy Investigation ("items not working as like collaborator's version"):**
+     - **Missing Tax Categories on Company 1:** Company 1 had zero entries in `tax_categories`, leaving products without GST slabs and breaking tax determination / dropdowns.
+     - **Missing Tax Ledgers & Semantic Roles:** Company 1 and Company 2 lacked standard input/output GST ledgers and semantic mappings (`output_tax_cgst`, `output_tax_sgst`, `output_tax_igst`, `input_tax_cgst`, `input_tax_sgst`, `input_tax_igst`, `rounding`).
+     - **Unlinked Physical Stock Movements:** 30 catalog products had warehouse stock without initial entries in `stock_movements`.
+     - **Unassigned Legacy / FMCG Records (Root Cause of 302 print redirects and Foreign Line errors):**
+       - 10 purchases, 12 sales, 1 return, 12 purchase items, 10 sale items, and 5 products (FMCG items from e2e scripts) had `branch_id = null` or `company_id = null`.
+       - When rendering or printing documents (e.g. `/compliance/documents/purchase/{id}/print?format=a4`), `DocumentRenderingService::source` threw `ValidationException: Print and dispatch require a posted document in this branch.` because `(int) null !== 1`.
+       - When inspecting lines, `DocumentRenderingService::capture` threw `LogicException: Document contains a foreign line.` because `(int) line->company_id !== context->companyId`.
+- **Fixes Applied:**
+  1. **GST Categories & Ledgers Installed:**
+     - Ran `GstSetupService::installDefaults($context, 1)` to install 10 standard GST categories, map 14 products, and sync 19 parties.
+     - Ran `GstSetupService::ensureLedgers(1)` and `ensureLedgers(2)` creating input/output tax accounts and semantic mappings.
+  2. **Stock & Accounting Reconciliation:**
+     - Executed `php artisan erp:stock-opening` and `php artisan erp:stock-reconcile` (stock reconciled).
+     - Posted opening inventory valuation journal entries and ran `php artisan erp:ledger-reconcile --rebuild --force` for both companies.
+     - Confirmed all 9 ERP health checks pass on Company 1 and Company 2 (`"ok": true`).
+  3. **Data Repair Migration (`database/migrations/2026_10_27_000001_repair_legacy_unassigned_commercial_documents.php`):**
+     - Backfills unassigned categories, units, and products where `company_id IS NULL` to Company 1.
+     - Backfills `purchases`, `sales`, and `returns` where `branch_id` or `company_id` is null from their warehouse and assigns the matching financial year.
+     - Synchronizes child line tables (`product_purchases`, `product_sales`, `product_returns`, `purchase_product_return`) to inherit `company_id` from parent documents.
+     - Maps products without `tax_category_id` to standard GST slab.
+     - Committed as commit `840bff1`.
+- **Verification & Test Evidence:**
+  - `php artisan test tests/Feature/DocumentEntryWebTest.php`: **12 passed (101 assertions, 100% GREEN, including PO print layout)**.
+  - `php artisan test tests/Feature/OptechMasterWebTest.php tests/Feature/IndustryFlowIntegrationTest.php tests/Feature/SalesOrderLifecycleTest.php tests/Feature/PurchaseOrderLifecycleTest.php tests/Feature/JobWorkReturnsReworkTest.php`: **42 passed (328 assertions, 100% GREEN)**.
+  - `php artisan test tests/Feature/TextileEndToEndLedgerTest.php`: **1 passed (167 assertions, 100% GREEN)**.
+  - `node tests/JavaScript/error-help.test.cjs`: **4 passed (100% GREEN)**.
+  - `php artisan erp:health --company=1` & `--company=2`: **ALL 9 CHECKS PASSED (`"ok": true`)**.
+
