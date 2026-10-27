@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call(Database\Seeders\Tenant\TenantDatabaseSeeder::class);
+        $this->call(Database\Seeders\TextileMasterSeeder::class);
 
         if (Schema::hasTable('general_settings')) {
             $general_setting = DB::table('general_settings')->select('modules')->first();

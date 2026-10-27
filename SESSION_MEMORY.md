@@ -8,7 +8,7 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-27 11:35:00 (+05:30) — Upstream origin/ui Synchronized & Clean Merge (section 97)
+- **Last Updated:** 2026-10-27 12:18:00 (+05:30) — Textile Suppliers & Products Catalog Provisioning (section 98)
 - **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/main, origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
@@ -2185,4 +2185,43 @@ Open: PO on company 23 blocks with "Set a valid HSN code for 3200 cc" — produc
 - Synchronized branch `ui` with remote tracking `origin/ui` (commits `9902420`, `6aeab06`, `cb1ad4e`, `75f7485`).
 - Cleanly resolved conflicts across `command-center-nav.blade.php`, `commercial-orders.js`, `purchase/index.blade.php`, `sale/index.blade.php`, and `SESSION_MEMORY.md`.
 - Maintained 100% architectural coherence: unified `quick_create_modal.blade.php` popup, modular `returns-workspace.blade.php` & `returns-side.blade.php` tabs, sidebar IA restructure, and 7,246 passing automated tests.
+
+---
+
+## 98. Textile Suppliers & Products Catalog Provisioning (2026-10-27, branch ui)
+- **User Request:** "create suppliers and few products for textiles."
+- **Architectural & Master Design:**
+  - Implemented an idempotent, multi-company seeder: `database/seeders/TextileMasterSeeder.php`, hooked into `database/seeders/DatabaseSeeder.php`.
+  - **UOM Provisioning:** Ensured standard textile units `MTR` (Meter), `KGS` (Kilogram), `DOZ` (Dozen, 12x factor), and `PCS` (Pieces).
+  - **Brand Masters:** Created authentic textile brands (`Ramraj Cotton`, `Liva (Aditya Birla)`, `Coats India`, `Vardhman Textiles`, `Arvind Mills`).
+  - **Category Hierarchy:** Created `Textiles & Handlooms` root category with specialized subcategories:
+    - `Yarn & Spinning` (default HSN: `5205`)
+    - `Grey & Woven Fabrics` (default HSN: `5208`)
+    - `Dyed & Finished Fabrics` (default HSN: `5208`)
+    - `Apparel & Made-ups` (default HSN: `6109`)
+    - `Textile Trims & Accessories` (default HSN: `5401`)
+  - **Textile Suppliers Provisioned:**
+    1. `Lakshmi Spinning Mills Ltd` (Coimbatore, GSTIN: `33AAACL2890A1ZB`, Yarn supplier, credit: 30 days)
+    2. `Sri Balaji Weaving & Powerloom Works` (Erode, GSTIN: `33AAHFS4455K1Z4`, Grey cloth, credit: 21 days)
+    3. `Surat Synthetic & Rayon Weaves Pvt Ltd` (Surat, Gujarat, GSTIN: `24AAACS9988P1Z6`, Interstate synthetic fabrics, credit: 45 days)
+    4. `Rainbow Textile Processors & Dyers` (Perundurai, GSTIN: `33AAACR5566M1Z2`, Dyeing/bleaching/mercerizing job work, credit: 15 days)
+    5. `Coats India Threads & Accessories Ltd` (Tiruppur, GSTIN: `33AAACC0123L1Z9`, Sewing threads & trims, credit: 30 days)
+    6. `Tirupur Knit Knots Garment Trims` (Tiruppur, GSTIN: `33AABCT7788Q1Z1`, Elastic tapes, buttons, zip fasteners, credit: 15 days)
+  - **Textile Products Provisioned (Catalog & Stock):**
+    1. `TEX-YRN-40C` — Cotton Combed Yarn 40s (Auto-Coner) (Unit: KGS, HSN: 5205, Cost: ₹280, Price: ₹325, Stock: 500 KGS)
+    2. `TEX-YRN-30H` — Cotton Carded Hosiery Yarn 30s (Unit: KGS, HSN: 5205, Cost: ₹250, Price: ₹295, Stock: 400 KGS)
+    3. `TEX-KNT-180G` — Single Jersey Cotton Knit Fabric 180 GSM (Raw Grey) (Unit: KGS, HSN: 6006, Cost: ₹260, Price: ₹310, Stock: 350 KGS)
+    4. `TEX-GRY-63W` — 100% Cotton Grey Fabric 40x40 / 92x88 (63 inch Width) (Unit: MTR, HSN: 5208, Cost: ₹48, Price: ₹62, Stock: 1,200 MTR)
+    5. `TEX-PC-SHT58` — Poly-Cotton Grey Sheeting Fabric (58 inch) (Unit: MTR, HSN: 5513, Cost: ₹38, Price: ₹50, Stock: 800 MTR)
+    6. `TEX-POP-WHT` — Pure Cotton Poplin Dyed Fabric - Super White (58 inch) (Unit: MTR, HSN: 5208, Cost: ₹72, Price: ₹95, Stock: 800 MTR)
+    7. `TEX-KNT-NVY` — Bio-Washed Combed Cotton Single Jersey (Navy Blue) (Unit: KGS, HSN: 6006, Cost: ₹340, Price: ₹420, Stock: 250 KGS)
+    8. `TEX-RAY-BLK` — Rayon / Viscose Liva Fabric 30s Dyed (Jet Black) (Unit: MTR, HSN: 5408, Cost: ₹65, Price: ₹88, Stock: 600 MTR)
+    9. `TEX-DHT-GOLD8` — Classic Gold Jari Border Cotton Dhoti (Double / 8 Muzham) (Unit: PCS, HSN: 5208, Cost: ₹320, Price: ₹550, Stock: 150 PCS)
+    10. `TEX-TSH-PK3` — Men's Combed Cotton Round Neck T-Shirt (Pack of 3) (Unit: PCS, HSN: 6109, Cost: ₹290, Price: ₹499, Stock: 200 PCS)
+    11. `TEX-TWL-500G` — Premium Cotton Terry Bath Towel 500 GSM (75x150 cm) (Unit: PCS, HSN: 6302, Cost: ₹180, Price: ₹320, Stock: 180 PCS)
+    12. `TEX-THD-40C` — High Tenacity Spun Polyester Sewing Thread 40/2 (Cone 1000m) (Unit: PCS, HSN: 5401, Cost: ₹35, Price: ₹55, Stock: 300 PCS)
+  - **Stock Linkage:** Each product was initialized with active inventory balances in `product_warehouse` linked to the primary active warehouse.
+  - **Testing Evidence:**
+    - `tests/Feature/TextileMasterSeederTest.php`: 1 passed, 154 assertions.
+    - Full regression suites: 100% passing across Optech and Product Options combinatorial test matrices.
 
