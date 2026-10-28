@@ -8,15 +8,17 @@
 ---
 
 ## 1. Active Session Metadata
-- **Last Updated:** 2026-10-27 12:18:00 (+05:30) — Textile Suppliers & Products Catalog Provisioning (section 98)
+- **Last Updated:** 2026-10-28 11:55:00 (+05:30) — Merged latest upstream origin/ui changes (commits 30a8ccb, 32dac57)
 - **Production:** https://erp.samuraibuiness.in (Hostinger VPS). Pushing `main` runs CI, then deploys automatically; see [deploy/README.md](deploy/README.md)
 - **Active Git Branch:** ui (synchronized with origin/main, origin/ui and nandha-origin/ui)
 - **Upstream Remotes:**
   - `nandha-origin`: https://github.com/nandha3d/zolo-erp-pro.git (`ui`, `enhanced-ui`)
   - `origin`: https://github.com/vigneshsinna/zolo-erp-pro.git (`main`, `ui`, `enhanced-ui`)
 - **Latest Commits:**
-  - `2c1cb1c` — "feat(audit): enhance quickStoreProduct persistence and add 7,232 exhaustive combinatorial test cases"
-  - `0ba9bf6` — "feat(commercial): unify add product modal into popup mirroring catalog create and make returns tab in-place"
+  - `32dac57` — "Remove old HRM menu; cache MenuSwitches lookups"
+  - `30a8ccb` — "Professional report printing, developer menu switches, module cleanup"
+  - `ca39c29` — "docs: record Section 108 migration audit and legacy commercial documents repair"
+  - `840bff1` — "Add migration to repair unassigned legacy commercial documents and master entities"
   - `8c3cde4` — "fix(dashboard): resolve blank screen by placing @extends on line 1 before @section"
   - `1b7dba5` — "fix(tokens): use brand tokens for section box purple icon in neo css"
   - `d301699` — "feat(ui): enlarge section-box title typography, add 10px spacing, and integrate crisp vector SVG icons"
@@ -2359,3 +2361,88 @@ User: test everything end to end (purchase, sales, GRN, DC, job work) and especi
   - `node tests/JavaScript/error-help.test.cjs`: **4 passed (100% GREEN)**.
   - `php artisan erp:health --company=1` & `--company=2`: **ALL 9 CHECKS PASSED (`"ok": true`)**.
 
+---
+
+## 109. Local Dev Stack Moved to Laravel Herd + Portable MySQL (2026-10-27, branch ui)
+
+WSL (and its MariaDB on 3308) was deleted; the live dev DB was lost.
+- PHP/site: Laravel Herd free (PHP 8.5, `http://zolo-erp-pro.test`). User declined Herd Pro, so the DB is not in Herd.
+- DB: portable MySQL 8.4 dev instance `C:\Users\vigne\zolo-mysql-dev` (127.0.0.1:3306, root no password, user zolo_erp, DB zoloerp; binaries shared from `C:\Users\vigne\zolo-mysql84`). Separate from the disposable test server on 33084.
+- Restored from `database/backups/erp-backup-094b8eb5-...zip` (2026-10-19, companies 1/14/15/16) and migrated through `2026_10_25_000001`. Data entered after 2026-10-19 (incl. Sweet Soil companies 17/18) is not in it; pulling it from the VPS is pending user approval.
+- `.env` DB_PORT 3308 → 3306. `run-erp.bat` now starts the dev MySQL and Herd PHP `php -S :8080` (no WSL). `config/database.php` uses `Pdo\Mysql::ATTR_SSL_CA` on PHP ≥ 8.5 (deprecation noise), old constant on 8.3 prod.
+- Verified: `/login` 200 on :8080 and on zolo-erp-pro.test.
+
+## 110. Draft tabs failed on http://zolo-erp-pro.test (2026-10-27, branch ui)
+
+Every draft tab click showed "Unable to complete this action." Cause: `crypto.randomUUID` exists only in secure contexts (HTTPS / localhost). Old dev URL `localhost:8080` was secure; Herd `http://*.test` is not. `grid.resetFormToNew()` → `command-center-form.js:215` threw, `openTab` catch turned the JS error into the generic message. Drafts themselves were fine.
+- Fix: `crypto.randomUUID` polyfill (via `getRandomValues`) in `<head>` of `backend/layout/main.blade.php`; covers command-center-form, commercial-orders, material-document.
+- Verified in Chrome on zolo-erp-pro.test: all 6 purchase draft tabs open with no banner.
+
+## 111. Dashboard quick actions pointed at duplicate legacy forms (2026-10-27, branch ui)
+
+New Sale / New Purchase opened old `/sales/create` / `/purchases/create` "Add Sale" forms — second implementation of the workspaces.
+- Quick actions + topbar "+" menu now open `sales.index?new=1`, `purchases.index?new=1`, `expenses.index?new=1` (expense page auto-opens its modal on `new=1`). "Stock" quick action → `/operations/stock` (products list only when operations off).
+- `SaleController::create` / `PurchaseController::create` redirect to the workspace; `backend/sale/create.blade.php` and `backend/purchase/create.blade.php` deleted; purchase store failure redirects go to the workspace. Classic rows removed from `tests/Browser/document-layout.spec.mjs`.
+- `LegacyStockShadowWebTest`: 4 failures on document-number prefix (`MJ-`/`PUR-`/`SR-`/`PR-` vs `ERP-`), unrelated.
+
+## 112. Job work service bill: their bill no + fully prefilled Edit bill (2026-10-27, branch ui)
+
+User: service bill print showed our PUR-xxxxx as Bill No.; wanted every field editable and prefilled on Edit bill.
+- Service bill form (job_work_workspace.blade.php) adds Their bill no. (`supplier_invoice_no`), Their bill date, Due date, Remarks. Edit bill prefills business date (original bill date), their no/date, due date, remarks, item/qty/rate/charge mode.
+- `JobWorkService::serviceBill` validates + passes them; remarks stored as `attributes_json.job_work_remarks` (added to CommercialApplicationService attribute whitelist) and appended to the note.
+- A4 print (all purchase bills, not orders): Bill No. = supplier's bill no when set, plus Bill Date and "Our Ref." = PUR no; date label becomes Entry Date. `DocumentRenderingService::dto` reads it live from the purchase row (`supplier_bill_no` / `supplier_bill_date`).
+- Tests: ManufacturingJobWorkTest rebill + IndustryFlowIntegrationTest print assertions; job work, print, DocumentEntryWeb, Optech suites green.
+
+## 113. Add / Edit Product screen fixes (2026-10-27, branch ui)
+
+Found by driving /products/create in Chrome at 1536x730:
+- Service type: page hid unit + cost and ProductController store/update zeroed unit/cost, so a service made here could not be billed per unit (job work per MTR). Now service keeps unit (required) + cost (blank → 0); only digital zeroes them. Edit page on-load handler fixed too.
+- `.zolo-toggle-pill { display:inline-flex !important }` beat jQuery .hide(): batch/IMEI/variant/initial-stock pills never hid for service/combo/digital. Added `[style*="display: none"]` override in zolo-erp-neo.css.
+- Price → margin with blank cost gave Infinity → blank required margin → save blocked. recalcMargin skips when cost ≤ 0 (percentage); margin no longer `required`; server stores blank as 0. Switching % / flat keeps price. Edit page on load recalculated price from cost+margin (overwrote saved price) — now keeps price.
+- Quick-add: unit added was not selected and sale/purchase units stayed empty (now selected + populated; sub-unit selects its base). Brand/category/unit errors were silent (now shown in the dialog with error-help bar); forms reset after save.
+- Category → HSN: HSN placeholder shows the category's default HSN (data-hsn on options).
+- One screen: duplicate bottom Cancel/Save bar removed (create + edit); inventory stripe pills flow inline (no 3rd row, no stray divider). create/edit now fit 1536x730 with no scroll.
+- Double help icons on Daily Sale Objective / Tax Method removed (field-help ⓘ stays).
+- Dev-only: "Invalid or unexpected token" on /products is Herd's injected toolbar script landing inside a JS '</body>' string (print code); not in production.
+- Note: another session was editing this tree in parallel (staged Modules/Optech* deletions, many controllers).
+
+## 114. Draft tab UI + auto-draft fixes on Purchase / Sales (2026-10-27, branch ui)
+
+- Top bar broke when a draft had a long title ("New Purchase Bill (from GRN #GRN-00001)"): `.comm-navbar-center-wrap` wrapped, breadcrumb went above the viewport and TOTAL pill dropped. commercial-workspace.css: center wrap nowrap, title group `flex: 1 1 0` + overflow hidden, title ellipsis, actions never wrap.
+- Auto-draft saved junk: blank item rows (Draft 2 had 8) and phantom drafts holding only defaults (Draft 6: no party, no lines — made by a pill click). document-workspace.js: blank rows (no product id, no item name) are neither captured nor restored; adapter `empty(state)` = no party, no lines, no supplier bill no / reference. document-drafts.js: autosave, page-hide flush and "+" never create a server draft for an empty form; an unused never-saved tab is dropped when switching away. Explicit "Save draft" still saves anything.
+- Verified in Chrome on purchases and sales: pill clicks create no draft, Draft 2 restores 1 row, header stays one row, typing a supplier bill no still autosaves.
+- Existing junk drafts (company 14 purchase Draft 6 empty; Drafts 4/5 had one blank row) left for the user to close.
+
+## 115. No duplicate screens, no navigation fallbacks (2026-10-27, branch ui)
+
+User rule: one page per screen; list duplicates with file:line and wait for confirmation before deleting. Full table of retired screens: ENGINEERING_REFERENCE.md §11 "One entry point per screen".
+- Returns: `/return-sale`, `/return-purchase`, their `create`, `/compliance/returns` and `/compliance/{kind}/{id}/return` redirect to the workspace Returns tab (`?returns=1[&bill=id]`); old return views + compliance notes/return views deleted. Shift+F2/Shift+F12 open the tab. Gap: the tab has no draft tabs.
+- Removed: topbar "+" menu, legacy `/report/profit_loss` and `/balancesheet`, unused `0main_rtl` layout, `Optech*` scaffold modules, missing `create/edit` resource routes for DC/GRN.
+- Navigation links no longer branch to old pages on `ERP_*_ENABLED`; flags still hide whole sections when off. Production needs all three flags true.
+- Open decision: Express Voucher Entry vs Voucher Hub (different posting engines, both claim F9).
+- Full suite (phpunit, unlimited memory) after this work: 846 tests; remaining failures are document-number prefixes (LegacyStockShadowWebTest), `profit_margin` column in test schema, dimension/volume fixtures, DeliveryChallanWebTest 422 (fails with my route change reverted too).
+
+## 116. Sales terms, line GST override, unknown item prompt (2026-10-27, branch ui)
+
+- Sales Terms: editable credit days like purchase (`syncTerms`, hidden for Cash, customer standard days on user pick); sales header labels got field help.
+- Line GST: row tax select editable in GST mode; `tax_rate_override` honoured by TaxDeterminationService (company slabs only, snapshot `product_rate`), CommercialPricing preview and CommercialApplicationService (legacy). `public/js/line-tax-override.js` marks and warns; `GstSetupService::entryConfig()` returns `slabs`.
+- Unknown item: `public/js/unknown-product.js` asks, then opens the page's Create item form with the typed name; saved product fills that row. Hooked into search bar, row name Enter and Save.
+- Concurrent work seen in the checkout (not mine): `layout/partials/print-letterhead.blade.php`, `erp-print.css/js`. Its `tax_registrations` query 500s WorkspaceSecurityTest and ProductAliasTest manager test in the test DB.
+
+## 117. Professional report / list printing (2026-10-28, branch ui)
+- Problem: report Print buttons called `window.print()` on the live screen (sidebar, filters, pagination, 1 clipped sheet); DataTables print icon gave a bare table.
+- Fix (global): `resources/views/backend/layout/partials/print-letterhead.blade.php` (company letterhead from Company profile + active tax registration, FY, printed by/at; hidden on screen) included in `#content` of `layout/main`; `public/css/erp-print.css` (A4 @page, "Page X of Y", printed-document styles, `@media print` fallback that unlocks the one-screen shell); `public/js/erp-print.js` replaces DataTables `print` action: fetches all rows (`length=-1`) for server-side tables, prints letterhead + title + filters used + table + totals in a hidden iframe. `window.ErpPrint.table(head, body, footer, title)` for custom lists.
+- 31 report/accounting/trade views: `onclick="window.print()"` -> `data-erp-print`. Sales/Purchase "Print Register" (`command-center-form.js`) now prints a Sales/Purchase Register table.
+- Best Seller report never loaded Chart.js (missing `@section('charts', '1')`) - fixed.
+- Not changed: dedicated document templates (A4/80mm/58mm invoices, tax invoice, challans, labels, barcodes).
+- Verified with Playwright -> page.pdf on 23 report pages + 11 list pages + sales register.
+
+## 118. Developer login, per-company section switches, People/HRM/Settings command bars (2026-10-28, branch ui)
+
+User: People, HRM and Settings did not follow the modern UI; add a developer role login that manages all admins and can switch sections / subsections off (e.g. HRM) — user chose **per company** and an **artisan command** for the login.
+- Developer = Admin account with `users.is_developer` (migration 2026_10_27_000001, also `company_menu_switches`). `php artisan erp:developer email [--password=]` creates/updates it and grants every company + branch. Local login: developer@zoloerp.local (password printed once on 2026-10-28; reset with the command).
+- `/developer` (DeveloperController, view backend/developer/index, css/pages/developer.css): admin logins (add with companies, block/activate, set password, companies) + section/screen ticks for the ACTIVE company. Admins never see/edit developer accounts (UserController guardDeveloper + hidden from list).
+- `App\Services\Platform\MenuSwitches`: catalog = rendered sidebar (sections `a[href=#key]`, screens `li[id]`, Settings pages from the search index); OFF rows store blocked paths (+query). Enforced by sidebar DOM filter (main.blade.php), `EnforceMenuSwitches` middleware in the web group (sorted after company context: redirect /dashboard with reason, AJAX 403), SettingsCatalog and command-bar pills. Developers are exempt. Never blocked: /, /login, /dashboard, /settings, /developer, own profile/password.
+- New components: x-section-command-bar (generic), x-people-command-bar, x-hrm-command-bar. All 3 People + 10 HRM pages (+ create/edit forms, HRM settings, HRM panel) use them with btn-primary actions; old `hrm.partial.menu` + its CSS deleted (user OK 2026-10-28). Settings bar added to Gift Cards, Coupons, Tables, WhatsApp x3, Notifications, Languages, My Profile, Document Series.
+- Not changed (different shells): Financial Year setup (standalone HTML, overflows), Business Profile (operations layout), Addons; Settings › Backup Database links to a retired page (410) — reported, not removed.
+- Tests: tests/Feature/MenuSwitchesTest.php (4). DesignTokens, DocumentEntryWeb, ProductCreateSmoke, LegacyCatalogIsolation, SwitchableCapability, CompanyProfile green. NavigationWebTest passes but needs ~478 MB (same with my hooks removed: pre-existing), so it dies under the default 128M CLI limit.
