@@ -235,9 +235,10 @@
                     </dl>
                 </div>
             </div>
-            <div class="voucher-entry-actions">
-                <button type="button" class="btn btn-outline-secondary btn-accounting-text" id="btnResetForm">Clear form</button>
-                <button type="submit" class="btn btn-primary btn-accounting-text" id="btnSaveVoucher" title="Alt+S" disabled>Save voucher</button>
+            <div class="voucher-entry-actions d-flex align-items-center justify-content-end">
+                <span id="saveHintText" class="small text-muted mr-3" role="status" aria-live="polite">Awaiting amounts</span>
+                <button type="button" class="btn btn-outline-secondary btn-accounting-text mr-2" id="btnResetForm">Clear form</button>
+                <button type="submit" class="btn btn-primary btn-accounting-text" id="btnSaveVoucher" title="Enter debit and credit amounts to balance the voucher" disabled>Save voucher</button>
             </div>
         </div>
     </form>
@@ -534,12 +535,24 @@
 
         const diff = Math.round((totalDr - totalCr) * 100) / 100;
         const nextIndex = parseInt(currentIndex) + 1;
-        const nextRow = document.querySelector(`#voucherTableBody tr[data-index="${nextIndex}"]`);
+        let targetRow = document.querySelector(`#voucherTableBody tr[data-index="${nextIndex}"]`);
 
-        if (nextRow && Math.abs(diff) > 0.001) {
-            const nextTypeSelect = nextRow.querySelector('.row-type');
-            const nextDebit = nextRow.querySelector('.debit-input');
-            const nextCredit = nextRow.querySelector('.credit-input');
+        if (!targetRow && Math.abs(diff) > 0.001) {
+            rows.forEach(r => {
+                if (r.dataset.index !== String(currentIndex) && !targetRow) {
+                    const dr = parseFloat(r.querySelector('.debit-input').value) || 0;
+                    const cr = parseFloat(r.querySelector('.credit-input').value) || 0;
+                    if (dr === 0 && cr === 0) {
+                        targetRow = r;
+                    }
+                }
+            });
+        }
+
+        if (targetRow && Math.abs(diff) > 0.001) {
+            const nextTypeSelect = targetRow.querySelector('.row-type');
+            const nextDebit = targetRow.querySelector('.debit-input');
+            const nextCredit = targetRow.querySelector('.credit-input');
 
             if (diff > 0) { // More debit than credit, suggest Credit on next row
                 nextTypeSelect.value = 'Cr';
@@ -588,6 +601,22 @@
         }
         diffRow.classList.toggle('text-danger', diff > 0);
         btnSave.disabled = !balanced;
+        const saveHint = document.getElementById('saveHintText');
+        if (saveHint) {
+            if (balanced) {
+                saveHint.textContent = 'Balanced — ready to save';
+                saveHint.className = 'small text-success font-weight-600 mr-3';
+                btnSave.title = 'Save voucher (Alt+S or Ctrl+Enter)';
+            } else if (totalDr === 0 && totalCr === 0) {
+                saveHint.textContent = 'Awaiting amounts';
+                saveHint.className = 'small text-muted mr-3';
+                btnSave.title = 'Enter debit and credit amounts to balance the voucher';
+            } else {
+                saveHint.textContent = 'Unbalanced (Diff: ' + formatAmount.format(diff) + ')';
+                saveHint.className = 'small text-danger font-weight-600 mr-3';
+                btnSave.title = 'Voucher is unbalanced. Total Debit (' + formatAmount.format(totalDr) + ') must equal Total Credit (' + formatAmount.format(totalCr) + '). Difference: ' + formatAmount.format(diff);
+            }
+        }
     }
 
     function updateRemoveButtons() {

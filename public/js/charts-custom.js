@@ -8,126 +8,99 @@ $(document).ready(function () {
     var gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(226, 232, 240, 0.6)';
     var tickColor = isDark ? '#64748b' : '#94a3b8';
 
-    // ------------------------------------------------------- //
-    // Modern Line Chart: Cash Flow
-    // ------------------------------------------------------ //
-    var CASHFLOW = $('#cashFlow');
-    if (CASHFLOW.length > 0) {
-        var recieved = CASHFLOW.data('recieved');
-        var sent = CASHFLOW.data('sent');
-        var month = CASHFLOW.data('month');
-        var label1 = CASHFLOW.data('label1') || 'Payment Received';
-        var label2 = CASHFLOW.data('label2') || 'Payment Sent';
+    var dashboard = document.querySelector('[data-dashboard]');
+    if (dashboard) {
+        var locale = dashboard.dataset.currency === '₹' ? 'en-IN' : document.documentElement.lang || 'en';
+        var currency = dashboard.dataset.currency;
+        var compact = new Intl.NumberFormat(locale, {notation: 'compact', maximumFractionDigits: 1});
+        var exact = new Intl.NumberFormat(locale, {maximumFractionDigits: Number(dashboard.dataset.decimals)});
+        var cash = $('#cashFlow').data();
+        var yearly = $('#saleChart').data();
+        var monthly = $('#transactionChart').data();
+        var charts = [];
+        var dark = document.body.classList.contains('dark-mode');
 
-        var ctx = CASHFLOW[0].getContext('2d');
-        var gradInflow = ctx.createLinearGradient(0, 0, 0, 280);
-        gradInflow.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
-        gradInflow.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
-
-        var gradOutflow = ctx.createLinearGradient(0, 0, 0, 280);
-        gradOutflow.addColorStop(0, 'rgba(249, 115, 22, 0.22)');
-        gradOutflow.addColorStop(1, 'rgba(249, 115, 22, 0.00)');
-
-        var cashFlow_chart = new Chart(CASHFLOW, {
-            type: 'line',
-            data: {
-                labels: month,
-                datasets: [
-                    {
-                        label: label1,
-                        fill: true,
-                        lineTension: 0.4,
-                        backgroundColor: gradInflow,
-                        borderColor: '#6366f1',
-                        borderWidth: 2.8,
-                        pointBorderColor: '#6366f1',
-                        pointBackgroundColor: "#ffffff",
-                        pointBorderWidth: 2.5,
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#6366f1',
-                        pointHoverBorderColor: "#ffffff",
-                        pointHoverBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHitRadius: 10,
-                        data: recieved,
-                        spanGaps: false
-                    },
-                    {
-                        label: label2,
-                        fill: true,
-                        lineTension: 0.4,
-                        backgroundColor: gradOutflow,
-                        borderColor: '#f97316',
-                        borderWidth: 2.8,
-                        pointBorderColor: '#f97316',
-                        pointBackgroundColor: "#ffffff",
-                        pointBorderWidth: 2.5,
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#f97316',
-                        pointHoverBorderColor: "#ffffff",
-                        pointHoverBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHitRadius: 10,
-                        data: sent,
-                        spanGaps: false
+        function drawDashboardCharts() {
+            charts.forEach(function (chart) { chart.destroy(); });
+            charts = [];
+            var theme = getComputedStyle(dashboard);
+            var token = function (name) { return theme.getPropertyValue(name).trim(); };
+            var plum = token('--z-primary-text');
+            var amber = token('--z-warning');
+            var green = token('--z-success');
+            var grid = token('--z-border');
+            var surface = token('--z-surface');
+            var font = theme.fontFamily;
+            var text = token('--z-text-2');
+            var ticks = {fontColor: text, fontFamily: font, fontSize: 11};
+            var layout = {responsive: true, maintainAspectRatio: false, animation: {duration: 0}};
+            var axes = {
+                xAxes: [{gridLines: {display: false}, ticks: ticks}],
+                yAxes: [{
+                    gridLines: {color: grid, zeroLineColor: grid, drawBorder: false},
+                    ticks: Object.assign({}, ticks, {
+                        beginAtZero: true,
+                        maxTicksLimit: 5,
+                        callback: function (value) { return currency + compact.format(value); }
+                    })
+                }]
+            };
+            var legend = {labels: Object.assign({}, ticks, {boxWidth: 10, usePointStyle: true})};
+            var tooltips = {
+                titleFontFamily: font,
+                bodyFontFamily: font,
+                callbacks: {
+                    label: function (item, data) {
+                        var series = data.datasets[item.datasetIndex];
+                        var label = series.label || data.labels[item.index];
+                        return label + ' ' + currency + exact.format(series.data[item.index]);
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                    position: 'top',
-                    labels: {
-                        boxWidth: 10,
-                        usePointStyle: true,
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 12,
-                        fontColor: tickColor,
-                        padding: 16
-                    }
-                },
-                tooltips: {
-                    backgroundColor: '#0f172a',
-                    titleFontFamily: 'Plus Jakarta Sans',
-                    bodyFontFamily: 'JetBrains Mono',
-                    titleFontSize: 12.5,
-                    bodyFontSize: 12,
-                    cornerRadius: 8,
-                    xPadding: 12,
-                    yPadding: 10,
-                    caretSize: 6,
-                    displayColors: true
-                },
-                scales: {
-                    xAxes: [{
-                        gridLines: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 11,
-                            fontColor: tickColor
-                        }
-                    }],
-                    yAxes: [{
-                        gridLines: {
-                            color: gridColor,
-                            zeroLineColor: gridColor,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            fontFamily: 'JetBrains Mono',
-                            fontSize: 11,
-                            fontColor: tickColor,
-                            beginAtZero: true
-                        }
-                    }]
                 }
+            };
+            function draw(id, type, labels, datasets, options) {
+                charts.push(new Chart(document.getElementById(id), {
+                    type: type,
+                    data: {labels: labels, datasets: datasets},
+                    options: Object.assign({}, layout, {tooltips: tooltips}, options)
+                }));
             }
-        });
-    };
+            function line(label, data, color, fill) {
+                return {
+                    label: label, data: data, borderColor: color, backgroundColor: fill, borderWidth: 2,
+                    pointBackgroundColor: surface, pointBorderColor: color, pointBorderWidth: 2,
+                    pointRadius: 3, pointHitRadius: 8, lineTension: 0
+                };
+            }
+
+            if (cash) {
+                draw('cashFlow', 'line', cash.month.map(function (month) { return month.slice(0, 3); }), [
+                    line(cash.label1, cash.recieved, plum, token('--z-primary-soft-strong')),
+                    line(cash.label2, cash.sent, amber, token('--z-warning-soft'))
+                ], {legend: legend, scales: axes});
+            }
+            if (yearly) {
+                draw('saleChart', 'bar', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], [
+                    {label: yearly.label1, data: yearly.purchase_chart_value, backgroundColor: amber},
+                    {label: yearly.label2, data: yearly.sale_chart_value, backgroundColor: plum}
+                ], {legend: legend, scales: axes});
+            }
+            if (monthly) {
+                draw('transactionChart', 'doughnut', [monthly.label1, monthly.label2, monthly.label3], [{
+                    data: [monthly.purchase, monthly.revenue, monthly.expense],
+                    backgroundColor: [plum, green, amber],
+                    borderWidth: 0
+                }], {cutoutPercentage: 76, legend: {display: false}});
+            }
+        }
+
+        drawDashboardCharts();
+        new MutationObserver(function () {
+            var nextDark = document.body.classList.contains('dark-mode');
+            if (nextDark === dark) return;
+            dark = nextDark;
+            drawDashboardCharts();
+        }).observe(document.body, {attributes: true, attributeFilter: ['class']});
+    }
 
     // ------------------------------------------------------- //
     // Sale Report Line Chart
@@ -190,104 +163,6 @@ $(document).ready(function () {
                     yAxes: [{
                         gridLines: { color: gridColor, drawBorder: false },
                         ticks: { fontFamily: 'JetBrains Mono', fontSize: 11, fontColor: tickColor, beginAtZero: true }
-                    }]
-                }
-            }
-        });
-    };
-
-    // ------------------------------------------------------- //
-    // Modern Bar Chart: Yearly Sales vs Purchases
-    // ------------------------------------------------------ //
-    var SALECHART = $('#saleChart');
-    if (SALECHART.length > 0) {
-        var yearly_sale_amount = SALECHART.data('sale_chart_value');
-        var yearly_purchase_amount = SALECHART.data('purchase_chart_value');
-        var label1 = SALECHART.data('label1') || 'Purchases';
-        var label2 = SALECHART.data('label2') || 'Sales';
-
-        var ctxBar = SALECHART[0].getContext('2d');
-        var gradBarSale = ctxBar.createLinearGradient(0, 0, 0, 300);
-        gradBarSale.addColorStop(0, '#6366f1');
-        gradBarSale.addColorStop(1, '#4f46e5');
-
-        var gradBarPurchase = ctxBar.createLinearGradient(0, 0, 0, 300);
-        gradBarPurchase.addColorStop(0, '#f97316');
-        gradBarPurchase.addColorStop(1, '#ea580c');
-
-        var saleChart = new Chart(SALECHART, {
-            type: 'bar',
-            data: {
-                labels: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-                datasets: [
-                    {
-                        label: label1,
-                        backgroundColor: gradBarPurchase,
-                        hoverBackgroundColor: '#f97316',
-                        borderColor: 'transparent',
-                        borderWidth: 0,
-                        data: yearly_purchase_amount
-                    },
-                    {
-                        label: label2,
-                        backgroundColor: gradBarSale,
-                        hoverBackgroundColor: '#6366f1',
-                        borderColor: 'transparent',
-                        borderWidth: 0,
-                        data: yearly_sale_amount
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                    position: 'top',
-                    labels: {
-                        boxWidth: 10,
-                        usePointStyle: true,
-                        fontFamily: 'Plus Jakarta Sans',
-                        fontSize: 12,
-                        fontColor: tickColor,
-                        padding: 16
-                    }
-                },
-                tooltips: {
-                    backgroundColor: '#0f172a',
-                    titleFontFamily: 'Plus Jakarta Sans',
-                    bodyFontFamily: 'JetBrains Mono',
-                    titleFontSize: 12.5,
-                    bodyFontSize: 12,
-                    cornerRadius: 8,
-                    xPadding: 12,
-                    yPadding: 10
-                },
-                scales: {
-                    xAxes: [{
-                        barPercentage: 0.7,
-                        categoryPercentage: 0.6,
-                        gridLines: {
-                            display: false,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 11,
-                            fontColor: tickColor
-                        }
-                    }],
-                    yAxes: [{
-                        gridLines: {
-                            color: gridColor,
-                            zeroLineColor: gridColor,
-                            drawBorder: false
-                        },
-                        ticks: {
-                            fontFamily: 'JetBrains Mono',
-                            fontSize: 11,
-                            fontColor: tickColor,
-                            beginAtZero: true
-                        }
                     }]
                 }
             }
@@ -358,55 +233,4 @@ $(document).ready(function () {
             }
         });
     }
-
-    // ------------------------------------------------------- //
-    // Modern Doughnut: Transaction Summary
-    // ------------------------------------------------------ //
-    var TRANSACTIONCHART = $('#transactionChart');
-    if (TRANSACTIONCHART.length > 0) {
-        var revenue = TRANSACTIONCHART.data('revenue');
-        var purchase = TRANSACTIONCHART.data('purchase');
-        var expense = TRANSACTIONCHART.data('expense');
-        var label1 = TRANSACTIONCHART.data('label1') || 'Purchase';
-        var label2 = TRANSACTIONCHART.data('label2') || 'Revenue';
-        var label3 = TRANSACTIONCHART.data('label3') || 'Expense';
-
-        var myTransactionChart = new Chart(TRANSACTIONCHART, {
-            type: 'doughnut',
-            data: {
-                labels: [ label1, label2, label3 ],
-                datasets: [{
-                    data: [ purchase, revenue, expense ],
-                    borderWidth: 0,
-                    backgroundColor: [
-                        '#6366f1',
-                        '#10b981',
-                        '#f59e0b'
-                    ],
-                    hoverBackgroundColor: [
-                        '#4f46e5',
-                        '#059669',
-                        '#d97706'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutoutPercentage: 74,
-                legend: {
-                    display: false
-                },
-                tooltips: {
-                    backgroundColor: '#0f172a',
-                    titleFontFamily: 'Plus Jakarta Sans',
-                    bodyFontFamily: 'JetBrains Mono',
-                    cornerRadius: 8,
-                    xPadding: 12,
-                    yPadding: 10
-                }
-            }
-        });
-    }
 });
-

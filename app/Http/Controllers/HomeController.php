@@ -20,7 +20,6 @@ use App\Models\Product;
 use App\Models\RewardPointSetting;
 use App\Models\Product_Warehouse;
 use App\Models\Unit;
-use Cache;
 use DB;
 use Auth;
 use Printing;
@@ -470,7 +469,6 @@ class HomeController extends Controller
         $stock_valuation = DB::table('product_warehouse')
             ->join('products', 'product_warehouse.product_id', '=', 'products.id')
             ->sum(DB::raw('product_warehouse.qty * products.cost')) ?? 0;
-        $total_products = Product::where('is_active', true)->count();
         $total_customers = Customer::where('is_active', true)->count();
         $total_suppliers = \App\Models\Supplier::where('is_active', true)->count();
         $low_stock_count = DB::table('product_warehouse')
@@ -488,35 +486,14 @@ class HomeController extends Controller
         $currency_model = \App\Models\Currency::find(cache()->get('general_setting')->currency ?? 1);
         $currency_symbol = $currency_model ? ($currency_model->symbol ?: ($currency_model->code == 'INR' ? '₹' : ($currency_model->code ?: '$'))) : '$';
 
-        $addon_stats = Cache::remember('dashboard_addon_stats', 60, function () {
-            $stats = [];
-            if (\Illuminate\Support\Facades\Schema::hasTable('water_tankers')) {
-                $stats['water_tankers'] = DB::table('water_tankers')->where('is_active', 1)->count();
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('water_tanker_trips')) {
-                $stats['water_trips_today'] = DB::table('water_tanker_trips')->whereDate('trip_date', date('Y-m-d'))->count();
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('water_can_deliveries')) {
-                $stats['cans_delivered_today'] = DB::table('water_can_deliveries')->whereDate('delivery_date', date('Y-m-d'))->sum('cans_delivered') ?? 0;
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('cafe_cash_drawers')) {
-                $stats['open_drawers'] = DB::table('cafe_cash_drawers')->where('status', 'open')->count();
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('repair_services')) {
-                $stats['repair_services_count'] = DB::table('repair_services')->count();
-            }
-            return $stats;
-        });
-
         $versionUpgradeData = (!config('database.connections.zoloerp_landlord') && Auth::user()->role_id <= 2) ? ($this->versionUpgradeInfo ?? []) : [];
 
         return view('backend.index', compact(
             'revenue', 'purchase_due', 'total_sale', 'invoice_due', 'purchase', 'expense',
             'return', 'purchase_return', 'profit', 'payment_recieved', 'payment_sent',
             'month', 'yearly_sale_amount', 'yearly_purchase_amount', 'versionUpgradeData',
-            'liquid_balance', 'stock_valuation', 'total_products', 'total_customers',
-            'total_suppliers', 'low_stock_count', 'low_stock_products', 'currency_symbol',
-            'addon_stats'
+            'liquid_balance', 'stock_valuation', 'total_customers',
+            'total_suppliers', 'low_stock_count', 'low_stock_products', 'currency_symbol'
         ));
     }
 

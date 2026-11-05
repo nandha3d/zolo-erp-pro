@@ -1,5 +1,14 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Journal Entry Modal Expansion & Voucher Save Feedback — 2026-11-05 (branch ui)
+
+- User reported being unable to save a voucher in Express Voucher Entry, and that the Add Journal Entry modal on the Journal Entries page was too small and difficult to read.
+- Diagnosis of screenshot 1 (Express Voucher Entry): Row 1 had no account selected and Debit at ₹0.00; Row 2 had BOB with Credit at ₹15,000. Total debit was ₹0.00 and Total credit was ₹15,000.00 (`Difference: ₹15,000.00 [Unbalanced]`). The Save button is strictly disabled for unbalanced vouchers. In addition, for a positive bank opening balance, Bank (Asset) must be Debited (`Dr`), and an Equity account (`3040 Opening Balance Adjustment` or `3010 Owner's Capital`) Credited (`Cr`).
+- Enhanced Express Voucher Entry (`resources/views/backend/accounting/voucher_entry.blade.php`): Added an inline status hint (`#saveHintText`) next to the Save button showing dynamic guidance ("Awaiting amounts", "Unbalanced (Diff: ₹...)", or "Balanced — ready to save"), updated the button tooltip with the exact difference when unbalanced, and made `autoBalanceNextRow` bi-directional so typing an amount into Row 2 automatically suggests the counter-balance onto Row 1 if empty.
+- Expanded New Journal Entry Voucher modal (`resources/views/backend/accounting/journal_entries.blade.php`): Upgraded `#createVoucherModal` and `#viewEntryModal` from `modal-lg` (800px) to `modal-xl` with responsive max-width up to 1080px. Re-allocated table columns to 36% Account, 28% Line Memo, 16% Debit, 16% Credit, and 4% Action with min-widths. Increased input heights to 34px with comfortable 10px padding and monospace font for numbers so values are never clipped. Aligned initial balance badge to neutral "Awaiting amounts" and disabled the submit button until a non-zero balanced entry is entered.
+- Validation: 26 JavaScript unit tests passed with 0 errors. Blade syntax linting passed. Git whitespace check clean. Existing uncommitted working tree preserved on branch `ui`.
+
+
 ## Accounting control and link audit — 2026-11-05 (branch ui)
 
 - Fixed the inactive party dropdown in the user's Contra screenshot. Advanced transfers hide the party column and guided fields. Voucher Hub uses native dynamic selectors. Receivable lines show customers, payable lines show suppliers, and posting requires a party on those lines. Verified receipt allocation and supplier payment payloads in browser fixtures.
