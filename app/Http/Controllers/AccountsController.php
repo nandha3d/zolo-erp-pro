@@ -142,9 +142,23 @@ class AccountsController extends Controller
 
     public function makeDefault($id)
     {
+        if (config('commercial.enabled')) {
+            $resolver = app(\App\Services\Platform\CompanyContextResolver::class);
+            $context = $resolver->forActor();
+            abort_unless($resolver->canManageFinancialYears(Auth::id(), $context->companyId), 403);
+            DB::transaction(function () use ($id, $context) {
+                \App\Models\Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
+                $account = Account::forCompany($context)->where('is_active', true)->findOrFail($id);
+                Account::forCompany($context)->where('is_default', true)->update(['is_default' => false]);
+                $account->forceFill(['is_default' => true])->save();
+            });
+            return 'Account set as default successfully';
+        }
         $lims_account_data = Account::where('is_default', true)->first();
-        $lims_account_data->is_default = false;
-        $lims_account_data->save();
+        if ($lims_account_data) {
+            $lims_account_data->is_default = false;
+            $lims_account_data->save();
+        }
 
         $lims_account_data = Account::findOrFail($id);
         $lims_account_data->is_default = true;

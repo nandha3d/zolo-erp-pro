@@ -328,7 +328,7 @@
                 <li id="inv-close-menu"><a href="{{route('accounting.inventory-close')}}">Periodic Inventory Close</a></li>
                 <li id="semantic-map-menu"><a href="{{route('accounting.semantic-mappings')}}">Semantic Account Mapping</a></li>
                 @if($nav->allows('account-index'))
-                    <li id="account-list-menu"><a href="{{route('accounts.index')}}">{{__('db.Account List')}} (Cash)</a></li>
+                    <li id="account-list-menu"><a href="{{route('accounts.index')}}">Cash &amp; Bank Accounts</a></li>
                 @endif
                 @if($nav->allows('money-transfer'))
                     <li id="money-transfer-menu"><a href="{{route('money-transfers.index')}}">{{__('db.Money Transfer')}}</a></li>

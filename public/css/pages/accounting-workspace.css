@@ -1,0 +1,70 @@
+/* Shared Accounting screens use the application tokens and one vertical scroll area. */
+body.accounting-screen #content { display: block !important; overflow-y: auto !important; overflow-x: hidden !important; min-height: 0; }
+body.accounting-screen #content > section { padding: 6px 12px 16px !important; min-height: 0 !important; display: block !important; background: var(--z-bg, var(--neo-bg-primary)) !important; }
+body.accounting-screen #content [hidden] { display: none !important; }
+.accounting-command-bar { margin: 0 0 6px !important; flex-wrap: wrap; position: relative; z-index: 15; padding: 6px 10px; }
+.accounting-command-bar .comm-title-group { flex: 1 1 auto; }
+.accounting-command-bar .comm-title-group h1 { white-space: normal; }
+.accounting-navigation { display: flex; flex-wrap: wrap; gap: 4px; }
+.accounting-nav-group { position: relative; }
+.accounting-nav-group > summary { list-style-position: inside; cursor: pointer; color: #f8fafc; padding: 4px 8px; border: 1px solid #334155; border-radius: 4px; font-size: 12px; }
+.accounting-nav-group[data-current-group] > summary, .accounting-nav-group[open] > summary { background: var(--z-primary); border-color: var(--z-primary); }
+.accounting-nav-menu { position: absolute; inset: calc(100% + 4px) 0 auto auto; min-width: 220px; padding: 4px; background: var(--z-surface, #fff); border: 1px solid var(--z-border, #e2e8f0); border-radius: 6px; box-shadow: var(--z-shadow, 0 4px 12px #0002); z-index: 100; }
+.accounting-nav-menu a { display: block; padding: 7px 10px; border-radius: 4px; font-size: 12px; color: var(--z-text, var(--neo-text-primary, #172b4d)); }
+.accounting-nav-menu a:hover, .accounting-nav-menu a[aria-current] { background: var(--z-primary-soft); color: var(--z-primary-text); }
+.accounting-screen :is(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--z-primary); outline-offset: 2px; }
+.accounting-purpose { margin: 0 0 8px; color: var(--z-text-muted, var(--neo-text-secondary)); font-size: 12px; }
+.accounting-screen #content :is(.desk-card-wrapper, .card, .kpi-card, .table-responsive) { background-color: var(--z-surface, var(--neo-bg-card, #fff)) !important; border-color: var(--z-border, var(--neo-border-color, #e2e8f0)) !important; color: var(--z-text, var(--neo-text-primary)) !important; }
+.accounting-screen #content .desk-card-wrapper { padding: 12px !important; margin-bottom: 8px !important; border-radius: 6px; display: block !important; flex: none !important; overflow: visible !important; height: auto !important; min-height: 0 !important; }
+.accounting-screen #content .table-responsive { display: block !important; flex: none !important; overflow: auto !important; max-width: 100%; min-height: 0 !important; }
+.accounting-screen #content .dataTables_wrapper { display: block !important; height: auto !important; overflow: visible !important; }
+.accounting-screen #content .dataTables_wrapper > .row { flex: none !important; }
+.accounting-screen #content .desk-card-wrapper:has(> details:not([open])) { min-height: 0 !important; }
+.accounting-screen #content .table thead th { background: var(--z-table-head-bg, var(--z-ink)) !important; color: var(--z-table-head-text, #fff) !important; }
+.accounting-screen #content .table tbody td { color: var(--z-text, var(--neo-text-primary)) !important; }
+.accounting-screen #content .table tbody tr:nth-child(even) > td { background-color: var(--z-table-stripe) !important; }
+.accounting-screen #content .table tbody tr:hover > td { background-color: var(--z-primary-soft) !important; }
+.accounting-screen #content :is(.form-control, .bootstrap-select > .dropdown-toggle) { background-color: var(--z-field-bg) !important; color: var(--z-field-text) !important; border-color: var(--z-field-border) !important; }
+body.accounting-screen.dark-mode #content :is(input, select) { color-scheme: dark; }
+.accounting-screen #content :is(.btn-primary, .btn-info) { background: var(--z-primary) !important; border-color: var(--z-primary) !important; color: #fff !important; }
+.accounting-screen #content :is(.btn-outline-primary, .btn-outline-secondary):not(.comm-actions *) { color: var(--z-primary-text) !important; border-color: var(--z-primary-border) !important; background: var(--z-surface) !important; }
+.accounting-screen #content :is(.btn-outline-primary, .btn-outline-secondary):hover:not(.comm-actions *) { background: var(--z-primary-soft) !important; }
+.accounting-screen #content .kpi-summary-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 8px; margin-bottom: 8px; }
+.accounting-screen #content .kpi-card { display: flex; justify-content: space-between; align-items: center; min-width: 0; padding: 10px 12px; border: 1px solid var(--z-border); border-radius: var(--z-radius-sm); }
+.accounting-screen #content .kpi-label { font-size: 11px; color: var(--z-text-muted); font-weight: 600; text-transform: uppercase; }
+.accounting-screen #content .kpi-number { font-size: 18px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.accounting-screen .accounting-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-bottom: 10px; }
+.accounting-screen .accounting-toolbar label { display: block; font-size: 12px; margin-bottom: 3px; }
+.accounting-screen .accounting-toolbar .form-control { min-height: 32px; }
+.accounting-screen .accounting-help { padding: 8px 12px; background: var(--z-primary-soft); border-left: 3px solid var(--z-primary); border-radius: 4px; font-size: 12px; margin-bottom: 10px; }
+.accounting-screen .accounting-empty { padding: 24px 12px; text-align: center; color: var(--z-text-muted, var(--neo-text-secondary)); }
+.accounting-screen #content .btn-accounting-text { width: auto !important; min-width: 0; height: auto !important; padding: 6px 10px !important; white-space: normal; }
+.accounting-screen .accounting-voucher-lines { min-height: 150px; }
+.accounting-screen #accounting-voucher-form { display: block !important; }
+.accounting-screen #accounting-voucher-form > .table-responsive { min-height: 0 !important; }
+.accounting-screen .voucher-history[open], .accounting-screen .voucher-hub-workspace-view > .desk-card-wrapper:has(> details[open]) { max-height: none !important; overflow: visible !important; }
+.transfer-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(150px, .65fr); gap: 12px; }
+.transfer-fields label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.transfer-fields .form-control { min-height: 36px; height: auto !important; }
+.transfer-preview { margin: 10px 0; padding: 10px 12px; background: var(--z-primary-soft); border-radius: 4px; font-size: 13px; overflow-wrap: anywhere; }
+.voucher-action-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; position: sticky; bottom: 0; background: var(--z-surface, #fff); padding: 10px 0 0; z-index: 2; }
+.voucher-advanced { margin: 10px 0; }
+.voucher-advanced summary { font-size: 12px; cursor: pointer; color: var(--z-text-muted, var(--neo-text-secondary)); }
+.voucher-advanced > .row { margin-top: 10px; }
+@media (max-width: 767px) {
+    body.accounting-screen #content > section { padding: 6px !important; }
+    .accounting-command-bar .comm-title-group { flex-basis: 100%; }
+    .accounting-navigation { flex: 1 1 100%; }
+    .accounting-nav-menu { left: 0; right: auto; min-width: min(230px, 80vw); }
+    .accounting-nav-group:last-child .accounting-nav-menu { left: auto; right: 0; }
+    .accounting-screen #content .kpi-summary-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .accounting-screen #content .kpi-card { min-width: 0; }
+    .transfer-fields { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .accounting-screen .accounting-voucher-lines table { min-width: 720px; }
+    .accounting-screen #content .voucher-action-row > button { width: 100% !important; min-height: 40px !important; }
+    .accounting-screen .accounting-toolbar > * { max-width: 100%; }
+}
+@media print {
+    .accounting-command-bar, .accounting-navigation, .voucher-action-row { display: none !important; }
+    body.accounting-screen #content { overflow: visible !important; }
+}

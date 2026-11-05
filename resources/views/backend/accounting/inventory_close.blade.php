@@ -11,31 +11,25 @@
 
 <section class="inv-close-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-archive text-primary"></i> Periodic Inventory Close Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Stock Valuation Preview for Authorized Branch</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.inventory-close') }}"><i class="dripicons-archive"></i> Periodic Close</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.semantic-mappings') }}"><i class="dripicons-gear"></i> Semantic Mappings</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="inventory-close" title="Periodic inventory close" purpose="Preview stored stock at current product cost. Closing entries cannot be posted from this screen.">
             <button type="button" class="btn btn-secondary btn-action-pill" disabled aria-disabled="true">
                 Inventory Close Unavailable
             </button>
-        </div>
+    </x-accounting-command-bar>
+
+    <div class="desk-filter-card d-print-none">
+        <form method="GET" action="{{ route('accounting.inventory-close') }}" class="row align-items-end">
+            <div class="col-md-8"><label for="inventory-close-warehouse">Warehouse</label><select id="inventory-close-warehouse" name="warehouse_id" class="form-control"><option value="">All authorized warehouses</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected((string)$warehouseId === (string)$warehouse->id)>{{ $warehouse->name }}</option>@endforeach</select></div>
+            <div class="col-md-4 d-flex u-gap-4px"><button type="submit" class="btn btn-primary">Apply filters</button><a href="{{ route('accounting.inventory-close') }}" class="btn btn-outline-secondary">Reset</a><button type="button" class="btn btn-outline-secondary" data-erp-print>Print / PDF</button></div>
+        </form>
     </div>
+    <div class="alert alert-info" role="note">This preview uses stored stock quantities, not a physical count. Quantity totals may combine different units. Historical closing valuation and ledger reconciliation are unavailable, so inventory-close posting remains disabled.</div>
 
     <!-- Metric KPI Cards -->
     <div class="kpi-summary-strip">
         <div class="kpi-card">
             <div>
-                <div class="kpi-label">TOTAL PHYSICAL UNITS</div>
+                <div class="kpi-label">STORED QUANTITY</div>
                 <div class="kpi-number">{{ number_format($totalQty, 2) }}</div>
             </div>
             <div class="z-icon-tile z-tone-info">
@@ -44,7 +38,7 @@
         </div>
         <div class="kpi-card">
             <div>
-                <div class="kpi-label">PHYSICAL STOCK VALUATION</div>
+                <div class="kpi-label">CURRENT COST VALUE</div>
                 <div class="kpi-number u-c-primary">₹ {{ number_format($totalValuation, 2) }}</div>
             </div>
             <div class="z-icon-tile z-tone-primary">
@@ -93,13 +87,14 @@
     <div class="desk-card-wrapper">
         <div class="table-responsive">
             <table class="table inv-table align-middle mb-0" id="close-table">
+                <caption class="sr-only">Periodic inventory close</caption>
                 <thead>
                     <tr>
-                        <th>Product Details</th>
-                        <th>Warehouse</th>
-                        <th class="text-right">Quantity</th>
-                        <th class="text-right">Unit Cost</th>
-                        <th class="text-right">Line Valuation</th>
+                        <th scope="col">Product Details</th>
+                        <th scope="col">Warehouse</th>
+                        <th scope="col" class="text-right">Quantity</th>
+                        <th scope="col" class="text-right">Unit Cost</th>
+                        <th scope="col" class="text-right">Line Valuation</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -116,16 +111,16 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No active warehouse inventory stocks found.</td>
+                            <td colspan="5" class="text-center text-muted py-4">No stored stock matches the selected warehouse.</td>
                         </tr>
                     @endforelse
                 </tbody>
                 <tfoot class="u-bg-surface-3 u-fw-700">
                     <tr>
-                        <th colspan="2">Total Physical Inventory Valuation:</th>
-                        <th class="text-right font-monospace">{{ number_format($totalQty, 2) }}</th>
-                        <th></th>
-                        <th class="text-right text-primary font-monospace u-fs-14px">₹ {{ number_format($totalValuation, 2) }}</th>
+                        <th scope="col" colspan="2">Total current cost value:</th>
+                        <th scope="col" class="text-right font-monospace">{{ number_format($totalQty, 2) }}</th>
+                        <th scope="col"></th>
+                        <th scope="col" class="text-right text-primary font-monospace u-fs-14px">₹ {{ number_format($totalValuation, 2) }}</th>
                     </tr>
                 </tfoot>
             </table>

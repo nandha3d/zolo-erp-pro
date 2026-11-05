@@ -1,4 +1,13 @@
 /* Page styles for: backend/accounting/chart_of_accounts.blade.php (moved from inline <style>). */
+    .account-setup-hint { margin: 6px 0 10px; font-size: 12px; color: var(--z-text-muted, #64748b); }
+    .coa-filters { display: flex; align-items: end; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 8px; }
+    .coa-filters > div { min-width: 180px; }
+    .coa-filters label { display: block; font-size: 11px; margin-bottom: 3px; font-weight: 600; }
+    .coa-filters small { padding-bottom: 6px; }
+    .coa-workspace-view #coa-table td:last-child { white-space: nowrap; }
+    .coa-workspace-view #coa-table td .btn { width: auto !important; min-width: 28px; height: 28px !important; padding: 3px 7px !important; gap: 4px; }
+    #coa-table .account-action-label { font-size: 11px; }
+    @media (max-width: 767px) { #coa-table { min-width: 850px; } .coa-filters > div { flex: 1 1 100%; } }
     .coa-workspace-view {
         padding: 12px 18px 24px;
         background: #f8fafc;

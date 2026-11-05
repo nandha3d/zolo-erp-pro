@@ -2,30 +2,12 @@
 @section('content')
 
 
-@include('backend.partials.document-entry-layout')
+@php($transferScreen = old('voucher_type', request('voucher_type')) === 'contra')
 <section class="voucher-hub-workspace-view">
-    <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-pencil text-primary"></i> Voucher Hub Command Center <small class="text-light opacity-75">(F9)</small></h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> {{ $year->name }} &bull; {{ $year->start_date->format('Y-m-d') }} to {{ $year->end_date->format('Y-m-d') }} &bull; {{ ucfirst($year->status) }}</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="{{ route('accounting.vouchers') }}"><i class="dripicons-home"></i> Voucher Hub</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.day-book') }}"><i class="dripicons-calendar"></i> Day Book</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.cash-book') }}"><i class="dripicons-wallet"></i> Cash Book</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.ageing') }}"><i class="dripicons-clock"></i> Receivables / Payables</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> Ledger</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.semantic-mappings') }}"><i class="dripicons-gear"></i> Account Mappings</a></li>
-        </ul>
-        <div class="comm-actions">
-            @if($year->lock_date)
-                <span class="badge badge-warning u-fs-11px u-p-5px-8px">
-                    <i class="dripicons-lock"></i> Locked thru {{ $year->lock_date->format('Y-m-d') }}
-                </span>
-            @endif
-        </div>
-    </div>
+    <x-accounting-command-bar :active="$transferScreen ? 'transfers' : 'vouchers'" :title="$transferScreen ? 'Money Transfer' : 'Voucher Hub'" :purpose="$transferScreen ? 'Move money between your cash and bank accounts. No income or expense is created.' : 'Record payments, receipts and adjustments. Use bill payment screens when settling a specific sales or purchase bill.'">
+        <span class="comm-title-badge">{{ $year->name }} · {{ ucfirst($year->status) }}</span>
+        @if($year->lock_date)<span class="badge badge-warning">Locked through {{ $year->lock_date->format('Y-m-d') }}</span>@endif
+    </x-accounting-command-bar>
 
     @if(session('message'))
         <div class="alert alert-success alert-dismissible text-center mb-3">
@@ -49,7 +31,7 @@
             <div class="row mb-3 u-m-0-6px">
                 <div class="col-md-4 u-p-0-6px">
                     <label for="voucher-type" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Voucher Type</label>
-                    <select id="voucher-type" name="voucher_type" class="form-control form-control-sm u-h-32px u-fs-12px">
+                    <select id="voucher-type" name="voucher_type" class="custom-select-native form-control form-control-sm u-h-32px u-fs-12px">
                         @foreach(['contra' => 'Contra (F4)', 'payment' => 'Payment (F5)', 'receipt' => 'Receipt (F6)', 'journal' => 'Journal (F7)'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('voucher_type', request('voucher_type', 'journal')) === $value)>{{ $label }}</option>
                         @endforeach
@@ -59,15 +41,43 @@
                     <label for="voucher-date" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Posting Date</label>
                     <input id="voucher-date" name="entry_date" type="date" class="form-control form-control-sm u-h-32px u-fs-12px" min="{{ $year->start_date->format('Y-m-d') }}" max="{{ $year->end_date->format('Y-m-d') }}" value="{{ old('entry_date', max($year->start_date->format('Y-m-d'), min(now()->toDateString(), $year->end_date->format('Y-m-d')))) }}" required>
                 </div>
-                <div class="col-md-4 u-p-0-6px">
+                <div class="col-md-4 u-p-0-6px" id="voucher-allocation-mode">
                     <label for="reference-mode" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Allocation Mode</label>
-                    <select id="reference-mode" name="reference_mode" class="form-control form-control-sm u-h-32px u-fs-12px">
+                    <select id="reference-mode" name="reference_mode" class="custom-select-native form-control form-control-sm u-h-32px u-fs-12px">
                         @foreach(['new_reference' => 'New Reference', 'against_reference' => 'Against Reference', 'advance' => 'Advance', 'on_account' => 'On Account'] as $value => $label)
                             <option value="{{ $value }}" @selected(old('reference_mode') === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
+
+            <div id="transfer-entry" @if(!$transferScreen) hidden @endif>
+                <div id="guided-transfer-fields">
+                <div class="transfer-fields">
+                    <div><label for="transfer-from">From account</label>
+                        <select id="transfer-from" class="custom-select-native form-control" aria-describedby="transfer-from-help">
+                            <option value="">Choose source account</option>
+                            @foreach($accounts->whereIn('control_type', ['cash', 'bank'])->where('allow_manual_posting', true) as $account)
+                                <option value="{{ $account->id }}" data-balance="{{ $account->current_balance }}">{{ $account->name }}</option>
+                            @endforeach
+                        </select><small id="transfer-from-help" class="text-muted">Money leaves this account.</small>
+                    </div>
+                    <div><label for="transfer-to">To account</label>
+                        <select id="transfer-to" class="custom-select-native form-control" aria-describedby="transfer-to-help">
+                            <option value="">Choose destination account</option>
+                            @foreach($accounts->whereIn('control_type', ['cash', 'bank'])->where('allow_manual_posting', true) as $account)
+                                <option value="{{ $account->id }}" data-balance="{{ $account->current_balance }}">{{ $account->name }}</option>
+                            @endforeach
+                        </select><small id="transfer-to-help" class="text-muted">Money arrives in this account.</small>
+                    </div>
+                    <div><label for="transfer-amount">Amount (₹)</label><input id="transfer-amount" class="form-control" type="number" min="0.0001" step="0.0001" inputmode="decimal" placeholder="0.00"></div>
+                </div>
+                <p id="transfer-preview" class="transfer-preview" role="status" aria-live="polite">Choose two different accounts and enter the amount.</p>
+                </div>
+                <p id="advanced-transfer-help" class="accounting-help" role="status" hidden></p>
+                <label class="small"><input type="checkbox" id="transfer-advanced"> Use advanced debit / credit lines</label>
+            </div>
+            <p id="voucher-type-help" class="accounting-help" @if($transferScreen) hidden @endif></p>
 
             <div class="row mb-3 u-m-0-6px">
                 <div class="col-md-8 u-p-0-6px">
@@ -76,24 +86,24 @@
                 </div>
                 <div class="col-md-4 u-p-0-6px">
                     <label for="narration-template" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Narration Template</label>
-                    <select id="narration-template" class="form-control form-control-sm u-h-32px u-fs-12px">
+                    <select id="narration-template" class="custom-select-native form-control form-control-sm u-h-32px u-fs-12px">
                         <option value="">Choose a template</option>
-                        <option>Cash deposited in bank</option>
-                        <option>Supplier bill payment</option>
-                        <option>Customer bill receipt</option>
-                        <option>Account adjustment</option>
+                        <option data-voucher-type="contra">Cash deposited in bank</option>
+                        <option data-voucher-type="payment">Supplier bill payment</option>
+                        <option data-voucher-type="receipt">Customer bill receipt</option>
+                        <option data-voucher-type="journal">Account adjustment</option>
                     </select>
                 </div>
             </div>
 
             <!-- Table of Lines -->
-            <div class="table-responsive mb-3">
+            <div class="table-responsive mb-3 accounting-voucher-lines" id="voucher-line-editor">
                 <table class="table vh-table mb-0">
                     <caption class="sr-only">Voucher debit and credit lines</caption>
                     <thead>
                         <tr>
                             <th scope="col" class="u-w-30pct">Account</th>
-                            <th scope="col" class="u-w-25pct">Party (AR/AP)</th>
+                            <th scope="col" class="u-w-25pct" data-party-column>Customer / Supplier</th>
                             <th scope="col" class="text-right u-w-15pct">Debit</th>
                             <th scope="col" class="text-right u-w-15pct">Credit</th>
                             <th scope="col">Memo</th>
@@ -104,7 +114,7 @@
                 </table>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3" id="voucher-line-actions">
                 <button class="btn btn-outline-primary btn-sm font-weight-bold u-fs-11px u-h-28px" type="button" id="add-voucher-line">
                     <i class="dripicons-plus mr-1"></i> Add Line
                 </button>
@@ -113,8 +123,10 @@
                 </div>
             </div>
 
-            <div class="row mb-3 u-m-0-6px u-bg-surface-2 u-p-10px-4px u-r-6px u-b-1px-solid-border">
-                <div class="col-md-4 u-p-0-6px">
+            <details class="voucher-advanced" id="voucher-extra-details" @if(old('cheque_no') || old('due_date')) open @endif>
+            <summary>Optional reference and cheque details</summary>
+            <div class="row mb-3 u-m-0-6px">
+                <div class="col-md-4 u-p-0-6px" id="voucher-due-field">
                     <label for="voucher-due-date" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Due Date</label>
                     <input type="date" id="voucher-due-date" name="due_date" class="form-control form-control-sm u-h-30px u-fs-12px" value="{{ old('due_date') }}">
                 </div>
@@ -128,7 +140,8 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center pt-2">
+            </details>
+            <div class="voucher-action-row">
                 <div>
                     <button type="button" id="choose-bills" class="btn btn-outline-secondary btn-sm" hidden data-toggle="modal" data-target="#allocation-modal">
                         <i class="dripicons-view-list mr-1"></i> Choose Bills for Allocation
@@ -136,8 +149,8 @@
                     <div id="voucher-allocations"></div>
                     <span id="allocation-summary" class="text-muted small"></span>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm px-4 font-weight-bold u-bg-primary u-bc-primary u-h-34px" id="post-voucher" disabled>
-                    Post Voucher (Ctrl+Enter)
+                <button type="submit" class="btn btn-primary btn-sm px-4 font-weight-bold btn-accounting-text" id="post-voucher" disabled>
+                    {{ $transferScreen ? 'Post Transfer' : 'Post Voucher' }} (Ctrl+Enter)
                 </button>
             </div>
         </form>
@@ -147,15 +160,16 @@
     <template id="voucher-line-template">
         <tr>
             <td>
-                <select class="form-control form-control-sm u-h-30px u-fs-12px" data-field="chart_of_account_id" required>
+                <select class="custom-select-native form-control form-control-sm u-h-30px u-fs-12px" data-field="chart_of_account_id" required>
                     <option value="">Choose account</option>
                     @foreach($accounts as $account)
-                        <option value="{{ $account->id }}" data-control="{{ $account->control_type }}">{{ $account->code }} — {{ $account->name }}</option>
+                        <option value="{{ $account->id }}" data-control="{{ $account->control_type }}" data-manual="{{ $account->allow_manual_posting ? '1' : '0' }}">{{ $account->code }} — {{ $account->name }}</option>
                     @endforeach
                 </select>
             </td>
-            <td>
-                <select class="form-control form-control-sm u-h-30px u-fs-12px" data-party>
+            <td data-party-column>
+                <span class="text-muted small" data-party-hint>Only for receivable or payable accounts</span>
+                <select class="custom-select-native form-control form-control-sm u-h-30px u-fs-12px" data-party hidden disabled>
                     <option value="">No party</option>
                     @foreach($customers as $party)<option value="customer:{{ $party->id }}">Customer: {{ $party->name }}</option>@endforeach
                     @foreach($suppliers as $party)<option value="supplier:{{ $party->id }}">Supplier: {{ $party->name }}</option>@endforeach
@@ -197,7 +211,7 @@
                                         <td class="font-weight-bold font-monospace text-primary">{{ $item->document_no }}</td>
                                         <td>{{ $item->party_type }} #{{ $item->party_id }}</td>
                                         <td class="text-right font-monospace font-weight-600">₹ {{ number_format((float)$item->open_amount, 2) }}</td>
-                                        <td><select class="form-control form-control-sm u-h-28px u-fs-11px" data-bill-line aria-label="Voucher line for {{ $item->document_no }}"><option value="">Skip bill</option></select></td>
+                                        <td><select class="custom-select-native form-control form-control-sm u-h-28px u-fs-11px" data-bill-line aria-label="Voucher line for {{ $item->document_no }}"><option value="">Skip bill</option></select></td>
                                         <td><input type="number" class="form-control form-control-sm text-right font-monospace u-h-28px u-fs-11px" step="0.0001" min="0" max="{{ abs((float) $item->open_amount) }}" data-bill-amount aria-label="Amount for {{ $item->document_no }}" value="0"></td>
                                     </tr>
                                 @empty
@@ -218,10 +232,10 @@
         <div class="alert alert-info">Ask a company administrator for voucher posting permission.</div>
     @endif
 
-    <!-- Posted Journal History -->
+    <!-- {{ $transferScreen ? 'Posted Transfer History' : 'Posted Journal History' }} -->
     <details class="desk-card-wrapper voucher-history">
         <summary class="font-weight-bold u-cur-pointer u-fs-13px">
-            <i class="dripicons-history text-primary mr-1"></i> Posted Journal History
+            <i class="dripicons-history text-primary mr-1"></i> {{ $transferScreen ? 'Posted Transfer History' : 'Posted Journal History' }}
         </summary>
         <div class="table-responsive">
             <table class="table vh-table mb-0">
@@ -237,7 +251,7 @@
                 <tbody>
                     @forelse($entries as $entry)
                         <tr>
-                            <td class="font-weight-bold font-monospace text-primary"><a href="{{ route('accounting.vouchers.show', $entry->id) }}">{{ $entry->entry_number }}</a><small class="d-block">{{ ucfirst($entry->voucher_type ?? $entry->reference_type) }}</small></td>
+                            <td class="font-weight-bold font-monospace text-primary"><a href="{{ route('accounting.vouchers.show', ['id' => $entry->id, 'branch_scope' => request('branch_scope')]) }}">{{ $entry->entry_number }}</a><small class="d-block">{{ ucfirst($entry->voucher_type ?? $entry->reference_type) }}</small></td>
                             <td>{{ $entry->entry_date->format('Y-m-d') }}</td>
                             <td>{{ $entry->description }}</td>
                             <td class="text-right font-monospace font-weight-600">
@@ -253,7 +267,9 @@
                                     </ul>
                                     @if($entry->reversal_of_id)
                                         <p class="text-muted small mb-0 font-weight-bold">Reversal of journal #{{ $entry->reversal_of_id }}</p>
-                                    @elseif($canManage)
+                                    @elseif(in_array($entry->id, $reversedIds))
+                                        <p class="text-muted small mb-0 font-weight-bold">Reversed</p>
+                                    @elseif($canManage && (int) $entry->branch_id === $branchId)
                                         <form method="POST" action="{{ route('accounting.journal.reverse', $entry->id) }}" class="mt-2 p-2 rounded u-bg-danger-soft u-b-1px-solid-danger-border">
                                             @csrf
                                             <div class="form-row align-items-center">
@@ -278,7 +294,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No posted journals in this financial year.</td>
+                            <td colspan="5" class="text-center text-muted py-4">{{ $transferScreen ? 'No posted transfers in this financial year. Create your first transfer above.' : 'No posted journals in this financial year.' }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -294,7 +310,7 @@
     @if($canManage)
     <!-- Period Controls & Settlement Account Links -->
     <div class="desk-card-wrapper mt-3">
-        <details>
+        <details id="settlement-account-links">
             <summary class="font-weight-bold u-cur-pointer u-c-text u-fs-14px">
                 <i class="dripicons-lock mr-1"></i> Period controls and settlement account links
             </summary>
@@ -325,7 +341,7 @@
                 </form>
 
                 <h6 class="font-weight-bold mb-1 u-fs-13px u-c-text">Settlement Account Links</h6>
-                <p class="text-muted small mb-3">Unlinked accounts use the default company cash or bank mapping.</p>
+                <p class="text-muted small mb-3">Link each payment account to its own cash or bank ledger. New payments use the account you select.</p>
                 @foreach($legacyAccounts as $legacy)
                     <form method="POST" action="{{ route('accounting.settlement-accounts.link', $legacy->id) }}" class="form-group mb-2">
                         @csrf

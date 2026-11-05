@@ -1,7 +1,10 @@
 @extends('backend.layout.main')
 @section('content')
 <section class="collections-workspace-view">
-    <div class="comm-command-bar"><div class="comm-title-group"><h1>Collections</h1><span class="comm-title-badge">Follow-up, PDC register and preview</span></div><div class="comm-actions"><a class="btn btn-outline-primary btn-sm" href="{{ route('accounting.ageing') }}">Ageing and reconciliation</a><a class="btn btn-outline-secondary btn-sm" href="{{ route('accounting.vouchers') }}">Post receipt in Voucher Hub</a></div></div>
+    <x-accounting-command-bar active="collections" title="Collections" purpose="Track invoice follow-ups, post-dated cheques and reminder plans. Record actual receipts separately.">
+            <a class="btn btn-outline-primary btn-sm" href="{{ route('accounting.ageing') }}">Ageing and reconciliation</a>
+            @if($canWrite)<a class="btn btn-outline-secondary btn-sm" href="{{ route('accounting.vouchers', ['voucher_type' => 'receipt']) }}">Post receipt in Voucher Hub</a>@endif
+    </x-accounting-command-bar>
     @if(session('message'))<div role="status" class="alert alert-success">{{ session('message') }}</div>@endif
     @if($errors->any())<div role="alert" class="alert alert-danger">{{ $errors->first() }}</div>@endif
     <p class="mb-0">Collection records are operational. PDC never posts money. Cleared status requires an existing posted receipt. Reminders record plans only; no messages are sent.</p>
@@ -33,11 +36,12 @@
     </details>
     <form method="GET" class="collection-grid collection-card">
         <div><label for="filter-party">Customer</label><select id="filter-party" name="party_id" class="form-control"><option value="">All</option>@foreach($parties as $party)<option value="{{ $party->id }}" @selected((string)request('party_id') === (string)$party->id)>{{ $party->name }}</option>@endforeach</select></div>
-        <div><label for="filter-kind">Type</label><select id="filter-kind" name="kind" class="form-control"><option value="">All</option>@foreach(['follow_up','pdc','reminder'] as $kind)<option @selected(request('kind') === $kind)>{{ $kind }}</option>@endforeach</select></div>
+        <div><label for="filter-kind">Type</label><select id="filter-kind" name="kind" class="form-control"><option value="">All</option>@foreach(['follow_up','pdc','reminder'] as $kind)<option value="{{ $kind }}" @selected(request('kind') === $kind)>{{ ucfirst(str_replace('_', ' ', $kind)) }}</option>@endforeach</select></div>
         <div><label for="filter-status">Status</label><select id="filter-status" name="status" class="form-control"><option value="">All</option>@foreach(['planned','completed','presented','cleared','bounced','cancelled'] as $status)<option @selected(request('status') === $status)>{{ $status }}</option>@endforeach</select></div>
-        <div><label for="filter-from">From</label><input type="date" id="filter-from" name="from" value="{{ request('from') }}" class="form-control"></div><div><label for="filter-until">Through</label><input type="date" id="filter-until" name="until" value="{{ request('until') }}" class="form-control"></div><div class="align-self-end"><button class="btn btn-primary btn-sm">Filter records</button></div>
+        <div><label for="filter-from">From</label><input type="date" id="filter-from" name="from" value="{{ request('from') }}" class="form-control"></div><div><label for="filter-until">Through</label><input type="date" id="filter-until" name="until" value="{{ request('until') }}" class="form-control"></div><div class="align-self-end"><button class="btn btn-primary btn-sm" type="submit">Filter records</button><a href="{{ route('accounting.collections') }}" class="btn btn-outline-secondary btn-sm ml-1">Reset</a></div>
     </form>
-    <div class="table-responsive collection-card"><table class="table collection-table"><thead><tr><th>Customer / Invoice</th><th>Type / Date</th><th>PDC</th><th>Update record</th><th>Audit history</th></tr></thead><tbody>
+    <div class="table-responsive collection-card"><table class="table collection-table">
+                <caption class="sr-only">Collections</caption><thead><tr><th scope="col">Customer / Invoice</th><th scope="col">Type / Date</th><th scope="col">PDC</th><th scope="col">Update record</th><th scope="col">Audit history</th></tr></thead><tbody>
         @forelse($records as $record)
             @php($source = $items->get($record->open_item_id))
             <tr><td>{{ $parties->get($source?->party_id)?->name }}<br>{{ $source?->document_no }}<br>Current outstanding {{ $source?->open_amount }}</td><td>{{ $record->kind }}<br>{{ $record->action_date->toDateString() }}<br>{{ str_replace('_', ' ', $record->effective_status) }}@if($record->receipt_warning)<div class="text-danger" role="alert">{{ $record->receipt_warning }}</div>@endif</td><td>{{ $record->cheque_no }}<br>{{ $record->bank_name }}<br>{{ $record->amount }}@if($record->receipt_entry_id)<br>Receipt #{{ $record->receipt_entry_id }}@endif</td><td>

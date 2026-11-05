@@ -5,38 +5,23 @@
 
 <section class="pl-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar d-print-none">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-graph-line text-primary"></i> Profit &amp; Loss Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Income Statement: Revenue, COGS &amp; Net Margins</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.trial-balance') }}"><i class="dripicons-scale"></i> Trial Balance</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.profit-loss') }}"><i class="dripicons-graph-line"></i> P&amp;L</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="profit-loss" title="Profit &amp; loss" purpose="Review revenue, cost of goods sold and expenses for the selected period.">
             <button type="button" class="btn btn-outline-secondary btn-action-pill" data-erp-print>
                 <i class="dripicons-print"></i> Print / PDF
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Card -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.profit-loss') }}" method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
+                    <label for="profit-loss-field-1" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
+                    <input id="profit-loss-field-1" type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
                 </div>
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
+                    <label for="profit-loss-field-2" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
+                    <input id="profit-loss-field-2" type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
                 </div>
                 <div class="col-md-4 d-flex u-p-0-6px">
                     @include('backend.accounting.partials.branch_scope')
@@ -102,6 +87,7 @@
         <!-- 1. Operating Revenue -->
         <div class="statement-section-title">1. Operating Revenue</div>
         <table class="statement-table">
+                <caption class="sr-only">Profit &amp; loss</caption>
             <tbody>
                 @forelse($report['revenues'] as $rev)
                     <tr>
@@ -129,6 +115,7 @@
         <!-- 2. Cost of Goods Sold -->
         <div class="statement-section-title mt-4">2. Cost of Goods Sold (COGS)</div>
         <table class="statement-table">
+                <caption class="sr-only">Profit &amp; loss</caption>
             <tbody>
                 @forelse($report['cogs'] as $cg)
                     <tr>
@@ -164,6 +151,7 @@
         <!-- 3. Operating Expenses -->
         <div class="statement-section-title mt-4">3. Operating Expenses</div>
         <table class="statement-table">
+                <caption class="sr-only">Profit &amp; loss</caption>
             <tbody>
                 @forelse($report['operating_expenses'] as $exp)
                     <tr>

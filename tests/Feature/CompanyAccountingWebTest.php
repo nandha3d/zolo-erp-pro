@@ -99,6 +99,37 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
         $this->assertSame('Company A', config('company_name'));
     }
 
+    public function test_accounting_report_screens_expose_filters_navigation_and_truthful_preview_limits(): void
+    {
+        (require database_path('migrations/2026_10_19_000012_create_collection_tracking.php'))->up();
+        $paths = ['journal-entries', 'general-ledger', 'trial-balance', 'profit-loss', 'balance-sheet',
+            'cash-flow-statement', 'inventory-close', 'day-book', 'cash-book', 'ageing', 'collections', 'monthly-ledger/1'];
+        foreach ($paths as $path) {
+            $response = $this->get('/accounting/'.$path)->assertOk()->assertDontSee('Secret B ledger');
+            $html = $response->getContent();
+            $this->assertStringContainsString('accounting-workspace.css', $html);
+            $this->assertStringNotContainsString('Command Center', preg_replace('/<script\b[^>]*>.*?<\/script>/s', '', $html));
+            $document = new \DOMDocument();
+            @$document->loadHTML($html);
+            $xpath = new \DOMXPath($document);
+            foreach ($xpath->query('//section//form[translate(@method, "get", "GET")="GET"]//*[self::input or self::select][not(@type="hidden")]') as $control) {
+                $id = $control->getAttribute('id');
+                $this->assertNotSame('', $id, $path.' filter requires an id');
+                $this->assertGreaterThan(0, $xpath->query('//label[@for="'.$id.'"]')->length, $path.' filter requires a label');
+            }
+            if (getenv('ERP_EXPORT_ACCOUNTING_BROWSER')) {
+                file_put_contents(base_path('scratch/accounting-'.str_replace('/', '-', $path).'.html'), $html);
+            }
+        }
+        $this->get('/accounting/general-ledger?account_id=1')->assertSee('Monthly Ledger')->assertSee('Reset dates');
+        $this->get('/accounting/cash-flow-statement')->assertSee('Cash movement summary:')->assertSee('Not calculated')
+            ->assertDontSee('GAAP')->assertDontSee('Cash Received from Customers');
+        $this->get('/accounting/inventory-close')->assertSee('name="warehouse_id"', false)->assertSee('not a physical count')
+            ->assertSee('Inventory Close Unavailable')->assertDontSee('TOTAL PHYSICAL UNITS');
+        $this->get('/accounting/journal-entries')->assertSee('value="voucher"', false)->assertSee('value="year_close"', false);
+        $this->assertSame(0, JournalEntry::count());
+    }
+
     public function test_web_manual_journals_validate_ownership_dates_and_nested_reads(): void
     {
         $payload = ['entry_date' => '2026-10-03', 'description' => 'Owned journal', 'created_by' => 2,

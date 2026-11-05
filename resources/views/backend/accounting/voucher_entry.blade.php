@@ -1,27 +1,13 @@
 @extends('backend.layout.main')
 
 @section('content')
-@include('backend.partials.document-entry-layout')
-<div class="optech-voucher-wrapper p-3">
-    <!-- Top Bar with Shortcuts matching Optech screen_05.jpg / screen_06.jpg -->
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <div>
-            <h4 class="font-weight-bold text-dark mb-0 d-inline-block">
-                <i class="dripicons-article text-teal mr-1"></i> Express Voucher Entry
-            </h4>
-            <span class="badge badge-secondary ml-2" id="vchModeBadge">JOURNAL</span>
-        </div>
-        <div class="optech-shortcut-banner d-none d-md-flex align-items-center">
-            <span class="mr-3"><kbd>Alt+C</kbd> Create Ledger</span>
-            <span class="mr-3"><kbd>Alt+S</kbd> Save Entry</span>
-            <span class="mr-3"><kbd>Esc</kbd> Close</span>
-            <span class="mr-3"><kbd>F4</kbd> Contra</span>
-            <span class="mr-3"><kbd>F5</kbd> Payment</span>
-            <span class="mr-3"><kbd>F6</kbd> Receipt</span>
-            <span class="mr-3"><kbd>F7</kbd> Journal</span>
-            <span><kbd>Ctl+F9</kbd> Series</span>
-        </div>
-    </div>
+<section class="voucher-entry-workspace">
+    <x-accounting-command-bar active="voucher-entry" title="Express Voucher Entry" purpose="Enter debit and credit lines. Use Voucher Hub to allocate payments to bills or start a guided transfer.">
+        @if((new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null))->allows('accounting.reports.view'))
+            <a class="btn btn-outline-light" href="{{ route('accounting.vouchers') }}">Voucher Hub</a>
+            <a class="btn btn-outline-light" href="{{ route('accounting.vouchers', ['voucher_type' => 'contra']) }}">Money Transfer</a>
+        @endif
+    </x-accounting-command-bar>
 
     <!-- Alert Messages -->
     <div id="voucherAlertArea"></div>
@@ -32,70 +18,60 @@
         <input type="hidden" name="reference_type" value="manual">
         <input type="hidden" name="voucher_type" id="hiddenVoucherType" value="journal">
 
-        <!-- Header Card -->
-        <div class="optech-header-card p-3 mb-3">
-            <div class="row align-items-center mb-2">
-                <!-- Voucher Type Tabs -->
-                <div class="col-lg-6 col-md-12 mb-2 mb-lg-0">
-                    <label class="font-weight-bold text-muted small text-uppercase mb-1">Voucher Type (F4 - F10)</label>
-                    <div class="optech-vch-tabs d-flex flex-wrap" role="group">
-                        <button type="button" class="btn btn-sm mr-1 mb-1 vch-type-btn" data-type="contra" data-key="F4">
-                            F4 · Contra
-                        </button>
-                        <button type="button" class="btn btn-sm mr-1 mb-1 vch-type-btn" data-type="payment" data-key="F5">
-                            F5 · Payment
-                        </button>
-                        <button type="button" class="btn btn-sm mr-1 mb-1 vch-type-btn" data-type="receipt" data-key="F6">
-                            F6 · Receipt
-                        </button>
-                        <button type="button" class="btn btn-sm mr-1 mb-1 vch-type-btn active" data-type="journal" data-key="F7">
-                            F7 · Journal
-                        </button>
-                        <button type="button" class="btn btn-sm mb-1 vch-type-btn" data-type="memo" data-key="F10">
-                            F10 · Memo
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Series & Voucher Number -->
-                <div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
-                    <label class="font-weight-bold text-muted small text-uppercase mb-1 d-flex justify-content-between align-items-center">
-                        <span>Voucher Series *</span>
-                        <button type="button" class="inline-add-btn" id="btnInlineSeries" title="Add New Series">[+]</button>
-                    </label>
-                    <select name="series_code" id="seriesSelect" class="form-control form-control-sm font-weight-bold">
-                        <option value="">-- Default Series --</option>
-                        @foreach($series as $ser)
-                            <option value="{{ $ser->code }}" data-type="{{ $ser->document_type }}" {{ $ser->is_default ? 'selected' : '' }}>
-                                {{ $ser->code }} ({{ $ser->prefix }}...{{ $ser->suffix }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Voucher No & Date -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="row">
-                        <div class="col-6 pr-1">
-                            <label class="font-weight-bold text-muted small text-uppercase mb-1">Vch No</label>
-                            <input type="text" id="voucherNoDisplay" class="form-control form-control-sm font-weight-bold text-center bg-light" value="AUTO" readonly>
-                        </div>
-                        <div class="col-6 pl-1">
-                            <label class="font-weight-bold text-muted small text-uppercase mb-1">
-                                Date <span class="badge badge-light" id="dayOfWeekBadge"></span>
-                            </label>
-                            <input type="date" name="entry_date" id="entryDate" class="form-control form-control-sm font-weight-bold" value="{{ $businessDate }}" required>
-                        </div>
-                    </div>
-                </div>
+        <div class="desk-card-wrapper">
+            <details class="voucher-shortcuts">
+                <summary>Keyboard shortcuts</summary>
+                <ul class="list-unstyled mb-0">
+                    <li><kbd>F4</kbd> Contra</li>
+                    <li><kbd>F5</kbd> Payment</li>
+                    <li><kbd>F6</kbd> Receipt</li>
+                    <li><kbd>F7</kbd> Journal</li>
+                    <li><kbd>F10</kbd> Memo</li>
+                    <li><kbd>Alt+C</kbd> New ledger</li>
+                    <li><kbd>Ctrl+F9</kbd> New series</li>
+                    <li><kbd>Ctrl+Enter</kbd> Add line</li>
+                    <li><kbd>Alt+S</kbd> Save voucher</li>
+                </ul>
+            </details>
+            <h2 class="voucher-section-title">Voucher details</h2>
+            <div class="voucher-type-options" role="group" aria-label="Voucher type">
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text vch-type-btn" data-type="contra" data-key="F4" aria-pressed="false">F4 · Contra</button>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text vch-type-btn" data-type="payment" data-key="F5" aria-pressed="false">F5 · Payment</button>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text vch-type-btn" data-type="receipt" data-key="F6" aria-pressed="false">F6 · Receipt</button>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text vch-type-btn active" data-type="journal" data-key="F7" aria-pressed="true">F7 · Journal</button>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text vch-type-btn" data-type="memo" data-key="F10" aria-pressed="false">F10 · Memo</button>
             </div>
 
-            <!-- Second Row: GST Nature and Cheque details -->
-            <div class="row">
-                <div class="col-md-3">
-                    <label class="font-weight-bold text-muted small text-uppercase mb-1">GST Nature</label>
-                    <select name="gst_nature" id="gstNature" class="form-control form-control-sm">
-                        <option value="">-- Not Applicable --</option>
+            <div class="voucher-detail-fields">
+                <div>
+                    <label for="seriesSelect">Voucher series</label>
+                    <div class="voucher-inline-field">
+                        <select name="series_code" id="seriesSelect" class="custom-select-native form-control form-control-sm">
+                            <option value="">Default series</option>
+                            @foreach($series as $ser)
+                                <option value="{{ $ser->code }}" @selected($ser->is_default)>
+                                    {{ $ser->code }} ({{ $ser->prefix }}...{{ $ser->suffix }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text" id="btnInlineSeries" title="New series (Ctrl+F9)" aria-label="New voucher series">+</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="voucherNoDisplay">Voucher number</label>
+                    <input type="text" id="voucherNoDisplay" class="form-control form-control-sm" value="AUTO" readonly>
+                </div>
+
+                <div>
+                    <label for="entryDate">Date <span class="text-muted font-weight-normal" id="dayOfWeekBadge"></span></label>
+                    <input type="date" name="entry_date" id="entryDate" class="form-control form-control-sm" value="{{ $businessDate }}" required>
+                </div>
+
+                <div>
+                    <label for="gstNature">GST nature</label>
+                    <select name="gst_nature" id="gstNature" class="custom-select-native form-control form-control-sm">
+                        <option value="">Not applicable</option>
                         <option value="Taxable">Taxable</option>
                         <option value="Exempted">Exempted</option>
                         <option value="Nil Rated">Nil Rated</option>
@@ -103,59 +79,56 @@
                         <option value="Reverse Charge">Reverse Charge (RCM)</option>
                     </select>
                 </div>
-                <div class="col-md-3" id="chequeNoCol">
-                    <label class="font-weight-bold text-muted small text-uppercase mb-1">Cheque / Ref No</label>
+                <div id="chequeNoCol">
+                    <label for="chequeNo">Cheque / reference no.</label>
                     <input type="text" name="cheque_no" id="chequeNo" class="form-control form-control-sm" placeholder="e.g. CHQ-990812">
                 </div>
-                <div class="col-md-3" id="chequeDateCol">
-                    <label class="font-weight-bold text-muted small text-uppercase mb-1">Cheque Date</label>
+                <div id="chequeDateCol">
+                    <label for="chequeDate">Cheque date</label>
                     <input type="date" name="cheque_date" id="chequeDate" class="form-control form-control-sm">
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <div class="form-check form-check-inline mb-2">
-                        <input class="form-check-input" type="checkbox" id="carryVoucher" value="1">
-                        <label class="form-check-label small font-weight-bold" for="carryVoucher">Carry Voucher</label>
-                    </div>
-                    <div class="form-check form-check-inline mb-2">
-                        <input class="form-check-input" type="checkbox" id="multiEntry" value="1" checked>
-                        <label class="form-check-label small font-weight-bold" for="multiEntry">Multi Entry</label>
-                    </div>
+            </div>
+            <div class="voucher-entry-options">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="carryVoucher" value="1">
+                    <label class="form-check-label small font-weight-bold" for="carryVoucher">Carry Voucher</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="multiEntry" value="1" checked>
+                    <label class="form-check-label small font-weight-bold" for="multiEntry">Multi Entry</label>
                 </div>
             </div>
         </div>
 
-        <!-- Main Voucher Lines Grid -->
-        <div class="card border-0 shadow-sm mb-3">
-            <div class="table-responsive">
-                <table class="table optech-grid-table mb-0" id="voucherTable">
+        <div class="desk-card-wrapper">
+            <div class="voucher-section-bar">
+                <h2 class="voucher-section-title" id="voucherLinesTitle">Voucher lines</h2>
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text" id="btnInlineAccount" title="New ledger (Alt+C)">+ New ledger</button>
+            </div>
+            <div class="table-responsive voucher-entry-lines" tabindex="0" role="region" aria-labelledby="voucherLinesTitle">
+                <table class="table mb-0" id="voucherTable">
                     <thead>
                         <tr>
-                            <th class="text-center u-w-75px">Type</th>
-                            <th class="u-w-38pct">
-                                Particulars (Ledger Account) *
-                                <button type="button" class="inline-add-btn ml-1" id="btnInlineAccount" title="Add Ledger (Alt+C)">[+]</button>
-                            </th>
-                            <th class="u-w-22pct">
-                                Partner / Sub-Ledger
-                                <span class="small text-light font-weight-normal">(if AR/AP)</span>
-                            </th>
-                            <th class="text-right u-w-14pct">Debit (Rs.)</th>
-                            <th class="text-right u-w-14pct">Credit (Rs.)</th>
-                            <th class="text-center u-w-50px">Action</th>
+                            <th scope="col" class="text-center">Type</th>
+                            <th scope="col">Ledger account</th>
+                            <th scope="col">Customer / supplier</th>
+                            <th scope="col" class="text-right">Debit (₹)</th>
+                            <th scope="col" class="text-right">Credit (₹)</th>
+                            <th scope="col" class="text-center"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody id="voucherTableBody">
                         <!-- Row 0: By default Dr -->
                         <tr class="voucher-row" data-index="0">
                             <td class="text-center">
-                                <select class="optech-dr-cr-select row-type" data-index="0">
+                                <select class="custom-select-native form-control form-control-sm row-type" aria-label="Debit or credit" data-index="0">
                                     <option value="Dr" selected>Dr</option>
                                     <option value="Cr">Cr</option>
                                 </select>
                             </td>
                             <td>
-                                <select name="items[0][chart_of_account_id]" class="form-control form-control-sm font-weight-bold account-select" data-index="0" required>
-                                    <option value="">-- Select Ledger Account --</option>
+                                <select name="items[0][chart_of_account_id]" class="custom-select-native form-control form-control-sm font-weight-bold account-select" aria-label="Ledger account" data-index="0" required>
+                                    <option value="">Select a ledger</option>
                                     @foreach($accounts as $acc)
                                         <option value="{{ $acc->id }}" data-type="{{ $acc->type }}" data-control="{{ $acc->control_type }}" data-bal="{{ $acc->formatted_balance }}">
                                             {{ $acc->code }} - {{ $acc->name }} ({{ $acc->formatted_balance }})
@@ -166,34 +139,34 @@
                             </td>
                             <td>
                                 <div class="partner-selector-wrap" id="partnerWrap_0">
-                                    <select name="items[0][partner_id]" class="form-control form-control-sm partner-select" data-index="0" disabled>
-                                        <option value="">-- No Sub-Ledger Required --</option>
+                                    <select name="items[0][partner_id]" class="custom-select-native form-control form-control-sm partner-select" aria-label="Customer or supplier" data-index="0" disabled>
+                                        <option value="">No customer or supplier required</option>
                                     </select>
                                     <input type="hidden" name="items[0][partner_type]" class="partner-type" id="partnerType_0" value="">
                                 </div>
                             </td>
                             <td>
-                                <input type="number" step="0.01" name="items[0][debit]" class="form-control form-control-sm text-right font-weight-bold debit-input" data-index="0" value="0.00">
+                                <input type="number" step="0.01" name="items[0][debit]" class="form-control form-control-sm text-right font-weight-bold debit-input" aria-label="Debit amount" data-index="0" value="0.00">
                             </td>
                             <td>
-                                <input type="number" step="0.01" name="items[0][credit]" class="form-control form-control-sm text-right font-weight-bold credit-input" data-index="0" value="0.00" readonly>
+                                <input type="number" step="0.01" name="items[0][credit]" class="form-control form-control-sm text-right font-weight-bold credit-input" aria-label="Credit amount" data-index="0" value="0.00" readonly>
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-row-btn" title="Remove row" disabled>&times;</button>
+                                <button type="button" class="btn btn-sm btn-link text-danger btn-accounting-text remove-row-btn" aria-label="Remove line" title="Remove line" disabled>&times;</button>
                             </td>
                         </tr>
 
                         <!-- Row 1: By default Cr -->
                         <tr class="voucher-row" data-index="1">
                             <td class="text-center">
-                                <select class="optech-dr-cr-select row-type" data-index="1">
+                                <select class="custom-select-native form-control form-control-sm row-type" aria-label="Debit or credit" data-index="1">
                                     <option value="Dr">Dr</option>
                                     <option value="Cr" selected>Cr</option>
                                 </select>
                             </td>
                             <td>
-                                <select name="items[1][chart_of_account_id]" class="form-control form-control-sm font-weight-bold account-select" data-index="1" required>
-                                    <option value="">-- Select Ledger Account --</option>
+                                <select name="items[1][chart_of_account_id]" class="custom-select-native form-control form-control-sm font-weight-bold account-select" aria-label="Ledger account" data-index="1" required>
+                                    <option value="">Select a ledger</option>
                                     @foreach($accounts as $acc)
                                         <option value="{{ $acc->id }}" data-type="{{ $acc->type }}" data-control="{{ $acc->control_type }}" data-bal="{{ $acc->formatted_balance }}">
                                             {{ $acc->code }} - {{ $acc->name }} ({{ $acc->formatted_balance }})
@@ -204,98 +177,79 @@
                             </td>
                             <td>
                                 <div class="partner-selector-wrap" id="partnerWrap_1">
-                                    <select name="items[1][partner_id]" class="form-control form-control-sm partner-select" data-index="1" disabled>
-                                        <option value="">-- No Sub-Ledger Required --</option>
+                                    <select name="items[1][partner_id]" class="custom-select-native form-control form-control-sm partner-select" aria-label="Customer or supplier" data-index="1" disabled>
+                                        <option value="">No customer or supplier required</option>
                                     </select>
                                     <input type="hidden" name="items[1][partner_type]" class="partner-type" id="partnerType_1" value="">
                                 </div>
                             </td>
                             <td>
-                                <input type="number" step="0.01" name="items[1][debit]" class="form-control form-control-sm text-right font-weight-bold debit-input" data-index="1" value="0.00" readonly>
+                                <input type="number" step="0.01" name="items[1][debit]" class="form-control form-control-sm text-right font-weight-bold debit-input" aria-label="Debit amount" data-index="1" value="0.00" readonly>
                             </td>
                             <td>
-                                <input type="number" step="0.01" name="items[1][credit]" class="form-control form-control-sm text-right font-weight-bold credit-input" data-index="1" value="0.00">
+                                <input type="number" step="0.01" name="items[1][credit]" class="form-control form-control-sm text-right font-weight-bold credit-input" aria-label="Credit amount" data-index="1" value="0.00">
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-row-btn" title="Remove row" disabled>&times;</button>
+                                <button type="button" class="btn btn-sm btn-link text-danger btn-accounting-text remove-row-btn" aria-label="Remove line" title="Remove line" disabled>&times;</button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="p-2 bg-light border-top d-flex justify-content-between align-items-center">
-                <button type="button" class="btn btn-sm btn-outline-primary font-weight-bold" id="btnAddRow">
-                    <i class="dripicons-plus mr-1"></i> Add Line (Ctrl+Enter)
+            <div class="voucher-lines-footer">
+                <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text" id="btnAddRow" title="Ctrl+Enter">
+                    + Add line
                 </button>
-                <small class="text-muted">Tip: Tab through fields to auto-calculate the balancing amount.</small>
+                <small class="text-muted">Tab out of an amount to suggest a balancing amount on the next line.</small>
             </div>
         </div>
 
-        <!-- Footer Section: Narration, Remarks, Totals & Save -->
-        <div class="optech-footer-card p-3">
-            <div class="row align-items-center">
-                <!-- Narration & Standard Remarks -->
-                <div class="col-lg-6 col-md-12 mb-3 mb-lg-0">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="font-weight-bold text-muted small text-uppercase mb-0">General Narration / Remarks *</label>
-                        <div class="d-flex align-items-center">
-                            <span class="small text-muted mr-1">Quick Remark:</span>
-                            <select id="standardRemarkSelect" class="form-control form-control-sm py-0 u-w-170px u-h-26px">
-                                <option value="">-- Insert Remark --</option>
+        <div class="desk-card-wrapper">
+            <div class="voucher-review">
+                <div>
+                    <label for="voucherDescription" class="voucher-section-title">Narration <span aria-hidden="true">*</span></label>
+                    <textarea name="description" id="voucherDescription" rows="2" class="form-control form-control-sm" placeholder="e.g. Payment for freight charges" required></textarea>
+                    <div class="voucher-remark-picker">
+                        <label for="standardRemarkSelect">Quick remark</label>
+                        <div class="voucher-inline-field">
+                            <select id="standardRemarkSelect" class="custom-select-native form-control form-control-sm">
+                                <option value="">Insert a saved remark</option>
                                 @foreach($remarks as $rem)
                                     <option value="{{ $rem->remark }}">{{ $rem->title }}</option>
                                 @endforeach
                             </select>
-                            <button type="button" class="inline-add-btn ml-1" id="btnInlineRemark" title="Add Remark">[+]</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-accounting-text" id="btnInlineRemark" title="New remark" aria-label="New remark">+</button>
                         </div>
                     </div>
-                    <textarea name="description" id="voucherDescription" rows="3" class="form-control form-control-sm" placeholder="Narration for this voucher entry (e.g. Being payment made for freight charges...)" required></textarea>
                 </div>
 
-                <!-- Balance Summary & Post Button -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="row">
-                        <div class="col-sm-7 mb-2 mb-sm-0">
-                            <div class="optech-total-box unbalanced" id="balanceStatusBox">
-                                <div class="d-flex justify-content-between font-weight-bold small mb-1">
-                                    <span>Total Debit:</span>
-                                    <span id="totalDebitDisplay">Rs. 0.00</span>
-                                </div>
-                                <div class="d-flex justify-content-between font-weight-bold small mb-1">
-                                    <span>Total Credit:</span>
-                                    <span id="totalCreditDisplay">Rs. 0.00</span>
-                                </div>
-                                <div class="d-flex justify-content-between font-weight-bold border-top pt-1 text-danger" id="diffRow">
-                                    <span>Difference:</span>
-                                    <span id="diffDisplay">Rs. 0.00</span>
-                                </div>
-                                <div class="text-center mt-1">
-                                    <span class="badge badge-danger font-weight-bold" id="balancedBadge">Unbalanced</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-5 d-flex flex-column justify-content-center">
-                            <button type="submit" class="btn btn-success btn-block font-weight-bold py-2 mb-2" id="btnSaveVoucher" disabled>
-                                <i class="dripicons-checkmark mr-1"></i> Save Voucher (Alt+S)
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary btn-block btn-sm" id="btnResetForm">
-                                <i class="dripicons-clockwise mr-1"></i> Clear Form
-                            </button>
-                        </div>
+                <div class="voucher-balance">
+                    <div class="voucher-section-bar">
+                        <h2 class="voucher-section-title">Balance summary</h2>
+                        <span class="badge badge-neutral" id="balancedBadge" role="status">Awaiting amounts</span>
                     </div>
+                    <dl class="voucher-balance-list mb-0">
+                        <div><dt>Total debit</dt><dd id="totalDebitDisplay">₹0.00</dd></div>
+                        <div><dt>Total credit</dt><dd id="totalCreditDisplay">₹0.00</dd></div>
+                        <div id="diffRow"><dt>Difference</dt><dd id="diffDisplay">₹0.00</dd></div>
+                    </dl>
                 </div>
+            </div>
+            <div class="voucher-entry-actions">
+                <button type="button" class="btn btn-outline-secondary btn-accounting-text" id="btnResetForm">Clear form</button>
+                <button type="submit" class="btn btn-primary btn-accounting-text" id="btnSaveVoucher" title="Alt+S" disabled>Save voucher</button>
             </div>
         </div>
     </form>
-</div>
+</section>
 
 <!-- ================= INLINE MODAL 1: CREATE LEDGER ACCOUNT (Alt+C) ================= -->
 <div class="modal fade" id="modalInlineAccount" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-teal text-white py-2">
-                <h5 class="modal-title font-weight-bold u-fs-15px">Create Ledger Account (Alt+C)</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            <div class="modal-header">
+                <h5 class="modal-title">Create Ledger Account (Alt+C)</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
             </div>
             <form id="formInlineAccount">
                 @csrf
@@ -311,7 +265,7 @@
                     <div class="form-row mb-2">
                         <div class="col-6">
                             <label class="small font-weight-bold mb-1">Account Type *</label>
-                            <select name="type" id="inlineAccountType" class="form-control form-control-sm" required>
+                            <select name="type" id="inlineAccountType" class="custom-select-native form-control form-control-sm" required>
                                 <option value="expense">Expense</option>
                                 <option value="revenue">Revenue / Income</option>
                                 <option value="asset">Asset</option>
@@ -326,7 +280,7 @@
                     </div>
                     <div class="form-group mb-2">
                         <label class="small font-weight-bold mb-1">Control / Role</label>
-                        <select name="control_type" class="form-control form-control-sm">
+                        <select name="control_type" class="custom-select-native form-control form-control-sm">
                             <option value="none">General Account</option>
                             <option value="cash">Cash Account</option>
                             <option value="bank">Bank Account</option>
@@ -339,9 +293,9 @@
                         <input type="number" step="0.01" name="opening_balance" class="form-control form-control-sm" value="0.00">
                     </div>
                 </div>
-                <div class="modal-footer py-2 bg-light">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-success font-weight-bold">Save Ledger</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Save Ledger</button>
                 </div>
             </form>
         </div>
@@ -352,9 +306,9 @@
 <div class="modal fade" id="modalInlineSeries" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-teal text-white py-2">
-                <h5 class="modal-title font-weight-bold u-fs-15px">Create Voucher Series</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            <div class="modal-header">
+                <h5 class="modal-title">Create Voucher Series</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
             </div>
             <form id="formInlineSeries">
                 @csrf
@@ -384,9 +338,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer py-2 bg-light">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-success font-weight-bold">Save Series</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Save Series</button>
                 </div>
             </form>
         </div>
@@ -397,9 +351,9 @@
 <div class="modal fade" id="modalInlineRemark" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-teal text-white py-2">
-                <h5 class="modal-title font-weight-bold u-fs-15px">Create Standard Remark</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            <div class="modal-header">
+                <h5 class="modal-title">Create Standard Remark</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
             </div>
             <form id="formInlineRemark">
                 @csrf
@@ -413,9 +367,9 @@
                         <textarea name="remark" rows="2" class="form-control form-control-sm" placeholder="e.g. Being cash paid towards office expenses" required></textarea>
                     </div>
                 </div>
-                <div class="modal-footer py-2 bg-light">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-sm btn-success font-weight-bold">Save Remark</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Save Remark</button>
                 </div>
             </form>
         </div>
@@ -430,6 +384,7 @@
     // In-memory customer and supplier data strictly from DB
     const customers = @json($customers);
     const suppliers = @json($suppliers);
+    const formatAmount = new Intl.NumberFormat('en-IN', {style: 'currency', currency: 'INR'});
 
     let rowCount = 2;
 
@@ -447,11 +402,12 @@
     // Voucher Type Tab Switching
     document.querySelectorAll('.vch-type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.vch-type-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+            document.querySelectorAll('.vch-type-btn').forEach(button => {
+                button.classList.toggle('active', button === this);
+                button.setAttribute('aria-pressed', button === this);
+            });
             const type = this.dataset.type;
             document.getElementById('hiddenVoucherType').value = type;
-            document.getElementById('vchModeBadge').textContent = type.toUpperCase();
 
             // Set suggested narration template
             const desc = document.getElementById('voucherDescription');
@@ -508,7 +464,7 @@
             const opt = this.options[this.selectedIndex];
             if (!opt || !opt.value) {
                 balPreview.innerHTML = '';
-                partnerSelect.innerHTML = '<option value="">-- No Sub-Ledger Required --</option>';
+                partnerSelect.innerHTML = '<option value="">No customer or supplier required</option>';
                 partnerSelect.setAttribute('disabled', 'disabled');
                 partnerTypeHidden.value = '';
                 return;
@@ -516,8 +472,7 @@
 
             const bal = opt.dataset.bal || '';
             const control = opt.dataset.control || '';
-            const isDr = bal.includes('Dr');
-            balPreview.innerHTML = `<span class="optech-balance-badge ${isDr ? 'optech-balance-dr' : 'optech-balance-cr'}">Bal: ${bal}</span>`;
+            balPreview.innerHTML = `<span class="badge badge-neutral">Bal: ${bal}</span>`;
 
             // Control account: Accounts Receivable (Customer) or Accounts Payable (Supplier)
             if (control === 'ar') {
@@ -539,7 +494,7 @@
                 });
                 partnerSelect.innerHTML = html;
             } else {
-                partnerSelect.innerHTML = '<option value="">-- No Sub-Ledger Required --</option>';
+                partnerSelect.innerHTML = '<option value="">No customer or supplier required</option>';
                 partnerSelect.setAttribute('disabled', 'disabled');
                 partnerSelect.removeAttribute('required');
                 partnerTypeHidden.value = '';
@@ -618,28 +573,21 @@
         totalCr = Math.round(totalCr * 100) / 100;
         const diff = Math.round(Math.abs(totalDr - totalCr) * 100) / 100;
 
-        document.getElementById('totalDebitDisplay').textContent = 'Rs. ' + totalDr.toFixed(2);
-        document.getElementById('totalCreditDisplay').textContent = 'Rs. ' + totalCr.toFixed(2);
-        document.getElementById('diffDisplay').textContent = 'Rs. ' + diff.toFixed(2);
+        document.getElementById('totalDebitDisplay').textContent = formatAmount.format(totalDr);
+        document.getElementById('totalCreditDisplay').textContent = formatAmount.format(totalCr);
+        document.getElementById('diffDisplay').textContent = formatAmount.format(diff);
 
-        const statusBox = document.getElementById('balanceStatusBox');
         const badge = document.getElementById('balancedBadge');
         const diffRow = document.getElementById('diffRow');
         const btnSave = document.getElementById('btnSaveVoucher');
-
-        if (diff === 0 && totalDr > 0) {
-            statusBox.className = 'optech-total-box balanced';
-            badge.className = 'badge badge-success font-weight-bold';
-            badge.textContent = '✓ Balanced (0.00)';
-            diffRow.className = 'd-flex justify-content-between font-weight-bold border-top pt-1 text-success';
-            btnSave.removeAttribute('disabled');
-        } else {
-            statusBox.className = 'optech-total-box unbalanced';
-            badge.className = 'badge badge-danger font-weight-bold';
-            badge.textContent = '⚠ Unbalanced';
-            diffRow.className = 'd-flex justify-content-between font-weight-bold border-top pt-1 text-danger';
-            btnSave.setAttribute('disabled', 'disabled');
+        const balanced = diff === 0 && totalDr > 0;
+        const status = balanced ? 'Balanced' : diff > 0 ? 'Unbalanced' : 'Awaiting amounts';
+        if (badge.textContent !== status) {
+            badge.className = 'badge ' + (balanced ? 'badge-success' : diff > 0 ? 'badge-danger' : 'badge-neutral');
+            badge.textContent = status;
         }
+        diffRow.classList.toggle('text-danger', diff > 0);
+        btnSave.disabled = !balanced;
     }
 
     function updateRemoveButtons() {
@@ -672,33 +620,33 @@
 
         tr.innerHTML = `
             <td class="text-center">
-                <select class="optech-dr-cr-select row-type" data-index="${newIndex}">
+                <select class="custom-select-native form-control form-control-sm row-type" aria-label="Debit or credit" data-index="${newIndex}">
                     <option value="Dr">Dr</option>
                     <option value="Cr" selected>Cr</option>
                 </select>
             </td>
             <td>
-                <select name="items[${newIndex}][chart_of_account_id]" class="form-control form-control-sm font-weight-bold account-select" data-index="${newIndex}" required>
+                <select name="items[${newIndex}][chart_of_account_id]" class="custom-select-native form-control form-control-sm font-weight-bold account-select" aria-label="Ledger account" data-index="${newIndex}" required>
                     ${optionsHtml}
                 </select>
                 <div class="account-balance-preview mt-1 small" id="balPreview_${newIndex}"></div>
             </td>
             <td>
                 <div class="partner-selector-wrap" id="partnerWrap_${newIndex}">
-                    <select name="items[${newIndex}][partner_id]" class="form-control form-control-sm partner-select" data-index="${newIndex}" disabled>
-                        <option value="">-- No Sub-Ledger Required --</option>
+                    <select name="items[${newIndex}][partner_id]" class="custom-select-native form-control form-control-sm partner-select" aria-label="Customer or supplier" data-index="${newIndex}" disabled>
+                        <option value="">No customer or supplier required</option>
                     </select>
                     <input type="hidden" name="items[${newIndex}][partner_type]" class="partner-type" id="partnerType_${newIndex}" value="">
                 </div>
             </td>
             <td>
-                <input type="number" step="0.01" name="items[${newIndex}][debit]" class="form-control form-control-sm text-right font-weight-bold debit-input" data-index="${newIndex}" value="0.00" readonly>
+                <input type="number" step="0.01" name="items[${newIndex}][debit]" class="form-control form-control-sm text-right font-weight-bold debit-input" aria-label="Debit amount" data-index="${newIndex}" value="0.00" readonly>
             </td>
             <td>
-                <input type="number" step="0.01" name="items[${newIndex}][credit]" class="form-control form-control-sm text-right font-weight-bold credit-input" data-index="${newIndex}" value="0.00">
+                <input type="number" step="0.01" name="items[${newIndex}][credit]" class="form-control form-control-sm text-right font-weight-bold credit-input" aria-label="Credit amount" data-index="${newIndex}" value="0.00">
             </td>
             <td class="text-center">
-                <button type="button" class="btn btn-sm btn-link text-danger p-0 remove-row-btn" title="Remove row">&times;</button>
+                <button type="button" class="btn btn-sm btn-link text-danger btn-accounting-text remove-row-btn" aria-label="Remove line" title="Remove line">&times;</button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -862,7 +810,7 @@
         .catch(err => {
             showAlert('danger', 'Posting Failed: ' + err.message);
             btnSave.disabled = false;
-            btnSave.innerHTML = '<i class="dripicons-checkmark mr-1"></i> Save Voucher (Alt+S)';
+            btnSave.textContent = 'Save voucher';
         });
     });
 
@@ -877,6 +825,17 @@
 
     // Keyboard Shortcuts
     document.addEventListener('keydown', function(e) {
+        if (e.defaultPrevented || document.querySelector('dialog[open], .modal.show')) return;
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btnAddRow').click();
+            return;
+        }
+        if (e.ctrlKey && e.key === 'F9') {
+            e.preventDefault();
+            document.getElementById('btnInlineSeries').click();
+            return;
+        }
         // Alt+C: Create Ledger
         if (e.altKey && (e.key === 'c' || e.key === 'C')) {
             e.preventDefault();

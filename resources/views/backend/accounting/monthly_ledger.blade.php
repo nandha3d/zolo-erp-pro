@@ -5,28 +5,20 @@
 
 <section class="monthly-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-calendar text-primary"></i> Monthly Ledger: {{ $report['account']->code }} - {{ $report['account']->name }}</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Financial Year Breakdown</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger', ['account_id' => $report['account']->id]) }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link active" href="#"><i class="dripicons-calendar"></i> Monthly Breakup</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="monthly-ledger" title="Monthly ledger" purpose="Compare monthly activity for this account, then open a month to inspect its ledger.">
             <a href="{{ route('accounting.general-ledger', ['account_id' => $report['account']->id]) }}" class="btn btn-outline-secondary btn-sm font-weight-bold u-h-28px u-fs-11px u-d-inline-flex u-items-center u-gap-4px">
                 <i class="dripicons-arrow-thin-left"></i> Back to Ledger
             </a>
-        </div>
-    </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-erp-print><i class="dripicons-print"></i> Print / PDF</button>
+    </x-accounting-command-bar>
+
+    <div class="accounting-report-note"><strong>{{ $report['account']->code }} — {{ $report['account']->name }}</strong><span class="d-block text-muted">Monthly debits and credits for the active financial year.</span></div>
 
     <!-- Monthly Summary Table -->
     <div class="desk-card-wrapper mt-3">
         <div class="table-responsive">
             <table class="table monthly-table mb-0">
+                <caption class="sr-only">Monthly ledger</caption>
                 <thead>
                     <tr>
                         <th scope="col">Month</th>

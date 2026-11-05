@@ -11,29 +11,9 @@
 @endphp
 
 <section class="transfer-workspace-view">
-    <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-export text-primary"></i> {{ __('db.Money Transfer') }} Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-swap"></i> Inter-Account Transfers</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="{{ route('money-transfers.index') }}"><i class="dripicons-export"></i> Money Transfer</a></li>
-            <li><a class="nav-link" href="{{ route('accounts.index') }}"><i class="dripicons-wallet"></i> Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-view-list"></i> COA</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-document"></i> General Ledger</a></li>
-        </ul>
-        <div class="comm-actions">
-            @if(config('commercial.enabled'))
-            <a class="btn btn-primary btn-action-pill" href="{{ route('accounting.vouchers', ['voucher_type' => 'contra']) }}"><i class="dripicons-plus"></i> New transfer · Contra voucher</a>
-            @else
-            <button class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary u-c-xffffff" data-toggle="modal" data-target="#create-money-transfer-modal">
-                <i class="dripicons-plus"></i> {{ __('db.Add Money Transfer') }}
-            </button>
-            @endif
-        </div>
-    </div>
+    <x-accounting-command-bar active="transfers" title="Money Transfer" purpose="Move funds between your own accounts.">
+        <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#create-money-transfer-modal">Add Money Transfer</button>
+    </x-accounting-command-bar>
 
     <!-- KPI Summary Strip -->
     @if(config('commercial.enabled'))<p class="mx-3">New cash/bank transfers post through Contra vouchers. The register below is read-only legacy history.</p>@endif

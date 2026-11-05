@@ -1,4 +1,19 @@
 /* Page styles for: backend/accounting/semantic_mappings.blade.php (moved from inline <style>). */
+    .mapping-explanation { padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--z-border, #e2e8f0); border-left: 3px solid var(--z-primary); border-radius: 6px; background: var(--z-surface, #fff); color: var(--z-text, #0f172a); font-size: 12px; }
+    .mapping-explanation p { margin: 4px 0; }
+    .mapping-explanation summary { cursor: pointer; font-weight: 600; }
+    .mapping-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 10px; }
+    .mapping-toolbar > div:first-child { flex: 1 1 240px; }
+    .mapping-toolbar label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 3px; }
+    .mapping-toolbar > span { padding-bottom: 6px; font-size: 12px; color: var(--z-text-muted, #64748b); }
+    .semantic-table th[scope="row"] { width: 20%; font-size: 12px; vertical-align: middle; }
+    .semantic-table .mapping-purpose { width: 32%; color: var(--z-text-muted, #64748b); font-size: 12px; white-space: normal; }
+    .semantic-table td:has(select) { min-width: 270px; }
+    .semantic-table select { width: 100%; min-height: 32px; }
+    .semantic-table [hidden] { display: none !important; }
+    .mapping-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid var(--z-border, #e2e8f0); font-size: 12px; }
+    body.dark-mode .mapping-explanation { background: var(--z-surface, #141c2e); color: var(--z-text, #e2e8f0); border-color: var(--z-border, #334155); }
+    @media (max-width: 767px) { .semantic-table { min-width: 760px; } .mapping-toolbar > div { flex: 1 1 100%; } }
     .semantic-workspace-view {
         padding: 12px 18px 24px;
         background: #f8fafc;

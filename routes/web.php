@@ -760,7 +760,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
 
     //accounting routes
     Route::controller(AccountsController::class)->group(function () {
-        Route::get('make-default/{id}', 'makeDefault');
+        Route::post('make-default/{id}', 'makeDefault');
         Route::post('account-statement', 'accountStatement')->name('accounts.statement');
         Route::get('accounts/all', 'accountsAll')->name('account.all');
     });

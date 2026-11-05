@@ -4,41 +4,29 @@
 
 <section class="book-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-document text-primary"></i> {{ $type === 'cash' ? 'Cash Book' : 'Day Book' }} Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> {{ $type === 'cash' ? 'Cash Account Transactions' : 'Daily Chronological Activity' }}</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.vouchers') }}"><i class="dripicons-home"></i> Voucher Hub</a></li>
-            <li><a class="nav-link {{ $type === 'day' ? 'active' : '' }}" href="{{ route('accounting.day-book') }}"><i class="dripicons-calendar"></i> Day Book</a></li>
-            <li><a class="nav-link {{ $type === 'cash' ? 'active' : '' }}" href="{{ route('accounting.cash-book') }}"><i class="dripicons-wallet"></i> Cash Book</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.ageing') }}"><i class="dripicons-clock"></i> Receivables / Payables</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-        </ul>
-        <div class="comm-actions">
-            <button data-erp-print class="btn btn-outline-secondary btn-sm u-h-28px u-fs-11px">
+    <x-accounting-command-bar :active="$type === 'cash' ? 'cash-book' : 'day-book'" :title="$type === 'cash' ? 'Cash book' : 'Day book'" :purpose="$type === 'cash' ? 'Review cash and bank journal entries for the selected period.' : 'Review all posted journal entries for the selected period.'">
+            <button type="button" data-erp-print class="btn btn-outline-secondary btn-sm u-h-28px u-fs-11px">
                 <i class="dripicons-print"></i> Print Book
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Card -->
     <div class="desk-filter-card">
         <form method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
+                    <label for="book-start" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
                     <input class="form-control form-control-sm u-h-32px u-fs-12px" type="date" id="book-start" name="start_date" value="{{ $report['start_date'] }}">
                 </div>
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
+                    <label for="book-end" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
                     <input class="form-control form-control-sm u-h-32px u-fs-12px" type="date" id="book-end" name="end_date" value="{{ $report['end_date'] }}">
                 </div>
                 <div class="col-md-4 d-flex u-p-0-6px">
                     <button class="btn btn-primary btn-sm flex-grow-1 u-h-32px u-fs-12px u-fw-600" type="submit">
-                        <i class="dripicons-search"></i> Show Book
+                        <i class="dripicons-search"></i> Apply filters
                     </button>
+                    <a href="{{ route($type === 'cash' ? 'accounting.cash-book' : 'accounting.day-book') }}" class="btn btn-sm btn-outline-secondary ml-1">Reset</a>
                 </div>
             </div>
         </form>
@@ -48,6 +36,7 @@
     <div class="desk-card-wrapper">
         <div class="table-responsive">
             <table class="table book-table mb-0">
+                <caption class="sr-only">Posted journal book</caption>
                 <thead>
                     <tr>
                         <th scope="col">Date</th>

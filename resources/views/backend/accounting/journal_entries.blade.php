@@ -13,30 +13,24 @@
     $totalEntriesCount = $entries->total();
     $totalDebitSum = $entries->sum('total_debit');
     $totalCreditSum = $entries->sum('total_credit');
+    $journalContext = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+    $canCreateJournal = $canReverseJournal = true;
+    try { \App\Services\Accounting\AccountingAccess::assert($journalContext); }
+    catch (\Illuminate\Auth\Access\AuthorizationException $e) { $canCreateJournal = false; }
+    try { \App\Services\Accounting\AccountingAccess::assert($journalContext, 'accounting.journal.reverse'); }
+    catch (\Illuminate\Auth\Access\AuthorizationException $e) { $canReverseJournal = false; }
 @endphp
 
 <section class="journal-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-briefcase text-primary"></i> General Journal Entries Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Double-Entry Financial Audit Trail</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.trial-balance') }}"><i class="dripicons-scale"></i> Trial Balance</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.profit-loss') }}"><i class="dripicons-graph-line"></i> P&amp;L</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="journals" title="Journal entries" purpose="Review posted transactions and their debit and credit lines. Use the source document to correct a bill.">
+            @if($canCreateJournal)
             <button type="button" class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary u-c-xffffff" data-toggle="modal" data-target="#createVoucherModal">
                 <i class="dripicons-plus"></i> New Journal Voucher
             </button>
-        </div>
-    </div>
+            @endif
+            <button type="button" class="btn btn-outline-secondary" data-erp-print><i class="dripicons-print"></i> Print / PDF</button>
+    </x-accounting-command-bar>
 
     <!-- KPI Summary Strip -->
     <div class="kpi-summary-strip">
@@ -85,23 +79,26 @@
         <form action="{{ route('accounting.journal-entries') }}" method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-3 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Reference Type</label>
-                    <select name="reference_type" class="form-control form-control-sm u-h-32px u-fs-12px">
+                    <label for="journal-entries-field-1" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Reference Type</label>
+                    <select id="journal-entries-field-1" name="reference_type" class="form-control form-control-sm u-h-32px u-fs-12px">
                         <option value="">-- All Types --</option>
                         <option value="sale" {{ request('reference_type') == 'sale' ? 'selected' : '' }}>Sale / Invoices</option>
-                        <option value="purchase" {{ request('reference_type') == 'purchase' ? 'selected' : '' }}>Purchase Orders</option>
+                        <option value="purchase" {{ request('reference_type') == 'purchase' ? 'selected' : '' }}>Purchase bills</option>
                         <option value="payment" {{ request('reference_type') == 'payment' ? 'selected' : '' }}>Payments</option>
                         <option value="expense" {{ request('reference_type') == 'expense' ? 'selected' : '' }}>Expenses</option>
                         <option value="manual" {{ request('reference_type') == 'manual' ? 'selected' : '' }}>Manual Vouchers</option>
+                        @foreach(['voucher' => 'Vouchers / Transfers', 'reversal' => 'Reversals', 'damage' => 'Damaged stock', 'stock_loss' => 'Stock losses', 'job_work_receipt' => 'Job work receipts', 'production' => 'Production', 'brokerage' => 'Brokerage', 'migration_opening' => 'Opening balances', 'year_close' => 'Year close'] as $source => $label)
+                            <option value="{{ $source }}" @selected(request('reference_type') === $source)>{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-3 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ request('start_date') }}">
+                    <label for="journal-entries-field-2" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
+                    <input id="journal-entries-field-2" type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ request('start_date') }}">
                 </div>
                 <div class="col-md-3 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ request('end_date') }}">
+                    <label for="journal-entries-field-3" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
+                    <input id="journal-entries-field-3" type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ request('end_date') }}">
                 </div>
                 <div class="col-md-3 d-flex u-p-0-6px">
                     <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2 u-h-32px u-fs-12px u-fw-600">
@@ -117,16 +114,17 @@
     <div class="desk-card-wrapper">
         <div class="table-responsive">
             <table class="table journal-grid-table mb-0">
+                <caption class="sr-only">Journal entries</caption>
                 <thead>
                     <tr>
-                        <th>Entry #</th>
-                        <th>Date</th>
-                        <th>Reference</th>
-                        <th>Description</th>
-                        <th class="text-right">Total Debit</th>
-                        <th class="text-right">Total Credit</th>
-                        <th>Status</th>
-                        <th class="text-center">Action</th>
+                        <th scope="col">Entry #</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Description</th>
+                        <th scope="col" class="text-right">Total Debit</th>
+                        <th scope="col" class="text-right">Total Credit</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -156,12 +154,12 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-primary view-entry-btn u-h-26px u-w-26px u-p-0 u-d-inline-flex u-items-center u-justify-center u-r-4px" data-id="{{ $entry->id }}" title="View Lines">
+                                <button type="button" class="btn btn-sm btn-outline-primary view-entry-btn u-h-26px u-w-26px u-p-0 u-d-inline-flex u-items-center u-justify-center u-r-4px" data-url="{{ route('accounting.journal-entries.show', ['id' => $entry->id, 'branch_scope' => request('branch_scope')]) }}" title="View Lines" aria-label="View lines for {{ $entry->entry_number }}">
                                     <i class="dripicons-preview"></i>
                                 </button>
                                 {{-- Posted journals are never edited or deleted; a manual one is cancelled by a reversing entry. Bill postings are corrected from the bill. --}}
-                                @if($entry->reference_type === 'manual' && !$entry->reversal_of_id && !$isReversed)
-                                    <button type="button" class="btn btn-sm btn-outline-danger reverse-entry-btn u-h-26px u-w-26px u-p-0 u-d-inline-flex u-items-center u-justify-center u-r-4px" data-url="{{ route('accounting.journal.reverse', $entry->id) }}" data-number="{{ $entry->entry_number }}" data-date="{{ $entry->entry_date->format('Y-m-d') }}" title="Reverse">
+                                @if($canReverseJournal && (int) $entry->branch_id === $journalContext->branchId && $entry->reference_type === 'manual' && !$entry->reversal_of_id && !$isReversed)
+                                    <button type="button" class="btn btn-sm btn-outline-danger reverse-entry-btn u-h-26px u-w-26px u-p-0 u-d-inline-flex u-items-center u-justify-center u-r-4px" data-url="{{ route('accounting.journal.reverse', $entry->id) }}" data-number="{{ $entry->entry_number }}" data-date="{{ $entry->entry_date->format('Y-m-d') }}" title="Reverse" aria-label="Reverse {{ $entry->entry_number }}">
                                         <i class="dripicons-return"></i>
                                     </button>
                                 @endif
@@ -184,11 +182,11 @@
 </section>
 
 <!-- Create Manual Voucher Modal -->
-<div id="createVoucherModal" tabindex="-1" role="dialog" class="modal fade" aria-hidden="true">
+<div id="createVoucherModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="create-voucher-title" class="modal fade" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
             <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
-                <h5 class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
+                <h5 id="create-voucher-title" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
                     <i class="dripicons-pencil mr-1"></i> New Journal Entry Voucher
                 </h5>
                 <button type="button" class="close u-c-xffffff u-op-0_8" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -199,12 +197,12 @@
                 <div class="modal-body u-p-16px-20px">
                     <div class="form-row mb-3">
                         <div class="col-md-4">
-                            <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Date <span class="text-danger">*</span></label>
-                            <input type="date" name="entry_date" class="form-control form-control-sm u-h-32px u-fs-12_5px" value="{{ date('Y-m-d') }}" required>
+                            <label for="journal-entries-field-4" class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Date <span class="text-danger">*</span></label>
+                            <input id="journal-entries-field-4" type="date" name="entry_date" class="form-control form-control-sm u-h-32px u-fs-12_5px" value="{{ date('Y-m-d') }}" required>
                         </div>
                         <div class="col-md-8">
-                            <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Description / Memo <span class="text-danger">*</span></label>
-                            <input type="text" name="description" class="form-control form-control-sm u-h-32px u-fs-12_5px" placeholder="e.g. Month-end adjustment, Depreciation" required>
+                            <label for="journal-entries-field-5" class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Description / Memo <span class="text-danger">*</span></label>
+                            <input id="journal-entries-field-5" type="text" name="description" class="form-control form-control-sm u-h-32px u-fs-12_5px" placeholder="e.g. Month-end adjustment, Depreciation" required>
                         </div>
                     </div>
 
@@ -217,43 +215,44 @@
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm mb-0 u-bcol-collapse" id="voucherLinesTable">
+                <caption class="sr-only">Journal entries</caption>
                             <thead class="u-bg-surface-3">
                                 <tr>
-                                    <th class="u-w-40pct u-fs-11px u-tt-uppercase">Account</th>
-                                    <th class="u-fs-11px u-tt-uppercase">Memo</th>
-                                    <th class="text-right u-w-20pct u-fs-11px u-tt-uppercase">Debit</th>
-                                    <th class="text-right u-w-20pct u-fs-11px u-tt-uppercase">Credit</th>
-                                    <th class="u-w-5pct"></th>
+                                    <th scope="col" class="u-w-40pct u-fs-11px u-tt-uppercase">Account</th>
+                                    <th scope="col" class="u-fs-11px u-tt-uppercase">Memo</th>
+                                    <th scope="col" class="text-right u-w-20pct u-fs-11px u-tt-uppercase">Debit</th>
+                                    <th scope="col" class="text-right u-w-20pct u-fs-11px u-tt-uppercase">Credit</th>
+                                    <th scope="col" class="u-w-5pct"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="line-row">
                                     <td>
-                                        <select name="items[0][chart_of_account_id]" class="form-control form-control-sm u-h-30px u-fs-12px" required>
+                                        <select aria-label="Journal account" name="items[0][chart_of_account_id]" class="form-control form-control-sm u-h-30px u-fs-12px" required>
                                             <option value="">-- Select Account --</option>
                                             @foreach($accounts as $acc)
                                                 <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input type="text" name="items[0][memo]" class="form-control form-control-sm u-h-30px u-fs-12px" placeholder="Memo"></td>
-                                    <td><input type="number" step="0.01" name="items[0][debit]" class="form-control form-control-sm text-right debit-input u-h-30px u-fs-12px" value="0.00"></td>
-                                    <td><input type="number" step="0.01" name="items[0][credit]" class="form-control form-control-sm text-right credit-input u-h-30px u-fs-12px" value="0.00"></td>
-                                    <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-16px">&times;</button></td>
+                                    <td><input aria-label="Line memo" type="text" name="items[0][memo]" class="form-control form-control-sm u-h-30px u-fs-12px" placeholder="Memo"></td>
+                                    <td><input aria-label="Debit amount" type="number" step="0.01" name="items[0][debit]" class="form-control form-control-sm text-right debit-input u-h-30px u-fs-12px" value="0.00"></td>
+                                    <td><input aria-label="Credit amount" type="number" step="0.01" name="items[0][credit]" class="form-control form-control-sm text-right credit-input u-h-30px u-fs-12px" value="0.00"></td>
+                                    <td class="text-center align-middle"><button type="button" aria-label="Remove journal line" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-16px">&times;</button></td>
                                 </tr>
                                 <tr class="line-row">
                                     <td>
-                                        <select name="items[1][chart_of_account_id]" class="form-control form-control-sm u-h-30px u-fs-12px" required>
+                                        <select aria-label="Journal account" name="items[1][chart_of_account_id]" class="form-control form-control-sm u-h-30px u-fs-12px" required>
                                             <option value="">-- Select Account --</option>
                                             @foreach($accounts as $acc)
                                                 <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input type="text" name="items[1][memo]" class="form-control form-control-sm u-h-30px u-fs-12px" placeholder="Memo"></td>
-                                    <td><input type="number" step="0.01" name="items[1][debit]" class="form-control form-control-sm text-right debit-input u-h-30px u-fs-12px" value="0.00"></td>
-                                    <td><input type="number" step="0.01" name="items[1][credit]" class="form-control form-control-sm text-right credit-input u-h-30px u-fs-12px" value="0.00"></td>
-                                    <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-16px">&times;</button></td>
+                                    <td><input aria-label="Line memo" type="text" name="items[1][memo]" class="form-control form-control-sm u-h-30px u-fs-12px" placeholder="Memo"></td>
+                                    <td><input aria-label="Debit amount" type="number" step="0.01" name="items[1][debit]" class="form-control form-control-sm text-right debit-input u-h-30px u-fs-12px" value="0.00"></td>
+                                    <td><input aria-label="Credit amount" type="number" step="0.01" name="items[1][credit]" class="form-control form-control-sm text-right credit-input u-h-30px u-fs-12px" value="0.00"></td>
+                                    <td class="text-center align-middle"><button type="button" aria-label="Remove journal line" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-16px">&times;</button></td>
                                 </tr>
                             </tbody>
                             <tfoot class="font-weight-bold u-bg-surface-2">
@@ -284,7 +283,7 @@
 </div>
 
 <!-- View Entry Modal -->
-<div id="viewEntryModal" tabindex="-1" role="dialog" class="modal fade" aria-hidden="true">
+<div id="viewEntryModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="viewModalTitle" class="modal fade" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
             <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
@@ -296,12 +295,13 @@
             </div>
             <div class="modal-body u-p-16px-20px">
                 <table class="table table-bordered table-sm mb-0" id="entryDetailTable">
+                <caption class="sr-only">Journal entries</caption>
                     <thead class="u-bg-ink u-c-xffffff">
                         <tr>
-                            <th class="u-fs-11px u-tt-uppercase">Account</th>
-                            <th class="u-fs-11px u-tt-uppercase">Memo</th>
-                            <th class="text-right u-fs-11px u-tt-uppercase">Debit</th>
-                            <th class="text-right u-fs-11px u-tt-uppercase">Credit</th>
+                            <th scope="col" class="u-fs-11px u-tt-uppercase">Account</th>
+                            <th scope="col" class="u-fs-11px u-tt-uppercase">Memo</th>
+                            <th scope="col" class="text-right u-fs-11px u-tt-uppercase">Debit</th>
+                            <th scope="col" class="text-right u-fs-11px u-tt-uppercase">Credit</th>
                         </tr>
                     </thead>
                     <tbody id="entryDetailBody"></tbody>
@@ -319,11 +319,11 @@
 </div>
 
 <!-- Reverse Journal Modal -->
-<div id="reverseEntryModal" tabindex="-1" role="dialog" class="modal fade" aria-hidden="true">
+<div id="reverseEntryModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="reverse-voucher-title" class="modal fade" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
             <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
-                <h5 class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
+                <h5 id="reverse-voucher-title" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
                     <i class="dripicons-return mr-1"></i> Reverse Journal <span id="reverse-entry-number" class="font-monospace"></span>
                 </h5>
                 <button type="button" class="close u-c-xffffff u-op-0_8" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -333,12 +333,12 @@
                 <div class="modal-body u-p-16px-20px">
                     <p class="text-muted mb-2 u-fs-12px">Posts an equal and opposite entry; the original stays in the books for audit.</p>
                     <div class="form-group mb-2">
-                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Reversal Date <span class="text-danger">*</span></label>
-                        <input type="date" name="entry_date" class="form-control form-control-sm u-h-32px u-fs-12_5px" required>
+                        <label for="journal-entries-field-6" class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Reversal Date <span class="text-danger">*</span></label>
+                        <input id="journal-entries-field-6" type="date" name="entry_date" class="form-control form-control-sm u-h-32px u-fs-12_5px" required>
                     </div>
                     <div class="form-group mb-0">
-                        <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Reason <span class="text-danger">*</span></label>
-                        <textarea name="reason" class="form-control form-control-sm u-fs-12_5px" rows="2" maxlength="500" required></textarea>
+                        <label for="journal-entries-field-7" class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Reason <span class="text-danger">*</span></label>
+                        <textarea id="journal-entries-field-7" name="reason" class="form-control form-control-sm u-fs-12_5px" rows="2" maxlength="500" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-3 u-bg-surface-2">
@@ -404,14 +404,14 @@
         let rowHtml = `
             <tr class="line-row">
                 <td>
-                    <select name="items[${lineIndex}][chart_of_account_id]" class="form-control form-control-sm u-h-30px u-fs-12px" required>
+                    <select aria-label="Journal account" name="items[${lineIndex}][chart_of_account_id]" class="form-control form-control-sm u-h-30px u-fs-12px" required>
                         ${accountsOptions}
                     </select>
                 </td>
-                <td><input type="text" name="items[${lineIndex}][memo]" class="form-control form-control-sm u-h-30px u-fs-12px" placeholder="Memo"></td>
-                <td><input type="number" step="0.01" name="items[${lineIndex}][debit]" class="form-control form-control-sm text-right debit-input u-h-30px u-fs-12px" value="0.00"></td>
-                <td><input type="number" step="0.01" name="items[${lineIndex}][credit]" class="form-control form-control-sm text-right credit-input u-h-30px u-fs-12px" value="0.00"></td>
-                <td class="text-center align-middle"><button type="button" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-16px">&times;</button></td>
+                <td><input aria-label="Line memo" type="text" name="items[${lineIndex}][memo]" class="form-control form-control-sm u-h-30px u-fs-12px" placeholder="Memo"></td>
+                <td><input aria-label="Debit amount" type="number" step="0.01" name="items[${lineIndex}][debit]" class="form-control form-control-sm text-right debit-input u-h-30px u-fs-12px" value="0.00"></td>
+                <td><input aria-label="Credit amount" type="number" step="0.01" name="items[${lineIndex}][credit]" class="form-control form-control-sm text-right credit-input u-h-30px u-fs-12px" value="0.00"></td>
+                <td class="text-center align-middle"><button type="button" aria-label="Remove journal line" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-16px">&times;</button></td>
             </tr>
         `;
 
@@ -430,28 +430,32 @@
 
     // View Entry details via AJAX
     $(document).on('click', '.view-entry-btn', function() {
-        let entryId = $(this).data('id');
-        $.get("{{ url('accounting/journal-entries') }}/" + entryId, function(entry) {
+        const trigger = $(this).prop('disabled', true);
+        $.get(trigger.data('url'), function(entry) {
             $('#viewModalTitle').text(entry.entry_number + ' - ' + (entry.description || 'Journal Entry'));
             $('#viewModalSubtitle').text('Date: ' + entry.entry_date + ' | Ref: ' + (entry.reference_type || 'Manual') + ' ' + (entry.reference_no || ''));
 
-            let bodyHtml = '';
+            const body = $('#entryDetailBody').empty();
             entry.items.forEach(function(item) {
-                bodyHtml += `
-                    <tr>
-                        <td class="font-weight-600">${item.account ? item.account.code + ' - ' + item.account.name : 'N/A'}</td>
-                        <td>${item.memo || ''}</td>
-                        <td class="text-right font-monospace">${parseFloat(item.debit) > 0 ? parseFloat(item.debit).toFixed(2) : '-'}</td>
-                        <td class="text-right font-monospace">${parseFloat(item.credit) > 0 ? parseFloat(item.credit).toFixed(2) : '-'}</td>
-                    </tr>
-                `;
+                $('<tr>').append(
+                    $('<td class="font-weight-600">').text(item.account ? item.account.code + ' - ' + item.account.name : 'N/A'),
+                    $('<td>').text(item.memo || ''),
+                    $('<td class="text-right font-monospace">').text(Number(item.debit) > 0 ? Number(item.debit).toFixed(2) : '-'),
+                    $('<td class="text-right font-monospace">').text(Number(item.credit) > 0 ? Number(item.credit).toFixed(2) : '-')
+                ).appendTo(body);
             });
 
-            $('#entryDetailBody').html(bodyHtml);
             $('#viewModalTotalDebit').text(parseFloat(entry.total_debit).toFixed(2));
             $('#viewModalTotalCredit').text(parseFloat(entry.total_credit).toFixed(2));
 
             $('#viewEntryModal').modal('show');
+        }).fail(function() {
+            $('#viewModalTitle').text('Journal lines unavailable');
+            $('#viewModalSubtitle').text('Refresh the journal list and try again.');
+            $('#entryDetailBody, #viewModalTotalDebit, #viewModalTotalCredit').empty();
+            $('#viewEntryModal').modal('show');
+        }).always(function() {
+            trigger.prop('disabled', false);
         });
     });
 </script>
