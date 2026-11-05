@@ -18,6 +18,7 @@ use App\Models\Product;
 use App\Models\Returns;
 use App\Models\Variant;
 use App\Models\Customer;
+use App\Models\Company;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\Transfer;
@@ -4706,9 +4707,8 @@ class ReportController extends Controller
 
     public function customerDueReportByDate(Request $request)
     {
-        $data = $request->all();
-        $start_date = $data['start_date'];
-        $end_date = $data['end_date'];
+        $start_date = $request->input('start_date', date('Y-m-d', strtotime('-90 days')));
+        $end_date = $request->input('end_date', date('Y-m-d'));
         $customer_id = $request->customer_id ?? 0;
 
         // $q = Sale::where('payment_status', '!=', 4)
@@ -4827,10 +4827,9 @@ class ReportController extends Controller
 
     public function supplierDueReportByDate(Request $request)
     {
-        $data = $request->all();
-        $supplier_id = null;
-        $start_date = $data['start_date'];
-        $end_date = $data['end_date'];
+        $supplier_id = $request->supplier_id ?? null;
+        $start_date = $request->input('start_date', date('Y-m-d', strtotime('-90 days')));
+        $end_date = $request->input('end_date', date('Y-m-d'));
         $q = Purchase::where('payment_status', 1)
             ->whereNull('deleted_at')
             ->whereDate('updated_at', '>=' , $start_date)
@@ -4843,5 +4842,251 @@ class ReportController extends Controller
         $lims_supplier_list = Supplier::where('is_active', true)->get();
 
         return view('backend.report.supplier_due_report', compact('lims_purchase_data', 'start_date', 'end_date', 'lims_supplier_list', 'supplier_id'));
+    }
+
+    /**
+     * Outstanding Payments (Dues) Report — Fully featured, filterable, company-scoped
+     */
+    public function outstandingDuesReport(Request $request)
+    {
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class) 
+            ?? app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+        $companyId = $context?->companyId ?? session('company_id') ?? 1;
+
+        $type = $request->input('type', 'receivables');
+        if (!in_array($type, ['receivables', 'payables'], true)) {
+            $type = 'receivables';
+        }
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date', date('Y-m-d'));
+        $customerId = $request->filled('customer_id') ? (int) $request->customer_id : null;
+        $supplierId = $request->filled('supplier_id') ? (int) $request->supplier_id : null;
+        $warehouseId = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
+        $dueStatus = $request->input('due_status', 'all_dues');
+        $searchTerm = trim((string) $request->input('search', ''));
+
+        $today = Carbon::today();
+
+        $rows = collect();
+        $kpiBilled = 0.0;
+        $kpiReturned = 0.0;
+        $kpiPaid = 0.0;
+        $kpiDue = 0.0;
+        $kpiOverdue = 0.0;
+
+        if ($type === 'receivables') {
+            $query = DB::table('sales')
+                ->leftJoin('customers', 'sales.customer_id', '=', 'customers.id')
+                ->leftJoin('warehouses', 'sales.warehouse_id', '=', 'warehouses.id')
+                ->where('sales.company_id', $companyId)
+                ->whereNull('sales.deleted_at')
+                ->select([
+                    'sales.id',
+                    'sales.reference_no',
+                    'sales.created_at',
+                    'sales.grand_total',
+                    'sales.paid_amount',
+                    'sales.payment_status',
+                    'sales.credit_days as sale_credit_days',
+                    'sales.customer_id',
+                    'sales.warehouse_id',
+                    'customers.name as party_name',
+                    'customers.phone_number as party_phone',
+                    'customers.city as party_city',
+                    'customers.credit_days as party_credit_days',
+                    'warehouses.name as warehouse_name',
+                    DB::raw('(SELECT COALESCE(SUM(grand_total / COALESCE(exchange_rate, 1)), 0) FROM returns WHERE returns.sale_id = sales.id) as returned_amount'),
+                ]);
+
+            if (!empty($startDate)) {
+                $query->whereDate('sales.created_at', '>=', $startDate);
+            }
+            if (!empty($endDate)) {
+                $query->whereDate('sales.created_at', '<=', $endDate);
+            }
+            if ($customerId) {
+                $query->where('sales.customer_id', $customerId);
+            }
+            if ($warehouseId) {
+                $query->where('sales.warehouse_id', $warehouseId);
+            }
+            if (!empty($searchTerm)) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('sales.reference_no', 'like', "%{$searchTerm}%")
+                      ->orWhere('customers.name', 'like', "%{$searchTerm}%")
+                      ->orWhere('customers.phone_number', 'like', "%{$searchTerm}%");
+                });
+            }
+
+            $rawRecords = $query->orderBy('sales.created_at', 'desc')->get();
+
+            foreach ($rawRecords as $record) {
+                $billed = (float) $record->grand_total;
+                $returned = (float) $record->returned_amount;
+                $paid = (float) ($record->paid_amount ?? 0);
+                $due = max(0.0, $billed - $returned - $paid);
+
+                $creditDays = (int) ($record->sale_credit_days ?? $record->party_credit_days ?? 30);
+                $invoiceDate = Carbon::parse($record->created_at);
+                $dueDate = (clone $invoiceDate)->addDays($creditDays);
+                $isOverdue = ($due > 0.009) && $today->greaterThan($dueDate);
+                $daysOverdue = $isOverdue ? $today->diffInDays($dueDate) : 0;
+                $daysLeft = (!$isOverdue && $due > 0.009) ? $dueDate->diffInDays($today) : 0;
+
+                if ($dueStatus === 'all_dues' && $due <= 0.009) continue;
+                if ($dueStatus === 'unpaid' && ($paid > 0.009 || $due <= 0.009)) continue;
+                if ($dueStatus === 'partial' && ($paid <= 0.009 || $due <= 0.009)) continue;
+                if ($dueStatus === 'overdue' && !$isOverdue) continue;
+
+                $kpiBilled += $billed;
+                $kpiReturned += $returned;
+                $kpiPaid += $paid;
+                $kpiDue += $due;
+                if ($isOverdue) {
+                    $kpiOverdue += $due;
+                }
+
+                $record->billed = $billed;
+                $record->returned = $returned;
+                $record->paid = $paid;
+                $record->due = $due;
+                $record->due_date = $dueDate->format('Y-m-d');
+                $record->is_overdue = $isOverdue;
+                $record->days_overdue = $daysOverdue;
+                $record->days_left = $daysLeft;
+                $record->action_url = route('selling.payments', ['sale_id' => $record->id, 'customer_id' => $record->customer_id]);
+                $record->action_label = 'Collect';
+
+                $rows->push($record);
+            }
+        } else {
+            // Payables (Purchases)
+            $query = DB::table('purchases')
+                ->leftJoin('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
+                ->leftJoin('warehouses', 'purchases.warehouse_id', '=', 'warehouses.id')
+                ->where('purchases.company_id', $companyId)
+                ->whereNull('purchases.deleted_at')
+                ->select([
+                    'purchases.id',
+                    'purchases.reference_no',
+                    'purchases.supplier_invoice_no',
+                    'purchases.created_at',
+                    'purchases.grand_total',
+                    'purchases.paid_amount',
+                    'purchases.payment_status',
+                    'purchases.supplier_id',
+                    'purchases.warehouse_id',
+                    'suppliers.name as party_name',
+                    'suppliers.phone_number as party_phone',
+                    'suppliers.city as party_city',
+                    'suppliers.credit_days as party_credit_days',
+                    'warehouses.name as warehouse_name',
+                    DB::raw('(SELECT COALESCE(SUM(grand_total), 0) FROM return_purchases WHERE return_purchases.purchase_id = purchases.id) as returned_amount'),
+                ]);
+
+            if (!empty($startDate)) {
+                $query->whereDate('purchases.created_at', '>=', $startDate);
+            }
+            if (!empty($endDate)) {
+                $query->whereDate('purchases.created_at', '<=', $endDate);
+            }
+            if ($supplierId) {
+                $query->where('purchases.supplier_id', $supplierId);
+            }
+            if ($warehouseId) {
+                $query->where('purchases.warehouse_id', $warehouseId);
+            }
+            if (!empty($searchTerm)) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('purchases.reference_no', 'like', "%{$searchTerm}%")
+                      ->orWhere('purchases.supplier_invoice_no', 'like', "%{$searchTerm}%")
+                      ->orWhere('suppliers.name', 'like', "%{$searchTerm}%")
+                      ->orWhere('suppliers.phone_number', 'like', "%{$searchTerm}%");
+                });
+            }
+
+            $rawRecords = $query->orderBy('purchases.created_at', 'desc')->get();
+
+            foreach ($rawRecords as $record) {
+                $billed = (float) $record->grand_total;
+                $returned = (float) $record->returned_amount;
+                $paid = (float) ($record->paid_amount ?? 0);
+                $due = max(0.0, $billed - $returned - $paid);
+
+                $creditDays = (int) ($record->party_credit_days ?? 30);
+                $invoiceDate = Carbon::parse($record->created_at);
+                $dueDate = (clone $invoiceDate)->addDays($creditDays);
+                $isOverdue = ($due > 0.009) && $today->greaterThan($dueDate);
+                $daysOverdue = $isOverdue ? $today->diffInDays($dueDate) : 0;
+                $daysLeft = (!$isOverdue && $due > 0.009) ? $dueDate->diffInDays($today) : 0;
+
+                if ($dueStatus === 'all_dues' && $due <= 0.009) continue;
+                if ($dueStatus === 'unpaid' && ($paid > 0.009 || $due <= 0.009)) continue;
+                if ($dueStatus === 'partial' && ($paid <= 0.009 || $due <= 0.009)) continue;
+                if ($dueStatus === 'overdue' && !$isOverdue) continue;
+
+                $kpiBilled += $billed;
+                $kpiReturned += $returned;
+                $kpiPaid += $paid;
+                $kpiDue += $due;
+                if ($isOverdue) {
+                    $kpiOverdue += $due;
+                }
+
+                $record->billed = $billed;
+                $record->returned = $returned;
+                $record->paid = $paid;
+                $record->due = $due;
+                $record->due_date = $dueDate->format('Y-m-d');
+                $record->is_overdue = $isOverdue;
+                $record->days_overdue = $daysOverdue;
+                $record->days_left = $daysLeft;
+                $record->action_url = route('buying.payments', ['purchase_id' => $record->id, 'supplier_id' => $record->supplier_id]);
+                $record->action_label = 'Pay';
+
+                $rows->push($record);
+            }
+        }
+
+        $customers = Customer::where('is_active', true)
+            ->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone_number']);
+
+        $suppliers = Supplier::where('is_active', true)
+            ->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone_number']);
+
+        $warehouses = Warehouse::where('is_active', true)
+            ->where('company_id', $companyId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $company = Company::find($companyId);
+        $generalSetting = cache()->get('general_setting') ?? DB::table('general_settings')->first();
+
+        return view('backend.report.outstanding_dues', compact(
+            'rows',
+            'type',
+            'startDate',
+            'endDate',
+            'customerId',
+            'supplierId',
+            'warehouseId',
+            'dueStatus',
+            'searchTerm',
+            'kpiBilled',
+            'kpiReturned',
+            'kpiPaid',
+            'kpiDue',
+            'kpiOverdue',
+            'customers',
+            'suppliers',
+            'warehouses',
+            'company',
+            'generalSetting'
+        ));
     }
 }

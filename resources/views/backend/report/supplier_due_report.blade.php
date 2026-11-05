@@ -17,8 +17,8 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Payables &amp; Vendor Outstanding</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('report.customerDueByDate') }}"><i class="dripicons-user"></i> Customer Due</a></li>
-            <li><a class="nav-link active" href="{{ route('report.supplierDueByDate') }}"><i class="dripicons-user-id"></i> Supplier Due</a></li>
+            <li><a class="nav-link" href="{{ route('report.outstandingDues', ['type' => 'receivables']) }}"><i class="dripicons-user"></i> Customer Due</a></li>
+            <li><a class="nav-link active" href="{{ route('report.outstandingDues', ['type' => 'payables']) }}"><i class="dripicons-user-id"></i> Supplier Due</a></li>
             <li><a class="nav-link" href="{{ route('accounting.ageing') }}"><i class="dripicons-clock"></i> Ageing Ledger</a></li>
             <li><a class="nav-link" href="{{ url('report/purchase') }}"><i class="dripicons-basket"></i> Purchase Report</a></li>
         </ul>

@@ -638,9 +638,11 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::post('supplier-payment-data', 'supplierPaymentData');
             Route::post('supplier-return-data', 'supplierReturnData');
             Route::post('supplier-quotation-data', 'supplierQuotationData');
-            Route::post('customer-due-report', 'customerDueReportByDate')->name('report.customerDueByDate');
+            Route::match(['get', 'post'], 'outstanding-due-report', 'outstandingDuesReport')->name('report.outstandingDues');
+            Route::match(['get', 'post'], 'outstanding-dues', 'outstandingDuesReport');
+            Route::match(['get', 'post'], 'customer-due-report', 'customerDueReportByDate')->name('report.customerDueByDate');
             Route::post('customer-due-report-data', 'customerDueReportData');
-            Route::post('supplier-due-report', 'supplierDueReportByDate')->name('report.supplierDueByDate');
+            Route::match(['get', 'post'], 'supplier-due-report', 'supplierDueReportByDate')->name('report.supplierDueByDate');
             Route::post('supplier-due-report-data', 'supplierDueReportData');
         });
     });

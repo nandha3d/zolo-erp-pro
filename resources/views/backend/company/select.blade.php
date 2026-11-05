@@ -225,7 +225,7 @@
                     <label><span>GSTIN <span class="cp-opt">turns on GST</span></span><input type="text" name="gstin" maxlength="15" class="u-tt-uppercase"></label>
                     <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" class="u-tt-uppercase"></label>
                 </div>
-                <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition">Composition</option><option value="unregistered">Unregistered (no GSTIN)</option></select></label>
+                <label><span>GST type <span class="text-danger font-weight-bold">*</span></span><select name="registration_type" required><option value="regular">Regular</option><option value="composition">Composition</option><option value="unregistered">Unregistered (no GSTIN)</option></select></label>
                 <label>Currency<select name="base_currency_id">
                     @foreach($currencies as $currency)<option value="{{ $currency->id }}">{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
                 </select></label>
@@ -368,7 +368,7 @@
                     <label><span>PAN <span class="cp-opt">from GSTIN</span></span><input type="text" name="pan" maxlength="10" value="{{ old('pan') }}" class="u-tt-uppercase"></label>
                 </div>
                 <div class="cp-row-2">
-                    <label>GST type<select name="registration_type"><option value="regular">Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option><option value="unregistered" @selected(old('registration_type') === 'unregistered')>Unregistered</option></select></label>
+                    <label><span>GST type <span class="text-danger font-weight-bold">*</span></span><select name="registration_type" required><option value="" disabled @selected(!old('registration_type'))>— Select GST type —</option><option value="regular" @selected(old('registration_type') === 'regular')>Regular</option><option value="composition" @selected(old('registration_type') === 'composition')>Composition</option><option value="unregistered" @selected(old('registration_type') === 'unregistered')>Unregistered</option></select></label>
                     <label>Currency<select name="base_currency_id">
                         @foreach($currencies as $currency)<option value="{{ $currency->id }}" @selected($currency->id == old('base_currency_id', $defaultCurrencyId))>{{ $currency->code }} · {{ $currency->name }}</option>@endforeach
                     </select></label>

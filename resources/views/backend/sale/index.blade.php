@@ -239,6 +239,22 @@
                         </div>
                     </div>
 
+                                        <!-- Sleek Item Search Strip (Positioned Above Items Table) -->
+                    <div class="table-search-strip" id="table-search-row">
+                        <div class="table-search-strip-inner">
+                            <span class="table-search-barcode-icon" title="Scan Barcode (Alt+I)">
+                                <i class="fa fa-barcode"></i>
+                            </span>
+                            <div class="table-search-input-wrap">
+                                <i class="fa fa-search table-search-icon"></i>
+                                <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (Alt+I)" autocomplete="off">
+                                <span class="table-search-f2-badge">Alt+I</span>
+                            </div>
+                            <div class="table-search-hint">
+                                <span class="d-none d-md-inline">&larr; Scan barcode or type above to add item to voucher. Press Enter to add.</span>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Items Grid Table (Expands to bottom summary bar) -->
                     <div class="table-responsive u-flex-1-1-auto u-ovy-auto u-minh-200px u-h-100pct u-m-0">
                         <table class="desk-grid-table cozy table table-sm mb-0 u-w-100pct" id="order-table">
@@ -257,22 +273,6 @@
                                 </tr>
                             </thead>
                             <tbody id="order-table-body">
-                                <!-- Integrated In-Table Item Search Row -->
-                                <tr class="table-search-row" id="table-search-row">
-                                    <td class="u-ta-center u-va-middle u-w-36px">
-                                        <i class="fa fa-barcode u-fs-15px u-c-primary" title="Scan Barcode (Alt+I)"></i>
-                                    </td>
-                                    <td class="u-va-middle">
-                                        <div class="table-search-input-wrap">
-                                            <i class="fa fa-search u-pos-absolute u-left-9px u-top-50pct u-tf-translatey-50pct u-fs-11px u-c-primary u-pe-none"></i>
-                                            <input type="text" id="lims_productcodeSearch" class="form-control" placeholder="Scan barcode or enter item code / name... (Alt+I)" autocomplete="off">
-                                            <span class="table-search-f2-badge">Alt+I</span>
-                                        </div>
-                                    </td>
-                                    <td colspan="8" class="u-va-middle u-fs-11px u-c-primary-hover u-fst-italic">
-                                        <span class="d-none d-md-inline">&larr; Scan barcode or type above to add item to voucher. Press Enter to add.</span>
-                                    </td>
-                                </tr>
                                 <tr class="empty-placeholder-row">
                                     <td colspan="10" class="text-center text-muted py-4 u-fs-12px">
                                         No items added yet. Scan barcode or search above, or click "+ Add row".

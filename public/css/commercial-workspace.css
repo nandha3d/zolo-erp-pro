@@ -1946,6 +1946,29 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
 .desk-grid-table td input,
 .desk-grid-table td select { min-width: 0; max-width: 100%; }
 
+
+/* Thin column dividers for crisp table separation */
+.desk-grid-table th,
+.desk-grid-table td {
+    border-right: 1px solid #e2e8f0 !important;
+}
+.desk-grid-table th:last-child,
+.desk-grid-table td:last-child {
+    border-right: none !important;
+}
+.desk-grid-table thead tr th {
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-bottom: 1px solid #0f172a !important;
+}
+.desk-grid-table thead tr th:last-child {
+    border-right: none !important;
+}
+.desk-grid-table tbody tr td {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+.desk-grid-table tbody tr.empty-placeholder-row td {
+    border-right: none !important;
+}
 /* Table Header Matching Left Sidebar (#0f172a) */
 .desk-grid-table thead tr,
 .desk-grid-table thead tr th {
@@ -2599,7 +2622,54 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     box-shadow: 0 3px 10px rgb(var(--z-primary-rgb) / 0.38) !important;
 }
 
-/* In-Table Item Search Row */
+/* Sleek Item Search Strip (Positioned Above Items Table) */
+.table-search-strip {
+    background: #fdf4ff !important;
+    border-bottom: 1px solid var(--z-primary-border, #e9d5ff) !important;
+    padding: 4px 10px !important;
+    flex-shrink: 0 !important;
+    z-index: 10 !important;
+}
+
+.table-search-strip-inner {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+}
+
+.table-search-barcode-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    color: var(--z-primary) !important;
+    font-size: 15px !important;
+    flex-shrink: 0 !important;
+}
+
+.table-search-icon {
+    position: absolute !important;
+    left: 9px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: 11px !important;
+    color: var(--z-primary) !important;
+    pointer-events: none !important;
+}
+
+.table-search-hint {
+    font-size: 11.5px !important;
+    color: var(--z-primary-hover, #701a75) !important;
+    font-style: italic !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex: 1 1 auto !important;
+}
+
+/* Backward-compatible in-table search row */
 .table-search-row {
     background: #fdf4ff !important;
     border-bottom: 2px solid var(--z-primary-border) !important;
@@ -3283,6 +3353,45 @@ body.dark-mode .desk-grid-table thead tr th {
     background: var(--z-table-head-bg) !important;
     color: var(--z-table-head-text) !important;
     border-color: #1e293b !important;
+}
+
+/* Dark Mode Thin Column Dividers */
+body.dark-mode .desk-grid-table th,
+body.dark-mode .desk-grid-table td {
+    border-right: 1px solid #334155 !important;
+}
+body.dark-mode .desk-grid-table th:last-child,
+body.dark-mode .desk-grid-table td:last-child {
+    border-right: none !important;
+}
+body.dark-mode .desk-grid-table thead tr th {
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+body.dark-mode .desk-grid-table tbody tr td {
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark-mode .desk-grid-table tbody tr.empty-placeholder-row td {
+    border-right: none !important;
+}
+body.dark-mode .table-search-strip {
+    background: #162032 !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark-mode .table-search-barcode-icon {
+    color: var(--z-primary, #c084fc) !important;
+}
+body.dark-mode .table-search-hint {
+    color: #94a3b8 !important;
+}
+body.dark-mode .table-search-strip #lims_productcodeSearch {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #f8fafc !important;
+}
+body.dark-mode .table-search-strip #lims_productcodeSearch:focus {
+    border-color: var(--z-primary) !important;
+    box-shadow: 0 0 0 2px rgb(var(--z-primary-rgb) / 0.25) !important;
 }
 body.dark-mode .desk-grid-table tbody tr.table-search-row,
 body.dark-mode .desk-grid-table tbody tr.table-search-row td {

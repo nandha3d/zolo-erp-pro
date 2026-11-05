@@ -1,5 +1,64 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-05: Voucher Search Row Re-placement, Column Dividers, Outstanding Dues Report & Mandatory Company GST Type (branch ui)
+
+- **Voucher Search Row & Crisp Column Separation (`/sales` and `/purchases`):**
+  - Relocated `#lims_productcodeSearch` and barcode scan prompt out of `<tbody>` where it previously occupied table rows and caused column misalignment.
+  - Structured as a dedicated, sleek `.table-search-strip` (`id="table-search-row"`) placed directly above `<div class="table-responsive">` in both `resources/views/backend/sale/index.blade.php` and `resources/views/backend/purchase/index.blade.php`.
+  - Preserved all keyboard shortcuts (`Alt+I` focus, `Enter` to insert, autocomplete listeners) and container queries.
+  - Added thin vertical column dividers (`border-right: 1px solid #e2e8f0` in light mode, `#334155` in dark mode) for `.desk-grid-table th, .desk-grid-table td` with `:last-child { border-right: none }` and empty placeholder row exemption.
+  - Table headers and rows now align 100% uniformly with crisp vertical boundaries.
+
+- **Fully Featured Outstanding Payments (Dues) Report:**
+  - Registered route `Route::match(['get', 'post'], 'outstanding-due-report', 'outstandingDuesReport')->name('report.outstandingDues')` in `routes/web.php` with alias `outstanding-dues`.
+  - Updated legacy routes `report.customerDueByDate` and `report.supplierDueByDate` to accept `GET|POST|HEAD`, eliminating HTTP 405 Method Not Allowed exceptions when navigating from menus or bookmarks.
+  - Added sidebar link `<li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}"><i class="dripicons-wallet mr-1"></i> Outstanding Dues</a></li>` in `resources/views/backend/layout/sidebar.blade.php` under `Reporting`.
+  - Implemented `ReportController::outstandingDuesReport` with company-level scoping (`CompanyContext`, `company_id`) preventing cross-company data leakage:
+    - Supports dual mode toggle: Receivables (Customers) vs Payables (Suppliers).
+    - Filters: Start/End dates, specific Party (Customer/Supplier with live search), Warehouse/Godown, Due Status (`all_dues`, `unpaid`, `partial`, `overdue`, `all`), and instant search query.
+    - Executive KPI Cards: Total Outstanding Due, Overdue Amount, Settled/Paid Amount, Total Billed, and Open Voucher Count.
+    - Rich interactive Data Table: `#`, Date, Reference No (clickable), Party details with phone, Warehouse, Due Date with live Overdue/Days Left Badge, Billed, Returned, Paid, Due Amount (emphasized), Status Badge, and direct `Collect` / `Pay` button linking to `/selling/payments` or `/buying/payments`.
+    - Print support with professional letterhead (Company legal name, trade name, GSTIN, address, audit period).
+
+- **Mandatory GST Type in Company Creation:**
+  - In `resources/views/backend/company/select.blade.php`: added mandatory red asterisk `*` to `GST type` label, added HTML5 `required` attribute to `<select name="registration_type" required>`, and added disabled placeholder option `<option value="" disabled>— Select GST type —</option>`. Updated edit modal `#dlg-company-edit` correspondingly.
+  - In `app/Http/Controllers/CompanySelectorController.php`: added backend validation in `storeCompany` and `updateCompany`: `'registration_type' => 'required|in:regular,composition,unregistered'`.
+  - In `app/Services/Platform/CompanyDirectoryService.php`: validated and supported safe fallback for programmatic callers.
+
+- **Targeted Test Suite & Verification:**
+  - Created `tests/Feature/OutstandingDuesAndGstTypeTest.php` covering GET/POST requests for receivables and payables, legacy GET handling, and mandatory GST type validation.
+  - Verified 36 tests pass (217 assertions) across `CompanyGroupDirectoryTest`, `CompanyProfileTest`, `DocumentEntryWebTest`, and `OutstandingDuesAndGstTypeTest`.
+
+
+
+## Active Session & Follow-up — 2026-11-05: Modular Addon Architecture (OpticalLab, Warranty, Subscription) & Upstream Sync (branch ui)
+
+- **Git & Repository Sync:**
+  - Pulled latest changes from `origin/ui` (commit `9bc7b86` — "Unify Accounting UI and add guided Money Transfer") merging clean with 'ort' strategy. Branch `ui` is fully synced with remotes.
+- **Migration Status Check:**
+  - Verified `php artisan migrate:status --pending`: returned `INFO No pending migrations.` All database migrations are completely up to date.
+- **Procedural Transaction Generation for Animazon Web Studios (Company #2):**
+  - Executed procedural generation of live commercial records across all 12 catalog products using `PurchaseApplicationService`, `SaleApplicationService`, and `PaymentService`.
+  - Created 12 authentic purchase bills (`PUR-00001` - `PUR-00012`) with supplier allocations, LR tracking, and 70% bank settlement payments.
+  - Created 12 wholesale sales invoices (`MJ-00002` - `MJ-00013`) across multiple customers (`KGF Gold Mining`, `Trendline Garments`, `Coimbatore Retail Textiles`, `Kaveri Garments`) with transport bales, LR details, and 80% collection receipts.
+  - All 12 products verified in `Inventory > Stock` (`/inventory-reports/stock-by-lot`): all display active Inward, Outward, Closing, and Owned Now balances with double-entry accounting integrity.
+- **Company Inventory Capability Alignment:**
+  - Diagnosed user discrepancy where collaborator UI showed `inventory-reports/stock-by-lot` (zoloERP Textiles / Textile profile) while local UI showed `operations/stock` (Animazon Web Studios / General Trading profile).
+  - Root cause: `inventory.lot_report` capability is preset per profile. Enabled `inventory.lot_report` on Company 2 (Animazon Web Studios). Verified `Inventory > Stock` now opens `/inventory-reports/stock-by-lot` matching the collaborator's UI.
+- **LenzBreeze Verification:**
+  - Verified `D:\PROJECTS\WEBSITES\lenzbreeze`. The agent executed only read-only inspection commands; no file in `lenzbreeze` was modified.
+  - Investigated the displayed glitch on `lenzbreeze.test/admin/sales`: in `resources/views/salepro/backend/sale/index.blade.php`, an unclosed tag/script block leaked JavaScript text directly into HTML.
+- **Modular Addons Specification Created:**
+  - Created `documents/MODULE_ADDONS_SPECIFICATION.md` and corresponding UI Artifact specifying three plug-and-play Addons for Zolo-ERP-Pro:
+    1. **Addon 1: Lens & Optical Manufacturing Company Profile (`Modules/OpticalLab`)** — Optical Rx prescription parameters (SPH, CYL, AXIS, ADD, BASE, PD, Height), physical lens attributes (DIA: 65/70/75mm, Index: 1.50 to 1.74, coatings), order extras (fitting, tinting, edging), thermal lab receipts with technician routing QR codes, return rejection verification, and consolidated optician billing statements (`customer_bills`, `customer_bill_monthlies`).
+    2. **Addon 2: Universal Warranty & Serial Verification Engine (`Modules/Warranty`)** — Cross-industry warranty lifecycle covering Category-level defaults and Product-level overrides. Defines 8 universal configuration dimensions (Duration, Activation trigger, Identity tracking, Coverage scope, Registration flow, Transferability, Meter/cycle limits, Extended warranties). Features 4 warranty card generation formats (Responsive Digital Card with status badge, Official A4 Certificate, Thermal box slip, PVC plastic card), dynamic QR code generation, and an 8-stage RMA claim workflow.
+    3. **Addon 3: Recurring Subscription & Membership Management (`Modules/Subscription`)** — Designed for Gyms, Spas, Salons, Wellness Clubs, Co-working, and AMC maintenance contracts. Manages flexible plans (Recurring period vs Session credit packs, Peak/Off-peak), member profiles with digital QR passes, front-desk/turnstile attendance kiosk with session credit deduction, membership freeze/pause with auto-extension, and automated accrual accounting (Deferred Subscription Revenue liability recognized monthly into Earned Income under Ind AS 115 / IFRS 15).
+- **Status:** Specification complete; repository synced; ready for implementation upon user direction.
+- **Herd Autoload Misdirection & 503 Resolution:**
+  - Diagnosed user report: `zolo-erp-pro.test/dashboard` showing HTTP 503 `Database temporarily unavailable`.
+  - Root cause: In `vendor/composer/autoload_psr4.php`, `$baseDir` was previously hardcoded pointing to `D:\PROJECTS\WEBSITES\DK Enterprises`. As a result, Herd executed classes from `DK Enterprises` instead of `zolo-erp-pro`. Specifically, `DK Enterprises/app/Http/Controllers/HomeController.php` attempted to query `water_tanker_trips.excess_km` (a column only existing in the DK Enterprises project), throwing a `QueryException` caught by `Handler.php`.
+  - Fix: Executed `composer dump-autoload` and `php artisan package:discover --ansi`. Verified that `vendor/composer/autoload_psr4.php` now correctly points to `zolo-erp-pro`. Tested `/dashboard` request directly: returns HTTP 200 OK.
+
 ## Accounting control and link audit — 2026-11-05 (branch ui)
 
 - Fixed the inactive party dropdown in the user's Contra screenshot. Advanced transfers hide the party column and guided fields. Voucher Hub uses native dynamic selectors. Receivable lines show customers, payable lines show suppliers, and posting requires a party on those lines. Verified receipt allocation and supplier payment payloads in browser fixtures.
