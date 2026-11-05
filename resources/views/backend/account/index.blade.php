@@ -26,9 +26,13 @@
             <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-document"></i> General Ledger</a></li>
         </ul>
         <div class="comm-actions">
+            @if(config('commercial.enabled'))
+            <a class="btn btn-primary btn-action-pill" href="{{ route('accounting.coa') }}"><i class="dripicons-plus"></i> Add account in COA</a>
+            @else
             <button class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary u-c-xffffff" data-toggle="modal" data-target="#account-modal">
                 <i class="dripicons-plus"></i> {{ __('db.Add Account') }}
             </button>
+            @endif
         </div>
     </div>
 

@@ -48,6 +48,19 @@ class VoucherController extends Controller
         return $this->effect($request, fn () => app(VoucherService::class)->post($request->all(), app(CompanyContextResolver::class)->forActor()), 'Voucher posted.');
     }
 
+    public function show(Request $request, int $id)
+    {
+        $context = app(CompanyContextResolver::class)->forActor();
+        app(\App\Services\Commercial\CommercialPermission::class)->assert('accounting.reports.view', $context, $request->user()->id);
+        $entry = JournalEntry::forCompany($context)->where('branch_id', $context->branchId)
+            ->where('financial_year_id', $context->financialYearId)->with('items.account')->findOrFail($id);
+        $bill = in_array($entry->reference_type, ['sale', 'purchase'], true)
+            ? ($entry->reference_type === 'sale' ? \App\Models\Sale::class : \App\Models\Purchase::class)::visibleIn($context)->find($entry->reference_id) : null;
+        $original = $bill?->replaces_id ? $bill::visibleIn($context)->find($bill->replaces_id) : null;
+        $entry->setAttribute('is_reversed', JournalEntry::forCompany($context)->where('reversal_of_id', $entry->id)->exists());
+        return view('backend.accounting.voucher-document', compact('entry', 'bill', 'original'));
+    }
+
     public function reverse(Request $request, int $id)
     {
         $request->validate(['entry_date' => 'required|date_format:Y-m-d', 'reason' => 'required|string|max:500']);

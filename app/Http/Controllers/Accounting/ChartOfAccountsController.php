@@ -20,8 +20,11 @@ class ChartOfAccountsController extends Controller
             ->get();
 
         $allAccounts = ChartOfAccount::forCompany($context)->where('is_active', true)->orderBy('code')->get();
+        $parentAccounts = ChartOfAccount::forCompany($context)->where('is_active', true)->where('control_type', 'none')
+            ->whereDoesntHave('journalItems')->whereNotIn('id', DB::table('semantic_account_mappings')
+                ->where('company_id', $context->companyId)->whereNotNull('account_id')->select('account_id'))->orderBy('code')->get();
 
-        return view('backend.accounting.chart_of_accounts', compact('accounts', 'allAccounts'));
+        return view('backend.accounting.chart_of_accounts', compact('accounts', 'allAccounts', 'parentAccounts'));
     }
 
     public function store(Request $request)
@@ -46,8 +49,11 @@ class ChartOfAccountsController extends Controller
             if ($request->filled('parent_id')) {
                 $parent = $guard->owned(ChartOfAccount::class, $request->parent_id, $context, 'parent_id');
                 abort_unless($parent->is_active && $parent->type === $request->type, 422, 'Parent account must be active and have the same account type.');
+                abort_if($parent->control_type !== 'none' || $parent->journalItems()->exists()
+                    || DB::table('semantic_account_mappings')->where('company_id', $context->companyId)->where('account_id', $parent->id)->exists(),
+                    422, 'Posting ledgers cannot become group accounts. Choose a group such as Current Assets.');
             }
-            (new ChartOfAccount)->forceFill([
+            $account = (new ChartOfAccount)->forceFill([
             'company_id' => $context->companyId,
             'code' => $request->code,
             'name' => $request->name,
@@ -59,7 +65,9 @@ class ChartOfAccountsController extends Controller
             'description' => $request->description,
             'is_system' => false,
             'is_active' => true,
-        ])->save();
+        ]);
+            $account->save();
+            app(\App\Services\Accounting\SettlementAccountService::class)->syncFromLedger($account, $context);
         });
 
         return redirect()->back()->with('message', 'Account created successfully.');
@@ -77,10 +85,12 @@ class ChartOfAccountsController extends Controller
         DB::transaction(function () use ($request, $id, $context) {
             app(CompanyWriteGuard::class)->begin($context, null);
             $account = ChartOfAccount::forCompany($context)->whereKey($id)->lockForUpdate()->firstOrFail();
+            $previousName = $account->name;
             $account->update([
             'name' => $request->name,
             'description' => $request->description,
         ]);
+            app(\App\Services\Accounting\SettlementAccountService::class)->syncFromLedger($account, $context, $previousName);
         });
 
         return redirect()->back()->with('message', 'Account updated successfully.');

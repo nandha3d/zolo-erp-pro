@@ -10,10 +10,14 @@
 @php
     $profileData = $profile ?? app(\App\Services\Industry\IndustryProfileService::class)->settings($context);
     $navigation = app(\App\Services\Platform\CapabilityService::class)->forNavigation($context);
+    $operationsStock = app(\App\Services\Platform\InventoryNavigation::class)->sections(new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null))['stock'] ?? null;
     $activeArea = $area ?? (request()->is('operations/manufacturing*') ? 'manufacturing' : (request()->is('operations/projects*') ? 'projects' : (request()->is('operations/stock*') ? 'stock' : (request()->is('operations/profiles*') ? 'profiles' : 'job-work'))));
 @endphp
 
 <div class="container-fluid px-3 pt-2">
+    @if($activeArea === 'stock')
+        <x-inventory-command-bar active="stock" view="tools"></x-inventory-command-bar>
+    @else
     <!-- Operations Single-Screen Command Bar -->
     <div class="ops-command-bar">
         <div class="ops-command-title">
@@ -47,11 +51,13 @@
                 </a>
             </li>
             @endif
+            @if($operationsStock)
             <li>
-                <a class="nav-link {{ $activeArea === 'stock' ? 'active' : '' }}" href="{{ url('/operations/stock') }}">
-                    <i class="dripicons-box mr-1"></i> Stock Tools
+                <a class="nav-link" href="{{ $operationsStock['url'] }}">
+                    <i class="dripicons-box mr-1"></i> Stock
                 </a>
             </li>
+            @endif
             <li>
                 <a class="nav-link {{ $activeArea === 'profiles' ? 'active' : '' }}" href="{{ url('/operations/profiles') }}">
                     <i class="dripicons-gear mr-1"></i> Business Profile
@@ -59,6 +65,8 @@
             </li>
         </ul>
     </div>
+
+    @endif
 
     @if(session('message'))
         <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-2 u-fs-13px" role="alert">

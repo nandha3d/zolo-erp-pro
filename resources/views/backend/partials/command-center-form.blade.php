@@ -5,6 +5,8 @@ $commandCenterFormConfig = [
     'kind' => $kind, 'shared' => (bool) config('commercial.enabled'),
     'textile' => $entryAids['tracking']['profile'] === 'textile',
     'baseUrl' => url('commercial/'.$kind), 'ordersUrl' => url('commercial/orders/'.$kind), 'listUrl' => route($kind === 'sale' ? 'sales.index' : 'purchases.index'),
+    'paymentUrl' => route($kind === 'sale' ? 'selling.payments' : 'buying.payments'),
+    'canPayment' => \Illuminate\Support\Facades\Gate::allows($kind.'-payment-add'),
     'units' => $lims_unit_list ?? \App\Models\Unit::where('is_active', true)->get(),
     'series' => $documentSeries,
     'context' => $documentContext ?? [],

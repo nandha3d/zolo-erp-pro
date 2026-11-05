@@ -49,6 +49,7 @@ class CommercialReversalService
             if ((int) $document->branch_id !== $context->branchId || !$document->financial_year_id) {
                 throw ValidationException::withMessages(['document' => 'Legacy documents require reviewed migration before reversal.']);
             }
+            if ($document instanceof Purchase) app(\App\Services\JobWork\JobWorkStockNaming::class)->assertBillReversible($document, $context);
             // All settlement journals reverse too; original payments stay as immutable source history.
             $paymentIds = $document->payments()->forCompany($context)->pluck('id');
             $journals = JournalEntry::forCompany($context)->where(function ($q) use ($kind, $document, $paymentIds) {
@@ -77,7 +78,7 @@ class CommercialReversalService
                     ->where('service_purchase_id', $document->id)->first();
                 if ($receipt) {
                     $details = json_decode($receipt->details_json ?? '{}', true) ?: [];
-                    unset($details['processing_cost']);
+                    unset($details['processing_cost'], $details['stock_name_change']);
                     DB::table('job_work_receipts')->where('id', $receiptId)->update(['service_purchase_id' => null,
                         'details_json' => json_encode($details, JSON_THROW_ON_ERROR), 'updated_at' => now()]);
                 }

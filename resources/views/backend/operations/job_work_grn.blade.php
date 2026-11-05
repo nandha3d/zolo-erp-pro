@@ -65,6 +65,7 @@
     <table class="box u-mt-1px"><tr><td>
         <p class="note"><strong>Summary:</strong> Received {{ $qty($d['received_qty'] ?? $sum('accepted_qty') + $sum('rejected_qty')) }} · Loss {{ $qty($d['loss_qty'] ?? $sum('loss_qty')) }}@if(isset($d['loss_percent'])) ({{ (float) $d['loss_percent'] }}%)@endif @if(!empty($d['lots']['output'])) · Lots {{ implode(', ', $d['lots']['output']) }}@endif</p>
         <p class="note"><strong>Tax:</strong> Goods returned from job work under Section 143 of the CGST Act; no GST on this receipt. The job worker's processing charge is billed separately{{ $bill ? ' on '.$bill : '' }}.</p>
+        @foreach(($receipt->details_json['stock_name_change']['items'] ?? []) as $item)<p class="note">Returned stock: <strong>{{ $item['to_name'] }}</strong> · {{ $qty($item['qty']) }} · from {{ $item['from_name'] }} · {{ $receipt->details_json['stock_name_change']['purchase_no'] }}</p>@endforeach
         @if($receipt->reversed_at)<p class="note"><strong>Reversed:</strong> {{ $receipt->reversal_reason }}</p>@endif
     </td></tr></table>
 

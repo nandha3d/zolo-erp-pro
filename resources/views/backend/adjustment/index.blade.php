@@ -4,9 +4,9 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<x-product-command-bar active="adjustment">
+<x-inventory-command-bar active="corrections" view="adjustment">
         <a href="{{route('qty_adjustment.create')}}" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Adjustment')}}</a>
-</x-product-command-bar>
+</x-inventory-command-bar>
 <section class="product-workspace-view">
     <div class="table-responsive">
         <table id="adjustment-table" class="table purchase-list">

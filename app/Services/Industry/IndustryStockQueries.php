@@ -83,8 +83,11 @@ class IndustryStockQueries
                 ->selectRaw("SUM({$open}) AS custody_qty, SUM(CASE WHEN i.qty_base > 0 THEN i.value * {$open} / i.qty_base ELSE 0 END) AS custody_value");
             $events->unionAll($custody);
         }
-        $totals = DB::query()->fromSub($events, 'e')->groupBy('e.product_id', 'e.warehouse_id', 'e.lot')
-            ->select('e.product_id', 'e.warehouse_id', 'e.lot');
+        $combined = ($filters['group_by'] ?? 'lot') === 'product' && empty($filters['lot']);
+        $totals = DB::query()->fromSub($events, 'e')->groupBy('e.product_id', 'e.warehouse_id')
+            ->select('e.product_id', 'e.warehouse_id');
+        if ($combined) $totals->selectRaw("'Combined lots' AS lot");
+        else $totals->groupBy('e.lot')->addSelect('e.lot');
         foreach (['opening_qty','inward_qty','outward_qty','closing_qty','current_qty','custody_qty','custody_value'] as $column) {
             $totals->selectRaw("SUM(e.{$column}) AS {$column}");
         }

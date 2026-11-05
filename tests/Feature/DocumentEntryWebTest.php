@@ -29,6 +29,9 @@ class DocumentEntryWebTest extends TestCase
     public function test_normal_page_loads_the_registry_and_draft_tabs_without_separate_shortcut_menus(string $kind, string $path, string $key): void
     {
         $html = $this->get($path.'?new=1')->assertOk()->getContent();
+        if (getenv('ERP_EXPORT_BILL_PAYMENT_BROWSER') === '1') {
+            file_put_contents(base_path('scratch/bill-payment-'.$kind.'.html'), $html);
+        }
         $this->assertStringContainsString('id="document-shortcut-data"', $html);
         $this->assertStringContainsString('js/document-shortcuts.js', $html);
         $this->assertStringContainsString('js/document-drafts.js', $html);

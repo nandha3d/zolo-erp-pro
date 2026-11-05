@@ -2865,6 +2865,27 @@ body.dark-mode .table-hover tbody tr:hover td {
   transform: translateY(-1px);
 }
 
+/* Payment actions contain text and must not inherit the icon-only table button size. */
+.btn.bill-payment-action,
+.table td .btn.bill-payment-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+  width: auto !important;
+  min-width: 112px !important;
+  height: 30px !important;
+  padding: 0 12px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.side-bill-card .side-card-actions { flex-wrap: wrap; }
+.side-bill-card .side-payment-action { margin-left: auto; }
+.command-center-detail-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 16px -16px -16px; padding: 12px 16px; border-top: 1px solid var(--z-border); }
+
 /* ====================================================================
    DATATABLE EXPORT BUTTONS & TOOLBAR
    Clean, compact single box styling without nested borders

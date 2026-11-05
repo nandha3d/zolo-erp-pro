@@ -659,7 +659,12 @@ class SaleController extends Controller
                             </li>';
                 if(in_array("sale-payment-add", $request['all_permission']) && ($sale->payment_status != 4) && ($sale->sale_status != 3)) {
                     $currency_code_name = $sale->currency->code ?? 'USD';
-                    $nestedData['options'] .=
+                    if (config('commercial.enabled')) {
+                        if ($sale->posted_at && !$sale->reversed_at && $sale->grand_total > $sale->paid_amount) {
+                            $nestedData['options'] .= '<li><a class="btn btn-link" href="'.e(route('selling.payments', ['bill' => $sale->id])).'"><i class="dripicons-wallet"></i> Add payment</a></li>';
+                        }
+                    } else {
+                        $nestedData['options'] .=
                             ' <li>
                                 <button
                                     type="button"
@@ -674,6 +679,7 @@ class SaleController extends Controller
                                     <i class="fa fa-plus"></i> '.__('db.Add Payment').'
                                 </button>
                             </li>';
+                    }
                 }
                 if($sale->sale_status !== 4)
                     $nestedData['options'] .=

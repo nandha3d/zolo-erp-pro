@@ -79,10 +79,7 @@ class SalePostingService
                     'debit' => round($debit, 4), 'credit' => round($credit, 4),
                     'partner_type' => $party ? 'customer' : null, 'partner_id' => $party ? $sale->customer_id : null];
             };
-            foreach ($sale->payments()->forCompany($context)->get() as $payment) {
-                $add($accounts->settlement($payment, $context, $actor), (float) $payment->amount, 0);
-            }
-            $add('accounts_receivable', (float) $sale->grand_total - (float) $sale->paid_amount, 0, true);
+            $add('accounts_receivable', (float) $sale->grand_total, 0, true);
             $add('sales_discount', (float) $sale->order_discount, 0);
             $add('sales_revenue', 0, (float) $sale->total_price - (float) $sale->total_tax);
             if ($sale->tax_snapshot_json) {
@@ -102,12 +99,19 @@ class SalePostingService
             $add('inventory', 0, $cost);
             $add('goods_delivered_not_invoiced', 0, $delivered / 10000);
             if ($lines !== []) {
+                $items = $sale->productSales->map(fn ($line) => $line->product?->name.' ('.$line->qty.')')->implode(', ');
+                $history = $sale->attributes_json['item_change_history'] ?? null;
+                $description = 'Sale '.$sale->reference_no.'. Items: '.$items;
+                if ($history) $description .= '. Replaces '.$history['original_bill'].'. Previous items: '.implode(', ', array_column($history['before'], 'name'));
                 app(AccountingService::class)->postJournalEntry([
                     'entry_date' => $date, 'reference_type' => 'sale', 'reference_id' => $sale->id,
                     'reference_no' => $sale->reference_no, 'posting_key' => 'sale:'.$sale->id.':v1',
                     'due_date' => $sale->attributes_json['due_date'] ?? $date, 'created_by' => $actor,
-                    'description' => 'Sale '.$sale->reference_no,
+                    'voucher_type' => 'sales', 'description' => mb_substr($description, 0, 2000),
                 ], $lines, $context);
+            }
+            foreach ($sale->payments()->forCompany($context)->get() as $payment) {
+                app(AccountingService::class)->postPaymentJournal($payment, $context, $actor);
             }
             if (config('compliance.enabled') && \Illuminate\Support\Facades\Schema::hasColumn('sales', 'document_snapshot_json')) {
                 $sale->forceFill(['document_snapshot_json' => app(\App\Services\Documents\DocumentRenderingService::class)->capture($sale, 'sale', $context)]);

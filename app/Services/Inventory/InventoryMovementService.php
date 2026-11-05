@@ -340,6 +340,46 @@ class InventoryMovementService
         $warehouseId = $line->warehouseId ?? $command->warehouseId;
 
         $this->assertVariant($product, $line->variantId, $type, $run);
+        // A sales line without a chosen lot consumes the product's combined warehouse stock.
+        // Keep each actual lot in the movement so valuation, reversals and returns remain traceable.
+        if ($type === 'issue' && !$run->shadow && in_array($command->sourceType, ['sale', 'legacy:sales'], true)
+            && $line->batchId === null && $line->batch === null && $line->identityId === null
+            && $line->serials === [] && !$product->is_imei) {
+            $rows = Product_Warehouse::where('product_id', $product->id)->where('warehouse_id', $warehouseId)
+                ->where('company_id', $run->companyId)
+                ->where(fn ($q) => $line->variantId === null ? $q->whereNull('variant_id')->orWhere('variant_id', 0) : $q->where('variant_id', $line->variantId))
+                ->where('qty', '>', self::EPSILON)->orderBy('id')->lockForUpdate()->get();
+            if ($product->is_batch || $rows->contains(fn ($row) => (bool) $row->product_batch_id)) {
+                $batches = DB::table('product_batches')->where('product_id', $product->id)
+                    ->where('company_id', $run->companyId)->get()->keyBy('id');
+                $rows = $rows->sortBy(fn ($row) => ($batches->get($row->product_batch_id)->expired_date ?? '9999-12-31').sprintf(':%010d', $row->id));
+                $remaining = $qty;
+                foreach ($rows as $row) {
+                    $batch = $batches->get($row->product_batch_id);
+                    if ($row->product_batch_id && (!$batch || (isset($batch->status) && $batch->status !== 'active'))) continue;
+                    if (!$row->product_batch_id && $product->is_batch) continue;
+                    if ($batch && $batch->expired_date && substr($batch->expired_date, 0, 10) < $command->date
+                        && $this->policy->expiredBatch($run->companyId) === 'block') continue;
+                    $take = min($remaining, (float) $row->qty);
+                    if ($take <= self::EPSILON) continue;
+                    $picked = new StockLine($line->productId, abs($line->qty) * $take / $qty,
+                        $line->warehouseId, $line->variantId, $row->product_batch_id ?: null, $line->unitCost,
+                        $line->uomId, attributes: $line->attributes);
+                    // Unbatched stock needs no further expansion.
+                    if (!$row->product_batch_id) {
+                        yield ['warehouse_id' => $warehouseId, 'qty' => -$take,
+                            'uom_qty' => $line->uomId === null ? null : -$picked->qty, 'unit_cost' => null,
+                            'variant_id' => $line->variantId, 'batch_id' => null, 'identity' => null,
+                            'uom_id' => $line->uomId, 'attributes' => $line->attributes];
+                    } else {
+                        yield from $this->expand($type, $command, $picked, $product, $run);
+                    }
+                    $remaining = round($remaining - $take, 4);
+                    if ($remaining <= self::EPSILON) return;
+                }
+                throw new StockPolicyException("Insufficient combined lot stock for {$product->name} in warehouse {$warehouseId}.");
+            }
+        }
         $batchId = $this->resolveBatch($type, $product, $line, $outbound, $run);
 
         foreach ($this->identityChunks($type, $product, $line, $qty, $outbound, $batchId, $run) as [$chunk, $identity]) {

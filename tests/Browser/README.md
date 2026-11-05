@@ -9,6 +9,9 @@ They never use a standalone entry screen, so they are what certifies the consoli
 | `document-aids.spec.mjs` | `?` shortcut help, F6 new item, previous rates, party outstanding / pending bills, copy bill, extended stock tracking per tab |
 | `party-details.spec.mjs` | Party details strip (GSTIN, address, credit) always matches the party picker: fresh page, real pick, `+` tab, tab switch, reload, `?new=1`; the New Party modal GSTIN check uses its own badge |
 | `document-layout.spec.mjs` | Desktop viewport fit at 1366×768 and 1280×720, visible Save/actions with growing item lists and expanded details, Enter/Tab/Shift+Tab, modal focus return, item search after new/reset, and register placement. Optional rendered fixtures cover source-bound returns, edit forms, quotation conversions, packing challans, and legacy exchange entry. |
+| `bill-stock-payment.spec.mjs` | Rendered Blade fixtures with real local scripts: payment due defaults and validation, dynamic required markers, product switching clears old stock references, mobile layout, and separate receipt/voucher printing. Backend effects are verified by `BillStockPaymentWorkflowTest`; browser requests never post business records. |
+
+For the isolated bill/payment browser check, set `ERP_EXPORT_BILL_PAYMENT_BROWSER=1` and run `BillStockPaymentWorkflowTest` and `DocumentEntryWebTest` first. Then run `node tests/Browser/bill-stock-payment.spec.mjs` with `PLAYWRIGHT_CORE` configured. Fixture HTML and screenshots stay under `scratch/`.
 
 ## Running them
 
@@ -58,3 +61,7 @@ The development data has no chart of accounts, so a post is *refused* ("Configur
 `document-entry.spec.mjs` therefore asserts the refusal keeps the draft and its tab, and asserts draft deletion if accounting
 is configured. The successful-post path (draft removed in the same transaction) is covered by `WorkspaceDraftTest`.
 `document-aids.spec.mjs` answers the three read endpoints with fixed JSON; their server behaviour is covered by PHP tests.
+
+For returned job-work stock names, set `ERP_EXPORT_JOB_STOCK_BROWSER=1` and run `JobWorkStockNamingTest`, then `node tests/Browser/job-work-stock-name.spec.mjs`. The intercepted fixtures cover the correction form, bill fields, linked GRN details and both stock report rows without real business writes.
+
+For inventory navigation and Transfers, set `ERP_EXPORT_INVENTORY_BROWSER=1` and run `InventoryWorkspaceTest`, then `node tests/Browser/inventory-workspace.spec.mjs` with `PLAYWRIGHT_CORE` configured. All requests are intercepted. It verifies grouped navigation, date/warehouse filtering, totals, details, create/import links, count/adjustment tabs, lot views and desktop/mobile empty states without business writes.

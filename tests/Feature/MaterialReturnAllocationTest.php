@@ -12,6 +12,31 @@ use Tests\Support\ReturnsDocumentTestCase;
 
 class MaterialReturnAllocationTest extends ReturnsDocumentTestCase
 {
+    public function test_combined_textile_lots_return_to_the_actual_lots_without_requiring_expiry(): void
+    {
+        Schema::table('product_batches', fn (Blueprint $table) => $table->date('expired_date')->nullable()->change());
+        $product = $this->gstProduct()->forceFill(['qty' => 0, 'is_batch' => true, 'negative_stock_policy' => 'block']); $product->save();
+        DB::table('product_warehouse')->where('product_id', $product->id)->update(['qty' => 0]);
+        $batches = [];
+        foreach ([2, 3] as $index => $qty) {
+            $batch = DB::table('product_batches')->insertGetId(['company_id' => $this->company->id, 'product_id' => $product->id,
+                'batch_no' => 'TEXTILE-'.$index, 'qty' => 0, 'expired_date' => null, 'status' => 'active']);
+            $batches[] = $batch;
+            app(InventoryMovementService::class)->receive(new StockMovementCommand(date: '2026-10-03',
+                lines: [new StockLine($product->id, $qty, batchId: $batch, unitCost: 5)], warehouseId: 1, context: $this->context(), userId: 1));
+        }
+        $sale = app(CommercialApplicationService::class)->create('sale', $this->saleData($product, [
+            'items' => [['product_id' => $product->id, 'qty' => 4, 'net_unit_price' => 10]]]), 'combined-return-sale', 1, $this->context());
+        $service = app(ReturnService::class);
+        $pending = $service->create('sale', $sale->id, ['business_date' => '2026-10-04', 'reason' => 'Return combined lots',
+            'note_type' => 'credit', 'adjustment_type' => 'quantity', 'items' => [['line_id' => $sale->productSales->first()->id, 'qty' => 3]]],
+            'combined-return', $this->context(), 1);
+        $note = $service->approve('sale', $pending->id, $this->context(), 1)->load('products');
+        $this->assertEquals([2, 1], array_column($note->products->first()->stock_details_json['chunks'], 'qty'));
+        $this->assertEquals([2, 2], DB::table('product_batches')->whereIn('id', $batches)->orderBy('id')->pluck('qty')->all());
+        $this->assertEquals(4, $product->fresh()->qty);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

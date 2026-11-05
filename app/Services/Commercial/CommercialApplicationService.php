@@ -167,6 +167,14 @@ class CommercialApplicationService
                 ? app(SaleService::class)->createSale($data, $actor, $context, deferPosting: true)
                 : app(PurchaseService::class)->createPurchase($data, $actor, $context, deferPosting: true);
             $attributes = $this->attributes($data);
+            if ($replacesId) {
+                $original = ($kind === 'sale' ? Sale::class : Purchase::class)::visibleIn($context)->findOrFail($replacesId);
+                $relation = $kind === 'sale' ? 'productSales' : 'productPurchases';
+                $snapshot = fn ($lines) => $lines->map(fn ($line) => ['product_id' => $line->product_id,
+                    'name' => $line->product?->name, 'qty' => (float) $line->qty])->all();
+                $attributes['item_change_history'] = ['original_bill' => $original->reference_no,
+                    'before' => $snapshot($original->$relation), 'after' => $snapshot($document->$relation)];
+            }
             // Cash discount terms typed on the bill win; otherwise the party master's standard terms apply.
             if (!isset($attributes['cash_discount_percent']) && (float) ($party->cd_percent ?? 0) > 0) {
                 $attributes += ['cash_discount_percent' => (float) $party->cd_percent, 'cash_discount_days' => (int) ($party->cd_days ?? 0)];

@@ -16,14 +16,9 @@
         ['key' => 'category', 'permission' => 'categories-index', 'route' => 'category.index', 'icon' => 'dripicons-folder', 'label' => __('db.category')],
         ['key' => 'brand', 'permission' => 'brand', 'route' => 'brand.index', 'icon' => 'dripicons-tag', 'label' => __('db.Brand')],
         ['key' => 'unit', 'permission' => 'unit', 'route' => 'unit.index', 'icon' => 'dripicons-scale', 'label' => __('db.Unit')],
-        ['key' => 'stock-by-lot', 'permission' => 'products-index', 'route' => 'inventory-reports.stock-by-lot', 'icon' => 'dripicons-stack', 'label' => 'Stock by lot'],
-        ['key' => 'adjustment', 'permission' => 'adjustment', 'route' => 'qty_adjustment.index', 'icon' => 'dripicons-swap', 'label' => 'Adjustments'],
-        ['key' => 'stock-count', 'permission' => 'stock_count', 'route' => 'stock-count.index', 'icon' => 'dripicons-checklist', 'label' => __('db.Stock Count')],
         ['key' => 'barcode', 'permission' => 'print_barcode', 'route' => 'product.printBarcode', 'icon' => 'dripicons-print', 'label' => __('db.print_barcode')],
     ];
-    if (in_array('inventory.damage_stock', $capabilities, true)) {
-        $links[] = ['key' => 'damage', 'permission' => 'adjustment', 'route' => 'damage-stock.index', 'icon' => 'dripicons-warning', 'label' => 'Damage'];
-    }
+    $inventorySections = app(\App\Services\Platform\InventoryNavigation::class)->sections(new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null));
 @endphp
 @once
     @push('css')
@@ -41,6 +36,10 @@
                 <li><a class="nav-link {{ $active === $link['key'] ? 'active' : '' }}" href="{{ route($link['route']) }}" @if($active === $link['key']) aria-current="page" @endif><i class="{{ $link['icon'] }}"></i> {{ $link['label'] }}</a></li>
             @endif
         @endforeach
+        @if($inventorySections)
+            @php $inventoryEntry = $inventorySections['stock'] ?? reset($inventorySections); @endphp
+            <li><a class="nav-link" href="{{ $inventoryEntry['url'] }}"><i class="dripicons-box"></i> Inventory</a></li>
+        @endif
         @if(config('operations.enabled') && in_array('operations.job_work', $capabilities, true))
             <li><a class="nav-link {{ $active === 'job-work' ? 'active' : '' }}" href="{{ url('/operations/job-work') }}"><i class="dripicons-network-3"></i> Job Work</a></li>
         @endif

@@ -69,7 +69,8 @@ class SharedCommercialTest extends CommercialTestCase
         $this->assertEquals(18, $product->fresh()->qty);
         $this->assertSame(1, DB::table('sales')->count());
         $this->assertSame(1, DB::table('stock_movements')->count());
-        $this->assertSame(1, DB::table('journal_entries')->count());
+        $this->assertSame(2, DB::table('journal_entries')->count());
+        $this->assertSame('receipt', DB::table('journal_entries')->where('reference_type', 'payment')->value('voucher_type'));
         $this->assertSame(1, DB::table('payments')->count());
         $this->assertEquals(15, DB::table('account_open_items')->sum('open_amount'));
         Event::assertDispatchedTimes(CommercialDocumentPosted::class, 1);
@@ -148,7 +149,7 @@ class SharedCommercialTest extends CommercialTestCase
         app(PurchaseReceiptService::class)->receive($purchase, $receipt, 'receipt', $this->context());
         $this->assertEquals(12, DB::table('stock_movement_lines')->sum('value'));
         $this->assertEquals(8, DB::table('account_open_items')->sum('open_amount'));
-        $this->assertSame(2, DB::table('journal_entries')->count());
+        $this->assertSame(3, DB::table('journal_entries')->count());
         $this->assertEquals(2, $product->fresh()->qty);
         $this->assertEquals(0, \App\Models\Accounting\ChartOfAccount::where('sub_type', 'goods_in_transit')->value('current_balance'));
     }

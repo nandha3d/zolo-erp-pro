@@ -51,7 +51,7 @@
                     <label for="voucher-type" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Voucher Type</label>
                     <select id="voucher-type" name="voucher_type" class="form-control form-control-sm u-h-32px u-fs-12px">
                         @foreach(['contra' => 'Contra (F4)', 'payment' => 'Payment (F5)', 'receipt' => 'Receipt (F6)', 'journal' => 'Journal (F7)'] as $value => $label)
-                            <option value="{{ $value }}" @selected(old('voucher_type', 'journal') === $value)>{{ $label }}</option>
+                            <option value="{{ $value }}" @selected(old('voucher_type', request('voucher_type', 'journal')) === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -237,7 +237,7 @@
                 <tbody>
                     @forelse($entries as $entry)
                         <tr>
-                            <td class="font-weight-bold font-monospace text-primary">{{ $entry->entry_number }}</td>
+                            <td class="font-weight-bold font-monospace text-primary"><a href="{{ route('accounting.vouchers.show', $entry->id) }}">{{ $entry->entry_number }}</a><small class="d-block">{{ ucfirst($entry->voucher_type ?? $entry->reference_type) }}</small></td>
                             <td>{{ $entry->entry_date->format('Y-m-d') }}</td>
                             <td>{{ $entry->description }}</td>
                             <td class="text-right font-monospace font-weight-600">

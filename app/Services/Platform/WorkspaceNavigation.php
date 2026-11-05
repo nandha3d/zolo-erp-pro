@@ -24,6 +24,7 @@ class WorkspaceNavigation
         foreach ($definitions as [$label, $url, $capability, $permission, $gate]) {
             if (($gate === null || config($gate)) && app(CapabilityService::class)->enabled($capability, $context)
                 && in_array($permission, $allowed, true)) {
+                if ($label === 'Inventory' && app(CapabilityService::class)->enabled('inventory.lot_report', $context)) $url = '/inventory-reports/stock-by-lot';
                 $items[] = compact('label', 'url');
             }
         }

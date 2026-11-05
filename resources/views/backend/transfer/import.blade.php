@@ -2,7 +2,11 @@
 
 <x-error-message key="not_permitted" />
 
-<section class="forms">
+<x-inventory-command-bar active="transfers" view="import">
+    @if((new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null))->allows('transfers-index'))<a href="{{ route('transfers.index') }}" class="btn btn-light">Back to transfers</a>@endif
+</x-inventory-command-bar>
+
+<section class="forms inventory-form-workspace">
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-12">

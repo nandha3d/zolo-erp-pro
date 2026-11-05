@@ -1,5 +1,6 @@
 @extends('backend.layout.main')
 @section('content')
+<x-inventory-command-bar active="corrections" view="count"></x-inventory-command-bar>
 <section class="forms">
     <div class="container-fluid">
         <div class="row">

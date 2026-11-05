@@ -490,7 +490,8 @@ class MaterialDocumentService
         }
         return app(AccountingService::class)->postJournalEntry(['entry_date' => $date, 'reference_type' => $this->type($document),
             'reference_id' => $document->id, 'reference_no' => $this->number($document), 'posting_key' => $key,
-            'created_by' => $actor, 'description' => $description], $lines, $context);
+            'created_by' => $actor, 'description' => mb_substr($description.'. Items: '.$document->items()
+                ->with('product')->get()->map(fn ($item) => $item->product?->name.' ('.$item->qty.')')->implode(', '), 0, 2000)], $lines, $context);
     }
 
     private function assertContext(GoodsReceivedNote|DeliveryChallan $document, CompanyContext $context): void

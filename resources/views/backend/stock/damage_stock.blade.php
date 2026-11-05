@@ -8,7 +8,7 @@
     </div>
 @endif
 
-<x-product-command-bar active="damage"></x-product-command-bar>
+<x-inventory-command-bar active="corrections" view="damage"></x-inventory-command-bar>
 <section class="forms">
     <div class="container-fluid">
         <div class="row align-items-center mb-4">

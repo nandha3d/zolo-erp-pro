@@ -1,7 +1,7 @@
 @extends('backend.layout.main')
 @section('content')
 @include('backend.partials.document-entry-layout')
-<x-product-command-bar active="adjustment"></x-product-command-bar>
+<x-inventory-command-bar active="corrections" view="adjustment"></x-inventory-command-bar>
 <section class="forms classic-document-workspace document-compact-workspace">
     <div class="container-fluid">
         <div class="row">
