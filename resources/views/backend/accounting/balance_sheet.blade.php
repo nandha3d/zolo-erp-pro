@@ -5,41 +5,26 @@
 
 <section class="bs-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar d-print-none">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-document text-primary"></i> Balance Sheet Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Financial Position (Assets = Liabilities + Equity)</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.trial-balance') }}"><i class="dripicons-scale"></i> Trial Balance</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.profit-loss') }}"><i class="dripicons-graph-line"></i> P&amp;L</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="balance-sheet" title="Balance sheet" purpose="Review assets, liabilities and equity on the selected date.">
             <button type="button" class="btn btn-outline-secondary btn-action-pill" data-erp-print>
                 <i class="dripicons-print"></i> Print / PDF
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Card -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.balance-sheet') }}" method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-6 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">As of Date</label>
-                    <input type="date" name="as_of_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $asOfDate }}">
+                    <label for="balance-sheet-field-1" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">As of Date</label>
+                    <input id="balance-sheet-field-1" type="date" name="as_of_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $asOfDate }}">
                 </div>
                 <div class="col-md-6 d-flex u-p-0-6px">
                     @include('backend.accounting.partials.branch_scope')
                     <button type="submit" class="btn btn-sm btn-primary flex-grow-1 mr-2 u-h-32px u-fs-12px u-fw-600">
                         <i class="dripicons-search"></i> Update Statement
                     </button>
-                    <a href="{{ route('accounting.balance-sheet') }}" class="btn btn-sm btn-outline-secondary u-h-32px u-fs-12px u-d-inline-flex u-items-center">Today</a>
+                    <a href="{{ route('accounting.balance-sheet') }}" class="btn btn-sm btn-outline-secondary u-h-32px u-fs-12px u-d-inline-flex u-items-center">Reset date</a>
                 </div>
             </div>
         </form>
@@ -115,6 +100,7 @@
                         <span class="badge badge-primary u-fs-10px">Resources Owned</span>
                     </div>
                     <table class="bs-table mb-4">
+                <caption class="sr-only">Balance sheet</caption>
                         <tbody>
                             @forelse($report['assets'] as $asset)
                                 <tr>
@@ -150,6 +136,7 @@
                         <span class="badge badge-danger u-fs-10px">Obligations Owed</span>
                     </div>
                     <table class="bs-table mb-3">
+                <caption class="sr-only">Balance sheet</caption>
                         <tbody>
                             @forelse($report['liabilities'] as $liab)
                                 <tr>
@@ -180,6 +167,7 @@
                         <span class="badge badge-info u-fs-10px">Owner Capital &amp; Earnings</span>
                     </div>
                     <table class="bs-table mb-2">
+                <caption class="sr-only">Balance sheet</caption>
                         <tbody>
                             @forelse($report['equity'] as $eq)
                                 <tr>

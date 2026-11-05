@@ -4,26 +4,13 @@
 
 <section class="ageing-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-clock text-primary"></i> Receivables &amp; Payables Ageing</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Maturity Bucketing &amp; Outstanding Debt Analysis</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.vouchers') }}"><i class="dripicons-home"></i> Voucher Hub</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.ageing') }}"><i class="dripicons-clock"></i> Ageing</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.day-book') }}"><i class="dripicons-calendar"></i> Day Book</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.cash-book') }}"><i class="dripicons-wallet"></i> Cash Book</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="ageing" title="Receivables &amp; payables" purpose="Review outstanding customer or supplier balances, overdue amounts and branch reconciliation.">
             <a href="{{ route('accounting.collections') }}" class="btn btn-outline-primary btn-sm">Collections</a>
             <a href="{{ request()->fullUrlWithQuery(['export' => 'csv']) }}" class="btn btn-outline-secondary btn-sm">Export all filtered rows</a>
-            <button data-erp-print class="btn btn-outline-secondary btn-sm u-h-28px u-fs-11px">
+            <button type="button" data-erp-print class="btn btn-outline-secondary btn-sm u-h-28px u-fs-11px">
                 <i class="dripicons-print"></i> Print Report
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Card -->
     <div class="desk-filter-card">
@@ -42,8 +29,9 @@
                 </div>
                 <div class="col-md-4 d-flex u-p-0-6px">
                     <button class="btn btn-primary btn-sm flex-grow-1 u-h-32px u-fs-12px u-fw-600" type="submit">
-                        <i class="dripicons-search"></i> Show Ageing
+                        <i class="dripicons-search"></i> Apply filters
                     </button>
+                    <a href="{{ route('accounting.ageing') }}" class="btn btn-sm btn-outline-secondary ml-1">Reset</a>
                 </div>
             </div>
             <div class="row mt-2">
@@ -83,6 +71,7 @@
     <div class="desk-card-wrapper">
         <div class="table-responsive">
             <table class="table ageing-table mb-0">
+                <caption class="sr-only">Receivables &amp; payables</caption>
                 <thead>
                     <tr>
                         <th scope="col">Document / Bill</th>

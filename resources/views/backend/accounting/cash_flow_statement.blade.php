@@ -4,53 +4,41 @@
 
 <section class="cf-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar d-print-none">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-pulse text-primary"></i> Statement of Cash Flows</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> GAAP Operating, Investing &amp; Financing Cash Analysis</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.trial-balance') }}"><i class="dripicons-scale"></i> Trial Balance</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.profit-loss') }}"><i class="dripicons-graph-line"></i> P&amp;L</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
-        </ul>
-        <div class="comm-actions">
-            <button data-erp-print class="btn btn-outline-secondary btn-action-pill">
+    <x-accounting-command-bar active="cash-flow" title="Cash flow statement" purpose="Review total movements across cash and bank accounts. Activity classifications are not yet available.">
+            <button type="button" data-erp-print class="btn btn-outline-secondary btn-action-pill">
                 <i class="dripicons-print"></i> Print Statement
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Bar -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.cash-flow') }}" method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">From Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
+                    <label for="cash-flow-statement-field-1" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">From Date</label>
+                    <input id="cash-flow-statement-field-1" type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
                 </div>
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">To Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
+                    <label for="cash-flow-statement-field-2" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">To Date</label>
+                    <input id="cash-flow-statement-field-2" type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
                 </div>
-                <div class="col-md-4 u-p-0-6px">
-                    <button type="submit" class="btn btn-primary btn-sm w-100 u-h-32px u-fs-12px u-fw-600">
-                        <i class="dripicons-search"></i> Generate Cash Flow
+                <div class="col-md-4 d-flex align-items-end u-gap-4px u-p-0-6px">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1 u-h-32px u-fs-12px u-fw-600">
+                        <i class="dripicons-search"></i> Apply filters
                     </button>
+                    <a href="{{ route('accounting.cash-flow') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
                 </div>
             </div>
         </form>
     </div>
 
+    <div class="alert alert-info accounting-report-note" role="note"><strong>Cash movement summary:</strong> These totals include all cash and bank postings, including transfers between your accounts. Transfers increase both movement totals but cancel in the net change. Investing and financing classifications are not calculated.</div>
+
     <!-- KPI Summary Strip -->
     <div class="kpi-summary-strip">
         <div class="kpi-card">
             <div>
-                <div class="kpi-label">OPERATING INFLOWS</div>
+                <div class="kpi-label">CASH / BANK DEBITS</div>
                 <div class="kpi-number u-c-success">+ ₹ {{ number_format($operatingDebits, 2) }}</div>
             </div>
             <div class="z-icon-tile z-tone-success">
@@ -59,7 +47,7 @@
         </div>
         <div class="kpi-card">
             <div>
-                <div class="kpi-label">OPERATING OUTFLOWS</div>
+                <div class="kpi-label">CASH / BANK CREDITS</div>
                 <div class="kpi-number u-c-danger">- ₹ {{ number_format($operatingCredits, 2) }}</div>
             </div>
             <div class="z-icon-tile z-tone-danger">
@@ -68,7 +56,7 @@
         </div>
         <div class="kpi-card">
             <div>
-                <div class="kpi-label">NET OPERATING CASH</div>
+                <div class="kpi-label">NET MOVEMENT</div>
                 <div class="kpi-number {{ $netOperatingCash >= 0 ? 'u-c-success' : 'u-c-danger' }}">
                     {{ $netOperatingCash >= 0 ? '+' : '' }}₹ {{ number_format($netOperatingCash, 2) }}
                 </div>
@@ -79,7 +67,7 @@
         </div>
         <div class="kpi-card">
             <div>
-                <div class="kpi-label">NET CASH FLOW</div>
+                <div class="kpi-label">NET CHANGE IN CASH / BANK</div>
                 <div class="kpi-number {{ $netCashFlow >= 0 ? 'u-c-success' : 'u-c-danger' }}">
                     {{ $netCashFlow >= 0 ? '+' : '' }}₹ {{ number_format($netCashFlow, 2) }}
                 </div>
@@ -94,27 +82,28 @@
     <div class="desk-card-wrapper">
         <div class="table-responsive">
             <table class="table cf-table mb-0">
+                <caption class="sr-only">Cash flow statement</caption>
                 <thead>
                     <tr>
-                        <th>Cash Flow Activity Category</th>
-                        <th class="text-right u-w-250px">Amount</th>
+                        <th scope="col">Cash and bank activity</th>
+                        <th scope="col" class="text-right u-w-250px">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- 1. Operating Activities -->
                     <tr class="u-bg-surface-3 u-fw-700 u-tt-uppercase">
-                        <td colspan="2"><i class="dripicons-pulse text-primary mr-1"></i> 1. Cash Flows from Operating Activities</td>
+                        <td colspan="2"><i class="dripicons-pulse text-primary mr-1"></i> 1. All cash and bank movements (unclassified)</td>
                     </tr>
                     <tr>
-                        <td class="pl-4 font-weight-500">Cash Received from Customers &amp; Sales</td>
+                        <td class="pl-4 font-weight-500">Total debits to cash and bank accounts</td>
                         <td class="text-right text-success font-weight-bold font-monospace">+ ₹ {{ number_format($operatingDebits, 2) }}</td>
                     </tr>
                     <tr>
-                        <td class="pl-4 font-weight-500">Cash Paid to Suppliers, Inventory &amp; Operating Expenses</td>
+                        <td class="pl-4 font-weight-500">Total credits to cash and bank accounts</td>
                         <td class="text-right text-danger font-weight-bold font-monospace">- ₹ {{ number_format($operatingCredits, 2) }}</td>
                     </tr>
                     <tr class="u-bg-surface-2 u-fw-700">
-                        <td class="pl-3 font-weight-bold">Net Cash Provided by (Used in) Operating Activities</td>
+                        <td class="pl-3 font-weight-bold">Net movement across cash and bank accounts</td>
                         <td class="text-right font-monospace font-weight-bold {{ $netOperatingCash >= 0 ? 'text-success' : 'text-danger' }}">
                             {{ $netOperatingCash >= 0 ? '+' : '' }}₹ {{ number_format($netOperatingCash, 2) }}
                         </td>
@@ -122,28 +111,28 @@
 
                     <!-- 2. Investing Activities -->
                     <tr class="u-bg-surface-3 u-fw-700 u-tt-uppercase">
-                        <td colspan="2"><i class="dripicons-graph-pie text-info mr-1"></i> 2. Cash Flows from Investing Activities</td>
+                        <td colspan="2"><i class="dripicons-graph-pie text-info mr-1"></i> 2. Investing classification</td>
                     </tr>
                     <tr>
-                        <td class="pl-4 font-weight-500">Capital Equipment &amp; Fixed Asset Acquisitions</td>
-                        <td class="text-right font-weight-bold text-muted font-monospace">₹ 0.00</td>
+                        <td class="pl-4 font-weight-500">Capital equipment and fixed asset payments</td>
+                        <td class="text-right font-weight-bold text-muted font-monospace">Not calculated</td>
                     </tr>
                     <tr class="u-bg-surface-2 u-fw-700">
-                        <td class="pl-3 font-weight-bold">Net Cash Provided by (Used in) Investing Activities</td>
-                        <td class="text-right text-muted font-monospace font-weight-bold">₹ 0.00</td>
+                        <td class="pl-3 font-weight-bold">Investing subtotal</td>
+                        <td class="text-right text-muted font-monospace font-weight-bold">Not calculated</td>
                     </tr>
 
                     <!-- 3. Financing Activities -->
                     <tr class="u-bg-surface-3 u-fw-700 u-tt-uppercase">
-                        <td colspan="2"><i class="dripicons-wallet text-warning mr-1"></i> 3. Cash Flows from Financing Activities</td>
+                        <td colspan="2"><i class="dripicons-wallet text-warning mr-1"></i> 3. Financing classification</td>
                     </tr>
                     <tr>
-                        <td class="pl-4 font-weight-500">Owner Equity Contributions / Loan Borrowings</td>
-                        <td class="text-right font-weight-bold text-muted font-monospace">₹ 0.00</td>
+                        <td class="pl-4 font-weight-500">Owner contributions and loan movements</td>
+                        <td class="text-right font-weight-bold text-muted font-monospace">Not calculated</td>
                     </tr>
                     <tr class="u-bg-surface-2 u-fw-700">
-                        <td class="pl-3 font-weight-bold">Net Cash Provided by (Used in) Financing Activities</td>
-                        <td class="text-right text-muted font-monospace font-weight-bold">₹ 0.00</td>
+                        <td class="pl-3 font-weight-bold">Financing subtotal</td>
+                        <td class="text-right text-muted font-monospace font-weight-bold">Not calculated</td>
                     </tr>
                 </tbody>
                 <tfoot>

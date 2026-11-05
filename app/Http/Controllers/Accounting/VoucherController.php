@@ -28,7 +28,18 @@ class VoucherController extends Controller
         $customers = \App\Models\Customer::forCompany($context)->orderBy('name')->get(['id', 'name']);
         $suppliers = \App\Models\Supplier::forCompany($context)->orderBy('name')->get(['id', 'name']);
         $openItems = AccountOpenItem::forCompany($context)->where('branch_id', $context->branchId)->where('status', 'open')->orderBy('document_date')->get();
-        $entries = app(FinancialReportService::class)->dayBook($context)['entries'];
+        $voucherType = $request->query('voucher_type');
+        $reports = app(FinancialReportService::class);
+        if (in_array($voucherType, ['contra', 'payment', 'receipt', 'journal'], true)) {
+            [$start, $end] = $reports->range($context);
+            $query = $reports->scopeEntries(JournalEntry::withOwnedItems($context), $context);
+            $entries = $query->where('voucher_type', $voucherType)->whereBetween('entry_date', [$start, $end])
+                ->orderByDesc('entry_date')->orderByDesc('id')->paginate(25)->withQueryString();
+        } else {
+            $entries = $reports->dayBook($context)['entries'];
+        }
+        $branchId = $context->branchId;
+        $reversedIds = JournalEntry::forCompany($context)->whereIn('reversal_of_id', $entries->pluck('id'))->pluck('reversal_of_id')->all();
         $year = FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
         $canManage = app(CompanyContextResolver::class)->canManageFinancialYears($request->user()->id, $context->companyId);
         $legacyAccounts = \App\Models\Account::forCompany($context)->orderBy('name')->get();
@@ -40,7 +51,7 @@ class VoucherController extends Controller
         }
         $periodEvents = DB::table('accounting_period_events')->where('company_id', $context->companyId)
             ->where('financial_year_id', $context->financialYearId)->orderByDesc('id')->limit(10)->get();
-        return view('backend.accounting.vouchers', compact('accounts', 'customers', 'suppliers', 'openItems', 'entries', 'year', 'canManage', 'canPost', 'legacyAccounts', 'periodEvents'));
+        return view('backend.accounting.vouchers', compact('accounts', 'customers', 'suppliers', 'openItems', 'entries', 'year', 'canManage', 'canPost', 'legacyAccounts', 'periodEvents', 'branchId', 'reversedIds'));
     }
 
     public function store(Request $request)
@@ -52,8 +63,7 @@ class VoucherController extends Controller
     {
         $context = app(CompanyContextResolver::class)->forActor();
         app(\App\Services\Commercial\CommercialPermission::class)->assert('accounting.reports.view', $context, $request->user()->id);
-        $entry = JournalEntry::forCompany($context)->where('branch_id', $context->branchId)
-            ->where('financial_year_id', $context->financialYearId)->with('items.account')->findOrFail($id);
+        $entry = app(FinancialReportService::class)->scopeEntries(JournalEntry::withOwnedItems($context), $context)->findOrFail($id);
         $bill = in_array($entry->reference_type, ['sale', 'purchase'], true)
             ? ($entry->reference_type === 'sale' ? \App\Models\Sale::class : \App\Models\Purchase::class)::visibleIn($context)->find($entry->reference_id) : null;
         $original = $bill?->replaces_id ? $bill::visibleIn($context)->find($bill->replaces_id) : null;

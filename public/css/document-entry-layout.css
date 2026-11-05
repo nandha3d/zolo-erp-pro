@@ -115,30 +115,6 @@
     #exchange-form .card-footer .btn { padding: 4px 12px !important; }
     .classic-document-workspace .totals { position: static; margin-bottom: 0; font-size: 12px; }
     .classic-document-workspace .totals td { padding: 6px 9px; }
-    .optech-voucher-wrapper { flex: 1; min-height: 0 !important; display: flex; flex-direction: column; padding: 8px 12px !important; }
-    .optech-voucher-wrapper > .d-flex { flex-shrink: 0; gap: 8px; }
-    .optech-voucher-wrapper .optech-shortcut-banner { flex-wrap: wrap; gap: 4px 8px; }
-    .optech-voucher-wrapper .optech-shortcut-banner > span { white-space: nowrap; margin-right: 0 !important; }
-    #voucherEntryForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    #voucherEntryForm > .card { flex: 1; min-height: 100px; margin-bottom: 8px !important; }
-    #voucherEntryForm > .card > .table-responsive { flex: 1 1 0 !important; min-height: 0 !important; overflow: auto; }
-    #voucherEntryForm .optech-header-card, #voucherEntryForm .optech-footer-card { padding: 8px 12px !important; }
-    #voucherEntryForm .optech-header-card { margin-bottom: 8px !important; }
-    #voucherEntryForm .form-control { min-height: 28px !important; height: 28px !important; }
-    #voucherEntryForm input[type=date] { padding: 3px 4px !important; font-size: 12px !important; }
-    #voucherEntryForm textarea.form-control { height: 54px !important; }
-    #voucherEntryForm .optech-vch-tabs .btn { min-height: 28px !important; height: 28px !important; padding: 3px 8px !important; }
-    #voucherEntryForm .optech-grid-table th, #voucherEntryForm .optech-grid-table td { padding: 5px 8px !important; }
-    #voucherEntryForm .optech-grid-table { width: 100%; min-width: 0 !important; table-layout: fixed; }
-    #voucherEntryForm .optech-grid-table th { white-space: normal !important; overflow-wrap: anywhere; font-size: 11px !important; letter-spacing: 0 !important; }
-    #voucherEntryForm .optech-grid-table th:first-child { width: 9% !important; }
-    #voucherEntryForm .optech-grid-table th:nth-child(2) { width: 34% !important; }
-    #voucherEntryForm .optech-grid-table th:nth-child(3) { width: 25% !important; }
-    #voucherEntryForm .optech-grid-table th:nth-child(4), #voucherEntryForm .optech-grid-table th:nth-child(5) { width: 13% !important; }
-    #voucherEntryForm .optech-grid-table th:last-child { width: auto !important; }
-    #voucherEntryForm .optech-grid-table input, #voucherEntryForm .optech-grid-table select { width: 100%; min-width: 0 !important; }
-    #voucherEntryForm .optech-grid-table .bootstrap-select { width: 100% !important; min-width: 0 !important; }
-    #voucherEntryForm .optech-grid-table .bootstrap-select > .dropdown-toggle { min-height: 28px !important; height: 28px !important; padding: 3px 7px !important; }
     body.document-entry-screen .compliance-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 6px 12px; }
     #return-form { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
     #return-form > .panel { margin: 0; padding: 8px 10px; }

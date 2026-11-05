@@ -5,38 +5,23 @@
 
 <section class="tb-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar d-print-none">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-scale text-primary"></i> Trial Balance Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> General Ledger Ending Balances Verification</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.trial-balance') }}"><i class="dripicons-scale"></i> Trial Balance</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.profit-loss') }}"><i class="dripicons-graph-line"></i> P&amp;L</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="trial-balance" title="Trial balance" purpose="Compare debit and credit balances for the selected period. A balanced report does not confirm every transaction is correct.">
             <button type="button" class="btn btn-outline-secondary btn-action-pill" data-erp-print>
                 <i class="dripicons-print"></i> Print / PDF
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Card -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.trial-balance') }}" method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
+                    <label for="trial-balance-field-1" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
+                    <input id="trial-balance-field-1" type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
                 </div>
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
+                    <label for="trial-balance-field-2" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
+                    <input id="trial-balance-field-2" type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
                 </div>
                 <div class="col-md-4 d-flex u-p-0-6px">
                     @include('backend.accounting.partials.branch_scope')
@@ -125,13 +110,14 @@
         </div>
         <div class="table-responsive">
             <table class="table tb-grid-table mb-0">
+                <caption class="sr-only">Trial balance</caption>
                 <thead>
                     <tr>
-                        <th class="u-w-15pct">Account Code</th>
-                        <th>Account Name</th>
-                        <th class="u-w-15pct">Type</th>
-                        <th class="text-right u-w-20pct">Debit Balance</th>
-                        <th class="text-right u-w-20pct">Credit Balance</th>
+                        <th scope="col" class="u-w-15pct">Account Code</th>
+                        <th scope="col">Account Name</th>
+                        <th scope="col" class="u-w-15pct">Type</th>
+                        <th scope="col" class="text-right u-w-20pct">Debit Balance</th>
+                        <th scope="col" class="text-right u-w-20pct">Credit Balance</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -5,34 +5,19 @@
 
 <section class="ledger-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar d-print-none">
-        <div class="comm-title-group">
-            <h1><i class="dripicons-view-thumb text-primary"></i> General Ledger Command Center</h1>
-            <span class="comm-title-badge"><i class="dripicons-tag"></i> Chronological Audit &amp; Running Balance</span>
-        </div>
-        <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ route('accounting.voucher.entry') }}"><i class="dripicons-pencil"></i> Voucher Entry · F9</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.journal-entries') }}"><i class="dripicons-align-justify"></i> Journal Entries</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.coa') }}"><i class="dripicons-network"></i> Chart of Accounts</a></li>
-            <li><a class="nav-link active" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-view-thumb"></i> General Ledger</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.trial-balance') }}"><i class="dripicons-scale"></i> Trial Balance</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.profit-loss') }}"><i class="dripicons-graph-line"></i> P&amp;L</a></li>
-            <li><a class="nav-link" href="{{ route('accounting.balance-sheet') }}"><i class="dripicons-document"></i> Balance Sheet</a></li>
-        </ul>
-        <div class="comm-actions">
+    <x-accounting-command-bar active="ledger" title="General ledger" purpose="Choose an account to review its opening balance, transactions and running balance.">
             <button type="button" class="btn btn-outline-secondary btn-action-pill" data-erp-print>
                 <i class="dripicons-print"></i> Print / PDF
             </button>
-        </div>
-    </div>
+    </x-accounting-command-bar>
 
     <!-- Filter Card -->
     <div class="desk-filter-card d-print-none">
         <form action="{{ route('accounting.general-ledger') }}" method="GET" class="m-0">
             <div class="row align-items-end u-m-0-6px">
                 <div class="col-md-4 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Select Account</label>
-                    <select name="account_id" class="form-control form-control-sm u-h-32px u-fs-12px" required>
+                    <label for="general-ledger-field-1" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Select Account</label>
+                    <select id="general-ledger-field-1" name="account_id" class="form-control form-control-sm u-h-32px u-fs-12px" required>
                         @foreach($accounts as $acc)
                             <option value="{{ $acc->id }}" {{ $accountId == $acc->id ? 'selected' : '' }}>
                                 {{ $acc->code }} - {{ $acc->name }} ({{ ucfirst($acc->type) }})
@@ -41,17 +26,18 @@
                     </select>
                 </div>
                 <div class="col-md-3 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
+                    <label for="general-ledger-field-2" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">Start Date</label>
+                    <input id="general-ledger-field-2" type="date" name="start_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $startDate }}">
                 </div>
                 <div class="col-md-3 u-p-0-6px">
-                    <label class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
+                    <label for="general-ledger-field-3" class="font-weight-600 mb-1 u-fs-11px u-tt-uppercase u-c-text-muted">End Date</label>
+                    <input id="general-ledger-field-3" type="date" name="end_date" class="form-control form-control-sm u-h-32px u-fs-12px" value="{{ $endDate }}">
                 </div>
                 <div class="col-md-2 d-flex u-p-0-6px">
                     <button type="submit" class="btn btn-sm btn-primary flex-grow-1 u-h-32px u-fs-12px u-fw-600">
-                        <i class="dripicons-search"></i> Search
+                        <i class="dripicons-search"></i> Apply filters
                     </button>
+                    <a href="{{ route('accounting.general-ledger', ['account_id' => $accountId]) }}" class="btn btn-sm btn-outline-secondary ml-1">Reset dates</a>
                 </div>
             </div>
         </form>
@@ -60,7 +46,7 @@
     @if($report)
         <div class="d-flex justify-content-between align-items-center mb-2 px-1">
             <a href="{{ route('accounting.monthly-ledger', $accountId) }}" class="btn btn-sm btn-outline-info font-weight-bold u-fs-11px u-h-26px u-p-2px-10px">
-                <i class="dripicons-calendar mr-1"></i> View Monthly Breakup
+                <i class="dripicons-calendar mr-1"></i> Monthly Ledger
             </a>
             <div class="text-muted u-fs-11px">
                 Account Type: <span class="badge badge-primary u-tt-uppercase">{{ $report['account']->type }}</span>
@@ -119,15 +105,16 @@
             </div>
             <div class="table-responsive">
                 <table class="table ledger-grid-table mb-0">
+                <caption class="sr-only">General ledger</caption>
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Entry #</th>
-                            <th>Reference</th>
-                            <th>Memo / Description</th>
-                            <th class="text-right">Debit</th>
-                            <th class="text-right">Credit</th>
-                            <th class="text-right">Running Balance</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Entry #</th>
+                            <th scope="col">Reference</th>
+                            <th scope="col">Memo / Description</th>
+                            <th scope="col" class="text-right">Debit</th>
+                            <th scope="col" class="text-right">Credit</th>
+                            <th scope="col" class="text-right">Running Balance</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -173,6 +160,8 @@
                 </table>
             </div>
         </div>
+    @else
+        <div class="desk-card-wrapper text-center py-4" role="status"><h2 class="h6">No account selected</h2><p class="text-muted mb-2">Select an active account to view its ledger. If no accounts are available, review the Chart of Accounts.</p><a href="{{ route('accounting.coa') }}" class="btn btn-outline-primary btn-sm">Chart of Accounts</a></div>
     @endif
 </section>
 
