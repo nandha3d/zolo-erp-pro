@@ -9,7 +9,7 @@
     // Visibility only: a module that is switched off hides its links. Links never fall back to an older page.
     $complianceOn = config('commercial.enabled') && config('compliance.enabled');
     $canMasters = $nav->allows('sidebar_product');
-    $canSelling = $nav->allows('sidebar_sale', 'packing_slip_challan', 'delivery', 'delivery-challans-index', 'quotes-index');
+    $canSelling = $nav->allows('sidebar_sale', 'packing_slip_challan', 'delivery', 'delivery-challans-index', 'quotes-index', 'sale-payment-add');
     $canJobWork = config('operations.enabled') && $nav->has('operations.job_work');
     $canDistribution = (config('commercial.enabled') && $nav->has('sales.route_distribution') && $nav->allows('sales-index')) || $nav->has('operations.water_logistics');
     $canHrm = $nav->has('hrm.enabled') && $nav->allows('sidebar_hrm');
@@ -107,27 +107,21 @@
                 <span>Inventory</span>
             </a>
             <ul id="inventory" class="collapse list-unstyled">
-                @if(config('operations.enabled') && $nav->has('core.inventory') && $nav->allows('products-index'))
-                    <li id="stock-menu"><a href="{{ url('/operations/stock') }}">Stock</a></li>
-                @endif
-                @if($nav->has('inventory.lot_report') && $nav->allows('products-index'))
-                    <li id="stock-by-lot-menu"><a href="{{route('inventory-reports.stock-by-lot')}}" data-keywords="batch">Stock By Lot</a></li>
-                @endif
-                @if($canMasters && $nav->allows('stock_count'))
-                    <li id="stock-count-menu"><a href="{{route('stock-count.index')}}" data-keywords="physical">Stock Count</a></li>
-                @endif
-                @if($canMasters && $nav->allows('adjustment'))
-                    <li id="adjustment-list-menu"><a href="{{route('qty_adjustment.index')}}" data-keywords="damage shrinkage write-off">Stock Adjustments</a></li>
-                @endif
-                @if($canMasters && $nav->has('inventory.damage_stock'))
-                    <li id="damage-stock-menu"><a href="{{route('damage-stock.index')}}">Damage Stock Audit</a></li>
-                @endif
-                @if($nav->allows('transfers-index') && $nav->allows('sidebar_transfer'))
-                    <li id="transfer-list-menu"><a href="{{route('transfers.index')}}" data-keywords="godown warehouse">Transfers</a></li>
-                @endif
-                @if($nav->allows('transfers-import') && $nav->allows('sidebar_transfer'))
-                    <li id="transfer-import-menu"><a href="{{url('transfers/transfer_by_csv')}}" data-keywords="csv">Import Transfers</a></li>
-                @endif
+                @foreach(app(\App\Services\Platform\InventoryNavigation::class)->sections($nav) as $key => $item)
+                    @php
+                        $inventoryActive = match ($key) {
+                            'stock' => request()->is('inventory-reports/*', 'operations/stock*'),
+                            'corrections' => request()->is('stock-count*', 'qty_adjustment*', 'damage-stock*'),
+                            'transfers' => request()->is('transfers*'),
+                        };
+                        $inventoryKeywords = match ($key) {
+                            'stock' => 'stock by lot batch balances warehouse godown',
+                            'corrections' => 'stock count physical stocktake stock adjustments damage shrinkage write-off',
+                            'transfers' => 'import transfers csv godown warehouse',
+                        };
+                    @endphp
+                    <li id="{{ $item['id'] }}" @class(['active' => $inventoryActive])><a href="{{ $item['url'] }}" data-keywords="{{ $inventoryKeywords }}">{{ $item['label'] }}</a></li>
+                @endforeach
             </ul>
         </li>
     @endif
@@ -136,7 +130,7 @@
     @if($nav->allows('sidebar_purchase') || $canSelling)
         <li class="sidebar-heading"><span>Transactions</span></li>
     @endif
-    @if($nav->allows('sidebar_purchase'))
+    @if($nav->allows('sidebar_purchase', 'purchase-payment-add'))
         <li>
             <a href="#purchase" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-card"></i>
@@ -146,6 +140,9 @@
                 @if($nav->allows('purchases-index'))
                     <li id="purchase-list-menu"><a href="{{route('purchases.index')}}" data-keywords="grn purchase">Purchase Bills</a></li>
                     <li><a href="{{ route('purchases.index', ['orders' => 1]) }}" data-keywords="po">Purchase Orders</a></li>
+                @endif
+                @if($nav->allows('purchase-payment-add'))
+                    <li id="purchase-payment-menu"><a href="{{ route('buying.payments') }}" data-keywords="payment voucher supplier due">Payments &amp; Vouchers</a></li>
                 @endif
                 @if($nav->allows('purchase-return-index'))
                     <li id="purchase-return-menu"><a href="{{ route('purchases.index', ['returns' => 1]) }}">Purchase Returns &amp; Debit Notes</a></li>
@@ -166,6 +163,9 @@
                 @if($nav->allows('sales-index'))
                     <li id="sale-list-menu"><a href="{{route('sales.index')}}" data-keywords="invoice sale">Sales Bills</a></li>
                     @if(config('commercial.enabled'))<li><a href="{{ route('sales.index', ['orders' => 1]) }}" data-keywords="so">Sales Orders</a></li>@endif
+                @endif
+                @if($nav->allows('sale-payment-add'))
+                    <li id="sale-payment-menu"><a href="{{ route('selling.payments') }}" data-keywords="payment receipt customer due">Payments &amp; Receipts</a></li>
                 @endif
                 @if($nav->allows('returns-index'))
                     <li id="sale-return-menu"><a href="{{ route('sales.index', ['returns' => 1]) }}">Sales Returns &amp; Credit Notes</a></li>

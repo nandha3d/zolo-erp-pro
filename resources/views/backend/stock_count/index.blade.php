@@ -3,9 +3,9 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<x-product-command-bar active="stock-count">
+<x-inventory-command-bar active="corrections" view="count">
         <button class="btn btn-info" data-toggle="modal" data-target="#createModal"><i class="dripicons-plus"></i> {{__('db.Count Stock')}} </button>
-</x-product-command-bar>
+</x-inventory-command-bar>
 <section class="product-workspace-view">
     <div class="table-responsive">
         <table id="stock-count-table" class="table stock-count-list">

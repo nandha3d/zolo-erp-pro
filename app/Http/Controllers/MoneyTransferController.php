@@ -15,6 +15,14 @@ class MoneyTransferController extends Controller
 
     public function index()
     {
+        if (config('commercial.enabled')) {
+            $context = app(\App\Services\Platform\CompanyContextResolver::class)->forActor();
+            app(\App\Services\Commercial\CommercialPermission::class)->assert('money-transfer', $context, Auth::id());
+            $lims_money_transfer_all = MoneyTransfer::forCompany($context)->with(['fromAccount', 'toAccount'])->get();
+            $ids = array_column(app(\App\Services\Accounting\SettlementAccountService::class)->options($context), 'id');
+            $lims_account_list = Account::forCompany($context)->whereIn('id', $ids)->get();
+            return view('backend.money_transfer.index', compact('lims_money_transfer_all', 'lims_account_list'));
+        }
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('money-transfer')){
             $lims_money_transfer_all = MoneyTransfer::get();
@@ -32,6 +40,7 @@ class MoneyTransferController extends Controller
 
     public function store(Request $request)
     {
+        abort_if(config('commercial.enabled'), 409, 'Create cash/bank transfers as Contra vouchers in Voucher Hub so both COA ledgers are posted.');
         $data = $request->all();
         \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
             $numberReservation = $this->reserveNumber('money_transfer');
@@ -43,6 +52,7 @@ class MoneyTransferController extends Controller
 
     public function update(Request $request, $id)
     {
+        abort_if(config('commercial.enabled'), 409, 'Legacy transfer history is read-only. Correct posted transfers with a Contra voucher reversal.');
         $data = $request->all();
         MoneyTransfer::find($data['id'])->update($data);
         return redirect()->back()->with('message', __('db.Money transfer updated successfully'));
@@ -50,6 +60,7 @@ class MoneyTransferController extends Controller
 
     public function destroy($id)
     {
+        abort_if(config('commercial.enabled'), 409, 'Legacy transfer history is read-only. Correct posted transfers with a Contra voucher reversal.');
         MoneyTransfer::find($id)->delete();
         return redirect()->back()->with('not_permitted', __('db.Data deleted successfully'));
     }

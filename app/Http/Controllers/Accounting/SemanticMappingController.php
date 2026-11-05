@@ -57,6 +57,7 @@ class SemanticMappingController extends Controller
                 $control = $resolver->role($role);
                 if (in_array($control, ['ar', 'ap', 'cash', 'bank'], true)) {
                     $account->forceFill(['control_type' => $control, 'allow_manual_posting' => !in_array($control, ['ar', 'ap'], true)])->save();
+                    if (in_array($control, ['cash', 'bank'], true)) app(\App\Services\Accounting\SettlementAccountService::class)->syncFromLedger($account, $context);
                 }
                 DB::table('semantic_account_mappings')->where('id', $mapping->id)->where('company_id', $context->companyId)->update([
                     'account_id' => $account->id, 'account_code' => $account->code, 'account_name' => $account->name,

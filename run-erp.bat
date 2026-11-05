@@ -5,7 +5,7 @@ cd /d "%~dp0"
 rem Local dev stack: Laravel Herd PHP + portable MySQL 8.4 in C:\Users\vigne\zolo-mysql-dev (see its README.txt)
 set MYSQL_DIR=C:\Users\vigne\zolo-mysql-dev
 set PHP=%USERPROFILE%\.config\herd\bin\php85\php.exe
-set DB_PORT=3306
+set DB_PORT=3307
 set APP_PORT=8080
 
 echo [1/3] Starting MySQL on 127.0.0.1:%DB_PORT%...

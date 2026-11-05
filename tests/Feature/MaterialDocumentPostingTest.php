@@ -22,6 +22,24 @@ use Tests\Support\CommercialTestCase;
  */
 class MaterialDocumentPostingTest extends CommercialTestCase
 {
+    public function test_editing_grn_product_reverses_old_stock_and_keeps_names_in_accounting_history(): void
+    {
+        $old = $this->stock(0)->forceFill(['name' => 'Old cotton', 'unit_id' => 1]); $old->save();
+        $new = $this->stock(0)->forceFill(['name' => 'New cotton', 'unit_id' => 1]); $new->save();
+        $grn = $this->grn($old, 5);
+        $originalEntry = $grn->journal_entry_id;
+        $this->putJson('/goods-received-notes/'.$grn->id, ['grn_date' => '2026-10-03', 'supplier_id' => 1, 'warehouse_id' => 1,
+            'unit_id' => [1], 'product_id' => [$new->id], 'qty' => [5], 'cost' => [5]])->assertOk();
+        $this->assertEquals(0, $old->fresh()->qty);
+        $this->assertEquals(5, $new->fresh()->qty);
+        $this->assertStringContainsString('Old cotton', DB::table('journal_entries')->where('id', $originalEntry)->value('description'));
+        $this->assertStringContainsString('New cotton', DB::table('journal_entries')->where('id', $grn->fresh()->journal_entry_id)->value('description'));
+        $this->assertNotNull(DB::table('journal_entries')->where('reversal_of_id', $originalEntry)->first());
+        $bill = $this->bill($new, $grn->fresh(), 5, 5, 'bill-new-cotton');
+        $this->assertEquals(5, $new->fresh()->qty, 'GRN conversion must not receive the goods twice.');
+        $this->assertEquals($new->id, $bill->productPurchases->first()->product_id);
+    }
+
     public function test_price_variance_uses_one_held_quantity_pool_for_repeated_sources_and_bill_lines(): void
     {
         foreach ([false, true] as $splitOneSource) {

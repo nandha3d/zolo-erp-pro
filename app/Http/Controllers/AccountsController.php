@@ -25,14 +25,23 @@ class AccountsController extends Controller
 {
     public function index()
     {
+        $context = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $linkedBooks = config('commercial.enabled') && $context;
         $role = Role::find(Auth::user()->role_id);
-        if (!$role->hasPermissionTo('account-index')) {
+        if ($linkedBooks) {
+            app(\App\Services\Commercial\CommercialPermission::class)->assert('account-index', $context, Auth::id());
+        } elseif (!$role->hasPermissionTo('account-index')) {
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
 
-        $lims_account_all = Account::where('is_active', true)->get();
+        $lims_account_all = Account::where('is_active', true)->with('ledger')->get();
 
         foreach ($lims_account_all as $account) {
+            if ($linkedBooks && $account->ledger && (int) $account->ledger->company_id === $context->companyId) {
+                $account->balance = $account->ledger->calculateBalance(null, $context);
+                $account->initial_balance = $account->ledger->opening_balance;
+                continue;
+            }
 
             // -------------------
             // CREDIT
@@ -167,6 +176,16 @@ class AccountsController extends Controller
 
     public function accountStatement(Request $request)
     {
+        $context = $request->attributes->get(\App\Services\Platform\CompanyContext::class);
+        if (config('commercial.enabled') && $context) {
+            app(\App\Services\Commercial\CommercialPermission::class)->assert('account-index', $context, Auth::id());
+            $account = Account::forCompany($context)->with('ledger')->findOrFail($request->account_id);
+            if ($account->ledger && (int) $account->ledger->company_id === $context->companyId) {
+                return redirect()->route('accounting.general-ledger', ['account_id' => $account->chart_of_account_id,
+                    'start_date' => $request->filled('start_date') ? substr(normalize_to_sql_datetime($request->start_date), 0, 10) : null,
+                    'end_date' => $request->filled('end_date') ? substr(normalize_to_sql_datetime($request->end_date), 0, 10) : null]);
+            }
+        }
         $data = $request->all();
 
         $lims_account_data = Account::find($data['account_id']);

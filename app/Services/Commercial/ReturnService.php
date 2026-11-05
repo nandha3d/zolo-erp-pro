@@ -189,7 +189,8 @@ class ReturnService
                 $stock = $this->stockChunks($source, $line, $kind, $qty, $input['stock_line_ids'] ?? [], $context);
                 if ($kind === 'sale' && $disposition === 'restock') {
                     foreach ($stock as $chunk) {
-                        if ($chunk['batch_id'] && DB::table('product_batches')->where('id', $chunk['batch_id'])->value('expired_date') < $data['business_date']) {
+                        $expiry = $chunk['batch_id'] ? DB::table('product_batches')->where('id', $chunk['batch_id'])->value('expired_date') : null;
+                        if ($expiry && $expiry < $data['business_date']) {
                             $this->invalid('disposition', 'Expired batches must enter quarantine.');
                         }
                     }

@@ -12,10 +12,11 @@
     $shown = array_diff_key($quantities, array_flip($zero));
     $oneGodown = $page->pluck('warehouse')->unique()->count() === 1 ? $page->first()->warehouse : null;
 @endphp
-<x-product-command-bar active="stock-by-lot"></x-product-command-bar>
+<x-inventory-command-bar active="stock" view="balances"></x-inventory-command-bar>
 <section id="stock-lot-report" class="product-workspace-view">
 <div class="lot-card">
     <form class="lot-filters" method="get">
+        <div><label for="lot-group">Stock view</label><select id="lot-group" name="group_by" class="form-control"><option value="product" @selected(($filters['group_by'] ?? 'product') === 'product')>Combined by product</option><option value="lot" @selected(($filters['group_by'] ?? '') === 'lot')>Individual lots</option></select></div>
         <div><label for="lot-from">From</label><input id="lot-from" type="date" name="from" class="form-control f-date" value="{{ $filters['from'] }}" required></div>
         <div><label for="lot-to">To</label><input id="lot-to" type="date" name="to" class="form-control f-date" value="{{ $filters['to'] }}" required></div>
         <div><label for="lot-product">Product</label><select id="lot-product" name="product_id" class="form-control f-pick"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected(($filters['product_id'] ?? '') == $product->id)>{{ $product->name }}</option>@endforeach</select></div>
@@ -35,7 +36,7 @@
         </caption>
         <thead><tr><th>Product</th><th>Lot</th>@unless($oneGodown)<th>Warehouse / Godown</th>@endunless<th>Unit</th>@foreach($shown as $label)<th class="text-right">{{ $label }}</th>@endforeach</tr></thead>
         <tbody>@forelse($rows as $row)<tr>
-            <td class="lot-product" title="{{ $row->product }} {{ $row->product_code }}">{{ $row->product }}<small>{{ $row->product_code }}</small></td>
+            <td class="lot-product" title="{{ $row->product }} {{ $row->product_code }}">{{ $row->product }}<small>{{ $row->product_code }}</small>@foreach(($stockNameNotes[$row->product_id.'|'.$row->warehouse_id.'|'.$row->lot] ?? []) as $stockNote)<small class="lot-stock-link">{{ $stockNote }}</small>@endforeach</td>
             <td>{{ $row->lot ?: 'Unbatched' }}</td>
             @unless($oneGodown)<td>{{ $row->warehouse }}</td>@endunless
             <td>{{ $row->base_unit }}</td>

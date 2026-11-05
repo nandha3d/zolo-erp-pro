@@ -503,6 +503,11 @@
                                     <i class="dripicons-return"></i>
                                 </a>
                                 @endif
+                                @if(!$bill->reversed_at && $bill->posted_at && $bill->grand_total > $bill->paid_amount)
+                                @can('sale-payment-add')
+                                <a href="{{ route('selling.payments', ['bill' => $bill->id]) }}" class="btn btn-primary bill-payment-action side-payment-action" title="Receive payment against this bill"><i class="dripicons-wallet" aria-hidden="true"></i> Add payment</a>
+                                @endcan
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -2215,6 +2220,10 @@
 
     // --- Apply Selected Product to an Existing Table Row ---
     function applyProductToRow(tr, p) {
+        if (String(tr.find('.row-product-id').val()) !== String(p.id)) {
+            tr.removeAttr('data-tracking data-batch-id data-variant-id data-order-item-id data-order-batch-no data-material-item-id data-material-document-id data-material-unit-id data-material-base-factor');
+            tr.find('.row-batch-val, .row-expire-val, .row-imei-val').val('');
+        }
         tr.attr('data-product-id', p.id);
         tr.find('.row-product-id').val(p.id);
         tr.find('.row-product-code').val(p.code);
@@ -3843,7 +3852,7 @@
     // Card click & edit button click
     $(document).on('click', '.side-bill-card', function(e) {
         if ($(this).data('reversed')) return;
-        if ($(e.target).closest('.side-action-btn.view, .side-action-btn.print, .side-action-btn.reverse').length) return;
+        if ($(e.target).closest('a, button').length) return;
         var id = $(this).data('bill-id');
         if (id) loadSaleToForm(id);
     });
@@ -4106,7 +4115,7 @@
     }
 
     initPanelState();
-    window.commandCenterGrid = {addProductRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts};
+    window.commandCenterGrid = {addProductRow, applyProductToRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts};
 })();
 </script>
 @include('backend.partials.gst-entry', ['kind' => 'sale'])

@@ -399,7 +399,8 @@ class AccountingService
             'reference_type' => 'payment',
             'reference_id' => $payment->id,
             'reference_no' => $payment->payment_reference,
-            'description' => "Double-entry payment settlement #{$payment->payment_reference}",
+            'voucher_type' => $payment->sale_id ? 'receipt' : 'payment',
+            'description' => ($payment->sale_id ? 'Receipt' : 'Payment voucher')." {$payment->payment_reference} against bill {$source->reference_no}",
             'created_by' => $actor ?? auth()->id() ?? $payment->user_id,
             'idempotency_key' => $idempotencyKey ? 'settlement:'.$idempotencyKey : null,
         ];

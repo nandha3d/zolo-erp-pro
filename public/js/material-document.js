@@ -70,6 +70,7 @@
     }
 
     function applyProduct($row, product) {
+        if (String($row.find('.row-product-id').val()) !== String(product.id)) $row.find('.row-batch').val('');
         $row.find('.row-product-id').val(product.id);
         $row.find('.row-unit-id').val(product.unit_id);
         $row.find('.row-item-name').val(product.name);
@@ -149,7 +150,12 @@
         $row.find('.row-qty').val(item.qty ?? 1);
         $row.find('.row-tax-rate').val(item.tax_rate ?? product?.tax_rate ?? 0);
         search($row.find('.row-item-name'), p => { applyProduct($row, p); $row.find('.row-qty').focus().select(); });
-        $row.find('.row-item-name').on('input', function () { $row.find('.row-product-id, .row-unit-id, .row-order-item-id').val(''); variants($row, null); });
+        $row.find('.row-item-name').on('input', function () { $row.find('.row-product-id, .row-unit-id, .row-order-item-id, .row-batch').val(''); variants($row, null); });
+        $row.find('.row-item-name').on('change', function () {
+            if ($row.find('.row-product-id').val()) return;
+            const matches = products.filter(p => p.name.toLowerCase() === this.value.trim().toLowerCase());
+            if (matches.length === 1) applyProduct($row, matches[0]);
+        });
         $body.append($row); totals();
         return $row;
     }

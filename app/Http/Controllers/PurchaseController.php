@@ -893,7 +893,12 @@ class PurchaseController extends Controller
 
                 if(in_array("purchase-payment-add", $request['all_permission'])) {
                     $currency_code_name = $purchase->currency->code ?? 'USD';
-                    $nestedData['options'] .=
+                    if (config('commercial.enabled')) {
+                        if ($purchase->posted_at && !$purchase->reversed_at && $purchase->grand_total > $purchase->paid_amount) {
+                            $nestedData['options'] .= '<li><a class="btn btn-link" href="'.e(route('buying.payments', ['bill' => $purchase->id])).'"><i class="dripicons-wallet"></i> Add payment</a></li>';
+                        }
+                    } else {
+                        $nestedData['options'] .=
                         '<li>
                             <button
                                 type="button"
@@ -908,6 +913,7 @@ class PurchaseController extends Controller
                                 <i class="fa fa-plus"></i> '.__('db.Add Payment').'
                             </button>
                         </li>';
+                    }
                 }
                 if(in_array("purchases-delete", $request['all_permission']))
                     $nestedData['options'] .= \Form::open(["route" => ["purchases.destroy", $purchase->id], "method" => "DELETE"] ).'

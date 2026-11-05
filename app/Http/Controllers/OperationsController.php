@@ -152,7 +152,7 @@ class OperationsController extends Controller
             $data['receiptOutputs'] = DB::table('stock_movement_lines as l')->join('products as p', 'p.id', '=', 'l.product_id')
                 ->where('l.company_id', $context->companyId)->where('l.qty_base', '>', 0)
                 ->whereIn('l.stock_movement_id', $data['receipts']->pluck('output_movement_id')->filter())
-                ->select('l.stock_movement_id', 'l.qty_base', 'p.name')->get()->groupBy('stock_movement_id');
+                ->select('l.stock_movement_id', 'l.product_id', 'l.qty_base', 'p.name')->get()->groupBy('stock_movement_id');
             $bills = DB::table('purchases')->where('company_id', $context->companyId)
                 ->whereIn('id', $data['receipts']->pluck('service_purchase_id')->filter())->get(['id', 'reference_no', 'total_tax', 'grand_total', 'attributes_json', 'created_at', 'supplier_invoice_no', 'supplier_invoice_date'])->keyBy('id');
             $data['billNumbers'] = $bills->pluck('reference_no', 'id');
@@ -218,6 +218,7 @@ class OperationsController extends Controller
             'job-rework' => app(JobWorkService::class)->rework($id, $data, $key, $context, $actor),
             'job-bill' => app(JobWorkService::class)->serviceBill($id, $data, $key, $context, $actor),
             'job-rebill' => app(JobWorkService::class)->rebill($id, $data, $key, $context, $actor),
+            'job-stock-name' => app(\App\Services\JobWork\JobWorkStockNaming::class)->apply($id, $data, $key, $context, $actor),
             'job-reverse-dispatch' => app(JobWorkService::class)->reverse('dispatch', $id, $request->string('business_date')->toString(), $request->string('reason')->toString(), $context, $actor),
             'job-reverse-receipt' => app(JobWorkService::class)->reverse('receipt', $id, $request->string('business_date')->toString(), $request->string('reason')->toString(), $context, $actor),
             'project' => app(ProjectService::class)->create($data, $key, $context, $actor),

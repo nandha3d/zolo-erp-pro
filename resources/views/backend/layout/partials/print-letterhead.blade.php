@@ -4,8 +4,9 @@
     $printName = $general_setting->company_name ?? $general_setting->site_title ?? config('app.name');
     $printLegal = null; $printAddress = null; $printGstin = null; $printContact = []; $printLogo = null;
     if ($activeCompany) {
-        $registration = \Illuminate\Support\Facades\DB::table('tax_registrations')->where('company_id', $activeCompany->id)
-            ->where('status', 'active')->whereNotNull('gstin')->orderByDesc('effective_from')->first(['gstin', 'legal_name', 'trade_name', 'address']);
+        $registration = \Illuminate\Support\Facades\Schema::hasTable('tax_registrations')
+            ? \Illuminate\Support\Facades\DB::table('tax_registrations')->where('company_id', $activeCompany->id)
+                ->where('status', 'active')->whereNotNull('gstin')->orderByDesc('effective_from')->first(['gstin', 'legal_name', 'trade_name', 'address']) : null;
         $printLegal = $registration->legal_name ?? $activeCompany->legal_name;
         $printName = ($registration->trade_name ?? null) ?: ($activeCompany->trade_name ?: $printLegal);
         $printAddress = ($registration->address ?? null) ?: app(\App\Services\Platform\CompanyProfileService::class)->fullAddress($activeCompany);

@@ -170,13 +170,14 @@
                         <div class="col-md-6 form-group mb-2">
                             <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Sub-Type <span class="text-danger">*</span></label>
                             <input type="text" name="sub_type" class="form-control form-control-sm u-h-32px u-fs-12_5px" placeholder="e.g. cash, bank, operating_expense" required>
+                            <small class="text-muted">Cash and bank assets automatically appear in payment account lists.</small>
                         </div>
                     </div>
                     <div class="form-group mb-2">
                         <label class="font-weight-600 mb-1 u-fs-11_5px u-c-text-2">Parent Account (Optional)</label>
                         <select name="parent_id" class="form-control form-control-sm u-h-32px u-fs-12_5px">
                             <option value="">-- No Parent (Header Account) --</option>
-                            @foreach($allAccounts as $acc)
+                            @foreach($parentAccounts as $acc)
                                 <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }} ({{ ucfirst($acc->type) }})</option>
                             @endforeach
                         </select>

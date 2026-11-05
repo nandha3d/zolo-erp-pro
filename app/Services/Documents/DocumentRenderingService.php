@@ -153,9 +153,15 @@ class DocumentRenderingService
         if (!$receiptId) return $document;
         $refs = DB::table('job_work_receipts as r')->join('job_work_dispatches as d', 'd.id', '=', 'r.dispatch_id')
             ->join('job_work_orders as o', 'o.id', '=', 'd.job_work_order_id')->where('r.company_id', $context->companyId)->where('r.id', $receiptId)
-            ->first(['r.reference_no as grn', 'd.reference_no as dc', 'o.reference_no as job_order']);
+            ->first(['r.reference_no as grn', 'd.reference_no as dc', 'o.reference_no as job_order', 'r.details_json', 'r.service_purchase_id']);
         $document['title'] = 'Job work service bill';
         if ($refs) $document['source_number'] = 'GRN '.$refs->grn.' · DC '.$refs->dc.' · Order '.$refs->job_order;
+        $stockChange = $refs && (int) $refs->service_purchase_id === $source->id
+            ? (json_decode($refs->details_json ?? '{}', true)['stock_name_change'] ?? null) : null;
+        if ($stockChange) {
+            $summary = collect($stockChange['items'])->map(fn ($item) => $item['from_name'].' to '.$item['to_name'].' ('.$item['qty'].')')->implode('; ');
+            $document['note'] = trim(($document['note'] ?? '').' · Returned stock: '.$summary);
+        }
         if (($document['transport']['bale_no'] ?? null) === $document['number']) unset($document['transport']['bale_no']);
         return $document;
     }

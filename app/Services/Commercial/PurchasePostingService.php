@@ -129,23 +129,27 @@ class PurchasePostingService
                     }
                 }
             }
-            foreach ($purchase->payments()->forCompany($context)->get() as $payment) {
-                $add($accounts->settlement($payment, $context, $actor), 0, (float) $payment->amount);
-            }
             // 194Q TDS is withheld from the supplier and owed to the government; the supplier's balance shrinks by it.
             $tds = app(\App\Services\Tax\Tds194qService::class)->forPurchase($purchase, $context);
             if ($tds) {
                 app(\App\Services\Tax\GstSetupService::class)->ensureLedgers($context->companyId, ['tds_payable']);
                 $add('tds_payable', 0, (float) $tds['amount']);
             }
-            $add('accounts_payable', 0, (float) $purchase->grand_total - (float) $purchase->paid_amount - (float) ($tds['amount'] ?? 0), true);
+            $add('accounts_payable', 0, (float) $purchase->grand_total - (float) ($tds['amount'] ?? 0), true);
             if ($lines !== []) {
+                $items = $purchase->productPurchases->map(fn ($line) => $line->product?->name.' ('.$line->qty.')')->implode(', ');
+                $history = $purchase->attributes_json['item_change_history'] ?? null;
+                $description = 'Purchase '.$purchase->reference_no.'. Items: '.$items;
+                if ($history) $description .= '. Replaces '.$history['original_bill'].'. Previous items: '.implode(', ', array_column($history['before'], 'name'));
                 app(AccountingService::class)->postJournalEntry([
                     'entry_date' => $date, 'reference_type' => 'purchase', 'reference_id' => $purchase->id,
                     'reference_no' => $purchase->reference_no, 'posting_key' => 'purchase:'.$purchase->id.':v1',
                     'due_date' => $purchase->attributes_json['due_date'] ?? $date,
-                    'created_by' => $actor, 'description' => 'Purchase '.$purchase->reference_no,
+                    'created_by' => $actor, 'voucher_type' => 'purchase', 'description' => mb_substr($description, 0, 2000),
                 ], $lines, $context);
+            }
+            foreach ($purchase->payments()->forCompany($context)->get() as $payment) {
+                app(AccountingService::class)->postPaymentJournal($payment, $context, $actor);
             }
             if (config('compliance.enabled') && \Illuminate\Support\Facades\Schema::hasColumn('purchases', 'document_snapshot_json')) {
                 $purchase->forceFill(['document_snapshot_json' => app(\App\Services\Documents\DocumentRenderingService::class)->capture($purchase, 'purchase', $context)]);

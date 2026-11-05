@@ -95,6 +95,17 @@ abstract class CompanyContextTestCase extends ErpServiceTestCase
             });
         }
         (require database_path('migrations/2026_10_04_000002_harden_accounting_and_create_open_items.php'))->up();
+        // Cash/bank register metadata used when a COA ledger becomes a payment account.
+        Schema::table('accounts', function (Blueprint $table) {
+            if (!Schema::hasColumn('accounts', 'account_no')) $table->string('account_no')->default('');
+            foreach (['initial_balance', 'total_balance'] as $column) {
+                if (!Schema::hasColumn('accounts', $column)) $table->decimal($column, 18, 4)->default(0);
+            }
+            foreach (['is_active' => true, 'is_default' => false] as $column => $default) {
+                if (!Schema::hasColumn('accounts', $column)) $table->boolean($column)->default($default);
+            }
+            if (!Schema::hasColumn('accounts', 'created_at')) $table->timestamps();
+        });
     }
 
     protected function tearDown(): void

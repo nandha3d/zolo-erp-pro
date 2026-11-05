@@ -1,0 +1,50 @@
+.payment-workspace-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 410px); gap: 16px; align-items: start; }
+.payment-registers { min-width: 0; display: grid; gap: 16px; }
+.bill-payment-workspace .card { margin-bottom: 0; }
+.bill-payment-workspace .card-body { padding: 16px; }
+.payment-entry-card { position: sticky; top: 12px; min-width: 0; scroll-margin-top: 12px; }
+.payment-section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.bill-payment-workspace h2, .payment-account-dialog h2 { font-size: 16px; font-weight: 650; margin: 0 0 6px; }
+.payment-section-heading p, .payment-account-dialog p { font-size: 12px; color: var(--z-text-2); margin: 0; line-height: 1.5; }
+.payment-search { display: flex; gap: 8px; margin: 0 0 16px; }
+.payment-search .form-control { flex: 1; min-width: 0; }
+.payment-register table { margin: 0; }
+.payment-register td { vertical-align: middle; font-size: 12px; }
+.payment-register .table-responsive { border: 0; box-shadow: none; }
+.payment-due-table th, .payment-due-value { white-space: nowrap; }
+.payment-cell-detail, .payment-register td > small { display: block; font-size: 11px; color: var(--z-text-2); margin-top: 4px; }
+.payment-register .payment-bill-selected td { background: var(--z-primary-soft) !important; }
+.payment-due-value { font-weight: 650; }
+.payment-form-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.payment-entry-card label, .payment-account-dialog label { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.payment-field-hint { display: block; margin-top: 6px; color: var(--z-text-2); font-size: 11px; line-height: 1.5; }
+.payment-field-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.payment-add-account { background: none; border: 0; padding: 0; color: var(--z-primary); font-size: 12px; font-weight: 600; cursor: pointer; }
+.payment-account-notice { background: var(--z-primary-soft); color: var(--z-text); border-radius: 6px; padding: 8px 12px; margin-top: 8px; font-size: 11px; line-height: 1.5; }
+.payment-deductions { border-top: 1px solid var(--z-border); padding: 12px 0; }
+.payment-deductions summary { cursor: pointer; color: var(--z-text-2); font-size: 12px; }
+.payment-posting-preview { padding: 12px; border: 1px solid var(--z-border); border-radius: 6px; background: var(--z-surface-2); font-size: 12px; }
+.payment-posting-preview p { margin: 6px 0 12px; color: var(--z-text-2); font-size: 11px; line-height: 1.5; }
+.payment-posting-preview > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.payment-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.payment-form-actions .btn.bill-payment-action { height: 36px !important; min-width: 140px !important; }
+.payment-account-dialog { width: min(460px, calc(100vw - 32px)); border: 1px solid var(--z-border); border-radius: 8px; padding: 20px; background: var(--z-surface, white); color: var(--z-text); }
+.payment-account-dialog::backdrop { background: rgb(0 0 0 / .4); }
+.payment-account-dialog:not([open]) { display: none !important; }
+.payment-account-dialog[open] { display: block !important; max-height: calc(100vh - 32px); overflow: auto; }
+.payment-account-dialog > form > p { margin-bottom: 16px; }
+#payment-account-status { color: var(--z-primary); font-size: 12px; }
+@media (max-width: 1100px) {
+    .payment-workspace-grid { grid-template-columns: minmax(0, 1fr); }
+    .payment-entry-card { position: static; grid-row: 1; }
+}
+@media (max-width: 767px) {
+    :is(.bill-payment-workspace, .bill-payment-document) .comm-command-bar { flex-wrap: wrap; padding: 8px; }
+    :is(.bill-payment-workspace, .bill-payment-document) .comm-title-group { flex-basis: 100%; }
+    :is(.bill-payment-workspace, .bill-payment-document) .comm-title-group h1 { white-space: normal; }
+    :is(.bill-payment-workspace, .bill-payment-document) .comm-actions { flex-wrap: wrap; }
+    .bill-payment-document h2 { overflow-wrap: anywhere; }
+    .payment-workspace-grid { gap: 12px; }
+    .bill-payment-workspace .card-body { padding: 12px; }
+    .payment-form-pair { gap: 8px; }
+}

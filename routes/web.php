@@ -895,6 +895,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     Route::prefix('accounting')->middleware('company.context')->group(function () {
         Route::controller(\App\Http\Controllers\Accounting\VoucherController::class)->group(function () {
             Route::get('vouchers', 'index')->name('accounting.vouchers');
+            Route::get('vouchers/{id}', 'show')->whereNumber('id')->name('accounting.vouchers.show');
             Route::post('vouchers', 'store')->name('accounting.vouchers.store');
             Route::post('journal-entries/{id}/reverse', 'reverse')->name('accounting.journal.reverse');
             Route::get('open-items', 'openItems')->name('accounting.open-items');

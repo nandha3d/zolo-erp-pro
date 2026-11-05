@@ -193,8 +193,8 @@ class TextileInventoryDefaultsTest extends OperationsTestCase
         // The route is intentionally independent of optional batch-expiry capability.
         if (!\Illuminate\Support\Facades\Route::has('inventory-reports.stock-by-lot')) require base_path('routes/inventory-reports.php');
         $product = $this->material(5);
-        $url = '/inventory-reports/stock-by-lot?from=2026-10-01&to=2026-10-04&product_id='.$product->id;
-        $this->get($url)->assertOk()->assertSee('Stock by lot')->assertSee('current balances only')->assertSee('Unbatched')->assertSee('Historical owned totals are unavailable');
+        $url = '/inventory-reports/stock-by-lot?group_by=lot&from=2026-10-01&to=2026-10-04&product_id='.$product->id;
+        $this->get($url)->assertOk()->assertSee('Inventory')->assertSee('Individual lots')->assertSee('current balances only')->assertSee('Unbatched')->assertSee('Historical owned totals are unavailable');
         $csv = $this->get($url.'&export=csv')->assertOk()->streamedContent();
         $this->assertStringContainsString('"Customer custody current"', $csv); $this->assertStringContainsString('Unbatched', $csv);
         $this->getJson('/inventory-reports/stock-by-lot?from=2026-10-04&to=2026-10-01')->assertUnprocessable();

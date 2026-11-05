@@ -4,6 +4,15 @@ use App\Http\Controllers\CommercialController;
 use App\Http\Middleware\RequireSharedCommercial;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware(['auth', 'company.context', 'common'])->group(function () {
+    Route::post('payment-accounts', [\App\Http\Controllers\BillPaymentController::class, 'createAccount'])->name('bill-payments.accounts.store');
+    Route::get('selling/payments', [\App\Http\Controllers\BillPaymentController::class, 'index'])->defaults('kind', 'sale')->name('selling.payments');
+    Route::post('selling/payments', [\App\Http\Controllers\BillPaymentController::class, 'store'])->defaults('kind', 'sale')->name('selling.payments.store');
+    Route::get('buying/payments', [\App\Http\Controllers\BillPaymentController::class, 'index'])->defaults('kind', 'purchase')->name('buying.payments');
+    Route::post('buying/payments', [\App\Http\Controllers\BillPaymentController::class, 'store'])->defaults('kind', 'purchase')->name('buying.payments.store');
+    Route::get('bill-payments/{id}', [\App\Http\Controllers\BillPaymentController::class, 'show'])->whereNumber('id')->name('bill-payments.show');
+});
+
 Route::get('dispatch-register', [\App\Http\Controllers\DispatchRegisterController::class, 'index'])
     ->middleware(['auth', 'company.context', 'common'])->name('dispatch-register.index');
 

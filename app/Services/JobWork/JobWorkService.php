@@ -320,6 +320,7 @@ class JobWorkService
                 }
                 validator($data, ['items' => 'required|array|min:1|max:500', 'charge_mode' => 'sometimes|in:capitalise,expense',
                     'their_names' => 'sometimes|array|max:50', 'their_names.*' => 'nullable|string|max:150',
+                    'stock_names' => 'sometimes|array|max:50', 'stock_names.*' => 'nullable|string|max:150',
                     'supplier_invoice_no' => 'nullable|string|max:60', 'supplier_invoice_date' => 'nullable|date_format:Y-m-d',
                     'due_date' => 'nullable|date_format:Y-m-d', 'remarks' => 'nullable|string|max:500'])->validate();
                 foreach ($data['items'] as $line) {
@@ -342,11 +343,19 @@ class JobWorkService
                             'party_id' => $order->job_worker_party_id, 'name' => $name], $context, $actor);
                     }
                 }
+                $returnedNames = [];
+                $returnedProducts = DB::table('stock_movement_lines as l')->join('products as p', 'p.id', '=', 'l.product_id')
+                    ->where('l.stock_movement_id', $receipt->output_movement_id ?: $receipt->material_movement_id)
+                    ->where('l.warehouse_id', $receipt->warehouse_id)->where('l.qty_base', '>', 0)->pluck('p.name', 'p.id');
+                foreach ($data['stock_names'] ?? [] as $id => $name) {
+                    $name = trim((string) $name);
+                    if ($name !== '' && $returnedProducts->has($id)) $returnedNames[] = $returnedProducts[$id].' to '.$name;
+                }
                 $purchase = app(PurchaseApplicationService::class)->create(new PurchaseCommand([
                     'supplier_id' => $order->job_worker_party_id, 'warehouse_id' => $receipt->warehouse_id,
                     'business_date' => $date, 'status' => 1, 'items' => $data['items'],
                     'note' => 'Job work '.$order->reference_no.' / '.$receipt->reference_no.($theirNames ? ' · Their name: '.implode('; ', $theirNames) : '')
-                        .($remarks !== '' ? ' · '.$remarks : ''),
+                        .($returnedNames ? ' · Returned stock: '.implode('; ', $returnedNames) : '').($remarks !== '' ? ' · '.$remarks : ''),
                     'job_work_receipt_id' => $receipt->id, 'job_work_charge_mode' => $data['charge_mode'] ?? 'capitalise',
                     // The job worker's own bill number and date print as the Bill No.; blank due date falls back to their credit days.
                     'supplier_invoice_no' => trim((string) ($data['supplier_invoice_no'] ?? '')) ?: null,
@@ -354,7 +363,7 @@ class JobWorkService
                     'job_work_remarks' => $remarks !== '' ? $remarks : null,
                 ] + (!empty($data['due_date']) ? ['due_date' => $data['due_date']] : []), 'job-work-bill:'.$key, $actor, $context));
                 DB::table('job_work_receipts')->where('id', $receiptId)->update(['service_purchase_id' => $purchase->id]);
-                return $receipt->fresh();
+                return app(JobWorkStockNaming::class)->forBill($receipt->fresh(), $purchase, $data['stock_names'] ?? [], $date, $context, $actor);
             });
     }
 

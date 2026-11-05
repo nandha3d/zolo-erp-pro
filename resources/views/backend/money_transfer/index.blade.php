@@ -25,13 +25,18 @@
             <li><a class="nav-link" href="{{ route('accounting.general-ledger') }}"><i class="dripicons-document"></i> General Ledger</a></li>
         </ul>
         <div class="comm-actions">
+            @if(config('commercial.enabled'))
+            <a class="btn btn-primary btn-action-pill" href="{{ route('accounting.vouchers', ['voucher_type' => 'contra']) }}"><i class="dripicons-plus"></i> New transfer · Contra voucher</a>
+            @else
             <button class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary u-c-xffffff" data-toggle="modal" data-target="#create-money-transfer-modal">
                 <i class="dripicons-plus"></i> {{ __('db.Add Money Transfer') }}
             </button>
+            @endif
         </div>
     </div>
 
     <!-- KPI Summary Strip -->
+    @if(config('commercial.enabled'))<p class="mx-3">New cash/bank transfers post through Contra vouchers. The register below is read-only legacy history.</p>@endif
     <div class="kpi-summary-strip">
         <div class="kpi-card">
             <div>
@@ -88,6 +93,7 @@
                         <td class="font-weight-bold u-c-text">{{ number_format((float)$money_transfer->amount, $general_setting->decimal, '.', '')}}</td>
                         <td>
                             <div class="btn-group">
+                                @if(!config('commercial.enabled'))
                                 <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{__('db.action')}}
                                     <span class="caret"></span>
                                     <span class="sr-only">Toggle Dropdown</span>
@@ -101,6 +107,7 @@
                                     </li>
                                     {{ Form::close() }}
                                 </ul>
+                                @else<span class="text-muted">Legacy record</span>@endif
                             </div>
                         </td>
                     </tr>

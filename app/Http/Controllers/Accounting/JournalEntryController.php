@@ -111,7 +111,7 @@ class JournalEntryController extends Controller
 
         $account = DB::transaction(function () use ($validated, $openingBal, $context) {
             app(CompanyWriteGuard::class)->begin($context, null);
-            return ChartOfAccount::forceCreate([
+            $account = ChartOfAccount::forceCreate([
                 'company_id' => $context->companyId,
                 'code' => $validated['code'],
                 'name' => $validated['name'],
@@ -125,6 +125,8 @@ class JournalEntryController extends Controller
                 'is_system' => false,
                 'is_active' => true,
             ]);
+            app(\App\Services\Accounting\SettlementAccountService::class)->syncFromLedger($account, $context);
+            return $account->refresh();
         });
 
         $bal = (float) $account->current_balance;

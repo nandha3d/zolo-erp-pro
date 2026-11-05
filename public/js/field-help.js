@@ -599,7 +599,31 @@
         return !!next && (next.matches(field) || !!next.querySelector(field));
     }
 
+    const requiredText = new WeakMap();
+    function syncRequiredMarkers(root) {
+        const controls = 'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea';
+        root.querySelectorAll('label').forEach(label => {
+            let field = label.control?.matches(controls) ? label.control : label.querySelector(controls);
+            if (!field) {
+                const next = label.nextElementSibling;
+                field = next?.matches(controls) ? next : next?.querySelector(controls);
+            }
+            if (!field) return;
+            const required = !field.disabled && (field.required || field.getAttribute('aria-required') === 'true');
+            const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                if (node.parentElement.closest('.field-help, input, select, textarea, button')) continue;
+                if (!requiredText.has(node) && node.textContent.includes('*')) requiredText.set(node, node.textContent);
+                if (!requiredText.has(node)) continue;
+                const original = requiredText.get(node), text = required ? original : original.replace(/\s*\*(?=\s*[:：]?\s*$)/g, '');
+                if (node.textContent !== text) node.textContent = text;
+            }
+        });
+    }
+
     function attach(root) {
+        syncRequiredMarkers(root || document);
         (root || document).querySelectorAll('label:not([data-help-ready])').forEach(label => {
             label.setAttribute('data-help-ready', '');
             let help = label.dataset.help;
@@ -643,7 +667,7 @@
         // Fields added later (modals, injected GST fields, ajax forms) get their help too.
         let pending = null;
         new MutationObserver(() => { if (!pending) pending = setTimeout(() => { pending = null; attach(); }, 250); })
-            .observe(document.body, {childList: true, subtree: true});
+            .observe(document.body, {childList: true, subtree: true, attributes: true, attributeFilter: ['required', 'disabled', 'aria-required']});
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -44,6 +44,8 @@ class PaymentService
                     $existing = Payment::visibleIn($context)->whereKey($existingJournal->reference_id)->first();
                     if (!$existing || (int) $existing->{$type.'_id'} !== (int) $source->id
                         || \App\Support\LedgerAmount::units((float) $existing->amount) !== \App\Support\LedgerAmount::units($amount)
+                        || \App\Support\LedgerAmount::units((float) ($existing->discount ?? 0)) !== \App\Support\LedgerAmount::units($data['discount'] ?? 0)
+                        || \App\Support\LedgerAmount::units((float) ($existing->tds_amount ?? 0)) !== \App\Support\LedgerAmount::units($data['tds_amount'] ?? 0)
                         || $existing->paying_method !== ($data['paying_method'] ?? 'Cash')
                         || (int) $existing->account_id !== $accountId || $existing->payment_at->toDateString() !== $date) {
                         throw new InvalidArgumentException('Payment key was already used for a different settlement.');

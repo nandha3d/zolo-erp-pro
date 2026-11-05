@@ -1,0 +1,34 @@
+.inventory-command-bar { flex-wrap: wrap; }
+.inventory-command-bar .comm-nav-pills { margin-left: auto; }
+.inventory-context { margin: 0 12px 8px; }
+.inventory-context p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: #64748b; }
+.inventory-context-links { display: flex; flex-wrap: wrap; gap: 4px; }
+.inventory-context-links a { padding: 6px 10px; border: 1px solid transparent; border-radius: 5px; font-size: 12px; color: #475569; text-decoration: none; }
+.inventory-context-links a:hover { background: #f1f5f9; }
+.inventory-context-links a.active { background: var(--z-primary-soft); border-color: var(--z-primary-border, #e2cce5); color: var(--z-primary); font-weight: 600; }
+.inventory-transfer-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+.inventory-transfer-filters .form-group { margin: 0; flex: 1 1 180px; min-width: 0; }
+.inventory-transfer-filters label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; color: #475569; }
+.inventory-transfer-filters .form-control { width: 100%; height: 36px; min-height: 36px; font-size: 13px; }
+.inventory-transfer-filters .btn { height: 36px; }
+.inventory-transfer-filters [role="status"] { flex-basis: 100%; margin: 0; color: #64748b; font-size: 12px; }
+.inventory-transfer-workspace .dataTables_empty { padding: 32px 16px !important; color: #64748b; }
+.inventory-transfer-workspace .table-responsive { overflow-x: auto; }
+.inventory-transfer-workspace #transfer-table { min-width: 900px; }
+.inventory-form-workspace > .container-fluid { padding: 0 12px; }
+.inventory-form-workspace .card { border: 1px solid #e2e8f0; border-radius: 8px; }
+body.dark-mode .inventory-context p, body.dark-mode .inventory-transfer-filters label { color: #94a3b8; }
+body.dark-mode .inventory-context-links a { color: #cbd5e1; }
+body.dark-mode .inventory-context-links a:hover { background: #1e293b; }
+body.dark-mode .inventory-transfer-filters, body.dark-mode .inventory-form-workspace .card { background: #141c2e; border-color: #334155; }
+@media (max-width: 640px) {
+    .inventory-command-bar { padding: 8px 10px; gap: 8px; }
+    .inventory-command-bar .comm-title-group { flex: 1 1 auto; }
+    .inventory-command-bar .comm-nav-pills { order: 3; width: 100%; justify-content: space-between; margin-left: 0; }
+    .inventory-command-bar .comm-nav-pills .nav-link { padding: 6px 8px; }
+    .inventory-transfer-filters { gap: 8px; }
+    .inventory-transfer-filters .form-group { flex-basis: 100%; }
+    .inventory-transfer-filters .btn { width: 100%; }
+    .inventory-transfer-workspace .dataTables_empty { text-align: left !important; }
+    .inventory-transfer-workspace .inventory-empty-text { display: block; max-width: 220px; white-space: normal; }
+}

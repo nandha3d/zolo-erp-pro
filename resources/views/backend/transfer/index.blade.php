@@ -3,72 +3,22 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<section>
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header mt-2">
-                <h3 class="text-center">{{__('db.Transfer List')}}</h3>
-            </div>
-            {!! Form::open(['route' => 'transfers.index', 'method' => 'get']) !!}
-            <div class="row mb-3">
-                <div class="col-md-3 offset-md-1 mt-3">
-                    <div class="form-group top-fields">
-                        <label class="">{{__('db.date')}} &nbsp;</label>
-                        <div class="">
-                            <div class="input-group">
-                                <input type="text" class="daterangepicker-field form-control" value="{{$starting_date}} To {{$ending_date}}" required />
-                                <input type="hidden" name="starting_date" value="{{$starting_date}}" />
-                                <input type="hidden" name="ending_date" value="{{$ending_date}}" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mt-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                    <div class="form-group top-fields">
-                        <label class="">{{__('db.From Warehouse')}} &nbsp;</label>
-                        <div class="">
-                            <select id="from_warehouse_id" name="from_warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" >
-                                <option value="0">{{__('db.All Warehouse')}}</option>
-                                @foreach($lims_warehouse_list as $warehouse)
-                                    @if($warehouse->id == $from_warehouse_id)
-                                        <option selected value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                    @else
-                                        <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mt-3 @if(\Auth::user()->role_id > 2){{'d-none'}}@endif">
-                    <div class="form-group top-fields">
-                        <label class="">{{__('db.To Warehouse')}} &nbsp;</label>
-                        <div class="">
-                            <select id="to_warehouse_id" name="to_warehouse_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" >
-                                <option value="0">{{__('db.All Warehouse')}}</option>
-                                @foreach($lims_warehouse_list as $warehouse)
-                                    @if($warehouse->id == $to_warehouse_id)
-                                        <option selected value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                    @else
-                                        <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="filter-loading" class="col-12 text-center my-2" style="display:none">
-                    <span class="spinner-border text-primary spinner-border-sm" role="status"></span>
-                    <span>Loading results...</span>
-                </div>
-            </div>
-            {!! Form::close() !!}
-        </div>
-        
-        @can('transfers-add')
-            <a href="{{route('transfers.create')}}" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Transfer')}}</a>&nbsp;
-        @endcan
-    </div>
+<x-inventory-command-bar active="transfers" view="register">
+    @if((new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null))->allows('transfers-add'))<a href="{{ route('transfers.create') }}" class="btn btn-primary"><i class="dripicons-plus"></i> New transfer</a>@endif
+</x-inventory-command-bar>
+<section class="product-workspace-view inventory-transfer-workspace">
+    <form id="transfer-filters" action="{{ route('transfers.index') }}" method="get" class="inventory-transfer-filters">
+        <div class="form-group"><label for="transfer-from-date">From date</label><input id="transfer-from-date" type="date" class="form-control" name="starting_date" value="{{ $starting_date }}" required></div>
+        <div class="form-group"><label for="transfer-to-date">To date</label><input id="transfer-to-date" type="date" class="form-control" name="ending_date" value="{{ $ending_date }}" min="{{ $starting_date }}" required></div>
+        @if(\Auth::user()->role_id <= 2)
+        <div class="form-group"><label for="from_warehouse_id">From warehouse</label><select id="from_warehouse_id" name="from_warehouse_id" class="selectpicker form-control" data-live-search="true"><option value="0">All warehouses</option>@foreach($lims_warehouse_list as $warehouse)<option value="{{ $warehouse->id }}" @selected($warehouse->id == $from_warehouse_id)>{{ $warehouse->name }}</option>@endforeach</select></div>
+        <div class="form-group"><label for="to_warehouse_id">To warehouse</label><select id="to_warehouse_id" name="to_warehouse_id" class="selectpicker form-control" data-live-search="true"><option value="0">All warehouses</option>@foreach($lims_warehouse_list as $warehouse)<option value="{{ $warehouse->id }}" @selected($warehouse->id == $to_warehouse_id)>{{ $warehouse->name }}</option>@endforeach</select></div>
+        @else
+        <input type="hidden" id="from_warehouse_id" name="from_warehouse_id" value="{{ $from_warehouse_id }}"><input type="hidden" id="to_warehouse_id" name="to_warehouse_id" value="{{ $to_warehouse_id }}">
+        @endif
+        <button class="btn btn-primary" type="submit">Apply filters</button>
+        <p id="filter-loading" role="status" hidden>Loading transfers…</p>
+    </form>
     <div class="table-responsive">
         <table id="transfer-table" class="table transfer-list u-w-100pct">
             <thead>
@@ -85,17 +35,7 @@
                     <th class="not-exported">{{__('db.action')}}</th>
                 </tr>
             </thead>
-            <tfoot class="tfoot active">
-                <th></th>
-                <th>{{__('db.Total')}}</th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-                <th></th>
-            </tfoot>
+            <tfoot><tr><th></th><th>{{ __('db.Total') }}</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
         </table>
     </div>
 </section>
@@ -144,37 +84,9 @@
 
 @push('scripts')
 <script type="text/javascript">
-    $("ul#transfer").siblings('a').attr('aria-expanded','true');
-    $("ul#transfer").addClass("show");
-    $("ul#transfer #transfer-list-menu").addClass("active");
-
-    $('.daterangepicker-field').daterangepicker({
-        autoUpdateInput: true,
-        locale: {
-            format: 'YYYY-MM-DD',
-            cancelLabel: 'Clear'
-        },
-        showDropdowns: true,
-        ranges: {
-            'Today': [moment(), moment()],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'Last 90 Days': [moment().subtract(89, 'days'), moment()],
-            'Last Year': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
-            'All Time': [moment('2000-01-01'), moment()]
-        }
-    }, function (start, end, label) {
-        let starting_date = start.format('YYYY-MM-DD');
-        let ending_date = end.format('YYYY-MM-DD');
-        let title = starting_date + ' To ' + ending_date;
-
-        $('.daterangepicker-field').val(title);
-        $('input[name="starting_date"]').val(starting_date);
-        $('input[name="ending_date"]').val(ending_date);
-
-        transferTable.ajax.reload();
-    });
-
+    $("ul#inventory").siblings('a').attr('aria-expanded','true');
+    $("ul#inventory").addClass("show");
+    $("#transfer-list-menu").addClass("active");
 
     var all_permission = <?php echo json_encode($all_permission) ?>;
     var transfer_id = [];
@@ -231,7 +143,7 @@
         "processing": true,
         "serverSide": true,
         "ajax":{
-            url:"transfers/transfer-data",
+            url: @json(route("transfers.data")),
             data:function(d){
                 d.all_permission    = all_permission;
                 d.starting_date     = $("input[name=starting_date]").val();
@@ -260,6 +172,8 @@
         ],
         'language': {
 
+            'emptyTable': '<span class="inventory-empty-text">No transfers found for these dates and warehouses.</span>',
+            'zeroRecords': '<span class="inventory-empty-text">No transfers match your search.</span>',
             'lengthMenu': '_MENU_ {{__("db.records per page")}}',
              "info":      '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
             "search":  '{{__("db.Search")}}',
@@ -396,8 +310,15 @@
         }
     });
 
-    // 🔹 Trigger reload when warehouse changes
-    $('#from_warehouse_id, #to_warehouse_id').on('change', function(){
+    $('#transfer-from-date').on('change', function () {
+        $('#transfer-to-date').attr('min', this.value);
+    });
+    $('#transfer-filters').on('submit', function (event) {
+        event.preventDefault();
+        if (!this.reportValidity()) return;
+        var target = new URL(this.action, window.location.href);
+        target.search = new URLSearchParams(new FormData(this)).toString();
+        window.history.replaceState(null, '', target);
         transferTable.ajax.reload();
     });
 
@@ -418,12 +339,12 @@
 
     // Show loader on request
     transferTable.on('preXhr.dt', function () {
-        $('#filter-loading').show();
+        $('#filter-loading').prop('hidden', false);
     });
 
     // Hide loader after draw
     transferTable.on('xhr.dt', function () {
-        $('#filter-loading').hide();
+        $('#filter-loading').prop('hidden', true);
     });
 
     function transferDetails(transfer) {
@@ -489,9 +410,5 @@
         $('.buttons-delete').addClass('d-none');
 
 </script>
-<script type="text/javascript" src="https://js.stripe.com/v3/"></script>
-@endpush
 
-@push('css')
-    <link rel="stylesheet" href="{{ versioned_asset('css/pages/transfer-index.css') }}">
 @endpush
