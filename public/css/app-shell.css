@@ -192,55 +192,6 @@ body.dark-mode .shell-steps-nav [role="tab"]:hover { background: #1e293b; color:
 .shell-steps-nav [role="tab"].has-errors .shell-step-no { background: #dc2626; color: #fff; }
 .shell-steps-nav [role="tab"][aria-selected="true"].has-errors { background: #dc2626; color: #fff; }
 
-/* ====================================================================
- * Dashboard on one screen: compact greeting bar, all eight KPIs in one row, panels as tabs.
- * ==================================================================== */
-html.app-shell .zolo-dashboard-header { padding: 10px 16px !important; }
-html.app-shell .zolo-dashboard-header .zolo-greeting-title { font-size: 18px !important; margin: 0 !important; }
-html.app-shell .zolo-dashboard-header .zolo-greeting-subtitle { font-size: 12px !important; margin: 0 !important; }
-html.app-shell .zolo-dashboard-header .zolo-quick-actions-bar { padding-top: 6px !important; margin-top: 6px !important; }
-html.app-shell #content > .row.mx-0 > .container-fluid > .col-md-12.mt-2.mb-3 { margin-top: 6px !important; margin-bottom: 6px !important; }
-html.app-shell .dashboard-counts > .container-fluid { padding-top: 0 !important; }
-@media (min-width: 1200px) {
-    /* Eight KPI cards in one row only when each gets ~140px; narrower screens use two rows of four so nothing clips. */
-    html.app-shell .dashboard-counts .row > [class*="col-xl-3"] { flex: 0 0 25%; max-width: 25%; padding-left: 4px; padding-right: 4px; margin-bottom: 8px !important; }
-    html.app-shell .dashboard-counts .row { margin-left: 8px; margin-right: 8px; }
-    html.app-shell .dashboard-counts .zolo-kpi-card { padding: 8px 10px !important; min-height: 0 !important; height: auto !important; }
-    html.app-shell .dashboard-counts .zolo-kpi-header { margin-bottom: 4px !important; }
-    html.app-shell .dashboard-counts .zolo-kpi-icon { width: 24px !important; height: 24px !important; font-size: 12px !important; }
-    html.app-shell .dashboard-counts .zolo-kpi-header > :not(.zolo-kpi-icon) { font-size: 9.5px !important; padding: 1px 6px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    html.app-shell .dashboard-counts .zolo-kpi-value { font-size: 17px !important; line-height: 1.2 !important; white-space: nowrap; }
-    html.app-shell .dashboard-counts .zolo-kpi-label { font-size: 10px !important; margin-top: 2px !important; }
-    html.app-shell .dashboard-counts .zolo-kpi-subtext { font-size: 10px !important; margin-top: 2px !important; }
-}
-@media (min-width: 1440px) {
-    html.app-shell .dashboard-counts .row > [class*="col-xl-3"] { flex: 0 0 12.5%; max-width: 12.5%; }
-}
-html.app-shell .dash-panels { padding-left: 15px; padding-right: 15px; }
-html.app-shell .dash-panels > .shell-steps-nav { margin-bottom: 8px; }
-html.app-shell .dash-panels > [data-step-title] > .container-fluid { padding-left: 0; padding-right: 0; margin-bottom: 0 !important; }
-html.app-shell .dash-panels .card { margin-bottom: 8px !important; }
-html.app-shell .zolo-dashboard-header .zolo-greeting { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-html.app-shell .zolo-dashboard-header .zolo-filter-bar { margin-top: 0 !important; }
-html.app-shell .zolo-dashboard-header .zolo-filter-bar .zolo-warehouse-picker,
-html.app-shell .zolo-dashboard-header .zolo-filter-bar .dropdown > .btn,
-html.app-shell .zolo-dashboard-header .zolo-filter-bar .btn { height: 30px !important; min-height: 30px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
-html.app-shell .zolo-dashboard-header .zolo-quick-btn { height: 26px !important; padding: 0 10px !important; font-size: 12px !important; }
-/* Panel tables were fixed at 320px; let them size to content and scroll inside if long. */
-html.app-shell .dash-panels .table-responsive,
-html.app-shell .dash-panels .tab-pane { min-height: 0 !important; max-height: 220px; overflow-y: auto; }
-html.app-shell .dash-panels .card.h-100 { height: auto !important; }
-html.app-shell .dash-panels .card-header { padding: 6px 12px !important; }
-html.app-shell .dash-panels .col-lg-7,
-html.app-shell .dash-panels .col-lg-5,
-html.app-shell .dash-panels .col-md-6,
-html.app-shell .dash-panels .col-md-12 { margin-bottom: 0 !important; }
-/* Yearly tab: chart and both best-seller lists side by side. */
-@media (min-width: 1200px) {
-    html.app-shell .dash-panels [data-step-title^="Yearly"] > .container-fluid > .row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0; }
-    html.app-shell .dash-panels [data-step-title^="Yearly"] > .container-fluid > .row > [class*="col-"] { max-width: none; }
-}
-
 /* Stepped forms: full-width textarea rows sit two per line on wide screens. */
 @media (min-width: 1200px) {
     :where(html.app-shell) .shell-steps [data-step-title] > .col-md-12:has(> .form-group > textarea) { flex: 0 0 50%; max-width: 50%; }

@@ -20,9 +20,13 @@ class DashboardSmokeTest extends TestCase
             ])
             ->get('/dashboard');
 
-        $response->assertStatus(200);
-        $content = $response->getContent();
-        $this->assertNotEmpty($content);
-        $this->assertStringContainsString('dashboard-counts', $content);
+        $response->assertOk()
+            ->assertSeeInOrder(['Financial overview', 'Cash Flow', 'Monthly breakdown', 'Recent activity', 'Stock alerts', 'Sales and purchases', 'Best sellers this month'])
+            ->assertDontSee('data-step-title="Cash flow"', false)
+            ->assertDontSee('Industry addons');
+
+        if (getenv('ERP_EXPORT_DASHBOARD_BROWSER')) {
+            file_put_contents(base_path('scratch/dashboard-browser.html'), $response->getContent());
+        }
     }
 }
