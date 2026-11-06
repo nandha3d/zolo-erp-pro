@@ -280,26 +280,238 @@ html.app-shell .zw > .zw-section-insights {
   margin-left: 4px;
 }
 
+/* Master Group Visual Charts Suite */
+.zw-master-visual-suite {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 991px) {
+  .zw-master-visual-suite {
+    grid-template-columns: 1fr;
+  }
+}
+
+.zw-visual-card {
+  background: var(--neo-bg, #f8fafc);
+  border: 1px solid var(--neo-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.zw-visual-main {
+  min-height: 290px;
+}
+.zw-visual-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.zw-visual-donut-card {
+  padding: 12px 14px;
+}
+
+.zw-visual-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.zw-visual-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--neo-text-primary, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zw-visual-subtitle {
+  font-size: 11px;
+  color: var(--neo-text-muted, #64748b);
+  display: block;
+  margin-top: 2px;
+}
+.zw-visual-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.zw-chart-legend-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.zw-legend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--neo-text-secondary, #475569);
+}
+.zw-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.zw-legend-pill.is-sales .zw-legend-dot { background-color: #7c3aed; }
+.zw-legend-pill.is-purchases .zw-legend-dot { background-color: #f59e0b; }
+.zw-legend-pill.is-profit .zw-legend-dot { background-color: #10b981; }
+
+.zw-chart-stage {
+  position: relative;
+  height: 220px;
+  width: 100%;
+}
+.zw-chart-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Donut Chart Layout */
+.zw-donut-layout {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+.zw-donut-stage {
+  position: relative;
+  width: 110px;
+  height: 110px;
+}
+.zw-donut-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.zw-donut-legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+.zw-donut-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  min-width: 0;
+}
+.zw-donut-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.zw-donut-legend-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.zw-donut-legend-info strong {
+  font-size: 11.5px;
+  color: var(--neo-text-primary, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zw-donut-legend-info span {
+  font-size: 10.5px;
+  color: var(--neo-text-muted, #64748b);
+}
+
+/* Working Capital & Dues Balance Meter */
+.zw-dues-meter-card {
+  background: var(--neo-bg, #f8fafc);
+  border: 1px solid var(--neo-border, #e2e8f0);
+  border-radius: 9px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+.zw-dues-meter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.zw-exposure-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.zw-exposure-tag.is-positive {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.zw-exposure-tag.is-negative {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+.zw-dues-bar-track {
+  display: flex;
+  height: 22px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+.zw-dues-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: width 0.3s ease;
+}
+.zw-dues-segment.is-receivable {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+}
+.zw-dues-segment.is-payable {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
 /* 5-KPI Executive Metrics Grid */
 .zw-master-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 0;
 }
 .zw-master-kpi {
   background: var(--neo-bg, #f8fafc);
   border: 1px solid var(--neo-border, #e2e8f0);
-  border-radius: 9px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   position: relative;
   overflow: hidden;
 }
 .zw-master-kpi-label {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -309,16 +521,16 @@ html.app-shell .zw > .zw-section-insights {
   gap: 5px;
 }
 .zw-master-kpi-value {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--neo-text-primary, #0f172a);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 .zw-master-kpi-sub {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--neo-text-secondary, #475569);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 .zw-master-kpi.is-profit .zw-master-kpi-value {
   color: #059669;
@@ -327,56 +539,8 @@ html.app-shell .zw > .zw-section-insights {
   color: #dc2626;
 }
 
-/* Revenue Distribution & Contribution Bar */
-.zw-dist-bar-wrap {
-  background: var(--neo-bg, #f8fafc);
-  border: 1px solid var(--neo-border, #e2e8f0);
-  border-radius: 8px;
-  padding: 12px 14px;
-}
-.zw-dist-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--neo-text-secondary, #475569);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.zw-dist-bar {
-  display: flex;
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: #e2e8f0;
-  margin-bottom: 10px;
-}
-.zw-dist-segment {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-.zw-dist-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 18px;
-}
-.zw-dist-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--neo-text-primary, #0f172a);
-}
-.zw-dist-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
 .zw-comp-status-chip {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
   border-radius: 4px;
@@ -393,8 +557,13 @@ html.app-shell .zw > .zw-section-insights {
 /* Big Company Insight Cards Grid */
 .zw-companies-grid-expanded {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   gap: 16px;
+}
+@media (max-width: 480px) {
+  .zw-companies-grid-expanded {
+    grid-template-columns: 1fr;
+  }
 }
 
 .zw-company-card-expanded {
@@ -407,7 +576,7 @@ html.app-shell .zw > .zw-section-insights {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
   overflow: hidden;
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
@@ -502,9 +671,9 @@ html.app-shell .zw > .zw-section-insights {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 .zw-card-pnl-banner.is-profit {
@@ -518,89 +687,124 @@ html.app-shell .zw > .zw-section-insights {
   border: 1px solid #fecdd3;
 }
 
-/* Card Metrics Grid */
-.zw-card-metrics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.zw-card-metric {
+/* Company Visual Monthly Graph Box */
+.zw-comp-visual-box {
   background: var(--neo-bg, #f8fafc);
   border: 1px solid var(--neo-border, #e2e8f0);
-  border-radius: 7px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
-.zw-card-metric-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--neo-text-muted, #64748b);
-  letter-spacing: 0.04em;
-}
-.zw-card-metric-val {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: var(--neo-text-primary, #0f172a);
-}
-.zw-card-metric-sub {
-  font-size: 10px;
-  color: var(--neo-text-secondary, #64748b);
-}
-
-/* 6-Month Sales Trend Sparkline */
-.zw-card-trend-wrap {
-  background: var(--neo-bg, #f8fafc);
-  border: 1px solid var(--neo-border, #e2e8f0);
-  border-radius: 7px;
-  padding: 8px 12px;
-}
-.zw-card-trend-head {
+.zw-comp-chart-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--neo-text-muted, #64748b);
   letter-spacing: 0.04em;
   margin-bottom: 6px;
 }
-.zw-spark-chart {
+.zw-comp-chart-legend {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 38px;
-  gap: 6px;
-  padding-top: 4px;
+  align-items: center;
+  font-size: 10px;
 }
-.zw-spark-col {
-  flex: 1;
+.zw-mini-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 3px;
+}
+.zw-mini-dot.is-sales { background-color: #7c3aed; }
+.zw-mini-dot.is-purchases { background-color: #f59e0b; }
+
+.zw-comp-chart-canvas-wrap {
+  position: relative;
+  height: 130px;
+  width: 100%;
+}
+.zw-comp-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Mini Donut & Metrics Details Row */
+.zw-comp-details-row {
+  display: grid;
+  grid-template-columns: 95px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.zw-comp-donut-box {
+  background: var(--neo-bg, #f8fafc);
+  border: 1px solid var(--neo-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.zw-comp-donut-stage {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.zw-comp-donut-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.zw-comp-donut-label {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%;
-  justify-content: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 1.15;
 }
-.zw-spark-bar {
-  width: 100%;
-  max-width: 16px;
-  min-height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: color-mix(in srgb, var(--accent) 70%, #94a3b8);
-  transition: height 0.2s;
-  cursor: pointer;
-}
-.zw-spark-bar:hover {
-  background: var(--accent);
-}
-.zw-spark-lbl {
+.zw-comp-donut-label span {
   font-size: 9px;
-  font-weight: 600;
-  color: var(--neo-text-muted, #94a3b8);
-  margin-top: 2px;
+  color: var(--neo-text-muted, #64748b);
+  text-transform: uppercase;
+}
+.zw-comp-donut-label strong {
+  font-size: 11px;
+  color: #059669;
+}
+
+/* Card Metrics Grid */
+.zw-card-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.zw-card-metric {
+  background: var(--neo-bg, #f8fafc);
+  border: 1px solid var(--neo-border, #e2e8f0);
+  border-radius: 7px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.zw-card-metric-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--neo-text-muted, #64748b);
+  letter-spacing: 0.04em;
+}
+.zw-card-metric-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--neo-text-primary, #0f172a);
+}
+.zw-card-metric-sub {
+  font-size: 9.5px;
+  color: var(--neo-text-secondary, #64748b);
 }
 
 /* Fast Switch Action Form */
@@ -656,7 +860,7 @@ html.app-shell .zw > .zw-section-insights {
   color: #7e22ce;
 }
 
-/* Dark Mode Overrides for Insights */
+/* Dark Mode Overrides for Visual Insights */
 body.dark-mode .zw-group-master-card {
   background: #172033;
   border-color: #334155;
@@ -665,16 +869,16 @@ body.dark-mode .zw-group-master-card {
 body.dark-mode .zw-master-head {
   border-color: #334155;
 }
+body.dark-mode .zw-visual-card,
+body.dark-mode .zw-dues-meter-card,
 body.dark-mode .zw-master-kpi {
   background: #1e293b;
   border-color: #334155;
 }
-body.dark-mode .zw-dist-bar-wrap {
-  background: #1e293b;
-  border-color: #334155;
-}
-body.dark-mode .zw-dist-bar {
+body.dark-mode .zw-visual-badge {
   background: #334155;
+  color: #cbd5e1;
+  border-color: #475569;
 }
 body.dark-mode .zw-company-card-expanded {
   background: #172033;
@@ -684,8 +888,9 @@ body.dark-mode .zw-company-card-expanded.is-current {
   background: #2e106522;
   border-color: #7e22ce;
 }
-body.dark-mode .zw-card-metric,
-body.dark-mode .zw-card-trend-wrap {
+body.dark-mode .zw-comp-visual-box,
+body.dark-mode .zw-comp-donut-box,
+body.dark-mode .zw-card-metric {
   background: #1e293b;
   border-color: #334155;
 }

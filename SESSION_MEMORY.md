@@ -1,6 +1,40 @@
 # zoloERP Pro — Persistent Session Memory & State
 
 
+## Active Session & Follow-up — 2026-11-06: Rich Interactive Charts & Visual Graphs Workspace Dashboard (branch ui)
+
+- **Interactive Charts & Visual Dashboard Upgrade (`/workspace`):**
+  - Addressed client requirement: *"instead if full text, use the pie charts graphs etc. graph can convey each month's full insights clearly.. so use that. give a fully understandable visual workspace dashboard."*
+  - Transformed the workspace dashboard from raw text boxes into a visual, chart-driven command center powered by Chart.js (`@section('charts', '1')`):
+  - **Enhanced Insight Service (`App\Services\Platform\CompanyInsightService`):**
+    - Expanded 6-month trajectory calculations for each company and consolidated group:
+      - Tracks `sales`, `purchases`, `expenses`, and `profit` on a per-month basis (`Jun`, `Jul`, `Aug`, `Sep`, `Oct`, `Nov`).
+      - Aggregates multi-series monthly metrics across all member companies in `directoryInsights()`.
+  - **Master Group Card Visual Suite (`.zw-master-visual-suite`):**
+    - **Group 6-Month Monthly Performance & Cash Trends Multi-Series Chart (`#masterTrendChart_{groupId}`):**
+      - Displays Sales Revenue (Theme Purple `#7c3aed`), Purchases & Costs (Amber `#f59e0b`), and Net Margin (Emerald Line `#10b981`) side-by-side with exact monthly values on hover and compact `₹` formatting.
+    - **Turnover Share by Company Doughnut Chart (`#masterShareDonut_{groupId}`):**
+      - Displays each entity's proportional turnover contribution in distinct palette colors, paired with an interactive legend displaying exact revenue, share %, and P&L status badge.
+    - **Group P&L Cost & Profit Distribution Doughnut Chart (`#masterCostDonut_{groupId}`):**
+      - Visualizes the financial split of turnover: Net Profit (Green `#10b981`), Purchases / COGS (Amber `#f59e0b`), and Operating Expenses (Rose `#f43f5e`).
+    - **Working Capital & Dues Exposure Meter (`.zw-dues-meter-card`):**
+      - Visual dual-segment bar gauge comparing Customer Receivables vs Supplier Payables with a dynamic Net Surplus / Net Payable tag.
+    - **Executive 5-KPI Strip:**
+      - Retains consolidated figures (Revenue, Net Profit, Purchases, Receivables, Payables) with compact styling underneath the charts for quick executive reference.
+  - **Expanded Company Cards with Dedicated Monthly Performance Charts (`.zw-company-card-expanded`):**
+    - **Company 6-Month Activity Chart (`#compChart_{companyId}`):**
+      - A dedicated multi-bar chart comparing Sales and Purchases for each of the last 6 months, giving instant visual insight into each entity's monthly velocity and seasonality.
+    - **Mini Financial Doughnut & Profit Margin Meter (`#compDonut_{companyId}`):**
+      - Visual ring displaying Revenue vs Cost with an embedded central Net Margin % badge.
+    - **4 Metric Badges:** Compact pills for Net Revenue, Purchases, Customer Dues, and Supplier Dues.
+    - **In-Card Fast Switcher:** 1-click context switch button (`Switch to Company →`).
+  - **Dark Mode & Responsive Support:**
+    - Integrated a `MutationObserver` on `document.body` to automatically destroy and re-render all charts with dark-mode gridlines (`rgba(255, 255, 255, 0.08)`) and ticks (`#94a3b8`) when the user switches themes.
+    - Responsive mobile layout collapses seamlessly to a single column on tablets and smartphones.
+  - **Verification & Test Coverage:**
+    - `tests/Feature/CompanyGroupInsightTest.php`: 3/3 passed (37 assertions).
+    - `tests/Feature/WorkspaceSecurityTest.php`: 12/12 passed (73 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Master Company Group Consolidated Insight Dashboard, P&L Loss Monitoring & Expanded Company Cards with Fast Switcher (branch ui)
 
 - **Git & GitHub Repository Push:**

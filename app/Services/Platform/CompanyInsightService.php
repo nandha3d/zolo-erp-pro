@@ -127,7 +127,7 @@ class CompanyInsightService
                 ? (float) DB::table('account_open_items')->where('company_id', $companyId)->where('party_type', 'supplier')->sum('open_amount')
                 : 0.0;
 
-            // 7. Last 6 Months Sales Trajectory for Mini Chart
+            // 7. Last 6 Months Sales & Financial Trajectory for Visual Charts
             $monthlyTrend = [];
             for ($i = 5; $i >= 0; $i--) {
                 $month = Carbon::now()->subMonths($i);
@@ -135,11 +135,22 @@ class CompanyInsightService
                 $salesVal = $hasSales
                     ? (float) DB::table('sales')->where('company_id', $companyId)->whereNull('deleted_at')->where('created_at', 'like', "{$ym}%")->sum('grand_total')
                     : 0.0;
+                $purchasesVal = $hasPurchases
+                    ? (float) DB::table('purchases')->where('company_id', $companyId)->whereNull('deleted_at')->where('created_at', 'like', "{$ym}%")->sum('grand_total')
+                    : 0.0;
+                $expensesVal = $hasExpenses
+                    ? (float) DB::table('expenses')->where('company_id', $companyId)->where('created_at', 'like', "{$ym}%")->sum('amount')
+                    : 0.0;
+                $monthProfit = round($salesVal - $purchasesVal - $expensesVal, 2);
 
                 $monthlyTrend[] = [
                     'month' => $month->format('M'),
                     'year_month' => $ym,
-                    'amount' => round($salesVal, 2),
+                    'sales' => round($salesVal, 2),
+                    'purchases' => round($purchasesVal, 2),
+                    'expenses' => round($expensesVal, 2),
+                    'profit' => $monthProfit,
+                    'amount' => round($salesVal, 2), // backward compatibility
                 ];
             }
 
@@ -255,17 +266,23 @@ class CompanyInsightService
                 ? round(($groupProfit / $groupRevenue) * 100, 1)
                 : ($groupProfit < 0 ? -100.0 : 0.0);
 
-            // Compute monthly trend combined for the group
+            // Compute monthly trend combined for the group (Sales, Purchases, Expenses, Profit)
             $groupMonthlyTrend = [];
             for ($i = 5; $i >= 0; $i--) {
                 $month = Carbon::now()->subMonths($i);
                 $ym = $month->format('Y-m');
-                $monthTotal = 0.0;
+                $monthSales = 0.0;
+                $monthPurchases = 0.0;
+                $monthExpenses = 0.0;
+                $monthProfit = 0.0;
                 foreach ($groupCompanyIds as $cid) {
                     if (isset($companyInsights[$cid])) {
                         foreach ($companyInsights[$cid]['monthly_trend'] as $mt) {
                             if ($mt['year_month'] === $ym) {
-                                $monthTotal += $mt['amount'];
+                                $monthSales += $mt['sales'] ?? $mt['amount'] ?? 0.0;
+                                $monthPurchases += $mt['purchases'] ?? 0.0;
+                                $monthExpenses += $mt['expenses'] ?? 0.0;
+                                $monthProfit += $mt['profit'] ?? 0.0;
                             }
                         }
                     }
@@ -273,7 +290,11 @@ class CompanyInsightService
                 $groupMonthlyTrend[] = [
                     'month' => $month->format('M'),
                     'year_month' => $ym,
-                    'amount' => round($monthTotal, 2),
+                    'sales' => round($monthSales, 2),
+                    'purchases' => round($monthPurchases, 2),
+                    'expenses' => round($monthExpenses, 2),
+                    'profit' => round($monthProfit, 2),
+                    'amount' => round($monthSales, 2),
                 ];
             }
 

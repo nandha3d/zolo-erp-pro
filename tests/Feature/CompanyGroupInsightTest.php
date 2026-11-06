@@ -84,19 +84,25 @@ class CompanyGroupInsightTest extends OperationsTestCase
         $response = $this->get('/workspace');
         $response->assertOk();
 
-        // Master Group Rollup Card elements
+        // Master Group Rollup Card elements & Visual Charts
         $response->assertSee('Master Group Rollup', false);
         $response->assertSee('Apex Group', false);
         $response->assertSee('APEX', false);
         $response->assertSee('Consolidated Revenue', false);
         $response->assertSee('Consolidated Net Profit', false);
         $response->assertSee('Revenue Distribution & Contribution', false);
+        $response->assertSee('data-zw-master-trend', false);
+        $response->assertSee('data-zw-donut-share', false);
+        $response->assertSee('data-zw-donut-cost', false);
+        $response->assertSee('zw-dues-meter-card', false);
 
-        // Big Expanded Company Cards & In-Card Switch action
+        // Big Expanded Company Cards, Dedicated Monthly Charts & In-Card Switch action
         $response->assertSee('zw-company-card-expanded', false);
         $response->assertSee('Current company', false);
         $response->assertSee('Switch', false);
         $response->assertSee('Net Revenue', false);
         $response->assertSee('6-Month Sales Trajectory', false);
+        $response->assertSee('data-zw-comp-trend', false);
+        $response->assertSee('data-zw-comp-donut', false);
     }
 }
