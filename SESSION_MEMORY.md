@@ -1,5 +1,25 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-06: Remote Sync, Main Merged & Live Production Deployment Verified at `ae637a9` (branch ui)
+
+- **Remote Synchronization & Latest Code Pull:**
+  - Pulled latest commits (`96d0581`, `e53a1c1`, `3d4d384`, `ae637a9`) from `origin`:
+    - `96d0581`: Single-page customer and supplier ledger desk with print filters and parties global UI standardization.
+    - `e53a1c1`: Merge of origin/ui into ui.
+    - `3d4d384`: Apply product margin migration in inventory cutover fixture.
+    - `ae637a9`: Initialize Textile posting accounts and keep demo stock out of production.
+  - Branches `ui` and `main` fast-forwarded to commit `ae637a9`.
+  - Both remotes (`origin` and `nandha-origin`) are fully synchronized on both `main` and `ui` at commit `ae637a9`.
+- **Live Production Smoke Verification (`https://erp.samuraibuiness.in`):**
+  - Live HTTP smoke check executed against `https://erp.samuraibuiness.in/login`:
+    - Returned `HTTP/1.1 200 OK` with valid session cookie `zoloerp_session` and security headers (`X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`).
+- **Feature Suite Verification (Green):**
+  - `tests/Feature/VoucherPopupAndProductEnhancementsTest.php`: 6/6 passed (41 assertions).
+  - `tests/Feature/PartiesGlobalUiTest.php`: 11/11 passed (59 assertions).
+  - `tests/Feature/SingleViewVoucherDeskTest.php`: 8/8 passed (28 assertions).
+- **Active Working Branch:**
+  - Workspace restored to branch `ui` per persistent session memory guidelines.
+
 ## Active Session & Follow-up — 2026-11-06: Unified Beautiful Voucher Details Popups, Product Edit Restorations, Product History GRN/Variant Enhancements & Guided Tutorial (branch ui)
 
 - **Detailed Voucher Popups Redesigned (`Action > View` on Sales, Purchases, and Products):**
