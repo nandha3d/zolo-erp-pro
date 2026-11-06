@@ -1,5 +1,52 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Global Printing Rules, Spacing Standardization & Ledger Data Visibility — 2026-11-06 (branch ui)
+
+- **Client Requests Addressed:**
+  - *"printing options has the problem, kindly check all the printing options. Does it have the spaces correctly and all the datas are visible or not. Make a global printing rules to do that."* with print preview screenshot `media_1793965297080_cd11ba3c.png`.
+- **Diagnosis of Printing Defects:**
+  1. **Duplicate Header:** The print preview rendered the official ERP letterhead (`zoloERP Textiles`, Tiruppur address, GSTIN `33ZOLOT1234K1Z5`, phone, FY, user) AND right below it a duplicate company header (`zoloERP Pro`, `GSTIN: —`) from a custom `.print-only-header` block in the view.
+  2. **Unwanted Screen Chrome on Paper:** The 5-card KPI summary strip (`REPORT TIMEFRAME`, `OPENING BALANCE`, etc.) and DataTables controls (`All records per page`, `Search: [ ]`) were printing, cluttering the statement and pushing content down.
+  3. **Horizontal Table Truncation & Missing Data:** On A4 portrait paper (width ~790px), the table had rigid pixel widths (`style="width: 130px;"`, etc.) totaling > 1,050px. Columns beyond `DEBIT (₹)` (`CREDIT`, `RUNNING BALANCE`, `STATUS`) overflowed the right margin, rendering them invisible.
+- **Global Architecture & Implementation (`public/css/erp-print.css`):**
+  1. **Global Page Geometry & Margins:**
+     - Standardized `@page { size: A4 portrait; margin: 8mm 8mm 10mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter", sans-serif; color: #64748b; } }`.
+     - Added `@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }` for landscape registers.
+  2. **Comprehensive Screen Chrome Suppression:**
+     - Enforced `@media print { display: none !important; }` across all UI navigation and control wrappers:
+       `nav.side-navbar`, `#sidebar`, `header.header`, `nav.navbar`, `.reveal-topbar-strip`, `.z-icon-tile`, `footer.main-footer`, `.comm-command-bar`, `.desk-filter-card`, `.report-filter-card`, `.dues-filter-card`, `.kpi-summary-strip`, `.dues-kpi-grid`, `.party-kpi-grid`, `.quick-filter-bar`, `.quick-filter-pills`, `.dataTables_length`, `.dataTables_filter`, `.dataTables_paginate`, `.dataTables_info`, `.dataTables_wrapper .row:first-child`, `.dataTables_wrapper .row:last-child`, `.dt-buttons`, `.d-print-none`, `.not-exported-col`, `th.not-exported-col`, `td.not-exported-col`, `.no-print`, `.action-col`, `.btn`.
+  3. **Global Table Print Geometry & 100% Data Visibility:**
+     - `.table-responsive` set to `overflow: visible !important; width: 100% !important; height: auto !important; border: none !important; margin: 0 !important;`.
+     - `table, table.dataTable, .table, .ledger-table` set to `width: 100% !important; max-width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; font-size: 8pt !important;`.
+     - Balanced percentage column widths for statement ledgers (8 printed columns):
+       - Date: 10%
+       - Type: 12%
+       - Ref No: 14%
+       - Warehouse: 13%
+       - Particulars/Description: auto (expands dynamically, wraps naturally)
+       - Debit: 11% (right-aligned)
+       - Credit: 11% (right-aligned)
+       - Balance: 13% (right-aligned, Dr/Cr tags preserved)
+       - Unnecessary `#` index and `Status` columns hidden via `.not-exported-col`.
+     - Table header styled with crisp light gray fill (`#f1f5f9`), bold dark text (`#0f172a`), 1px subtle borders (`#94a3b8`).
+     - Table footer totals styled with `#f8fafc` background, top border `2px solid #0f172a`, and bold font.
+     - Type and Dr/Cr badges printed cleanly as bordered text pills without heavy dark background fills.
+     - Row break avoidance: `tr { break-inside: avoid !important; page-break-inside: avoid !important; }`.
+  4. **Standardized Party Statement Card (`.erp-print-party-card`):**
+     - Removed redundant company letterhead block in `customer_report.blade.php` and `supplier_report.blade.php`.
+     - Positioned dedicated `.erp-print-party-card` immediately below the official ERP letterhead:
+       - Left: Party details (Name, Company, Phone, Email, GSTIN).
+       - Right: Financial balance (Opening Balance Dr/Cr, Current Outstanding Dr/Cr).
+     - Hidden on screen via `@media screen { display: none !important; }`; shown on print as a neat 2-column card.
+  5. **Standardized Signatures Block (`.erp-print-signatures`):**
+     - Positioned at document end with `break-inside: avoid`:
+       - Left: "Customer Confirmation Signature" / "Supplier Confirmation / Verification".
+       - Right: "For [Company Name] / Authorized Signatory".
+- **Verification & Test Coverage:**
+  - Automated feature suite `Tests\Feature\CustomerSupplierReportsNavigationTest`: 6/6 passed (39 assertions).
+  - Clean view cache compilation: `php artisan view:clear` & `php artisan view:cache` (100% clean).
+  - Chrome / Print preview verification: zero double headers, zero horizontal truncation, all columns fully visible within A4 portrait printable area.
+
 ## Active Session & Follow-up — 2026-11-06: Remote Sync, Main Merged & Live Production Deployment Verified at `ae637a9` (branch ui)
 
 - **Remote Synchronization & Latest Code Pull:**
@@ -3304,3 +3351,5 @@ User: People, HRM and Settings did not follow the modern UI; add a developer rol
 - Atomically advanced local and remote release references to `ae637a9523efb8aec602e1fa9a5b80b479dcfbfe`. The new main acceptance run gates the production deployment.
 - Acceptance run `42212573724` failed its legacy fixture because the Textile migration added a second company before the single-company backfill rehearsal. Commit `96c057a` moves the new-company migration after that rehearsal and verifies the current Journal entries heading. All 44 legacy MySQL tests passed locally. Pushed `96c057a` to `main`; its acceptance run is `42213247436`. `origin/ui` received a separate documentation commit during the rollout.
 - Earlier GitHub runs also found legacy styles, a stale expected party statement count, and an accounting rollback fixture that assumed an empty company table. Commit `60f2e97` moves inline CSS to page stylesheets, uses brand tokens, checks all six posted statement movements, and fixes the Guided Tour startup and empty ledger tables found during Chrome verification. Commit `0cca23f` rehearses accounting rollback before the Textile company and chart are created. Targeted design, Textile contract and rollback checks passed. Pushed both fixes to `main` from an isolated worktree.
+
+- Production rollout verified on 2026-11-06 at 17:47 IST. All seven suites passed in GitHub acceptance run `42214947217`. The automatic deployment `42216499752` deployed `0cca23faaced776e76149bea796bd578f04d865f`, ran the Textile company and masters migration successfully, and returned HTTP 200 for `/login`. A separate live request also returned HTTP 200 for the new ledger stylesheet. The release provisions `ZTEX` inside the existing production database with catalog and party masters and zero sample opening stock. Later edits on `ui` are outside this release snapshot.

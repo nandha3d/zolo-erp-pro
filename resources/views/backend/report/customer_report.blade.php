@@ -303,56 +303,12 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
     color: #0f172a;
 }
 
-/* Print specific styling */
+/* Print specific styling handled globally in erp-print.css */
 @media print {
-    body, body.dark-mode {
-        background: #ffffff !important;
-        color: #0f172a !important;
-    }
-    .comm-command-bar,
-    .desk-filter-card,
-    .quick-filter-bar,
-    .not-exported-col,
-    .side-navbar,
-    header.header,
-    footer.main-footer,
-    .btn,
-    .dataTables_length,
-    .dataTables_filter,
-    .dataTables_info,
-    .dataTables_paginate {
-        display: none !important;
-    }
     .report-workspace-view {
         padding: 0 !important;
         margin: 0 !important;
-    }
-    .desk-card-wrapper {
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-    }
-    .print-only-header {
-        display: block !important;
-        margin-bottom: 15px;
-    }
-    .ledger-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-    }
-    .ledger-table th, .ledger-table td {
-        border: 1px solid #cbd5e1 !important;
-        padding: 5px 6px !important;
-        font-size: 8.5pt !important;
-    }
-    .ledger-table tfoot th {
-        background: #f1f5f9 !important;
-        border-top: 2px solid #0f172a !important;
-    }
-}
-@media screen {
-    .print-only-header {
-        display: none;
+        background: transparent !important;
     }
 }
 </style>
@@ -391,47 +347,34 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
         </div>
     </div>
 
-    <!-- Print Letterhead & Party Header (Only Visible When Printing) -->
-    <div class="print-only-header">
-        <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-                <h2 style="margin: 0; font-size: 16pt; font-weight: 800; color: #0f172a;">{{ $general_setting->company_name ?? 'zoloERP Pro' }}</h2>
-                <div style="font-size: 9pt; color: #475569; margin-top: 3px;">
-                    GSTIN: <strong>{{ $general_setting->vat_registration_number ?? '—' }}</strong> | Phone: {{ $general_setting->phone ?? '—' }}
-                </div>
-                <div style="font-size: 8.5pt; color: #64748b;">
-                    {{ $general_setting->address ?? '' }}
-                </div>
+    <!-- Print Party Details Card (Only Visible When Printing) -->
+    @if($customer)
+    <div class="erp-print-party-card">
+        <div>
+            <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Customer / Debtor Details:</div>
+            <div style="font-size: 11pt; font-weight: 800; color: #0f172a;">{{ $customer->name }}</div>
+            @if(!empty($customer->company_name))
+                <div style="font-size: 9pt; color: #334155; font-weight: 600;">{{ $customer->company_name }}</div>
+            @endif
+            <div style="font-size: 8.5pt; color: #64748b; margin-top: 2px;">
+                Phone: {{ $customer->phone_number }} | Email: {{ $customer->email ?? '—' }}
             </div>
-            <div style="text-align: right;">
-                <h3 style="margin: 0; font-size: 13pt; font-weight: 800; text-transform: uppercase; color: #0f172a;" id="printDocTitle">Customer Account Statement / Ledger</h3>
-                <div style="font-size: 8.5pt; color: #64748b; margin-top: 4px;">
-                    Period: <strong>{{ date('d-m-Y', strtotime($start_date)) }}</strong> To <strong>{{ date('d-m-Y', strtotime($end_date)) }}</strong>
-                </div>
-                <div style="font-size: 8pt; color: #94a3b8;">Printed on: {{ date('d-m-Y H:i') }}</div>
+            <div style="font-size: 8.5pt; color: #64748b;">
+                GSTIN: <strong>{{ $customer->tax_no ?? 'Unregistered' }}</strong>
             </div>
         </div>
-
-        @if($customer)
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between;">
-            <div>
-                <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Customer / Debtor Details:</div>
-                <div style="font-size: 11.5pt; font-weight: 800; color: #0f172a;">{{ $customer->name }}</div>
-                <div style="font-size: 9pt; color: #334155;">{{ $customer->company_name ?? '' }}</div>
-                <div style="font-size: 8.5pt; color: #64748b;">Phone: {{ $customer->phone_number }} | Email: {{ $customer->email ?? '—' }}</div>
-                <div style="font-size: 8.5pt; color: #64748b;">GSTIN: <strong>{{ $customer->tax_no ?? 'Unregistered' }}</strong></div>
+        <div style="text-align: right; min-width: 190px;">
+            <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Opening Balance:</div>
+            <div style="font-size: 10pt; font-weight: 700; color: #0f172a;">
+                {{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Dr' : 'Cr' }}
             </div>
-            <div style="text-align: right; min-width: 180px;">
-                <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Opening Balance:</div>
-                <div style="font-size: 10pt; font-weight: 700; color: #0f172a;">{{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Dr' : 'Cr' }}</div>
-                <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b; margin-top: 4px;">Current Outstanding:</div>
-                <div style="font-size: 12pt; font-weight: 800; color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
-                    {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }} {{ $closingBal >= 0 ? 'Dr' : 'Cr' }}
-                </div>
+            <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b; margin-top: 4px;">Current Outstanding:</div>
+            <div style="font-size: 12pt; font-weight: 800; color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
+                {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }} {{ $closingBal >= 0 ? 'Dr' : 'Cr' }}
             </div>
         </div>
-        @endif
     </div>
+    @endif
 
     <!-- KPI Summary Strip -->
     <div class="kpi-summary-strip d-print-none">
@@ -679,15 +622,13 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
     </div>
 
     <!-- Print Footer Signatures (Only Visible When Printing) -->
-    <div class="print-only-header" style="margin-top: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px;">
-            <div style="text-align: center; border-top: 1px dashed #94a3b8; width: 220px; padding-top: 6px; font-size: 8.5pt;">
-                Customer Confirmation Signature
-            </div>
-            <div style="text-align: center; border-top: 1px dashed #94a3b8; width: 220px; padding-top: 6px; font-size: 8.5pt;">
-                For {{ $general_setting->company_name ?? 'zoloERP Pro' }}<br>
-                <strong>Authorized Signatory</strong>
-            </div>
+    <div class="erp-print-signatures">
+        <div class="erp-print-sig-box">
+            Customer Confirmation Signature
+        </div>
+        <div class="erp-print-sig-box">
+            For {{ $customer->company_name ?? ($activeCompany->trade_name ?? 'zoloERP Pro') }}<br>
+            <strong>Authorized Signatory</strong>
         </div>
     </div>
 </section>
@@ -779,30 +720,29 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
 
     function printReport(mode) {
         var prevFilter = $('.btn-filter-pill.active').data('filter');
+        var reportTitle = 'Customer Account Statement / Ledger';
 
         if (mode === 'all') {
-            // Complete Ledger mode
-            $('#printDocTitle').text('Complete Customer Account Statement / Ledger');
+            reportTitle = 'Complete Customer Account Statement / Ledger';
             $('.btn-filter-pill[data-filter="all"]').trigger('click');
         } else if (mode === 'current') {
-            // Keep active view
             var filterName = prevFilter.charAt(0).toUpperCase() + prevFilter.slice(1);
-            $('#printDocTitle').text(filterName === 'All' ? 'Complete Customer Account Statement / Ledger' : 'Customer ' + filterName + ' Statement');
+            reportTitle = filterName === 'All' ? 'Complete Customer Account Statement / Ledger' : 'Customer ' + filterName + ' Statement';
         } else {
-            // Specific filter mode
             $('.btn-filter-pill[data-filter="' + mode + '"]').trigger('click');
             var filterName = mode.charAt(0).toUpperCase() + mode.slice(1);
-            $('#printDocTitle').text('Customer ' + filterName + ' Statement');
+            reportTitle = 'Customer ' + filterName + ' Statement';
         }
 
-        // Expand all records for full print
+        $('[data-erp-print-title]').text(reportTitle);
+
+        // Expand all records and adjust columns for full print
         if (table) {
             var origLen = table.page.len();
             table.page.len(-1).draw();
 
             setTimeout(function() {
                 window.print();
-                // Restore previous pagination
                 setTimeout(function() {
                     table.page.len(origLen).draw();
                     if (mode === 'all' && prevFilter && prevFilter !== 'all') {
