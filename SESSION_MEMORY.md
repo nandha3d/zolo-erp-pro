@@ -1,5 +1,10 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Angalammantex textile product categories — 2026-11-06 (branch ui)
+
+- Assigned the existing Textiles & Handlooms category and its five subcategories (IDs 144–149) to Angalammantex (company 26) in the local `zoloerp` database. The categories had no company owner and were referenced only by the 12 seeded Angalammantex textile products.
+- A fresh company-scoped query verified 2 Yarn & Spinning, 3 Grey & Woven Fabrics, 3 Dyed & Finished Fabrics, 3 Apparel & Made-ups, and 1 Textile Trims & Accessories product. The transaction updated the six category records.
+
 ## Production Migration for zoloERP Textiles & Main Branch Merge — 2026-11-06 (branch ui -> main)
 
 - **Client Request:** *"can you merge the ui to main branch? Along with zoloerp textile db to be migrated to the actual production site, create a file for it the github will deploy it"*
