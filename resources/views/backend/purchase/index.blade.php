@@ -286,7 +286,7 @@
                         <span class="text-muted d-none d-lg-inline u-fs-11px" id="remarks-summary-preview">Remarks: Add transport, LR and bale details</span>
                     </div>
 
-                    <div class="bottom-action-buttons">
+                    <div class="bottom-action-buttons standard-mode-actions">
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-form-discard">
                             <i class="dripicons-clockwise"></i> Discard
                         </button>
@@ -298,6 +298,21 @@
                         </button>
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-form-review">
                             Review
+                        </button>
+                    </div>
+
+                    <div class="bottom-action-buttons view-mode-actions" style="display:none;">
+                        <button type="button" class="btn btn-primary comm-bottom-btn comm-bottom-btn-primary" id="btn-view-to-edit" title="Switch to edit mode">
+                            <i class="dripicons-document-edit"></i> Edit this Bill
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-duplicate" title="Duplicate as a new draft">
+                            <i class="dripicons-copy"></i> Duplicate
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-print" title="Print this bill">
+                            <i class="dripicons-print"></i> Print
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-close" title="Close view and start new bill">
+                            <i class="dripicons-cross"></i> Close View
                         </button>
                     </div>
 
@@ -473,14 +488,14 @@
                                     <i class="dripicons-document-edit"></i> Edit
                                 </a>
                                 @endunless
-                                <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View purchase details">
+                                <a href="javascript:void(0)" class="side-action-btn view btn-side-view" data-id="{{ $bill->id }}" title="View purchase details in single view">
                                     <i class="dripicons-preview"></i> View
+                                </a>
+                                <a href="javascript:void(0)" class="side-action-btn copy btn-side-copy" data-id="{{ $bill->id }}" title="Duplicate this purchase into a new draft in single view">
+                                    <i class="dripicons-copy"></i> Duplicate
                                 </a>
                                 <a href="javascript:void(0)" class="side-action-btn print btn-side-print" data-id="{{ $bill->id }}" title="Print purchase">
                                     <i class="dripicons-print"></i> Print
-                                </a>
-                                <a href="javascript:void(0)" class="side-action-btn copy btn-side-copy" data-id="{{ $bill->id }}" title="Copy this purchase into a new draft" hidden>
-                                    <i class="dripicons-copy"></i> Copy
                                 </a>
                                 @if($returnsTab && $bill->posted_at && !$bill->reversed_at)
                                 <a href="javascript:void(0)" class="side-action-btn edit btn-side-return" data-id="{{ $bill->id }}" title="Return goods or adjust value: make a debit note against this bill">
@@ -1194,7 +1209,7 @@
 </div>
 
 <!-- Unified Executive Add Product Modal (Catalog Master) -->
-@include('backend.product.partials.quick_create_modal')
+@include('backend.product.partials.quick_create_modal', ['billUsage' => 'purchase'])
 
 <!-- Quick Create Category Modal (Inline) -->
 <div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
@@ -2570,7 +2585,7 @@
         formData.set('name', name);
         formData.set('code', code);
         formData.set('cost', cost);
-        formData.set('price', price);
+        formData.set('price', this.elements.product_usage.value === 'purchase' ? 0 : price);
         formData.set('unit_id', unitId || '');
         formData.set('sale_unit_id', $('#quick-item-sale-unit').val() || unitId || '');
         formData.set('purchase_unit_id', $('#quick-item-purchase-unit').val() || unitId || '');
@@ -3142,6 +3157,7 @@
             }
         });
 
+        // DataTables sums and filters
         function datatable_sum(dt_selector, is_calling_first) {
             var baseCol = (show_purchase_product_details == 1) ? 8 : 6;
             for (var c = baseCol; c <= baseCol + 3; c++) {
@@ -3159,18 +3175,63 @@
         $('#btn-quick-refresh').on('click', function() {
             purchaseTable.draw();
         });
+    }
 
-        // Clicking Edit on any row in DataTables switches to Voucher Entry mode and loads that bill
-        $(document).on('click', '#purchase-table a', function(e) {
+    // --- Global Row Action Listeners for Full View Register (Single View Setup: View, Edit, Duplicate) ---
+    $(document).on('click', '#purchase-table .btn-table-view, #purchase-table button.view, #purchase-table .view', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
+            var tr = $(this).closest('tr');
+            var rowData = $('#purchase-table').DataTable().row(tr).data();
+            id = rowData ? rowData.id : null;
+        }
+        if (id) {
+            switchWorkspaceMode('voucher');
+            loadPurchaseToForm(id, 'view');
+        }
+    });
+
+    $(document).on('click', '#purchase-table .btn-table-edit, #purchase-table a[href*="/edit"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
             var href = $(this).attr('href') || '';
             var match = href.match(/purchases\/(\d+)\/edit/);
-            if (match && match[1]) {
-                e.preventDefault();
-                switchWorkspaceMode('voucher');
-                loadPurchaseToForm(match[1]);
-            }
-        });
-    }
+            if (match && match[1]) id = match[1];
+        }
+        if (!id) {
+            var tr = $(this).closest('tr');
+            var rowData = $('#purchase-table').DataTable().row(tr).data();
+            id = rowData ? rowData.id : null;
+        }
+        if (id) {
+            switchWorkspaceMode('voucher');
+            loadPurchaseToForm(id, 'edit');
+        }
+    });
+
+    $(document).on('click', '#purchase-table .btn-table-duplicate, #purchase-table a[href*="/duplicate"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
+            var href = $(this).attr('href') || '';
+            var match = href.match(/purchases\/duplicate\/(\d+)/);
+            if (match && match[1]) id = match[1];
+        }
+        if (!id) {
+            var tr = $(this).closest('tr');
+            var rowData = $('#purchase-table').DataTable().row(tr).data();
+            id = rowData ? rowData.id : null;
+        }
+        if (id) {
+            switchWorkspaceMode('voucher');
+            loadPurchaseToForm(id, 'duplicate');
+        }
+    });
 
     // --- Auto-retract all dropdowns when clicking anywhere outside ---
     $(document).on('click', function(e) {
@@ -3197,8 +3258,17 @@
         $('.bootstrap-select.show, .dropdown.show').not($(e.target).closest('.bootstrap-select, .dropdown')).removeClass('show open').find('.dropdown-menu.show').removeClass('show');
     });
 
-    // --- Load Purchase To Form for In-Place Editing ---
-    window.loadPurchaseToForm = function(id) {
+    var currentLoadedPurchaseId = null;
+
+    // --- Load Purchase To Form: Unified Single View Setup (View, Edit, Duplicate) ---
+    window.loadPurchaseToForm = function(id, mode) {
+        mode = mode || 'edit';
+        currentLoadedPurchaseId = id;
+
+        if ($('#fullwidth-register-view').is(':visible')) {
+            switchWorkspaceMode('voucher');
+        }
+
         $('#comm-split-grid').removeClass('panel-fullwidth');
         $('#fullscreen-icon').text('⛶');
         $('#fullscreen-tooltip').text('Full Width');
@@ -3218,21 +3288,64 @@
                 }
 
                 var p = res.purchase;
-                // Switch Form to Update Mode
-                $('#entry-form-method').val('PUT');
-                $('#edit-purchase-id').val(p.id);
-                $('#purchase-entry-form').attr('action', '{{ url("purchases") }}/' + p.id);
 
-                // Update UI Labels
-                $('#doc-breadcrumb-mode').text('Edit: ' + (p.reference_no || '#' + p.id)).removeClass('text-primary').addClass('text-success');
-                $('#doc-title-text').text((Number(p.status) === 4 ? 'Edit Purchase Order: ' : 'Edit Purchase Bill: ') + (p.reference_no || '#' + p.id));
-                $('#doc-sub-text').text('Editing saved purchase record');
+                if (mode === 'view') {
+                    // --- Single View Setup: View Mode (Read-Only Preview in Desk, No Dialog Box) ---
+                    $('#entry-form-method').val('GET');
+                    $('#edit-purchase-id').val(p.id);
+                    $('#purchase-entry-form').attr('action', 'javascript:void(0)');
+
+                    $('#doc-breadcrumb-mode').text('View: ' + (p.reference_no || '#' + p.id))
+                        .removeClass('badge-primary badge-success').addClass('badge-info');
+                    $('#doc-title-text').text((Number(p.status) === 4 ? 'View Purchase Order: ' : 'View Purchase Bill: ') + (p.reference_no || '#' + p.id));
+                    $('#doc-sub-text').text('Viewing purchase record (Single View Mode)');
+
+                    $('#comm-entry-workspace').addClass('is-view-mode');
+                    $('.standard-mode-actions').hide();
+                    $('.view-mode-actions').show();
+                } else if (mode === 'duplicate') {
+                    // --- Single View Setup: Duplicate Mode (Clone into New Bill) ---
+                    $('#entry-form-method').val('POST');
+                    $('#edit-purchase-id').val('');
+                    $('#purchase-entry-form').attr('action', '{{ route("purchases.store") }}');
+
+                    $('#doc-breadcrumb-mode').text('New (Duplicate)')
+                        .removeClass('badge-success badge-info').addClass('badge-primary');
+                    $('#doc-title-text').text('New Purchase Bill (Copy of ' + (p.reference_no || '#' + p.id) + ')');
+                    $('#doc-sub-text').text('Duplicate purchase • Review and save as new bill');
+
+                    $('#comm-entry-workspace').removeClass('is-view-mode');
+                    $('.view-mode-actions').hide();
+                    $('.standard-mode-actions').show();
+                } else {
+                    // --- Single View Setup: Edit Mode (Update Saved Record) ---
+                    $('#entry-form-method').val('PUT');
+                    $('#edit-purchase-id').val(p.id);
+                    $('#purchase-entry-form').attr('action', '{{ url("purchases") }}/' + p.id);
+
+                    $('#doc-breadcrumb-mode').text('Edit: ' + (p.reference_no || '#' + p.id))
+                        .removeClass('badge-primary badge-info').addClass('badge-success');
+                    $('#doc-title-text').text((Number(p.status) === 4 ? 'Edit Purchase Order: ' : 'Edit Purchase Bill: ') + (p.reference_no || '#' + p.id));
+                    $('#doc-sub-text').text('Editing saved purchase record');
+
+                    $('#comm-entry-workspace').removeClass('is-view-mode');
+                    $('.view-mode-actions').hide();
+                    $('.standard-mode-actions').show();
+                }
 
                 // Populate Header Inputs
-                $('#reference_no').val(p.reference_no || '');
-                $('#supplier_invoice_no').val(p.supplier_invoice_no || '');
-                if (p.supplier_invoice_date) $('#supplier_invoice_date').val(p.supplier_invoice_date.slice(0, 10));
-                if (res.business_date || p.created_at) $('#created_at').val(res.business_date || p.created_at.slice(0, 10));
+                if (mode === 'duplicate') {
+                    $('#reference_no').val('');
+                    $('#supplier_invoice_no').val(p.supplier_invoice_no ? p.supplier_invoice_no + ' (Copy)' : '');
+                    var today = '{{ date("Y-m-d") }}';
+                    $('#supplier_invoice_date').val(today);
+                    $('#created_at').val(today);
+                } else {
+                    $('#reference_no').val(p.reference_no || '');
+                    $('#supplier_invoice_no').val(p.supplier_invoice_no || '');
+                    if (p.supplier_invoice_date) $('#supplier_invoice_date').val(p.supplier_invoice_date.slice(0, 10));
+                    if (res.business_date || p.created_at) $('#created_at').val(res.business_date || p.created_at.slice(0, 10));
+                }
                 
                 $('#supplier_id').val(p.supplier_id).trigger('change');
                 $('.selectpicker').selectpicker('refresh');
@@ -3244,8 +3357,12 @@
                 }
 
                 // Highlight active card in side list
-                $('.side-bill-card').removeClass('active-editing');
-                $('.side-bill-card[data-bill-id="' + id + '"]').addClass('active-editing');
+                $('.side-bill-card').removeClass('active-editing active-viewing');
+                if (mode === 'view') {
+                    $('.side-bill-card[data-bill-id="' + id + '"]').addClass('active-viewing');
+                } else {
+                    $('.side-bill-card[data-bill-id="' + id + '"]').addClass('active-editing');
+                }
 
                 // Populate Items
                 $('#order-table-body .order-item-row, #order-table-body .empty-placeholder-row').remove();
@@ -3267,8 +3384,34 @@
                     reindexRows();
                 }
 
+                // Populate drawer / charges
+                if (p.note) {
+                    $('#drawer-note, #hidden-note').val(p.note);
+                    $('#remarks-summary-preview').text('Remarks: ' + p.note.slice(0, 40) + (p.note.length > 40 ? '...' : ''));
+                }
+                if (p.shipping_cost) {
+                    $('#drawer-shipping-cost, #hidden-shipping-cost').val(p.shipping_cost);
+                }
+                if (p.order_discount) {
+                    $('#drawer-order-discount, #hidden-order-discount').val(p.order_discount);
+                }
+                var attr = p.attributes_json;
+                if (typeof attr === 'string') { try { attr = JSON.parse(attr); } catch(e){ attr = {}; } }
+                if (attr) {
+                    if (attr.bale_no) $('#drawer-bale-no, #hidden-bale-no').val(attr.bale_no);
+                    if (attr.no_of_bales) $('#drawer-no-of-bales, #hidden-no-of-bales').val(attr.no_of_bales);
+                    if (attr.bundle_count) $('#drawer-bundle-count, #hidden-bundle-count').val(attr.bundle_count);
+                    if (attr.vehicle_number) $('#drawer-vehicle-number, #hidden-vehicle-number').val(attr.vehicle_number);
+                    if (attr.lr_no) $('#drawer-lr-no, #hidden-lr-no').val(attr.lr_no);
+                    if (attr.lr_date) $('#drawer-lr-date, #hidden-lr-date').val(attr.lr_date);
+                    if (attr.transporter_name) $('#drawer-transporter-name, #hidden-transporter-name').val(attr.transporter_name);
+                    if (attr.station_to) $('#drawer-station-to, #hidden-station-to').val(attr.station_to);
+                    if (attr.order_no) $('#drawer-order-no, #hidden-order-no').val(attr.order_no);
+                    if (attr.credit_days) setCreditDays(attr.credit_days);
+                }
+
                 recalcTableSummary();
-                $(document).trigger("command-center-loaded", [res.purchase]);
+                $(document).trigger("command-center-loaded", [res.purchase, mode]);
 
                 // Scroll smoothly to top of form
                 $('#comm-entry-workspace').animate({ scrollTop: 0 }, 200);
@@ -3282,15 +3425,20 @@
 
     // --- Reset Form to Blank New Purchase ---
     window.resetFormToNew = function() {
+        currentLoadedPurchaseId = null;
         $('#comm-split-grid').removeClass('panel-fullwidth');
         $('#fullscreen-icon').text('⛶');
         $('#fullscreen-tooltip').text('Full Width');
+
+        $('#comm-entry-workspace').removeClass('is-view-mode');
+        $('.view-mode-actions').hide();
+        $('.standard-mode-actions').show();
 
         $('#entry-form-method').val('POST');
         $('#edit-purchase-id').val('');
         $('#purchase-entry-form').attr('action', '{{ route("purchases.store") }}');
 
-        $('#doc-breadcrumb-mode').text('New').removeClass('text-success').addClass('text-primary');
+        $('#doc-breadcrumb-mode').text('New').removeClass('badge-success badge-info').addClass('badge-primary');
         $('#doc-title-text').text('New Purchase Bill');
         $('#doc-sub-text').text('Purchase • New bill');
 
@@ -3302,7 +3450,7 @@
         $('.selectpicker').selectpicker('refresh');
         $('#purchase_type_id').val('0');
 
-        $('.side-bill-card').removeClass('active-editing');
+        $('.side-bill-card').removeClass('active-editing active-viewing');
         $('#order-table-body .order-item-row, #order-table-body .empty-placeholder-row').remove();
         $productSearch.val('');
         rowCounter = 0;
@@ -3318,18 +3466,60 @@
         resetFormToNew();
     });
 
-    // Card click & edit button click
+    // View Mode Interactive Transition Handlers
+    $(document).on('click', '#btn-view-to-edit', function(e) {
+        e.preventDefault();
+        if (currentLoadedPurchaseId) {
+            loadPurchaseToForm(currentLoadedPurchaseId, 'edit');
+        }
+    });
+
+    $(document).on('click', '#btn-view-to-duplicate', function(e) {
+        e.preventDefault();
+        if (currentLoadedPurchaseId) {
+            loadPurchaseToForm(currentLoadedPurchaseId, 'duplicate');
+        }
+    });
+
+    $(document).on('click', '#btn-view-to-print', function(e) {
+        e.preventDefault();
+        if (currentLoadedPurchaseId) {
+            window.open('{{ url("purchases/gen_invoice") }}/' + currentLoadedPurchaseId, '_blank');
+        }
+    });
+
+    $(document).on('click', '#btn-view-close', function(e) {
+        e.preventDefault();
+        resetFormToNew();
+    });
+
+    // Side bill list card actions: View, Edit, Duplicate in Single View Setup
     $(document).on('click', '.side-bill-card', function(e) {
         if ($(this).data('reversed')) return;
         if ($(e.target).closest('a, button').length) return;
         var id = $(this).data('bill-id');
-        if (id) loadPurchaseToForm(id);
+        if (id) loadPurchaseToForm(id, 'view');
+    });
+
+    $(document).on('click', '.btn-side-view', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (id) loadPurchaseToForm(id, 'view');
     });
 
     $(document).on('click', '.btn-side-load-edit', function(e) {
+        e.preventDefault();
         e.stopPropagation();
         var id = $(this).data('id');
-        if (id) loadPurchaseToForm(id);
+        if (id) loadPurchaseToForm(id, 'edit');
+    });
+
+    $(document).on('click', '.btn-side-copy', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (id) loadPurchaseToForm(id, 'duplicate');
     });
 
     // --- Slideover Drawer Handlers ---
@@ -3581,9 +3771,18 @@
         switchWorkspaceMode('register');
     }
 
-    // --- Auto filter by search / ref if present in query params ---
-    var searchParam = (urlParams.get('search') || urlParams.get('ref') || '').trim();
-    if (searchParam) {
+    // --- Check URL query params for initial load in Single View Setup (Edit, View, Duplicate) ---
+    var editParam = urlParams.get('edit');
+    var viewParam = urlParams.get('view_id') || urlParams.get('show_bill');
+    var duplicateParam = urlParams.get('duplicate');
+
+    if (editParam) {
+        loadPurchaseToForm(editParam, 'edit');
+    } else if (viewParam) {
+        loadPurchaseToForm(viewParam, 'view');
+    } else if (duplicateParam) {
+        loadPurchaseToForm(duplicateParam, 'duplicate');
+    } else if (searchParam) {
         $('#side-search-input').val(searchParam);
         filterSideBills();
         var $exactCard = $('.side-bill-card').filter(function() {

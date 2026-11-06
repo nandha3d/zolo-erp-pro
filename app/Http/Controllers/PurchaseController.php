@@ -130,8 +130,12 @@ class PurchaseController extends Controller
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
     }
 
-    public function show($id)
+    public function show($id, Request $request)
     {
+        if (!$request->wantsJson() && !$request->ajax()) {
+            return redirect()->route('purchases.index', ['view_id' => $id]);
+        }
+
         $purchase = Purchase::with(['supplier', 'warehouse', 'payments'])->find($id);
         if (!$purchase) {
             return response()->json(['success' => false, 'message' => 'Purchase not found'], 404);
@@ -300,7 +304,7 @@ class PurchaseController extends Controller
                 $lims_product_data = Product::find($id);
                 if (!$lims_product_data && !empty($data['product_name_text'][$i])) {
                     $manualName = trim($data['product_name_text'][$i]);
-                    $lims_product_data = Product::firstOrCreate(
+                    $lims_product_data = Product::lockForUpdate()->firstOrCreate(
                         ['name' => $manualName],
                         [
                             'code' => 'ITM-' . mt_rand(100000, 999999),
@@ -314,6 +318,7 @@ class PurchaseController extends Controller
                             'is_active' => true,
                         ]
                     );
+                    $lims_product_data->assertAllowedOnBill('purchase', 'product_id');
                     $id = $lims_product_data->id;
                     $product_id[$i] = $id;
                 }
@@ -504,11 +509,12 @@ class PurchaseController extends Controller
                     $product_data[] = Product::where([
                                         ['code', $current_line[0]],
                                         ['is_active', true]
-                                    ])->first();
+                                    ])->lockForUpdate()->first();
                     if(!$product_data[$i-1]) {
                         throw new \Exception('Product with this code '.$current_line[0].' does not exist!');
                         // return redirect()->back()->with('message', 'Product with this code '.$current_line[0].' does not exist!');
                     }
+                    $product_data[$i-1]->assertAllowedOnBill('purchase', 'file');
                     $unit[] = Unit::where('unit_code', $current_line[2])->first();
                     if(!$unit[$i-1]) {
                         throw new \Exception(__('db.Purchase unit does not exist!'));
@@ -875,15 +881,15 @@ class PurchaseController extends Controller
                             </button>
                             <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
                                 <li>
-                                    <button type="button" class="btn btn-link view"><i class="fa fa-eye"></i> '.__('db.View').'</button>
+                                    <button type="button" class="btn btn-link view btn-table-view" data-id="'.$purchase->id.'"><i class="fa fa-eye"></i> '.__('db.View').'</button>
                                 </li>';
                 if(in_array("purchases-add", $request['all_permission']))
                     $nestedData['options'] .= '<li>
-                        <a href="'.route('purchase.duplicate', $purchase->id).'" class="btn btn-link"><i class="fa fa-copy"></i> '.__('db.Duplicate').'</a>
+                        <button type="button" class="btn btn-link duplicate btn-table-duplicate" data-id="'.$purchase->id.'"><i class="fa fa-copy"></i> '.__('db.Duplicate').'</button>
                         </li>';
                 if(in_array("purchases-edit", $request['all_permission']))
                     $nestedData['options'] .= '<li>
-                        <a href="'.route('purchases.edit', $purchase->id).'" class="btn btn-link"><i class="dripicons-document-edit"></i> '.__('db.edit').'</a>
+                        <button type="button" class="btn btn-link edit btn-table-edit" data-id="'.$purchase->id.'"><i class="dripicons-document-edit"></i> '.__('db.edit').'</button>
                         </li>';
                 if(in_array("purchase-payment-index", $request['all_permission']))
                     $nestedData['options'] .=
@@ -1001,7 +1007,7 @@ class PurchaseController extends Controller
 
     public function productWithoutVariant()
     {
-        return Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
+        return Product::forBill('purchase')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
@@ -1011,6 +1017,7 @@ class PurchaseController extends Controller
     public function productWithVariant()
     {
         return Product::join('product_variants', 'products.id', 'product_variants.product_id')
+            ->forBill('purchase')
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
@@ -1038,10 +1045,12 @@ class PurchaseController extends Controller
                                 ['code', $product_code[0]],
                                 ['is_active', true]
                             ])
-                            ->whereNull('is_variant')
+                            ->forBill('purchase')
+                            ->where(fn ($query) => $query->whereNull('is_variant')->orWhere('is_variant', false))
                             ->first();
         if(!$lims_product_data) {
             $lims_product_data = Product::join('product_variants', 'products.id', 'product_variants.product_id')
+                ->forBill('purchase')
                 ->where([
                     ['product_variants.item_code', $product_code[0]],
                     ['products.is_active', true]
@@ -1123,41 +1132,7 @@ class PurchaseController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('purchases-edit')){
-            $lims_supplier_list = Supplier::where('is_active', true)->get();
-            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_product_list_without_variant = $this->productWithoutVariant();
-            $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_purchase_data = Purchase::findOrFail($id);
-            $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
-            foreach ($lims_product_purchase_data as $purchase) {
-                $lims_product_data = Product::select('cost', 'profit_margin', 'profit_margin_type', 'price')->where('id', $purchase->product_id)->first();
-                $cost = (float) $purchase->net_unit_cost;
-                if ($lims_product_data) {
-                    $price = (float) $purchase->net_unit_price == 0 ? $lims_product_data->price : $purchase->net_unit_price;
-                } else {
-                    $price = (float) $purchase->net_unit_price;
-                }
-                $margin = (float) $purchase->net_unit_margin;
-                $margin_type = $purchase->net_unit_margin_type;
-
-                if ($cost > 0 && $price > 0 && $margin_type === 'percentage') {
-                    $calculatedMargin = (($price - $cost) / $cost) * 100;
-
-                    if (round($calculatedMargin, 2) != round($margin, 2)) {
-                        $purchase->net_unit_margin = $calculatedMargin;
-                        $purchase->net_unit_price = $price;
-                        $purchase->save();
-                    }
-                }
-            }
-            $currency_list = Currency::where('is_active', true)->get();
-            if($lims_purchase_data->exchange_rate)
-                $currency_exchange_rate = $lims_purchase_data->exchange_rate;
-            else
-                $currency_exchange_rate = 1;
-            $custom_fields = CustomField::where('belongs_to', 'purchase')->get();
-            return view('backend.purchase.edit', compact('lims_warehouse_list', 'lims_supplier_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_tax_list', 'lims_purchase_data', 'lims_product_purchase_data', 'currency_list', 'currency_exchange_rate', 'custom_fields'));
+            return redirect()->route('purchases.index', ['edit' => $id]);
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -1250,7 +1225,7 @@ class PurchaseController extends Controller
                 $lims_product_data = Product::find($pro_id);
                 if (!$lims_product_data && !empty($data['product_name_text'][$key])) {
                     $manualName = trim($data['product_name_text'][$key]);
-                    $lims_product_data = Product::firstOrCreate(
+                    $lims_product_data = Product::lockForUpdate()->firstOrCreate(
                         ['name' => $manualName],
                         [
                             'code' => 'ITM-' . mt_rand(100000, 999999),
@@ -1264,6 +1239,7 @@ class PurchaseController extends Controller
                             'is_active' => true,
                         ]
                     );
+                    $lims_product_data->assertAllowedOnBill('purchase', 'product_id');
                     $pro_id = $lims_product_data->id;
                     $product_id[$key] = $pro_id;
                 }
@@ -1392,19 +1368,7 @@ class PurchaseController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('purchases-add')){
-            $lims_supplier_list = Supplier::where('is_active', true)->get();
-            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            $lims_tax_list = Tax::where('is_active', true)->get();
-            $lims_product_list_without_variant = $this->productWithoutVariant();
-            $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_purchase_data = Purchase::findOrFail($id);
-            $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
-            if($lims_purchase_data->exchange_rate)
-                $currency_exchange_rate = $lims_purchase_data->exchange_rate;
-            else
-                $currency_exchange_rate = 1;
-            $custom_fields = CustomField::where('belongs_to', 'purchase')->get();
-            return view('backend.purchase.duplicate', compact('lims_warehouse_list', 'lims_supplier_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_tax_list', 'lims_purchase_data', 'lims_product_purchase_data', 'currency_exchange_rate', 'custom_fields'));
+            return redirect()->route('purchases.index', ['duplicate' => $id]);
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));

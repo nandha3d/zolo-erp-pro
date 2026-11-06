@@ -3,25 +3,47 @@
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\CommercialController;
+use App\Models\Company;
+use App\Models\Product;
+use App\Services\Platform\CompanyContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /** Routes legacy web/POS mutations through the shared engine. The normal Sales/Purchase pages are the only entry UI. */
 class CommercialRouteAdapter
 {
     public function handle(Request $request, Closure $next)
     {
+        $action = $request->route()->getActionMethod();
+        $kind = str_contains($request->route()->getActionName(), 'SaleController') ? 'sale' : 'purchase';
         if (!config('commercial.enabled')) {
+            if (!$request->isMethod('GET') && in_array($action, ['store', 'update', 'updateFromClient'], true)) {
+                $ids = (array) $request->input('product_id', []);
+                if ($kind === 'sale' && $action === 'store' && is_array($request->input('products'))) {
+                    $ids = array_map(fn ($line) => $line['product_id'] ?? $line['id'] ?? null, $request->input('products'));
+                }
+                $ids = array_filter($ids, 'is_numeric');
+                if ($ids) {
+                    return DB::transaction(function () use ($request, $next, $kind, $ids) {
+                        if ($context = $request->attributes->get(CompanyContext::class)) {
+                            Company::whereKey($context->companyId)->lockForUpdate()->firstOrFail();
+                        }
+                        foreach (Product::whereKey($ids)->orderBy('id')->lockForUpdate()->get() as $product) {
+                            $product->assertAllowedOnBill($kind, 'product_id');
+                        }
+                        return $next($request);
+                    });
+                }
+            }
             return $next($request);
         }
-        $action = $request->route()->getActionMethod();
         if ($request->isMethod('GET') && !in_array($action, ['paypalSuccess', 'paypalPaymentSuccess', 'stripePayment', 'duplicate'], true)) {
             return $next($request);
         }
         if (in_array($action, ['saleData', 'purchaseData'], true)) {
             return $next($request);
         }
-        $kind = str_contains($request->route()->getActionName(), 'SaleController') ? 'sale' : 'purchase';
         if ($action === 'addPayment' && !$request->filled('paying_method')) {
             $method = match ((string) $request->input('paid_by_id')) {
                 '1' => 'Cash', '3' => 'Credit Card', '4' => 'Cheque', 'bank', 'Bank' => 'Bank',

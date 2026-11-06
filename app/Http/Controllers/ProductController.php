@@ -471,6 +471,11 @@ class ProductController extends Controller
             ]);
 
             $data = $request->except('image', 'file', 'qty');
+            if ($request->input('product_usage') === 'purchase') {
+                $data['price'] = $request->input('price') ?? 0;
+            } elseif ($request->input('product_usage') === 'sale') {
+                $data['cost'] = $request->input('cost') ?? 0;
+            }
             // A new master starts empty; opening receipts are the only source of its stock quantity.
             $data['qty'] = 0;
 
@@ -1302,6 +1307,9 @@ class ProductController extends Controller
 
             $lims_product_data = Product::whereKey($request->input('id'))->lockForUpdate()->firstOrFail();
             $data = $request->except('image', 'file', 'prev_img', 'qty');
+            if ($request->input('product_usage') === 'sale') {
+                $data['cost'] = $request->input('cost') ?? 0;
+            }
             $data['name'] = htmlspecialchars(trim($data['name']), ENT_QUOTES);
             $data['profit_margin_type'] = $request->input('profit_margin_type', 'percentage');
             $data['profit_margin'] = $request->input('profit_margin') ?? 0;

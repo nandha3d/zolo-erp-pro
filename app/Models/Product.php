@@ -6,13 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\ScopesCompanyQueries;
 use App\Services\Platform\CompanyContext;
 use Illuminate\Database\Eloquent\Builder;
+use App\Support\Database\SchemaCache;
+use Illuminate\Validation\ValidationException;
 
 class Product extends Model
 {
     use ScopesCompanyQueries;
 
+    public const USAGE_RULE = 'sometimes|required|in:purchase,sale,composite';
+
+    public function scopeForBill(Builder $query, string $kind): Builder
+    {
+        if (app(SchemaCache::class)->hasColumn($query->getConnection(), 'products', 'product_usage')) {
+            $query->whereIn('products.product_usage', [$kind, 'composite']);
+        }
+
+        return $query;
+    }
+
+    public function assertAllowedOnBill(string $kind, string $field = 'items'): void
+    {
+        if (!in_array($this->product_usage ?? 'composite', [$kind, 'composite'], true)) {
+            $bill = $kind === 'sale' ? 'sales' : 'purchase';
+            throw ValidationException::withMessages([$field => "Product {$this->code} cannot be used on a {$bill} bill."]);
+        }
+    }
+
     protected $fillable =[
-        "name", "print_name", "code", "type", "slug", "barcode_symbology", "brand_id", "category_id", "unit_id", "purchase_unit_id", "sale_unit_id", "cost", "profit_margin", "profit_margin_type", "price", "wholesale_price", "qty", "alert_quantity", "neg_stock_allowed", "negative_stock_policy", "sales_account_id", "purchase_account_id", "daily_sale_objective", "promotion", "promotion_price", "starting_date", "last_date", "tax_id", "tax_method", "image", "file", "is_embeded", "is_batch", "is_variant", "is_diffPrice", "is_imei", "featured", "product_list", "variant_list", "qty_list", "price_list", "product_details", "short_description", "specification", "related_products", "is_addon", "extras", "menu_type", "variant_option", "variant_value", "is_active", "is_online", "kitchen_id", "in_stock", "track_inventory", "is_sync_disable", "woocommerce_product_id","woocommerce_media_id","tags","meta_title","meta_description", "warranty", "guarantee", "warranty_type", "guarantee_type","wastage_percent","combo_unit_id","production_cost","is_recipe"
+        'product_usage',
+        "name", "print_name", "code", "type", "slug", "barcode_symbology", "brand_id", "category_id", "unit_id", "purchase_unit_id", "sale_unit_id", "cost", "profit_margin", "profit_margin_type", "price", "wholesale_price", "qty", "alert_quantity", "neg_stock_allowed", "negative_stock_policy", "sales_account_id", "purchase_account_id", "daily_sale_objective", "promotion", "promotion_price", "starting_date", "last_date", "tax_id", "tax_method", "hsn_code", "image", "file", "is_embeded", "is_batch", "is_variant", "is_diffPrice", "is_imei", "featured", "product_list", "variant_list", "qty_list", "price_list", "product_details", "short_description", "specification", "related_products", "is_addon", "extras", "menu_type", "variant_option", "variant_value", "is_active", "is_online", "kitchen_id", "in_stock", "track_inventory", "is_sync_disable", "woocommerce_product_id","woocommerce_media_id","tags","meta_title","meta_description", "warranty", "guarantee", "warranty_type", "guarantee_type","wastage_percent","combo_unit_id","production_cost","is_recipe"
     ];
 
     public function salesAccount()

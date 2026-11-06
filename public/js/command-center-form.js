@@ -158,9 +158,9 @@
     // Purchase orders (status 4) print on the same A4 layout, built from their current lines.
     const invoiceUrl = doc => config.printUrl && ((doc?.posted_at && doc.document_snapshot_json) || (purchase && Number(doc?.status) === 4 && !doc.reversed_at))
         ? config.printUrl + '/' + doc.id + '/print?format=a4' : null;
-    $(document).on('click', '.btn-side-view, .btn-side-print', function (event) {
+    $(document).on('click', '.btn-side-print', function (event) {
         event.preventDefault(); event.stopPropagation();
-        const print = $(this).hasClass('btn-side-print');
+        const print = true;
         // Opened during the click so popup blockers allow it; filled or closed once the document is known.
         const tab = print && config.printUrl ? window.open('', '_blank') : null;
         $.getJSON(config.listUrl + '/' + $(this).data('id') + (purchase ? '' : '/json')).done(result => {

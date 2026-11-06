@@ -596,7 +596,7 @@ class TextileMasterSeeder extends Seeder
             ];
 
             if (!$product) {
-                $product = Product::create($data);
+                $product = Product::forceCreate($data);
             } else {
                 $product->forceFill($data)->save();
             }

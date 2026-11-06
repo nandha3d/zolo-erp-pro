@@ -89,7 +89,12 @@ class TextileMasterSeederTest extends TestCase
         foreach ($expectedProducts as $code => $meta) {
             $product = Product::withoutGlobalScope('request_company')
                 ->where('code', $code)
-                ->first();
+                ->whereNotNull('company_id')
+                ->latest('id')
+                ->first()
+                ?? Product::withoutGlobalScope('request_company')
+                    ->where('code', $code)
+                    ->first();
 
             $this->assertNotNull($product, "Product {$code} must exist in the database.");
             $this->assertSame($meta['name'], $product->name);

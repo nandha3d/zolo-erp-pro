@@ -1656,6 +1656,39 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     box-shadow: 0 0 0 2px rgb(var(--z-primary-rgb) / 0.25) !important;
 }
 
+.side-bill-card.active-viewing {
+    border-color: #0284c7 !important;
+    background: #f0f9ff !important;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* Single View Setup (Read-Only Preview in Voucher Desk) */
+#comm-entry-workspace.is-view-mode .table-search-strip,
+#comm-entry-workspace.is-view-mode #btn-add-item-row,
+#comm-entry-workspace.is-view-mode #btn-multi-item,
+#comm-entry-workspace.is-view-mode #btn-create-item-modal,
+#comm-entry-workspace.is-view-mode .btn-del-row,
+#comm-entry-workspace.is-view-mode .btn-edit-row {
+    display: none !important;
+}
+
+#comm-entry-workspace.is-view-mode input:not([type=hidden]),
+#comm-entry-workspace.is-view-mode select,
+#comm-entry-workspace.is-view-mode textarea,
+#comm-entry-workspace.is-view-mode .bootstrap-select button {
+    pointer-events: none;
+    background-color: var(--z-bg-subtle, #f8fafc) !important;
+}
+
+body.dark-mode #comm-entry-workspace.is-view-mode input:not([type=hidden]),
+body.dark-mode #comm-entry-workspace.is-view-mode select,
+body.dark-mode #comm-entry-workspace.is-view-mode textarea,
+body.dark-mode #comm-entry-workspace.is-view-mode .bootstrap-select button {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
 .desk-bill-list-panel .side-list-container {
     flex: 1;
     overflow-y: auto;
@@ -3582,6 +3615,11 @@ body.dark-mode .side-bill-card.active-editing,
 body.dark-mode .bill-card.active-editing {
     background: var(--z-primary-soft) !important;
     border-color: var(--z-primary) !important;
+}
+body.dark-mode .side-bill-card.active-viewing,
+body.dark-mode .bill-card.active-viewing {
+    background: rgba(2, 132, 199, 0.2) !important;
+    border-color: #38bdf8 !important;
 }
 body.dark-mode .side-card-ref,
 body.dark-mode .bill-card .bill-card-ref {

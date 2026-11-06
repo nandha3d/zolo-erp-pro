@@ -203,14 +203,17 @@ class SaleController extends Controller
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
     }
 
-    public function show($id)
+    public function show($id, Request $request)
     {
+        if (!$request->wantsJson() && !$request->ajax()) {
+            return redirect()->route('sales.index', ['view_id' => $id]);
+        }
         return $this->getSaleJson($id);
     }
 
     public function productWithoutVariant()
     {
-        $query = Product::where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
+        $query = Product::forBill('sale')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false));
@@ -221,6 +224,7 @@ class SaleController extends Controller
     public function productWithVariant()
     {
         $query = Product::join('product_variants', 'products.id', 'product_variants.product_id')
+            ->forBill('sale')
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
@@ -629,12 +633,16 @@ class SaleController extends Controller
                     <ul class="dropdown-menu edit-options dropdown-menu-right dropdown-default" user="menu">
                         <li><a href="'.route('sale.invoice', $sale->id).'" class="btn btn-link gen-invoice"><i class="fa fa-copy"></i> '.__('db.Generate Invoice').'</a></li>
                         <li>
-                            <button type="button" class="btn btn-link view"><i class="fa fa-eye"></i> '.__('db.View').'</button>
+                            <button type="button" class="btn btn-link view btn-table-view" data-id="'.$sale->id.'"><i class="fa fa-eye"></i> '.__('db.View').'</button>
+                        </li>';
+                if(in_array("sales-add", $request['all_permission']))
+                    $nestedData['options'] .= '<li>
+                        <button type="button" class="btn btn-link duplicate btn-table-duplicate" data-id="'.$sale->id.'"><i class="fa fa-copy"></i> '.__('db.Duplicate').'</button>
                         </li>';
                 if(in_array("sales-edit", $request['all_permission'])){
                     if($sale->sale_status != 3)
                         $nestedData['options'] .= '<li>
-                            <a href="'.route('sales.edit', $sale->id).'" class="btn btn-link"><i class="dripicons-document-edit"></i> '.__('db.edit').'</a>
+                            <button type="button" class="btn btn-link edit btn-table-edit" data-id="'.$sale->id.'"><i class="dripicons-document-edit"></i> '.__('db.edit').'</button>
                             </li>';
                     else
                         $nestedData['options'] .= '<li>
@@ -993,7 +1001,7 @@ class SaleController extends Controller
                 $lims_product_data = Product::where('id', $id)->first();
                 if (!$lims_product_data && !empty($data['product_name_text'][$i])) {
                     $manualName = trim($data['product_name_text'][$i]);
-                    $lims_product_data = Product::firstOrCreate(
+                    $lims_product_data = Product::lockForUpdate()->firstOrCreate(
                         ['name' => $manualName],
                         [
                             'code' => 'ITM-' . mt_rand(100000, 999999),
@@ -1007,6 +1015,7 @@ class SaleController extends Controller
                             'is_active' => true,
                         ]
                     );
+                    $lims_product_data->assertAllowedOnBill('sale', 'product_id');
                     $id = $lims_product_data->id;
                     $product_id[$i] = $id;
                 }
@@ -1689,7 +1698,7 @@ class SaleController extends Controller
 
     public function getProduct($id)
     {
-        $query = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id');
+        $query = Product::forBill('sale')->join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id');
         if(config('without_stock') == 'no') {
             $query = $query->where([
                 ['products.is_active', true],
@@ -1713,7 +1722,7 @@ class SaleController extends Controller
         config()->set('database.connections.mysql.strict', false);
         \DB::reconnect(); //important as the existing connection if any would be in strict mode
 
-        $query = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id');
+        $query = Product::forBill('sale')->join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id');
 
         if(config('without_stock') == 'no') {
             $query = $query->where([
@@ -1739,7 +1748,7 @@ class SaleController extends Controller
         config()->set('database.connections.mysql.strict', true);
         \DB::reconnect();
 
-        $query = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id');
+        $query = Product::forBill('sale')->join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id');
         if(config('without_stock') == 'no') {
             $query = $query->where([
                 ['products.is_active', true],
@@ -1754,7 +1763,7 @@ class SaleController extends Controller
             ]);
         }
 
-        $lims_product_with_imei_warehouse_data = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
+        $lims_product_with_imei_warehouse_data = Product::forBill('sale')->join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
         ->where([
             ['products.is_active', true],
             ['products.is_imei', true],
@@ -1896,7 +1905,7 @@ class SaleController extends Controller
         }
 
         //retrieve product with type of digital and service
-        $lims_product_data = Product::whereNotIn('type', ['standard', 'combo'])->where('is_active', true)->get();
+        $lims_product_data = Product::forBill('sale')->whereNotIn('type', ['standard', 'combo'])->where('is_active', true)->get();
         foreach ($lims_product_data as $product)
         {
             if (!isset($product->is_imei)) {
@@ -2144,7 +2153,7 @@ class SaleController extends Controller
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_sale_data = Sale::findOrFail($id);
             $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
-            $lims_product_list = Product::where([
+            $lims_product_list = Product::forBill('sale')->where([
                                     ['featured', 1],
                                     ['is_active', true]
                                 ])->get();
@@ -2171,7 +2180,7 @@ class SaleController extends Controller
 
     public function getProducts($warehouse_id, $key, $cat_or_brand_id)
     {
-        $query = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')->where('products.is_active', true);
+        $query = Product::forBill('sale')->join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')->where('products.is_active', true);
 
         if ($key == 'category') {
             $query = $query->join('categories', 'products.category_id', '=', 'categories.id')
@@ -2186,7 +2195,7 @@ class SaleController extends Controller
         }
 
         $query = $query->where('products.type', '!=', 'combo')
-               ->where('products.is_imei', null)->orWhere('products.is_imei', 0);
+               ->where(fn ($query) => $query->whereNull('products.is_imei')->orWhere('products.is_imei', false));
 
         if (config('without_stock') == 'no') {
             $query = $query->where('products.is_active', true)
@@ -2320,15 +2329,16 @@ class SaleController extends Controller
         }
         if ($general_setting && in_array('restaurant', explode(',', $general_setting->modules))) {
             // Try to find base product
-            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id','extras')->where('code', $code)->where('is_active', true)->first();
+            $product = Product::forBill('sale')->select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id','extras')->where('code', $code)->where('is_active', true)->first();
         } else {
             // Try to find base product
-            $product = Product::select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id')->where('code', $code)->where('is_active', true)->first();
+            $product = Product::forBill('sale')->select('id','name','code','is_variant','is_batch','is_imei','qty','price','wholesale_price','cost','promotion','promotion_price','last_date','tax_id','tax_category_id','tax_method','type','unit_id','sale_unit_id')->where('code', $code)->where('is_active', true)->first();
         }
 
         // Try to find variant if base product not found
         if (!$product) {
             $variantProduct = Product::join('product_variants', 'products.id', '=', 'product_variants.product_id')
+                ->forBill('sale')
                 ->select('products.*', 'product_variants.id as product_variant_id', 'product_variants.item_code')
                 ->where('product_variants.item_code', $code)
                 ->where('products.is_active', true)
@@ -2710,11 +2720,12 @@ class SaleController extends Controller
             while (!feof($file_handle) ) {
                 $current_line = fgetcsv($file_handle);
                 if($current_line && $i > 0){
-                    $product_data[] = Product::where('code', $current_line[0])->first();
+                    $product_data[] = Product::where('code', $current_line[0])->lockForUpdate()->first();
                     if(!$product_data[$i-1]) {
                         throw new \Exception(__('db.Product does not exist!'));
                         // return redirect()->back()->with('message', __('db.Product does not exist!'));
                     }
+                    $product_data[$i-1]->assertAllowedOnBill('sale', 'file');
                     $unit[] = Unit::where('unit_code', $current_line[2])->first();
                     if(!$unit[$i-1] && $current_line[2] == 'n/a')
                         $unit[$i-1] = 'n/a';
@@ -2864,19 +2875,7 @@ class SaleController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('sales-edit')){
-            $lims_customer_list = Customer::where('is_active', true)->get();
-            $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            $lims_biller_list = Biller::where('is_active', true)->get();
-            $lims_tax_list = Tax::where('is_active', true)->get();
-            $numberOfInvoice = Sale::whereNull('deleted_at')->count();
-            $lims_sale_data = Sale::findOrFail($id);
-            $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
-            if($lims_sale_data->exchange_rate)
-                $currency_exchange_rate = $lims_sale_data->exchange_rate;
-            else
-                $currency_exchange_rate = 1;
-            $custom_fields = CustomField::where('belongs_to', 'sale')->get();
-            return view('backend.sale.edit',compact('lims_customer_list', 'lims_warehouse_list', 'lims_biller_list', 'lims_tax_list', 'lims_sale_data','lims_product_sale_data', 'currency_exchange_rate', 'custom_fields', 'numberOfInvoice'));
+            return redirect()->route('sales.index', ['edit' => $id]);
         }else{
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
         }
@@ -2992,7 +2991,7 @@ class SaleController extends Controller
             $lims_product_data = Product::find($pro_id);
             if (!$lims_product_data && !empty($data['product_name_text'][$key])) {
                 $manualName = trim($data['product_name_text'][$key]);
-                $lims_product_data = Product::firstOrCreate(
+                $lims_product_data = Product::lockForUpdate()->firstOrCreate(
                     ['name' => $manualName],
                     [
                         'code' => 'ITM-' . mt_rand(100000, 999999),
@@ -3006,6 +3005,7 @@ class SaleController extends Controller
                         'is_active' => true,
                     ]
                 );
+                $lims_product_data->assertAllowedOnBill('sale', 'product_id');
                 $pro_id = $lims_product_data->id;
                 $product_id[$key] = $pro_id;
             }
@@ -4919,7 +4919,7 @@ class SaleController extends Controller
         $product_embed_code = null;
         if (preg_match('/^\d{13}$/', $search)) {
             $product_embed_code = $search;
-            $product = Product::where('is_embeded', true)
+            $product = Product::forBill('sale')->where('is_embeded', true)
                 ->where(function ($q) use ($product_embed_code) {
                     $q->where('code', 'like', $product_embed_code . '%')
                     ->orWhere('name', 'like', '%' . $product_embed_code . '%');
@@ -4932,6 +4932,7 @@ class SaleController extends Controller
 
         // 🔹 Step 1: Exact variant match (quick path)
         $exactVariant = ProductVariant::join('products', 'product_variants.product_id', '=', 'products.id')
+            ->whereIn('products.id', Product::forBill('sale')->select('products.id'))
             ->join('product_warehouse', function ($join) use ($warehouse_id) {
                 $join->on('product_variants.variant_id', '=', 'product_warehouse.variant_id')
                     ->on('product_variants.product_id', '=', 'product_warehouse.product_id')
@@ -5020,7 +5021,7 @@ class SaleController extends Controller
 
         if ($byCode->isEmpty()) {
 
-            $byName = Product::leftJoin('product_warehouse', function($j) use ($warehouse_id){
+            $byName = Product::forBill('sale')->leftJoin('product_warehouse', function($j) use ($warehouse_id){
                     $j->on('products.id','=','product_warehouse.product_id')
                     ->where('product_warehouse.warehouse_id',$warehouse_id);
                 })
@@ -5046,20 +5047,8 @@ class SaleController extends Controller
 
         if ($byCode->isEmpty() && $byName->isEmpty()) {
 
-            $byIMEI = Product_Warehouse::where('warehouse_id',$warehouse_id)
-                ->whereRaw("imei_number LIKE ? ESCAPE '!'", ['%'.$escapedSearch.'%'])
-                ->limit(5)
-                ->get()
-                ->map(function($pw){
-                    return Product::find($pw->product_id);
-                });
-        }
-
-        $byIMEI = collect();
-
-        if ($byCode->isEmpty() && $byName->isEmpty()) {
-
             $imeiMatch = Product_Warehouse::where('warehouse_id',$warehouse_id)
+                ->whereIn('product_id', Product::forBill('sale')->select('products.id'))
                 ->whereRaw("imei_number LIKE ? ESCAPE '!'", ['%'.$escapedSearch.'%'])
                 ->first();
 
@@ -5093,7 +5082,7 @@ class SaleController extends Controller
         $ranks = array_flip($rankedIds);
         $baseProducts = $baseProducts->sortBy(fn ($product) => $ranks[$product->id] ?? PHP_INT_MAX)->values();
         // 🔹 Step 4: Add combo products
-        $combos = Product::where('products.is_active', true)
+        $combos = Product::forBill('sale')->where('products.is_active', true)
             ->where('products.type', 'combo')
             ->where(function ($q) use ($escapedSearch) {
                 $q->whereRaw("products.code LIKE ? ESCAPE '!'", [$escapedSearch.'%'])

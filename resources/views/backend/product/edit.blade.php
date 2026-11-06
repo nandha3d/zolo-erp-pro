@@ -37,13 +37,14 @@
                     <x-error-message key="not_permitted" />
 
                     <div class="card-body p-2">
-                        <form id="product-form">
+                        <form id="product-form" data-product-usage="{{ old('product_usage', $lims_product_data->product_usage ?? 'composite') }}">
                             <input type="hidden" name="id" value="{{$lims_product_data->id}}" />
                             <div class="zolo-product-grid">
 
                                 <!-- BOX 1: Primary Identity & Categorization (Blue) -->
                                 <x-ui.section-box variant="blue" title="{{__('db.Product Details')}}" icon="box">
                                     <div class="row">
+                                        @include('backend.product.partials.usage-options', ['productUsage' => $lims_product_data->product_usage ?? 'composite'])
                                         <div class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Product Type')}} *</label>
@@ -126,12 +127,12 @@
                                                     <input type="hidden" name="unit" value="{{ $lims_product_data->unit_id}}">
                                                     <span class="validation-msg text-danger small"></span>
                                                 </div>
-                                                <div class="col-6 form-group">
+                                                <div data-usage-side="sale" class="col-6 form-group">
                                                     <label>{{__('db.Sale Unit')}}</label>
                                                     <select class="form-control selectpicker" name="sale_unit_id" id="sale-unit"></select>
                                                     <input type="hidden" name="sale_unit" value="{{ $lims_product_data->sale_unit_id}}">
                                                 </div>
-                                                <div class="col-6 form-group">
+                                                <div data-usage-side="purchase" class="col-6 form-group">
                                                     <label>{{__('db.Purchase Unit')}}</label>
                                                     <select class="form-control selectpicker" name="purchase_unit_id"></select>
                                                     <input type="hidden" name="purchase_unit" value="{{ $lims_product_data->purchase_unit_id}}">
@@ -153,7 +154,7 @@
                                     <div class="row">
                                         <div id="cost" class="col-6 @if(Auth::user()->role_id > 2) d-none @endif">
                                             <div class="form-group">
-                                                <label>{{__('db.Product Cost')}} *</label>
+                                                <label>{{__('db.Product Cost')}} <span data-usage-cost-required>*</span></label>
                                                 <input type="number" name="cost" value="{{$lims_product_data->cost}}" required class="form-control product_cost" step="any">
                                                 <div class="alert alert-warning very-small-text d-none p-1 position-absolute" id="product-cost-warning">
                                                     Cost must be higher than 0!
@@ -161,7 +162,7 @@
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Profit Margin Type') }}</label>
                                                 <select name="profit_margin_type" class="form-control selectpicker" required>
@@ -171,14 +172,14 @@
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div id="profit_margin" class="col-6">
+                                        <div data-usage-side="sale" id="profit_margin" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Profit Margin')}}</label>
                                                 <input type="number" name="profit_margin" value="{{$lims_product_data->profit_margin}}" class="form-control" step="0.01">
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Product Price')}} *</label>
                                                 <input type="number" name="price" value="{{$lims_product_data->price}}" required class="form-control" step="any">
@@ -189,13 +190,13 @@
                                             </div>
                                             <input type="hidden" name="qty" value="{{ $lims_product_data->qty }}">
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Wholesale Price')}}</label>
                                                 <input type="number" name="wholesale_price" class="form-control" value="{{$lims_product_data->wholesale_price}}" step="any">
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Daily Sale Objective')}}</label>
                                                 <input type="number" name="daily_sale_objective" class="form-control" step="any" value="{{$lims_product_data->daily_sale_objective}}">
@@ -232,7 +233,7 @@
 
                                         @include('backend.product.partials.stock-policy', ['product' => $lims_product_data, 'colClass' => 'col-6'])
 
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Warranty') }}</label>
                                                 <div class="input-group">
@@ -245,7 +246,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Guarantee') }}</label>
                                                 <div class="input-group">
@@ -436,7 +437,7 @@
                                     <span id="variant-option" hidden><input name="is_variant" type="checkbox" id="is-variant" value="1" checked></span>
                                     @endif
 
-                                    <label id="diffPrice-option" class="zolo-toggle-pill @if($lims_product_data->is_diffPrice) is-active @endif" data-role="emerald" for="is-diffPrice" title="{{ __('db.Different price by warehouse') }}">
+                                    <label data-usage-side="sale" id="diffPrice-option" class="zolo-toggle-pill @if($lims_product_data->is_diffPrice) is-active @endif" data-role="emerald" for="is-diffPrice" title="{{ __('db.Different price by warehouse') }}">
                                         <input name="is_diffPrice" type="checkbox" id="is-diffPrice" value="1" @checked($lims_product_data->is_diffPrice)>
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Different price by warehouse')}}</span>
@@ -454,14 +455,14 @@
                                         <span>{{__('db.IMEI / Serial numbers')}}</span>
                                     </label>
 
-                                    <label class="zolo-toggle-pill @if($lims_product_data->promotion) is-active @endif" data-role="blue" for="promotion" title="{{ __('db.Promotional Price') }}">
+                                    <label data-usage-side="sale" class="zolo-toggle-pill @if($lims_product_data->promotion) is-active @endif" data-role="blue" for="promotion" title="{{ __('db.Promotional Price') }}">
                                         <input type="hidden" name="promotion_hidden" value="{{$lims_product_data->promotion}}">
                                         <input name="promotion" type="checkbox" id="promotion" value="1" @checked($lims_product_data->promotion)>
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Promotional Price')}}</span>
                                     </label>
 
-                                    <label id="featured" class="zolo-toggle-pill @if($lims_product_data->featured) is-active @endif" data-role="purple" for="chk_featured" title="{{ __('db.Featured product will be displayed in POS') }}">
+                                    <label data-usage-side="sale" id="featured" class="zolo-toggle-pill @if($lims_product_data->featured) is-active @endif" data-role="purple" for="chk_featured" title="{{ __('db.Featured product will be displayed in POS') }}">
                                         <input type="checkbox" name="featured" id="chk_featured" value="1" @checked($lims_product_data->featured)>
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Featured')}}</span>
@@ -510,7 +511,7 @@
                             <!-- Extended Conditional Details Container (4-column grid mirroring top primary boxes) -->
                             <div class="product-extended-details-container mt-2">
                                 <!-- Warehouse Differential Price Section -->
-                                <div id="diffPrice-section">
+                                <div data-usage-side="sale" id="diffPrice-section">
                                     <x-ui.section-box variant="emerald" title="{{__('db.Different Warehouse Price')}}" icon="pricing">
                                         <div class="table-responsive">
                                             <table id="diffPrice-table" class="table table-hover table-sm">
@@ -603,7 +604,7 @@
                                 </div>
 
                                 <!-- Promotional Price Section -->
-                                <div id="promo-container">
+                                <div data-usage-side="sale" id="promo-container">
                                     <x-ui.section-box variant="blue" title="{{__('db.Promotional Price')}}" icon="pricing">
                                         <div class="zolo-promo-vertical-form">
                                             <div class="form-group mb-2" id="promotion_price">
@@ -1465,7 +1466,7 @@
             $("#variant-section, #variant-option").hide(300);
         }
         else if($(this).val() == 'standard'){
-            $("input[name='cost']").prop('required',true);
+            $("input[name='cost']").prop('required', $('#product-form').attr('data-product-usage') !== 'sale');
             $("select[name='unit_id']").prop('required',true);
             $("input[name='file']").prop('required',false);
             $("#cost").show();
@@ -1704,6 +1705,7 @@
 
     // Recalculate price based on cost & margin
     function recalcPrice() {
+        if ($('#product-form').attr('data-product-usage') === 'purchase') return;
         let cost = parseFloat($('input[name="cost"]').val()) || 0;
         let margin = parseFloat($('input[name="profit_margin"]').val()) || 0;
 
@@ -1717,6 +1719,7 @@
 
     // Recalculate margin when price changes manually
     function recalcMargin() {
+        if ($('#product-form').attr('data-product-usage') === 'purchase') return;
         let cost = parseFloat($('input[name="cost"]').val()) || 0;
         let price = parseFloat($('input[name="price"]').val()) || 0;
         // Without a cost a percentage margin has no meaning (it would be Infinity and blank the field): keep it as is.

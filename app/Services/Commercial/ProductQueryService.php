@@ -15,6 +15,9 @@ class ProductQueryService
         $term = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], trim($term));
         $base = Product::forCompany($context)->where('is_active', true)->whereIn('type', ['standard', 'service', 'digital'])
             ->select(['id', 'name', 'code', 'type', 'price', 'cost', 'unit_id', 'tax_id', 'is_batch', 'is_imei', 'is_variant']);
+        if ($partyType === 'customer' || $partyType === 'supplier') {
+            $base->forBill($partyType === 'customer' ? 'sale' : 'purchase');
+        }
         if ($term === '') return $base->orderBy('code')->limit(20)->get()->toArray();
         $aliases = Schema::hasTable('product_aliases')
             ? app(ProductAliasService::class)->visible($context, $partyType, $partyId)

@@ -1,0 +1,32 @@
+.product-usage legend {
+    font-size: inherit;
+    font-weight: 600;
+}
+
+.product-usage input {
+    position: absolute;
+    opacity: 0;
+}
+
+.product-usage input:checked + span {
+    color: #fff;
+    background: var(--z-primary, #7b247b);
+    border-color: var(--z-primary, #7b247b);
+}
+
+.product-usage input:focus-visible + span {
+    outline: 2px solid var(--z-primary, #7b247b);
+    outline-offset: 2px;
+}
+
+.product-usage input:disabled + span {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+[data-product-usage="purchase"] [data-usage-side="sale"],
+[data-product-usage="sale"] [data-usage-side="purchase"],
+[data-product-usage="sale"] [data-usage-cost-required],
+[data-product-usage="sale"] #product-cost-warning {
+    display: none !important;
+}

@@ -70,12 +70,16 @@ class CommercialApplicationService
                 }
             }
             // Validate the original contract before any profile expands its lines.
-            $guard->products($data['items'], $context, $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id');
+            $unitField = $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id';
+            $products = $guard->products($data['items'], $context, $unitField);
+            foreach ($products as $product) {
+                $product->assertAllowedOnBill($kind);
+            }
             if ($kind === 'sale') {
                 $data['items'] = app(\App\Services\Industry\FmcgInventoryService::class)->prepareSale($data['items'], (int) $data['warehouse_id'], $date, $context, $actor);
                 if (count($data['items']) > 500) throw ValidationException::withMessages(['items' => 'Expanded invoice exceeds 500 lines.']);
             }
-            $products = $guard->products($data['items'], $context, $kind === 'sale' ? 'sale_unit_id' : 'purchase_unit_id')->all();
+            $products = $guard->products($data['items'], $context, $unitField)->all();
             foreach ($data['items'] as &$line) {
                 validator($line, ['attributes' => 'nullable|array', 'serials' => 'nullable|array', 'serials.*' => 'string|max:255',
                     'batch' => 'nullable|array', 'batch.batch_no' => 'required_with:batch|string|max:255',
@@ -88,6 +92,7 @@ class CommercialApplicationService
                     throw ValidationException::withMessages(['batch.mfg_date' => 'Manufacturing date cannot follow expiry.']);
                 }
                 $product = $products[$line['product_id']];
+                $product->assertAllowedOnBill($kind);
                 if ((isset($product->is_active) && !$product->is_active) || !in_array($product->type, ['standard', 'service', 'digital'], true)) {
                     throw ValidationException::withMessages(['items' => 'This product needs its reviewed posting path.']);
                 }

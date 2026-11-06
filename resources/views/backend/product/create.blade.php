@@ -26,12 +26,13 @@
                         </div>
                     </div>
                     <div class="card-body p-2">
-                        <form id="product-form">
+                        <form id="product-form" data-product-usage="{{ old('product_usage', 'composite') }}">
                             <div class="zolo-product-grid">
 
                                 <!-- BOX 1: Primary Identity & Categorization (Blue) -->
                                 <x-ui.section-box variant="blue" title="{{__('db.Product Details')}}" icon="box">
                                     <div class="row">
+                                        @include('backend.product.partials.usage-options', ['productUsage' => 'composite'])
                                         <div class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Product Type')}} *</label>
@@ -125,11 +126,11 @@
                                                     </div>
                                                     <span class="validation-msg text-danger small"></span>
                                                 </div>
-                                                <div class="col-6 form-group">
+                                                <div data-usage-side="sale" class="col-6 form-group">
                                                     <label>{{__('db.Sale Unit')}}</label>
                                                     <select class="form-control selectpicker" name="sale_unit_id"></select>
                                                 </div>
-                                                <div class="col-6 form-group">
+                                                <div data-usage-side="purchase" class="col-6 form-group">
                                                     <label>{{__('db.Purchase Unit')}}</label>
                                                     <select class="form-control selectpicker" name="purchase_unit_id"></select>
                                                 </div>
@@ -150,7 +151,7 @@
                                     <div class="row">
                                         <div id="cost" class="col-6">
                                             <div class="form-group">
-                                                <label>{{__('db.Product Cost')}} *</label>
+                                                <label>{{__('db.Product Cost')}} <span data-usage-cost-required>*</span></label>
                                                 <input type="number" name="cost" required class="form-control" step="any" placeholder="0.00">
                                                 <div class="alert alert-warning very-small-text d-none p-1 position-absolute" id="product-cost-warning">
                                                     Cost must be higher than 0!
@@ -158,7 +159,7 @@
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Profit Margin Type') }}</label>
                                                 <select name="profit_margin_type" class="form-control selectpicker" required>
@@ -168,14 +169,14 @@
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div id="profit_margin" class="col-6">
+                                        <div data-usage-side="sale" id="profit_margin" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Profit Margin')}}</label>
                                                 <input type="number" name="profit_margin" class="form-control" step="0.01" placeholder="0.00">
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Product Price')}} *</label>
                                                 <input type="number" name="price" required class="form-control" step="any" placeholder="0.00">
@@ -186,13 +187,13 @@
                                             </div>
                                             <input type="hidden" name="qty" value="{{number_format(0, $general_setting->decimal, '.', '')}}">
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Wholesale Price')}}</label>
                                                 <input type="number" name="wholesale_price" class="form-control" step="any" placeholder="0.00">
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Daily Sale Objective')}}</label>
                                                 <input type="number" name="daily_sale_objective" class="form-control" step="any" placeholder="0">
@@ -233,7 +234,7 @@
                                         @include('backend.product.partials.stock-policy', ['product' => null, 'colClass' => 'col-6'])
 
                                         <!-- Warranty and Guarantee -->
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Warranty') }}</label>
                                                 <div class="input-group">
@@ -246,7 +247,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-6">
+                                        <div data-usage-side="sale" class="col-6">
                                             <div class="form-group">
                                                 <label>{{ __('db.Guarantee') }}</label>
                                                 <div class="input-group">
@@ -385,7 +386,7 @@
                                         <span>{{__('db.This product has variant')}}</span>
                                     </label>
 
-                                    <label id="diffPrice-option" class="zolo-toggle-pill" data-role="emerald" for="is-diffPrice" title="{{ __('db.Different price by warehouse') }}">
+                                    <label data-usage-side="sale" id="diffPrice-option" class="zolo-toggle-pill" data-role="emerald" for="is-diffPrice" title="{{ __('db.Different price by warehouse') }}">
                                         <input name="is_diffPrice" type="checkbox" id="is-diffPrice" value="1">
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Different price by warehouse')}}</span>
@@ -403,13 +404,13 @@
                                         <span>{{__('db.IMEI / Serial numbers')}}</span>
                                     </label>
 
-                                    <label class="zolo-toggle-pill" data-role="blue" for="promotion" title="{{ __('db.Promotional Price') }}">
+                                    <label data-usage-side="sale" class="zolo-toggle-pill" data-role="blue" for="promotion" title="{{ __('db.Promotional Price') }}">
                                         <input name="promotion" type="checkbox" id="promotion" value="1">
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Promotional Price')}}</span>
                                     </label>
 
-                                    <label id="featured" class="zolo-toggle-pill" data-role="purple" for="chk_featured" title="{{ __('db.Featured') }}">
+                                    <label data-usage-side="sale" id="featured" class="zolo-toggle-pill" data-role="purple" for="chk_featured" title="{{ __('db.Featured') }}">
                                         <input type="checkbox" name="featured" id="chk_featured" value="1">
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>{{__('db.Featured')}}</span>
@@ -485,7 +486,7 @@
                                 </div>
 
                                 <!-- Warehouse Differential Price Section (1 grid column) -->
-                                <div id="diffPrice-section">
+                                <div data-usage-side="sale" id="diffPrice-section">
                                     <x-ui.section-box variant="emerald" title="{{__('db.Different Warehouse Price')}}" icon="pricing">
                                         <div class="table-responsive">
                                             <table id="diffPrice-table" class="table table-hover table-sm">
@@ -614,7 +615,7 @@
                                 </div>
 
                                 <!-- Promotional Price Section -->
-                                <div id="promo-container">
+                                <div data-usage-side="sale" id="promo-container">
                                     <x-ui.section-box variant="blue" title="{{__('db.Promotional Price')}}" icon="pricing">
                                         <div class="zolo-promo-vertical-form">
                                             <div class="form-group mb-2" id="promotion_price">
@@ -1406,7 +1407,7 @@
             $("#variant-section, #variant-option, #diffPrice-option, #diffPrice-section, #batch-option, #imei-option").hide(300);
         }
         else if($(this).val() == 'standard') {
-            $("input[name='cost']").prop('required',true);
+            $("input[name='cost']").prop('required', $('#product-form').attr('data-product-usage') !== 'sale');
             $("select[name='unit_id']").prop('required',true);
             $("input[name='file']").prop('required',false);
             $("#stock-section").show(300);
@@ -1651,6 +1652,7 @@
 
     // Recalc price function
     function recalcPrice() {
+        if ($('#product-form').attr('data-product-usage') === 'purchase') return;
         let cost   = parseFloat($('input[name="cost"]').val()) || 0;
         let margin = parseFloat($('input[name="profit_margin"]').val()) || 0;
 
@@ -1664,6 +1666,7 @@
 
     // Recalc margin when price edited manually
     function recalcMargin() {
+        if ($('#product-form').attr('data-product-usage') === 'purchase') return;
         let price = parseFloat($('input[name="price"]').val()) || 0;
         let cost  = parseFloat($('input[name="cost"]').val()) || 0;
         // Without a cost a percentage margin has no meaning (it would be Infinity and blank the field): keep it as is.

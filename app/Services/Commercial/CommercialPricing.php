@@ -21,6 +21,7 @@ class CommercialPricing
                 $this->invalid('items', 'Use at most 500 object lines.');
             }
             $product = app(\App\Services\ERP\CompanyWriteGuard::class)->product($line, $context, $purchase ? 'purchase_unit_id' : 'sale_unit_id');
+            $product->assertAllowedOnBill($purchase ? 'purchase' : 'sale');
             $products[$product->id] = $product;
             $line['tax_rate'] = $product->tax_category_id ? 0 : $this->legacyRate($product, $context);
             // A user-changed line rate (GST lines are checked in TaxDeterminationService).

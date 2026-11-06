@@ -15,6 +15,7 @@ class ProductMasterService
     public function validateMetadata(array $data, CompanyContext $context): void
     {
         Validator::make($data, ['negative_stock_policy' => 'nullable|in:allow,warn,block',
+            'product_usage' => Product::USAGE_RULE,
             'category_id' => 'nullable|integer|min:1', 'tax_category_id' => 'nullable|integer|min:1',
             'hsn_code' => 'nullable|string|max:8'])->validate();
         if (!empty($data['category_id'])) app(CompanyWriteGuard::class)->owned(Category::class, $data['category_id'], $context, 'category_id');

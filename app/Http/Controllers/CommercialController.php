@@ -475,6 +475,7 @@ class CommercialController extends Controller
     public function quickStoreProduct(Request $request)
     {
         $validated = $request->validate([
+            'product_usage' => Product::USAGE_RULE,
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:100',
             'type' => 'nullable|string',
@@ -537,7 +538,7 @@ class CommercialController extends Controller
         $name = trim($validated['name']);
         $code = !empty($validated['code']) ? trim($validated['code']) : ('ITM-' . mt_rand(100000, 999999));
         $cost = isset($validated['cost']) ? (float)$validated['cost'] : 0;
-        $price = isset($validated['price']) && $validated['price'] !== '' ? (float)$validated['price'] : ($cost > 0 ? $cost : 0);
+        $price = (float) ($validated['price'] ?? (($validated['product_usage'] ?? null) === 'purchase' ? 0 : $cost));
         $type = !empty($validated['type']) ? strtolower(trim($validated['type'])) : 'standard';
         $barcodeSymbology = !empty($validated['barcode_symbology']) ? trim($validated['barcode_symbology']) : 'C128';
         if (!empty($validated['hsn_code'])) {
@@ -605,7 +606,7 @@ class CommercialController extends Controller
             'product_details' => $validated['product_details'] ?? null,
             'qty' => 0,
             'is_active' => 1,
-        ], $validated, $context);
+        ] + array_intersect_key($validated, ['product_usage' => true]), $validated, $context);
 
         // Extended promotional pricing
         if (!empty($validated['promotion'])) {

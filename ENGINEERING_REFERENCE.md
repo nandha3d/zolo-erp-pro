@@ -6,9 +6,9 @@ Shared ERP architecture and implementation guide for zoloERP Pro / Laravel 10.
 - **Product:** A general ERP with configurable General Trading, FMCG, Textile, Timber and Solar profiles.
 - **Platform:** Existing Laravel application, MySQL, Blade/Bootstrap UI, and `nwidart/laravel-modules` where modular packaging fits.
 - **Architecture:** One commercial, inventory, accounting, tax and document foundation; optional operational capabilities and industry presets.
-- **Status:** Implementation specification with staged foundation packages delivered. Full company isolation and later phases remain pending.
-- **Updated:** 2026-10-04.
-- **Implementation snapshot:** Reviewed shared commercial writers and double-entry accounting paths; see [implementation progress](documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md).
+- **Status:** Implementation specification with delivered foundation packages, centralized due management hub, consolidated group insights, modernized commercial desks, inventory UI standardization, and navigation route hardening.
+- **Updated:** 2026-11-06.
+- **Implementation snapshot:** Reviewed shared commercial writers, centralized payment and due clearing, multi-company visual dashboards, double-entry accounting paths, and inventory theme contracts; see [implementation progress](documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md).
 
 This reference consolidates the [implementation pack](documents/zolo_erp_implementation_docs/README.md) and its [master index](documents/zolo_erp_implementation_docs/00_IMPLEMENTATION_MASTER_INDEX.md). It supersedes the earlier textile-only, isolated Optech architecture in this file. Detailed implementation requirements remain in the linked documents. The confirmed financial-year policy below resolves the pack's conflicting table names.
 
@@ -129,6 +129,28 @@ Middleware reads positive integer `X-Company-ID`, `X-Branch-ID` and `X-Financial
 
 Before activation, rehearse on representative disposable MySQL data; validate ownership and uniqueness; convert all affected readers/writers and jobs; enforce necessary constraints; prove cross-company rejection and legacy parity. Do not activate a second company before these gates pass.
 
+### Master company groups and consolidated insight dashboard
+
+Companies may belong to a `CompanyGroup` for aggregate management and multi-entity operations. The workspace directory (`/workspace#zw-companies` and `/select-company`) provides an executive command center powered by `CompanyInsightService`:
+
+- **Single-Company Insight (`CompanyInsightService::companyInsight`):**
+  - Computes single-company performance metrics with defensive database schema checks: gross sales, sales returns, other income, net revenue, purchases, purchase returns, COGS, operating expenses, consolidated net profit/loss, profit margin percentage, loss flag (`is_loss`), customer receivables (open dues), supplier payables (open dues), and 6-month monthly sales trend with dynamic scaling.
+- **Directory & Group Insights (`CompanyInsightService::directoryInsights`):**
+  - Aggregates member companies under each `CompanyGroup` into a consolidated group rollup:
+    - Total group revenue, sales count, purchases, operating expenses, and consolidated net profit/loss with aggregate margin %.
+    - **P&L Health Monitor & Loss Detection:** Tracks `is_loss`, `loss_companies` (names of loss-making companies), `loss_count`, and `profitable_count`. Renders a dynamic warning banner (`⚠️ X Company operating at a loss: [Name]` or `✓ All N companies operating profitably`).
+    - **Visual Group Card Suite (`.zw-master-visual-suite`):** Powered by Chart.js (`@section('charts', '1')`):
+      1. *Group 6-Month Performance & Cash Trends Multi-Series Chart (`#masterTrendChart_{groupId}`):* Sales Revenue (Theme Purple `#7c3aed`), Purchases & Costs (Amber `#f59e0b`), and Net Margin (Emerald `#10b981`) with hover tooltips and `₹` formatting.
+      2. *Turnover Share by Company Doughnut Chart (`#masterShareDonut_{groupId}`):* Entity turnover proportions with interactive legend showing revenue, share %, and P&L badge.
+      3. *Group P&L Cost & Profit Distribution Doughnut Chart (`#masterCostDonut_{groupId}`):* Turnover split between Net Profit (`#10b981`), Purchases/COGS (`#f59e0b`), and Operating Expenses (`#f43f5e`).
+      4. *Working Capital & Dues Exposure Meter (`.zw-dues-meter-card`):* Dual-segment gauge comparing Customer Receivables vs Supplier Payables with dynamic Net Surplus / Net Payable indicator.
+      5. *Executive 5-KPI Strip:* Consolidated Revenue, Net Profit, Purchases, Receivables, and Payables.
+- **Expanded Company Cards (`.zw-company-card-expanded`):**
+  - Informative executive cards featuring company header, business sector, P&L badge (`₹X Net Profit` vs `₹X Net Loss`), 4-metric grid (Net Revenue, Operating Purchases, Customer Dues, Supplier Dues), mini financial doughnut / 6-month trajectory sparkline, and an embedded 1-click `Switch to Company →` context switcher.
+  - Dark mode support uses a `MutationObserver` on `document.body` to automatically refresh charts with dark gridlines (`rgba(255, 255, 255, 0.08)`) and ticks (`#94a3b8`).
+- **Mandatory GST Registration Type:**
+  - Company creation and editing strictly validate `registration_type` (`required|in:regular,composition,unregistered`), ensuring every company entity is initialized with valid Indian tax registration semantics.
+
 ## 02 Capabilities, profiles and shared masters
 
 Sources: [capability engine](documents/zolo_erp_implementation_docs/04_BUSINESS_PROFILE_AND_CAPABILITY_ENGINE.md), [master data](documents/zolo_erp_implementation_docs/06_MASTER_DATA_PRODUCTS_PARTIES_UOM_ATTRIBUTES.md).
@@ -244,6 +266,27 @@ Preserve keyboard workflows as an optional interaction mode over the existing UI
 
 Use contextual maps to avoid conflicts, including F6 for accounting receipts and F7 for accounting journals. Do not capture ordinary typing or browser shortcuts globally. A new-document command must protect unsaved work. Display shortcuts and validation feedback near the relevant controls.
 
+### Commercial voucher desk, operator assistance and single view setup
+
+The modern sales workspace (`/sales`) integrates fast-entry capabilities, real-time operational aids, and a unified single-view desk architecture:
+
+- **Single View Setup (Dialog Box Elimination):**
+  - Completely eliminates popup modal dialog boxes (`#sale-details`) when viewing invoices. View, Edit, and Duplicate operations across both **Split View** (side bill cards) and **Full View** (register DataTable) load directly into the single voucher desk workspace.
+  - **View Mode:** Loads the document into the voucher desk in read-only mode (`.is-view-mode`), locking all inputs, hiding the item search row and add/delete actions. The bottom action bar displays dedicated view controls: *Edit this Bill*, *Duplicate*, *Print*, and *Close View*. The active side card highlights with an active viewing border (`.active-viewing`).
+  - **Edit Mode:** Loads the document in update mode (`PUT` method, `#edit-sale-id`), populates customer, warehouse, dates, line items, taxes, and charges, and updates the bill on submission.
+  - **Duplicate Mode:** Clones the document lines, customer, warehouse, and notes into a new draft (`POST` method, cleared reference number for auto-series generation, today's date), allowing operators to quickly reuse prior bills. Unhides and activates the `.btn-side-copy` button on side bill cards.
+  - **Deep-Link URL Routing:** Browser requests to `sales/{id}`, `sales/{id}/edit`, and duplicate routes redirect cleanly to `/sales` with query parameters (`?view_id=`, `?edit=`, `?duplicate=`) which auto-switch the desk to the corresponding mode on load.
+- **Dedicated Table Search Strip (`.table-search-strip`):**
+  - Relocated barcode search `#lims_productcodeSearch` and scan prompts out of the table `<tbody>` into a dedicated strip positioned directly above `<div class="table-responsive">`. This ensures strict vertical column alignment across headers and line items, supported by crisp column dividers (`border-right: 1px solid #e2e8f0` in light mode, `#334155` in dark mode).
+- **In-Window Modal Settlement (`#add-payment`):**
+  - Side bill cards trigger an in-place `#add-payment` modal rather than taking operators away from their active sales desk. The modal displays the bill reference badge, customer name, outstanding due balance, and a direct deep link button: **"Go to Payment & Due Page →"** (`route('dues.index', ['tab' => 'sales', 'search' => $ref])`).
+  - URL parameters (`search` or `ref`) automatically populate `#side-search-input`, filter side bills, and select the target bill card on load.
+- **Commercial Assistance Aid Dialogs (`commercial-assistance.js`):**
+  - **Rate History, Pending Bills, Party Statement, and Load DCs:** Accessible via visual toolbar buttons (`fa-history`, `fa-clock-o`, `fa-file-text-o`, `fa-download`) and shortcuts.
+  - **Smart Row Resolver (`getTargetRow`):** Automatically targets the active row, the last edited item row, or the last table row, preventing null references when operators trigger aids immediately after adding rows.
+  - **Operator Guidance Toasts (`.commercial-aid-toast`):** Animated, non-blocking feedback toasts guide operators when prerequisites are missing (e.g. prompt to select customer or product) and automatically focus the required input.
+  - **Modern Dialog Layout:** Centered fixed layout with backdrop blur, styled headers, responsive hover tables, and dark mode support.
+
 ## 05 Purchases and procure to pay
 
 Source: [purchase specification](documents/zolo_erp_implementation_docs/08_PURCHASE_AND_PROCURE_TO_PAY.md).
@@ -261,6 +304,20 @@ A posted purchase atomically writes its document/lines, number, applicable recei
 - Preserve supplier document references and distinguish cloning from reprinting.
 
 The audit correction preserves `product_purchases.recieved` while accepting API `received_qty`: Received records full quantity, Partial records validated line receipts, Pending records zero, and Ordered remains an unbilled PO. The confirmed supplier-bill policy recognizes full payment/AP and splits received inventory from goods-in-transit. Configure an active asset account with sub_type `goods_in_transit`; missing required accounts roll back creation. Subsequent receipt release and legacy web update parity remain shared-engine integration gates.
+
+### Purchase voucher desk modernization and single view setup
+
+The purchase workspace (`/purchases`) mirrors the modernized commercial desk architecture and single-view operation:
+
+- **Single View Setup (Dialog Box Elimination):**
+  - Eliminates the `#purchase-details` modal popup for View. View, Edit, and Duplicate operations in both **Split View** (side cards) and **Full View** (register DataTable dropdown) directly transition the desk to the voucher form.
+  - **View Mode:** Loads supplier bill headers, item rows, batches, and charges into read-only view (`.is-view-mode`), showing view actions (*Edit this Bill*, *Duplicate*, *Print*, *Close View*) and highlighting the active side card (`.active-viewing`).
+  - **Edit Mode:** Loads the bill into edit mode (`PUT` method, `#edit-purchase-id`), allowing modification of items, quantities, and totals.
+  - **Duplicate Mode:** Loads bill details into a new draft purchase bill (`POST` method, cleared reference number, today's date), with active `.btn-side-copy` button on side cards.
+  - **URL Parameter Deep-Linking:** Browser requests to `purchases/{id}`, `purchases/{id}/edit`, and duplicate routes redirect cleanly to `/purchases` with query parameters (`?view_id=`, `?edit=`, `?duplicate=`) which auto-switch the desk to the corresponding mode on load.
+- **Search Strip and Alignment:** Relocated barcode search into `.table-search-strip` (`#table-search-row`) above the grid, ensuring uniform column widths and vertical dividers across all purchase line rows.
+- **In-Window Settlement:** Side purchase cards trigger an in-place `#add-payment` modal with supplier outstanding details and a direct button: **"Go to Payment & Due Page →"** (`route('dues.index', ['tab' => 'purchases', 'search' => $ref])`).
+- **Deep-Link Auto-Selection:** URL query parameters (`search` or `ref`) automatically filter and select the target supplier bill on page load.
 
 ## 06 Inventory, manufacturing and job work
 
@@ -299,6 +356,25 @@ Pending outside-material reports derive from movement balances. Support partial 
 ### Projects and serialized operations
 
 Solar projects/sites link shared quotations, orders, procurement, reservations, dispatches, installations and invoices. Serial history follows purchase, allocation, dispatch, installation and replacement. Warranty/AMC records follow installed serials. Project margin aggregates shared material, service, expense and revenue data.
+
+### Inventory global UI and dark mode standardization
+
+Inventory operations and reporting share a unified UI contract centered on `.desk-card-wrapper` and `.desk-filter-card` components, standardized in `public/css/pages/inventory-workspace.css`:
+
+- **Stock by Lot & Batch Reports (`/inventory-reports/stock-by-lot`):**
+  - Dedicated `.desk-filter-card` separating filter controls from report content with compact inputs, date pickers, and branded buttons.
+  - Report table wrapped in `.desk-card-wrapper lot-card` with sticky headers (`var(--z-table-head-bg)`), full zebra striping, hover highlights, and lot notes.
+  - Comprehensive dark mode (`body.dark-mode`): `#141c2e` card backgrounds, `#334155` borders, `#0b0f19` inputs, and `#e2e8f0` text tokens.
+- **Stock Corrections Suite:**
+  - **Physical Count (`/stock-count`):** Wrapped in `.desk-card-wrapper` with theme-branded `<x-inventory-command-bar>`.
+  - **Manual Adjustments (`/qty_adjustment`):** Standardized `.desk-card-wrapper` and action buttons.
+  - **Damage Stock Audit (`/damage-stock`):** Integrated into `<x-inventory-command-bar active="corrections" view="damage">`, wrapped in `.desk-card-wrapper`, sticky thead, paginated links, and modernized modal `#createDamageModal`.
+- **Transfer Register (`/transfers`):** Standardized `.desk-filter-card` and `.desk-card-wrapper`.
+- **Modular Addons Architecture:**
+  - Standardized plug-and-play extensions defined in `documents/MODULE_ADDONS_SPECIFICATION.md` under `Modules/`:
+    1. *OpticalLab (`Modules/OpticalLab`):* Prescription parameters (Sphere, Cylinder, Axis, Add), lens types, and job tickets.
+    2. *Warranty & AMC (`Modules/WarrantyAMC`):* Serialized equipment warranty cards, AMC lifecycle tracking, and maintenance logs.
+    3. *Subscription Billing (`Modules/SubscriptionBilling`):* Recurring billing schedules, automated period invoicing, and renewal notices.
 
 ## 07 Registry, orders, returns and reversals
 
@@ -352,6 +428,33 @@ Preserve F4 Contra, F5 Payment, F6 Receipt, F7 Journal and F9 Voucher Hub as a c
 
 Legacy cash/bank `accounts` (`/accounts`, "Account List (Cash)") and `/money-transfers` remain as legacy operational records that POS and payments still write; they overlap Chart of Accounts and Contra vouchers and are retired only after those writers move to the ledger.
 
+### Centralized Due Management System & Command Center
+
+The operational clearing of open customer receivables, supplier payables, and service expense dues is unified in the Centralized Due Management Command Center (`/transactions/dues`, `route('dues.index')`):
+
+- **Multi-Tab Architecture & Rapid Shortcuts:**
+  - `Customer Dues (Receivables)` (`tab=sales`, `Alt+1`): Customer invoices, open bills, collections, and receipts.
+  - `Supplier Dues (Payables)` (`tab=purchases`, `Alt+2`): Vendor bills, procurement dues, and payment vouchers.
+  - `Other Dues (Expenses & Services)` (`tab=expenses`, `Alt+3`): Operating expenses, utility bills, and subcontracting obligations.
+- **Dual Operational Modes with Dual-Layer Persistence:**
+  - **Bill-Wise Mode:** Multi-bill batch checkboxes, overdue badges, clickable bill references, and coordinated pastel background tints (`party-tint-0` to `party-tint-4`) with matching 3.5px solid left border indicators grouping bills from the same party.
+  - **Party Grouped Mode:** Aggregates outstanding amounts per party, displaying open bill count, total billed, total paid, and net due. Features a 1-click `⚡ Clear All` button that loads all unpaid bills into a batch settlement.
+  - **Persistence:** User selection is saved both server-side (`session(['dues_view_mode' => $mode])`) and client-side (`localStorage.setItem('zolo_dues_view_mode', mode)`), ensuring consistent defaults across navigation sessions.
+- **Fast Settlement Drawer & Real-Time FIFO Simulation:**
+  - A responsive 35% slide-in drawer supporting instant due auto-fill, `Full` and `50%` quick amount presets, method-driven leaf account selection (Cash vs Bank via `SettlementAccountService`), early settlement discount, and TDS deduction.
+  - **Dynamic FIFO Breakdown Panel (`#fifo-breakdown-panel`):** Simulates bill allocation in real time as the user types any paying amount:
+    - `✓ Cleared` (Green badge: full bill cleared, balance ₹0.00).
+    - `⚡ Partial` (Amber badge: partial clearance, remaining balance displayed in red).
+    - `⏳ Due/Unpaid` (Neutral badge: ₹0.00 allocated, full bill due).
+    - Header chips summarize live counts (`X Cleared`, `Y Partial`, `Z Due`).
+- **Batch Settlement Engine (`POST /transactions/dues/batch-settle`):**
+  - Allocates payment across selected invoices for a party sequentially using First-In-First-Out (oldest bill first).
+  - Posts transactional double-entry ledger entries through `PaymentService::addPayment`, preserving voucher series, discounts, and TDS deductions without data loss.
+- **Historical Payments & Receipts Audit Register (`.due-history-card`):**
+  - Full-width audit register at the bottom of the hub displaying recent settlement transactions (`#due-historical-payments-table`) with Date/Time, Payment Reference, Linked Invoice, Party details, Payment Method/Account, Amount Settled (`₹`), and 1-click `View / Print Voucher` (`route('bill-payments.show', $id)`).
+- **Legacy Module Redirection:**
+  - Browser visits to legacy `/selling/payments` and `/buying/payments` automatically redirect to `/transactions/dues` with the appropriate tab preselected, consolidating operational workflows into a single interface while preserving API endpoints.
+
 ## 09 Financial and operational reporting
 
 Sources: [accounting](documents/zolo_erp_implementation_docs/10_ACCOUNTING_DOUBLE_ENTRY_OPEN_ITEMS_AND_VOUCHERS.md), [inventory](documents/zolo_erp_implementation_docs/09_INVENTORY_STOCK_LEDGER_BATCH_SERIAL_DIMENSIONS.md), [traceability](documents/zolo_erp_implementation_docs/27_REQUIREMENT_TRACEABILITY_MATRIX.md).
@@ -370,6 +473,22 @@ Preserve:
 Apply company scope to report queries, exports and cache keys. Apply branch/FY filters according to report semantics; opening/as-of balances may need prior-period history. Do not hide that history with an indiscriminate FY query scope.
 
 Weighted average and FIFO are company valuation choices requiring supported posting/reconciliation behavior. Changing policy must not recalculate historical posted costs silently. Heavy summaries may use derived projections or asynchronous exports, with a defined reconciliation source.
+
+### Audited outstanding dues reporting and route normalization
+
+Operational clearance and financial auditing follow strict separation of concerns:
+
+- **Audited Outstanding Dues Report (`/outstanding-due-report`):**
+  - **Audit-Only Integrity:** Inline operational action buttons (`Collect`, `Pay`, `⚡ Settle`) are omitted entirely from this report. It serves strictly as a reconciliation, statement verification, and printable audit instrument.
+  - **Audit & Clearance Notification Banner:** An informative banner directs operators needing to clear dues to the Centralized Due Management Hub (`/transactions/dues`).
+  - **Company-Scoped Reporting (`ReportController::outstandingDuesReport`):** Company isolation is enforced via `CompanyContext`, preventing cross-company party due leakage. Supports Customer Receivables, Supplier Payables, and Operating Expenses (`type=expenses`).
+  - **Contextual Filter Retention:** Navigating between the audit report and Due Management retains active party filters (`party_id`, `party_type`, `search`).
+  - **Modern Theme Navigation Toolbar (`.dues-report-nav-toolbar`):** Branded pill buttons provide instant navigation between Receivables, Payables, Ageing Ledger (`/accounting/ageing`), Due Clearance Hub, and Print Report.
+  - **Parties Datatable Action Menus:** Integrated direct links from `Parties > Customers` and `Parties > Suppliers` datatable rows directly to their company-scoped Outstanding Due Report.
+  - **Print Layout:** High-fidelity printable A4 layout with legal letterhead, GSTIN, period dates, executive KPI cards, and signature lines.
+- **Canonical Report Route Hardening:**
+  - Registered `Route::match(['get', 'post'], ...)` across customer reports, supplier reports, customer group reports, and outstanding dues to eliminate HTTP 405 Method Not Allowed exceptions when navigating back or using bookmarks.
+  - Route aliases registered for legacy paths (`/report/biller`, `/report/customer_group`, `/report/daily_sale_objective`, `/report/purchase_report`, `/report/qty_alert_report`, `/report/sale_report_chart`, `/report/supplier_report`), ensuring all report entry points resolve cleanly.
 
 ## 10 GST and tax compliance
 
@@ -417,6 +536,9 @@ Retired screens:
 | Add Purchase form `/purchases/create` | Purchase workspace `/purchases?new=1` | Redirects |
 | Sales/purchase returns lists `/return-sale`, `/return-purchase` and their `create` forms | Workspace Returns tab | Redirects |
 | Returns register `/compliance/returns` and return form `/compliance/{kind}/{id}/return` | Workspace Returns tab | Redirects (JSON kept for the tab) |
+| Selling payments `/selling/payments` | Due Management Hub `/transactions/dues?tab=sales` | Redirects (API preserved) |
+| Buying payments `/buying/payments` | Due Management Hub `/transactions/dues?tab=purchases` | Redirects (API preserved) |
+| Legacy backup `/backup` | Server/platform backup policy | Removed (410 gone) |
 | Legacy P&L `/report/profit_loss` | `/accounting/profit-loss` | Removed |
 | Legacy balance sheet `/balancesheet` | `/accounting/balance-sheet` | Removed |
 | Topbar "+" quick-add menu | Each list page's own Add button | Removed |
@@ -426,6 +548,17 @@ Retired screens:
 | Old light HRM menu `backend/hrm/partial/menu.blade.php` (+ `css/pages/hrm-partial-menu.css`) | `<x-hrm-command-bar>` on every HRM page | Removed |
 
 Not duplicates, kept on purpose: Dispatch Register (one list over Customer DC, courier Challan, Delivery and Packing Slip, which are different documents); product list "All Product In Stock" (an e-commerce bulk action, not a stock page).
+
+### Navigation link integrity and theme standards
+
+- **Navigation Link Audit Standards:**
+  - Automated and browser-driven link audits run across all rendered sidebar and context menus (`documents/auditing/navigation-link-audit-2026-11-06.csv`).
+  - Strict route validation: all navigation targets must return HTTP 200, or a deliberate 302 canonical redirect. Any 404 Not Found, 405 Method Not Allowed, or 500 Server Error is treated as a blocking navigation regression.
+  - **Disabled Module Link Suppression:** Links to optional capabilities disabled in the current company context are suppressed or disabled. In `/addon-list`, inactive add-ons render an inert "Enable to Open" indicator instead of linking to unauthorized 403 endpoints.
+  - **Context Retention:** Drilldowns between registers, reports, and hubs (such as Outstanding Dues, Ageing Ledger, and Due Management) must preserve `party_id`, `party_type`, `search`, and active filter states.
+- **Brand Theme Harmonization & Dark Mode:**
+  - Standardized UI variables (`var(--z-primary)`, `var(--z-primary-hover)`, `var(--z-primary-soft)`, `var(--z-primary-border)`) govern all primary actions, active tabs, pill buttons, and settlement drawers.
+  - Unified `body.dark-mode` tokens ensure clean contrast across desk cards (`#141c2e`), borders (`#334155`), inputs (`#0b0f19`), zebra rows, and sticky table headers (`var(--z-table-head-bg)`). Dynamic Chart.js instances track theme mutations via `MutationObserver` to refresh gridlines and tick colors without manual page reload.
 
 ### API and integration
 
@@ -535,8 +668,14 @@ For each package, state observed/target behavior, responsible source of truth an
 | Phase 0 transaction regressions | `d6b69d2` | 7 SQLite tests, 50 assertions; sale/purchase/transfer relationships and purchase receipt repair |
 | Phase 1 A: schema/backfill | `2535838` | 16 SQLite tests, 83 assertions; dry-run, guards, rollback, ownership and date preservation |
 | Phase 1 B: context primitives | `b2df894` | 27 SQLite tests, 34 assertions; membership/branch/FY resolution, spoofing rejection and period guards |
+| Centralized Due Management & FIFO Batch Clearance | `526e0f3` | 10 MySQL tests, 52 assertions (`CentralizedDueManagementTest`); sales/purchases/expenses, FIFO allocations, batch settle |
+| Company Group Consolidated Visual Insight Hub | `526e0f3` | 3 MySQL tests, 37 assertions (`CompanyGroupInsightTest`); 6-month trends, loss company detection, multi-series charts |
+| Outstanding Dues Audit Report & Mandatory GST | `0cb7c55` | 8 MySQL tests, 29 assertions (`OutstandingDuesAndGstTypeTest`); audit-only report, letterhead, GST registration type |
+| Commercial Assistance & Rate History Aids | `45c8ba5` | 5 MySQL tests, 39 assertions (`RateHistoryTest`); smart row resolver, rate history, party statements |
+| Navigation Route Audit & Link Resolution | `da0bea8` | 6 MySQL tests, 93 assertions (`NavigationAuditResolutionTest`); GET/POST report routing, canonical aliases, context retention |
+| Single View Voucher Desk Architecture & Dialog Elimination | `current` | 8 MySQL tests, 28 assertions (`SingleViewVoucherDeskTest`); single-view setup for view/edit/duplicate, modal elimination, routing |
 
-The recorded targeted suite totals **50 tests and 167 assertions**. See [implementation progress](documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md) for fixtures, effects and limitations. These results are package evidence, not a claim that this documentation update reran tests.
+The recorded targeted suite totals **58 tests and 195 assertions**. See [implementation progress](documents/zolo_erp_implementation_docs/IMPLEMENTATION_PROGRESS.md) for fixtures, effects and limitations. These results are package evidence, not a claim that this documentation update reran tests.
 
 The application boot and route baseline succeeded. The original feature suite recorded 2 passed and 16 failed because seeded MySQL was unavailable. The frontend build baseline failed with absent dependencies/build configuration. SQLite proof does not establish MySQL migration compatibility, concurrent safety, full HTTP isolation or production-data parity.
 

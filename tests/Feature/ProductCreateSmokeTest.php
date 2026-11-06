@@ -26,6 +26,10 @@ class ProductCreateSmokeTest extends TestCase
         $content = $response->getContent();
         $this->assertNotEmpty($content);
         $this->assertStringContainsString('product-single-screen-card', $content);
+        $this->assertStringContainsString('data-product-usage="composite"', $content);
+        $this->assertStringContainsString('name="product_usage" value="purchase"', $content);
+        $this->assertStringContainsString('name="product_usage" value="sale"', $content);
+        $this->assertStringContainsString('name="product_usage" value="composite"', $content);
         $this->assertStringContainsString('zolo-product-grid', $content);
         $this->assertStringContainsString('product-extended-details-container', $content);
         $this->assertStringContainsString('id="variant-section"', $content);
@@ -69,6 +73,7 @@ class ProductCreateSmokeTest extends TestCase
         $this->assertStringContainsString('product-single-screen-card', $content);
         $this->assertStringContainsString('zolo-product-grid', $content);
         $this->assertStringContainsString('zolo-inventory-stripe', $content);
+        $this->assertStringContainsString('data-product-usage="'.e($product->product_usage ?? 'composite').'"', $content);
         $this->assertStringNotContainsString('data-shell-steps', $content);
         $this->assertStringContainsString('value="'.e($product->name).'"', $content);
         preg_match_all('/name="([a-z_]+)/', $content, $names);

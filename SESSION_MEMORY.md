@@ -1,5 +1,116 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Production Migration for zoloERP Textiles & Main Branch Merge — 2026-11-06 (branch ui -> main)
+
+- **Client Request:** *"can you merge the ui to main branch? Along with zoloerp textile db to be migrated to the actual production site, create a file for it the github will deploy it"*
+- **Automated Production Migration for zoloERP Textiles (`database/migrations/2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php`):**
+  - VPS deployment executes `bash deploy/deploy.sh` on push/merge to `main`, which runs `php artisan migrate --force`.
+  - Created a robust, fully idempotent production migration that guarantees zoloERP Textiles is seeded and available on the live production site (`erp.samuraibuiness.in`):
+    1. **Target Company Setup (`ZTEX`):** Resolves base currency (INR), creates or activates company `ZTEX` (legal/trade name `zoloERP Textiles`, Tiruppur address, PAN `ZOLOT1234K`, state code 33, phone, email, logo).
+    2. **Branch & Fiscal Year:** Ensures Main Branch (`MAIN`, active) and active open financial year `FY 2026-27` (start 2026-04-01, end 2027-03-31).
+    3. **Main Warehouse:** Ensures `zoloERP Textiles - Main` godown.
+    4. **Tax Registration:** Sets up GSTIN `33ZOLOT1234K1Z5` (Tamil Nadu, regular registration).
+    5. **Industry Settings:** Configures `textile` profile (`in_house_processing` / `manufacturing`), UOMs (`MTR`, `KGS`, `DOZ`, `PCS`), and terminology overrides (Godown, Material DC, Job Work GRN).
+    6. **Admin Access:** Automatically grants membership and branch access to all installation administrators.
+    7. **Chart of Accounts & Document Series:** Ensures standard chart of accounts, starter masters (customer groups, categories, billers, cash & bank payment accounts), and document series counters (`OptechMasterSeeder::seedSeries`).
+    8. **Textile Masters & Catalog:** Executes `TextileMasterSeeder::seedCompany()` to seed UOMs, textile categories, brands, realistic textile suppliers, and products with warehouse stock links.
+    9. **Demo Parties & Products:** Seeds demo customers (Tiruppur Garment Works, Mumbai Fabric Distributors, Erode Counter Buyer), demo suppliers (Erode Grey Fabric Mill, Perundurai Dyeing, Surat Finished Fabric Mill), and demo products (`ZT-DEMO-GREY`, `ZT-DEMO-POPLIN`, `ZT-DEMO-PROCESS`).
+- **Product Model & Test Fixes:**
+  - Added `hsn_code` to `Product::$fillable` in `app/Models/Product.php` and updated `TextileMasterSeeder.php` to use `forceCreate`, resolving HSN persistence.
+  - Hardened `TextileMasterSeederTest` and `SingleViewVoucherDeskTest` with `withSession(['company_id' => ...])` for isolated testing.
+- **Verification:**
+  - `php artisan migrate` completed cleanly in local MySQL environment (1,071 ms), re-verifying idempotency with zero pending changes on rerun.
+  - Tests passing: `SingleViewVoucherDeskTest` (8/8 passed, 28 assertions), `TextileMasterSeederTest` (1/1 passed, 154 assertions), `ProductUsageTest` (3/3 passed, 34 assertions), `ProductCreateSmokeTest` (3/3 passed, 23 assertions), `NavigationAuditResolutionTest` (6/6 passed, 93 assertions).
+
+
+## Product usage for purchase and sales bills — 2026-11-06 (branch ui)
+
+- Added Purchase, Sales, and Composite usage options to the product master. Product usage controls the visible pricing and unit fields. Existing products default to Composite. The local database reports the usage migration as applied.
+- Purchase bills list Purchase and Composite products. Sales bills list Sales and Composite products. Bill quick-create defaults to the current bill's usage and also offers Composite. Shared review and posting, legacy bill submission, and legacy bill imports check product eligibility.
+- Product Usage tests and Product Create smoke tests passed. Browser verification stopped because Computer Use could not establish the active URL. The broader DocumentEntryWeb test run exposed an existing redirect conflict in the pending `sales/{id}` route, which captures `sales/create`.
+
+## Active Session & Follow-up — 2026-11-06: Commercial Command Center Single View Setup — Dialog Box Elimination for View, Edit & Duplicate across Split & Full Register Views (branch ui)
+
+- **Problem & Client Request Addressed:**
+  - Client raised: *"view, edit, duplicate button does not work. I dont want a dialog box, in split view when i click view it opens a dialog box. I want in both split or full view, a single view setup, same for the duplicate, Edit"* with screenshot showing the Purchases register DataTables action dropdown menu.
+  - Previous Behavior:
+    - In Split View, clicking "View" on a side bill card triggered a modal dialog box (`#purchase-details`, `#sale-details`).
+    - In Full View (register DataTable), action dropdown buttons for "View", "Edit", and "Duplicate" lacked event handler wiring, or navigated to legacy standalone views. View buttons were rendered without row identifier attributes.
+    - Duplicate button on side bill cards was hidden (`hidden` class).
+- **Architecture & Implementation of Single View Setup:**
+  1. **Elimination of Modal Dialogs on View:**
+     - In `public/js/command-center-form.js`, decoupled `.btn-side-view` from the generic modal display handler (`$(document).on('click', '.btn-side-print', ...)`).
+     - Standardized the single view desk to render documents directly in the workspace form without any popups or dialog boxes.
+  2. **View Mode Styling & Protection (`public/css/commercial-workspace.css`):**
+     - Added `.is-view-mode` rules: disables pointer events on inputs/selects, hides `#table-search-row`, hides "+ Add row" button, and hides row removal icons (`.delete-order-item-row`, `.fa-trash`).
+     - Added `.side-bill-card.active-viewing` sky blue border indicator (`#0284c7`, dark mode `#38bdf8`) distinguishing view mode from editing mode (`.active-editing`).
+  3. **Backend Controller & Route Enhancements:**
+     - `app/Http/Controllers/PurchaseController.php`:
+       - Enhanced `purchaseData()` to render row action dropdown buttons with classes `.btn-table-view`, `.btn-table-duplicate`, `.btn-table-edit` and `data-id`.
+       - Browser request handling for `show($id)`, `edit($id)`, and `duplicate($id)`: automatically redirects browser requests to `route('purchases.index', ['view_id' => $id])`, `['edit' => $id]`, or `['duplicate' => $id]`, while maintaining clean JSON responses for AJAX/API requests.
+     - `app/Http/Controllers/SaleController.php`:
+       - Enhanced `saleData()` with `.btn-table-view`, `.btn-table-duplicate`, `.btn-table-edit` and `data-id`.
+       - Browser request handling for `show($id)` and `edit($id)`: automatically redirects to `route('sales.index', ['view_id' => $id])` or `['edit' => $id]`.
+     - `routes/web.php`: Registered `Route::get('sales/{id}', 'show')->name('sales.show')` under `SaleController` group.
+  4. **Purchase & Sales Command Center Blade Modernization (`resources/views/backend/purchase/index.blade.php` & `resources/views/backend/sale/index.blade.php`):**
+     - **Bottom Action Bar View Controls:** Added `.view-mode-actions` container holding *Edit this Bill* (`#btn-view-to-edit`), *Duplicate* (`#btn-view-to-duplicate`), *Print* (`#btn-view-to-print`), and *Close View* (`#btn-view-close`), which display exclusively during View Mode while hiding normal Save/Reset buttons.
+     - **Side Card Duplicate Activation:** Unhid `.btn-side-copy` and standardized label to "Duplicate".
+     - **Unified Loader Functions (`loadPurchaseToForm(id, mode)` and `loadSaleToForm(id, mode)`):**
+       - Supports `'view'`, `'edit'`, and `'duplicate'` modes seamlessly.
+       - Fetches document JSON via AJAX (`purchases/{id}` or `sales/{id}`).
+       - Populates party, warehouse, date, bill reference, custom fields, line items (item name, code, quantity, unit price, tax, subtotal), additional charges, and document notes.
+       - In `'view'` mode: activates `.is-view-mode`, sets `.side-bill-card.active-viewing`, and reveals view mode action buttons.
+       - In `'edit'` mode: sets form method to `PUT`, sets `#edit-purchase-id`/`#edit-sale-id`, marks `.active-editing`, and enables input editing.
+       - In `'duplicate'` mode: sets form method to `POST`, clears primary ID and document reference number (for automatic document series generation), sets current date, and enables editing as a fresh draft.
+       - In all modes, switches workspace from full register view to split/desk view if the user is in full register view.
+     - **Event Delegations for Register DataTable & Side Cards:**
+       - Added document-level listeners for `#purchase-table` and `#sale-table` row actions: `.btn-table-view`, `.btn-table-edit`, `.btn-table-duplicate` with safe row data-id extraction.
+       - Added side card button handlers for `.btn-side-view`, `.btn-side-load-edit`, `.btn-side-copy`, and clicking the card body.
+     - **URL Parameter Deep-Link Dispatcher:**
+       - Auto-routes URL query parameters on load: `edit`, `duplicate`, `view_id`, and `show_bill`.
+- **Verification & Test Coverage:**
+  - Created `tests/Feature/SingleViewVoucherDeskTest.php` passing 8/8 tests (28 assertions):
+    - `✓ purchase edit redirects to single view workspace`
+    - `✓ purchase duplicate redirects to single view workspace`
+    - `✓ purchase browser view redirects to single view workspace`
+    - `✓ purchase ajax show returns json`
+    - `✓ sale edit redirects to single view workspace`
+    - `✓ sale browser view redirects to single view workspace`
+    - `✓ purchase workspace contains single view elements`
+    - `✓ sale workspace contains single view elements`
+  - JavaScript regression suite passing 26/26 tests (`node --test tests/JavaScript/*.cjs`).
+  - Navigation audit resolution suite passing 6/6 tests (93 assertions).
+  - Centralized due management suite passing 7/7 active tests (37 assertions).
+
+
+## Active Session & Follow-up — 2026-11-06: Comprehensive Master Engineering Reference Update (branch ui)
+
+- **Documentation Modernization (`ENGINEERING_REFERENCE.md`):**
+  - Addressed client request: *"can you update all the features in the engineering reference"*.
+  - Updated document metadata: bumped revision date to `2026-11-06` and updated system status to reflect all delivered capabilities, visual dashboards, and route hardening.
+  - **Section 01 (Company, branch and financial year):**
+    - Documented Master Company Groups and Consolidated Insight Dashboard (`/workspace#zw-companies`, `CompanyInsightService`): `companyInsight` single-company metrics, `directoryInsights` group rollups, P&L loss monitoring (`loss_companies`), 6-month performance multi-series charts, turnover share donuts, cost vs margin donuts, and dues exposure meters.
+    - Documented expanded company cards with inline SVG/Chart.js 6-month activity sparklines and in-card 1-click fast company switcher.
+    - Documented mandatory GST registration type validation (`registration_type`).
+  - **Section 04 (Sales, POS and order to cash):**
+    - Documented Commercial Voucher Desk modernization: dedicated `.table-search-strip` (`#table-search-row`) above table for barcode search `#lims_productcodeSearch`, crisp vertical column dividers (`border-right: 1px solid`), URL parameter auto-selection (`search`/`ref`), and in-window `#add-payment` modal with direct link to Due Management (`route('dues.index', ['tab' => 'sales', 'search' => $ref])`).
+    - Documented Commercial Assistance Aid Dialogs (`commercial-assistance.js`): Rate History, Pending Bills, Party Statement, and Load DCs with smart row resolving (`getTargetRow`), row activation tracking, and animated operator guidance toasts (`.commercial-aid-toast`).
+  - **Section 05 (Purchases and procure to pay):**
+    - Documented Purchase Voucher Desk modernization: `.table-search-strip` above grid, vertical column dividers, URL parameter auto-selection, and in-window `#add-payment` modal with direct link to Due Management (`route('dues.index', ['tab' => 'purchases', 'search' => $ref])`).
+  - **Section 06 (Inventory, manufacturing and job work):**
+    - Documented Inventory Global UI & Dark Mode Standardization: `.desk-card-wrapper` and `.desk-filter-card` standard across Stock by Lot (`/inventory-reports/stock-by-lot`), Physical Count (`/stock-count`), Manual Adjustments (`/qty_adjustment`), Damage Stock Audit (`/damage-stock`), and Transfers (`/transfers`), supported by shared `inventory-workspace.css`.
+    - Documented Modular Addons Specification (`documents/MODULE_ADDONS_SPECIFICATION.md`): Optical Lab (`Modules/OpticalLab`), Warranty & AMC (`Modules/WarrantyAMC`), and Subscription Billing (`Modules/SubscriptionBilling`).
+  - **Section 08 (Accounting, vouchers and open items):**
+    - Documented Centralized Due Management System & Command Center (`/transactions/dues`): multi-tab architecture (`tab=sales`, `tab=purchases`, `tab=expenses`), dual operational modes (Bill-wise with pastel party tints `party-tint-0`..`party-tint-4` vs Party Grouped with 1-click `⚡ Clear All`), dual-layer view mode persistence (session + localStorage), real-time FIFO simulation panel (`#fifo-breakdown-panel`), batch settlement engine (`POST /transactions/dues/batch-settle`), historical settlement audit register (`.due-history-card`), and legacy module redirection (`/selling/payments` and `/buying/payments`).
+  - **Section 09 (Financial and operational reporting):**
+    - Documented Audited Outstanding Dues Report (`/outstanding-due-report`): strict audit-only separation (no inline settle/pay buttons), audit banner directing clearance to Due Hub, company-level scoping, filter retention, theme navigation pills (`.dues-report-nav-toolbar`), Parties datatable action menu integrations, and printable A4 letterhead.
+    - Documented Canonical Report Route Hardening: `Route::match(['get', 'post'], ...)` on customer, supplier, group, and outstanding dues reports, plus registered URL aliases for legacy report paths.
+  - **Section 11 (UI, API, permissions and operational controls):**
+    - Updated Retired Screens table: added `/backup` (410 gone), `/selling/payments`, and `/buying/payments` (redirects to `/transactions/dues`).
+    - Documented Navigation Link Audit standards: routine full-tree link audits, disabled module link suppression in `/addon-list` and Trade submenus, brand theme harmonization (`var(--z-primary)`), and responsive dark mode contracts.
+  - **Section 13 (Delivery, validation and deployment):**
+    - Updated Recorded Implementation Evidence table with recent test suites: `CentralizedDueManagementTest` (10 tests, 52 assertions), `CompanyGroupInsightTest` (3 tests, 37 assertions), `OutstandingDuesAndGstTypeTest` (8 tests, 29 assertions), `RateHistoryTest` (5 tests, 39 assertions), and `NavigationAuditResolutionTest` (6 tests, 93 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Navigation Link Audit Resolution — Route 404/405 Fixes, Filter Context Retention, Bill Payment Redirects & Addon Leak Hardening (branch ui)
 
 - **Audit Resolution & Bug Fixes (`documents/auditing/navigation-link-audit-2026-11-06.csv`):**
@@ -2941,3 +3052,10 @@ User: People, HRM and Settings did not follow the modern UI; add a developer rol
 - This was a diagnosis request. No services, database settings, credentials, or application code were changed. The user's existing `run-erp.bat` edit was preserved.
 - Follow-up recovery: started the existing portable MySQL 8.4 server directly with its existing `my.ini` after the user reported the same error again. MySQL completed crash recovery and is ready on port 3307 (PID 10156, tool session 69626). No database configuration, credentials, or application code changed.
 - Verification: `GET http://zolo-erp-pro.test/login` now returns HTTP 200; Laravel logs also show a successful authenticated company-selection page. Reloading the browser should now work. The portable database still requires startup after a reboot; automatic startup was not configured.
+
+## ZTEX live local data reset and four-profile sample — 2026-11-06 (branch ui)
+
+- User explicitly requested a clean slate in zoloERP Textiles. Target verified as ZTEX, company 14, Main branch 2, FY 2026–27 (ID 2), on the running local MySQL `zoloerp` database. Backed up the full database before reset to the encrypted, checksum-verified 205-table archive `database/backups/erp-backup-10721e72-c83d-478c-983e-92e0d03ca929.zip`. The key is stored separately and privately.
+- Rehearsed the company-scoped cleanup, seeded new data, and audited it inside a single transaction before committing the same workflow. Foreign keys stayed enabled. Before/after row fingerprints verified all shared and other-company rows. The reset removed old parties, products, operational records, accounting history, and their report projections. It reinstalled the current standard chart and default Cash and Bank. It kept the company, branch, fiscal year, and document series counters.
+- Created 3 demo customers, 3 demo suppliers, and 3 products (grey cotton, dyed poplin, and textile processing service). Manufacturing covers PO, supplier GRN, purchase, dyeing, printing, finishing, unprocessed return, processing loss, capitalized and expensed service bills, customer-owned processing, sales order, invoice, and returns. Wholesale covers a bale sale from a customer DC. Distributor covers B2B/B2C invoices. Wholesale & Distributor covers the 10+1 scheme. The original Manufacturing profile and capability settings were restored at the end.
+- A fresh process read the committed data and reproduced `scratch/textile-live-reset-audit.json`. All 56 chart accounts (20 with activity) and 37 mappings passed. General and monthly ledgers, Day Book, Cash Book, Trial Balance, P&L, Balance Sheet, AR/AP ageing, stock valuation, GST, ITC-04, GRNI/GDNI, and the wholesale dot-matrix print were checked. `erp:health` passed all 9 checks. Trial balance debit and credit each equal INR 187,489.65. Closing inventory equals INR 40,290.7678. No application code changes were needed for this task.
