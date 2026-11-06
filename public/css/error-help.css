@@ -1,4 +1,4 @@
-/* Error help: the "How to fix" bar error-help.js adds under an error. Collapsed to one line; opens for why + steps. */
+/* Error help shows the first step, then expands to show the explanation and full steps. */
 .error-help {
     margin: 6px 0 2px; padding: 5px 9px; border: 1px solid var(--z-info-border); border-radius: var(--z-radius-sm);
     background: var(--z-info-soft); color: var(--z-text); font-size: 12px; line-height: 1.45; font-weight: 500;
@@ -18,3 +18,19 @@
 .error-help-link { display: inline-block; margin-top: 2px; color: var(--z-info); font-weight: 700; }
 .error-help-link:hover { color: var(--z-primary); }
 li > .error-help { margin-left: -2px; }
+
+.alert-danger[data-inline-error-help] > .error-help {
+    margin: 8px 0 0;
+    padding: 8px 0 0;
+    border: 0;
+    border-top: 1px solid var(--z-danger-border);
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+}
+.alert-danger[data-inline-error-help] > .error-help > summary::after { color: inherit; }
+.alert-danger[data-inline-error-help] .error-help-tag {
+    background: var(--z-danger-solid-hover);
+    font-size: 12px;
+    text-transform: none;
+}

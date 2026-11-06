@@ -18,13 +18,10 @@
     $closingBal = (float)($ledgerData['closing_balance'] ?? 0);
 @endphp
 
-@push('css')
-<link rel="stylesheet" href="{{ versioned_asset('css/pages/party-ledger.css') }}">
-@endpush
 
 <section class="report-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar section-command-bar d-print-none">
+    <div class="comm-command-bar d-print-none">
         <div class="comm-title-group">
             <h1><i class="dripicons-user-group text-primary"></i> {{ __('db.Customer Report') }} Command Center</h1>
             <span class="comm-title-badge"><i class="dripicons-tag"></i> 360° Account Receivable &amp; Single-View Ledger</span>
@@ -38,10 +35,10 @@
         </ul>
         <div class="comm-actions">
             <div class="btn-group">
-                <button type="button" class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary" onclick="printReport('all')">
+                <button type="button" class="btn btn-secondary btn-action-pill" onclick="printReport('all')">
                     <i class="dripicons-print"></i> Print Complete Ledger
                 </button>
-                <button type="button" class="btn btn-primary btn-action-pill dropdown-toggle dropdown-toggle-split u-bg-primary u-bc-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button type="button" class="btn btn-secondary btn-action-pill dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="sr-only">Toggle Dropdown</span>
                 </button>
                 <div class="dropdown-menu dropdown-menu-right">
@@ -56,47 +53,34 @@
         </div>
     </div>
 
-    <!-- Print Letterhead & Party Header (Only Visible When Printing) -->
-    <div class="print-only-header">
-        <div class="ledger-letterhead">
-            <div>
-                <h2 class="ledger-company-name">{{ $general_setting->company_name ?? 'zoloERP Pro' }}</h2>
-                <div class="ledger-company-address">
-                    GSTIN: <strong>{{ $general_setting->vat_registration_number ?? '—' }}</strong> | Phone: {{ $general_setting->phone ?? '—' }}
-                </div>
-                <div class="ledger-print-detail">
-                    {{ $general_setting->address ?? '' }}
-                </div>
+    <!-- Print Party Details Card (Only Visible When Printing) -->
+    @if($customer)
+    <div class="erp-print-party-card">
+        <div>
+            <div class="ledger-print-label">Customer / Debtor Details:</div>
+            <div class="ledger-party-name">{{ $customer->name }}</div>
+            @if(!empty($customer->company_name))
+                <div class="ledger-party-company">{{ $customer->company_name }}</div>
+            @endif
+            <div class="ledger-print-detail ledger-print-contact">
+                Phone: {{ $customer->phone_number }} | Email: {{ $customer->email ?? '—' }}
             </div>
-            <div class="text-right">
-                <h3 class="ledger-print-title" id="printDocTitle">Customer Account Statement / Ledger</h3>
-                <div class="ledger-print-period">
-                    Period: <strong>{{ date('d-m-Y', strtotime($start_date)) }}</strong> To <strong>{{ date('d-m-Y', strtotime($end_date)) }}</strong>
-                </div>
-                <div class="ledger-print-date">Printed on: {{ date('d-m-Y H:i') }}</div>
+            <div class="ledger-print-detail">
+                GSTIN: <strong>{{ $customer->tax_no ?? 'Unregistered' }}</strong>
             </div>
         </div>
-
-        @if($customer)
-        <div class="ledger-print-party">
-            <div>
-                <div class="ledger-print-label">Customer / Debtor Details:</div>
-                <div class="ledger-party-name">{{ $customer->name }}</div>
-                <div class="ledger-party-company">{{ $customer->company_name ?? '' }}</div>
-                <div class="ledger-print-detail">Phone: {{ $customer->phone_number }} | Email: {{ $customer->email ?? '—' }}</div>
-                <div class="ledger-print-detail">GSTIN: <strong>{{ $customer->tax_no ?? 'Unregistered' }}</strong></div>
+        <div class="ledger-print-balances">
+            <div class="ledger-print-label">Opening Balance:</div>
+            <div class="ledger-opening-balance">
+                {{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Dr' : 'Cr' }}
             </div>
-            <div class="ledger-print-balances">
-                <div class="ledger-print-label">Opening Balance:</div>
-                <div class="ledger-opening-balance">{{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Dr' : 'Cr' }}</div>
-                <div class="ledger-print-label ledger-closing-label">Current Outstanding:</div>
-                <div style="font-size: 12pt; font-weight: 800; color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
-                    {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }} {{ $closingBal >= 0 ? 'Dr' : 'Cr' }}
-                </div>
+            <div class="ledger-print-label ledger-closing-label">Current Outstanding:</div>
+            <div class="ledger-closing-balance {{ $closingBal > 0 ? 'ledger-balance-due' : 'ledger-balance-settled' }}">
+                {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }} {{ $closingBal >= 0 ? 'Dr' : 'Cr' }}
             </div>
         </div>
-        @endif
     </div>
+    @endif
 
     <!-- KPI Summary Strip -->
     <div class="kpi-summary-strip d-print-none">
@@ -145,10 +129,10 @@
                 <i class="dripicons-checkmark u-fs-18px"></i>
             </div>
         </div>
-        <div class="kpi-card" style="border-left: 3px solid {{ $closingBal > 0 ? '#ef4444' : '#10b981' }};">
+        <div class="kpi-card {{ $closingBal > 0 ? 'ledger-kpi-due' : 'ledger-kpi-settled' }}">
             <div>
                 <div class="kpi-label">NET CLOSING BALANCE</div>
-                <div class="kpi-number u-fs-16px u-fw-800" style="color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
+                <div class="kpi-number u-fs-16px u-fw-800 {{ $closingBal > 0 ? 'ledger-balance-due' : 'ledger-balance-settled' }}">
                     {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }}
                     <span class="badge badge-sm {{ $closingBal >= 0 ? 'badge-danger' : 'badge-success' }}">{{ $closingBal >= 0 ? 'Dr' : 'Cr' }}</span>
                 </div>
@@ -343,15 +327,13 @@
     </div>
 
     <!-- Print Footer Signatures (Only Visible When Printing) -->
-    <div class="ledger-signatures print-only-header">
-        <div class="ledger-signature-row">
-            <div class="ledger-signature">
-                Customer Confirmation Signature
-            </div>
-            <div class="ledger-signature">
-                For {{ $general_setting->company_name ?? 'zoloERP Pro' }}<br>
-                <strong>Authorized Signatory</strong>
-            </div>
+    <div class="erp-print-signatures">
+        <div class="erp-print-sig-box">
+            Customer Confirmation Signature
+        </div>
+        <div class="erp-print-sig-box">
+            For {{ $activeCompany->trade_name ?? $general_setting->company_name ?? 'zoloERP Pro' }}<br>
+            <strong>Authorized Signatory</strong>
         </div>
     </div>
 </section>
@@ -443,30 +425,29 @@
 
     function printReport(mode) {
         var prevFilter = $('.btn-filter-pill.active').data('filter');
+        var reportTitle = 'Customer Account Statement / Ledger';
 
         if (mode === 'all') {
-            // Complete Ledger mode
-            $('#printDocTitle').text('Complete Customer Account Statement / Ledger');
+            reportTitle = 'Complete Customer Account Statement / Ledger';
             $('.btn-filter-pill[data-filter="all"]').trigger('click');
         } else if (mode === 'current') {
-            // Keep active view
             var filterName = prevFilter.charAt(0).toUpperCase() + prevFilter.slice(1);
-            $('#printDocTitle').text(filterName === 'All' ? 'Complete Customer Account Statement / Ledger' : 'Customer ' + filterName + ' Statement');
+            reportTitle = filterName === 'All' ? 'Complete Customer Account Statement / Ledger' : 'Customer ' + filterName + ' Statement';
         } else {
-            // Specific filter mode
             $('.btn-filter-pill[data-filter="' + mode + '"]').trigger('click');
             var filterName = mode.charAt(0).toUpperCase() + mode.slice(1);
-            $('#printDocTitle').text('Customer ' + filterName + ' Statement');
+            reportTitle = 'Customer ' + filterName + ' Statement';
         }
 
-        // Expand all records for full print
+        $('[data-erp-print-title]').text(reportTitle);
+
+        // Expand all records and adjust columns for full print
         if (table) {
             var origLen = table.page.len();
             table.page.len(-1).draw();
 
             setTimeout(function() {
                 window.print();
-                // Restore previous pagination
                 setTimeout(function() {
                     table.page.len(origLen).draw();
                     if (mode === 'all' && prevFilter && prevFilter !== 'all') {
@@ -479,4 +460,12 @@
         }
     }
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-report-biller-report.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/party-ledger.css') }}">
 @endpush

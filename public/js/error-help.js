@@ -11,6 +11,13 @@
     var url = function (path) { return base + path; };
 
     var H = [
+        // ---- Bill entry ----
+        {m: /The bill form could not load|Cannot read properties of undefined \(reading ['"]recalcTableSummary['"]\)/i,
+            why: 'The item grid did not finish loading, so the ERP cannot check the bill totals.',
+            fix: ['Copy any unsaved bill details, then reload this page.', 'If the error returns, contact your ERP administrator with this message and the bill number.']},
+        {m: /^(?:The ERP did not return a readable response\.|Server Error)$/i,
+            why: 'The ERP could not confirm the result of the request.',
+            fix: ['If you clicked Save, check the bill list for this bill before trying again.', 'If the error returns, contact your ERP administrator with this message and the bill number.']},
         // ---- Developer switches ----
         {m: /is switched off for this company\. Ask your developer/i,
             why: 'The developer switched this section or screen off for the company you are working in.',
@@ -462,7 +469,11 @@
             var found = lookup(message, strict);
             if (!found) return;
             var bar = build(found);
-            if (target.tagName === 'LI') target.appendChild(bar); else target.insertAdjacentElement('afterend', bar);
+            if (target.tagName === 'LI' || target.hasAttribute('data-inline-error-help')) {
+                target.appendChild(bar);
+            } else {
+                target.insertAdjacentElement('afterend', bar);
+            }
             hosts.push({host: target, bar: bar});
         });
     }

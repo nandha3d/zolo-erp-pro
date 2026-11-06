@@ -1,5 +1,129 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Voucher Preview Popups Live Details, Supplier Metadata & Alignment Fixes — 2026-11-06 (branch ui)
+
+- **Problem & User Feedback Addressed:**
+  - Client reported: *"align the table properly.. also why there is not total item cost and other details are zeor at bottom? also the supplier billed from? and other details are empty?"* with screenshot `media_1793965487744_a6abe229.png`.
+  - In the screenshot:
+    - Bill Reference displayed `#REF` instead of `#PUR-00012`.
+    - Supplier (Billed From) card was empty (`—`).
+    - Purchase & Warehouse Details metadata was empty (`—`).
+    - Product items table had 9 `<td>` cells under an 8-column header, shifting returned quantity (`0`) under Unit Cost, unit cost (`35`) under Tax, tax (`0`) under Discount, discount (`0`) under Subtotal, and overflowing subtotal (`3500`) beyond the table's right border.
+    - Financial summary totals (Total Items Cost, Order Tax, Order Discount, Shipping/Freight, Grand Total, Paid Amount, Balance Due) all showed `₹0.00`.
+- **Root Cause Analysis:**
+  1. **Legacy Positional Array & Numeric Parsing:**
+     - The modal previously relied on `PurchaseController::purchaseData`'s legacy 28-element positional string array (`purchase[3]`, `purchase[1]`, `purchase[7]`, `purchase[15]`, `purchase[20]`, etc.).
+     - `PurchaseController` formatted strings with leading spaces and double quotes (e.g. `' "3500"'`), which caused JavaScript `parseFloat(' "3500"')` to return `NaN` and fall back to `0` (`₹0.00`).
+     - When opened via DataTables row action or passing row ID/object, positional indices were undefined, leaving default template placeholders (`#REF`, `—`, `₹0.00`) intact.
+  2. **Table Misalignment:**
+     - Header had 8 columns (`#`, `Product`, `Batch No`, `Qty`, `Unit Cost`, `Tax`, `Discount`, `Subtotal`).
+     - Legacy row injection in SalePro included a 9th column (`Returned`), offsetting each numeric cell by one column.
+- **Architectural Solution & Implementation:**
+  1. **Authoritative AJAX Backend (`PurchaseController::show` & `SaleController::getSaleJson`):**
+     - Eager-loaded relations: `Purchase::with(['supplier', 'warehouse', 'user', 'payments'])->find($id)` and `Sale::with(['customer', 'warehouse', 'biller', 'user', 'payments'])->find($id)`.
+     - Ensured fallback unit cost calculation: `(float)($pp->net_unit_cost > 0 ? $pp->net_unit_cost : ($pp->qty > 0 ? ($pp->total / $pp->qty) : 0))`.
+  2. **Purchase Details Modal Redesign (`resources/views/backend/purchase/index.blade.php`):**
+     - Replaced legacy array extraction with live `openPurchaseDetailsModal(purchaseOrId)`:
+       - Supports integer IDs, string IDs, object `{id: ...}`, and legacy arrays safely.
+       - Fetches live `/purchases/{id}` JSON with HTTP headers `Accept: application/json`.
+       - Renders reference badge (`#PUR-00012`), status badge (`Received`/`Partial`/`Pending`/`Ordered`), and formatted date (`DD-MM-YYYY`).
+       - Updates Supplier (Billed From) card: Party Name, Company Name, bold GSTIN badge (`#purchase-details-supplier-gstin`), Phone, and full Address.
+       - Updates Purchase & Warehouse Details: Bill Date, Receiving Godown, Godown Contact, and Recorded By.
+       - Renders table with exact 1:1 8 columns:
+         1. `#` (`text-center`)
+         2. `Product` (Bold title + code badge)
+         3. `Batch No` (Batch pill or `—`)
+         4. `Qty` (`text-right` badge with unit)
+         5. `Unit Cost` (`text-right` with ₹ currency)
+         6. `Tax` (`text-right` with ₹ and % rate)
+         7. `Discount` (`text-right` with ₹)
+         8. `Subtotal` (`text-right font-weight-bold text-primary` with ₹)
+       - Populates financial summary totals: Total Items Cost, Order Tax, Order Discount, Shipping/Freight, Grand Total, Paid Amount, and Balance Due with dynamic `.has-due` / `.settled` states.
+       - Rewired `Action > View` on `#purchase-table` to trigger `openPurchaseDetailsModal(id)`.
+  3. **Sales Details Modal Redesign (`resources/views/backend/sale/index.blade.php`):**
+     - Applied identical live server fetch upgrade to `openSaleDetailsModal(saleOrId)`.
+     - Added Customer GSTIN line and strict 8-column header/body matching.
+     - Rewired `Action > View` on `#sale-table` to trigger `openSaleDetailsModal(id)`.
+  4. **CSS & Party View Alignments (`public/css/pages/voucher-preview-modal.css`, `supplier/view.blade.php`, `customer/view.blade.php`):**
+     - Added `table-layout: fixed;`, `border-collapse: separate;`, text-right alignment rules, and `word-break: break-word` to `.voucher-items-table`.
+     - In `supplier/view.blade.php`, corrected unit cost calculation in `purchaseDetails()` line item loop.
+     - In `customer/view.blade.php`, added dual-compatibility for both object (`data.sale`, `data.items`) and legacy array formats.
+- **Verification & Test Coverage:**
+  - `tests/Feature/VoucherPopupAndProductEnhancementsTest.php`: 8/8 passed (65 assertions).
+  - `tests/Feature/SingleViewVoucherDeskTest.php`: 8/8 passed (28 assertions).
+  - `tests/Feature/PartiesGlobalUiTest.php`: 11/11 passed (59 assertions).
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php`: 8/8 passed (29 assertions).
+  - Combined suite: 35/35 passed (181 assertions) in 9.36s.
+  - JavaScript regression suite: 26/26 passed (`node --test tests/JavaScript/*.cjs`).
+  - View cache: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
+
+## Global Printing Rules, Spacing Standardization & Ledger Data Visibility — 2026-11-06 (branch ui)
+
+- **Client Requests Addressed:**
+  - *"printing options has the problem, kindly check all the printing options. Does it have the spaces correctly and all the datas are visible or not. Make a global printing rules to do that."* with print preview screenshot `media_1793965297080_cd11ba3c.png`.
+- **Diagnosis of Printing Defects:**
+  1. **Duplicate Header:** The print preview rendered the official ERP letterhead (`zoloERP Textiles`, Tiruppur address, GSTIN `33ZOLOT1234K1Z5`, phone, FY, user) AND right below it a duplicate company header (`zoloERP Pro`, `GSTIN: —`) from a custom `.print-only-header` block in the view.
+  2. **Unwanted Screen Chrome on Paper:** The 5-card KPI summary strip (`REPORT TIMEFRAME`, `OPENING BALANCE`, etc.) and DataTables controls (`All records per page`, `Search: [ ]`) were printing, cluttering the statement and pushing content down.
+  3. **Horizontal Table Truncation & Missing Data:** On A4 portrait paper (width ~790px), the table had rigid pixel widths (`style="width: 130px;"`, etc.) totaling > 1,050px. Columns beyond `DEBIT (₹)` (`CREDIT`, `RUNNING BALANCE`, `STATUS`) overflowed the right margin, rendering them invisible.
+- **Global Architecture & Implementation (`public/css/erp-print.css`):**
+  1. **Global Page Geometry & Margins:**
+     - Standardized `@page { size: A4 portrait; margin: 8mm 8mm 10mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter", sans-serif; color: #64748b; } }`.
+     - Added `@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }` for landscape registers.
+  2. **Comprehensive Screen Chrome Suppression:**
+     - Enforced `@media print { display: none !important; }` across all UI navigation and control wrappers:
+       `nav.side-navbar`, `#sidebar`, `header.header`, `nav.navbar`, `.reveal-topbar-strip`, `.z-icon-tile`, `footer.main-footer`, `.comm-command-bar`, `.desk-filter-card`, `.report-filter-card`, `.dues-filter-card`, `.kpi-summary-strip`, `.dues-kpi-grid`, `.party-kpi-grid`, `.quick-filter-bar`, `.quick-filter-pills`, `.dataTables_length`, `.dataTables_filter`, `.dataTables_paginate`, `.dataTables_info`, `.dataTables_wrapper .row:first-child`, `.dataTables_wrapper .row:last-child`, `.dt-buttons`, `.d-print-none`, `.not-exported-col`, `th.not-exported-col`, `td.not-exported-col`, `.no-print`, `.action-col`, `.btn`.
+  3. **Global Table Print Geometry & 100% Data Visibility:**
+     - `.table-responsive` set to `overflow: visible !important; width: 100% !important; height: auto !important; border: none !important; margin: 0 !important;`.
+     - `table, table.dataTable, .table, .ledger-table` set to `width: 100% !important; max-width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; font-size: 8pt !important;`.
+     - Balanced percentage column widths for statement ledgers (8 printed columns):
+       - Date: 10%
+       - Type: 12%
+       - Ref No: 14%
+       - Warehouse: 13%
+       - Particulars/Description: auto (expands dynamically, wraps naturally)
+       - Debit: 11% (right-aligned)
+       - Credit: 11% (right-aligned)
+       - Balance: 13% (right-aligned, Dr/Cr tags preserved)
+       - Unnecessary `#` index and `Status` columns hidden via `.not-exported-col`.
+     - Table header styled with crisp light gray fill (`#f1f5f9`), bold dark text (`#0f172a`), 1px subtle borders (`#94a3b8`).
+     - Table footer totals styled with `#f8fafc` background, top border `2px solid #0f172a`, and bold font.
+     - Type and Dr/Cr badges printed cleanly as bordered text pills without heavy dark background fills.
+     - Row break avoidance: `tr { break-inside: avoid !important; page-break-inside: avoid !important; }`.
+  4. **Standardized Party Statement Card (`.erp-print-party-card`):**
+     - Removed redundant company letterhead block in `customer_report.blade.php` and `supplier_report.blade.php`.
+     - Positioned dedicated `.erp-print-party-card` immediately below the official ERP letterhead:
+       - Left: Party details (Name, Company, Phone, Email, GSTIN).
+       - Right: Financial balance (Opening Balance Dr/Cr, Current Outstanding Dr/Cr).
+     - Hidden on screen via `@media screen { display: none !important; }`; shown on print as a neat 2-column card.
+  5. **Standardized Signatures Block (`.erp-print-signatures`):**
+     - Positioned at document end with `break-inside: avoid`:
+       - Left: "Customer Confirmation Signature" / "Supplier Confirmation / Verification".
+       - Right: "For [Company Name] / Authorized Signatory".
+- **Verification & Test Coverage:**
+  - Automated feature suite `Tests\Feature\CustomerSupplierReportsNavigationTest`: 6/6 passed (39 assertions).
+  - Clean view cache compilation: `php artisan view:clear` & `php artisan view:cache` (100% clean).
+  - Chrome / Print preview verification: zero double headers, zero horizontal truncation, all columns fully visible within A4 portrait printable area.
+
+## Active Session & Follow-up — 2026-11-06: Remote Sync, Main Merged & Live Production Deployment Verified at `ae637a9` (branch ui)
+
+- **Remote Synchronization & Latest Code Pull:**
+  - Pulled latest commits (`96d0581`, `e53a1c1`, `3d4d384`, `ae637a9`) from `origin`:
+    - `96d0581`: Single-page customer and supplier ledger desk with print filters and parties global UI standardization.
+    - `e53a1c1`: Merge of origin/ui into ui.
+    - `3d4d384`: Apply product margin migration in inventory cutover fixture.
+    - `ae637a9`: Initialize Textile posting accounts and keep demo stock out of production.
+  - Branches `ui` and `main` fast-forwarded to commit `ae637a9`.
+  - Both remotes (`origin` and `nandha-origin`) are fully synchronized on both `main` and `ui` at commit `ae637a9`.
+- **Live Production Smoke Verification (`https://erp.samuraibuiness.in`):**
+  - Live HTTP smoke check executed against `https://erp.samuraibuiness.in/login`:
+    - Returned `HTTP/1.1 200 OK` with valid session cookie `zoloerp_session` and security headers (`X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`).
+- **Feature Suite Verification (Green):**
+  - `tests/Feature/VoucherPopupAndProductEnhancementsTest.php`: 6/6 passed (41 assertions).
+  - `tests/Feature/PartiesGlobalUiTest.php`: 11/11 passed (59 assertions).
+  - `tests/Feature/SingleViewVoucherDeskTest.php`: 8/8 passed (28 assertions).
+- **Active Working Branch:**
+  - Workspace restored to branch `ui` per persistent session memory guidelines.
+
 ## Active Session & Follow-up — 2026-11-06: Unified Beautiful Voucher Details Popups, Product Edit Restorations, Product History GRN/Variant Enhancements & Guided Tutorial (branch ui)
 
 - **Detailed Voucher Popups Redesigned (`Action > View` on Sales, Purchases, and Products):**
@@ -3272,3 +3396,35 @@ User: People, HRM and Settings did not follow the modern UI; add a developer rol
 - Rehearsed the company-scoped cleanup, seeded new data, and audited it inside a single transaction before committing the same workflow. Foreign keys stayed enabled. Before/after row fingerprints verified all shared and other-company rows. The reset removed old parties, products, operational records, accounting history, and their report projections. It reinstalled the current standard chart and default Cash and Bank. It kept the company, branch, fiscal year, and document series counters.
 - Created 3 demo customers, 3 demo suppliers, and 3 products (grey cotton, dyed poplin, and textile processing service). Manufacturing covers PO, supplier GRN, purchase, dyeing, printing, finishing, unprocessed return, processing loss, capitalized and expensed service bills, customer-owned processing, sales order, invoice, and returns. Wholesale covers a bale sale from a customer DC. Distributor covers B2B/B2C invoices. Wholesale & Distributor covers the 10+1 scheme. The original Manufacturing profile and capability settings were restored at the end.
 - A fresh process read the committed data and reproduced `scratch/textile-live-reset-audit.json`. All 56 chart accounts (20 with activity) and 37 mappings passed. General and monthly ledgers, Day Book, Cash Book, Trial Balance, P&L, Balance Sheet, AR/AP ageing, stock valuation, GST, ITC-04, GRNI/GDNI, and the wholesale dot-matrix print were checked. `erp:health` passed all 9 checks. Trial balance debit and credit each equal INR 187,489.65. Closing inventory equals INR 40,290.7678. No application code changes were needed for this task.
+
+## UI merge and production rollout — 2026-11-06
+
+- Reconciled local `ui` with `origin/ui` in `e53a1c1`, retaining both session histories, the Parties command bar, the Customer Returns link, and the voucher preview and product updates. Preserved concurrent uncommitted controller and report edits in the `ui` checkout.
+- Reused the existing product margin migration in the isolated cutover test fixture (`3d4d384`) to address a failure from the previous main acceptance run. The UI branch already guarded the print letterhead against a missing optional tax table.
+- Verified the full migration chain on disposable MySQL. It created active company `ZTEX` with 15 products, 3 customers, and 9 suppliers. A second `migrate --force` reported no pending migrations. All 26 targeted UI tests passed, with the existing empty `ExampleTest` discovery warning.
+- Atomically advanced `origin/ui` and `origin/main` to `3d4d384d9a4fc998f83069f8db7afd0502742184` and updated local `main`. GitHub acceptance run `42212044075` started. The production deployment and migration are pending the acceptance result.
+- Cancelled acceptance run `42212044075` after disposable MySQL health checks exposed missing posting mappings and unposted sample quantities. The associated VPS deployment was skipped.
+- Commit `ae637a9` makes the Textile setup transactional, installs core and GST posting mappings, and seeds catalog entries at zero stock while preserving existing products and suppliers. Disposable MySQL passed all nine ERP health checks. An explicit rerun preserved an existing product name and quantity. The accounting report test also passed after scoping its heading assertion to the report.
+- Atomically advanced local and remote release references to `ae637a9523efb8aec602e1fa9a5b80b479dcfbfe`. The new main acceptance run gates the production deployment.
+- Acceptance run `42212573724` failed its legacy fixture because the Textile migration added a second company before the single-company backfill rehearsal. Commit `96c057a` moves the new-company migration after that rehearsal and verifies the current Journal entries heading. All 44 legacy MySQL tests passed locally. Pushed `96c057a` to `main`; its acceptance run is `42213247436`. `origin/ui` received a separate documentation commit during the rollout.
+- Earlier GitHub runs also found legacy styles, a stale expected party statement count, and an accounting rollback fixture that assumed an empty company table. Commit `60f2e97` moves inline CSS to page stylesheets, uses brand tokens, checks all six posted statement movements, and fixes the Guided Tour startup and empty ledger tables found during Chrome verification. Commit `0cca23f` rehearses accounting rollback before the Textile company and chart are created. Targeted design, Textile contract and rollback checks passed. Pushed both fixes to `main` from an isolated worktree.
+
+- Production rollout verified on 2026-11-06 at 17:47 IST. All seven suites passed in GitHub acceptance run `42214947217`. The automatic deployment `42216499752` deployed `0cca23faaced776e76149bea796bd578f04d865f`, ran the Textile company and masters migration successfully, and returned HTTP 200 for `/login`. A separate live request also returned HTTP 200 for the new ledger stylesheet. The release provisions `ZTEX` inside the existing production database with catalog and party masters and zero sample opening stock. Later edits on `ui` are outside this release snapshot.
+
+## KMTimbers purchase bill save diagnosis — 2026-11-06 (branch ui)
+
+- Reproduced the reported `Cannot read properties of undefined (reading 'recalcTableSummary')` on both Review and Save in Chrome using the purchase view from deployed commit `0cca23f`. The fixture used bill K78, 198 units at INR 2,000, 18% GST, and an INR 467,280 total. All browser requests were intercepted; the broken form sent neither a preview nor a save request.
+- Regression `263e8b8` removed the `searchParam` declaration but kept `else if (searchParam)` in both purchase and sales index scripts. On ordinary bill entry, the undefined variable throws before `window.commandCenterGrid` is assigned. Most form handlers have already bound, so totals update while the form still cannot submit. The October Returns script ordering test passes and covers a different failure.
+- A temporary browser fixture restored parsing of `search` and `ref` and used `filterSidePurchases()` in the purchase view (its existing `filterSideBills()` call names the sales helper). Review, Save, and both search URLs then worked without browser exceptions against intercepted responses. The sales view also needs the missing declaration. This was diagnosis only; application code and production records were not changed.
+
+## KMTimbers bill save and inline error help fix — 2026-11-06 (branch ui)
+
+- Restored `search` and `ref` parsing on purchase and sales bill entry and corrected the purchase filter helper. Bill form initialization now reports a clear recovery message and blocks submission if its item grid cannot load. Rejected requests show the first server field error when available.
+- Moved the bill form's How to fix guidance inside the red error banner. The first step is always visible and the remaining steps expand in the banner. The form scrolls the banner into view when an action fails.
+- Chrome verified Review, Save, query links, and inline validation guidance on both bill pages with intercepted responses. A 390 px purchase test verified the missing grid recovery and that submission stayed blocked. Error help and script order tests passed. Broader checks exposed existing fixture, redirect, and design issues: missing `company_menu_switches` in the commercial test fixture, `/sales/create` redirect precedence, pre-existing token and inline style violations, and the Guided Tour loading before jQuery on `ui`. The bill fix was verified locally only.
+
+## Bill and UI release integration — 2026-11-06
+
+- Merged the bill fix, voucher previews, and global print changes into the production branch candidate. Resolved the ledger view conflicts by sharing the page stylesheet while keeping the print party card, signatures, and global letterhead.
+- Kept the production branch's existing acceptance repairs. Voucher popup text is escaped before rendering and the related user response contains only the ID and name. Design, error help, voucher popup, and ledger navigation tests passed on the merged tree.
+- The local customer ledger debug edits and generated render error capture are workspace diagnostics and remain local.

@@ -6,9 +6,22 @@
     const grid = window.commandCenterGrid;
     const purchase = config.kind === 'purchase';
     let busy = false, paymentError = '';
-    const $message = $('<div class="alert" role="status" style="display:none">').insertBefore(form);
-    const show = (text, failed = false) => $message.removeClass('alert-danger alert-success').addClass(failed ? 'alert-danger' : 'alert-success').text(text).show();
-    const failure = xhr => show(xhr.responseJSON?.message || xhr.message || 'Unable to complete this action.', true);
+    const $message = $('<div class="alert" role="status" data-inline-error-help style="display:none">').insertBefore(form);
+    const show = (text, failed = false) => {
+        $message.removeClass('alert-danger alert-success').addClass(failed ? 'alert-danger' : 'alert-success').text(text).show();
+        if (failed) $message[0].scrollIntoView({block: 'nearest'});
+    };
+    if (typeof grid?.recalcTableSummary !== 'function') {
+        $(form).on('submit', event => event.preventDefault());
+        $('#btn-form-review, #btn-form-save, #btn-form-save-as').prop('disabled', true);
+        show('The bill form could not load. Review and Save are unavailable.', true);
+        return;
+    }
+    const failure = xhr => {
+        const response = xhr.responseJSON;
+        const fieldError = Object.values(response?.errors || {}).flat().find(message => typeof message === 'string' && message.trim());
+        show(fieldError || response?.message || xhr.message || 'The ERP did not return a readable response.', true);
+    };
     const $reason = $('<div class="form-group" hidden><label for="replacement-reason">Reason for replacement *</label><input id="replacement-reason" name="reason" class="form-control" maxlength="500"></div>').prependTo(form);
     const token = () => $(form).find('[name="_token"]').val();
     for (const name of ['shipping_cost', 'order_discount']) $('<input type="hidden">').attr({name, id: 'hidden-' + name.replaceAll('_', '-')}).val(0).appendTo(form);
