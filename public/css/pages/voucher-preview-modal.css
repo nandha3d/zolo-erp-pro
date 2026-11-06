@@ -287,6 +287,9 @@
 .voucher-items-table {
     margin-bottom: 0;
     width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .voucher-items-table thead th {
@@ -298,6 +301,17 @@
     letter-spacing: 0.5px;
     padding: 10px 14px;
     border: none;
+    vertical-align: middle;
+}
+
+.voucher-items-table thead th.text-right,
+.voucher-items-table tbody td.text-right {
+    text-align: right !important;
+}
+
+.voucher-items-table thead th.text-center,
+.voucher-items-table tbody td.text-center {
+    text-align: center !important;
 }
 
 .voucher-items-table tbody td {
@@ -306,6 +320,7 @@
     color: #1e293b;
     vertical-align: middle;
     border-top: 1px solid #f1f5f9;
+    word-break: break-word;
 }
 
 .voucher-items-table tbody tr:hover {

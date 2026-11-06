@@ -910,6 +910,7 @@
                         </div>
                         <div id="purchase-details-supplier-name" class="voucher-party-name">—</div>
                         <div id="purchase-details-supplier-company" class="voucher-info-line text-muted"></div>
+                        <div id="purchase-details-supplier-gstin" class="voucher-info-line text-primary font-weight-bold" style="display: none;"></div>
                         <div id="purchase-details-supplier-phone" class="voucher-info-line"></div>
                         <div id="purchase-details-supplier-address" class="voucher-info-line"></div>
                     </div>
@@ -942,14 +943,14 @@
                     <table class="table voucher-items-table product-purchase-list">
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th style="width: 45px;" class="text-center">#</th>
                                 <th>{{__('db.product')}}</th>
-                                <th>{{__('db.Batch No')}}</th>
-                                <th>Qty</th>
-                                <th>{{__('db.Unit Cost')}}</th>
-                                <th>{{__('db.Tax')}}</th>
-                                <th>{{__('db.Discount')}}</th>
-                                <th class="text-right">{{__('db.Subtotal')}}</th>
+                                <th style="width: 110px;">{{__('db.Batch No')}}</th>
+                                <th style="width: 95px;" class="text-right">Qty</th>
+                                <th style="width: 110px;" class="text-right">{{__('db.Unit Cost')}}</th>
+                                <th style="width: 110px;" class="text-right">{{__('db.Tax')}}</th>
+                                <th style="width: 95px;" class="text-right">{{__('db.Discount')}}</th>
+                                <th style="width: 120px;" class="text-right">{{__('db.Subtotal')}}</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -3276,11 +3277,10 @@
         if (!id) {
             var tr = $(this).closest('tr');
             var rowData = $('#purchase-table').DataTable().row(tr).data();
-            id = rowData ? rowData.id : null;
+            id = rowData ? (rowData.id || (rowData.purchase && rowData.purchase[3])) : null;
         }
         if (id) {
-            switchWorkspaceMode('voucher');
-            loadPurchaseToForm(id, 'view');
+            openPurchaseDetailsModal(id);
         }
     });
 
@@ -3885,118 +3885,233 @@
         }
     }
 
-    // --- Detailed Purchase Bill Modal (Neat & Beautiful Preview with Edit Option) ---
-    window.openPurchaseDetailsModal = function(purchase) {
-        if (!purchase) return;
-        if (typeof purchase === 'string') {
-            try { purchase = JSON.parse(purchase); } catch (e) { return; }
+    // --- Detailed Purchase Bill Modal (Neat & Beautiful Preview with Live Server Fetch & Edit Option) ---
+    window.openPurchaseDetailsModal = function(purchaseOrId) {
+        if (!purchaseOrId) return;
+
+        // Resolve purchaseId from number, string, object or array
+        var purchaseId = null;
+        if (typeof purchaseOrId === 'number' || (typeof purchaseOrId === 'string' && /^\d+$/.test(purchaseOrId.trim()))) {
+            purchaseId = parseInt(purchaseOrId, 10);
+        } else if (typeof purchaseOrId === 'object' && purchaseOrId !== null) {
+            if (purchaseOrId.id) {
+                purchaseId = parseInt(purchaseOrId.id, 10);
+            } else if (Array.isArray(purchaseOrId)) {
+                var rawId = purchaseOrId[3] || '';
+                var m = String(rawId).replace(/[^0-9]/g, '');
+                if (m) purchaseId = parseInt(m, 10);
+            }
+        } else if (typeof purchaseOrId === 'string') {
+            try {
+                var parsed = JSON.parse(purchaseOrId);
+                return window.openPurchaseDetailsModal(parsed);
+            } catch (e) {
+                var m = purchaseOrId.replace(/[^0-9]/g, '');
+                if (m) purchaseId = parseInt(m, 10);
+            }
         }
-        var purchaseId = purchase[3];
-        var ref = purchase[1] || '';
-        var statusText = purchase[2] || 'Received';
-        var billDate = purchase[0] || '';
-        var warehouseName = purchase[4] || 'Main Godown';
-        var warehousePhone = purchase[5] || '';
-        var supplierName = purchase[7] || 'Supplier';
-        var supplierCompany = purchase[8] || '';
-        var supplierEmail = purchase[9] || '';
-        var supplierPhone = purchase[10] ? ('📞 ' + purchase[10]) : '';
-        var supplierAddress = (purchase[11] ? purchase[11] : '') + (purchase[12] ? (', ' + purchase[12]) : '');
-        var totalTax = parseFloat(purchase[13]) || 0;
-        var totalDiscount = parseFloat(purchase[14]) || 0;
-        var totalCost = parseFloat(purchase[15]) || 0;
-        var orderTax = parseFloat(purchase[16]) || 0;
-        var orderTaxRate = parseFloat(purchase[17]) || 0;
-        var orderDiscount = parseFloat(purchase[18]) || 0;
-        var shippingCost = parseFloat(purchase[19]) || 0;
-        var grandTotal = parseFloat(purchase[20]) || 0;
-        var paidAmount = parseFloat(purchase[21]) || 0;
-        var dueAmount = Math.max(0, grandTotal - paidAmount);
-        var notes = (purchase[22] || '').replace(/<br\s*[\/]?>/gi, ' ') || 'No remarks recorded for this bill.';
-        var userName = purchase[23] || 'Admin';
 
-        // Header & Edit button linking to original edit page
-        $('#purchase-details-ref-badge').text(ref);
-        $('#purchase-details-status-badge').text(statusText);
-        $('#purchase-details-date-text').text(billDate);
-        var editUrl = "{{ url('purchases') }}/" + purchaseId + "/edit";
-        $('#purchase-details-edit-btn').attr('href', editUrl);
-
-        // Supplier Card
-        $('#purchase-details-supplier-name').text(supplierName);
-        $('#purchase-details-supplier-company').text(supplierCompany ? ('Company: ' + supplierCompany) : '').toggle(Boolean(supplierCompany));
-        $('#purchase-details-supplier-phone').text(supplierPhone).toggle(Boolean(supplierPhone));
-        $('#purchase-details-supplier-address').text(supplierAddress ? ('📍 ' + supplierAddress) : '').toggle(Boolean(supplierAddress));
-
-        // Warehouse Meta Card
-        $('#purchase-details-date-val').text(billDate);
-        $('#purchase-details-warehouse-val').text(warehouseName);
-        $('#purchase-details-warehouse-phone').text(warehousePhone || '—');
-        $('#purchase-details-user-val').text(userName);
-
-        // Totals Card
-        $('#purchase-details-items-cost').text('₹' + totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#purchase-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2}) + (orderTaxRate ? ' (' + orderTaxRate + '%)' : ''));
-        $('#purchase-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#purchase-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#purchase-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#purchase-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#purchase-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        if (dueAmount > 0.01) {
-            $('#purchase-details-due-row').removeClass('settled').addClass('has-due');
-        } else {
-            $('#purchase-details-due-row').removeClass('has-due').addClass('settled');
+        if (!purchaseId) {
+            console.error('Could not resolve purchase ID for modal', purchaseOrId);
+            return;
         }
-        $('#purchase-details-notes-val').text(notes);
 
-        // Fetch Line Items
-        var $table = $('#purchase-details table.product-purchase-list tbody');
-        $table.html('<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>');
+        // Show modal immediately with loading indicators
+        $('#purchase-details-ref-badge').text('Loading...');
+        $('#purchase-details-status-badge').text('...');
+        $('#purchase-details-date-text').text('');
+        $('#purchase-details-supplier-name').text('Loading supplier details...');
+        $('#purchase-details-supplier-company').hide();
+        $('#purchase-details-supplier-gstin').hide();
+        $('#purchase-details-supplier-phone').hide();
+        $('#purchase-details-supplier-address').hide();
+        $('#purchase-details-date-val').text('—');
+        $('#purchase-details-warehouse-val').text('—');
+        $('#purchase-details-warehouse-phone').text('—');
+        $('#purchase-details-user-val').text('—');
+        $('#purchase-details table.product-purchase-list tbody').html(
+            '<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>'
+        );
+        $('#purchase-details-items-cost').text('₹0.00');
+        $('#purchase-details-order-tax').text('₹0.00');
+        $('#purchase-details-order-discount').text('₹0.00');
+        $('#purchase-details-shipping-cost').text('₹0.00');
+        $('#purchase-details-grand-total').text('₹0.00');
+        $('#purchase-details-paid-amount').text('₹0.00');
+        $('#purchase-details-due-amount').text('₹0.00');
+        $('#purchase-details-notes-val').text('Loading...');
         $('#purchase-details').modal('show');
 
-        $.get("{{ url('purchases/product_purchase') }}/" + purchaseId, function(data) {
-            $table.empty();
-            if (data && data[0] && data[0].length > 0) {
-                for (var i = 0; i < data[0].length; i++) {
-                    var name = data[0][i] || '';
-                    var qty = data[1][i] || '0';
-                    var unit = data[2][i] || '';
-                    var tax = parseFloat(data[3][i]) || 0;
-                    var taxRate = data[4][i] || '0';
-                    var discount = parseFloat(data[5][i]) || 0;
-                    var subtotal = parseFloat(data[6][i]) || 0;
-                    var batch = (data[7] && data[7][i]) ? data[7][i] : '—';
-                    var unitCost = (qty > 0) ? (subtotal / qty) : subtotal;
-
-                    var rowHtml = '<tr>' +
-                        '<td>' + (i + 1) + '</td>' +
-                        '<td><strong>' + name + '</strong></td>' +
-                        '<td><span class="badge badge-light border">' + batch + '</span></td>' +
-                        '<td><span class="badge badge-info px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
-                        '<td>₹' + unitCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
-                        '<td>₹' + tax.toFixed(2) + ' <small class="text-muted">(' + taxRate + '%)</small></td>' +
-                        '<td>₹' + discount.toFixed(2) + '</td>' +
-                        '<td class="text-right font-weight-bold">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) + '</td>' +
-                        '</tr>';
-                    $table.append(rowHtml);
+        // Fetch live authoritative purchase JSON
+        $.ajax({
+            url: "{{ url('purchases') }}/" + purchaseId,
+            type: "GET",
+            dataType: "json",
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+            success: function(res) {
+                if (!res || !res.purchase) {
+                    $('#purchase-details-ref-badge').text('Error');
+                    $('#purchase-details table.product-purchase-list tbody').html(
+                        '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load purchase details.</td></tr>'
+                    );
+                    return;
                 }
-            } else {
-                $table.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this voucher.</td></tr>');
+
+                var p = res.purchase;
+                var ref = p.reference_no || ('#' + p.id);
+                var statusMap = { 1: 'Received', 2: 'Partial', 3: 'Pending', 4: 'Ordered' };
+                var statusText = statusMap[p.status] || (p.status == 1 ? 'Received' : 'Ordered');
+                var rawDate = res.business_date || (p.created_at ? p.created_at.split('T')[0] : '');
+                var formattedDate = rawDate;
+                if (rawDate && rawDate.indexOf('-') > -1) {
+                    var dp = rawDate.split('-');
+                    if (dp.length === 3) formattedDate = dp[2] + '-' + dp[1] + '-' + dp[0];
+                }
+
+                // Header & Edit Button
+                $('#purchase-details-ref-badge').text(ref);
+                $('#purchase-details-status-badge').text(statusText);
+                $('#purchase-details-date-text').text(formattedDate);
+                var editUrl = "{{ url('purchases') }}/" + p.id + "/edit";
+                $('#purchase-details-edit-btn').attr('href', editUrl);
+
+                // Supplier Card
+                var s = p.supplier || {};
+                var supplierName = s.name || 'Walk-in / Cash Supplier';
+                var supplierCompany = s.company_name || '';
+                var supplierGstin = s.vat_number || s.tax_no || '';
+                var supplierPhone = s.phone_number ? ('📞 ' + s.phone_number) : '';
+                var addressParts = [s.address, s.city, s.postal_code].filter(Boolean);
+                var supplierAddress = addressParts.length ? ('📍 ' + addressParts.join(', ')) : '';
+
+                $('#purchase-details-supplier-name').text(supplierName);
+                if (supplierCompany) {
+                    $('#purchase-details-supplier-company').text('Company: ' + supplierCompany).show();
+                } else {
+                    $('#purchase-details-supplier-company').hide();
+                }
+                if (supplierGstin) {
+                    $('#purchase-details-supplier-gstin').text('GSTIN: ' + supplierGstin).show();
+                } else {
+                    $('#purchase-details-supplier-gstin').hide();
+                }
+                if (supplierPhone) {
+                    $('#purchase-details-supplier-phone').text(supplierPhone).show();
+                } else {
+                    $('#purchase-details-supplier-phone').hide();
+                }
+                if (supplierAddress) {
+                    $('#purchase-details-supplier-address').text(supplierAddress).show();
+                } else {
+                    $('#purchase-details-supplier-address').hide();
+                }
+
+                // Warehouse & Metadata Card
+                var w = p.warehouse || {};
+                var warehouseName = w.name || 'Main Godown';
+                var warehousePhone = w.phone || w.email || '—';
+                var userName = (p.user && p.user.name) ? p.user.name : 'Admin';
+
+                $('#purchase-details-date-val').text(formattedDate || '—');
+                $('#purchase-details-warehouse-val').text(warehouseName);
+                $('#purchase-details-warehouse-phone').text(warehousePhone);
+                $('#purchase-details-user-val').text(userName);
+
+                // Items Table (8 Columns 1:1)
+                var $tbody = $('#purchase-details table.product-purchase-list tbody');
+                $tbody.empty();
+                var items = res.items || [];
+                var itemsCostTotal = 0;
+
+                if (items.length > 0) {
+                    items.forEach(function(item, idx) {
+                        var name = item.product_name || 'Product';
+                        var code = item.product_code || '';
+                        var batch = item.batch_no ? item.batch_no : '—';
+                        var qty = Number(item.qty || 0);
+                        var unit = item.unit_code || 'PCS';
+                        var unitCost = Number(item.net_unit_cost || (qty > 0 ? (item.total / qty) : 0));
+                        var tax = Number(item.tax || 0);
+                        var taxRate = Number(item.tax_rate || 0);
+                        var discount = Number(item.discount || 0);
+                        var subtotal = Number(item.total || 0);
+                        itemsCostTotal += subtotal;
+
+                        var rowHtml = '<tr>' +
+                            '<td class="text-center align-middle">' + (idx + 1) + '</td>' +
+                            '<td class="align-middle">' +
+                                '<div class="font-weight-bold text-dark">' + name + '</div>' +
+                                (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                            '</td>' +
+                            '<td class="align-middle">' +
+                                (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
+                            '</td>' +
+                            '<td class="text-right align-middle"><span class="badge badge-info px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
+                            '<td class="text-right align-middle font-weight-bold">₹' + unitCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle">₹' + tax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (taxRate > 0 ? ' <small class="text-muted">(' + taxRate + '%)</small>' : '') + '</td>' +
+                            '<td class="text-right align-middle">₹' + discount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle font-weight-bold text-primary">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '</tr>';
+                        $tbody.append(rowHtml);
+                    });
+                } else {
+                    $tbody.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this voucher.</td></tr>');
+                }
+
+                // Financial Totals
+                var totalCost = Number(p.total_cost || itemsCostTotal || 0);
+                var orderTax = Number(p.order_tax || 0);
+                var orderTaxRate = Number(p.order_tax_rate || 0);
+                var orderDiscount = Number(p.order_discount || 0);
+                var shippingCost = Number(p.shipping_cost || 0);
+                var grandTotal = Number(p.grand_total || (totalCost + orderTax + shippingCost - orderDiscount));
+                var paidAmount = Number(p.paid_amount || 0);
+                var dueAmount = Math.max(0, grandTotal - paidAmount);
+
+                $('#purchase-details-items-cost').text('₹' + totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (orderTaxRate > 0 ? ' (' + orderTaxRate + '%)' : ''));
+                $('#purchase-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+                if (dueAmount > 0.01) {
+                    $('#purchase-details-due-row').removeClass('settled').addClass('has-due');
+                } else {
+                    $('#purchase-details-due-row').removeClass('has-due').addClass('settled');
+                }
+
+                var note = (p.note || '').trim();
+                $('#purchase-details-notes-val').text(note || 'No remarks recorded for this bill.');
+            },
+            error: function() {
+                $('#purchase-details-ref-badge').text('Error');
+                $('#purchase-details table.product-purchase-list tbody').html(
+                    '<tr><td colspan="8" class="text-center text-danger py-3">Unable to retrieve bill data from server.</td></tr>'
+                );
             }
-        }).fail(function() {
-            $table.html('<tr><td colspan="8" class="text-center text-danger py-3">Failed to load item lines.</td></tr>');
         });
     };
 
     // Click handler for Action > View on datatable rows and cards
     $(document).on('click', 'table.purchase-list tbody .view, #purchase-table tbody .view, .purchase-link .view', function(e) {
         e.preventDefault();
-        var purchaseData = $(this).closest('tr').data('purchase');
-        if (!purchaseData && $(this).closest('tr').attr('data-purchase')) {
-            purchaseData = $(this).closest('tr').attr('data-purchase');
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
+            var tr = $(this).closest('tr');
+            id = tr.data('id') || tr.attr('data-id');
+            if (!id) {
+                var rowData = $('#purchase-table').DataTable().row(tr).data();
+                id = rowData ? (rowData.id || (rowData.purchase && rowData.purchase[3])) : null;
+            }
         }
-        if (purchaseData) {
-            openPurchaseDetailsModal(purchaseData);
+        if (id) {
+            openPurchaseDetailsModal(id);
+        } else {
+            var purchaseData = $(this).closest('tr').data('purchase') || $(this).closest('tr').attr('data-purchase');
+            if (purchaseData) openPurchaseDetailsModal(purchaseData);
         }
     });
 

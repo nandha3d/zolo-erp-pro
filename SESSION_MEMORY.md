@@ -1,5 +1,63 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-06: Voucher Modal Alignment, Authoritative Live Server Details, Supplier Card & Financial Totals Fix (branch ui)
+
+- **Problem & User Feedback Addressed:**
+  - Client reported: *"align the table properly.. also why there is not total item cost and other details are zeor at bottom? also the supplier billed from? and other details are empty?"* with screenshot `media_1793965487744_a6abe229.png`.
+  - In the screenshot:
+    - Bill Reference displayed `#REF` instead of `#PUR-00012`.
+    - Supplier (Billed From) card was empty (`—`).
+    - Purchase & Warehouse Details metadata was empty (`—`).
+    - Product items table had 9 `<td>` cells under an 8-column header, shifting returned quantity (`0`) under Unit Cost, unit cost (`35`) under Tax, tax (`0`) under Discount, discount (`0`) under Subtotal, and overflowing subtotal (`3500`) beyond the table's right border.
+    - Financial summary totals (Total Items Cost, Order Tax, Order Discount, Shipping/Freight, Grand Total, Paid Amount, Balance Due) all showed `₹0.00`.
+- **Root Cause Analysis:**
+  1. **Legacy Positional Array & Numeric Parsing:**
+     - The modal previously relied on `PurchaseController::purchaseData`'s legacy 28-element positional string array (`purchase[3]`, `purchase[1]`, `purchase[7]`, `purchase[15]`, `purchase[20]`, etc.).
+     - `PurchaseController` formatted strings with leading spaces and double quotes (e.g. `' "3500"'`), which caused JavaScript `parseFloat(' "3500"')` to return `NaN` and fall back to `0` (`₹0.00`).
+     - When opened via DataTables row action or passing row ID/object, positional indices were undefined, leaving default template placeholders (`#REF`, `—`, `₹0.00`) intact.
+  2. **Table Misalignment:**
+     - Header had 8 columns (`#`, `Product`, `Batch No`, `Qty`, `Unit Cost`, `Tax`, `Discount`, `Subtotal`).
+     - Legacy row injection in SalePro included a 9th column (`Returned`), offsetting each numeric cell by one column.
+- **Architectural Solution & Implementation:**
+  1. **Authoritative AJAX Backend (`PurchaseController::show` & `SaleController::getSaleJson`):**
+     - Eager-loaded relations: `Purchase::with(['supplier', 'warehouse', 'user', 'payments'])->find($id)` and `Sale::with(['customer', 'warehouse', 'biller', 'user', 'payments'])->find($id)`.
+     - Ensured fallback unit cost calculation: `(float)($pp->net_unit_cost > 0 ? $pp->net_unit_cost : ($pp->qty > 0 ? ($pp->total / $pp->qty) : 0))`.
+  2. **Purchase Details Modal Redesign (`resources/views/backend/purchase/index.blade.php`):**
+     - Replaced legacy array extraction with live `openPurchaseDetailsModal(purchaseOrId)`:
+       - Supports integer IDs, string IDs, object `{id: ...}`, and legacy arrays safely.
+       - Fetches live `/purchases/{id}` JSON with HTTP headers `Accept: application/json`.
+       - Renders reference badge (`#PUR-00012`), status badge (`Received`/`Partial`/`Pending`/`Ordered`), and formatted date (`DD-MM-YYYY`).
+       - Updates Supplier (Billed From) card: Party Name, Company Name, bold GSTIN badge (`#purchase-details-supplier-gstin`), Phone, and full Address.
+       - Updates Purchase & Warehouse Details: Bill Date, Receiving Godown, Godown Contact, and Recorded By.
+       - Renders table with exact 1:1 8 columns:
+         1. `#` (`text-center`)
+         2. `Product` (Bold title + code badge)
+         3. `Batch No` (Batch pill or `—`)
+         4. `Qty` (`text-right` badge with unit)
+         5. `Unit Cost` (`text-right` with ₹ currency)
+         6. `Tax` (`text-right` with ₹ and % rate)
+         7. `Discount` (`text-right` with ₹)
+         8. `Subtotal` (`text-right font-weight-bold text-primary` with ₹)
+       - Populates financial summary totals: Total Items Cost, Order Tax, Order Discount, Shipping/Freight, Grand Total, Paid Amount, and Balance Due with dynamic `.has-due` / `.settled` states.
+       - Rewired `Action > View` on `#purchase-table` to trigger `openPurchaseDetailsModal(id)`.
+  3. **Sales Details Modal Redesign (`resources/views/backend/sale/index.blade.php`):**
+     - Applied identical live server fetch upgrade to `openSaleDetailsModal(saleOrId)`.
+     - Added Customer GSTIN line and strict 8-column header/body matching.
+     - Rewired `Action > View` on `#sale-table` to trigger `openSaleDetailsModal(id)`.
+  4. **CSS & Party View Alignments (`public/css/pages/voucher-preview-modal.css`, `supplier/view.blade.php`, `customer/view.blade.php`):**
+     - Added `table-layout: fixed;`, `border-collapse: separate;`, text-right alignment rules, and `word-break: break-word` to `.voucher-items-table`.
+     - In `supplier/view.blade.php`, corrected unit cost calculation in `purchaseDetails()` line item loop.
+     - In `customer/view.blade.php`, added dual-compatibility for both object (`data.sale`, `data.items`) and legacy array formats.
+- **Verification & Test Coverage:**
+  - `tests/Feature/VoucherPopupAndProductEnhancementsTest.php`: 8/8 passed (65 assertions).
+  - `tests/Feature/SingleViewVoucherDeskTest.php`: 8/8 passed (28 assertions).
+  - `tests/Feature/PartiesGlobalUiTest.php`: 11/11 passed (59 assertions).
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php`: 8/8 passed (29 assertions).
+  - Combined suite: 35/35 passed (181 assertions) in 9.36s.
+  - JavaScript regression suite: 26/26 passed (`node --test tests/JavaScript/*.cjs`).
+  - View cache: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
+
+
 ## Active Session & Follow-up — 2026-11-06: Remote Sync, Main Merged & Live Production Deployment Verified at `ae637a9` (branch ui)
 
 - **Remote Synchronization & Latest Code Pull:**
