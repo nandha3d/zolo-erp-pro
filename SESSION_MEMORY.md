@@ -1,6 +1,31 @@
 # zoloERP Pro — Persistent Session Memory & State
 
 
+## Active Session & Follow-up — 2026-11-06: Git Push, Sales Entry Aid Buttons Fix & Master Company Group Dashboard Architecture (branch ui)
+
+- **Git & GitHub Repository Push:**
+  - Pushed all 18 local commits on branch `ui` cleanly to GitHub remote `origin/ui` (`0cb7c55..45c8ba5`).
+  - Working tree is clean and synchronized with upstream.
+- **Sales Voucher Desk Entry Aid Buttons Fix (`Rate history`, `Pending Bills`, `Party Statement`, `Load DCs`):**
+  - **Diagnosis:**
+    - Buttons appeared non-responsive because all four click handlers (`history()`, `partyItems()`, `sources()`) had silent guard clauses (`if (!party()) return false;`, `if (!activeRow) return false;`, `if (!Number(product)) return false;`) that returned `false` with zero feedback when prerequisites were missing.
+    - `activeRow` was only captured on `focusin` of inputs inside `.order-item-row`. If a user added an item via barcode search `#lims_productcodeSearch`, multi-item modal, or clicked "+ Add row" and immediately clicked "Rate history", `activeRow` remained `null`, silently failing even with valid rows on screen.
+    - The HTML5 `<dialog>` lacked centered positioning and backdrop layering in `commercial-assistance.css`, colliding with `app.css` line 13 (`dialog { display: block }`).
+  - **Enhancements Implemented (`public/js/commercial-assistance.js` & `public/css/commercial-assistance.css`):**
+    - **Smart Row Resolver (`getTargetRow`):** Automatically falls back to the focused row, the last row with an assigned product, or the last table row, preventing null references.
+    - **Active Row Tracking:** Captures row activation on `focusin`, `click`, and `change` across the table.
+    - **Operator Guidance Toast (`.commercial-aid-toast`):** Displays clear, animated guidance banners when prerequisites are missing (e.g. "Please select a Customer first to view rate history", "Please search or select a product for this row first", "Please select a Warehouse first") and automatically focuses the relevant input.
+    - **Modern Modal Dialog Layout:** Upgraded `.commercial-aid-dialog` to fixed centered layout (`transform: translate(-50%, -50%)`, `z-index: 105000`) with backdrop blur, styled header with `×` button, scrollable body, responsive tables with hover effects, and dark mode support.
+    - **Visual Toolbar Buttons:** Added font-awesome icons (`fa-history`, `fa-clock-o`, `fa-file-text-o`, `fa-download`) with theme-styled buttons.
+- **Master Company Dashboard (Group of Companies Total Insight):**
+  - Analyzed the current system architecture:
+    - `/dashboard` is the Single-Company Operational & Financial Dashboard (scoped to the active selected company via `CompanyContext`).
+    - Company Groups (`CompanyGroup`) and member companies are currently organized in `/workspace` ("Switch company" grouped by Company Group) and `/select-company` (Company & Group directory picker).
+    - Clarified the path forward for a Consolidated Master Company Total Insight Dashboard rolling up revenue, profit, receivables, payables, and cash flow across all companies in a group.
+- **Verification & Test Coverage:**
+  - `php artisan test --filter=CentralizedDueManagementTest`: 10/10 passed (52 assertions).
+  - `php artisan test --filter=RateHistoryTest`: 5/5 passed (39 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Unified Payment & Receipt System in Due Management & Brand Theme Harmonization (branch ui)
 
 - **Theme Color Harmonization across all Buttons & UI Elements:**
