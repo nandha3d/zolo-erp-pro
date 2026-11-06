@@ -11,6 +11,12 @@ Route::middleware(['auth', 'company.context', 'common'])->group(function () {
     Route::get('buying/payments', [\App\Http\Controllers\BillPaymentController::class, 'index'])->defaults('kind', 'purchase')->name('buying.payments');
     Route::post('buying/payments', [\App\Http\Controllers\BillPaymentController::class, 'store'])->defaults('kind', 'purchase')->name('buying.payments.store');
     Route::get('bill-payments/{id}', [\App\Http\Controllers\BillPaymentController::class, 'show'])->whereNumber('id')->name('bill-payments.show');
+
+    // Centralized Due Management Workspace & Fast Settlements
+    Route::get('transactions/dues', [\App\Http\Controllers\DueManagementController::class, 'index'])->name('dues.index');
+    Route::post('transactions/dues/settle', [\App\Http\Controllers\DueManagementController::class, 'settle'])->name('dues.settle');
+    Route::post('transactions/dues/batch-settle', [\App\Http\Controllers\DueManagementController::class, 'batchSettle'])->name('dues.batchSettle');
+    Route::get('dues', fn () => redirect()->route('dues.index'));
 });
 
 Route::get('dispatch-register', [\App\Http\Controllers\DispatchRegisterController::class, 'index'])

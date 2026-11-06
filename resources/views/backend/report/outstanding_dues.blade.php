@@ -102,12 +102,6 @@
     color: #15803d;
     border: 1px solid #bbf7d0;
 }
-.btn-quick-action {
-    padding: 2px 10px;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 4px;
-}
 body.dark-mode .dues-kpi-card {
     background: #1e293b;
     border-color: #334155;
@@ -203,19 +197,11 @@ body.dark-mode .dues-table-card {
                     <i class="dripicons-clock mr-1"></i> Ageing Ledger
                 </a>
             </li>
-            @if($type === 'receivables')
-                <li>
-                    <a class="nav-link" href="{{ route('selling.payments') }}">
-                        <i class="dripicons-card mr-1"></i> Collections
-                    </a>
-                </li>
-            @else
-                <li>
-                    <a class="nav-link" href="{{ route('buying.payments') }}">
-                        <i class="dripicons-card mr-1"></i> Payments
-                    </a>
-                </li>
-            @endif
+            <li>
+                <a class="nav-link text-primary font-weight-bold" href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}">
+                    <i class="dripicons-wallet mr-1"></i> Due Clearance Hub
+                </a>
+            </li>
         </ul>
 
         <div class="comm-actions d-flex align-items-center gap-2">
@@ -310,6 +296,19 @@ body.dark-mode .dues-table-card {
         </div>
     </div>
 
+    <!-- Audit & Operational Clearance Link Banner -->
+    <div class="alert alert-light border d-flex align-items-center justify-content-between mb-3 py-2 px-3 not-printable" style="border-radius: 8px;">
+        <span class="small text-muted">
+            <i class="fa fa-info-circle text-primary mr-1"></i>
+            This is an audit and reconciliation report. To record payments, settlements, and clear dues, open the
+            <a href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}" class="font-weight-bold text-primary">
+                Due Management Command Center
+            </a>.
+        </span>
+        <a href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}" class="btn btn-outline-primary btn-sm py-1 font-weight-bold">
+            <i class="dripicons-wallet mr-1"></i> Open Due Clearance
+        </a>
+    </div>
     <!-- Filter Card -->
     <div class="dues-filter-card not-printable">
         <form method="GET" action="{{ route('report.outstandingDues') }}" id="dues-filter-form" class="row align-items-end g-2">
@@ -399,7 +398,7 @@ body.dark-mode .dues-table-card {
                         <th class="text-right">Paid</th>
                         <th class="text-right font-weight-bold">Due Amount</th>
                         <th class="text-center">Status</th>
-                        <th class="text-center not-exported not-printable">Action</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -461,19 +460,11 @@ body.dark-mode .dues-table-card {
                                     <span class="badge-due-status badge-status-unpaid">Unpaid</span>
                                 @endif
                             </td>
-                            <td class="text-center not-exported not-printable">
-                                @if($r->due > 0.009)
-                                    <a href="{{ $r->action_url }}" class="btn btn-primary btn-quick-action">
-                                        <i class="dripicons-card mr-1"></i> {{ $r->action_label }}
-                                    </a>
-                                @else
-                                    <span class="text-muted small">—</span>
-                                @endif
-                            </td>
+                            
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $type === 'payables' ? 13 : 12 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ $type === 'payables' ? 12 : 11 }}" class="text-center py-4 text-muted">
                                 <div class="mb-1"><i class="dripicons-checkmark text-success u-fs-24px"></i></div>
                                 <div>No outstanding dues found matching the active filters.</div>
                             </td>
@@ -488,7 +479,7 @@ body.dark-mode .dues-table-card {
                             <th class="text-right">{{ number_format($kpiReturned, 2) }}</th>
                             <th class="text-right text-success">{{ number_format($kpiPaid, 2) }}</th>
                             <th class="text-right text-danger">{{ number_format($kpiDue, 2) }}</th>
-                            <th colspan="2"></th>
+                            <th></th>
                         </tr>
                     </tfoot>
                 @endif

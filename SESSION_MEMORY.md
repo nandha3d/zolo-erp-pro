@@ -1,5 +1,130 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+
+## Active Session & Follow-up — 2026-11-06: Unified Payment & Receipt System in Due Management & Brand Theme Harmonization (branch ui)
+
+- **Theme Color Harmonization across all Buttons & UI Elements:**
+  - Standardized all interactive buttons, tabs, toggles, and drawers to strictly follow the zoloERP brand theme variables (`var(--z-primary, #7d287e)`, `var(--z-primary-hover, #631f64)`, `var(--z-primary-soft, #fdf4ff)`, `var(--z-primary-border, #f0abfc)`):
+    - **Top Hub Navigation Tabs (`tab-sales`, `tab-purchases`, `tab-expenses`):** Replaced divergent arbitrary colors with unified theme styling — active tabs use high-contrast gradient (`linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-hover) 100%)`) with white text and icons; inactive tabs use soft theme background (`#fdf4ff`) with theme border (`#f0abfc`) and theme text (`#7d287e`).
+    - **Outstanding Dues Report Action Link (`.btn-report-link`):** Replaced hardcoded indigo with theme styling.
+    - **View Mode Toggle Buttons (`due-btn-billwise` and `due-btn-partywise`):** Harmonized both toggle buttons to theme colors — active state uses theme gradient and white text; inactive uses soft theme background with theme border.
+    - **Drawer & Table Actions:** Settle buttons, Clear All button, submit button, and preset pills (`Full`, `50%`) all share unified theme branding.
+    - Dark mode variants updated uniformly (`#2e1065`, `#e9d5ff`, `#7e22ce`).
+- **Payment & Receipt Module Unification with Due Management:**
+  - Evaluated the legacy Selling `selling.payments` and Buying `buying.payments` workflows: verified they perform the exact same operational clearing of outstanding bills into cash/bank accounts with discounts/TDS, which is already natively handled with superior FIFO batching and party aggregation by Due Management.
+  - **Sidebar Menu Redirection:**
+    - Selling Menu: `Payments & Receipts` (`#sale-payment-menu`) updated to link to `route('dues.index', ['tab' => 'sales'])`.
+    - Buying Menu: `Payments & Vouchers` (`#purchase-payment-menu`) updated to link to `route('dues.index', ['tab' => 'purchases'])`.
+    - Transactions Menu: Renamed `#dues-management-menu` to **"Payments & Due Management"**.
+    - Legacy route endpoints (`selling.payments`, `buying.payments`, `bill-payments.show`) preserved to prevent any breakage of existing accounting tests or API consumers.
+- **Historical Payments & Receipts Register (Bottom Full-Width Card):**
+  - Added historical settlement audit trail at the bottom of the Due Management Command Center:
+    - `DueManagementController::index` queries recent settlement payments (`Payment::visibleIn($context)`) for the active tab (Sales customer receipts, Purchase supplier payment vouchers, or Operational expenses).
+    - Rendered in `.due-history-card` with table `#due-historical-payments-table`: Date & Time, Payment/Voucher Reference (`payment_reference`), Linked Bill/Invoice (`reference_no`), Party details with phone, Payment Method & Account (`paying_method` · `account->name`), Reference/Note, Amount Settled (`₹`), and 1-click `View / Print Voucher` button linking to `route('bill-payments.show', $hp->id)`.
+- **Verification & Test Coverage:**
+  - `tests/Feature/CentralizedDueManagementTest.php` passing 10/10 tests (52 assertions).
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php` passing 5/5 tests (17 assertions).
+  - `tests/Feature/BillStockPaymentWorkflowTest.php` passing 9/9 tests (114 assertions).
+
+## Active Session & Follow-up — 2026-11-06: Due Management UI Polish — View Mode Persistence, Party Pastel Backgrounds, FIFO Partial Clearance & Real-time Bill Breakdown (branch ui)
+
+- **View Mode Persistence (Bill-wise vs Party Grouped):**
+  - Whichever view mode button is clicked last becomes the default on subsequent visits.
+  - Implemented dual-layer persistence:
+    - Server-side in `DueManagementController::index`: `session(['dues_view_mode' => $viewMode])`.
+    - Client-side in `resources/views/backend/dues/index.blade.php`: `localStorage.setItem('zolo_dues_view_mode', mode)` on toggle click; auto-redirects when visiting without `?view=` parameter.
+- **Color Coded Toggle Buttons with Clean Spacing:**
+  - Separated previously tight buttons into `.due-toggle-wrap` with a clean 8px gap:
+    - **Bill-wise:** Theme Sky/Blue (`.due-btn-billwise`), active linear-gradient `#0284c7` to `#0369a1` with white text; inactive soft `#f0f9ff` with `#bae6fd` border.
+    - **Party Grouped:** Theme Purple/Violet (`.due-btn-partywise`), active linear-gradient `#7e22ce` to `#6b21a8` with white text; inactive soft `#fdf4ff` with `#f0abfc` border.
+- **Search Icon Overlap Fix:**
+  - Resolved salePro `.form-control` padding collision by structuring the search bar as a `.due-search-box` flex container:
+    - `.due-search-icon-prefix` as a non-collapsing inline-flex sibling (`flex-shrink: 0; margin-right: 8px;`).
+    - `.due-search-input-field` borderless input that never overlaps the magnifying glass icon regardless of viewport width or zoom.
+- **Color Coded Background for Same Party in Bill-Wise Table:**
+  - Bills belonging to the same party share a coordinated pastel background tint and 3.5px solid left border indicator:
+    - `party-tint-0`: Lavender (`#faf5ff`, border `#c084fc`)
+    - `party-tint-1`: Sky (`#f0f9ff`, border `#38bdf8`)
+    - `party-tint-2`: Mint (`#ecfdf5`, border `#34d399`)
+    - `party-tint-3`: Amber (`#fffbeb`, border `#fbbf24`)
+    - `party-tint-4`: Rose (`#fff1f2`, border `#fb7185`)
+- **Party Grouped FIFO Pending Bills Breakdown & Real-Time Partial Simulation:**
+  - In Party Grouped mode, selecting a party row or clicking `⚡ Clear All` loads all pending bills in date-wise order (oldest first) into `#fifo-breakdown-panel` at the bottom of the Fast Settlement Drawer.
+  - **Dynamic Clearance Simulation:**
+    - As the user types any paying amount (e.g. paying ₹30,000 against ₹60,900 due) or clicks `Full` / `50%`, the simulation dynamically calculates allocations in real time on every keystroke (`input`, `keyup`, `change`).
+    - Individual bill cards display:
+      - `✓ Cleared` (Green card: allocated full bill due, balance ₹0.00).
+      - `⚡ Partial` (Amber card: allocated partial amount, remaining balance displayed in red).
+      - `⏳ Due/Unpaid` (Neutral card: ₹0.00 allocated, full bill due).
+    - Header chips summarize live counts (e.g. `1 Cleared`, `1 Partial`, `2 Due`).
+  - **Partial FIFO Execution (`batchSettle`):**
+    - `DueManagementController::batchSettle` clears oldest bills first sequentially until payment pool is exhausted, records double-entry journal entries through `PaymentService::addPayment`, and returns updated party due and open bill counts.
+    - Frontend updates the table row in-place and clears completed rows.
+- **Template Hygiene & Fixes:**
+  - Removed duplicate Blade closing tags and stray orphaned "Print Voucher" link from the bottom footer.
+- **Verification & Test Coverage:**
+  - `tests/Feature/CentralizedDueManagementTest.php` passing 9/9 tests (48 assertions), including FIFO partial allocation and session view mode persistence.
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php` passing 5/5 tests (17 assertions).
+
+## Active Session & Follow-up — 2026-11-06: Due Management UI Polish — Theme Colored Top Tabs, Inline Toolbar & Button-Text Alignment (branch ui)
+
+- **Theme Colored Top Navigation Tabs (`/transactions/dues`):**
+  - Updated `.due-hub-nav` from a muted grey box to distinct, theme-coded interactive pill buttons:
+    - **Customer Dues (Receivables):** Theme Purple (`#7e22ce`), active linear-gradient with soft purple icon, inactive tinted `#fdf4ff` with `#f0abfc` border.
+    - **Supplier Dues (Payables):** Theme Sky/Blue (`#0284c7`), active linear-gradient with soft blue icon, inactive tinted `#f0f9ff` with `#7dd3fc` border.
+    - **Other Dues (Expenses & Services):** Theme Emerald (`#059669`), active linear-gradient with soft emerald icon, inactive tinted `#ecfdf5` with `#6ee7b7` border.
+    - **Outstanding Dues Report Link:** High-contrast Indigo theme action button (`.btn-report-link`) with document icon, 36px height matching the tabs.
+    - Dark mode variants configured for all tabs and actions.
+- **Unified Inline Toolbar (Search + Filters on One Line):**
+  - Replaced the previous multi-row wrapping layout with a sleek single-line flex toolbar (`.due-toolbar-form`):
+    - Search input (`.due-search-input`) flex-grows to occupy available space, with `padding-left: 34px` ensuring zero overlap between the magnifying glass and placeholder text.
+    - Party filter (`.due-party-filter-wrap`) and Due status filter (`.due-status-filter-wrap`) sit directly inline on the same row with fixed compact widths (190px and 140px).
+    - View mode toggle (`.due-toggle-wrap` for Bill-wise vs. Party Grouped) anchors to the far right (`margin-left: auto`).
+    - Responsive wrapping enabled on mobile/tablet (`max-width: 991px`).
+- **Button and Text Alignment Across Hub:**
+  - Table action buttons (`.btn-trigger-settle` and `.btn-party-settle-all`) modernized with centered flexbox (`display: inline-flex; align-items: center; justify-content: center; gap: 5px`), replacing raw emojis with crisp `<i class="fa fa-bolt"></i>` icons.
+  - Right-side Fast Settlement Drawer form elements normalized:
+    - Preset pills (`Full`, `50%`) centered with `height: 22px`, `font-size: 10.5px`, and proper line-height.
+    - Date and Method aligned side-by-side using `.form-row` with consistent 32px height.
+    - Submit button (`#btn-submit-settlement`) centered with `gap: 7px` between check icon and text.
+- **Verification & Test Coverage:**
+  - `tests/Feature/CentralizedDueManagementTest.php` passing 7/7 tests (31 assertions).
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php` passing 5/5 tests (17 assertions).
+
+## Active Session & Follow-up — 2026-11-05: Centralized Due Management Hub & Clean Audit Outstanding Dues Report (branch ui)
+
+- **Centralized Due Management System (`DueManagementController` & `/transactions/dues`):**
+  - **Unified Hub Navigation & Multi-Tab Architecture:**
+    - Combines Customer Dues (Receivables), Supplier Dues (Payables), and Other Dues (Expenses & Services) in a single unified command center.
+    - URL: `/transactions/dues` (`route('dues.index')`), with backwards-compatible redirect `/dues`.
+    - Tab navigation (`sales`, `purchases`, `expenses`) with fast keyboard shortcuts (`Alt+1`, `Alt+2`, `Alt+3`).
+  - **Dual Operational Modes (Bill-wise vs Party-wise):**
+    - **Bill-wise Table:** Multi-bill batch selection checkboxes, overdue indicators, days left/overdue chips, clickable references, and quick row selection to load into the Fast Settlement Panel.
+    - **Party-wise Grouped Table:** Aggregates outstanding amounts per party, shows open bill count, total billed, total paid, and net due with a 1-click `⚡ Clear All` button that loads all unpaid bills into a batch settlement.
+  - **Fast Settlement Panel (Right-side 35% Drawer):**
+    - Immediate due amount auto-fill, `Full` and `50%` quick amount presets.
+    - Method-driven settlement account filtering (Cash vs Bank leaf accounts) via `SettlementAccountService`.
+    - Collapsible fields for early settlement discount and TDS deduction.
+    - Instant submission via AJAX (`POST /transactions/dues/settle`) with `Ctrl+Enter` shortcut, toast notifications, dynamic table row balance updates, and 1-click printable receipt/voucher link.
+  - **Batch Settlement Engine (`POST /transactions/dues/batch-settle`):**
+    - Multi-bill payment across selected invoices for a single party with FIFO (oldest bill first) allocation.
+    - Transactional integrity using `PaymentService::addPayment`, preserving all double-entry journal postings and voucher series.
+  - **Strictly Audit Outstanding Dues Report (`/outstanding-due-report`):**
+    - Per user directive, removed all inline action buttons (`Collect`, `Pay`, `⚡ Settle`, `<th>Action</th>`) from the Outstanding Dues Report in the Reporting section.
+    - Preserved high-fidelity printable A4 layout with letterhead, filters, and executive KPIs.
+    - Added an Audit & Reconciliation notification banner directing operational clearance to the Centralized Due Management Hub.
+  - **Sidebar Menu Integration:**
+    - Added `<li id="dues-management-menu">` under `Transactions`, placed between `Selling` and `Operations`.
+  - **Verification & Test Coverage:**
+    - Feature test suite `tests/Feature/DueManagementTest.php` passing 6/6 tests (23 assertions):
+      - Customer Dues tab loading
+      - Supplier Dues tab loading
+      - Other Dues tab loading
+      - Single-bill settlement via AJAX
+      - Multi-bill FIFO batch settlement
+      - Outstanding Dues report verification (zero action buttons, audit-only)
+    - `tests/Feature/OutstandingDuesAndGstTypeTest.php` passing 5/5 tests (17 assertions).
+
 ## Active Session & Follow-up — 2026-11-05: Voucher Search Row Re-placement, Column Dividers, Outstanding Dues Report & Mandatory Company GST Type (branch ui)
 
 - **Voucher Search Row & Crisp Column Separation (`/sales` and `/purchases`):**

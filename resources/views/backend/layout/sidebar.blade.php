@@ -142,7 +142,7 @@
                     <li><a href="{{ route('purchases.index', ['orders' => 1]) }}" data-keywords="po">Purchase Orders</a></li>
                 @endif
                 @if($nav->allows('purchase-payment-add'))
-                    <li id="purchase-payment-menu"><a href="{{ route('buying.payments') }}" data-keywords="payment voucher supplier due">Payments &amp; Vouchers</a></li>
+                    <li id="purchase-payment-menu"><a href="{{ route('dues.index', ['tab' => 'purchases']) }}" data-keywords="payment voucher supplier due">Payments &amp; Vouchers</a></li>
                 @endif
                 @if($nav->allows('purchase-return-index'))
                     <li id="purchase-return-menu"><a href="{{ route('purchases.index', ['returns' => 1]) }}">Purchase Returns &amp; Debit Notes</a></li>
@@ -165,7 +165,7 @@
                     @if(config('commercial.enabled'))<li><a href="{{ route('sales.index', ['orders' => 1]) }}" data-keywords="so">Sales Orders</a></li>@endif
                 @endif
                 @if($nav->allows('sale-payment-add'))
-                    <li id="sale-payment-menu"><a href="{{ route('selling.payments') }}" data-keywords="payment receipt customer due">Payments &amp; Receipts</a></li>
+                    <li id="sale-payment-menu"><a href="{{ route('dues.index', ['tab' => 'sales']) }}" data-keywords="payment receipt customer due">Payments &amp; Receipts</a></li>
                 @endif
                 @if($nav->allows('returns-index'))
                     <li id="sale-return-menu"><a href="{{ route('sales.index', ['returns' => 1]) }}">Sales Returns &amp; Credit Notes</a></li>
@@ -202,6 +202,14 @@
             </ul>
         </li>
     @endif
+
+        <!-- Centralized Due Clearance Hub -->
+    <li id="dues-management-menu" class="{{ request()->is('transactions/dues*') ? 'active' : '' }}">
+        <a href="{{ route('dues.index') }}" data-keywords="dues settlement collections payables receivables clearance payment receipt">
+            <i class="dripicons-wallet"></i>
+            <span>Payments &amp; Due Management</span>
+        </a>
+    </li>
 
     <!-- OPERATIONS (each module only when its capability is on) -->
     @if($hasOperations)
