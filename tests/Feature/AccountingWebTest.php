@@ -27,7 +27,8 @@ class AccountingWebTest extends TestCase
     {
         $response = $this->actingAs($this->adminUser)->get(route('accounting.journal-entries'));
         $response->assertStatus(200)
-            ->assertSee('General Journal Entries');
+            ->assertSee('data-accounting-active="journals"', false)
+            ->assertSee('<h1>Journal entries</h1>', false);
     }
 
     public function test_trial_balance_page_loads(): void

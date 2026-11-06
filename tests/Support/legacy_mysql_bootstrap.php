@@ -32,8 +32,12 @@ if (Illuminate\Support\Facades\DB::getDriverName() !== 'mysql'
 }
 Illuminate\Support\Facades\Schema::dropAllTables();
 $started = microtime(true);
+$textileMigration = '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php';
+// Rehearse the single-company cutover before running the migration that adds ZTEX.
+$legacyMigrations = array_values(array_filter(glob(database_path('migrations/*.php')),
+    fn (string $path) => strcmp(basename($path), $textileMigration) < 0));
 foreach ([
-    ['migrate', ['--force' => true]],
+    ['migrate', ['--force' => true, '--realpath' => true, '--path' => $legacyMigrations]],
     ['db:seed', ['--class' => Database\Seeders\Tenant\TenantDatabaseSeeder::class, '--force' => true]],
     ['db:seed', ['--class' => Database\Seeders\ChartOfAccountsSeeder::class, '--force' => true]],
 ] as [$command, $options]) {
@@ -49,6 +53,9 @@ foreach ([['--dry-run' => true], [], ['--dry-run' => true]] as $options) {
     if (Illuminate\Support\Facades\Artisan::call('erp:backfill-company-context', $options) !== 0) {
         throw new RuntimeException('Seeded backfill rehearsal failed: '.Illuminate\Support\Facades\Artisan::output());
     }
+}
+if (Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]) !== 0) {
+    throw new RuntimeException('Post-backfill migrations failed: '.Illuminate\Support\Facades\Artisan::output());
 }
 printf("Legacy fixture migration, original seeders and dry-run/write/dry-run: %.3f seconds\n", microtime(true) - $started);
 foreach (App\Models\Company::pluck('id') as $companyId) {
