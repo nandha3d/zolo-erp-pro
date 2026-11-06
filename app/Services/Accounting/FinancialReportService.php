@@ -50,10 +50,12 @@ class FinancialReportService
     }
 
     /** Undated legacy headers belong to MAIN only, until reviewed opening/history migration. */
-    public function scopeEntries(Builder $query, CompanyContext $context): Builder
+    public function scopeEntries(Builder $query, CompanyContext $context, bool $currentYearOnly = true): Builder
     {
-        $query->forCompany($context)->where('status', 'posted')
-            ->where(fn ($q) => $q->where('financial_year_id', $context->financialYearId)->orWhereNull('financial_year_id'));
+        $query->forCompany($context)->where('status', 'posted');
+        if ($currentYearOnly) {
+            $query->where(fn ($q) => $q->where('financial_year_id', $context->financialYearId)->orWhereNull('financial_year_id'));
+        }
         // The legal entity's statements: every branch, for a user who holds every branch of the company.
         if ($this->allBranches($context)) {
             return $query;

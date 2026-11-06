@@ -1,203 +1,213 @@
 @extends('backend.layout.main')
 
 @section('content')
-<div class="container-fluid">
 
-    <x-success-message key="message" />
-    <x-error-message key="not_permitted" />
+@push('css')
+<link rel="stylesheet" href="{{ versioned_asset('css/product-workspace.css') }}" type="text/css">
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/parties-workspace.css') }}" type="text/css">
+@endpush
 
-    <!-- Customer Header -->
-    <div class="card mt-5">
-        <div class="card-header d-flex justify-content-between align-items-start">
+<x-success-message key="message" />
+<x-error-message key="not_permitted" />
 
-            <!-- Left: name, phone, email -->
+<x-party-command-bar active="customers" title="{{ __('db.customer') }} Profile" badge="{{ $lims_customer_data->name }}">
+    @can('customers-edit')
+        <a href="{{ route('customer.edit', $lims_customer_data->id) }}" class="btn btn-primary">
+            <i class="dripicons-document-edit"></i> {{ __('db.edit') }}
+        </a>
+    @endcan
+    <a href="{{ route('customer.index') }}" class="btn btn-outline-secondary">
+        <i class="dripicons-arrow-left"></i> {{ __('db.Back') }}
+    </a>
+</x-party-command-bar>
+
+<div class="customer-workspace-view">
+    <!-- Customer Profile Header Card -->
+    <div class="party-profile-card">
+        <div class="party-profile-left">
+            <div class="party-avatar">
+                {{ strtoupper(substr($lims_customer_data->name ?? 'C', 0, 1)) }}
+            </div>
             <div>
-                <span><h4 class="mb-1">{{ $lims_customer_data->name ?? '-' }}</h4>Customer</span>
-                <p class="mb-0"><strong>Email:</strong> {{ $lims_customer_data->email ?? '-' }}</p>
-                <p class="mb-0"><strong>Phone:</strong> {{ $lims_customer_data->phone_number ?? '-' }}</p>
+                <h4 class="party-profile-name">{{ $lims_customer_data->name ?? '-' }}</h4>
+                <div class="party-profile-meta">
+                    @if(!empty($lims_customer_data->company_name))
+                        <span><i class="dripicons-store"></i> {{ $lims_customer_data->company_name }}</span>
+                    @endif
+                    @if(!empty($lims_customer_data->tax_no))
+                        <span class="badge badge-info"><i class="dripicons-card"></i> GSTIN: {{ $lims_customer_data->tax_no }}</span>
+                    @endif
+                    @if(!empty($lims_customer_data->phone_number))
+                        <span><i class="dripicons-phone"></i> {{ $lims_customer_data->phone_number }}</span>
+                    @endif
+                    @if(!empty($lims_customer_data->email))
+                        <span><i class="dripicons-mail"></i> {{ $lims_customer_data->email }}</span>
+                    @endif
+                </div>
             </div>
+        </div>
 
-            <!-- Right: address -->
-            <div class="text-end">
-                <p class="mb-0">
-                    <strong>Address:</strong> {{ $lims_customer_data->address ?? '-' }}<br>
-                    <strong>City:</strong> {{ $lims_customer_data->city ?? '-' }}<br>
-                    <strong>Country:</strong> {{ $lims_customer_data->country ?? '-' }}
-                </p>
-            </div>
-
+        <div class="text-right text-muted small">
+            <div><strong>Address:</strong> {{ $lims_customer_data->address ?? '-' }}</div>
+            <div>{{ $lims_customer_data->city ?? '' }}{{ !empty($lims_customer_data->city) && !empty($lims_customer_data->state) ? ', ' : '' }}{{ $lims_customer_data->state ?? '' }} {{ $lims_customer_data->postal_code ?? '' }}</div>
+            <div>{{ $lims_customer_data->country ?? 'India' }}</div>
         </div>
     </div>
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mt-4" role="tablist">
+    <!-- Financial KPI Summary Strip -->
+    <div id="ledger-summery" class="party-kpi-grid d-none">
+        <div class="party-kpi-box">
+            <div class="party-kpi-label">Opening Balance</div>
+            <h5 class="party-kpi-val">₹ {{ number_format($opening_balance, 2) }}</h5>
+        </div>
+        <div class="party-kpi-box">
+            <div class="party-kpi-label">Total Sales</div>
+            <h5 class="party-kpi-val u-c-primary">₹ {{ number_format($total_sales, 2) }}</h5>
+        </div>
+        <div class="party-kpi-box">
+            <div class="party-kpi-label">Total Paid</div>
+            <h5 class="party-kpi-val u-c-success">₹ {{ number_format($total_paid, 2) }}</h5>
+        </div>
+        <div class="party-kpi-box">
+            <div class="party-kpi-label">Balance Due</div>
+            <h5 class="party-kpi-val u-c-danger">₹ {{ number_format($balance_due, 2) }}</h5>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mt-2" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" href="#ledger-latest" role="tab" data-toggle="tab">
-                Ledger
+                <i class="dripicons-document mr-1"></i> Ledger
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#sales-latest" role="tab" data-toggle="tab">
-                {{ __('db.Sale') }}
+                <i class="dripicons-cart mr-1"></i> {{ __('db.Sale') }}
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#sales-payment-latest" role="tab" data-toggle="tab">
-                {{ __('db.Sale Payment') }}
+                <i class="fa fa-money mr-1"></i> {{ __('db.Sale Payment') }}
             </a>
         </li>
     </ul>
 
-    <div id="ledger-summery" class="row mt-3 text-center d-none">
-
-        <div class="col-md-3">
-            <div class="p-2 border rounded bg-light">
-                <strong>Opening Balance</strong><br>
-                <h5>{{ number_format($opening_balance, 2) }}</h5>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="p-2 border rounded bg-light">
-                <strong>Total Sales</strong><br>
-                <h5>{{ number_format($total_sales, 2) }}</h5>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="p-2 border rounded bg-light">
-                <strong>Total Paid</strong><br>
-                <h5>{{ number_format($total_paid, 2) }}</h5>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="p-2 border rounded bg-light">
-                <strong>Balance Due</strong><br>
-                <h5 class="text-danger">{{ number_format($balance_due, 2) }}</h5>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="tab-content mb-5">
-
+    <div class="tab-content mb-4 pt-3">
         <!-- LEDGER TAB -->
         <div role="tabpanel" class="tab-pane fade show active" id="ledger-latest">
-            <div class="table-responsive">
-                <table id="recent-ledger" class="table w-100">
-                    <thead>
-                    <tr>
-                        <th>{{ __('db.date') }}</th>
-                        <th>Type</th>
-                        <th>{{ __('db.reference') }}</th>
-                        <th>Debit</th>
-                        <th>Credit</th>
-                        <th>Balance</th>
-                    </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="recent-ledger" class="table w-100">
+                        <thead>
+                            <tr>
+                                <th>{{ __('db.date') }}</th>
+                                <th>Type</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- SALES TAB -->
         <div role="tabpanel" class="tab-pane fade" id="sales-latest">
-            <div class="table-responsive">
-                <table id="recent-sales" class="table w-100">
-                    <thead>
-                        <tr>
-                            <th>{{ __('db.date') }}</th>
-                            <th>{{ __('db.reference') }}</th>
-                            <th>{{ __('db.Warehouse') }}</th>
-                            <th>{{ __('db.Sale Status') }}</th>
-                            <th>{{ __('db.Payment Status') }}</th>
-                            <th>{{ __('db.grand total') }}</th>
-                            <th>{{ __('db.Paid Amount') }}</th>
-                            <th>{{ __('db.Due') }}</th>
-                            <th>{{ __('db.action') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="recent-sales" class="table w-100">
+                        <thead>
+                            <tr>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>{{ __('db.Warehouse') }}</th>
+                                <th>{{ __('db.Sale Status') }}</th>
+                                <th>{{ __('db.Payment Status') }}</th>
+                                <th>{{ __('db.grand total') }}</th>
+                                <th>{{ __('db.Paid Amount') }}</th>
+                                <th>{{ __('db.Due') }}</th>
+                                <th class="not-exported">{{ __('db.action') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- SALES PAYMENT TAB -->
         <div role="tabpanel" class="tab-pane fade" id="sales-payment-latest">
-            <div class="table-responsive">
-                <table id="recent-sales-payment" class="table w-100">
-                    <thead>
-                        <tr>
-                            <th>{{ __('db.date') }}</th>
-                            <th>{{ __('db.reference') }}</th>
-                            <th>{{ __('db.Amount') }}</th>
-                            <th>{{ __('db.Payment Method') }}</th>
-                            <th>{{ __('db.Payment At') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div class="desk-card-wrapper">
+                <div class="table-responsive">
+                    <table id="recent-sales-payment" class="table w-100">
+                        <thead>
+                            <tr>
+                                <th>{{ __('db.date') }}</th>
+                                <th>{{ __('db.reference') }}</th>
+                                <th>{{ __('db.Amount') }}</th>
+                                <th>{{ __('db.Payment Method') }}</th>
+                                <th>{{ __('db.Payment At') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-
     </div>
 
     <!-- SALE DETAILS MODAL -->
     <div id="sale-details" class="modal fade text-left" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-
-                <div class="container mt-3 pb-2 border-bottom">
-                    <div class="row">
-                        <div class="col-md-6 d-print-none">
-                            <button id="print-btn" type="button" class="btn btn-default btn-sm">
-                                <i class="dripicons-print"></i> {{__('db.Print')}}
-                            </button>
-                        </div>
-
-                        <div class="col-md-6 d-print-none">
-                            <button type="button" class="close" data-dismiss="modal">
-                                <span aria-hidden="true"><i class="dripicons-cross"></i></span>
-                            </button>
-                        </div>
-
-                        <div class="col-md-12 text-center">
-                            <h3 class="modal-title">{{ $general_setting->site_title }}</h3>
-                            <i class="u-fs-15px">{{ __('db.Sale Details') }}</i>
-                        </div>
+                <div class="modal-header party-modal-header d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title"><i class="dripicons-preview text-primary mr-2"></i> {{ __('db.Sale Details') }}</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <button id="print-btn" type="button" class="btn btn-outline-secondary btn-sm">
+                            <i class="dripicons-print"></i> {{__('db.Print')}}
+                        </button>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
                 </div>
 
                 <div id="sale-content" class="modal-body"></div>
 
-                <table class="table table-bordered product-sale-list">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>{{ __('db.Product') }}</th>
-                            <th>{{ __('db.qty') }}</th>
-                            <th>{{ __('db.Price') }}</th>
-                            <th>{{ __('db.Tax') }}</th>
-                            <th>{{ __('db.Discount') }}</th>
-                            <th>{{ __('db.Subtotal') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="p-3">
+                    <table class="table table-bordered product-sale-list mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{{ __('db.Product') }}</th>
+                                <th>{{ __('db.qty') }}</th>
+                                <th>{{ __('db.Price') }}</th>
+                                <th>{{ __('db.Tax') }}</th>
+                                <th>{{ __('db.Discount') }}</th>
+                                <th>{{ __('db.Subtotal') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
 
-                <div id="sale-footer" class="modal-body"></div>
+                <div id="sale-footer" class="modal-body border-top"></div>
             </div>
         </div>
     </div>
-
 </div>
 @endsection
-
 
 @push('scripts')
 <script>
 $(function () {
+    $("ul#parties").siblings('a').attr('aria-expanded','true');
+    $("ul#parties").addClass("show");
+    $("ul#parties #customer-list-menu").addClass("active");
 
     // LEDGER TABLE
     $('#recent-ledger').DataTable({
@@ -250,94 +260,107 @@ $(function () {
     $('#recent-sales-payment').DataTable({
         ajax: "{{ route('customers.payments', $lims_customer_data->id) }}",
         columns: [
-            { data: 'created_at' },
-            { data: 'payment_reference' },
+            { data: 'date' },
+            { data: 'reference' },
             { data: 'amount' },
             { data: 'paying_method' },
-            { data: 'payment_at' },
+            { data: 'created_at' }
         ],
         order: [[0, 'desc']],
         responsive: true,
     });
 
-    // VIEW SALE MODAL
-    $(document).on("click", ".view-sale", function () {
-        let table = $('#recent-sales').DataTable();
-        let sale = table.row($(this).parents('tr')).data();
-        saleDetails(sale);
+    // Handle Ledger Tab Show
+    $('a[href="#ledger-latest"]').on('shown.bs.tab', function () {
+        $('#ledger-summery').removeClass('d-none');
     });
 
-    $('#ledger-summery').removeClass('d-none'); // default open
-
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        let target = $(e.target).attr("href");
-        if (target === '#ledger-latest') {
-            $('#ledger-summery').removeClass('d-none');
-        } else {
-            $('#ledger-summery').addClass('d-none');
-        }
+    // Handle Other Tabs Show
+    $('a[href="#sales-latest"], a[href="#sales-payment-latest"]').on('shown.bs.tab', function () {
+        $('#ledger-summery').addClass('d-none');
     });
 
-});
+    // Show on page load since Ledger is active
+    $('#ledger-summery').removeClass('d-none');
 
-// SALE DETAILS MODAL FUNCTION
-function saleDetails(sale) {
-    let html = `
-        {{__('db.date')}}: ${sale.date}<br>
-        {{__('db.reference')}}: ${sale.reference}<br>
-        {{__('db.Sale Status')}}: ${sale.sale_status}<br><br>
+    // VIEW SALE MODAL HANDLER
+    $(document).on('click', '.view-sale', function () {
+        var saleId = $(this).data('id');
+        $.get('/sales/' + saleId, function (data) {
+            var sale = data[0];
+            var saleDetails = data[1];
 
-        <div class="u-d-flex u-justify-space-between u-gap-20px u-w-100pct">
-            <div class="u-flex-1">
-                <strong>{{__('db.customer')}}</strong><br>
-                ${sale.customer_name}<br>
-                ${sale.customer_phone}<br>
-                ${sale.customer_address}<br><br>
-            </div>
+            var customer = data[2];
+            var biller = data[3];
 
-            <div class="u-flex-1 u-ta-right">
-                <strong>{{__('db.Warehouse')}}</strong><br>
-                ${sale.warehouse}
-            </div>
-        </div>
-    `;
+            var html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Date:</strong> ${sale.created_at}<br>
+                        <strong>Reference:</strong> ${sale.reference_no}<br>
+                        <strong>Warehouse:</strong> ${sale.warehouse ? sale.warehouse.name : '-'}<br>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <strong>Customer:</strong> ${customer.name}<br>
+                        <strong>Phone:</strong> ${customer.phone_number}<br>
+                        <strong>Biller:</strong> ${biller ? biller.name : '-'}<br>
+                    </div>
+                </div>
+            `;
+            $('#sale-content').html(html);
 
-    $("#sale-content").html(html);
+            var rows = '';
+            var totalQty = 0;
+            var subtotal = 0;
 
-    let $table = $("table.product-sale-list");
-    $table.find("tbody").remove();
+            $.each(saleDetails, function (index, item) {
+                totalQty += parseFloat(item.qty);
+                subtotal += parseFloat(item.total);
 
-    // sales/product_sale/
-    $.get("{{url('sales/product_sale')}}/" + sale.id, function(data){
-        console.log(data);
-        var $newBody = $("<tbody>");
-
-        if (data && data[0] && data[0].length > 0) {
-            for (var i = 0; i < data[0].length; i++) {
-                var $newRow = $(`
+                rows += `
                     <tr>
-                        <td>${i + 1}</td>
-                        <td>${data[0][i]}</td> <!-- name + code -->
-                        <td>${data[1][i]} ${data[2][i]}</td> <!-- qty + unit -->
-                        <td>${data[6][i]}</td> <!-- price -->
-                        <td>${data[3][i]} (${data[4][i]}%)</td> <!-- tax -->
-                        <td>${data[5][i]}</td> <!-- discount -->
-                        <td>${data[6][i]}</td> <!-- sub total -->
+                        <td>${index + 1}</td>
+                        <td>${item.code} - ${item.name}</td>
+                        <td>${item.qty}</td>
+                        <td>${parseFloat(item.net_unit_price).toFixed(2)}</td>
+                        <td>${parseFloat(item.tax).toFixed(2)}</td>
+                        <td>${parseFloat(item.discount).toFixed(2)}</td>
+                        <td>${parseFloat(item.total).toFixed(2)}</td>
                     </tr>
-                `);
-                $newBody.append($newRow);
-            }
-        } else {
-            $newBody.append('<tr><td colspan="9" class="text-center">No products found</td></tr>');
-        }
+                `;
+            });
 
-        $table.append($newBody);
+            $('.product-sale-list tbody').html(rows);
+
+            var footerHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Note:</strong> ${sale.sale_note ?? '-'}<br>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <strong>Total Qty:</strong> ${totalQty}<br>
+                        <strong>Grand Total:</strong> ₹ ${parseFloat(sale.grand_total).toFixed(2)}<br>
+                        <strong>Paid Amount:</strong> ₹ ${parseFloat(sale.paid_amount).toFixed(2)}<br>
+                        <strong>Due:</strong> <span class="text-danger">₹ ${(parseFloat(sale.grand_total) - parseFloat(sale.paid_amount)).toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+            $('#sale-footer').html(footerHtml);
+
+            $('#sale-details').modal('show');
+        });
     });
 
-    $("#sale-footer").html(`<p>{{__('db.Note')}}: ${sale.note ?? ''}</p>`);
+    // PRINT SALE DETAILS
+    $('#print-btn').on('click', function () {
+        var printContents = document.getElementById('sale-details').innerHTML;
+        var originalContents = document.body.innerHTML;
 
-    $("#sale-details").modal('show');
-}
-
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        location.reload();
+    });
+});
 </script>
 @endpush

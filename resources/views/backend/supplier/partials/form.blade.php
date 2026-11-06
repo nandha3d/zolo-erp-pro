@@ -189,9 +189,9 @@
 
 @push('scripts')
 <script type="text/javascript">
-    $("ul#people").siblings('a').attr('aria-expanded', 'true');
-    $("ul#people").addClass("show");
-    $("ul#people #supplier-list-menu").addClass("active");
+    $("ul#parties").siblings('a').attr('aria-expanded', 'true');
+    $("ul#parties").addClass("show");
+    $("ul#parties #supplier-list-menu").addClass("active");
 
     $('#sup-both').on('change', function () {
         $('.customer-group-section').toggle(this.checked);

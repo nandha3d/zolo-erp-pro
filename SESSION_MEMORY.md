@@ -1,5 +1,145 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Single-Page View Customer & Supplier Ledger Desk with Dynamic Print Filters — 2026-11-06 (branch ui)
+
+- **Client Requests Addressed:**
+  1. *"expenses, where it is being debited from? what this expenses it is about?"* with screenshot of expense EXP-00001 (₹100, category: stationary, note: cover).
+     - **Diagnosis & Explanation:**
+       - **What the expense is about:** It is an operational business expense recorded under category `stationary` with memo/note `cover` (purchase of stationery/covers) allocated to godown `zoloERP Textiles - Main`.
+       - **Where it is debited from / accounting flow:**
+         - **Expense Account (Debited):** `Stationary Expense` is debited by ₹100.00 (increases operational expenses on the Profit & Loss statement).
+         - **Payment / Asset Account (Credited / Deducted from):** Paid out from the default business account `Cash [ZTEX-CASH]` (Account ID: 29). Money was disbursed from cash-in-hand.
+  2. *"According to the global UI, there should not be tabs, need it in single page view, then while printing you can insert a filter to print also, if no filter i need the complete ledger of the customer/supplier report"* with screenshot of `/report/customer_report`.
+     - **Diagnosis:**
+       - Previously, Customer Report (`/report/customer_report`) and Supplier Report (`/report/supplier`) split data into 4 fragmented tabs (`Sale`/`Purchase`, `Payment`, `Quotation`, `Return`).
+       - Users had no single chronological ledger statement showing Running Balance, Opening Balance, and both debits/credits together.
+       - Printing was fragmented per tab, preventing customers or suppliers from receiving a full unified account statement/ledger.
+- **Architecture & Implementation:**
+  1. **Backend Ledger Calculation Engine (`app/Http/Controllers/ReportController.php`):**
+     - Enhanced `customerReport(Request $request)` and `supplierReport(Request $request)` to compute complete chronological ledgers via `getCustomerLedgerData()` and `getSupplierLedgerData()`.
+     - **Opening Balance Calculation:**
+       - Customer: `customers.opening_balance + prior_sales - prior_payments - prior_returns - prior_deposits` for transactions before `$start_date`.
+       - Supplier: `suppliers.opening_balance + prior_purchases - prior_payments - prior_returns` for transactions before `$start_date`.
+     - **Unified Chronological Transaction Pipeline:** Gathers sales/purchases, payments, returns, advance deposits, and quotations with warehouse names and particulars, sorts chronologically, and calculates exact running balance (`balance += debit - credit` for customers Dr/Cr; `balance += credit - debit` for suppliers Cr/Dr).
+     - Auto-selects the first active party if none is explicitly chosen in the request.
+  2. **Single-Page View Customer Ledger Desk (`resources/views/backend/report/customer_report.blade.php`):**
+     - Replaced 4 tabs with a unified **Single-Page View** command center following Global UI standards.
+     - **Global UI Command Bar (`.comm-command-bar`):** Title, badge (`360° Account Receivable & Single-View Ledger`), contextual nav pills, and print action dropdown.
+     - **5-KPI Quick Strip:** Timeframe, Opening Balance (Dr/Cr), Total Invoiced (Debits), Total Credits (Payments/Returns), and Net Closing Balance (Dr/Cr) with color-coded status badges.
+     - **Filter Bar (`.desk-filter-card`):** Date range picker, customer searchable selectpicker, and transaction type selector.
+     - **Quick-Filter Pills (`.quick-filter-pills`):** In-screen instant filtering pills with transaction counts: `All`, `Invoices`, `Payments`, `Returns`, `Quotations`.
+     - **Unified Ledger Table (`#customer-ledger-table`):**
+       - Opening Balance row with badge `B/F` and brought-forward Dr/Cr amount.
+       - Columns: `#`, `Date`, `Type` (color-coded badges), `Reference No` (with link to invoice), `Warehouse`, `Description / Particulars`, `Debit (₹)`, `Credit (₹)`, `Running Balance (₹)` (with Dr/Cr indicators), and `Status`.
+       - Footer summary row with total debits, total credits, and net closing balance.
+  3. **Single-Page View Supplier Ledger Desk (`resources/views/backend/report/supplier_report.blade.php`):**
+     - Modernized with matching Single-Page View: Opening balance row, 5-KPI strip, unified ledger table, quick-filter pills, and running balance calculation with Cr/Dr liability tracking.
+  4. **Dynamic Print Filter & Complete Ledger Printing System:**
+     - Added a multi-mode Print Dropdown on both desks:
+       - **Print Complete Ledger (Default if no filter):** Dynamically resets table filters to show all transactions, expands pagination to show all records (`table.page.len(-1).draw()`), prints the full ledger, and restores pagination.
+       - **Print Current Filtered View:** Prints exactly what is visible on the screen based on active quick-filter pills.
+       - **Print Invoices Only / Print Payments Only / Print Returns Only:** Quickly applies the filter and triggers printing with tailored document title.
+     - **A4 Letterhead Print Styling (`@media print`):** Includes company name, GSTIN, address, phone, party card (name, company, phone, GSTIN, opening balance, current outstanding), ledger grid with borders, and formal signatures ("Customer/Supplier Confirmation" and "Authorized Signatory"). Hides navigation, sidebars, buttons, and datatable controls.
+- **Verification & Test Coverage:**
+  - `Tests\Feature\CustomerSupplierReportsNavigationTest`: 6/6 passed (39 assertions), validating:
+    - Sidebar customer and supplier report menu links.
+    - Customer report loads with single-page `#customer-ledger-table`, opening balance row, running balance, print button, and NO tabs (`desk-report-tabs`, `nav-tabs`).
+    - Supplier report loads with single-page `#supplier-ledger-table`, opening balance row, running balance, and NO tabs.
+    - Customer and supplier report filter POST endpoints return HTTP 200 with single-page tables.
+  - `Tests\Feature\OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
+  - `Tests\Feature\PartiesGlobalUiTest`: 11/11 passed (59 assertions).
+  - Blade template compilation: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
+
+## Customer and Supplier Reports in Reporting Navigation — 2026-11-06 (branch ui)
+
+- **Client Request Addressed:**
+  - Client reported: *"In report drop down i dont see customer/supplier reports"*.
+  - Diagnosis:
+    - In `resources/views/backend/layout/sidebar.blade.php`, the `<ul id="report">` navigation dropdown previously grouped Sales, Purchases, Inventory, and Users & Audit, but lacked direct links for Customer Report, Customer Due Report, Customer Group Report, Supplier Report, and Supplier Due Report (these routes and views existed under `report.customer`, `report.customerDueByDate`, `report.customer_group`, `report.supplier`, and `report.supplierDueByDate`).
+  - Implementation:
+    - Added a dedicated `<li class="sidebar-sublabel">Customers &amp; Suppliers</li>` section under `Reporting > Reports` in [sidebar.blade.php](file:///v:/pers/Freelance/zolo-erp-pro/resources/views/backend/layout/sidebar.blade.php#L442-L460) with permission-gated links:
+      1. **Customer Report** (`route('report.customer')`, `id="customer-report-menu"`, permission `customer-report`)
+      2. **Customer Due Report** (`route('report.customerDueByDate')`, `id="due-report-menu"`, permission `due-report`)
+      3. **Customer Group Report** (`route('report.customer_group')`, `id="customer-group-report-menu"`, permission `customer_group`)
+      4. **Supplier Report** (`route('report.supplier')`, `id="supplier-report-menu"`, permission `supplier-report`)
+      5. **Supplier Due Report** (`route('report.supplierDueByDate')`, `id="supplier-due-report-menu"`, permission `supplier-due-report`)
+      6. **Outstanding Dues** (`route('report.outstandingDues')`, `id="outstanding-due-report-menu"`)
+    - All IDs align directly with the active sidebar highlights in `backend/report/customer_report.blade.php`, `supplier_report.blade.php`, `due_report.blade.php`, and `supplier_due_report.blade.php`.
+  - Verification:
+    - Added automated test suite `Tests\Feature\CustomerSupplierReportsNavigationTest`: 4/4 passed (19 assertions).
+    - `Tests\Feature\OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
+    - `Tests\Feature\MenuSwitchesTest`: 4/4 passed (20 assertions).
+    - `Tests\Feature\PartiesGlobalUiTest`: 11/11 passed (59 assertions).
+    - `php artisan view:cache`: 100% clean compilation.
+
+## Dashboard financial and operational data — 2026-11-06 (branch ui)
+
+- The dashboard uses the active company, branch, and financial year. Period changes refresh the overview and breakdown together. The warehouse filter applies to operational records and stock, while posted P&L and cash figures retain branch scope. Receivables, payables, cash, stock, and party counts show current balances or totals.
+- Purchases and returns with a missing exchange rate use the base currency. Sales and purchase totals exclude orders and reversals. Posted financials come from the Profit and Loss report, cash journal lines, and open items. Inventory uses posted movement values with a fallback for stock without movement history. Recent bill references open the existing single-view workspace.
+- Verified on local zoloERP Textiles. Net purchases were ₹62,021.40, payables ₹48,221.40, cash and bank ₹95,767.00, and inventory ₹40,290.77. Two dashboard tests and the targeted financial-year accounting test passed. Chrome verified both filters, cash chart rendering, purchase drill-down, and the Profit and Loss report.
+
+## Parties Global UI Standardization across Master Data — 2026-11-06 (branch ui)
+
+- **Client Request Addressed:**
+  - Client raised: *"check in the parties section, where all the pages should respect and look like in the global UI"* with screenshot of `http://localhost:8080/customer/create`.
+  - Diagnosis:
+    - Master Data `Parties` submenu views (`/customer/create`, `/customer/{id}/edit`, `/customer/{id}`, `/supplier/create`, `/supplier/{id}/edit`, `/supplier/{id}`, `/agent`, `/area`, `/customer-group`) lacked global UI unification:
+    - `customer.create` and `customer.edit` used legacy `<section class="forms">` with raw cards, broken 4-column layout with squished credit fields in one column, misaligned checkboxes, no top header actions, unstyled submit button, and legacy `ul#people` sidebar targeting.
+    - `supplier.create` and `supplier.edit` borrowed `<x-purchase-command-bar>` rather than honoring the Parties domain.
+    - `agent.index` and `area.index` used raw `<section class="container-fluid py-3">` with raw Bootstrap tables, unstyled modals, and non-theme headers that clashed with dark mode.
+    - `customer.view` and `supplier.view` used legacy raw white cards and tables with `.bg-light` that broke in dark mode.
+- **Architecture & Implementation:**
+  1. **Unified Parties Command Bar Component (`resources/views/components/party-command-bar.blade.php`):**
+     - Global dark command bar matching Product, Accounting, and Inventory bars (`.comm-command-bar.section-command-bar`).
+     - Nav pills linking all five party master sections with permission gating:
+       - Customers (`customer.index`)
+       - Customer Groups (`customer_group.index`)
+       - Suppliers (`supplier.index`)
+       - Agents / Brokers (`agent.index`)
+       - Areas / Routes (`area.index`)
+     - Configurable `$active`, `$title`, and `$badge`, with action buttons slot (`$slot`).
+  2. **Dedicated Parties Workspace CSS (`public/css/pages/parties-workspace.css`):**
+     - Single-screen form container (`.party-single-card`) with header title, hint, and action buttons.
+     - Responsive grid and structured section boxes:
+       - `.party-sec-identity`: Primary Identity & Categorization (Blue)
+       - `.party-sec-contact`: Contact & Communication (Emerald)
+       - `.party-sec-address`: Billing Address & GSTIN (Purple)
+       - `.party-sec-credit`: Credit Terms & Accounts (Amber)
+       - `.party-sec-custom`: Custom Master Attributes (Teal)
+       - `.party-sec-user`: Portal & User Login Access (Violet)
+     - Interactive toggle boxes (`.party-toggle-box`) for "Both Customer & Supplier" and "Add User".
+     - Complete dark mode support across inputs, selects, labels, section headers, cards, modals, and profile views.
+  3. **Customer Master Redesign (`create.blade.php`, `edit.blade.php`, `index.blade.php`, `view.blade.php`):**
+     - Replaced legacy forms with `<x-party-command-bar>`, `.party-single-card`, and structured section boxes.
+     - Added inline `+ Add Customer Group` link next to Customer Group dropdown.
+     - Header and footer action bars with Cancel and theme submit buttons with checkmark icons.
+     - In `customer.index`: integrated `<x-party-command-bar active="customers">` and `.party-context-subnav` for sales/receivables links.
+     - In `customer.view`: upgraded to `<x-party-command-bar>`, `.party-profile-card` with monogram avatar, `.party-kpi-grid`, and `.desk-card-wrapper`.
+  4. **Supplier Master Redesign (`create.blade.php`, `edit.blade.php`, `index.blade.php`, `view.blade.php`, `partials/form.blade.php`):**
+     - Replaced `<x-purchase-command-bar>` with `<x-party-command-bar active="suppliers">`.
+     - Wrapped creation and edit in `.party-single-card` with header action buttons.
+     - Enhanced `public/css/pages/supplier-partials-form.css` with dark mode input and border tokens.
+     - In `supplier.index`: added `.party-context-subnav` for procurement/payables links.
+     - In `supplier.view`: upgraded to `.party-profile-card`, `.party-kpi-grid`, and `.desk-card-wrapper`.
+  5. **Agent / Broker Master Modernization (`resources/views/backend/master/agent.blade.php`):**
+     - Integrated `<x-party-command-bar active="agents">` with `+ Add Agent / Broker` action button.
+     - Added 3-KPI summary strip (Total Agents, Active Intermediaries, Commission Enrolled).
+     - Wrapped `#agent-table` in `.desk-card-wrapper` with dark mode tokens.
+     - Upgraded `#createModal` with modern header, clean inputs, and dark mode support.
+  6. **Area / Route Master Modernization (`resources/views/backend/master/area.blade.php`):**
+     - Integrated `<x-party-command-bar active="areas">` with `+ Add Area` action button.
+     - Added 3-KPI summary strip (Total Areas, Active Territories, Hubs Covered).
+     - Wrapped `#area-table` in `.desk-card-wrapper`.
+     - Upgraded `#createModal` with modern header and dark mode styling.
+  7. **Sidebar Navigation Harmonization (`resources/views/backend/layout/sidebar.blade.php`):**
+     - Standardized menu item IDs (`#customer-list-menu`, `#customer-group-menu`, `#supplier-list-menu`, `#agent-list-menu`, `#area-list-menu`).
+     - Updated all page scripts to expand `ul#parties` and activate their respective menu items.
+- **Verification:**
+  - Automated feature test `Tests\Feature\PartiesGlobalUiTest`: 11/11 passed (59 assertions).
+  - Navigation test `Tests\Feature\CustomerGroupNavigationTest`: 3/3 passed (8 assertions).
+  - JavaScript regression suite `node --test tests/JavaScript/*.cjs`: 26/26 passed.
+  - Blade template compilation `php artisan view:cache`: 100% clean compilation.
+
 ## Angalammantex textile product categories — 2026-11-06 (branch ui)
 
 - Assigned the existing Textiles & Handlooms category and its five subcategories (IDs 144–149) to Angalammantex (company 26) in the local `zoloerp` database. The categories had no company owner and were referenced only by the 12 seeded Angalammantex textile products.

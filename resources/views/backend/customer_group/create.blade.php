@@ -5,10 +5,10 @@
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
 
-<x-settings-command-bar active="customer_group">
+<x-party-command-bar active="customer_groups" title="Customer Groups" badge="Customer Segmentation &amp; Pricing Tiers">
     <a href="#" data-toggle="modal" data-target="#createModal" class="btn btn-primary"><i class="dripicons-plus"></i> {{__('db.Add Customer Group')}}</a>
-    <a href="#" data-toggle="modal" data-target="#importcustomer_group" class="btn btn-secondary"><i class="dripicons-copy"></i> {{__('db.Import Customer Group')}}</a>
-</x-settings-command-bar>
+    <a href="#" data-toggle="modal" data-target="#importcustomer_group" class="btn btn-outline-secondary"><i class="dripicons-copy"></i> {{__('db.Import Customer Group')}}</a>
+</x-party-command-bar>
 
 <section class="settings-workspace-view">
     <div class="settings-card-wrapper">
@@ -152,9 +152,9 @@
 
 @push('scripts')
 <script type="text/javascript">
-    $("ul#setting").siblings('a').attr('aria-expanded','true');
-    $("ul#setting").addClass("show");
-    $("ul#setting #customer-group-menu").addClass("active");
+    $("ul#parties").siblings('a').attr('aria-expanded','true');
+    $("ul#parties").addClass("show");
+    $("ul#parties #customer-group-menu").addClass("active");
 
     var customer_group_id = [];
     var user_verified = <?php echo json_encode(config('app.user_verified')) ?>;

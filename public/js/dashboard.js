@@ -3,7 +3,7 @@ jQuery(function ($) {
     const dashboard = document.querySelector('[data-dashboard]');
     if (!dashboard) return;
 
-    const {currency, decimals, dateFormat, filterUrl} = dashboard.dataset;
+    const {currency, decimals, dateFormat, saleUrl, purchaseUrl} = dashboard.dataset;
     const locale = currency === '₹' ? 'en-IN' : document.documentElement.lang || 'en';
     const exact = new Intl.NumberFormat(locale, {minimumFractionDigits: Number(decimals), maximumFractionDigits: Number(decimals)});
     const compact = new Intl.NumberFormat(locale, {notation: 'compact', maximumFractionDigits: 2});
@@ -14,46 +14,10 @@ jQuery(function ($) {
         element.textContent = Math.abs(value) >= 100000 ? currency + compact.format(value) : element.title;
     }
 
-    const metricElements = new Map(Array.from(dashboard.querySelectorAll('[data-metric]'), element => {
-        setMetric(element, element.dataset.amount);
-        return [element.dataset.metric, element];
-    }));
-    const period = dashboard.querySelector('#dash-period');
-    const warehouse = dashboard.querySelector('#warehouse_btn');
-    if (period) {
-        const fields = ['revenue', 'return', 'profit', 'purchase_return', 'total_sale', 'invoice-due', 'total_purchase', 'purchase_due', 'expense'];
-        const metrics = dashboard.querySelector('.dash-metrics');
-        const statusText = dashboard.querySelector('#dash-filter-status');
-        const defaultStatus = statusText.textContent;
-        let request;
-        let appliedPeriod = period.value;
-        let appliedWarehouse = warehouse?.value;
-
-        function filterMetrics() {
-            request?.abort();
-            const selection = period.selectedOptions[0];
-            const warehouseId = warehouse?.value ?? '0';
-            statusText.textContent = 'Updating financial overview…';
-            metrics.setAttribute('aria-busy', 'true');
-            request = $.getJSON(filterUrl + '/' + selection.dataset.start + '/' + selection.dataset.end + '/' + warehouseId);
-            request.done(data => {
-                fields.forEach((field, index) => {
-                    if (data[index] !== undefined) setMetric(metricElements.get(field), data[index]);
-                });
-                appliedPeriod = selection.value;
-                appliedWarehouse = warehouseId;
-                statusText.textContent = defaultStatus;
-            }).fail((_, status) => {
-                if (status === 'abort') return;
-                period.value = appliedPeriod;
-                if (warehouse) warehouse.value = appliedWarehouse;
-                statusText.textContent = 'Could not update financial overview. Showing previous totals.';
-            }).always(() => metrics.removeAttribute('aria-busy'));
-        }
-
-        period.addEventListener('change', filterMetrics);
-        warehouse?.addEventListener('change', filterMetrics);
-    }
+    dashboard.querySelectorAll('[data-metric]').forEach(element => setMetric(element, element.dataset.amount));
+    dashboard.querySelectorAll('.dash-filters select').forEach(select => {
+        select.addEventListener('change', () => select.form.requestSubmit());
+    });
 
     function addCell(row, text, className) {
         const cell = row.insertCell();
@@ -118,15 +82,24 @@ jQuery(function ($) {
         activity.querySelector('[data-activity-status]').textContent = payment ? 'Payment method' : 'Status';
 
         activityRequest = loadTable(activity, activityType.selectedOptions[0].dataset.url, (row, item) => {
-            addCell(row, payment ? item.payment_reference : item.reference_no, 'dash-reference');
-            addCell(row, dateLabel(item.created_at));
+            const reference = addCell(row, payment ? item.payment_reference : item.reference_no, 'dash-reference');
+            const register = {sale: saleUrl, purchase: purchaseUrl}[kind];
+            if (register && item.id) {
+                const link = document.createElement('a');
+                const url = new URL(register, window.location.href);
+                url.searchParams.set('view_id', item.id);
+                link.href = url.href;
+                link.textContent = reference.textContent;
+                reference.replaceChildren(link);
+            }
+            addCell(row, dateLabel(item.business_date || item.created_at));
             if (!payment) addCell(row, item.name);
             const [status, tone] = statusFor[kind](item);
             const pill = document.createElement('span');
             pill.className = 'dash-status dash-tone-' + tone;
             pill.textContent = status;
             row.insertCell().append(pill);
-            const amount = (payment ? item.amount : item.grand_total) / Number(item.exchange_rate ?? 1);
+            const amount = (payment ? item.amount : item.grand_total) / (Number(item.exchange_rate) || 1);
             addCell(row, money(amount), 'dash-number');
         }, {
             loading: 'Loading transactions…',

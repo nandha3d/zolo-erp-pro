@@ -22,24 +22,30 @@
     $showCashFlow = $navigation->allows('cash_flow');
     $showMonthly = $navigation->allows('monthly_summary');
     $showYearly = $navigation->allows('yearly_report');
-    $today = now();
+    $breakdownTitle = $period === 'month' ? 'Monthly breakdown' : 'Period breakdown';
+    $dateRange = $start === $end ? $reportDate->format('d M Y') : \Carbon\CarbonImmutable::parse($start)->format('d M Y') . ' – ' . $reportDate->format('d M Y');
+    $warehouseQuery = $warehouseId ? '?' . http_build_query(['warehouse_id' => $warehouseId]) : '';
+    $pnlUrl = $ledger && $navigation->allows('accounting.reports.view') && $menu->routeAllowed('accounting.profit-loss')
+        ? route('accounting.profit-loss', ['start_date' => $start, 'end_date' => $end]) : null;
     $decimals = (int) $general_setting->decimal;
     $money = fn ($value) => $currency_symbol . number_format((float) $value, $decimals);
     $metrics = [
-        ['Revenue', 'graph-bar', 'primary', $revenue, 'revenue', 'Sales returns', $return, 'return', 'Sales less shipping and returns, plus other income.'],
-        ['Profit', 'trophy', 'success', $profit, 'profit', 'Purchase returns', $purchase_return, 'purchase_return', 'Revenue plus purchase returns, less product costs and expenses.'],
+        ['Revenue', 'graph-bar', 'primary', $revenue, 'revenue', 'Sales returns', $return, 'return', $ledger ? 'Posted revenue for the selected branch and period.' : 'Sales less shipping and returns, plus other income.'],
+        ['Profit', 'trophy', 'success', $profit, 'profit', 'Purchase returns', $purchase_return, 'purchase_return', $ledger ? 'Net income from the Profit and Loss report for the selected branch and period.' : 'Estimated profit after product costs and expenses.'],
         ['Sales', 'cart', 'info', $total_sale, 'total_sale', 'Active customers', $total_customers, null, 'Sales total excluding shipping.'],
-        ['Purchases', 'archive', 'info', $purchase - $purchase_return, 'total_purchase', 'Active suppliers', $total_suppliers, null, 'Purchase total after purchase returns.'],
-        ['Expenses', 'wallet', 'warning', $expense, 'expense', 'Operating expenses', null, null, 'Direct business expenses and overhead.'],
-        ['Receivables', 'clock', 'warning', $invoice_due, 'invoice-due', 'Due from customers', null, null, 'Unpaid amounts on customer invoices in the selected period.'],
-        ['Payables', 'calendar', 'warning', $purchase_due, 'purchase_due', 'Due to suppliers', null, null, 'Unpaid amounts on supplier bills in the selected period.'],
-        ['Cash & Bank', 'briefcase', 'success', $liquid_balance, 'liquid-balance', 'Inventory value', $stock_valuation, 'stock-value', 'Current balance across active cash and bank accounts.'],
+        ['Purchases', 'archive', 'info', $purchase, 'total_purchase', 'Active suppliers', $total_suppliers, null, 'Purchase total after purchase returns.'],
+        ['Expenses', 'wallet', 'warning', $expense, 'expense', 'Operating expenses', null, null, $ledger ? 'Posted operating expenses for the selected branch and period.' : 'Direct business expenses and overhead.'],
+        ['Receivables', 'clock', 'warning', $invoice_due, 'invoice-due', 'Due from customers', null, null, 'Current outstanding customer balances.'],
+        ['Payables', 'calendar', 'warning', $purchase_due, 'purchase_due', 'Due to suppliers', null, null, 'Current outstanding supplier balances.'],
+        ['Cash & Bank', 'briefcase', 'success', $liquid_balance, 'liquid-balance', 'Inventory value', $stock_valuation, 'stock-value', 'Current cash and bank balance. Inventory value follows the warehouse filter.'],
     ];
     $hasBreakdown = min($revenue, $purchase, $expense) >= 0 && max($revenue, $purchase, $expense) > 0;
 @endphp
 
 <div class="erp-dashboard" data-dashboard data-currency="{{ $currency_symbol }}" data-decimals="{{ $decimals }}"
-    data-date-format="{{ $general_setting->date_format }}" data-filter-url="{{ url('/dashboard-filter') }}">
+    data-date-format="{{ $general_setting->date_format }}"
+    @if ($navigation->allows('sales-index') && $menu->routeAllowed('sales.index')) data-sale-url="{{ route('sales.index') }}" @endif
+    @if ($navigation->allows('purchases-index') && $menu->routeAllowed('purchases.index')) data-purchase-url="{{ route('purchases.index') }}" @endif>
     @if (!config('database.connections.zoloerp_landlord') && Auth::user()->role_id <= 2 && !empty($versionUpgradeData['alert_version_upgrade_enable']))
         <div id="alertSection" class="zolo-banner-card alert alert-dismissible fade show" role="alert">
             <div class="zolo-banner-content">
@@ -117,37 +123,49 @@
                     <a href="{{ url('/workspace#zw-companies') }}" class="btn btn-sm btn-outline-primary ml-2 d-inline-flex align-items-center" style="height: 30px; border-radius: 6px; font-weight: 650; font-size: 11.5px; gap: 5px;">
                         <i class="fa fa-cubes"></i> Master Group Insight
                     </a>
-                    <p id="dash-filter-status" class="w-100 mb-0 mt-1" role="status">Cash, inventory and active party counts show current totals.</p>
+                    <p class="w-100 mb-0 mt-1">
+                        Receivables, payables, cash, inventory and party counts show current balances or totals.
+                        @if ($ledger)
+                            Revenue, profit, expenses and cash reflect the selected branch across its warehouses.
+                        @endif
+                    </p>
                 </div>
-                <div class="dash-filters" aria-label="Financial overview filters" role="group">
+                <form action="{{ route('dashboard') }}" method="GET" class="dash-filters" aria-label="Dashboard filters">
                     @if (Auth::user()->role_id <= 2)
                         <div class="dash-filter">
                             <label for="warehouse_btn">Warehouse</label>
                             <select class="form-control custom-select-native" name="warehouse_id" id="warehouse_btn">
                                 <option value="0">All warehouses</option>
-                                @foreach (\App\Models\Warehouse::where('is_active', true)->get() as $warehouse)
-                                    <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                                @foreach ($warehouses as $warehouse)
+                                    <option value="{{ $warehouse->id }}" @selected($warehouseId === $warehouse->id)>{{ $warehouse->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                     @endif
                     <div class="dash-filter">
                         <label for="dash-period">Period</label>
-                        <select class="form-control custom-select-native" id="dash-period">
-                            <option value="today" data-start="{{ $today->toDateString() }}" data-end="{{ $today->toDateString() }}">{{ __('db.Today') }}</option>
-                            <option value="week" data-start="{{ $today->copy()->subDays(6)->toDateString() }}" data-end="{{ $today->toDateString() }}">{{ __('db.Last 7 Days') }}</option>
-                            <option value="month" data-start="{{ $today->copy()->startOfMonth()->toDateString() }}" data-end="{{ $today->toDateString() }}" selected>{{ __('db.This Month') }}</option>
-                            <option value="year" data-start="{{ $today->copy()->startOfYear()->toDateString() }}" data-end="{{ $today->copy()->endOfYear()->toDateString() }}">{{ __('db.This Year') }}</option>
+                        <select class="form-control custom-select-native" id="dash-period" name="period">
+                            <option value="today" @selected($period === 'today')>{{ __('db.Today') }}</option>
+                            <option value="week" @selected($period === 'week')>{{ __('db.Last 7 Days') }}</option>
+                            <option value="month" @selected($period === 'month')>{{ __('db.This Month') }}</option>
+                            <option value="year" @selected($period === 'year')>Financial year</option>
                         </select>
                     </div>
-                </div>
+                    <noscript><button type="submit" class="btn btn-outline-secondary">Apply</button></noscript>
+                </form>
             </div>
             <div class="dash-metrics">
                 @foreach ($metrics as [$label, $icon, $tone, $amount, $field, $note, $detail, $detailField, $help])
                     <article class="dash-card dash-metric">
                         <div class="dash-metric-head">
                             <span class="dash-icon dash-tone-{{ $tone }}"><i class="dripicons-{{ $icon }}" aria-hidden="true"></i></span>
-                            <h3>{{ $label }}</h3>
+                            <h3>
+                                @if ($pnlUrl && in_array($field, ['revenue', 'profit', 'expense'], true))
+                                    <a href="{{ $pnlUrl }}">{{ $label }}</a>
+                                @else
+                                    {{ $label }}
+                                @endif
+                            </h3>
                             <x-info :title="$help" type="info" />
                         </div>
                         <p class="dash-value" data-metric="{{ $field }}" data-amount="{{ $amount }}">{{ $money($amount) }}</p>
@@ -174,7 +192,7 @@
                             <span class="dash-icon"><i class="dripicons-pulse" aria-hidden="true"></i></span>
                             <div>
                                 <h2 id="dash-cash-title">{{ __('db.Cash Flow') }}</h2>
-                                <p>Monthly payments received and sent</p>
+                                <p>{{ $ledger ? 'Posted cash movements by month' : 'Monthly payments received and sent' }}</p>
                             </div>
                         </div>
                     </div>
@@ -199,8 +217,8 @@
                         <div class="dash-heading">
                             <span class="dash-icon dash-tone-success"><i class="dripicons-graph-pie" aria-hidden="true"></i></span>
                             <div>
-                                <h2 id="dash-monthly-title">Monthly breakdown</h2>
-                                <p>{{ $today->format('F Y') }}</p>
+                                <h2 id="dash-monthly-title">{{ $breakdownTitle }}</h2>
+                                <p>{{ $dateRange }}</p>
                             </div>
                         </div>
                     </div>
@@ -236,10 +254,10 @@
                     </div>
                 </div>
                 <select id="dash-activity-kind" class="form-control custom-select-native" aria-label="Transaction type">
-                    <option value="sale" data-url="{{ url('/recent-sale') }}">Sales</option>
-                    <option value="purchase" data-url="{{ url('/recent-purchase') }}">Purchases</option>
-                    <option value="quotation" data-url="{{ url('/recent-quotation') }}">Quotations</option>
-                    <option value="payment" data-url="{{ url('/recent-payment') }}">Payments</option>
+                    <option value="sale" data-url="{{ url('/recent-sale') . $warehouseQuery }}">Sales</option>
+                    <option value="purchase" data-url="{{ url('/recent-purchase') . $warehouseQuery }}">Purchases</option>
+                    <option value="quotation" data-url="{{ url('/recent-quotation') . $warehouseQuery }}">Quotations</option>
+                    <option value="payment" data-url="{{ url('/recent-payment') . $warehouseQuery }}">Payments</option>
                 </select>
             </div>
             <div class="table-responsive" id="dash-activity-results" role="region" aria-label="Recent transactions" tabindex="0">
@@ -307,19 +325,19 @@
                     <span class="dash-icon"><i class="dripicons-graph-bar" aria-hidden="true"></i></span>
                     <div>
                         <h2 id="dash-yearly-title">Sales and purchases</h2>
-                        <p>Monthly totals for {{ $today->year }}</p>
+                        <p>Monthly totals for {{ $year->name }}</p>
                     </div>
                 </div>
             </div>
             <div class="dash-chart-body">
                 <div class="dash-chart">
-                    <canvas id="saleChart" role="img" aria-label="Monthly sales and purchase totals for {{ $today->year }}" aria-describedby="dash-yearly-description"
+                    <canvas id="saleChart" role="img" aria-label="Monthly sales and purchase totals for {{ $year->name }}" aria-describedby="dash-yearly-description"
                         data-sale_chart_value="{{ json_encode($yearly_sale_amount) }}" data-purchase_chart_value="{{ json_encode($yearly_purchase_amount) }}"
-                        data-label1="Purchases" data-label2="Sales"></canvas>
+                        data-label1="Purchases" data-label2="Sales" data-month="{{ json_encode($month) }}"></canvas>
                 </div>
                 <p class="sr-only" id="dash-yearly-description">
                     @foreach ($yearly_sale_amount as $index => $amount)
-                        {{ $today->copy()->startOfYear()->month($index + 1)->format('F') }}. Sales {{ $money($amount) }}. Purchases {{ $money($yearly_purchase_amount[$index]) }}.
+                        {{ $month[$index] }}. Sales {{ $money($amount) }}. Purchases {{ $money($yearly_purchase_amount[$index]) }}.
                     @endforeach
                 </p>
             </div>
@@ -328,9 +346,9 @@
 
     <div class="dash-rankings">
         @foreach ([
-            ['monthly-best-selling-qty', 'Best sellers this month', $today->format('F Y'), 'Quantity'],
-            ['yearly-best-selling-qty', 'Best sellers by quantity', $today->year, 'Quantity'],
-            ['yearly-best-selling-price', 'Best sellers by value', $today->year, 'Sales value'],
+            ['monthly-best-selling-qty', 'Best sellers this month', $reportDate->format('F Y'), 'Quantity'],
+            ['yearly-best-selling-qty', 'Best sellers by quantity', $year->name, 'Quantity'],
+            ['yearly-best-selling-price', 'Best sellers by value', $year->name, 'Sales value'],
         ] as [$key, $title, $period, $unit])
             <section class="dash-card" aria-labelledby="{{ $key }}-title">
                 <div class="dash-panel-head">
@@ -342,7 +360,7 @@
                         </div>
                     </div>
                 </div>
-                <table class="table table-sm dash-table" aria-labelledby="{{ $key }}-title" data-ranking-url="{{ url('/' . $key) }}" @if ($unit === 'Sales value') data-ranking-value @endif>
+                <table class="table table-sm dash-table" aria-labelledby="{{ $key }}-title" data-ranking-url="{{ url('/' . $key) . $warehouseQuery }}" @if ($unit === 'Sales value') data-ranking-value @endif>
                     <thead><tr><th scope="col">Product</th><th scope="col" class="dash-number">{{ $unit }}</th></tr></thead>
                     <tbody><tr><td colspan="2" class="dash-table-message" role="status">Loading best sellers…</td></tr></tbody>
                 </table>

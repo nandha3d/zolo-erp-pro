@@ -62,7 +62,7 @@
             </ul>
         </li>
     @endif
-    @if($canMasters || $nav->allows('customers-index', 'suppliers-index'))
+    @if($canMasters || $nav->allows('customers-index', 'suppliers-index', 'customer_group'))
         <li>
             <a href="#parties" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-user"></i>
@@ -72,12 +72,15 @@
                 @if($nav->allows('customers-index'))
                     <li id="customer-list-menu"><a href="{{route('customer.index')}}">Customers</a></li>
                 @endif
+                @if($canMasters || $nav->allows('customer_group'))
+                    <li id="customer-group-menu"><a href="{{route('customer_group.index')}}">Customer Groups</a></li>
+                @endif
                 @if($nav->allows('suppliers-index'))
                     <li id="supplier-list-menu"><a href="{{route('supplier.index')}}">Suppliers</a></li>
                 @endif
                 @if($canMasters)
-                    <li><a href="{{route('agent.index')}}">Agents / Brokers</a></li>
-                    <li><a href="{{route('area.index')}}">Areas / Routes</a></li>
+                    <li id="agent-list-menu"><a href="{{route('agent.index')}}">Agents / Brokers</a></li>
+                    <li id="area-list-menu"><a href="{{route('area.index')}}">Areas / Routes</a></li>
                 @endif
             </ul>
         </li>
@@ -426,7 +429,6 @@
                 @if($nav->allows('payment-report'))
                     <li id="payment-report-menu"><a href="{{route('report.paymentByDate')}}">{{__('db.Payment Report')}}</a></li>
                 @endif
-                <li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}" data-keywords="customer supplier dues receivables payables outstanding">{{ __('db.Outstanding Dues') }}</a></li>
                 <li class="sidebar-sublabel">Purchases</li>
                 @if($nav->allows('purchase-report'))
                     <li id="purchase-report-menu"><a href="{{route('report.purchase')}}">{{__('db.Purchase Report')}}</a></li>
@@ -437,6 +439,23 @@
                 @if($nav->allows('monthly-purchase'))
                     <li id="monthly-purchase-report-menu"><a href="{{url('report/monthly_purchase/'.date('Y'))}}">{{__('db.Monthly Purchase')}}</a></li>
                 @endif
+                <li class="sidebar-sublabel">Customers &amp; Suppliers</li>
+                @if($nav->allows('customer-report'))
+                    <li id="customer-report-menu"><a href="{{route('report.customer')}}" data-keywords="customer report statement ledger">{{__('db.Customer Report')}}</a></li>
+                @endif
+                @if($nav->allows('due-report'))
+                    <li id="due-report-menu"><a href="{{route('report.customerDueByDate')}}" data-keywords="customer dues receivables">{{__('db.Customer Due Report')}}</a></li>
+                @endif
+                @if($nav->allows('customer_group'))
+                    <li id="customer-group-report-menu"><a href="{{route('report.customer_group')}}" data-keywords="customer group">{{__('db.Customer Group Report')}}</a></li>
+                @endif
+                @if($nav->allows('supplier-report'))
+                    <li id="supplier-report-menu"><a href="{{route('report.supplier')}}" data-keywords="supplier report statement ledger">{{__('db.Supplier Report')}}</a></li>
+                @endif
+                @if($nav->allows('supplier-due-report'))
+                    <li id="supplier-due-report-menu"><a href="{{route('report.supplierDueByDate')}}" data-keywords="supplier dues payables">{{__('db.Supplier Due Report')}}</a></li>
+                @endif
+                <li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}" data-keywords="customer supplier dues receivables payables outstanding">{{ __('db.Outstanding Dues') }}</a></li>
                 <li class="sidebar-sublabel">Inventory</li>
                 @if($nav->allows('product-report'))
                     <li id="product-report-menu"><a href="{{route('report.product')}}">{{__('db.Product Report')}}</a></li>

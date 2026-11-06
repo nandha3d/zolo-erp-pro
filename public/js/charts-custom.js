@@ -73,13 +73,13 @@ $(document).ready(function () {
             }
 
             if (cash) {
-                draw('cashFlow', 'line', cash.month.map(function (month) { return month.slice(0, 3); }), [
+                draw('cashFlow', 'line', cash.month, [
                     line(cash.label1, cash.recieved, plum, token('--z-primary-soft-strong')),
                     line(cash.label2, cash.sent, amber, token('--z-warning-soft'))
                 ], {legend: legend, scales: axes});
             }
             if (yearly) {
-                draw('saleChart', 'bar', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], [
+                draw('saleChart', 'bar', yearly.month, [
                     {label: yearly.label1, data: yearly.purchase_chart_value, backgroundColor: amber},
                     {label: yearly.label2, data: yearly.sale_chart_value, backgroundColor: plum}
                 ], {legend: legend, scales: axes});

@@ -14,11 +14,21 @@ use App\Models\Payroll;
 use App\Models\Quotation;
 use App\Models\Payment;
 use App\Models\Account;
-use App\Models\Product_Sale;
+use App\Models\Accounting\AccountOpenItem;
+use App\Models\Accounting\ChartOfAccount;
+use App\Models\Accounting\FiscalYear;
+use App\Models\Accounting\JournalEntry;
+use App\Models\Company;
+use App\Models\Warehouse;
+use App\Services\Accounting\FinancialReportService;
+use App\Services\Platform\CompanyContext;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\RewardPointSetting;
-use App\Models\Product_Warehouse;
 use App\Models\Unit;
 use DB;
 use Auth;
@@ -202,40 +212,8 @@ class HomeController extends Controller
         return response()->json(['success' => true, 'status' => $status, 'message' => $msg]);
     }
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-
-        //Write your translatable strings in JSON format below
-        // $jsonData = '{
-        //     "Available Quantity": "Available Quantity",
-        //     "Hide Total Due": "Hide Total Due"
-        // }';
-
-        // $translations = json_decode($jsonData, true);
-
-        // $languages = DB::table('languages')->pluck('language');
-
-        // foreach ($languages as $locale) {
-        //     foreach ($translations as $key => $value) {
-        //         // Optional: Check if this translation already exists to avoid duplication
-        //         $exists = DB::table('translations')
-        //             ->where('locale', $locale)
-        //             ->where('key', $key)
-        //             ->exists();
-
-        //         if (!$exists) {
-        //             DB::table('translations')->insert([
-        //                 'locale' => $locale,
-        //                 'group' => 'db',
-        //                 'key' => $key,
-        //                 'value' => $value,
-        //                 'created_at' => now(),
-        //                 'updated_at' => now(),
-        //             ]);
-        //         }
-        //     }
-        // };
-
 
         if(in_array('restaurant',explode(',',cache()->get('general_setting')->modules))){
             if(Auth::user()->role_id > 2 && isset(Auth::user()->kitchen_id)){
@@ -271,228 +249,129 @@ class HomeController extends Controller
             return view('backend.customer_index', compact('customer', 'lims_sale_data', 'lims_payment_data', 'lims_quotation_data', 'lims_return_data', 'lims_reward_point_setting_data'));
         }
 
-        $start_date = date("Y").'-'.date("m").'-'.'01';
-        $end_date = date("Y").'-'.date("m").'-'.date('t', mktime(0, 0, 0, date("m"), 1, date("Y")));
-        $yearly_sale_amount = [];
+        $context = $request->attributes->get(CompanyContext::class);
+        $company = Company::findOrFail($context->companyId);
+        $year = FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
+        $yearStart = CarbonImmutable::parse($year->start_date);
+        $yearEnd = CarbonImmutable::parse($year->end_date);
+        $today = CarbonImmutable::now($company->timezone ?: config('app.timezone'));
+        $reportDate = $today->max($yearStart)->min($yearEnd->endOfDay());
+        $request->query->remove('branch_scope');
+        $period = $request->validate(['period' => 'sometimes|in:today,week,month,year'])['period'] ?? 'month';
+        $warehouseId = $this->dashboardWarehouseId($request->query('warehouse_id', 0));
+        $warehouses = Warehouse::where('branch_id', $context->branchId)->where('is_active', true)->orderBy('name')->get();
 
-        if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own')
-        {
-            $product_sale_data = Sale::join('product_sales', 'sales.id','=', 'product_sales.sale_id')
-                ->select(DB::raw('product_sales.product_id, product_sales.product_batch_id, product_sales.sale_unit_id, sum(product_sales.qty) as sold_qty, sum(product_sales.return_qty) as return_qty, sum(product_sales.total) as sold_amount'))
-                ->whereNull('sales.deleted_at')
-                ->where('sales.user_id', Auth::id())
-                ->whereDate('sales.created_at', '>=' , $start_date)
-                ->whereDate('sales.created_at', '<=' , $end_date)
-                ->groupBy('product_sales.product_id', 'product_sales.product_batch_id')
-                ->get();
+        $start = match ($period) {
+            'today' => $reportDate,
+            'week' => $reportDate->subDays(6),
+            'month' => $reportDate->startOfMonth(),
+            'year' => $yearStart,
+        };
+        $start = max($start->toDateString(), $yearStart->toDateString());
+        $end = $reportDate->toDateString();
 
-            $product_cost = $this->calculateAverageCOGS($product_sale_data);
+        $reports = app(FinancialReportService::class);
+        $entries = $this->dashboardLedger($context, $reports);
+        $ledger = $entries !== null;
+        $metrics = $this->dashboardMetrics($start, $end, $warehouseId, $context, $reports, $ledger);
 
-            $sale_query = Sale::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-
-            $revenue = $sale_query->sum(DB::raw('(grand_total - shipping_cost) / exchange_rate'));
-
-            $total_sale = $sale_query->sum(DB::raw('(grand_total - shipping_cost) / exchange_rate'));
-
-            $invoice_due = $sale_query->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-
-            $return = Returns::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('grand_total / exchange_rate'));
-            
-            $purchase_return = ReturnPurchase::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('grand_total / exchange_rate'));
-            
-            $expense = Expense::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->sum('amount');
-            
-            $income = Income::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->sum('amount');
-
-            $purchase_query = Purchase::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-            
-            $purchase = $purchase_query->sum(DB::raw('grand_total / exchange_rate'));
-            
-            $purchase_due = $purchase_query->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-            
-            $revenue = $revenue - $return + $income;
-            
-            $profit = $revenue + $purchase_return - $product_cost - $expense;
-        }
-        else
-        {
-            $product_sale_data = Product_Sale::join('sales', 'product_sales.sale_id', '=', 'sales.id')
-                ->select(DB::raw('
-                    product_sales.product_id,
-                    product_sales.product_batch_id,
-                    product_sales.sale_unit_id,
-                    sum(product_sales.qty) as sold_qty,
-                    sum(product_sales.return_qty) as return_qty,
-                    sum(product_sales.total) as sold_total
-                '))
-                ->whereNull('sales.deleted_at')
-                ->whereDate('sales.created_at', '>=', $start_date)
-                ->whereDate('sales.created_at', '<=', $end_date)
-                ->groupBy('product_sales.product_id', 'product_sales.product_batch_id', 'product_sales.sale_unit_id')
-                ->get();
-
-            $product_cost = $this->calculateAverageCOGS($product_sale_data);
-
-            $sale_query = Sale::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-            
-            $revenue = $sale_query->sum(DB::raw('(grand_total - shipping_cost) / exchange_rate'));
-            
-            $total_sale = $sale_query->sum(DB::raw('(grand_total - shipping_cost) / exchange_rate'));
-            
-            $invoice_due = Sale::whereDate('created_at', '>=' , $start_date)->where('user_id', Auth::id())->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at')->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-            
-            $expense = Expense::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum('amount');
-            
-            $income = Income::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum('amount');
-           
-            $return = Returns::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('grand_total / exchange_rate'));
-            
-            $purchase_return = ReturnPurchase::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->sum(DB::raw('grand_total / exchange_rate'));
-
-            $purchase_query = Purchase::whereDate('created_at', '>=' , $start_date)->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-            
-            $purchase = $purchase_query->sum(DB::raw('grand_total / exchange_rate'));
-            
-            $purchase_due = $purchase_query->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-            
-            $revenue = $revenue - $return + $income;
-            
-            $profit = $revenue + $purchase_return - $product_cost - $expense;
+        $months = [];
+        for ($month = $yearStart->startOfMonth(); $month->lte($reportDate); $month = $month->addMonth()) {
+            $months[] = $month;
         }
 
-        //cash flow of last 6 months
-        $start_time = strtotime(date('Y-m-01', strtotime('-6 month', strtotime(date('Y-m-d') ))));
-        $end_time = strtotime(date('Y-m-'.date('t', mktime(0, 0, 0, date("m"), 1, date("Y")))));
-        $range_start = date("Y-m-01", $start_time);
-        $range_end = date("Y-m-t", $end_time);
+        $monthlyTotals = function (Builder $query, string $amount) use ($yearStart, $end, $months) {
+            $totals = $query->whereDate($query->qualifyColumn('created_at'), '>=', $yearStart->toDateString())
+                ->whereDate($query->qualifyColumn('created_at'), '<=', $end)
+                ->selectRaw("SUBSTR(".$query->qualifyColumn('created_at').", 1, 7) as month_key, SUM($amount) as total")
+                ->groupBy('month_key')->pluck('total', 'month_key');
+            return array_map(fn ($month) => (float) ($totals[$month->format('Y-m')] ?? 0), $months);
+        };
 
-        $is_staff_own = (Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own');
-
-        $recieved_query = DB::table('payments')->whereNotNull('sale_id')
-            ->whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
-        if ($is_staff_own) {
-            $recieved_query->where('user_id', Auth::id());
+        $yearly_sale_amount = $monthlyTotals($this->dashboardSales($warehouseId), '(grand_total - COALESCE(shipping_cost, 0)) / COALESCE(NULLIF(exchange_rate, 0), 1)');
+        $yearly_purchase_amount = $monthlyTotals($this->dashboardPurchases($warehouseId), 'grand_total / COALESCE(NULLIF(exchange_rate, 0), 1)');
+        $monthlyPurchaseReturns = $monthlyTotals($this->dashboardReturns(ReturnPurchase::class, $warehouseId), 'grand_total / COALESCE(NULLIF(exchange_rate, 0), 1)');
+        foreach ($yearly_purchase_amount as $index => &$amount) {
+            $amount -= $monthlyPurchaseReturns[$index];
         }
-        $recieved_map = $recieved_query
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount / exchange_rate) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
+        unset($amount);
 
-        $sent_query = DB::table('payments')->whereNotNull('purchase_id')
-            ->whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
-        if ($is_staff_own) {
-            $sent_query->where('user_id', Auth::id());
-        }
-        $sent_map = $sent_query
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount / exchange_rate) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
+        $cashAccounts = ChartOfAccount::forCompany($context)->whereIn('control_type', ['cash', 'bank']);
+        $liquid_balance = $ledger
+            ? $cashAccounts->get()->sum(fn ($account) => $reports->openingBalance($account, $context, $today->addDay()->toDateString()))
+            : Account::where('is_active', true)->sum('total_balance');
 
-        $returns_query = Returns::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
-        if ($is_staff_own) {
-            $returns_query->where('user_id', Auth::id());
-        }
-        $returns_map = $returns_query
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
-
-        $purchase_returns_query = ReturnPurchase::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
-        if ($is_staff_own) {
-            $purchase_returns_query->where('user_id', Auth::id());
-        }
-        $purchase_returns_map = $purchase_returns_query
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
-
-        $expenses_query = Expense::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
-        if ($is_staff_own) {
-            $expenses_query->where('user_id', Auth::id());
-        }
-        $expenses_map = $expenses_query
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
-
-        $payroll_query = Payroll::whereDate('created_at', '>=', $range_start)->whereDate('created_at', '<=', $range_end);
-        if ($is_staff_own) {
-            $payroll_query->where('user_id', Auth::id());
-        }
-        $payroll_map = $payroll_query
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(amount) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
-
-        $payment_recieved = [];
-        $payment_sent = [];
-        $month = [];
-        $cur = $start_time;
-        while ($cur < $end_time) {
-            $ym = date('Y-m', $cur);
-            $start_date = $ym.'-01';
-            $rec = (float)($recieved_map[$ym] ?? 0);
-            $ret_pur = (float)($purchase_returns_map[$ym] ?? 0);
-            $sent = (float)($sent_map[$ym] ?? 0) + (float)($returns_map[$ym] ?? 0) + (float)($expenses_map[$ym] ?? 0) + (float)($payroll_map[$ym] ?? 0);
-
-            $payment_recieved[] = number_format((float)($rec + $ret_pur), config('decimal', 2), '.', '');
-            $payment_sent[] = number_format((float)$sent, config('decimal', 2), '.', '');
-            $month[] = date("F", strtotime($start_date));
-            $cur = strtotime("+1 month", $cur);
+        if ($ledger) {
+            // Net each entry across cash accounts so transfers between them do not count as cash flow.
+            $cashPerEntry = DB::table('journal_items')
+                ->joinSub($entries->whereBetween('entry_date', [$yearStart->toDateString(), $end])
+                    ->select('id', 'entry_date'), 'posted_entries', 'posted_entries.id', '=', 'journal_items.journal_entry_id')
+                ->where('journal_items.company_id', $context->companyId)
+                ->whereIn('chart_of_account_id', $cashAccounts->select('id'))
+                ->selectRaw('posted_entries.id, posted_entries.entry_date, SUM(debit - credit) as movement')
+                ->groupBy('posted_entries.id', 'posted_entries.entry_date');
+            $cash = DB::query()->fromSub($cashPerEntry, 'cash_entries')
+                ->selectRaw("SUBSTR(entry_date, 1, 7) as month_key,
+                    SUM(CASE WHEN movement > 0 THEN movement ELSE 0 END) as received,
+                    SUM(CASE WHEN movement < 0 THEN -movement ELSE 0 END) as sent")
+                ->groupBy('month_key')->get()->keyBy('month_key');
+            $payment_recieved = array_map(fn ($month) => (float) ($cash[$month->format('Y-m')]->received ?? 0), $months);
+            $payment_sent = array_map(fn ($month) => (float) ($cash[$month->format('Y-m')]->sent ?? 0), $months);
+        } else {
+            $payment_recieved = $monthlyTotals($this->dashboardPayments($warehouseId)->where('sale_id', '>', 0), 'amount / COALESCE(NULLIF(exchange_rate, 0), 1)');
+            $payment_sent = $monthlyTotals($this->dashboardPayments($warehouseId)->where('purchase_id', '>', 0), 'amount / COALESCE(NULLIF(exchange_rate, 0), 1)');
+            $expenses = $monthlyTotals($this->dashboardDocuments(Expense::class, $warehouseId), 'amount');
+            $payroll = $monthlyTotals(Payroll::when($this->dashboardOwnRecords(), fn ($query) => $query->where('user_id', Auth::id())), 'amount');
+            foreach ($payment_sent as $index => &$amount) {
+                $amount += $expenses[$index] + $payroll[$index];
+            }
+            unset($amount);
         }
 
-        // yearly report
-        $year_start = date("Y-01-01");
-        $year_end = date("Y-12-31");
-        $sale_query_yearly = Sale::whereDate('created_at', '>=', $year_start)->whereDate('created_at', '<=', $year_end)->whereNull('deleted_at');
-        if ($is_staff_own) {
-            $sale_query_yearly->where('user_id', Auth::id());
-        }
-        $yearly_sale_map = $sale_query_yearly
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
-
-        $purchase_query_yearly = Purchase::whereDate('created_at', '>=', $year_start)->whereDate('created_at', '<=', $year_end)->whereNull('deleted_at');
-        if ($is_staff_own) {
-            $purchase_query_yearly->where('user_id', Auth::id());
-        }
-        $yearly_purchase_map = $purchase_query_yearly
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym, sum(grand_total / exchange_rate) as total"))
-            ->groupBy('ym')->pluck('total', 'ym')->all();
-
-        $yearly_start = strtotime(date("Y-01-01"));
-        $yearly_end = strtotime(date("Y-12-31"));
-        while ($yearly_start < $yearly_end) {
-            $ym = date('Y-m', $yearly_start);
-            $sale_amt = (float)($yearly_sale_map[$ym] ?? 0);
-            $purchase_amt = (float)($yearly_purchase_map[$ym] ?? 0);
-            $yearly_sale_amount[] = number_format($sale_amt, config('decimal', 2), '.', '');
-            $yearly_purchase_amount[] = number_format($purchase_amt, config('decimal', 2), '.', '');
-            $yearly_start = strtotime("+1 month", $yearly_start);
-        }
-        // Additional Business Insights & Liquidity Metrics
-        $liquid_balance = Account::where('is_active', true)->sum('total_balance') ?? 0;
-        $stock_valuation = DB::table('product_warehouse')
-            ->join('products', 'product_warehouse.product_id', '=', 'products.id')
-            ->sum(DB::raw('product_warehouse.qty * products.cost')) ?? 0;
+        $month = array_map(fn ($month) => $month->format('M Y'), $months);
         $total_customers = Customer::where('is_active', true)->count();
         $total_suppliers = \App\Models\Supplier::where('is_active', true)->count();
-        $low_stock_count = DB::table('product_warehouse')
-            ->join('products', 'product_warehouse.product_id', '=', 'products.id')
-            ->whereRaw('product_warehouse.qty <= products.alert_quantity')
-            ->count();
-        $low_stock_products = DB::table('product_warehouse')
+
+        $stock = DB::table('product_warehouse')
             ->join('products', 'product_warehouse.product_id', '=', 'products.id')
             ->join('warehouses', 'product_warehouse.warehouse_id', '=', 'warehouses.id')
-            ->select('products.name', 'products.code', 'product_warehouse.qty', 'products.alert_quantity', 'warehouses.name as warehouse_name')
-            ->whereRaw('product_warehouse.qty <= products.alert_quantity')
-            ->limit(5)
-            ->get();
+            ->where('warehouses.branch_id', $context->branchId)
+            ->when($warehouseId, fn ($query) => $query->where('warehouses.id', $warehouseId));
+        $legacyStock = clone $stock;
+        $stock_valuation = 0;
+        if (Schema::hasTable('stock_movement_lines')) {
+            $stockLedger = DB::table('stock_movement_lines')
+                ->join('stock_movements', 'stock_movements.id', '=', 'stock_movement_lines.stock_movement_id')
+                ->join('warehouses', 'warehouses.id', '=', 'stock_movement_lines.warehouse_id')
+                ->where('stock_movement_lines.company_id', $context->companyId)
+                ->where('stock_movements.company_id', $context->companyId)
+                ->where('stock_movements.status', 'posted')
+                ->where('warehouses.branch_id', $context->branchId)
+                ->when($warehouseId, fn ($query) => $query->where('warehouses.id', $warehouseId));
+            $stock_valuation = $stockLedger->sum('stock_movement_lines.value');
+            // Existing stock without movement history still uses its recorded unit cost.
+            $legacyStock->whereNotExists($stockLedger->selectRaw('1')
+                ->whereColumn('stock_movement_lines.product_id', 'products.id')
+                ->whereColumn('stock_movement_lines.warehouse_id', 'product_warehouse.warehouse_id'));
+        }
+        $stock_valuation += $legacyStock->sum(DB::raw('product_warehouse.qty * products.cost'));
 
-        $currency_model = \App\Models\Currency::find(cache()->get('general_setting')->currency ?? 1);
+        $lowStock = $stock->where('products.is_active', true)->where('products.alert_quantity', '>', 0)
+            ->groupBy('products.id', 'products.name', 'products.code', 'products.alert_quantity', 'warehouses.id', 'warehouses.name')
+            ->select('products.name', 'products.code', 'products.alert_quantity', 'warehouses.name as warehouse_name')
+            ->selectRaw('SUM(product_warehouse.qty) as qty')
+            ->havingRaw('SUM(product_warehouse.qty) <= products.alert_quantity');
+        $low_stock_count = DB::query()->fromSub(clone $lowStock, 'low_stock')->count();
+        $low_stock_products = $lowStock->orderBy('qty')->orderBy('products.id')->limit(5)->get();
+
+        $currency_model = \App\Models\Currency::find($company->base_currency_id ?: (cache()->get('general_setting')->currency ?? 1));
         $currency_symbol = $currency_model ? ($currency_model->symbol ?: ($currency_model->code == 'INR' ? '₹' : ($currency_model->code ?: '$'))) : '$';
-
         $versionUpgradeData = (!config('database.connections.zoloerp_landlord') && Auth::user()->role_id <= 2) ? ($this->versionUpgradeInfo ?? []) : [];
 
-        return view('backend.index', compact(
-            'revenue', 'purchase_due', 'total_sale', 'invoice_due', 'purchase', 'expense',
-            'return', 'purchase_return', 'profit', 'payment_recieved', 'payment_sent',
-            'month', 'yearly_sale_amount', 'yearly_purchase_amount', 'versionUpgradeData',
-            'liquid_balance', 'stock_valuation', 'total_customers',
+        return view('backend.index', $metrics + compact(
+            'period', 'warehouseId', 'warehouses', 'start', 'end', 'year', 'reportDate', 'ledger',
+            'payment_recieved', 'payment_sent', 'month', 'yearly_sale_amount', 'yearly_purchase_amount',
+            'versionUpgradeData', 'liquid_balance', 'stock_valuation', 'total_customers',
             'total_suppliers', 'low_stock_count', 'low_stock_products', 'currency_symbol'
         ));
     }
@@ -512,288 +391,221 @@ class HomeController extends Controller
         abort(410, 'Remote code extraction is retired.');
     }
 
-    public function yearlyBestSellingPrice()
+    public function yearlyBestSellingPrice(Request $request)
     {
-        $yearly_best_selling_price = Product_Sale::join('products', 'products.id', '=', 'product_sales.product_id')
-        ->join('sales', 'sales.id', '=', 'product_sales.sale_id')
-        ->whereNull('sales.deleted_at')
-        ->select(DB::raw('products.name as product_name, products.code as product_code, products.image as product_images'),'sales.exchange_rate', DB::raw('sum(product_sales.total / sales.exchange_rate) as total_price'))
-        ->whereYear('product_sales.created_at', date("Y")) 
-        ->groupBy('products.code')
-        ->orderBy('total_price', 'desc')
-        ->take(5)
-        ->get();
-
-        return response()->json($yearly_best_selling_price);
+        return $this->dashboardBestSellers($request, byValue: true);
     }
 
-    public function yearlyBestSellingQty()
+    public function yearlyBestSellingQty(Request $request)
     {
-        $yearly_best_selling_qty = Product_Sale::join('products', 'products.id', '=', 'product_sales.product_id')
-        ->select(DB::raw('products.name as product_name, products.code as product_code, products.image as product_images, sum(product_sales.qty) as sold_qty'))
-        ->whereYear('product_sales.created_at', date("Y")) 
-        ->groupBy('products.code')
-        ->orderBy('sold_qty', 'desc')
-        ->take(5)
-        ->get();
-
-        return response()->json($yearly_best_selling_qty);
+        return $this->dashboardBestSellers($request);
     }
 
-    public function monthlyBestSellingQty()
+    public function monthlyBestSellingQty(Request $request)
     {
-
-        $best_selling_qty = Product_Sale::join('products', 'products.id', '=', 'product_sales.product_id')
-        ->select(DB::raw('products.name as product_name, products.code as product_code, products.image as product_images, sum(product_sales.qty) as sold_qty'))
-        ->whereYear('product_sales.created_at', date("Y"))
-        ->whereMonth('product_sales.created_at', date("m"))
-        ->groupBy('products.code')
-        ->orderBy('sold_qty', 'desc')
-        ->take(5)
-        ->get();
-
-        return response()->json($best_selling_qty);
+        return $this->dashboardBestSellers($request, monthly: true);
     }
 
-    public function recentSale()
+    private function dashboardBestSellers(Request $request, bool $byValue = false, bool $monthly = false)
     {
-        if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own')
-        {
-            $recent_sale = Sale::join('customers', 'customers.id', '=', 'sales.customer_id')
-                            ->select('sales.id','sales.reference_no','sales.sale_status','sales.created_at','sales.grand_total','sales.exchange_rate','sales.user_id','customers.name')
-                            ->orderBy('id', 'desc')
-                            ->whereNull('sales.deleted_at')
-                            ->where('sales.user_id', Auth::id())
-                            ->where(function($q) {
-                                $q->where('sales.sale_type', '!=', 'opening balance')
-                                ->orWhereNull('sales.sale_type');
-                            })
-                            ->take(5)->get();
-            return response()->json($recent_sale);
+        $warehouseId = $this->dashboardWarehouseId($request->query('warehouse_id', 0));
+        $context = $request->attributes->get(CompanyContext::class);
+        $year = FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
+        $timezone = Company::whereKey($context->companyId)->value('timezone') ?: config('app.timezone');
+        $end = max($year->start_date->toDateString(), min(now($timezone)->toDateString(), $year->end_date->toDateString()));
+        $start = $year->start_date->toDateString();
+        if ($monthly) {
+            $start = max($start, CarbonImmutable::parse($end)->startOfMonth()->toDateString());
         }
-        else
-        {
-            $recent_sale = Sale::join('customers', 'customers.id', '=', 'sales.customer_id')
-                            ->select('sales.id','sales.reference_no','sales.sale_status','sales.created_at','sales.grand_total','sales.exchange_rate','customers.name')->orderBy('id', 'desc')
-                            ->whereNull('sales.deleted_at')
-                            ->where(function($q) {
-                                $q->where('sales.sale_type', '!=', 'opening balance')
-                                ->orWhereNull('sales.sale_type');
-                            })
-                            ->take(5)->get();
-            return response()->json($recent_sale);
-        }
+        $sales = $this->dashboardSales($warehouseId)->whereDate('sales.created_at', '>=', $start)->whereDate('sales.created_at', '<=', $end);
+
+        return response()->json($sales->join('product_sales', 'product_sales.sale_id', '=', 'sales.id')
+            ->join('products', 'products.id', '=', 'product_sales.product_id')
+            ->where('products.company_id', $context->companyId)
+            ->select('products.name as product_name', 'products.code as product_code', 'products.image as product_images')
+            ->selectRaw($byValue
+                ? 'SUM(product_sales.total / COALESCE(NULLIF(sales.exchange_rate, 0), 1)) as total_price'
+                : 'SUM(product_sales.qty - COALESCE(product_sales.return_qty, 0)) as sold_qty')
+            ->groupBy('products.id', 'products.name', 'products.code', 'products.image')
+            ->orderByDesc($byValue ? 'total_price' : 'sold_qty')->orderBy('products.id')->take(5)->get());
     }
 
-    public function recentPurchase()
+    public function recentSale(Request $request)
     {
-        if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own')
-        {
-            $recent_purchase = Purchase::leftJoin('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')->select('purchases.id','purchases.reference_no','purchases.status','purchases.created_at','purchases.grand_total','purchases.exchange_rate','purchases.user_id','suppliers.name')->orderBy('id', 'desc')->where('purchases.user_id', Auth::id())->whereNull('purchases.deleted_at')->whereNULL('purchases.purchase_type')->take(5)->get();
-            return response()->json($recent_purchase);
-        }
-        else
-        {
-            $recent_purchase = Purchase::leftJoin('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')->select('purchases.id','purchases.reference_no','purchases.status','purchases.created_at','purchases.grand_total','purchases.exchange_rate','suppliers.name')->orderBy('id', 'desc')->whereNull('purchases.deleted_at')->whereNULL('purchases.purchase_type')->take(5)->get();
-            return response()->json($recent_purchase);
-        }
+        return response()->json($this->dashboardSales($this->dashboardWarehouseId($request->query('warehouse_id', 0)))
+            ->join('customers', 'customers.id', '=', 'sales.customer_id')
+            ->select('sales.id', 'sales.reference_no', 'sales.sale_status', 'sales.created_at', 'sales.grand_total', 'sales.exchange_rate', 'customers.name')
+            ->selectRaw('DATE(sales.created_at) as business_date')
+            ->latest('sales.created_at')->orderByDesc('sales.id')->take(5)->get());
     }
 
-    public function recentQuotation()
+    public function recentPurchase(Request $request)
     {
-        if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own')
-        {
-            $recent_quotation = Quotation::join('customers', 'customers.id', '=', 'quotations.customer_id')->select('quotations.id','quotations.reference_no','quotations.quotation_status','quotations.created_at','quotations.grand_total','quotations.user_id','customers.name')->orderBy('id', 'desc')->where('quotations.user_id', Auth::id())->take(5)->get();
-            return response()->json($recent_quotation);
-        }
-        else
-        {
-            $recent_quotation = Quotation::join('customers', 'customers.id', '=', 'quotations.customer_id')->select('quotations.id','quotations.reference_no','quotations.quotation_status','quotations.created_at','quotations.grand_total','customers.name')->orderBy('id', 'desc')->take(5)->get();
-            return response()->json($recent_quotation);
-        }
+        return response()->json($this->dashboardPurchases($this->dashboardWarehouseId($request->query('warehouse_id', 0)))
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')
+            ->select('purchases.id', 'purchases.reference_no', 'purchases.status', 'purchases.created_at', 'purchases.grand_total', 'purchases.exchange_rate', 'suppliers.name')
+            ->selectRaw('DATE(purchases.created_at) as business_date')
+            ->latest('purchases.created_at')->orderByDesc('purchases.id')->take(5)->get());
     }
 
-    public function recentPayment()
+    public function recentQuotation(Request $request)
     {
-        if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own')
-        {
-            $recent_payment = Payment::select('id','payment_reference','amount','exchange_rate','paying_method','created_at','user_id')->orderBy('id', 'desc')->where('user_id', Auth::id())->take(5)->get();
-            return response()->json($recent_payment);
-        }
-        else
-        {
-            $recent_payment = Payment::select('id','payment_reference','amount','exchange_rate','paying_method','created_at')->orderBy('id', 'desc')->take(5)->get();
-            return response()->json($recent_payment);
-        }
+        return response()->json($this->dashboardDocuments(Quotation::class, $this->dashboardWarehouseId($request->query('warehouse_id', 0)))
+            ->join('customers', 'customers.id', '=', 'quotations.customer_id')
+            ->select('quotations.id', 'quotations.reference_no', 'quotations.quotation_status', 'quotations.created_at', 'quotations.grand_total', 'customers.name')
+            ->selectRaw('DATE(quotations.created_at) as business_date')
+            ->latest('quotations.created_at')->orderByDesc('quotations.id')->take(5)->get());
     }
 
-    public function dashboardFilter($start_date, $end_date, $warehouse_id)
+    public function recentPayment(Request $request)
     {
-        if(Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access == 'own') {
+        return response()->json($this->dashboardPayments($this->dashboardWarehouseId($request->query('warehouse_id', 0)))
+            ->select('id', 'payment_reference', 'amount', 'exchange_rate', 'paying_method', 'created_at', 'payment_at')
+            ->selectRaw('DATE(COALESCE(payment_at, created_at)) as business_date')
+            ->orderByRaw('COALESCE(payment_at, created_at) DESC')->orderByDesc('id')->take(5)->get());
+    }
 
-            $q = Sale::join('product_sales', 'sales.id','=', 'product_sales.sale_id')
-                ->select(DB::raw('product_sales.product_id, product_sales.product_batch_id, product_sales.sale_unit_id, sum(product_sales.qty) as sold_qty, sum(product_sales.return_qty) as return_qty, sum(product_sales.total) as sold_amount'))
-                ->whereNull('sales.deleted_at')
-                ->where('sales.user_id', Auth::id())
-                ->whereDate('sales.created_at', '>=' , $start_date)
-                ->whereDate('sales.created_at', '<=' , $end_date);
+    public function dashboardFilter(Request $request, $start_date, $end_date, $warehouse_id)
+    {
+        Validator::validate(['start' => $start_date, 'end' => $end_date], [
+            'start' => 'required|date_format:Y-m-d',
+            'end' => 'required|date_format:Y-m-d|after_or_equal:start',
+        ]);
+        $warehouseId = $this->dashboardWarehouseId($warehouse_id);
+        $request->query->remove('branch_scope');
+        $context = $request->attributes->get(CompanyContext::class);
+        $reports = app(FinancialReportService::class);
+        $year = FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
+        $start = max($start_date, $year->start_date->toDateString());
+        $end = min($end_date, $year->end_date->toDateString());
+        $metrics = $this->dashboardMetrics($start, $end, $warehouseId, $context, $reports, $this->dashboardLedger($context, $reports) !== null);
 
-            if($warehouse_id != 0) {
-                $q->where('sales.warehouse_id',$warehouse_id);
-            }
+        return [$metrics['revenue'], $metrics['return'], $metrics['profit'], $metrics['purchase_return'],
+            $metrics['total_sale'], $metrics['invoice_due'], $metrics['purchase'], $metrics['purchase_due'], $metrics['expense']];
+    }
 
-            $product_sale_data = $q->groupBy('product_sales.product_id', 'product_sales.product_batch_id')->get();
+    private function dashboardMetrics(string $start, string $end, int $warehouseId, CompanyContext $context, FinancialReportService $reports, bool $ledger): array
+    {
+        $inPeriod = fn (Builder $query) => $query->whereDate($query->qualifyColumn('created_at'), '>=', $start)
+            ->whereDate($query->qualifyColumn('created_at'), '<=', $end);
+        $baseAmount = 'grand_total / COALESCE(NULLIF(exchange_rate, 0), 1)';
+        $sales = $this->dashboardSales($warehouseId);
+        $purchases = $this->dashboardPurchases($warehouseId);
+        $total_sale = $inPeriod(clone $sales)->sum(DB::raw('(grand_total - COALESCE(shipping_cost, 0)) / COALESCE(NULLIF(exchange_rate, 0), 1)'));
+        $return = $inPeriod($this->dashboardReturns(Returns::class, $warehouseId))->sum(DB::raw($baseAmount));
+        $purchase_return = $inPeriod($this->dashboardReturns(ReturnPurchase::class, $warehouseId))->sum(DB::raw($baseAmount));
+        $purchase = $inPeriod(clone $purchases)->sum(DB::raw($baseAmount)) - $purchase_return;
 
-
-            $product_cost = $this->calculateAverageCOGS($product_sale_data);
-
-            $total_sale_q = Sale::where('user_id', Auth::id())->whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-
-            $purchase_q = Purchase::where('user_id', Auth::id())->whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-
-            $return_q = Returns::where('user_id', Auth::id())->whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date);
-
-            $purchase_return_q = ReturnPurchase::where('user_id', Auth::id())->whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date);
-
-            if($warehouse_id != 0) {
-                $total_sale_q->where('warehouse_id',$warehouse_id);
-                $purchase_q->where('warehouse_id',$warehouse_id);
-                $return_q->where('warehouse_id',$warehouse_id);
-                $purchase_return_q->where('warehouse_id',$warehouse_id);
-            }
-
-            $total_sale = $total_sale_q->sum(DB::raw('(grand_total - shipping_cost) / exchange_rate'));
-            $purchase = $purchase_q->sum(DB::raw('grand_total / exchange_rate'));
-            $return = $return_q->sum(DB::raw('grand_total / exchange_rate'));
-            $purchase_return = $purchase_return_q->sum(DB::raw('grand_total / exchange_rate'));
-
-            $invoice_due = Sale::whereDate('created_at', '>=' , $start_date)
-                ->whereNull('deleted_at')
-                ->whereDate('created_at', '<=' , $end_date)
-                ->where('user_id', Auth::id())
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-
-            $purchase_due = Purchase::whereDate('created_at', '>=' , $start_date)
-                ->whereNull('deleted_at')
-                ->whereDate('created_at', '<=' , $end_date)
-                ->where('user_id', Auth::id())
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-
-            $expense = Expense::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)
-                ->where('user_id', Auth::id())
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum('amount');
-
-
-            $income = Income::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)
-                ->where('user_id', Auth::id())
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum('amount');
-
-            $revenue = $total_sale - $return + $income;
-            $profit = $revenue + $purchase_return - $product_cost - $expense;
-
+        if ($ledger && $start <= $end) {
+            $pnl = $reports->getProfitAndLoss($start, $end, $context);
+            $revenue = $pnl['total_revenue'];
+            $expense = $pnl['total_operating_expenses'];
+            $profit = $pnl['net_income'];
         } else {
-
-            $q = Sale::join('product_sales', 'sales.id','=', 'product_sales.sale_id')
-                ->select(DB::raw('product_sales.product_id, product_sales.product_batch_id, product_sales.sale_unit_id, sum(product_sales.qty) as sold_qty, sum(product_sales.return_qty) as return_qty, sum(product_sales.total) as sold_amount'))
-                ->whereNull('sales.deleted_at')
-                ->whereDate('sales.created_at', '>=' , $start_date)
-                ->whereDate('sales.created_at', '<=' , $end_date);
-
-            if($warehouse_id != 0) {
-                $q->where('sales.warehouse_id',$warehouse_id);
-            }
-
-            $product_sale_data = $q->groupBy('product_sales.product_id', 'product_sales.product_batch_id')->get();
-
-
-            $product_cost = $this->calculateAverageCOGS($product_sale_data);
-
-            $total_sale_q = Sale::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-
-            $purchase_q = Purchase::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)->whereNull('deleted_at');
-
-            $return_q = Returns::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date);
-
-            $purchase_return_q = ReturnPurchase::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date);
-
-            if($warehouse_id != 0) {
-                $total_sale_q->where('warehouse_id',$warehouse_id);
-                $purchase_q->where('warehouse_id',$warehouse_id);
-                $return_q->where('warehouse_id',$warehouse_id);
-                $purchase_return_q->where('warehouse_id',$warehouse_id);
-            }
-
-            $total_sale = $total_sale_q->sum(DB::raw('(grand_total - shipping_cost) / exchange_rate'));
-            $purchase = $purchase_q->sum(DB::raw('grand_total / exchange_rate'));
-            $return = $return_q->sum(DB::raw('grand_total / exchange_rate'));
-            $purchase_return = $purchase_return_q->sum(DB::raw('grand_total / exchange_rate'));
-
-            $invoice_due = Sale::whereDate('created_at', '>=' , $start_date)
-                ->whereNull('deleted_at')
-                ->whereDate('created_at', '<=' , $end_date)
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-
-            $purchase_due = Purchase::whereDate('created_at', '>=' , $start_date)
-                ->whereNull('deleted_at')
-                ->whereDate('created_at', '<=' , $end_date)
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum(DB::raw('(grand_total - paid_amount) / exchange_rate'));
-
-            $expense = Expense::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum('amount');
-
-
-            $income = Income::whereDate('created_at', '>=' , $start_date)
-                ->whereDate('created_at', '<=' , $end_date)
-                ->when($warehouse_id != 0, function ($q) use ($warehouse_id) {
-                    $q->where('warehouse_id', $warehouse_id);
-                })
-                ->sum('amount');
-
+            $expense = $inPeriod($this->dashboardDocuments(Expense::class, $warehouseId))->sum('amount');
+            $income = $inPeriod($this->dashboardDocuments(Income::class, $warehouseId))->sum('amount');
             $revenue = $total_sale - $return + $income;
-            $profit = $revenue + $purchase_return - $product_cost - $expense;
+            $lines = $inPeriod(clone $sales)->join('product_sales', 'sales.id', '=', 'product_sales.sale_id')
+                ->select('product_sales.product_id', 'product_sales.product_batch_id', 'product_sales.variant_id', 'product_sales.sale_unit_id')
+                ->selectRaw('SUM(product_sales.qty) as sold_qty, SUM(COALESCE(product_sales.return_qty, 0)) as return_qty')
+                ->groupBy('product_sales.product_id', 'product_sales.product_batch_id', 'product_sales.variant_id', 'product_sales.sale_unit_id')
+                ->get();
+            $profit = $revenue + $purchase_return - $this->calculateAverageCOGS($lines) - $expense;
         }
-        $data[0] = $revenue;
-        $data[1] = $return;
-        $data[2] = $profit;
-        $data[3] = $purchase_return;
-        $data[4] = $total_sale;
-        $data[5] = $invoice_due ?? 0;
-        $data[6] = $purchase - $purchase_return;
-        $data[7] = $purchase_due ?? 0;
-        $data[8] = $expense ?? 0;
-        return $data;
+
+        $invoice_due = $this->dashboardDue($sales, $context, 'customer', 'sale', $warehouseId);
+        $purchase_due = $this->dashboardDue($purchases, $context, 'supplier', 'purchase', $warehouseId);
+        return compact('revenue', 'expense', 'profit', 'total_sale', 'return', 'purchase_return', 'purchase', 'invoice_due', 'purchase_due');
+    }
+
+    private function dashboardDue(Builder $documents, CompanyContext $context, string $partyType, string $sourceType, int $warehouseId): float
+    {
+        $open = 0;
+        if (Schema::hasTable('account_open_items')) {
+            $items = AccountOpenItem::forCompany($context)->where('branch_id', $context->branchId)->where('party_type', $partyType);
+            $tracked = (clone $items)->where('source_type', $sourceType);
+            $open = $warehouseId || $this->dashboardOwnRecords()
+                ? (clone $tracked)->whereIn('source_id', (clone $documents)->select($documents->qualifyColumn('id')))->sum('open_amount')
+                : $items->sum('open_amount');
+            $documents->whereNotIn($documents->qualifyColumn('id'), $tracked->whereNotNull('source_id')->select('source_id'));
+        }
+
+        return $open + $documents->whereColumn('paid_amount', '<', 'grand_total')
+            ->sum(DB::raw('(grand_total - paid_amount) / COALESCE(NULLIF(exchange_rate, 0), 1)'));
+    }
+
+    private function dashboardLedger(CompanyContext $context, FinancialReportService $reports): ?Builder
+    {
+        if ($this->dashboardOwnRecords() || !Schema::hasTable('journal_entries')) {
+            return null;
+        }
+        if (!$reports->scopeEntries(JournalEntry::query(), $context, currentYearOnly: false)->exists()) {
+            return null;
+        }
+        return $reports->scopeEntries(JournalEntry::query(), $context);
+    }
+
+    private function dashboardWarehouseId(mixed $value): int
+    {
+        Validator::validate(['warehouse_id' => $value], ['warehouse_id' => 'required|integer|min:0']);
+        $id = (int) $value;
+        if ($id) {
+            abort_unless(Auth::user()->role_id <= 2, 403);
+            $context = request()->attributes->get(CompanyContext::class);
+            Warehouse::where('branch_id', $context->branchId)->where('is_active', true)->findOrFail($id);
+        }
+        return $id;
+    }
+
+    private function dashboardOwnRecords(): bool
+    {
+        return Auth::user()->role_id > 2 && cache()->get('general_setting')->staff_access === 'own';
+    }
+
+    private function dashboardDocuments(string $model, int $warehouseId): Builder
+    {
+        $context = request()->attributes->get(CompanyContext::class);
+        $query = $model::query();
+        $warehouses = Warehouse::where('branch_id', $context->branchId)
+            ->when($warehouseId, fn ($warehouses) => $warehouses->whereKey($warehouseId))->select('id');
+        $column = $query->qualifyColumn('warehouse_id');
+        return $query->where(function ($query) use ($column, $warehouses, $model, $warehouseId) {
+            $query->whereIn($column, $warehouses);
+            if (!$warehouseId && in_array($model, [Expense::class, Income::class], true)) {
+                $query->orWhereNull($column);
+            }
+        })->when($this->dashboardOwnRecords(), fn ($query) => $query->where($query->qualifyColumn('user_id'), Auth::id()));
+    }
+
+    private function dashboardSales(int $warehouseId): Builder
+    {
+        return $this->dashboardDocuments(Sale::class, $warehouseId)->where('sales.sale_status', 1)
+            ->whereNull('sales.reversed_at')
+            ->where(fn ($query) => $query->whereNull('sales.sale_type')->orWhere('sales.sale_type', '!=', 'opening balance'));
+    }
+
+    private function dashboardPurchases(int $warehouseId): Builder
+    {
+        return $this->dashboardDocuments(Purchase::class, $warehouseId)->whereIn('purchases.status', [1, 2, 3])
+            ->whereNull('purchases.reversed_at')
+            ->where(fn ($query) => $query->whereNull('purchases.purchase_type')->orWhere('purchases.purchase_type', '!=', 'opening balance'));
+    }
+
+    private function dashboardReturns(string $model, int $warehouseId): Builder
+    {
+        $query = $this->dashboardDocuments($model, $warehouseId);
+        if (Schema::hasColumn($query->getModel()->getTable(), 'status')) {
+            $query->where(fn ($query) => $query->whereNull('status')->orWhere('status', 'posted'));
+        }
+        return $query;
+    }
+
+    private function dashboardPayments(int $warehouseId): Builder
+    {
+        $sales = $this->dashboardSales($warehouseId)->select('sales.id');
+        $purchases = $this->dashboardPurchases($warehouseId)->select('purchases.id');
+        return Payment::where(fn ($query) => $query->whereIn('sale_id', $sales)->orWhereIn('purchase_id', $purchases))
+            ->when($this->dashboardOwnRecords(), fn ($query) => $query->where('user_id', Auth::id()));
     }
 
     public function calculateAverageCOGS($product_sale_data)
@@ -858,13 +670,15 @@ class HomeController extends Controller
                         $purchase_unit_data = $units->where('id',$product_purchase->purchase_unit_id)->first();
 
                         // Convert received quantity into base unit
+                        if(!$purchase_unit_data)
+                            continue;
                         if($purchase_unit_data->operator == '*')
                             $total_received_qty += $product_purchase->recieved * $purchase_unit_data->operation_value;
                         else
                             $total_received_qty += $product_purchase->recieved / $purchase_unit_data->operation_value;
 
                         // Accumulate purchase cost
-                        if(isset($product_purchase->exchange_rate))
+                        if($product_purchase->exchange_rate)
                             $total_purchased_amount += $product_purchase->total/$product_purchase->exchange_rate;
                         else
                             $total_purchased_amount += $product_purchase->total;
@@ -921,7 +735,9 @@ class HomeController extends Controller
                 // Convert sold quantity into base unit if sale unit is defined
                 if($product_sale->sale_unit_id) {
                     $sale_unit_data = $units->where('id', $product_sale->sale_unit_id)->first();
-                    if($sale_unit_data->operator == '*')
+                    if(!$sale_unit_data)
+                        $sold_qty = $product_sale->sold_qty - $product_sale->return_qty;
+                    elseif($sale_unit_data->operator == '*')
                         $sold_qty = ($product_sale->sold_qty - $product_sale->return_qty) * $sale_unit_data->operation_value;
                     else
                         $sold_qty = ($product_sale->sold_qty - $product_sale->return_qty) / $sale_unit_data->operation_value;
@@ -940,7 +756,7 @@ class HomeController extends Controller
                         else
                             $total_received_qty += $product_purchase->recieved / $purchase_unit_data->operation_value;
 
-                        if(isset($product_purchase->exchange_rate))
+                        if($product_purchase->exchange_rate)
                             $total_purchased_amount += $product_purchase->total/$product_purchase->exchange_rate;
                         else
                             $total_purchased_amount += $product_purchase->total;

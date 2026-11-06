@@ -346,7 +346,7 @@ class TextileMasterSeeder extends Seeder
                 ->where('company_id', $companyId)
                 ->where(function ($q) use ($data) {
                     $q->where('company_name', $data['company_name'])
-                      ->orWhere('vat_number', $data['vat_number']);
+                        ->orWhere('vat_number', $data['vat_number']);
                 })->first();
 
             if (!$supplier) {

@@ -1,228 +1,297 @@
-@extends('backend.layout.main') @section('content')
+@extends('backend.layout.main')
+
+@section('content')
 
 @push('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.9/css/intlTelInput.css"/>
+<link rel="stylesheet" href="{{ versioned_asset('css/product-workspace.css') }}" type="text/css">
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/parties-workspace.css') }}" type="text/css">
 <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-customer-create.css') }}">
 @endpush
 
 <x-error-message key="not_permitted" />
 
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.Update Customer')}}</h4>
+<x-party-command-bar active="customers" title="{{ __('db.customer') }} Command Center" badge="{{ __('db.Update Customer') }}: {{ $lims_customer_data->name }}">
+    <a href="{{ route('customer.index') }}" class="btn btn-outline-secondary">
+        <i class="dripicons-arrow-left"></i> {{ __('db.Back') }}
+    </a>
+</x-party-command-bar>
+
+<div class="customer-workspace-view">
+    <div class="party-single-card">
+        <div class="party-card-header">
+            <div class="party-card-title-group">
+                <h4><i class="dripicons-document-edit text-primary"></i> {{ __('db.Update Customer') }}: {{ $lims_customer_data->name }}</h4>
+                <div class="party-hint">{{ __('db.The field labels marked with * are required input fields') }}.</div>
+            </div>
+            <div class="party-card-actions">
+                <a href="{{ route('customer.index') }}" class="btn btn-outline-secondary">
+                    <i class="dripicons-cross"></i> {{ __('db.Cancel') }}
+                </a>
+                <button type="submit" form="customer_form" class="btn btn-primary">
+                    <i class="dripicons-checkmark"></i> {{ __('db.submit') }}
+                </button>
+            </div>
+        </div>
+
+        <div class="party-card-body">
+            {!! Form::open(['route' => ['customer.update', $lims_customer_data->id], 'method' => 'put', 'files' => true, 'id' => 'customer_form']) !!}
+            <input type="hidden" name="customer_group" value="{{ $lims_customer_data->customer_group_id }}">
+
+            <div class="party-form-grid">
+                <!-- BOX 1: Primary Identity & Categorization -->
+                <div class="party-section-box party-sec-identity">
+                    <div class="party-section-header">
+                        <i class="dripicons-user"></i> {{ __('db.Customer Details') }}
                     </div>
-                    <div class="card-body">
-                        <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        {!! Form::open(['route' => ['customer.update',$lims_customer_data->id], 'method' => 'put', 'files' => true, 'id' => 'customer_form']) !!}
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <input type="hidden" name="customer_group" value="{{$lims_customer_data->customer_group_id}}">
-                                    <label>{{__('db.Customer Group')}} *</strong> </label>
-                                    <select required class="form-control selectpicker" name="customer_group_id">
-                                        @foreach($lims_customer_group_all as $customer_group)
-                                            <option value="{{$customer_group->id}}">{{$customer_group->name}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                    <div class="party-section-content">
+                        <div class="party-fields-row">
+                            <div class="party-form-group">
+                                <label for="customer-group-id">{{ __('db.Customer Group') }} <span class="req">*</span> <a href="{{ route('customer_group.index') }}" target="_blank" class="text-primary small ml-2" title="{{ __('db.Add Customer Group') }}"><i class="dripicons-plus"></i> {{ __('db.Add Customer Group') }}</a></label>
+                                <select required class="form-control selectpicker" id="customer-group-id" name="customer_group_id">
+                                    @foreach($lims_customer_group_all as $customer_group)
+                                        <option value="{{ $customer_group->id }}" @selected($customer_group->id == $lims_customer_data->customer_group_id)>{{ $customer_group->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.name')}} *</strong> </label>
-                                    <input type="text" name="customer_name" value="{{$lims_customer_data->name}}" required class="form-control">
-                                </div>
+                            <div class="party-form-group">
+                                <label for="name">{{ __('db.name') }} <span class="req">*</span></label>
+                                <input type="text" id="name" name="customer_name" value="{{ $lims_customer_data->name }}" required class="form-control" placeholder="{{ __('db.Customer Name') }}">
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Company Name')}} </label>
-                                    <input type="text" name="company_name" value="{{$lims_customer_data->company_name}}" class="form-control">
-                                </div>
+                            <div class="party-form-group">
+                                <label for="company_name">{{ __('db.Company Name') }}</label>
+                                <input type="text" id="company_name" name="company_name" value="{{ $lims_customer_data->company_name }}" class="form-control" placeholder="{{ __('db.Company Name') }}">
+                                @if($errors->has('company_name'))
+                                    <small class="text-danger">{{ $errors->first('company_name') }}</small>
+                                @endif
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Email')}}</label>
-                                    <input type="email" name="email" value="{{$lims_customer_data->email}}" class="form-control">
-                                </div>
+                            <div class="party-form-group">
+                                <label for="type">{{ __('db.Type') }}</label>
+                                <select id="type" name="type" class="form-control selectpicker">
+                                    @foreach(\App\Enums\CustomerTypeEnum::cases() as $case)
+                                        <option value="{{ $case->value }}" @selected($lims_customer_data->type === $case->value)>
+                                            {{ $case->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{ __('db.Type') }}</label>
-                                    <select name="type" class="form-control">
-                                        @foreach(\App\Enums\CustomerTypeEnum::cases() as $case)
-                                            <option value="{{ $case->value }}" {{ $lims_customer_data->type === $case->value ? 'selected' : '' }}>
-                                                {{ $case->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOX 2: Contact Details -->
+                <div class="party-section-box party-sec-contact">
+                    <div class="party-section-header">
+                        <i class="dripicons-phone"></i> Contact &amp; Communication
+                    </div>
+                    <div class="party-section-content">
+                        <div class="party-fields-row">
+                            <div class="party-form-group">
+                                <label for="phone_number">{{ __('db.Phone Number') }} <span class="req">*</span></label>
+                                <input type="text" id="phone_number" name="phone_number" value="{{ $lims_customer_data->phone_number }}" required class="form-control" placeholder="Primary contact phone">
+                                @if($errors->has('phone_number'))
+                                    <small class="text-danger">{{ $errors->first('phone_number') }}</small>
+                                @endif
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Phone Number')}} *</label>
-                                    <input type="text" name="phone_number" required value="{{$lims_customer_data->phone_number}}" class="form-control">
-                                    @if($errors->has('phone_number'))
-                                   <span>
-                                       <strong>{{ $errors->first('phone_number') }}</strong>
-                                    </span>
-                                    @endif
-                                </div>
+                            <div class="party-form-group">
+                                <label for="email">{{ __('db.Email') }}</label>
+                                <input type="email" id="email" name="email" value="{{ $lims_customer_data->email }}" placeholder="example@domain.com" class="form-control">
+                                @if($errors->has('email'))
+                                    <small class="text-danger">{{ $errors->first('email') }}</small>
+                                @endif
                             </div>
-                            <div class="col-md-4">
-                                <div class="country-phone-group form-group">
-                                    <label>{{__('db.WhatsApp Number')}}</label>
-                                    <div class="d-flex">
-                                        <select id="country_code" name="country_code" class="form-control w-auto me-2">
-                                        </select>
-                                        <input type="tel" id="wa_number" class="form-control" value="{{$lims_customer_data->phone_number}}">
-                                        <input type="hidden" id="full_phone" name="wa_number"  value="{{$lims_customer_data->phone_number}}">
-                                    </div>
+                            <div class="party-form-group party-field-col-full country-phone-group">
+                                <label for="wa_number">{{ __('db.WhatsApp Number') }}</label>
+                                <div class="d-flex">
+                                    <select id="country_code" name="country_code" class="form-control w-auto me-2"></select>
+                                    <input type="tel" id="wa_number" class="form-control" value="{{ $lims_customer_data->wa_number ?? $lims_customer_data->phone_number }}" placeholder="WhatsApp contact number">
+                                    <input type="hidden" id="full_phone" name="wa_number" value="{{ $lims_customer_data->wa_number ?? $lims_customer_data->phone_number }}">
                                 </div>
+                                <span class="party-field-hint">Used for dispatch slips, payment reminders and invoices</span>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>GSTIN / {{__('db.Tax Number')}}</label>
-                                    <input type="text" name="tax_no" class="form-control" value="{{$lims_customer_data->tax_no}}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOX 3: Location & GST Compliance -->
+                <div class="party-section-box party-sec-address">
+                    <div class="party-section-header">
+                        <i class="dripicons-location"></i> Billing Address &amp; GSTIN
+                    </div>
+                    <div class="party-section-content">
+                        <div class="party-fields-row">
+                            <div class="party-form-group party-field-col-full">
+                                <label for="tax_no">GSTIN / {{ __('db.Tax Number') }}</label>
+                                <input type="text" id="tax_no" name="tax_no" value="{{ $lims_customer_data->tax_no }}" class="form-control text-uppercase" placeholder="15-character GSTIN">
+                            </div>
+                            <div class="party-form-group party-field-col-full">
+                                <label for="address">{{ __('db.Address') }}</label>
+                                <input type="text" id="address" name="address" value="{{ $lims_customer_data->address }}" class="form-control" placeholder="Street address, building, premises">
+                            </div>
+                            <div class="party-form-group">
+                                <label for="city">{{ __('db.City') }}</label>
+                                <input type="text" id="city" name="city" value="{{ $lims_customer_data->city }}" class="form-control" placeholder="City / Town">
+                            </div>
+                            <div class="party-form-group">
+                                <label for="state">{{ __('db.State') }}</label>
+                                <input type="text" id="state" name="state" value="{{ $lims_customer_data->state }}" class="form-control" placeholder="State name or code">
+                            </div>
+                            <div class="party-form-group">
+                                <label for="postal_code">{{ __('db.Postal Code') }}</label>
+                                <input type="text" id="postal_code" name="postal_code" value="{{ $lims_customer_data->postal_code }}" class="form-control" placeholder="PIN code">
+                            </div>
+                            <div class="party-form-group">
+                                <label for="country">{{ __('db.Country') }}</label>
+                                <input type="text" id="country" name="country" value="{{ $lims_customer_data->country ?? 'India' }}" class="form-control" placeholder="Country">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOX 4: Credit Terms & Balances -->
+                <div class="party-section-box party-sec-credit">
+                    <div class="party-section-header">
+                        <i class="fa fa-money"></i> Credit Terms &amp; Accounts
+                    </div>
+                    <div class="party-section-content">
+                        <div class="party-fields-row">
+                            <div class="party-form-group">
+                                <label for="credit_limit">
+                                    {{ __('db.Credit Limit') }} ₹
+                                    <x-info title="0 or blank for unlimited credit" type="info" />
+                                </label>
+                                <input type="number" id="credit_limit" name="credit_limit" class="form-control" value="{{ $lims_customer_data->credit_limit }}" step="any" min="0">
+                            </div>
+                            @if(config('commercial.enabled'))
+                                <div class="party-form-group">
+                                    <label for="credit-days">Credit Days <span class="party-field-hint d-inline">(sets due date)</span></label>
+                                    <input id="credit-days" type="number" name="credit_days" class="form-control" min="0" max="3650" value="{{ $lims_customer_data->credit_days ?? 0 }}">
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Address')}}</label>
-                                    <input type="text" name="address" value="{{$lims_customer_data->address}}" class="form-control">
+                                <div class="party-form-group party-field-col-full">
+                                    <label for="search-alias">Search Alias <span class="party-field-hint d-inline">(quick keyword for voucher desks)</span></label>
+                                    <input id="search-alias" name="search_alias" class="form-control" maxlength="100" value="{{ $lims_customer_data->search_alias }}" placeholder="e.g. AG-BUYER, TIR-01">
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.City')}}</label>
-                                    <input type="text" name="city" value="{{$lims_customer_data->city}}" class="form-control">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.State')}}</label>
-                                    <input type="text" name="state" value="{{$lims_customer_data->state}}" class="form-control">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Postal Code')}}</label>
-                                    <input type="text" name="postal_code" value="{{$lims_customer_data->postal_code}}" class="form-control">
-                                </div>
-                            </div>
-                            @if(!$lims_customer_data->user_id)
-                            <div class="col-md-4 mt-3">
-                                <div class="form-group">
-                                    <label>{{__('db.Add User')}}</label>&nbsp;
-                                    <input type="checkbox" name="user" value="1" />
-                                </div>
-                            </div>
                             @endif
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Country')}}</label>
-                                    <input type="text" name="country" value="{{$lims_customer_data->country}}" class="form-control">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label>{{__('db.Credit Limit')}} <x-info title="Leave it blank for unlimited credit" type="info" /></label>
-                                    <input type="number" name="credit_limit" class="form-control" value="{{$lims_customer_data->credit_limit}}" step="any" min="0">
-                                    @if(config('commercial.enabled'))<label for="credit-days">Credit days</label><input id="credit-days" type="number" name="credit_days" class="form-control" min="0" max="3650" value="{{ $lims_customer_data->credit_days ?? 0 }}"><label for="search-alias">Search alias</label><input id="search-alias" name="search_alias" class="form-control" maxlength="100" value="{{ $lims_customer_data->search_alias }}">@endif
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOX 5: Custom Fields (if configured) -->
+                @if(count($custom_fields) > 0)
+                <div class="party-section-box party-sec-custom party-field-col-full">
+                    <div class="party-section-header">
+                        <i class="dripicons-view-thumb"></i> Custom Master Attributes
+                    </div>
+                    <div class="party-section-content">
+                        <div class="party-fields-row">
                             @foreach($custom_fields as $field)
-                                <?php $field_name = str_replace(' ', '_', strtolower($field->name)); ?>
+                                @php $field_name = str_replace(' ', '_', strtolower($field->name)); @endphp
                                 @if(!$field->is_admin || \Auth::user()->role_id == 1)
-                                    <div class="{{'col-md-'.$field->grid_value}}">
-                                        <div class="form-group">
-                                            <label>{{$field->name}}</label>
-                                            @if($field->type == 'text')
-                                                <input type="text" name="{{$field_name}}" value="{{$lims_customer_data->$field_name}}" class="form-control" @if($field->is_required){{'required'}}@endif>
-                                            @elseif($field->type == 'number')
-                                                <input type="number" name="{{$field_name}}" value="{{$lims_customer_data->$field_name}}" class="form-control" @if($field->is_required){{'required'}}@endif>
-                                            @elseif($field->type == 'textarea')
-                                                <textarea rows="5" name="{{$field_name}}" value="{{$lims_customer_data->$field_name}}" class="form-control" @if($field->is_required){{'required'}}@endif></textarea>
-                                            @elseif($field->type == 'checkbox')
-                                                <br>
-                                                <?php
+                                    <div class="party-form-group {{ $field->grid_value > 6 ? 'party-field-col-full' : '' }}">
+                                        <label>{{ $field->name }} @if($field->is_required)<span class="req">*</span>@endif</label>
+                                        @if($field->type == 'text')
+                                            <input type="text" name="{{ $field_name }}" value="{{ $lims_customer_data->$field_name }}" class="form-control" @if($field->is_required) required @endif>
+                                        @elseif($field->type == 'number')
+                                            <input type="number" name="{{ $field_name }}" value="{{ $lims_customer_data->$field_name }}" class="form-control" @if($field->is_required) required @endif>
+                                        @elseif($field->type == 'textarea')
+                                            <textarea rows="3" name="{{ $field_name }}" class="form-control" @if($field->is_required) required @endif>{{ $lims_customer_data->$field_name }}</textarea>
+                                        @elseif($field->type == 'checkbox')
+                                            @php
                                                 $option_values = explode(",", $field->option_value);
-                                                $field_values =  explode(",", $lims_customer_data->$field_name);
-                                                ?>
+                                                $field_values = explode(",", (string) $lims_customer_data->$field_name);
+                                            @endphp
+                                            <div class="d-flex flex-wrap gap-2 pt-1">
                                                 @foreach($option_values as $value)
-                                                    <label>
-                                                        <input type="checkbox" name="{{$field_name}}[]" value="{{$value}}" @if(in_array($value, $field_values)) checked @endif @if($field->is_required){{'required'}}@endif> {{$value}}
+                                                    <label class="mr-3 font-weight-normal">
+                                                        <input type="checkbox" name="{{ $field_name }}[]" value="{{ $value }}" @if(in_array($value, $field_values)) checked @endif> {{ $value }}
                                                     </label>
-                                                    &nbsp;
                                                 @endforeach
-                                            @elseif($field->type == 'radio_button')
-                                                <br>
-                                                <?php 
-                                                $option_values = explode(",", $field->option_value);
-                                                ?>
+                                            </div>
+                                        @elseif($field->type == 'radio_button')
+                                            @php $option_values = explode(",", $field->option_value); @endphp
+                                            <div class="d-flex flex-wrap gap-2 pt-1">
                                                 @foreach($option_values as $value)
-                                                    <label class="radio-inline">
-                                                        <input type="radio" name="{{$field_name}}" value="{{$value}}" @if($value == $lims_customer_data->$field_name){{'checked'}}@endif @if($field->is_required){{'required'}}@endif> {{$value}}
+                                                    <label class="mr-3 font-weight-normal">
+                                                        <input type="radio" name="{{ $field_name }}" value="{{ $value }}" @if($value == $lims_customer_data->$field_name) checked @endif> {{ $value }}
                                                     </label>
-                                                    &nbsp;
                                                 @endforeach
-                                            @elseif($field->type == 'select')
-                                                <?php $option_values = explode(",", $field->option_value); ?>
-                                                <select class="form-control" name="{{$field_name}}" @if($field->is_required){{'required'}}@endif>
-                                                    @foreach($option_values as $value)
-                                                        <option value="{{$value}}" @if($value == $lims_customer_data->$field_name){{'selected'}}@endif>{{$value}}</option>
-                                                    @endforeach
-                                                </select>
-                                            @elseif($field->type == 'multi_select')
-                                                <?php
+                                            </div>
+                                        @elseif($field->type == 'select')
+                                            @php $option_values = explode(",", $field->option_value); @endphp
+                                            <select class="form-control selectpicker" name="{{ $field_name }}" @if($field->is_required) required @endif>
+                                                @foreach($option_values as $value)
+                                                    <option value="{{ $value }}" @selected($value == $lims_customer_data->$field_name)>{{ $value }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($field->type == 'multi_select')
+                                            @php
                                                 $option_values = explode(",", $field->option_value);
-                                                $field_values =  explode(",", $lims_customer_data->$field_name);
-                                                ?>
-                                                <select class="form-control" name="{{$field_name}}[]" @if($field->is_required){{'required'}}@endif multiple>
-                                                    @foreach($option_values as $value)
-                                                        <option value="{{$value}}" @if(in_array($value, $field_values)) selected @endif>{{$value}}</option>
-                                                    @endforeach
-                                                </select>
-                                            @elseif($field->type == 'date_picker')
-                                                <input type="text" name="{{$field_name}}" value="{{$lims_customer_data->$field_name}}" class="form-control date" @if($field->is_required){{'required'}}@endif>
-                                            @endif
-                                        </div>
+                                                $field_values = explode(",", (string) $lims_customer_data->$field_name);
+                                            @endphp
+                                            <select class="form-control selectpicker" name="{{ $field_name }}[]" @if($field->is_required) required @endif multiple>
+                                                @foreach($option_values as $value)
+                                                    <option value="{{ $value }}" @selected(in_array($value, $field_values))>{{ $value }}</option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($field->type == 'date_picker')
+                                            <input type="text" name="{{ $field_name }}" value="{{ $lims_customer_data->$field_name }}" class="form-control date" @if($field->is_required) required @endif>
+                                        @endif
                                     </div>
                                 @endif
                             @endforeach
-                            <div class="col-md-4 user-input">
-                                <div class="form-group">
-                                    <label>{{__('db.UserName')}} *</label>
-                                    <input type="text" name="name" class="form-control">
-                                    @if($errors->has('name'))
-                                   <span>
-                                       <strong>{{ $errors->first('name') }}</strong>
-                                    </span>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="col-md-4 user-input">
-                                <div class="form-group">
-                                    <label>{{__('db.Password')}} *</label>
-                                    <input type="password" name="password" class="form-control">
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="form-group mt-3">
-                                    <input type="submit" value="{{__('db.submit')}}" class="btn btn-primary">
-                                </div>
-                            </div>
                         </div>
-                        {!! Form::close() !!}
                     </div>
                 </div>
+                @endif
+
+                <!-- BOX 6: Portal & User Access (if not created yet) -->
+                @if(!$lims_customer_data->user_id)
+                <div class="party-section-box party-sec-user party-field-col-full">
+                    <div class="party-section-header">
+                        <i class="dripicons-lock"></i> Portal &amp; Login Access
+                    </div>
+                    <div class="party-section-content">
+                        <div class="party-fields-row">
+                            <div class="party-form-group party-field-col-full">
+                                <label class="party-toggle-box">
+                                    <input type="checkbox" name="user" value="1" id="user-toggle">
+                                    <div>
+                                        <div class="party-toggle-label">{{ __('db.Add User') }}</div>
+                                        <div class="party-toggle-desc">Enable portal login credentials for this customer to view invoices &amp; statements</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="party-form-group user-input" style="display:none;">
+                                <label for="username">{{ __('db.UserName') }} <span class="req">*</span></label>
+                                <input type="text" id="username" name="name" class="form-control" placeholder="Customer username">
+                                @if($errors->has('name'))
+                                    <small class="text-danger">{{ $errors->first('name') }}</small>
+                                @endif
+                            </div>
+                            <div class="party-form-group user-input" style="display:none;">
+                                <label for="password">{{ __('db.Password') }} <span class="req">*</span></label>
+                                <input type="password" id="password" name="password" class="form-control" placeholder="Portal password">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
+
+            <!-- Bottom Actions -->
+            <div class="party-form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="dripicons-checkmark"></i> {{ __('db.submit') }}
+                </button>
+                <a href="{{ route('customer.index') }}" class="btn btn-outline-secondary">
+                    {{ __('db.Cancel') }}
+                </a>
+                <span class="party-shortcut-hint">* required fields · Enter or Tab moves to next field</span>
+            </div>
+            {!! Form::close() !!}
         </div>
     </div>
-</section>
-
+</div>
 
 @endsection
 
@@ -230,48 +299,46 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
 <script>
     const input = document.querySelector("#wa_number");
-    window.intlTelInput(input, {
-        initialCountry: "auto",
-        geoIpLookup: function (callback) {
-        fetch("https://ipapi.co/json")
-            .then((res) => res.json())
-            .then((data) => callback(data.country_code))
-            .catch(() => callback("us"));
-        },
-        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
-    });
+    if (input) {
+        window.intlTelInput(input, {
+            initialCountry: "in",
+            geoIpLookup: function (callback) {
+                fetch("https://ipapi.co/json")
+                    .then((res) => res.json())
+                    .then((data) => callback(data.country_code))
+                    .catch(() => callback("in"));
+            },
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+        });
 
-    $("#customer_form").submit(function(e) {
-        e.preventDefault();
-        var iti = window.intlTelInputGlobals.getInstance(input);
-        var full_number = iti.getNumber();
-        $('#full_phone').val(full_number);
-        $(this).off('submit').submit();
-    });
+        $("#customer_form").submit(function(e) {
+            e.preventDefault();
+            var iti = window.intlTelInputGlobals.getInstance(input);
+            if (iti) {
+                var full_number = iti.getNumber();
+                $('#full_phone').val(full_number);
+            }
+            $(this).off('submit').submit();
+        });
+    }
 </script>
 
 <script type="text/javascript">
+    $("ul#parties").siblings('a').attr('aria-expanded','true');
+    $("ul#parties").addClass("show");
+    $("ul#parties #customer-list-menu").addClass("active");
 
-    $("ul#people").siblings('a').attr('aria-expanded','true');
-    $("ul#people").addClass("show");
-
-    $(".user-input").hide();
-
-    $('input[name="user"]').on('change', function() {
+    $('#user-toggle').on('change', function() {
         if ($(this).is(':checked')) {
-            $('.user-input').show(300);
-            $('input[name="name"]').prop('required',true);
-            $('input[name="password"]').prop('required',true);
-        }
-        else{
-            $('.user-input').hide(300);
-            $('input[name="name"]').prop('required',false);
-            $('input[name="password"]').prop('required',false);
+            $('.user-input').show(200);
+            $('input[name="name"]').prop('required', true);
+            $('input[name="password"]').prop('required', true);
+        } else {
+            $('.user-input').hide(200);
+            $('input[name="name"]').prop('required', false);
+            $('input[name="password"]').prop('required', false);
         }
     });
-
-    var customer_group = $("input[name='customer_group']").val();
-    $('select[name=customer_group_id]').val(customer_group);
 </script>
 @include('backend.partials.gstin-autofill', ['gstinField' => 'tax_no', 'nameField' => 'customer_name'])
 @endpush

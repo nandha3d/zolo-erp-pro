@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/operations.php';
+require __DIR__ . '/operations.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -92,11 +92,11 @@ use App\Http\Controllers\SaleAgentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WhatsappController;
 
-require __DIR__.'/commercial.php';
-require __DIR__.'/orders.php';
-require __DIR__.'/inventory-reports.php';
-require __DIR__.'/product-aliases.php';
-require __DIR__.'/compliance.php';
+require __DIR__ . '/commercial.php';
+require __DIR__ . '/orders.php';
+require __DIR__ . '/inventory-reports.php';
+require __DIR__ . '/product-aliases.php';
+require __DIR__ . '/compliance.php';
 
 Route::get('webview/auth', WebviewAuthController::class)->name('webview.auth');
 
@@ -140,9 +140,11 @@ if (!$isInstalled) {
 
     // Jika user mengakses halaman lain (bukan installer), redirect ke installer
     Route::get('/', function () {
-        return redirect()->route('install-step-1'); });
+        return redirect()->route('install-step-1');
+    });
     Route::get('/dashboard', function () {
-        return redirect()->route('install-step-1'); });
+        return redirect()->route('install-step-1');
+    });
     // Note: Kita tidak me-redirect semua route (*) untuk menghindari conflict dengan asset/static files
 } else {
     // Jika sudah terinstall, disable installer routes
@@ -1012,4 +1014,4 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
 
 });
 
-require __DIR__.'/product-imports.php';
+require __DIR__ . '/product-imports.php';

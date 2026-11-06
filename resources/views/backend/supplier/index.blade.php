@@ -5,28 +5,26 @@
 <x-error-message key="not_permitted" />
 
 <!-- Top Command Bar -->
-<div class="comm-command-bar">
-    <div class="comm-title-group">
-        <h1><i class="dripicons-user text-primary"></i> {{ __('db.Supplier') }} Command Center</h1>
-        <span class="comm-title-badge"><i class="dripicons-card"></i> Vendor Master Directory &amp; Accounts</span>
-    </div>
-    <ul class="comm-nav-pills">
-        <li><a class="nav-link active" href="{{ route('supplier.index') }}"><i class="dripicons-list"></i> All Suppliers</a></li>
-        <li><a class="nav-link" href="{{ route('purchases.index') }}"><i class="dripicons-card"></i> Purchase Bills</a></li>
-        <li><a class="nav-link" href="{{ route('purchases.index', ['view' => 'orders', 'purchase_status' => 4]) }}"><i class="dripicons-clipboard"></i> Purchase Orders</a></li>
-        <li><a class="nav-link" href="{{ route('purchases.index', ['returns' => 1]) }}"><i class="dripicons-return"></i> Returns</a></li>
-    </ul>
-    <div class="comm-actions">
-        @can('suppliers-add')
-            <a href="{{route('supplier.create')}}" class="btn btn-primary py-1 px-3 u-bg-primary u-bc-primary u-fs-11_5px u-r-4px">
-                <i class="dripicons-plus"></i> {{__('db.Add Supplier')}}
-            </a>
-        @endcan
-        @can('suppliers-import')
-            <a href="#" data-toggle="modal" data-target="#importSupplier" class="btn btn-outline-secondary py-1 px-3 u-fs-11_5px u-r-4px">
-                <i class="dripicons-upload"></i> {{__('db.Import Supplier')}}
-            </a>
-        @endcan
+<x-party-command-bar active="suppliers" title="{{ __('db.Supplier') }} Command Center" badge="Vendor Master Directory &amp; Accounts">
+    @can('suppliers-add')
+        <a href="{{route('supplier.create')}}" class="btn btn-primary">
+            <i class="dripicons-plus"></i> {{__('db.Add Supplier')}}
+        </a>
+    @endcan
+    @can('suppliers-import')
+        <a href="#" data-toggle="modal" data-target="#importSupplier" class="btn btn-outline-secondary">
+            <i class="dripicons-upload"></i> {{__('db.Import Supplier')}}
+        </a>
+    @endcan
+</x-party-command-bar>
+
+<div class="party-context-subnav d-flex align-items-center justify-content-between px-3 py-1 mb-2">
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small font-weight-bold text-uppercase"><i class="dripicons-link mr-1"></i> Procurement Links:</span>
+        <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-card mr-1"></i> Purchase Bills</a>
+        <a href="{{ route('purchases.index', ['view' => 'orders', 'purchase_status' => 4]) }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-clipboard mr-1"></i> Purchase Orders</a>
+        <a href="{{ route('purchases.index', ['returns' => 1]) }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-return mr-1"></i> Returns</a>
+        <a href="{{ route('report.outstandingDues', ['type' => 'payables']) }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-pulse mr-1"></i> Payables Audit</a>
     </div>
 </div>
 
@@ -299,9 +297,9 @@
 
 @push('scripts')
 <script type="text/javascript">
-    $("ul#people").siblings('a').attr('aria-expanded','true');
-    $("ul#people").addClass("show");
-    $("ul#people #supplier-list-menu").addClass("active");
+    $("ul#parties").siblings('a').attr('aria-expanded','true');
+    $("ul#parties").addClass("show");
+    $("ul#parties #supplier-list-menu").addClass("active");
 
     var all_permission = <?php echo json_encode($all_permission) ?>;
     var supplier_id = [];
