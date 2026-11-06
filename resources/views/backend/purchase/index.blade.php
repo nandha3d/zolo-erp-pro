@@ -1533,7 +1533,7 @@
         $form.find('#add-payment-supplier-name').text(party || 'Supplier');
         $form.find('#add-payment-purchase-due-val').text('₹' + due.toLocaleString('en-IN', {minimumFractionDigits: 2}));
         var dueUrl = "{{ route('dues.index', ['tab' => 'purchases']) }}";
-        if (ref) dueUrl += '?search=' + encodeURIComponent(ref);
+        if (ref) dueUrl += '&search=' + encodeURIComponent(ref);
         $form.find('#modal-goto-due-page-btn-purchase').attr('href', dueUrl);
         $('#currency_id').val($(this).data('currency_id')); $('#exchange_rate').val(parseFloat($(this).data('exchange_rate')) || 1);
     });
@@ -3579,6 +3579,20 @@
     // Only a register link opens the full-width list.
     if (@json(request('view') === 'orders') && !fromGrnId && !fromQuotationId) {
         switchWorkspaceMode('register');
+    }
+
+    // --- Auto filter by search / ref if present in query params ---
+    var searchParam = (urlParams.get('search') || urlParams.get('ref') || '').trim();
+    if (searchParam) {
+        $('#side-search-input').val(searchParam);
+        filterSideBills();
+        var $exactCard = $('.side-bill-card').filter(function() {
+            var ref = String($(this).data('reference') || '').toLowerCase();
+            return ref === searchParam.toLowerCase();
+        }).first();
+        if ($exactCard.length) {
+            $exactCard.trigger('click');
+        }
     }
 
     initPanelState();

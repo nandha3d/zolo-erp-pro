@@ -32,6 +32,7 @@ class DueManagementController extends Controller
 
         $search = trim((string) $request->input('search', ''));
         $partyId = $request->filled('party_id') ? (int) $request->party_id : null;
+        $billId = $request->filled('bill_id') ? (int) $request->bill_id : ($request->filled('bill') ? (int) $request->bill : null);
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $warehouseId = $request->filled('warehouse_id') ? (int) $request->warehouse_id : null;
@@ -59,6 +60,9 @@ class DueManagementController extends Controller
                 ->whereNull('reversed_at')
                 ->whereRaw('grand_total > paid_amount + 0.009');
 
+            if ($billId) {
+                $query->where('id', $billId);
+            }
             if ($partyId) {
                 $query->where('customer_id', $partyId);
             }
@@ -78,6 +82,9 @@ class DueManagementController extends Controller
                           $cq->where('name', 'like', "%{$search}%")
                              ->orWhere('phone_number', 'like', "%{$search}%");
                       });
+                    if (is_numeric($search)) {
+                        $q->orWhere('id', (int) $search);
+                    }
                 });
             }
 
@@ -140,6 +147,9 @@ class DueManagementController extends Controller
                 ->whereNull('reversed_at')
                 ->whereRaw('grand_total > paid_amount + 0.009');
 
+            if ($billId) {
+                $query->where('id', $billId);
+            }
             if ($partyId) {
                 $query->where('supplier_id', $partyId);
             }
@@ -160,6 +170,9 @@ class DueManagementController extends Controller
                           $sq->where('name', 'like', "%{$search}%")
                              ->orWhere('phone_number', 'like', "%{$search}%");
                       });
+                    if (is_numeric($search)) {
+                        $q->orWhere('id', (int) $search);
+                    }
                 });
             }
 
@@ -221,6 +234,9 @@ class DueManagementController extends Controller
                 ->with(['expenseCategory', 'warehouse'])
                 ->whereNull('account_id');
 
+            if ($billId) {
+                $query->where('id', $billId);
+            }
             if ($startDate) {
                 $query->whereDate('created_at', '>=', $startDate);
             }
@@ -234,6 +250,9 @@ class DueManagementController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('reference_no', 'like', "%{$search}%")
                       ->orWhere('note', 'like', "%{$search}%");
+                    if (is_numeric($search)) {
+                        $q->orWhere('id', (int) $search);
+                    }
                 });
             }
 

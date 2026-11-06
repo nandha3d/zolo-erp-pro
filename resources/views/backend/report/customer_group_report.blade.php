@@ -19,10 +19,10 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Segmented Tier &amp; Cohort Trading Ledger</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="{{ url('report/customer_group') }}"><i class="dripicons-network"></i> Customer Group</a></li>
-            <li><a class="nav-link" href="{{ url('report/customer_report') }}"><i class="dripicons-user-group"></i> Customer Report</a></li>
+            <li><a class="nav-link active" href="{{ route('report.customer_group') }}"><i class="dripicons-network"></i> Customer Group</a></li>
+            <li><a class="nav-link" href="{{ route('report.customer') }}"><i class="dripicons-user-group"></i> Customer Report</a></li>
             <li><a class="nav-link" href="{{ route('report.customerDueByDate') }}"><i class="dripicons-warning"></i> Customer Due</a></li>
-            <li><a class="nav-link" href="{{ url('report/sale_report') }}"><i class="dripicons-cart"></i> Sales</a></li>
+            <li><a class="nav-link" href="{{ route('report.sale') }}"><i class="dripicons-cart"></i> Sales</a></li>
             <li><a class="nav-link" href="{{ route('report.paymentByDate') }}"><i class="dripicons-wallet"></i> Payments</a></li>
         </ul>
         <div class="comm-actions">

@@ -21,9 +21,15 @@
         <h1><i class="dripicons-store text-primary"></i> @yield('title', 'Trade')</h1>
         <span class="comm-title-badge"><i class="dripicons-network-3"></i> Agents, routes and job work for customers</span>
     </div>
+    @php
+        $navAccess = app(\App\Services\Platform\NavigationAccess::class);
+        $canRouteSheet = config('commercial.enabled') && $navAccess->has('sales.route_distribution') && $navAccess->allows('sales-index');
+    @endphp
     <ul class="comm-nav-pills">
         <li><a class="nav-link {{ request()->is('*trade/brokerage*') ? 'active' : '' }}" href="{{ url('/trade/brokerage') }}"><i class="dripicons-user-group"></i> Brokerage</a></li>
-        <li><a class="nav-link {{ request()->is('*trade/routes*') ? 'active' : '' }}" href="{{ url('/trade/routes') }}"><i class="dripicons-map"></i> Route sheet</a></li>
+        @if($canRouteSheet)
+            <li><a class="nav-link {{ request()->is('*trade/routes*') ? 'active' : '' }}" href="{{ url('/trade/routes') }}"><i class="dripicons-map"></i> Route sheet</a></li>
+        @endif
         <li><a class="nav-link {{ request()->is('*trade/customer-jobs*') ? 'active' : '' }}" href="{{ url('/trade/customer-jobs') }}"><i class="dripicons-swap"></i> Job work for customers</a></li>
     </ul>
 </div>

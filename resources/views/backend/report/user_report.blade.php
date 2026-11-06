@@ -19,10 +19,10 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Multi-Disciplinary Staff Audit</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="{{ url('report/user_report') }}"><i class="dripicons-user"></i> User Report</a></li>
-            <li><a class="nav-link" href="{{ url('report/customer_report') }}"><i class="dripicons-user-group"></i> Customers</a></li>
-            <li><a class="nav-link" href="{{ url('report/supplier') }}"><i class="dripicons-user-id"></i> Suppliers</a></li>
-            <li><a class="nav-link" href="{{ url('report/biller') }}"><i class="dripicons-briefcase"></i> Billers</a></li>
+            <li><a class="nav-link active" href="{{ route('report.user') }}"><i class="dripicons-user"></i> User Report</a></li>
+            <li><a class="nav-link" href="{{ route('report.customer') }}"><i class="dripicons-user-group"></i> Customers</a></li>
+            <li><a class="nav-link" href="{{ route('report.supplier') }}"><i class="dripicons-user-id"></i> Suppliers</a></li>
+            <li><a class="nav-link" href="{{ route('report.biller') }}"><i class="dripicons-briefcase"></i> Billers</a></li>
             <li><a class="nav-link" href="{{ route('report.paymentByDate') }}"><i class="dripicons-wallet"></i> Payments</a></li>
         </ul>
         <div class="comm-actions">

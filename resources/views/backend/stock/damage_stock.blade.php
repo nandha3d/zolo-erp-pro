@@ -8,60 +8,52 @@
     </div>
 @endif
 
-<x-inventory-command-bar active="corrections" view="damage"></x-inventory-command-bar>
-<section class="forms">
-    <div class="container-fluid">
-        <div class="row align-items-center mb-4">
-            <div class="col-md-6">
-                <h3 class="font-weight-bold text-dark m-0">Damage Stock Management</h3>
-                <p class="text-muted small m-0">Log, track and account for inventory damages, spoilage and write-offs.</p>
-            </div>
-            <div class="col-md-6 text-right">
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createDamageModal">
-                    <i class="dripicons-plus"></i> + Add Damage Stock
-                </button>
-            </div>
-        </div>
+<x-inventory-command-bar active="corrections" view="damage">
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createDamageModal">
+        <i class="dripicons-plus"></i> + Add Damage Stock
+    </button>
+</x-inventory-command-bar>
 
-        <div class="card border-0 shadow-sm rounded-lg">
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="damage-table">
-                        <thead class="bg-light text-muted uppercase small">
-                            <tr>
-                                <th>Date</th>
-                                <th>Reference</th>
-                                <th>Warehouse</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Unit Cost</th>
-                                <th>Total Loss Value</th>
-                                <th>Reason</th>
-                                <th>Recorded By</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($damageStocks as $item)
-                                <tr>
-                                    <td>{{ $item->created_at->format('Y-m-d H:i') }}</td>
-                                    <td><span class="badge badge-secondary px-2 py-1 font-mono">{{ $item->reference_no }}</span></td>
-                                    <td>{{ $item->warehouse->name ?? 'N/A' }}</td>
-                                    <td><strong>{{ $item->product->name ?? 'N/A' }}</strong></td>
-                                    <td><span class="text-danger font-weight-bold">-{{ number_format($item->qty, 2) }}</span></td>
-                                    <td>{{ number_format($item->unit_cost, 2) }}</td>
-                                    <td><span class="text-danger font-weight-bold">{{ number_format($item->total_loss, 2) }}</span></td>
-                                    <td><span class="badge badge-warning px-2 py-1">{{ $item->reason }}</span></td>
-                                    <td>{{ $item->user->name ?? 'System' }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">No damaged stock records found. Click "+ Add Damage Stock" to log damaged or expired items.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<section class="product-workspace-view damage-stock-workspace">
+    <div class="desk-card-wrapper">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="damage-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Reference</th>
+                        <th>Warehouse</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Cost</th>
+                        <th>Total Loss Value</th>
+                        <th>Reason</th>
+                        <th>Recorded By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($damageStocks as $item)
+                        <tr>
+                            <td>{{ $item->created_at->format('Y-m-d H:i') }}</td>
+                            <td><span class="badge badge-secondary px-2 py-1 font-mono">{{ $item->reference_no }}</span></td>
+                            <td>{{ $item->warehouse->name ?? 'N/A' }}</td>
+                            <td><strong>{{ $item->product->name ?? 'N/A' }}</strong></td>
+                            <td><span class="text-danger font-weight-bold">-{{ number_format($item->qty, 2) }}</span></td>
+                            <td>{{ number_format($item->unit_cost, 2) }}</td>
+                            <td><span class="text-danger font-weight-bold">{{ number_format($item->total_loss, 2) }}</span></td>
+                            <td><span class="badge badge-warning px-2 py-1">{{ $item->reason }}</span></td>
+                            <td>{{ $item->user->name ?? 'System' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">No damaged stock records found. Click "+ Add Damage Stock" to log damaged or expired items.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2">
+            {{ $damageStocks->links() }}
         </div>
     </div>
 </section>
@@ -120,7 +112,7 @@
                         <textarea name="note" class="form-control" rows="2" placeholder="Optional details regarding the loss incident"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer border-0 p-3 bg-light">
+                <div class="modal-footer border-0 p-3">
                     <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger px-4 font-weight-bold">Confirm Write-Off</button>
                 </div>

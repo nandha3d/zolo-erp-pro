@@ -887,7 +887,7 @@ body.dark-mode .btn-voucher-print:hover {
         </div>
 
         <div class="d-flex align-items-center">
-            <a href="{{ route('report.outstandingDues', ['type' => $tab === 'purchases' ? 'payables' : 'receivables']) }}" class="btn-report-link" title="Open Printable Audit Report">
+            <a href="{{ route('report.outstandingDues', ['type' => $tab === 'purchases' ? 'payables' : ($tab === 'expenses' ? 'expenses' : 'receivables')]) }}" class="btn-report-link" title="Open Printable Audit Report">
                 <i class="dripicons-document"></i>
                 <span>Outstanding Dues Report</span>
             </a>

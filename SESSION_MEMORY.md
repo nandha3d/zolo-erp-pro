@@ -1,5 +1,78 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-06: Navigation Link Audit Resolution — Route 404/405 Fixes, Filter Context Retention, Bill Payment Redirects & Addon Leak Hardening (branch ui)
+
+- **Audit Resolution & Bug Fixes (`documents/auditing/navigation-link-audit-2026-11-06.csv`):**
+  - Addressed client request: *"can you use the file, to check and solve all the link mismatched and other bugs too. And give me a file to check how each link you fixed"*.
+  - Resolved all 26 defects identified across 4 categories:
+    1. **Missing Routes (404s) & Method Not Allowed (405s):**
+       - Upgraded `report.customer` (`/report/customer_report`), `report.customer_group` (`/report/customer-group`), and `report.supplier` (`/report/supplier`) to accept `GET|POST|HEAD` via `Route::match(['get', 'post'], ...)`.
+       - Registered route aliases for views that use alternative URL patterns: `/report/biller`, `/report/customer_group`, `/report/daily_sale_objective`, `/report/purchase_report`, `/report/qty_alert_report`, `/report/sale_report_chart`, and `/report/supplier_report`.
+       - Updated all Blade templates (`biller_report`, `user_report`, `customer_group_report`, `daily_sale`, `monthly_purchase`, `warehouse_stock`, `sale_report_chart`) to invoke canonical `route(...)` helpers.
+    2. **Context & Filter Mismatch Fixes:**
+       - **Due Clearance Retention:** In `resources/views/backend/report/outstanding_dues.blade.php`, updated Due Clearance Hub button to retain `party_id` when customer or supplier is filtered (`/transactions/dues?tab=sales&party_id=56` and `/transactions/dues?tab=purchases&party_id=69`).
+       - **Ageing Ledger Retention:** Ageing button now passes `['party_type' => 'customer', 'party_id' => 56]` and `['party_type' => 'supplier', 'party_id' => 69]`.
+       - **Voucher Direct Link:** Reference numbers in Outstanding Dues table link directly to `route('sales.index', ['search' => $r->reference_no])` and `route('purchases.index', ['search' => $r->reference_no])`.
+       - **Desk Auto-Selection:** In `sale/index.blade.php` and `purchase/index.blade.php`, checks URL `search` / `ref` parameters to auto-populate `#side-search-input`, filter side bills, and select the matching bill card.
+       - **Expense Dues Context:** In `dues/index.blade.php`, updated Outstanding Dues Report link on the Expenses tab to point to `route('report.outstandingDues', ['type' => 'expenses'])`. Enhanced `ReportController::outstandingDuesReport` and `outstanding_dues.blade.php` to natively support `$type === 'expenses'` with an "Other Dues (Expenses)" theme pill and KPIs.
+    3. **Bill Payment Redirect & Search Hardening:**
+       - Fixed double question-mark URL syntax bug in `#modal-goto-due-page-btn` on both sales and purchase voucher desks.
+       - In `BillPaymentController::index`, resolves target bill's `reference_no` from primary key `bill={id}` so the browser redirect carries both `search={ref}` and `bill_id={id}`.
+       - In `DueManagementController::index`, added numeric search fallback matching `id` in addition to reference number search.
+    4. **Disabled Module & Retired Link Hardening:**
+       - Removed retired `/backup` route from `SettingsCatalog::sections()`, eliminating broken link from 297 source pages.
+       - In `resources/views/backend/addonlist.blade.php`, wrapped `Open Module →` in `@if($isActive && Route::has($addon['route']))`; rendered disabled "Enable to Open" indicator when inactive.
+       - In `resources/views/backend/compliance/layout.blade.php`, wrapped "Route sheet" link in capability check `sales.route_distribution`, matching `sidebar.blade.php`.
+  - **Resolution Documentation Created:**
+    - Saved comprehensive report to [`documents/auditing/navigation-link-fixes-2026-11-06.md`](file:///v:/pers/Freelance/zolo-erp-pro/documents/auditing/navigation-link-fixes-2026-11-06.md).
+  - **Verification & Test Coverage:**
+    - Created `tests/Feature/NavigationAuditResolutionTest.php` passing 6/6 tests (93 assertions).
+    - `tests/Feature/OutstandingDuesAndGstTypeTest.php`: 8/8 passed (29 assertions).
+    - `tests/Feature/CentralizedDueManagementTest.php`: 7/7 passed (37 assertions).
+    - `tests/Feature/CompanyGroupInsightTest.php`: 3/3 passed (37 assertions).
+
+## Active Session & Follow-up — 2026-11-06: Inventory Global UI & Dark Mode Standardization across Stock, Corrections & Transfers (branch ui)
+
+- **Problem Addressed:**
+  - Client raised: *"is the stock respect the global ui? it does not seems to check entire section and update"* with screenshot `http://localhost:8080/inventory-reports/stock-by-lot`.
+  - Diagnosis: In the Inventory section, `/inventory-reports/stock-by-lot` bundled filters and table into a custom `.lot-card` with hardcoded `#fff` background and zero dark-mode token support for inputs, text, zebra rows, borders, or pagination. Furthermore, other inventory views (Stock Corrections: Physical Count, Manual Adjustments, Damage Audit; and Transfers: Register) either lacked `.desk-card-wrapper` / `.desk-filter-card` wrappers or used raw unstyled Bootstrap cards (`bg-light` headers/footers) that broke theme immersion.
+- **Key Enhancements Implemented:**
+  1. **Stock by Lot (`resources/views/backend/reports/stock-by-lot.blade.php` & `public/css/pages/reports-stock-by-lot.css`):**
+     - Separated filter controls into a dedicated `.desk-filter-card` with clean typography, compact form controls, date pickers, and branded theme buttons (`Apply` theme purple, `Export all` outline).
+     - Wrapped the report table inside `.desk-card-wrapper lot-card` with sticky table headers (`var(--z-table-head-bg)`), full zebra striping, hover highlights, subtle borders, and styled `.lot-note` info banner.
+     - Implemented complete `body.dark-mode` styling: dark card backgrounds (`#141c2e`), borders (`#334155`), inputs (`#0b0f19`), zebra rows (`#111827` / `#141c2e`), cell text (`#e2e8f0` / `#f8fafc`), and pagination controls.
+  2. **Physical Count (`resources/views/backend/stock_count/index.blade.php`):**
+     - Wrapped `#stock-count-table` inside `.desk-card-wrapper` to align height, flex container, and theme borders with ERP standards.
+     - Upgraded action button in `<x-inventory-command-bar>` from unbranded `btn-info` to theme primary `btn-primary`.
+  3. **Manual Adjustments (`resources/views/backend/adjustment/index.blade.php`):**
+     - Wrapped `#adjustment-table` inside `.desk-card-wrapper`.
+     - Standardized `<x-inventory-command-bar>` action button with theme primary styling.
+  4. **Damage Audit (`resources/views/backend/stock/damage_stock.blade.php`):**
+     - Moved `+ Add Damage Stock` action button into `<x-inventory-command-bar active="corrections" view="damage">`.
+     - Replaced duplicate page heading and raw `.forms .card` with `.product-workspace-view damage-stock-workspace` and `.desk-card-wrapper`.
+     - Replaced `thead.bg-light` with standard sticky dark thead (`var(--z-table-head-bg)`).
+     - Added pagination links (`{{ $damageStocks->links() }}`).
+     - Modernized modal `#createDamageModal` with dark mode support.
+  5. **Transfer Register (`resources/views/backend/transfer/index.blade.php`):**
+     - Added `.desk-filter-card` to `#transfer-filters` and wrapped `#transfer-table` inside `.desk-card-wrapper`.
+  6. **Shared Inventory Workspace CSS (`public/css/pages/inventory-workspace.css`):**
+     - Implemented unified dark mode rules for command bar, sub-nav links (`.inventory-context-links a.active`), filters, tables, DataTables controls, and modals across all Inventory views.
+- **Verification:**
+  - In-memory view renderer verified all 5 inventory views render successfully with 0 errors.
+  - Contract assertions passed for all 5 screens (filter IDs, desk-card-wrappers, table structures, command bar links).
+  - All 26 JavaScript unit tests passed (`node --test tests/JavaScript/*.cjs`).
+  - Whitespace and syntax checks clean (`git diff --check`).
+
+
+
+## Navigation link audit — 2026-11-06 (branch ui)
+
+- Audited rendered internal navigation using the Admin role in zoloERP Textiles (company 14). A loopback harness used read-only MySQL transactions, with a rollback-only exception to verify the stock report that takes a read lock. No business records or application code were changed.
+- Checked 692 unique GET URLs, including all 128 distinct rendered sidebar targets. Results: 668 HTTP 200, seven redirects, seven disabled-module 403s, seven 404s, two 405s, and one retired backup link returning 410. Checked three report filter POSTs separately to inspect links rendered after filtering. External links, state-changing actions, and other roles or company configurations were outside this run.
+- Chrome verified customer #56 opens Receivables with that customer selected, supplier #69 opens Payables with that supplier selected, and both highlight Reports > Outstanding Dues. The two bill-reference links open unfiltered registers, both Due Clearance links drop the party filter, Ageing drops the customer and switches Payables to Customers, and the Expenses audit link opens Receivables. The legacy Add payment redirects turn bill IDs 138 and 72 into text searches, and neither search returns the selected bill.
+- Report link failures: Sale Objectives, Sales Chart, Procurement Report, Supplier Report shortcut, Qty Alerts, Biller Report, and Customer Group return 404. The Customers and Suppliers links to POST-only reports return 405. Six Add-ons links and the Route sheet shortcut point to capabilities disabled in this company.
+- Verification: 19 Chrome checks (12 passed, seven navigation defects reproduced), plus two failing bill-context redirect probes. Existing targeted Laravel tests recorded 17 passes and three settlement fixture skips. The full destination inventory and browser outcomes are in scratch/navigation-link-audit-2026-11-06.csv.
+
 
 ## Active Session & Follow-up — 2026-11-06: Outstanding Dues Theme Nav Buttons, Parties Action Menu Links, In-Window Payment Modal & Legacy Module Redirect (branch ui)
 

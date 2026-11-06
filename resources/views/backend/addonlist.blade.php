@@ -76,10 +76,14 @@
                                     <small class="text-muted"><i class="dripicons-lock mr-1"></i>ERP Synced</small>
                                 </div>
                                 <div>
-                                    @if(Route::has($addon['route']))
-                                        <a href="{{ route($addon['route']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    @if($isActive && Route::has($addon['route']))
+                                        <a href="{{ route($addon['route']) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 module-open-btn-{{ $addon['key'] }}">
                                             Open Module &rarr;
                                         </a>
+                                    @elseif(Route::has($addon['route']))
+                                        <span class="btn btn-light btn-sm text-muted rounded-pill px-3 module-open-btn-{{ $addon['key'] }}" title="Enable addon above to access module">
+                                            Enable to Open
+                                        </span>
                                     @else
                                         <span class="btn btn-light btn-sm text-muted rounded-pill px-3">Installed</span>
                                     @endif

@@ -14,37 +14,39 @@
 @endphp
 <x-inventory-command-bar active="stock" view="balances"></x-inventory-command-bar>
 <section id="stock-lot-report" class="product-workspace-view">
-<div class="lot-card">
-    <form class="lot-filters" method="get">
-        <div><label for="lot-group">Stock view</label><select id="lot-group" name="group_by" class="form-control"><option value="product" @selected(($filters['group_by'] ?? 'product') === 'product')>Combined by product</option><option value="lot" @selected(($filters['group_by'] ?? '') === 'lot')>Individual lots</option></select></div>
-        <div><label for="lot-from">From</label><input id="lot-from" type="date" name="from" class="form-control f-date" value="{{ $filters['from'] }}" required></div>
-        <div><label for="lot-to">To</label><input id="lot-to" type="date" name="to" class="form-control f-date" value="{{ $filters['to'] }}" required></div>
-        <div><label for="lot-product">Product</label><select id="lot-product" name="product_id" class="form-control f-pick"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected(($filters['product_id'] ?? '') == $product->id)>{{ $product->name }}</option>@endforeach</select></div>
-        <div><label for="lot-warehouse">Warehouse / Godown</label><select id="lot-warehouse" name="warehouse_id" class="form-control f-pick"><option value="">All branch warehouses</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected(($filters['warehouse_id'] ?? '') == $warehouse->id)>{{ $warehouse->name }}</option>@endforeach</select></div>
-        <div><label for="lot-number">Lot (exact)</label><input id="lot-number" name="lot" maxlength="100" class="form-control f-pick" value="{{ $filters['lot'] ?? '' }}" placeholder="__unbatched__ for no lot"></div>
-        <div class="d-flex u-gap-6px"><button class="btn btn-primary">Apply</button><button name="export" value="csv" class="btn btn-outline-primary">Export all</button></div>
-    </form>
+    <div class="desk-filter-card">
+        <form class="lot-filters" method="get">
+            <div class="filter-field"><label for="lot-group">Stock view</label><select id="lot-group" name="group_by" class="form-control"><option value="product" @selected(($filters['group_by'] ?? 'product') === 'product')>Combined by product</option><option value="lot" @selected(($filters['group_by'] ?? '') === 'lot')>Individual lots</option></select></div>
+            <div class="filter-field"><label for="lot-from">From</label><input id="lot-from" type="date" name="from" class="form-control f-date" value="{{ $filters['from'] }}" required></div>
+            <div class="filter-field"><label for="lot-to">To</label><input id="lot-to" type="date" name="to" class="form-control f-date" value="{{ $filters['to'] }}" required></div>
+            <div class="filter-field"><label for="lot-product">Product</label><select id="lot-product" name="product_id" class="form-control f-pick"><option value="">All products</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected(($filters['product_id'] ?? '') == $product->id)>{{ $product->name }}</option>@endforeach</select></div>
+            <div class="filter-field"><label for="lot-warehouse">Warehouse / Godown</label><select id="lot-warehouse" name="warehouse_id" class="form-control f-pick"><option value="">All branch warehouses</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected(($filters['warehouse_id'] ?? '') == $warehouse->id)>{{ $warehouse->name }}</option>@endforeach</select></div>
+            <div class="filter-field"><label for="lot-number">Lot (exact)</label><input id="lot-number" name="lot" maxlength="100" class="form-control f-pick" value="{{ $filters['lot'] ?? '' }}" placeholder="__unbatched__ for no lot"></div>
+            <div class="filter-actions d-flex u-gap-6px"><button class="btn btn-primary">Apply</button><button name="export" value="csv" class="btn btn-outline-primary">Export all</button></div>
+        </form>
+    </div>
     @if($errors->any())<div class="alert alert-danger py-1 mb-2" role="alert">{{ $errors->first() }}</div>@endif
-    <p class="lot-note" title="Historical owned totals are unavailable. Owned now = warehouse now + customer custody now. GDNI is carried accrual value, not independent lot costing; inventory uses item weighted-average valuation.">
-        <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong> (no history). Quantities are in each product's base unit.
-    </p>
-    <div class="table-responsive"><table class="table table-sm">
-        <caption>
-            {{ $rows->total() }} rows
-            @if($oneGodown) · Godown: <strong>{{ $oneGodown }}</strong>@endif
-            @if($zero) · {{ implode(' and ', array_map(fn ($column) => $quantities[$column], $zero)) }} hidden (zero on every row)@endif
-        </caption>
-        <thead><tr><th>Product</th><th>Lot</th>@unless($oneGodown)<th>Warehouse / Godown</th>@endunless<th>Unit</th>@foreach($shown as $label)<th class="text-right">{{ $label }}</th>@endforeach</tr></thead>
-        <tbody>@forelse($rows as $row)<tr>
-            <td class="lot-product" title="{{ $row->product }} {{ $row->product_code }}">{{ $row->product }}<small>{{ $row->product_code }}</small>@foreach(($stockNameNotes[$row->product_id.'|'.$row->warehouse_id.'|'.$row->lot] ?? []) as $stockNote)<small class="lot-stock-link">{{ $stockNote }}</small>@endforeach</td>
-            <td>{{ $row->lot ?: 'Unbatched' }}</td>
-            @unless($oneGodown)<td>{{ $row->warehouse }}</td>@endunless
-            <td>{{ $row->base_unit }}</td>
-            @foreach(array_keys($shown) as $column)<td class="text-right">{{ $column === 'custody_value' ? number_format((float) $row->$column, 2) : $qty($row->$column) }}</td>@endforeach
-        </tr>@empty<tr><td colspan="{{ 4 + count($shown) }}">No stock movements or current customer custody match these filters.</td></tr>@endforelse</tbody>
-    </table></div>
-    {{ $rows->links() }}
-</div>
+    <div class="desk-card-wrapper lot-card">
+        <p class="lot-note" title="Historical owned totals are unavailable. Owned now = warehouse now + customer custody now. GDNI is carried accrual value, not independent lot costing; inventory uses item weighted-average valuation.">
+            <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong> (no history). Quantities are in each product's base unit.
+        </p>
+        <div class="table-responsive"><table class="table table-sm">
+            <caption>
+                {{ $rows->total() }} rows
+                @if($oneGodown) · Godown: <strong>{{ $oneGodown }}</strong>@endif
+                @if($zero) · {{ implode(' and ', array_map(fn ($column) => $quantities[$column], $zero)) }} hidden (zero on every row)@endif
+            </caption>
+            <thead><tr><th>Product</th><th>Lot</th>@unless($oneGodown)<th>Warehouse / Godown</th>@endunless<th>Unit</th>@foreach($shown as $label)<th class="text-right">{{ $label }}</th>@endforeach</tr></thead>
+            <tbody>@forelse($rows as $row)<tr>
+                <td class="lot-product" title="{{ $row->product }} {{ $row->product_code }}">{{ $row->product }}<small>{{ $row->product_code }}</small>@foreach(($stockNameNotes[$row->product_id.'|'.$row->warehouse_id.'|'.$row->lot] ?? []) as $stockNote)<small class="lot-stock-link">{{ $stockNote }}</small>@endforeach</td>
+                <td>{{ $row->lot ?: 'Unbatched' }}</td>
+                @unless($oneGodown)<td>{{ $row->warehouse }}</td>@endunless
+                <td>{{ $row->base_unit }}</td>
+                @foreach(array_keys($shown) as $column)<td class="text-right">{{ $column === 'custody_value' ? number_format((float) $row->$column, 2) : $qty($row->$column) }}</td>@endforeach
+            </tr>@empty<tr><td colspan="{{ 4 + count($shown) }}">No stock movements or current customer custody match these filters.</td></tr>@endforelse</tbody>
+        </table></div>
+        {{ $rows->links() }}
+    </div>
 </section>
 @endsection
 

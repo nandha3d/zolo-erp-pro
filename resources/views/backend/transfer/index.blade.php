@@ -7,7 +7,7 @@
     @if((new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null))->allows('transfers-add'))<a href="{{ route('transfers.create') }}" class="btn btn-primary"><i class="dripicons-plus"></i> New transfer</a>@endif
 </x-inventory-command-bar>
 <section class="product-workspace-view inventory-transfer-workspace">
-    <form id="transfer-filters" action="{{ route('transfers.index') }}" method="get" class="inventory-transfer-filters">
+    <form id="transfer-filters" action="{{ route('transfers.index') }}" method="get" class="inventory-transfer-filters desk-filter-card">
         <div class="form-group"><label for="transfer-from-date">From date</label><input id="transfer-from-date" type="date" class="form-control" name="starting_date" value="{{ $starting_date }}" required></div>
         <div class="form-group"><label for="transfer-to-date">To date</label><input id="transfer-to-date" type="date" class="form-control" name="ending_date" value="{{ $ending_date }}" min="{{ $starting_date }}" required></div>
         @if(\Auth::user()->role_id <= 2)
@@ -19,8 +19,9 @@
         <button class="btn btn-primary" type="submit">Apply filters</button>
         <p id="filter-loading" role="status" hidden>Loading transfers…</p>
     </form>
-    <div class="table-responsive">
-        <table id="transfer-table" class="table transfer-list u-w-100pct">
+    <div class="desk-card-wrapper">
+        <div class="table-responsive">
+            <table id="transfer-table" class="table transfer-list u-w-100pct">
             <thead>
                 <tr>
                     <th class="not-exported"></th>
@@ -37,6 +38,7 @@
             </thead>
             <tfoot><tr><th></th><th>{{ __('db.Total') }}</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
         </table>
+    </div>
     </div>
 </section>
 

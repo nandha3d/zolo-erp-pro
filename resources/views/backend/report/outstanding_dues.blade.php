@@ -248,6 +248,22 @@ body.dark-mode .dues-table-card {
     border-color: transparent;
     box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
 }
+/* Expenses Pill */
+.dues-nav-pill.pill-expenses {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #6ee7b7;
+}
+.dues-nav-pill.pill-expenses:hover {
+    background: #d1fae5;
+    color: #047857;
+}
+.dues-nav-pill.pill-expenses.is-active {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 2px 4px rgba(5, 150, 105, 0.25);
+}
 /* Ageing Pill */
 .dues-nav-pill.pill-ageing {
     background: #f8fafc;
@@ -297,6 +313,11 @@ body.dark-mode .dues-nav-pill.pill-payables {
     border-color: #0284c7;
     color: #7dd3fc;
 }
+body.dark-mode .dues-nav-pill.pill-expenses {
+    background: #064e3b33;
+    border-color: #059669;
+    color: #34d399;
+}
 body.dark-mode .dues-nav-pill.pill-ageing {
     background: #334155;
     border-color: #475569;
@@ -321,7 +342,7 @@ body.dark-mode .dues-nav-pill.pill-hub {
                 Outstanding Payments (Dues) Command Center
             </h1>
             <span class="badge badge-light border text-muted px-2 py-1">
-                {{ $type === 'receivables' ? 'Customer Receivables' : 'Supplier Payables' }}
+                {{ $type === 'receivables' ? 'Customer Receivables' : ($type === 'payables' ? 'Supplier Payables' : 'Operational Expenses') }}
                 @if($customerId)
                     · Filtered: Customer #{{ $customerId }}
                 @elseif($supplierId)
@@ -330,6 +351,22 @@ body.dark-mode .dues-nav-pill.pill-hub {
             </span>
         </div>
 
+        @php
+            $ageingParams = ['party_type' => $type === 'payables' ? 'supplier' : 'customer'];
+            if ($type === 'payables' && $supplierId) {
+                $ageingParams['party_id'] = $supplierId;
+            } elseif ($type === 'receivables' && $customerId) {
+                $ageingParams['party_id'] = $customerId;
+            }
+
+            $hubTab = $type === 'payables' ? 'purchases' : ($type === 'expenses' ? 'expenses' : 'sales');
+            $hubParams = ['tab' => $hubTab];
+            if ($type === 'payables' && $supplierId) {
+                $hubParams['party_id'] = $supplierId;
+            } elseif ($type === 'receivables' && $customerId) {
+                $hubParams['party_id'] = $customerId;
+            }
+        @endphp
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <div class="dues-nav-btn-group">
                 <a class="dues-nav-pill pill-receivables {{ $type === 'receivables' ? 'is-active' : '' }}"
@@ -340,10 +377,14 @@ body.dark-mode .dues-nav-pill.pill-hub {
                    href="{{ route('report.outstandingDues', ['type' => 'payables'] + ($supplierId ? ['supplier_id' => $supplierId] : [])) }}">
                     <i class="dripicons-user-id"></i> Payables (Suppliers)
                 </a>
-                <a class="dues-nav-pill pill-ageing" href="{{ route('accounting.ageing') }}">
+                <a class="dues-nav-pill pill-expenses {{ $type === 'expenses' ? 'is-active' : '' }}"
+                   href="{{ route('report.outstandingDues', ['type' => 'expenses']) }}">
+                    <i class="dripicons-card"></i> Other Dues (Expenses)
+                </a>
+                <a class="dues-nav-pill pill-ageing" href="{{ route('accounting.ageing', $ageingParams) }}">
                     <i class="dripicons-clock"></i> Ageing Ledger
                 </a>
-                <a class="dues-nav-pill pill-hub font-weight-bold" href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}">
+                <a class="dues-nav-pill pill-hub font-weight-bold" href="{{ route('dues.index', $hubParams) }}">
                     <i class="dripicons-wallet"></i> Due Clearance Hub
                 </a>
             </div>
@@ -444,11 +485,11 @@ body.dark-mode .dues-nav-pill.pill-hub {
         <span class="small text-muted">
             <i class="fa fa-info-circle text-primary mr-1"></i>
             This is an audit and reconciliation report. To record payments, settlements, and clear dues, open the
-            <a href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}" class="font-weight-bold text-primary">
+            <a href="{{ route('dues.index', $hubParams) }}" class="font-weight-bold text-primary">
                 Due Management Command Center
             </a>.
         </span>
-        <a href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}" class="btn btn-outline-primary btn-sm py-1 font-weight-bold">
+        <a href="{{ route('dues.index', $hubParams) }}" class="btn btn-outline-primary btn-sm py-1 font-weight-bold">
             <i class="dripicons-wallet mr-1"></i> Open Due Clearance
         </a>
     </div>
@@ -477,7 +518,7 @@ body.dark-mode .dues-nav-pill.pill-hub {
                         @endforeach
                     </select>
                 </div>
-            @else
+            @elseif($type === 'payables')
                 <div class="col-md-2 col-sm-6">
                     <label class="small font-weight-bold text-muted mb-1">Supplier</label>
                     <select name="supplier_id" class="form-control form-control-sm selectpicker" data-live-search="true">
@@ -551,13 +592,17 @@ body.dark-mode .dues-nav-pill.pill-hub {
                             <td>{{ date('d-m-Y', strtotime($r->created_at)) }}</td>
                             <td>
                                 @if($type === 'receivables')
-                                    <a href="{{ route('sales.index') }}" class="font-weight-bold text-primary font-monospace" title="View Sale">
+                                    <a href="{{ route('sales.index', ['search' => $r->reference_no]) }}" class="font-weight-bold text-primary font-monospace" title="View Sale">
+                                        {{ $r->reference_no }}
+                                    </a>
+                                @elseif($type === 'payables')
+                                    <a href="{{ route('purchases.index', ['search' => $r->reference_no]) }}" class="font-weight-bold text-primary font-monospace" title="View Purchase">
                                         {{ $r->reference_no }}
                                     </a>
                                 @else
-                                    <a href="{{ route('purchases.index') }}" class="font-weight-bold text-primary font-monospace" title="View Purchase">
+                                    <span class="font-weight-bold text-primary font-monospace">
                                         {{ $r->reference_no }}
-                                    </a>
+                                    </span>
                                 @endif
                             </td>
                             @if($type === 'payables')

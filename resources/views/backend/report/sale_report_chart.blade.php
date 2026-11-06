@@ -28,8 +28,8 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Sales Volume Trend & Sold Quantity Velocity</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="{{ url('report/sale_report_chart') }}"><i class="dripicons-graph-line"></i> Sales Chart</a></li>
-            <li><a class="nav-link" href="{{ url('report/sale_report') }}"><i class="dripicons-cart"></i> Sales Report</a></li>
+            <li><a class="nav-link active" href="{{ route('report.saleChart') }}"><i class="dripicons-graph-line"></i> Sales Chart</a></li>
+            <li><a class="nav-link" href="{{ route('report.sale') }}"><i class="dripicons-cart"></i> Sales Report</a></li>
             <li><a class="nav-link" href="{{ url('report/best_seller') }}"><i class="dripicons-trophy"></i> Best Seller</a></li>
             <li><a class="nav-link" href="{{ url('report/warehouse_stock') }}"><i class="dripicons-store"></i> Stock Chart</a></li>
         </ul>

@@ -581,8 +581,10 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
 
     Route::controller(ReportController::class)->group(function () {
         Route::prefix('report')->group(function () {
-            Route::get('product_quantity_alert', 'productQuantityAlert')->name('report.qtyAlert');
-            Route::get('daily-sale-objective', 'dailySaleObjective')->name('report.dailySaleObjective');
+            Route::match(['get', 'post'], 'product_quantity_alert', 'productQuantityAlert')->name('report.qtyAlert');
+            Route::match(['get', 'post'], 'qty_alert_report', 'productQuantityAlert');
+            Route::match(['get', 'post'], 'daily-sale-objective', 'dailySaleObjective')->name('report.dailySaleObjective');
+            Route::match(['get', 'post'], 'daily_sale_objective', 'dailySaleObjective');
             Route::post('daily-sale-objective-data', 'dailySaleObjectiveData');
             Route::get('product-expiry', 'productExpiry')->name('report.productExpiry');
             Route::get('warehouse_stock', 'warehouseStock')->name('report.warehouseStock');
@@ -599,11 +601,13 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::get('product_report', 'productReport')->name('report.product');
             Route::post('product_report_data', 'productReportData');
             Route::match(['get', 'post'], 'purchase', 'purchaseReport')->name('report.purchase');
+            Route::match(['get', 'post'], 'purchase_report', 'purchaseReport');
             Route::post('purchase_report_data', 'purchaseReportData');
             Route::match(['get', 'post'], 'sale_report', 'saleReport')->name('report.sale');
             Route::post('sale_report_data', 'saleReportData');
             Route::get('challan-report', 'challanReport')->name('report.challan');
             Route::match(['get', 'post'], 'sale-report-chart', 'saleReportChart')->name('report.saleChart');
+            Route::match(['get', 'post'], 'sale_report_chart', 'saleReportChart');
             Route::match(['get', 'post'], 'payment_report_by_date', 'paymentReportByDate')->name('report.paymentByDate');
             Route::match(['get', 'post'], 'warehouse_report', 'warehouseReport')->name('report.warehouse');
             Route::post('warehouse-sale-data', 'warehouseSaleData');
@@ -620,20 +624,23 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::post('user-transfer-data', 'userTransferData');
             Route::post('user-payroll-data', 'userPayrollData');
             Route::match(['get', 'post'], 'biller_report', 'billerReport')->name('report.biller');
+            Route::match(['get', 'post'], 'biller', 'billerReport');
             Route::post('biller-sale-data', 'billerSaleData');
             Route::post('biller-quotation-data', 'billerQuotationData');
             Route::post('biller-payment-data', 'billerPaymentData');
-            Route::post('customer_report', 'customerReport')->name('report.customer');
+            Route::match(['get', 'post'], 'customer_report', 'customerReport')->name('report.customer');
             Route::post('customer-sale-data', 'customerSaleData');
             Route::post('customer-payment-data', 'customerPaymentData');
             Route::post('customer-quotation-data', 'customerQuotationData');
             Route::post('customer-return-data', 'customerReturnData');
-            Route::post('customer-group', 'customerGroupReport')->name('report.customer_group');
+            Route::match(['get', 'post'], 'customer-group', 'customerGroupReport')->name('report.customer_group');
+            Route::match(['get', 'post'], 'customer_group', 'customerGroupReport');
             Route::post('customer-group-sale-data', 'customerGroupSaleData');
             Route::post('customer-group-payment-data', 'customerGroupPaymentData');
             Route::post('customer-group-quotation-data', 'customerGroupQuotationData');
             Route::post('customer-group-return-data', 'customerGroupReturnData');
-            Route::post('supplier', 'supplierReport')->name('report.supplier');
+            Route::match(['get', 'post'], 'supplier', 'supplierReport')->name('report.supplier');
+            Route::match(['get', 'post'], 'supplier_report', 'supplierReport');
             Route::post('supplier-purchase-data', 'supplierPurchaseData');
             Route::post('supplier-payment-data', 'supplierPaymentData');
             Route::post('supplier-return-data', 'supplierReturnData');

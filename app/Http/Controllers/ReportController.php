@@ -4854,7 +4854,7 @@ class ReportController extends Controller
         $companyId = $context?->companyId ?? session('company_id') ?? 1;
 
         $type = $request->input('type', 'receivables');
-        if (!in_array($type, ['receivables', 'payables'], true)) {
+        if (!in_array($type, ['receivables', 'payables', 'expenses'], true)) {
             $type = 'receivables';
         }
 
@@ -4960,7 +4960,7 @@ class ReportController extends Controller
 
                 $rows->push($record);
             }
-        } else {
+        } elseif ($type === 'payables') {
             // Payables (Purchases)
             $query = DB::table('purchases')
                 ->leftJoin('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
@@ -5046,6 +5046,53 @@ class ReportController extends Controller
                 $record->action_label = 'Pay';
 
                 $rows->push($record);
+            }
+        } elseif ($type === 'expenses') {
+            $query = Expense::where('company_id', $companyId)
+                ->with(['expenseCategory', 'warehouse'])
+                ->whereNull('account_id');
+
+            if (!empty($startDate)) {
+                $query->whereDate('created_at', '>=', $startDate);
+            }
+            if (!empty($endDate)) {
+                $query->whereDate('created_at', '<=', $endDate);
+            }
+            if ($warehouseId) {
+                $query->where('warehouse_id', $warehouseId);
+            }
+            if (!empty($searchTerm)) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('reference_no', 'like', "%{$searchTerm}%")
+                      ->orWhere('note', 'like', "%{$searchTerm}%");
+                });
+            }
+
+            $rawRecords = $query->orderBy('created_at', 'desc')->get();
+
+            foreach ($rawRecords as $record) {
+                $amount = (float) $record->amount;
+                $kpiBilled += $amount;
+                $kpiDue += $amount;
+
+                $row = (object) [
+                    'id' => $record->id,
+                    'reference_no' => $record->reference_no,
+                    'created_at' => $record->created_at,
+                    'party_name' => $record->expenseCategory?->name ?? 'Operating Expense',
+                    'party_phone' => '',
+                    'warehouse_name' => $record->warehouse?->name ?? '—',
+                    'billed' => $amount,
+                    'returned' => 0.0,
+                    'paid' => 0.0,
+                    'due' => $amount,
+                    'due_date' => Carbon::parse($record->created_at)->format('Y-m-d'),
+                    'is_overdue' => false,
+                    'days_overdue' => 0,
+                    'days_left' => 0,
+                ];
+
+                $rows->push($row);
             }
         }
 

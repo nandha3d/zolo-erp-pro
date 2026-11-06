@@ -19,11 +19,11 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Biller Operational Throughput &amp; Sales Ledger</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link active" href="{{ url('report/biller') }}"><i class="dripicons-briefcase"></i> Biller Report</a></li>
-            <li><a class="nav-link" href="{{ url('report/sale_report') }}"><i class="dripicons-cart"></i> Sales</a></li>
-            <li><a class="nav-link" href="{{ url('report/customer_report') }}"><i class="dripicons-user-group"></i> Customers</a></li>
+            <li><a class="nav-link active" href="{{ route('report.biller') }}"><i class="dripicons-briefcase"></i> Biller Report</a></li>
+            <li><a class="nav-link" href="{{ route('report.sale') }}"><i class="dripicons-cart"></i> Sales</a></li>
+            <li><a class="nav-link" href="{{ route('report.customer') }}"><i class="dripicons-user-group"></i> Customers</a></li>
             <li><a class="nav-link" href="{{ route('report.paymentByDate') }}"><i class="dripicons-wallet"></i> Payments</a></li>
-            <li><a class="nav-link" href="{{ url('report/warehouse_report') }}"><i class="dripicons-store"></i> Warehouses</a></li>
+            <li><a class="nav-link" href="{{ route('report.warehouse') }}"><i class="dripicons-store"></i> Warehouses</a></li>
         </ul>
         <div class="comm-actions">
             <button class="btn btn-secondary btn-action-pill" data-erp-print>

@@ -75,7 +75,6 @@ final class SettingsCatalog
                 $item($access->allows('general_setting'), 'General Settings', route('setting.general'), 'site date format'),
                 $item($access->allows('barcode_setting'), 'Barcode Settings', route('barcodes.index'), 'label'),
                 $item($access->has('hrm.enabled') && $access->allows('hrm_setting'), 'HRM Settings', route('setting.hrm'), 'attendance payroll'),
-                $item($access->allows('backup_database'), 'Backup Database', route('setting.backup'), 'export'),
             ]],
         ];
 

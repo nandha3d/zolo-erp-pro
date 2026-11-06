@@ -5,10 +5,11 @@
 <x-error-message key="not_permitted" />
 
 <x-inventory-command-bar active="corrections" view="adjustment">
-        <a href="{{route('qty_adjustment.create')}}" class="btn btn-info"><i class="dripicons-plus"></i> {{__('db.Add Adjustment')}}</a>
+        <a href="{{route('qty_adjustment.create')}}" class="btn btn-primary"><i class="dripicons-plus"></i> {{__('db.Add Adjustment')}}</a>
 </x-inventory-command-bar>
 <section class="product-workspace-view">
-    <div class="table-responsive">
+    <div class="desk-card-wrapper">
+        <div class="table-responsive">
         <table id="adjustment-table" class="table purchase-list">
             <thead>
                 <tr>
@@ -74,6 +75,7 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
     </div>
 </section>
 

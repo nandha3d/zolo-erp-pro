@@ -47,8 +47,8 @@
         <ul class="comm-nav-pills">
             <li><a class="nav-link active" href="{{ url('report/monthly_purchase/'.$year) }}"><i class="dripicons-calendar"></i> Monthly Purchase</a></li>
             <li><a class="nav-link" href="{{ url('report/daily_purchase/'.$year.'/'.date('m')) }}"><i class="dripicons-calendar"></i> Daily Purchase</a></li>
-            <li><a class="nav-link" href="{{ url('report/purchase_report') }}"><i class="dripicons-box"></i> Procurement Report</a></li>
-            <li><a class="nav-link" href="{{ url('report/supplier_report') }}"><i class="dripicons-user"></i> Supplier Report</a></li>
+            <li><a class="nav-link" href="{{ route('report.purchase') }}"><i class="dripicons-box"></i> Procurement Report</a></li>
+            <li><a class="nav-link" href="{{ route('report.supplier') }}"><i class="dripicons-user"></i> Supplier Report</a></li>
         </ul>
         <div class="comm-actions">
             <button class="btn btn-secondary btn-action-pill" data-erp-print>
