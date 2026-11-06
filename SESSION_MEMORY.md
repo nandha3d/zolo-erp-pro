@@ -1,5 +1,43 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-06: Unified Beautiful Voucher Details Popups, Product Edit Restorations, Product History GRN/Variant Enhancements & Guided Tutorial (branch ui)
+
+- **Detailed Voucher Popups Redesigned (`Action > View` on Sales, Purchases, and Products):**
+  - Replaced legacy multi-table/plain modals with unified modern executive preview cards (`public/css/pages/voucher-preview-modal.css`):
+    - **Header Suite:** Icon badges (Sales purple, Purchases sky/blue, Products emerald), title, bold reference/code badges, status pills, and prominent action toolbar.
+    - **Edit Bill / Edit Product Button:** Added direct `Edit` buttons linking straight to `/sales/{id}/edit`, `/purchases/{id}/edit`, and `/products/{id}/edit`.
+    - **Print & Close:** Integrated print stylesheet and responsive close button.
+    - **Proper Spacing & Internal Scroll:** Card container bounded to `max-height: 88vh; overflow-y: auto;` eliminating double window scrollbars.
+- **Product Edit Menu Components Restored (`resources/views/backend/product/edit.blade.php`):**
+  - **Print Name Field:** Added `print_name` (Invoice Display / Print Name) alongside `name` in Box 1.
+  - **Inline Quick-Add Modals & Buttons:** Restored `+ Add Brand` (`#addBrand`), `+ Add Category` (`#category-modal`), `+ Add Unit` (`#createUnitModal`), and `+ Add Tax` (`#addTax`) inline input-group buttons, modal dialogs, and AJAX handlers.
+  - **Stock & Variant Toggles:** Restored `#variant-option` as an active interactive `.zolo-toggle-pill`, added `#stock-section` initial stock toggle pill, and added `#initial-stock-section` warehouse initial stock table.
+- **Product Action Highlights & History Enhancements (`product/history.blade.php` & `ProductController.php`):**
+  - **Theme-Highlighted Pill Tabs:** Upgraded history tabs to vibrant theme buttons:
+    - `Sales`: Theme purple (`#7c3aed`) with shopping bag icon.
+    - `Purchases (GRN)`: Theme emerald (`#059669`) with truck icon.
+    - `Composition & Recipe`: Theme amber (`#d97706`) with cubes icon, displaying full Bill of Materials (BOM), ingredient quantities, wastage %, and production costs.
+    - `Returns`: Rose (`#e11d48`) and Orange (`#ea580c`) return tabs.
+  - **Product Popup Highlight Navigation:** Added direct shortcut buttons in `#product-details` for `Sales History`, `Purchase (GRN) History`, and `Composition`.
+  - **GRN & Custom Variant Name History Cross-check:**
+    - `ProductController::purchaseHistoryData`: Joined `variants` and `product_batches`, selected `purchases.status as purchase_status` and `product_purchases.recieved`. Displays GRN status badge (`GRN Done`, `GRN Partial`, `Pending`) and GRN Received quantity alongside ordered qty.
+    - `ProductController::saleHistoryData`: Joined `variants` and `product_batches`, displaying variant names and batch codes clearly.
+- **Interactive Initial Setup Guided Tutorial (`<x-guided-tutorial-modal />`):**
+  - Created `resources/views/components/guided-tutorial-modal.blade.php` featuring a 6-step onboarding wizard:
+    1. Company Profile, GST & Fiscal Rules (`route('setting.general')`)
+    2. Storage Godowns & Branch Warehouses (`route('warehouse.index')`)
+    3. Master Products, Categories & GST Rates (`route('products.index')`)
+    4. Customers, Groups & Supplier Vendors (`route('customer.index')`)
+    5. Sales Invoicing, Purchase Bills & GRNs (`route('sales.index')`)
+    6. Centralized Due & Payment Command Center (`route('dues.index')`)
+  - Features progress rail, step indicators, direct jump navigation, `localStorage` persistence, and a `💡 Guided Tour` launcher pill in the top navigation bar (`resources/views/backend/layout/main.blade.php`).
+- **Verification & Test Coverage:**
+  - Created `tests/Feature/VoucherPopupAndProductEnhancementsTest.php` passing 6/6 tests (41 assertions).
+  - Regression verified `tests/Feature/BillStockPaymentWorkflowTest.php` passing 9/9 tests (114 assertions).
+  - Regression verified `tests/Feature/OutstandingDuesAndGstTypeTest.php` passing 8/8 tests (29 assertions).
+  - Regression verified `tests/Feature/CustomerGroupNavigationTest.php` passing 3/3 tests (8 assertions).
+  - Regression verified `tests/Feature/CompanyGroupInsightTest.php` passing 3/3 tests (37 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Navigation Link Audit Resolution — Route 404/405 Fixes, Filter Context Retention, Bill Payment Redirects & Addon Leak Hardening (branch ui)
 
 - **Audit Resolution & Bug Fixes (`documents/auditing/navigation-link-audit-2026-11-06.csv`):**
@@ -73,6 +111,21 @@
 - Report link failures: Sale Objectives, Sales Chart, Procurement Report, Supplier Report shortcut, Qty Alerts, Biller Report, and Customer Group return 404. The Customers and Suppliers links to POST-only reports return 405. Six Add-ons links and the Route sheet shortcut point to capabilities disabled in this company.
 - Verification: 19 Chrome checks (12 passed, seven navigation defects reproduced), plus two failing bill-context redirect probes. Existing targeted Laravel tests recorded 17 passes and three settlement fixture skips. The full destination inventory and browser outcomes are in scratch/navigation-link-audit-2026-11-06.csv.
 
+
+## Active Session & Follow-up — 2026-11-06: Customer Group Navigation Exposure under Parties & Customer Workspace (branch ui)
+
+- **Parties Sidebar Menu Enhancement (`resources/views/backend/layout/sidebar.blade.php`):**
+  - Exposed **Customer Groups** (`route('customer_group.index')`) directly under the `Parties` dropdown in the sidebar alongside Customers, Suppliers, Agents, and Areas.
+- **Customers Command Center Pill Toolbar (`resources/views/backend/customer/index.blade.php`):**
+  - Added a direct `Customer Groups` nav pill in the top command bar of the customer directory.
+- **Customer Creation Form Inline Link (`resources/views/backend/customer/create.blade.php`):**
+  - Added an inline `+ Add Customer Group` link next to the Customer Group field label so users can jump to or manage customer groups without losing context.
+- **Active Navigation State (`resources/views/backend/customer_group/create.blade.php`):**
+  - Updated sidebar script to expand `ul#parties` and activate `#customer-group-menu`.
+- **Verification & Test Coverage:**
+  - Created `tests/Feature/CustomerGroupNavigationTest.php`: 3/3 passed (8 assertions).
+  - Regression verified `tests/Feature/CentralizedDueManagementTest.php`: 10/10 passed (52 assertions).
+  - Regression verified `tests/Feature/OutstandingDuesAndGstTypeTest.php`: 8/8 passed (29 assertions).
 
 ## Active Session & Follow-up — 2026-11-06: Customer Group Navigation Exposure under Parties & Customer Workspace (branch ui)
 

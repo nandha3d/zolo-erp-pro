@@ -311,6 +311,12 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
           <li class="nav-item"><a class="btn-pos btn-sm" href="{{route('sale.pos') }}"><i class="dripicons-shopping-bag"></i><span> POS</span></a></li>
           @endif
           --}}
+          <li class="nav-item">
+            <button type="button" class="topbar-shortcuts topbar-guided-tour-btn" id="btn-open-guided-tour" title="Interactive Setup Guided Tour">
+              <i class="dripicons-lightbulb" aria-hidden="true"></i>
+              <span>Guided Tour</span>
+            </button>
+          </li>
           <li class="nav-item"><button type="button" class="topbar-shortcuts" data-shortcut-help title="Keyboard shortcuts (?)"><i class="dripicons-information" aria-hidden="true"></i><span>Shortcuts</span><kbd>?</kbd></button></li>
           <li class="nav-item d-none d-lg-block"><a id="switch-theme" data-toggle="tooltip" title="{{ __('Switch Theme') }}"><i class="dripicons-brightness-max"></i></a></li>
           @if(config('database.connections.zoloerp_landlord'))
@@ -522,6 +528,8 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     </div>
     <!-- end notification modal -->
     @endif
+
+    <x-guided-tutorial-modal />
 
     <!-- Category Modal -->
     <div id="category-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">

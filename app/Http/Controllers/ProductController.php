@@ -337,12 +337,21 @@ class ProductController extends Controller
                     <a href="'.route('products.edit', $product->id).'" class="btn btn-link"><i class="fa fa-edit"></i> '.__('db.edit').'</a>
                 </li>';
 
-            if(in_array("product_history", $all_permission))
-                $nestedData['options'] .= \Form::open(["route" => "products.history", "method" => "GET"] ).'
+            if(in_array("product_history", $all_permission)) {
+                $nestedData['options'] .= '
                     <li>
-                        <input type="hidden" name="product_id" value="'.$product->id.'" />
-                        <button type="submit" class="btn btn-link"><i class="dripicons-checklist"></i> '.__("db.Product History").'</button>
-                    </li>'.\Form::close();
+                        <a href="'.route('products.history', ['product_id' => $product->id, 'tab' => 'sales']).'" class="btn btn-link text-purple"><i class="fa fa-shopping-bag text-primary"></i> '.__("db.Sale").' History</a>
+                    </li>
+                    <li>
+                        <a href="'.route('products.history', ['product_id' => $product->id, 'tab' => 'purchases']).'" class="btn btn-link text-success"><i class="fa fa-truck text-success"></i> '.__("db.Purchase").' (GRN)</a>
+                    </li>';
+                if ($product->type === 'combo') {
+                    $nestedData['options'] .= '
+                    <li>
+                        <a href="'.route('products.history', ['product_id' => $product->id, 'tab' => 'composition']).'" class="btn btn-link text-warning"><i class="fa fa-cubes text-warning"></i> Composition</a>
+                    </li>';
+                }
+            }
 
             if(in_array("print_barcode", $all_permission)) {
                 $product_info = $product->code.' ('.$product->name.')';
@@ -803,9 +812,31 @@ class ProductController extends Controller
                 $ending_date = date("Y-m-d");
             }
             $product_id = $request->input('product_id');
-            $product_data = Product::select('name', 'code')->findOrFail($product_id);
+            $product_data = Product::findOrFail($product_id);
+            $combo_items = [];
+            if ($product_data->type === 'combo' && !empty($product_data->product_list)) {
+                $pIds = explode(',', $product_data->product_list);
+                $qList = explode(',', $product_data->qty_list ?? '');
+                $prList = explode(',', $product_data->price_list ?? '');
+                $wList = explode(',', $product_data->wastage_percent ?? '');
+                $uList = explode(',', $product_data->combo_unit_id ?? '');
+                foreach ($pIds as $idx => $pId) {
+                    $itemProduct = Product::find($pId);
+                    if ($itemProduct) {
+                        $combo_items[] = [
+                            'name' => $itemProduct->name,
+                            'code' => $itemProduct->code,
+                            'qty' => $qList[$idx] ?? 1,
+                            'unit' => $uList[$idx] ?? '',
+                            'price' => $prList[$idx] ?? $itemProduct->price,
+                            'cost' => $itemProduct->cost,
+                            'wastage' => $wList[$idx] ?? 0,
+                        ];
+                    }
+                }
+            }
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            return view('backend.product.history',compact('starting_date', 'ending_date', 'warehouse_id', 'product_id', 'product_data', 'lims_warehouse_list'));
+            return view('backend.product.history',compact('starting_date', 'ending_date', 'warehouse_id', 'product_id', 'product_data', 'lims_warehouse_list', 'combo_items'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -844,7 +875,9 @@ class ProductController extends Controller
         $dir = $request->input('order.0.dir');
         $q = $q->join('customers', 'sales.customer_id', '=', 'customers.id')
                 ->join('warehouses', 'sales.warehouse_id', '=', 'warehouses.id')
-                ->select('sales.id', 'sales.reference_no', 'sales.created_at', 'customers.name as customer_name', 'customers.phone_number as customer_number', 'warehouses.name as warehouse_name', 'product_sales.qty', 'product_sales.sale_unit_id', 'product_sales.total')
+                ->leftJoin('variants', 'product_sales.variant_id', '=', 'variants.id')
+                ->leftJoin('product_batches', 'product_sales.product_batch_id', '=', 'product_batches.id')
+                ->select('sales.id', 'sales.reference_no', 'sales.created_at', 'customers.name as customer_name', 'customers.phone_number as customer_number', 'warehouses.name as warehouse_name', 'product_sales.qty', 'product_sales.sale_unit_id', 'product_sales.total', 'variants.name as variant_name', 'product_batches.batch_no as batch_no')
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir);
@@ -880,7 +913,14 @@ class ProductController extends Controller
                 $nestedData['id'] = $sale->id;
                 $nestedData['key'] = $key;
                 $nestedData['date'] = date(config('date_format'), strtotime($sale->created_at));
-                $nestedData['reference_no'] = $sale->reference_no;
+                $badgeHtml = '';
+                if (!empty($sale->variant_name)) {
+                    $badgeHtml .= ' <span class="badge badge-info">' . e($sale->variant_name) . '</span>';
+                }
+                if (!empty($sale->batch_no)) {
+                    $badgeHtml .= ' <span class="badge badge-secondary">B: ' . e($sale->batch_no) . '</span>';
+                }
+                $nestedData['reference_no'] = '<strong>' . e($sale->reference_no) . '</strong>' . ($badgeHtml ? '<br>' . $badgeHtml : '');
                 $nestedData['warehouse'] = $sale->warehouse_name;
                 $nestedData['customer'] = $sale->customer_name.' ['.($sale->customer_number).']';
                 $nestedData['qty'] = number_format($sale->qty, config('decimal'));
@@ -935,18 +975,21 @@ class ProductController extends Controller
         $dir = $request->input('order.0.dir');
         $q = $q->leftJoin('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
                 ->join('warehouses', 'purchases.warehouse_id', '=', 'warehouses.id')
+                ->leftJoin('variants', 'product_purchases.variant_id', '=', 'variants.id')
+                ->leftJoin('product_batches', 'product_purchases.product_batch_id', '=', 'product_batches.id')
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir);
+        $purchaseSelect = ['purchases.id', 'purchases.reference_no', 'purchases.created_at', 'purchases.status as purchase_status', 'purchases.supplier_id', 'suppliers.name as supplier_name', 'suppliers.phone_number as supplier_number', 'warehouses.name as warehouse_name', 'product_purchases.qty', 'product_purchases.recieved', 'product_purchases.purchase_unit_id', 'product_purchases.total', 'variants.name as variant_name', 'product_batches.batch_no as batch_no'];
         if(empty($request->input('search.value'))) {
-            $purchases = $q->select('purchases.id', 'purchases.reference_no', 'purchases.created_at', 'purchases.supplier_id', 'suppliers.name as supplier_name', 'suppliers.phone_number as supplier_number', 'warehouses.name as warehouse_name', 'product_purchases.qty', 'product_purchases.purchase_unit_id', 'product_purchases.total')->get();
+            $purchases = $q->select($purchaseSelect)->get();
         }
         else
         {
             $search = $request->input('search.value');
             $q = $q->whereDate('purchases.created_at', '=' , date('Y-m-d', strtotime(str_replace('/', '-', $search))));
             if(Auth::user()->role_id > 2 && config('staff_access') == 'own') {
-                $purchases =  $q->select('purchases.id', 'purchases.reference_no', 'purchases.created_at', 'purchases.supplier_id', 'suppliers.name as supplier_name', 'suppliers.phone_number as supplier_number', 'warehouses.name as warehouse_name', 'product_purchases.qty', 'product_purchases.purchase_unit_id', 'product_purchases.total')
+                $purchases =  $q->select($purchaseSelect)
                             ->orwhere([
                                 ['purchases.reference_no', 'LIKE', "%{$search}%"],
                                 ['purchases.user_id', Auth::id()]
@@ -957,7 +1000,7 @@ class ProductController extends Controller
                                 ])->count();
             }
             else {
-                $purchases =  $q->select('purchases.id', 'purchases.reference_no', 'purchases.created_at', 'purchases.supplier_id', 'suppliers.name as supplier_name', 'suppliers.phone_number as supplier_number', 'warehouses.name as warehouse_name', 'product_purchases.qty', 'product_purchases.purchase_unit_id', 'product_purchases.total')
+                $purchases =  $q->select($purchaseSelect)
                             ->orwhere('purchases.reference_no', 'LIKE', "%{$search}%")
                             ->get();
                 $totalFiltered = $q->orwhere('purchases.reference_no', 'LIKE', "%{$search}%")->count();
@@ -971,17 +1014,45 @@ class ProductController extends Controller
                 $nestedData['id'] = $purchase->id;
                 $nestedData['key'] = $key;
                 $nestedData['date'] = date(config('date_format'), strtotime($purchase->created_at));
-                $nestedData['reference_no'] = $purchase->reference_no;
+
+                $statusBadge = '';
+                if ($purchase->purchase_status == 1) {
+                    $statusBadge = '<span class="badge badge-success">GRN Done</span>';
+                } elseif ($purchase->purchase_status == 2) {
+                    $statusBadge = '<span class="badge badge-warning">GRN Partial</span>';
+                } elseif ($purchase->purchase_status == 3) {
+                    $statusBadge = '<span class="badge badge-secondary">Pending</span>';
+                } elseif ($purchase->purchase_status == 4) {
+                    $statusBadge = '<span class="badge badge-info">Ordered</span>';
+                }
+
+                $variantBadge = '';
+                if (!empty($purchase->variant_name)) {
+                    $variantBadge .= ' <span class="badge badge-info">' . e($purchase->variant_name) . '</span>';
+                }
+                if (!empty($purchase->batch_no)) {
+                    $variantBadge .= ' <span class="badge badge-secondary">B: ' . e($purchase->batch_no) . '</span>';
+                }
+
+                $nestedData['reference_no'] = '<strong>' . e($purchase->reference_no) . '</strong>' . ($statusBadge ? ' ' . $statusBadge : '') . ($variantBadge ? '<br>' . $variantBadge : '');
                 $nestedData['warehouse'] = $purchase->warehouse_name;
                 if($purchase->supplier_id)
                     $nestedData['supplier'] = $purchase->supplier_name.' ['.($purchase->supplier_number).']';
                 else
                     $nestedData['supplier'] = 'N/A';
-                $nestedData['qty'] = number_format($purchase->qty, config('decimal'));
+
+                $unitCode = '';
                 if($purchase->purchase_unit_id) {
                     $unit_data = DB::table('units')->select('unit_code')->find($purchase->purchase_unit_id);
-                    $nestedData['qty'] .= ' '.$unit_data->unit_code;
+                    $unitCode = $unit_data ? ' ' . $unit_data->unit_code : '';
                 }
+
+                $recvText = '';
+                if(isset($purchase->recieved) && $purchase->recieved !== null) {
+                    $recvText = '<br><small class="text-success font-weight-bold">GRN Recv: ' . number_format($purchase->recieved, config('decimal')) . $unitCode . '</small>';
+                }
+
+                $nestedData['qty'] = number_format($purchase->qty, config('decimal')) . $unitCode . $recvText;
                 $nestedData['unit_cost'] = number_format(($purchase->total / $purchase->qty), config('decimal'));
                 $nestedData['sub_total'] = number_format($purchase->total, config('decimal'));
                 $data[] = $nestedData;

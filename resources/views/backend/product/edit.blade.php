@@ -70,11 +70,17 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-12">
+                                        <div class="col-md-6 col-12">
                                             <div class="form-group">
                                                 <label>{{__('db.Product Name')}} *</label>
                                                 <input type="text" name="name" value="{{$lims_product_data->name}}" required class="form-control" id="name">
                                                 <span class="validation-msg text-danger small" id="name-error"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-12">
+                                            <div class="form-group">
+                                                <label>{{__('db.Print Name / Invoice Display Name')}}</label>
+                                                <input type="text" name="print_name" value="{{$lims_product_data->print_name ?? ''}}" class="form-control" id="print_name" placeholder="{{ __('db.Display name on invoices (optional)') }}">
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -93,22 +99,32 @@
                                             <div class="form-group">
                                                 <label>{{__('db.Brand')}}</label>
                                                 <input type="hidden" name="brand" value="{{ $lims_product_data->brand_id}}">
-                                                <select name="brand_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Brand...') }}">
-                                                    @foreach($lims_brand_list as $brand)
-                                                        <option value="{{$brand->id}}">{{$brand->title}}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="input-group">
+                                                    <select name="brand_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Brand...') }}">
+                                                        @foreach($lims_brand_list as $brand)
+                                                            <option value="{{$brand->id}}">{{$brand->title}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addBrand" title="{{ __('db.Add Brand') }}"><i class="dripicons-plus"></i></button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.category')}} *</label>
                                                 <input type="hidden" name="category" value="{{$lims_product_data->category_id}}">
-                                                <select name="category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Category...') }}">
-                                                    @foreach($lims_category_list as $category)
-                                                        <option value="{{$category->id}}">{{$category->name}}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="input-group">
+                                                    <select name="category_id" required class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Category...') }}">
+                                                        @foreach($lims_category_list as $category)
+                                                            <option value="{{$category->id}}">{{$category->name}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-default btn-sm category-model" data-toggle="modal" data-target="#category-modal" title="{{ __('db.Add Category') }}"><i class="dripicons-plus"></i></button>
+                                                    </div>
+                                                </div>
                                                 <span class="validation-msg text-danger small"></span>
                                             </div>
                                         </div>
@@ -116,13 +132,18 @@
                                             <div class="row">
                                                 <div class="col-12 form-group">
                                                     <label>{{__('db.Product Unit')}} *</label>
-                                                    <select required class="form-control selectpicker" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Product Unit...') }}" name="unit_id">
-                                                        @foreach($lims_unit_list as $unit)
-                                                            @if($unit->base_unit==null)
-                                                                <option value="{{$unit->id}}">{{$unit->unit_name}}</option>
-                                                            @endif
-                                                        @endforeach
-                                                    </select>
+                                                    <div class="input-group">
+                                                        <select required class="form-control selectpicker" data-live-search="true" data-live-search-style="begins" title="{{ __('db.Select Product Unit...') }}" name="unit_id">
+                                                            @foreach($lims_unit_list as $unit)
+                                                                @if($unit->base_unit==null)
+                                                                    <option value="{{$unit->id}}">{{$unit->unit_name}}</option>
+                                                                @endif
+                                                            @endforeach
+                                                        </select>
+                                                        <div class="input-group-append">
+                                                            <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#createUnitModal" title="{{ __('db.Add Unit') }}"><i class="dripicons-plus"></i></button>
+                                                        </div>
+                                                    </div>
                                                     <input type="hidden" name="unit" value="{{ $lims_product_data->unit_id}}">
                                                     <span class="validation-msg text-danger small"></span>
                                                 </div>
@@ -209,12 +230,17 @@
                                         <div class="col-6">
                                             <div class="form-group">
                                                 <label>{{__('db.Product Tax')}}</label>
-                                                <select name="tax_id" class="selectpicker form-control">
-                                                    <option value="">No Tax</option>
-                                                    @foreach($lims_tax_list as $tax)
-                                                        <option value="{{$tax->id}}">{{$tax->name}}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="input-group">
+                                                    <select name="tax_id" class="selectpicker form-control">
+                                                        <option value="">No Tax</option>
+                                                        @foreach($lims_tax_list as $tax)
+                                                            <option value="{{$tax->id}}">{{$tax->name}}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="input-group-append">
+                                                        <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addTax" title="{{ __('db.Add Tax') }}"><i class="dripicons-plus"></i></button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         @endif
@@ -431,10 +457,17 @@
                                 <div class="zolo-inventory-stripe-divider"></div>
 
                                 <div class="zolo-inventory-stripe-toggles">
-                                    {{-- Variants are set when the product is created; an existing variant product keeps the flag. --}}
-                                    @if($lims_product_data->is_variant)
-                                    <span id="variant-option" hidden><input name="is_variant" type="checkbox" id="is-variant" value="1" checked></span>
-                                    @endif
+                                    <label id="stock-section" class="zolo-toggle-pill @if($lims_product_data->is_initial_stock ?? false) is-active @endif" data-role="amber" for="chk_initial_stock" title="{{ __('db.Initial Stock') }}">
+                                        <input type="checkbox" name="is_initial_stock" id="chk_initial_stock" value="1">
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
+                                        <span>{{__('db.Initial Stock')}}</span>
+                                    </label>
+
+                                    <label id="variant-option" class="zolo-toggle-pill @if($lims_product_data->is_variant) is-active @endif" data-role="purple" for="is-variant" title="{{ __('db.This product has variant') }}">
+                                        <input name="is_variant" type="checkbox" id="is-variant" value="1" @checked($lims_product_data->is_variant)>
+                                        <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
+                                        <span>{{__('db.This product has variant')}}</span>
+                                    </label>
 
                                     <label id="diffPrice-option" class="zolo-toggle-pill @if($lims_product_data->is_diffPrice) is-active @endif" data-role="emerald" for="is-diffPrice" title="{{ __('db.Different price by warehouse') }}">
                                         <input name="is_diffPrice" type="checkbox" id="is-diffPrice" value="1" @checked($lims_product_data->is_diffPrice)>
@@ -509,6 +542,34 @@
 
                             <!-- Extended Conditional Details Container (4-column grid mirroring top primary boxes) -->
                             <div class="product-extended-details-container mt-2">
+                                <!-- Warehouse Initial Stock Section -->
+                                <div id="initial-stock-section" style="display:none;">
+                                    <x-ui.section-box variant="amber" title="{{__('db.Warehouse Initial Stock')}}" icon="inventory">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{__('db.Warehouse')}}</th>
+                                                        <th>{{__('db.qty')}}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($lims_warehouse_list as $warehouse)
+                                                    @php $existing_pw = \App\Models\Product_Warehouse::FindProductWithoutVariant($lims_product_data->id, $warehouse->id)->first(); @endphp
+                                                    <tr>
+                                                        <td>
+                                                            <input type="hidden" name="stock_warehouse_id[]" value="{{$warehouse->id}}">
+                                                            {{$warehouse->name}}
+                                                        </td>
+                                                        <td><input type="number" name="stock[]" min="0" value="{{ $existing_pw ? $existing_pw->qty : '' }}" class="form-control form-control-sm" placeholder="0"></td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </x-ui.section-box>
+                                </div>
+
                                 <!-- Warehouse Differential Price Section -->
                                 <div id="diffPrice-section">
                                     <x-ui.section-box variant="emerald" title="{{__('db.Different Warehouse Price')}}" icon="pricing">
@@ -721,6 +782,81 @@
             </div>
         </div>
     </div>
+    <!-- Brand Create Modal Start -->
+    <div id="addBrand" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+        <div role="document" class="modal-dialog">
+          <div class="modal-content">
+            <form id="brand-form">
+            <div class="modal-header">
+              <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Brand')}}</h5>
+              <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+            </div>
+            <div class="modal-body">
+              <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
+                <div class="form-group">
+                    <label>{{__('db.Title')}} *</label>
+                    <input type="text" name="title" class="form-control" placeholder="{{ __('db.Type brand title') }}" required>
+                </div>
+                <div class="form-group">
+                    <label>{{__('db.Image')}}</label>
+                    <input type="file" name="image" class="form-control">
+                </div>
+                @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
+                <div class="row">
+                    <div class="col-md-12 mt-3">
+                        <h6><strong>{{ __('For SEO') }}</strong></h6>
+                        <hr>
+                    </div>
+                    <div class="col-md-12 form-group">
+                        <label>{{ __('Meta Title') }}</label>
+                        {{Form::text('page_title',null,array('class' => 'form-control', 'placeholder' => __('db.Meta Title')))}}
+                    </div>
+                    <div class="col-md-12 form-group">
+                        <label>{{ __('Meta Description') }}</label>
+                        {{Form::text('short_description',null,array('class' => 'form-control', 'placeholder' => __('db.Meta Description')))}}
+                    </div>
+                </div>
+                @endif
+                <div class="form-group">
+                    <input type="hidden" name="ajax" value="1">
+                    <button type="button" class="btn btn-primary brand-submit-btn">{{__('db.submit')}}</button>
+                </div>
+            </div>
+            </form>
+          </div>
+        </div>
+    </div>
+    <!-- Brand Create Modal End -->
+    <!-- Tax Create Modal Start -->
+    <div id="addTax" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+        <div role="document" class="modal-dialog">
+            <div class="modal-content">
+                {!! Form::open(['route' => 'tax.store', 'method' => 'post', 'id' => 'tax-form']) !!}
+                <div class="modal-header">
+                    <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Tax')}}</h5>
+                    <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
+                    <div class="form-group">
+                        <label>{{__('db.Tax Name')}} *</label>
+                        {{Form::text('name',null,array('required' => 'required', 'class' => 'form-control'))}}
+                    </div>
+                    <div class="form-group">
+                        <label>{{__('db.Rate')}}(%) *</label>
+                        {{Form::number('rate',null,array('required' => 'required', 'class' => 'form-control', 'step' => 'any'))}}
+                    </div>
+                    <input type="hidden" name="ajax" value="1">
+                    <button type="button" class="btn btn-primary tax-submit-btn">{{__('db.submit')}}</button>
+                </div>
+                {{ Form::close() }}
+            </div>
+        </div>
+    </div>
+    <!-- Tax Create Modal End -->
+
+    <!-- Unit Create Modal Start -->
+    @include('backend.unit.add_unit_modal')
 </section>
 
 @endsection
@@ -1816,6 +1952,7 @@
     function applyDynamicGridSpans() {
         var isCombo = $('select[name="type"]').val() === 'combo';
         var sections = [
+            {$el: $('#initial-stock-section'), isWide: false, active: !isCombo && $("#chk_initial_stock").is(':checked')},
             {$el: $('#diffPrice-section'), isWide: false, active: !isCombo && $("#is-diffPrice").is(':checked')},
             {$el: $('#promo-container'), isWide: false, active: $("#promotion").is(':checked')},
             {$el: $('#variant-section'), isWide: true, active: !isCombo && $("#is-variant").is(':checked')},
@@ -2075,6 +2212,122 @@
         }
     });
 
+
+    // Toggle listeners for Initial Stock and Variant
+    $("#chk_initial_stock").on("change", function () {
+        if ($(this).is(':checked')) {
+            $("#initial-stock-section").show(300);
+        } else {
+            $("#initial-stock-section").hide(300);
+        }
+        applyDynamicGridSpans();
+    });
+
+    $("#is-variant").on("change", function () {
+        variantShowHide();
+    });
+
+    // Quick-add (brand / category / unit / tax): modal handling and AJAX saves
+    function quickAddError(modal, xhr) {
+        var json = (xhr && xhr.responseJSON) || {};
+        var message = json.errors ? Object.values(json.errors)[0][0] : (json.message || 'Could not save. Check the fields and try again.');
+        var $box = $(modal).find('.quick-add-error');
+        if (!$box.length) $box = $('<div class="alert alert-danger small quick-add-error" role="alert"></div>').prependTo($(modal).find('.modal-body'));
+        $box.text(message).show();
+    }
+    function quickAddDone(modal, form) {
+        $(modal).find('.quick-add-error').remove();
+        if (form) form.reset();
+        $(modal).modal('hide');
+    }
+    function pickOption(name, id, label) {
+        var $select = $('select[name="' + name + '"]');
+        if (!$select.find('option[value="' + id + '"]').length) $select.append($('<option>').val(id).text(label));
+        $select.val(String(id)).selectpicker('refresh').trigger('change');
+    }
+    $('#addBrand, #category-modal, #createUnitModal, #addTax').on('hidden.bs.modal', function () { $(this).find('.quick-add-error').remove(); });
+
+    // Brand create ajax
+    $('.brand-submit-btn').on("click", function() {
+        $.ajax({
+            type:'POST',
+            url:'{{route('brand.store')}}',
+            data: $("#brand-form").serialize(),
+            success:function(response) {
+                pickOption('brand_id', response['id'], response['title']);
+                quickAddDone('#addBrand', $("#brand-form")[0]);
+            },
+            error: function (xhr) { quickAddError('#addBrand', xhr); }
+        });
+    });
+
+    $('.category-model').on("click", function() {
+        $('.category-submit-btn').prop('type', 'button');
+        $('.category-ajax-check').val(1);
+    });
+
+    // Category create ajax
+    $('.category-submit-btn').on("click", function() {
+        $.ajax({
+            type:'POST',
+            url:'{{route('category.store')}}',
+            data: $("#category-form").serialize(),
+            success:function(response) {
+                pickOption('category_id', response['id'], response['name']);
+                $('select[name="category_id"] option[value="' + response['id'] + '"]').attr('data-hsn', response['default_hsn_code'] || '');
+                $('select[name="category_id"]').trigger('change');
+                quickAddDone('#category-modal', $("#category-form")[0]);
+            },
+            error: function (xhr) { quickAddError('#category-modal', xhr); }
+        });
+    });
+
+    // Tax create ajax
+    $('.tax-submit-btn').on("click", function() {
+        $.ajax({
+            type:'POST',
+            url:'{{route('tax.store')}}',
+            data: $("#tax-form").serialize(),
+            success:function(response) {
+                var key = response['id'];
+                var value = response['name'];
+                $('select[name="tax_id"]').append('<option value="'+ key +'">'+ value +'</option>');
+                $('select[name="tax_id"]').val(key);
+                $('.selectpicker').selectpicker('refresh');
+                $("#addTax").modal('hide');
+            }
+        });
+    });
+
+    // Unit create ajax
+    $(document).on('click', '#create_unit', function (e) {
+        e.preventDefault();
+        let form = $(this).closest('form');
+        let formData = form.serialize();
+
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                if (!response.success || !response.unit) { quickAddError('#createUnitModal', null); return; }
+                var unit = response.unit;
+                if (!unit.base_unit) {
+                    pickOption('unit_id', unit.id, unit.unit_name);
+                    $('#base_unit_create').append($('<option>').val(unit.id).text(unit.unit_name)).selectpicker('refresh');
+                } else {
+                    $("select[name='unit_id']").val(String(unit.base_unit)).selectpicker('refresh').trigger('change');
+                }
+                quickAddDone('#createUnitModal', form[0]);
+                $('#base_unit_create').selectpicker('refresh');
+            },
+            error: function (xhr) { quickAddError('#createUnitModal', xhr); }
+        });
+        applyDynamicGridSpans();
+    });
 
 </script>
 @endpush

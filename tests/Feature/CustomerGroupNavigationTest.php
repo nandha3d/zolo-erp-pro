@@ -51,3 +51,4 @@ class CustomerGroupNavigationTest extends TestCase
         $response->assertSee('Add Customer Group');
     }
 }
+

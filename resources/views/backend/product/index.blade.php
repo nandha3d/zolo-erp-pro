@@ -1,4 +1,9 @@
 @extends('backend.layout.main')
+
+@push('css')
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/voucher-preview-modal.css') }}">
+@endpush
+
 @section('content')
 
 <x-success-message key="create_message" />
@@ -148,20 +153,49 @@
 </section>
 
 <div id="product-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog modal-lg product-details-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 id="exampleModalLabel" class="modal-title">{{__('db.Product Details')}}</h5>
-          <button id="print-btn" type="button" class="btn btn-default btn-sm ml-auto mr-2"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
-          <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close m-0"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+    <div role="document" class="modal-dialog modal-lg product-details-dialog voucher-modal-dialog">
+      <div class="modal-content voucher-preview-card">
+        <div class="voucher-preview-header">
+            <div class="voucher-header-main">
+                <div class="voucher-icon-badge product">
+                    <i class="fa fa-cube"></i>
+                </div>
+                <div>
+                    <h5 id="modal-product-name" class="voucher-doc-title">
+                        <span id="product-modal-name-text">{{__('db.Product Details')}}</span>
+                        <span id="product-modal-code-badge" class="voucher-ref-badge"></span>
+                    </h5>
+                    <div class="voucher-badges-strip">
+                        <span id="product-modal-type-badge" class="badge badge-light border"></span>
+                        <span id="product-modal-category-badge" class="badge badge-info"></span>
+                        <span id="product-modal-brand-badge" class="badge badge-secondary"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="voucher-actions-toolbar">
+                <a href="#" id="modal-product-sales-btn" target="_blank" class="voucher-btn-sales" title="View Sales History">
+                    <i class="fa fa-shopping-bag"></i> Sales
+                </a>
+                <a href="#" id="modal-product-purchase-btn" target="_blank" class="voucher-btn-purchase" title="View Purchase & GRN History">
+                    <i class="fa fa-truck"></i> Purchase (GRN)
+                </a>
+                <a href="#" id="modal-product-composition-btn" target="_blank" class="voucher-btn-composition" title="View Composition & Recipe">
+                    <i class="fa fa-cubes"></i> Composition
+                </a>
+                <a href="#" id="modal-product-edit-btn" class="voucher-edit-btn" title="Edit this product">
+                    <i class="fa fa-pencil"></i> Edit
+                </a>
+                <button id="print-btn" type="button" class="voucher-print-btn" title="{{__('db.Print')}}"><i class="dripicons-print"></i></button>
+                <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="voucher-close-btn"><i class="dripicons-cross"></i></button>
+            </div>
         </div>
-        <div class="modal-body">
+        <div class="modal-body voucher-preview-body">
             <div class="row">
                 <div class="col-md-3" id="slider-content"></div>
                 <div class="col" id="product-content"></div>
                 @if($role_id <= 2)
-                <div class="col-md-12 mt-2" id="product-warehouse-section">
-                    <h5>{{__('db.Warehouse Quantity')}}</h5>
+                <div class="col-md-12 mt-3" id="product-warehouse-section">
+                    <h6 class="font-weight-bold text-dark mb-2"><i class="fa fa-building text-info mr-1"></i> {{__('db.Warehouse Quantity')}}</h6>
                     <table class="table table-sm table-bordered table-hover product-warehouse-list">
                         <thead>
                         </thead>
@@ -170,8 +204,8 @@
                     </table>
                 </div>
                 @endif
-                <div class="col-md-7 mt-2" id="product-variant-section">
-                    <h5>{{__('db.Product Variant Information')}}</h5>
+                <div class="col-md-7 mt-3" id="product-variant-section">
+                    <h6 class="font-weight-bold text-dark mb-2"><i class="fa fa-tags text-purple mr-1"></i> {{__('db.Product Variant Information')}}</h6>
                     <table class="table table-bordered table-hover product-variant-list">
                         <thead>
                         </thead>
@@ -180,8 +214,8 @@
                     </table>
                 </div>
                 @if($role_id <= 2)
-                <div class="col-md-5 mt-2" id="product-variant-warehouse-section">
-                    <h5>{{__('db.Warehouse quantity of product variants')}}</h5>
+                <div class="col-md-5 mt-3" id="product-variant-warehouse-section">
+                    <h6 class="font-weight-bold text-dark mb-2"><i class="fa fa-cubes text-secondary mr-1"></i> {{__('db.Warehouse quantity of product variants')}}</h6>
                     <table class="table table-bordered table-hover product-variant-warehouse-list">
                         <thead>
                         </thead>
@@ -192,7 +226,7 @@
                 @endif
             </div>
 
-            <h5 id="combo-header"></h5>
+            <h5 id="combo-header" class="mt-3 font-weight-bold"></h5>
             <table class="table table-bordered table-hover item-list">
                 <thead>
                 </thead>
@@ -315,6 +349,25 @@
     function productDetails(product, imagedata) {
         product[11] = product[11].replace(/@/g, '"');
         htmltext = slidertext = '';
+
+        var prodId = product[12];
+        $('#product-modal-name-text').text(product[1] || 'Product Details');
+        $('#product-modal-code-badge').text(product[2] || '');
+        $('#product-modal-type-badge').text((product[0] || 'standard').toUpperCase());
+        $('#product-modal-category-badge').text(product[4] || 'General');
+        if (product[3] && String(product[3]).trim() !== '' && product[3] !== 'N/A') {
+            $('#product-modal-brand-badge').text(product[3]).show();
+        } else {
+            $('#product-modal-brand-badge').hide();
+        }
+        $('#modal-product-edit-btn').attr('href', '{{ url("products") }}/' + prodId + '/edit');
+        $('#modal-product-sales-btn').attr('href', '{{ route("products.history") }}?product_id=' + prodId + '&tab=sales');
+        $('#modal-product-purchase-btn').attr('href', '{{ route("products.history") }}?product_id=' + prodId + '&tab=purchases');
+        if (product[0] === 'combo') {
+            $('#modal-product-composition-btn').attr('href', '{{ route("products.history") }}?product_id=' + prodId + '&tab=composition').show();
+        } else {
+            $('#modal-product-composition-btn').hide();
+        }
 
         // Compact label/value grid; blank values show as a dash so every row lines up.
         var facts = [['{{__("db.Type")}}', product[0]], ['{{__("db.name")}}', product[1]], ['{{__("db.Code")}}', product[2]],
