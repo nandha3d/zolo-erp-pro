@@ -74,6 +74,21 @@
 - Verification: 19 Chrome checks (12 passed, seven navigation defects reproduced), plus two failing bill-context redirect probes. Existing targeted Laravel tests recorded 17 passes and three settlement fixture skips. The full destination inventory and browser outcomes are in scratch/navigation-link-audit-2026-11-06.csv.
 
 
+## Active Session & Follow-up — 2026-11-06: Customer Group Navigation Exposure under Parties & Customer Workspace (branch ui)
+
+- **Parties Sidebar Menu Enhancement (`resources/views/backend/layout/sidebar.blade.php`):**
+  - Exposed **Customer Groups** (`route('customer_group.index')`) directly under the `Parties` dropdown in the sidebar alongside Customers, Suppliers, Agents, and Areas.
+- **Customers Command Center Pill Toolbar (`resources/views/backend/customer/index.blade.php`):**
+  - Added a direct `Customer Groups` nav pill in the top command bar of the customer directory.
+- **Customer Creation Form Inline Link (`resources/views/backend/customer/create.blade.php`):**
+  - Added an inline `+ Add Customer Group` link next to the Customer Group field label so users can jump to or manage customer groups without losing context.
+- **Active Navigation State (`resources/views/backend/customer_group/create.blade.php`):**
+  - Updated sidebar script to expand `ul#parties` and activate `#customer-group-menu`.
+- **Verification & Test Coverage:**
+  - Created `tests/Feature/CustomerGroupNavigationTest.php`: 3/3 passed (8 assertions).
+  - Regression verified `tests/Feature/CentralizedDueManagementTest.php`: 10/10 passed (52 assertions).
+  - Regression verified `tests/Feature/OutstandingDuesAndGstTypeTest.php`: 8/8 passed (29 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Outstanding Dues Theme Nav Buttons, Parties Action Menu Links, In-Window Payment Modal & Legacy Module Redirect (branch ui)
 
 - **Outstanding Dues Sidebar Clean-up (`resources/views/backend/layout/sidebar.blade.php`):**

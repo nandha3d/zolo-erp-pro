@@ -152,9 +152,9 @@
 
 @push('scripts')
 <script type="text/javascript">
-    $("ul#setting").siblings('a').attr('aria-expanded','true');
-    $("ul#setting").addClass("show");
-    $("ul#setting #customer-group-menu").addClass("active");
+    $("ul#parties").siblings('a').attr('aria-expanded','true');
+    $("ul#parties").addClass("show");
+    $("ul#parties #customer-group-menu").addClass("active");
 
     var customer_group_id = [];
     var user_verified = <?php echo json_encode(config('app.user_verified')) ?>;

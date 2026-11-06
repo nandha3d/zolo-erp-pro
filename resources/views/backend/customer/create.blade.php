@@ -27,7 +27,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>{{__('db.Customer Group')}} *</strong> </label>
+                                    <label>{{__('db.Customer Group')}} * <a href="{{ route('customer_group.index') }}" target="_blank" class="text-primary small ml-2" title="{{ __('db.Add Customer Group') }}"><i class="dripicons-plus"></i> {{ __('db.Add Customer Group') }}</a></label>
                                     <select required class="form-control selectpicker" id="customer-group-id" name="customer_group_id">
                                         @foreach($lims_customer_group_all as $customer_group)
                                             <option value="{{$customer_group->id}}">{{$customer_group->name}}</option>

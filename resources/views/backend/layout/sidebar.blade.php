@@ -62,7 +62,7 @@
             </ul>
         </li>
     @endif
-    @if($canMasters || $nav->allows('customers-index', 'suppliers-index'))
+    @if($canMasters || $nav->allows('customers-index', 'suppliers-index', 'customer_group'))
         <li>
             <a href="#parties" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-user"></i>
@@ -71,6 +71,9 @@
             <ul id="parties" class="collapse list-unstyled">
                 @if($nav->allows('customers-index'))
                     <li id="customer-list-menu"><a href="{{route('customer.index')}}">Customers</a></li>
+                @endif
+                @if($canMasters || $nav->allows('customer_group'))
+                    <li id="customer-group-menu"><a href="{{route('customer_group.index')}}">Customer Groups</a></li>
                 @endif
                 @if($nav->allows('suppliers-index'))
                     <li id="supplier-list-menu"><a href="{{route('supplier.index')}}">Suppliers</a></li>

@@ -15,6 +15,9 @@
     </div>
     <ul class="comm-nav-pills">
         <li><a class="nav-link active" href="{{ route('customer.index') }}"><i class="dripicons-list"></i> All Customers</a></li>
+        @can('customer_group')
+            <li><a class="nav-link" href="{{ route('customer_group.index') }}"><i class="dripicons-user-group"></i> Customer Groups</a></li>
+        @endcan
         <li><a class="nav-link" href="{{ route('sales.index') }}"><i class="dripicons-cart"></i> Sales Bills</a></li>
         <li><a class="nav-link" href="{{ route('sales.index', ['orders' => 1]) }}"><i class="dripicons-clipboard"></i> Sales Orders</a></li>
         <li><a class="nav-link" href="{{ route('delivery-challans.index') }}"><i class="dripicons-box"></i> Customer DC</a></li>
