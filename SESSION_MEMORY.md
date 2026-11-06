@@ -1,5 +1,57 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Complete Ledger Printing Visibility, Zero-Overflow A4 Geometry & Screen Style Isolation — 2026-11-06 (branch ui)
+
+- **Client Requests Addressed:**
+  - *"Still the complete printing option does not show the complete ledger"* with print preview screenshot `media_1793969528531_a6ba71f9.png`.
+- **Diagnosis of Printing Defects in Screenshot:**
+  1. **Unwanted Screen Chrome on Paper:**
+     - The `.comm-command-bar` (Customer Report Command Center) and `.kpi-summary-strip` (5 KPI metric cards) were rendered inside `<style>` directly in `customer_report.blade.php` with `!important` at root level without `@media screen`.
+     - Because this `<style>` tag was loaded in the body after `erp-print.css`, its rules overrode `@media print { .comm-command-bar, .kpi-summary-strip { display: none !important; } }`.
+     - The command bar and KPI strip consumed over 250px of vertical height on paper, cluttering the statement.
+  2. **Vertical Clipping of Table & Scrollbar Artifacts:**
+     - In `app-shell.css`, `html.app-shell #content [class$="-workspace-view"]` and `.desk-card-wrapper` were constrained to `display: flex !important; flex: 1 1 0 !important; overflow-y: auto !important;`.
+     - In Chromium/Chrome, pagination and multi-page page breaks do not work inside flex containers; the browser treats the container as viewport-bound and clips all overflowing content.
+     - Because of the vertical height taken by the unsuppressed command bar and KPI strip, only the Table Header and Row 1 (Opening Balance) fit within the first-page flex box; rows 2–6 (`MJ-00005`, `MJ-00006`, `MJ-00010`, `REC-00004`, `SR-00001`) overflowed and were clipped, resulting in `Total: 1 sheet of paper` with a vertical scrollbar artifact on paper.
+  3. **Horizontal Overflow & Column Cutoff:**
+     - The table used pixel widths (`style="width: 130px;"`, etc.) and Bootstrap's `.table-responsive` had `overflow-x: auto`.
+     - On paper, this caused Credit to be cut off mid-character (`0.0`) and rendered a visible horizontal scrollbar track under Row 1.
+  4. **DataTables Search Filter Stack Isolation:**
+     - `$.fn.dataTable.ext.search.pop()` in `applyFilter()` was not scoped, potentially leaving custom search functions in place or failing to clean the stack when printing `all`.
+- **Global Architecture & Implementation:**
+  1. **Screen-Only Styles Isolated to `@media screen` (`customer_report.blade.php` & `supplier_report.blade.php`):**
+     - Wrapped all layout rules for `.comm-command-bar`, `.kpi-summary-strip`, `.desk-filter-card`, `.quick-filter-pills`, and `.desk-card-wrapper` inside `@media screen { ... }`.
+     - Screen rules no longer have `!important` specificity in `@media print`, allowing `.d-print-none` and `erp-print.css` to completely hide all app chrome on paper.
+  2. **Complete Unconstrained Print Flow (`public/css/erp-print.css`):**
+     - Neutralized all flex, overflow, and height constraints across the entire hierarchy in `@media print`:
+       `html, body, html.app-shell, html.app-shell body, html.app-shell .page, .page, #content, html.app-shell #content, section, [class*="-workspace-view"], .report-workspace-view, :has(> .desk-card-wrapper), .desk-card-wrapper, .table-responsive, .dataTables_wrapper, .dataTables_wrapper .row` set to `display: block !important; height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; overflow-x: visible !important; overflow-y: visible !important; flex: none !important; position: static !important; float: none !important;`.
+     - Destroys viewport and flexbox clipping completely, allowing native A4 pagination across multiple pages with zero scrollbars on paper.
+  3. **100% Zero-Overflow Fixed Table Geometry (`erp-print.css`):**
+     - Enforced `table-layout: fixed !important; width: 100% !important; max-width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important;`.
+     - Standardized exact percentage widths totaling exactly 100% across the 8 visible columns:
+       - Date: 10%
+       - Type: 12%
+       - Reference No: 13%
+       - Warehouse: 12%
+       - Particulars / Description: 25% (wraps cleanly)
+       - Debit: 9% (text-right tabular-nums)
+       - Credit: 9% (text-right tabular-nums)
+       - Running Balance: 10% (text-right tabular-nums with Dr/Cr)
+     - `th.not-exported-col` and `td.not-exported-col` (`#` and `Status`) hidden via `display: none !important;`.
+     - Table header repeats across pages (`thead { display: table-header-group !important; }`), table footer prints totals (`tfoot { display: table-footer-group !important; }`), and rows avoid page splits (`tr { break-inside: avoid !important; }`).
+  4. **DataTables Search Isolation & Clean Print Triggering (`customer_report.blade.php` & `supplier_report.blade.php`):**
+     - Tagged ledger filters with `_isCustomerLedgerFilter` and `_isSupplierLedgerFilter`.
+     - `applyFilter('all')` cleanly strips tagged filters from `$.fn.dataTable.ext.search`.
+     - Opening balance row always retained (`if (type === 'opening') return true;`).
+     - `printReport('all')` sets `table.page.len(-1).draw()`, expands all rows, updates document title to "Complete Customer/Supplier Account Statement / Ledger", and restores pagination cleanly after printing.
+- **Verification & Test Coverage:**
+  - `Tests\Feature\CustomerSupplierReportsNavigationTest`: 7/7 passed (45 assertions), verifying all ledger transactions (`MJ-00005`, `MJ-00006`, `MJ-00010`, opening balance, etc.) render cleanly.
+  - `Tests\Feature\PartiesGlobalUiTest`: 11/11 passed (59 assertions).
+  - `Tests\Feature\OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
+  - `Tests\Feature\VoucherPopupAndProductEnhancementsTest`: 8/8 passed (65 assertions).
+  - Combined suite: 34/34 passed (198 assertions) in 8.35s.
+  - Clean view cache: `php artisan view:clear` & `php artisan view:cache` (100% compiled).
+
 ## Voucher Preview Popups Live Details, Supplier Metadata & Alignment Fixes — 2026-11-06 (branch ui)
 
 - **Problem & User Feedback Addressed:**
