@@ -52,6 +52,7 @@ class LegacyInventoryCutoverTest extends InventoryLedgerTestCase
             '2024_07_05_193002_create_packing_slip_products_table.php' => null,
             '2024_07_14_122415_add_variant_id_to_packing_slip_products_table.php' => null,
             '2024_07_14_122519_add_packing_slip_ids_to_deliveries_table.php' => null,
+            '2025_08_17_121821_add_profit_margin_to_products_table.php' => null,
         ];
         // Delivery schema is deliberately small; the stock writer only owns these columns.
         Schema::create('deliveries', function (Blueprint $table) {
