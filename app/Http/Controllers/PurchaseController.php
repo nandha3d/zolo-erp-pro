@@ -136,7 +136,7 @@ class PurchaseController extends Controller
             return redirect()->route('purchases.index', ['view_id' => $id]);
         }
 
-        $purchase = Purchase::with(['supplier', 'warehouse', 'payments'])->find($id);
+        $purchase = Purchase::with(['supplier', 'warehouse', 'user', 'payments'])->find($id);
         if (!$purchase) {
             return response()->json(['success' => false, 'message' => 'Purchase not found'], 404);
         }
@@ -152,7 +152,7 @@ class PurchaseController extends Controller
                 'product_name' => $product->name ?? 'Unknown',
                 'product_code' => $product->code ?? '',
                 'qty' => (float)$pp->qty,
-                'net_unit_cost' => (float)$pp->net_unit_cost,
+                'net_unit_cost' => (float)($pp->net_unit_cost > 0 ? $pp->net_unit_cost : ($pp->qty > 0 ? ($pp->total / $pp->qty) : 0)),
                 'discount' => (float)$pp->discount,
                 'tax_rate' => (float)$pp->tax_rate,
                 'tax' => (float)$pp->tax,

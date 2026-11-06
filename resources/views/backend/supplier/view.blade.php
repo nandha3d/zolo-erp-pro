@@ -336,6 +336,9 @@
 
             if (data && data[0] && data[0].length > 0) {
                 for (var i = 0; i < data[0].length; i++) {
+                    var qtyVal = parseFloat(data[1][i]) || 0;
+                    var totalVal = parseFloat(data[6][i]) || 0;
+                    var unitCostVal = qtyVal > 0 ? (totalVal / qtyVal) : totalVal;
                     var $newRow = $(`
                         <tr>
                             <td>${i + 1}</td>
@@ -343,10 +346,10 @@
                             <td>${data[7][i]}</td> <!-- batch_no -->
                             <td>${data[1][i]} ${data[2][i]}</td> <!-- qty + unit -->
                             <td>${data[8][i]}</td> <!-- returned qty -->
-                            <td>${data[6][i]}</td> <!-- unit cost / total -->
-                            <td>${data[3][i]} (${data[4][i]}%)</td> <!-- tax -->
-                            <td>${data[5][i]}</td> <!-- discount -->
-                            <td>${data[6][i]}</td> <!-- subtotal -->
+                            <td>₹${unitCostVal.toFixed(2)}</td> <!-- unit cost -->
+                            <td>₹${parseFloat(data[3][i] || 0).toFixed(2)} (${data[4][i]}%)</td> <!-- tax -->
+                            <td>₹${parseFloat(data[5][i] || 0).toFixed(2)}</td> <!-- discount -->
+                            <td>₹${totalVal.toFixed(2)}</td> <!-- subtotal -->
                         </tr>
                     `);
                     $newBody.append($newRow);

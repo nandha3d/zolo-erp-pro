@@ -40,6 +40,8 @@ class VoucherPopupAndProductEnhancementsTest extends TestCase
         $response->assertSee('voucher-edit-btn', false);
         $response->assertSee('voucher-print-btn', false);
         $response->assertSee('voucher-preview-modal.css', false);
+        $response->assertSee('openSaleDetailsModal', false);
+        $response->assertSee('sale-details-customer-gstin', false);
     }
 
     public function test_purchase_index_has_modern_voucher_preview_card_and_edit_button()
@@ -51,6 +53,62 @@ class VoucherPopupAndProductEnhancementsTest extends TestCase
         $response->assertSee('voucher-edit-btn', false);
         $response->assertSee('voucher-print-btn', false);
         $response->assertSee('voucher-preview-modal.css', false);
+        $response->assertSee('openPurchaseDetailsModal', false);
+        $response->assertSee('purchase-details-supplier-gstin', false);
+    }
+
+    public function test_purchase_ajax_show_returns_hydrated_supplier_and_items()
+    {
+        $purchase = \App\Models\Purchase::first();
+        if (!$purchase) {
+            $this->markTestSkipped('No purchase available');
+        }
+
+        $response = $this->actingAs($this->admin)
+            ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('purchases.show', $purchase->id));
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'success',
+            'purchase' => [
+                'id',
+                'reference_no',
+                'grand_total',
+                'paid_amount',
+            ],
+            'items',
+        ]);
+        $data = $response->json();
+        $this->assertTrue($data['success']);
+        $this->assertEquals($purchase->id, $data['purchase']['id']);
+    }
+
+    public function test_sale_ajax_show_returns_hydrated_customer_and_items()
+    {
+        $sale = \App\Models\Sale::first();
+        if (!$sale) {
+            $this->markTestSkipped('No sale available');
+        }
+
+        $response = $this->actingAs($this->admin)
+            ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('sales.show', $sale->id));
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'success',
+            'sale' => [
+                'id',
+                'reference_no',
+                'grand_total',
+                'paid_amount',
+            ],
+            'items',
+        ]);
+        $data = $response->json();
+        $this->assertTrue($data['success']);
+        $this->assertEquals($sale->id, $data['sale']['id']);
     }
 
     public function test_product_index_has_modern_popup_and_highlight_buttons()
