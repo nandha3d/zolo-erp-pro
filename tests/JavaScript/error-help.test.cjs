@@ -32,6 +32,19 @@ test('every error box message gets help, ending with the general fallback', () =
     assert.match(help.steps(found)[0], /correct the field it names/);
 });
 
+test('a bill form that could not load gives recovery steps instead of field corrections', () => {
+    const { help } = load();
+    for (const message of [
+        'The bill form could not load. Review and Save are unavailable.',
+        "Cannot read properties of undefined (reading 'recalcTableSummary')",
+    ]) {
+        const found = help.lookup(message, true);
+        assert.ok(found, message);
+        assert.equal(help.steps(found)[0], 'Copy any unsaved bill details, then reload this page.');
+        assert.match(help.steps(found)[1], /contact your ERP administrator/);
+    }
+});
+
 test('alert() boxes carry the numbered steps', () => {
     const { alert, alerts } = load();
     alert('Select a company-owned record.');
