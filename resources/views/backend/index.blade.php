@@ -112,9 +112,12 @@
     @if ($showMetrics)
         <section class="dashboard-counts dash-overview" aria-labelledby="dash-overview-title">
             <div class="dash-overview-head">
-                <div>
-                    <h2 id="dash-overview-title">Financial overview</h2>
-                    <p id="dash-filter-status" role="status">Cash, inventory and active party counts show current totals.</p>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h2 id="dash-overview-title" class="mb-0">Financial overview</h2>
+                    <a href="{{ url('/workspace#zw-companies') }}" class="btn btn-sm btn-outline-primary ml-2 d-inline-flex align-items-center" style="height: 30px; border-radius: 6px; font-weight: 650; font-size: 11.5px; gap: 5px;">
+                        <i class="fa fa-cubes"></i> Master Group Insight
+                    </a>
+                    <p id="dash-filter-status" class="w-100 mb-0 mt-1" role="status">Cash, inventory and active party counts show current totals.</p>
                 </div>
                 <div class="dash-filters" aria-label="Financial overview filters" role="group">
                     @if (Auth::user()->role_id <= 2)

@@ -27,12 +27,15 @@ class WorkspaceController extends Controller
         $context = $request->attributes->get(CompanyContext::class);
         $actor = $request->user()->id;
         $navigation = app(WorkspaceNavigation::class)->items($context, $actor);
+        $directory = app(CompanyDirectoryService::class)->directory($actor);
+        $insights = app(\App\Services\Platform\CompanyInsightService::class)->directoryInsights($directory);
         if ($request->is('api/*')) {
-            return response()->json(['data' => $navigation, 'context' => $context]);
+            return response()->json(['data' => $navigation, 'context' => $context, 'insights' => $insights]);
         }
         $data = ['context' => $context, 'company' => Company::with('group')->findOrFail($context->companyId),
             'navigation' => $navigation,
-            'directory' => app(CompanyDirectoryService::class)->directory($actor),
+            'directory' => $directory,
+            'insights' => $insights,
             'branches' => DB::table('company_branches')->where('company_id', $context->companyId)->where('is_active', true)
                 ->whereIn('id', DB::table('company_user_branches')->where('company_id', $context->companyId)->where('user_id', $actor)->select('branch_id'))->get(['id', 'name']),
             'years' => DB::table('fiscal_years')->where('company_id', $context->companyId)->orderByDesc('start_date')->get(['id', 'name', 'status'])];

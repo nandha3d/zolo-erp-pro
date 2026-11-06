@@ -1,6 +1,40 @@
 # zoloERP Pro — Persistent Session Memory & State
 
 
+## Active Session & Follow-up — 2026-11-06: Master Company Group Consolidated Insight Dashboard, P&L Loss Monitoring & Expanded Company Cards with Fast Switcher (branch ui)
+
+- **Master Company Group Consolidated Insight Dashboard (`/workspace#zw-companies`):**
+  - Built an executive group dashboard directly in the Workspace where companies are switched, fulfilling user requirement: *"keep the insights for these companies as a big card, with important details with charts, in that card itself we can switch the company. also one master card fetch all the company's details and consolidate into single card with profit and loss, which company is in loss. etc."*
+  - **Platform Service (`App\Services\Platform\CompanyInsightService`):**
+    - `companyInsight(int $companyId)`: Computes single-company metrics with defensive database schema checks (`Schema::hasTable`, `Schema::hasColumn`): gross sales, sales returns, other income, net sales/revenue, total purchases, purchase returns, COGS, operating expenses, consolidated net profit, profit margin percentage, loss flag (`is_loss`), customer receivables (open dues), supplier payables (open dues), and 6-month monthly sales trend with dynamic scaling.
+    - `directoryInsights(array $directory)`: Aggregates member companies under each `CompanyGroup` into a consolidated group rollup:
+      - Total group revenue, sales count, total purchases, operating expenses.
+      - Consolidated net profit/loss and aggregate margin %.
+      - Group P&L health monitor: tracks `is_loss`, `loss_companies` (names of loss-making companies), `loss_count`, and `profitable_count`.
+      - Group 6-month revenue trajectory trend.
+      - Contribution percentage for each company for stacked distribution visualization.
+  - **Master Consolidated Group Card (`.zw-group-master-card`):**
+    - High-level executive banner with group badge and company count.
+    - 5-KPI quick-stat strip: Consolidated Revenue, Net Profit/Loss (with colored badge and margin %), Customer Receivables, Supplier Payables, and Total Operating Purchases.
+    - **P&L Loss Warning Banner:** Dynamically alerts management if any company in the group is operating at a net loss (e.g. `⚠️ 1 Company operating at a loss: [Company Name]`), or displays `✓ All [N] companies operating profitably`.
+    - **Visual Revenue Distribution Bar:** Stacked color-coded progress bar illustrating each entity's percentage contribution to total group turnover.
+  - **Expanded Company Insight Cards (`.zw-company-card-expanded`):**
+    - Transformed the plain switcher list into informative executive cards:
+      - Company header with logo monogram, company title, business sector, company code, and `Current Company` indicator badge.
+      - P&L Status Badge: Green `₹X.XX Net Profit (Y% Margin)` vs Red `₹X.XX Net Loss (Deficit)`.
+      - 4-metric grid: Net Revenue, Operating Purchases, Customer Dues (Receivables), and Supplier Dues (Payables).
+      - **6-Month Trajectory Mini-Chart:** Clean inline SVG sparkline bar chart visualizing monthly sales performance with month labels and hover titles.
+      - **In-Card Fast Context Switcher:** Embedded seamless 1-click `Switch to Company →` form directly within the card, switching active session context safely via `WorkspaceSecurityTest`-verified controller action.
+  - **Single-Company Dashboard Direct Link (`/dashboard`):**
+    - Added a `Master Group Insight` quick button in the top action header of `/dashboard` linking directly to `/workspace#zw-companies`.
+  - **Verification & Test Coverage:**
+    - Created `tests/Feature/CompanyGroupInsightTest.php` passing 3/3 tests (31 assertions):
+      - `✓ company insight computes revenue profit margin and loss status`
+      - `✓ directory insights consolidates group rollups and detects losses`
+      - `✓ workspace home renders master group card and big company cards`
+    - Regression test `tests/Feature/WorkspaceSecurityTest.php` passing 12/12 tests (73 assertions).
+    - Centralized due test `tests/Feature/CentralizedDueManagementTest.php` passing 10/10 tests (52 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Git Push, Sales Entry Aid Buttons Fix & Master Company Group Dashboard Architecture (branch ui)
 
 - **Git & GitHub Repository Push:**
