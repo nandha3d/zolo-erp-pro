@@ -21,18 +21,205 @@
 <style>
 .report-workspace-view {
     padding: 12px 18px 24px;
-}
-.ledger-table th {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     background: #f8fafc;
-    color: #334155;
-    border-top: none;
-    border-bottom: 2px solid #e2e8f0;
-    padding: 9px 10px;
-    white-space: nowrap;
+    min-height: calc(100vh - 40px);
+}
+body.dark-mode .report-workspace-view {
+    background: #0b0f19;
+}
+
+/* Global Command Bar & Nav Pills */
+.comm-command-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: var(--z-ink, #0b1329) !important;
+    border: 1px solid #1e293b !important;
+    border-radius: 6px !important;
+    padding: 5px 12px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+    flex-shrink: 0 !important;
+    gap: 8px !important;
+    color: #f8fafc !important;
+    flex-wrap: wrap !important;
+}
+.comm-title-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.comm-title-group h1 {
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    color: #f8fafc !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+.comm-title-badge {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+    white-space: nowrap !important;
+}
+.comm-nav-pills {
+    display: flex !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 3px !important;
+    list-style: none !important;
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    border-radius: 6px !important;
+}
+.comm-nav-pills li {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.comm-nav-pills .nav-link {
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-radius: 4px !important;
+    color: #cbd5e1 !important;
+    border: none !important;
+    transition: all 0.15s ease-in-out !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+}
+.comm-nav-pills .nav-link:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+.comm-nav-pills .nav-link.active {
+    background: var(--z-primary, #7d287e) !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(125, 40, 126, 0.4) !important;
+}
+.comm-actions .btn-group .btn-secondary {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+.comm-actions .btn-group .btn-secondary:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+/* Global 5-KPI Strip */
+.kpi-summary-strip {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-bottom: 14px !important;
+}
+@media (max-width: 1200px) {
+    .kpi-summary-strip {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    }
+}
+.kpi-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+}
+body.dark-mode .kpi-card {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+.kpi-card .kpi-label {
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    margin-bottom: 2px !important;
+}
+.kpi-card .kpi-number {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+body.dark-mode .kpi-card .kpi-number {
+    color: #f8fafc !important;
+}
+
+/* Filter Card & Desk Card Wrapper */
+.desk-filter-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    margin-bottom: 14px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+}
+body.dark-mode .desk-filter-card {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+.desk-card-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    padding: 14px 16px !important;
+}
+body.dark-mode .desk-card-wrapper {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+
+/* Global Table Thead - Dark Navy */
+.ledger-table thead th {
+    background: var(--z-table-head-bg, #022051) !important;
+    color: var(--z-table-head-text, #ffffff) !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 9px 12px !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+body.dark-mode .ledger-table thead th {
+    background: var(--z-table-head-bg, #022051) !important;
+    color: var(--z-table-head-text, #ffffff) !important;
+}
+.ledger-table tbody tr:nth-child(even) {
+    background: var(--z-table-stripe, #f8fafc);
+}
+.ledger-table tbody tr:nth-child(odd) {
+    background: var(--z-surface, #ffffff);
+}
+body.dark-mode .ledger-table tbody tr:nth-child(even) {
+    background: #141c2c;
+}
+body.dark-mode .ledger-table tbody tr:nth-child(odd) {
+    background: #1e293b;
+}
+.ledger-table tbody tr:hover {
+    background: #e2e8f0 !important;
+}
+body.dark-mode .ledger-table tbody tr:hover {
+    background: #27354f !important;
 }
 .ledger-table td {
     font-size: 12.5px;
@@ -49,8 +236,11 @@
     padding: 10px;
 }
 .ledger-opening-row {
-    background-color: #f8fafc;
+    background-color: #f1f5f9 !important;
     font-weight: 600;
+}
+body.dark-mode .ledger-opening-row {
+    background-color: #1e293b !important;
 }
 .badge-type-pill {
     font-size: 11px;
@@ -92,21 +282,14 @@
 }
 
 /* Dark mode compatibility */
-body.dark-mode .ledger-table th {
-    background: #1e293b;
-    color: #cbd5e1;
-    border-color: #334155;
-}
 body.dark-mode .ledger-table td {
     border-color: #334155;
+    color: #e2e8f0;
 }
 body.dark-mode .ledger-table tfoot th {
     background: #1e293b;
     border-color: #64748b;
     color: #f8fafc;
-}
-body.dark-mode .ledger-opening-row {
-    background-color: #1e293b;
 }
 body.dark-mode .quick-filter-pills .btn-filter-pill {
     background: #1e293b;
@@ -175,7 +358,7 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
 
 <section class="report-workspace-view">
     <!-- Top Command Bar -->
-    <div class="comm-command-bar section-command-bar d-print-none">
+    <div class="comm-command-bar d-print-none">
         <div class="comm-title-group">
             <h1><i class="dripicons-user-id text-primary"></i> {{ __('db.Supplier Report') }} Command Center</h1>
             <span class="comm-title-badge"><i class="dripicons-tag"></i> 360° Vendor Payable &amp; Single-View Ledger</span>
@@ -188,10 +371,10 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
         </ul>
         <div class="comm-actions">
             <div class="btn-group">
-                <button type="button" class="btn btn-primary btn-action-pill u-bg-primary u-bc-primary" onclick="printReport('all')">
+                <button type="button" class="btn btn-secondary btn-action-pill" onclick="printReport('all')">
                     <i class="dripicons-print"></i> Print Complete Ledger
                 </button>
-                <button type="button" class="btn btn-primary btn-action-pill dropdown-toggle dropdown-toggle-split u-bg-primary u-bc-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button type="button" class="btn btn-secondary btn-action-pill dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="sr-only">Toggle Dropdown</span>
                 </button>
                 <div class="dropdown-menu dropdown-menu-right">
@@ -614,4 +797,11 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
         }
     }
 </script>
+@endpush
+
+@push('css')
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/commercial-workspace.css') . '?v=' . (file_exists(public_path('css/commercial-workspace.css')) ? filemtime(public_path('css/commercial-workspace.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>" type="text/css">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-report-biller-report.css') }}">
 @endpush
