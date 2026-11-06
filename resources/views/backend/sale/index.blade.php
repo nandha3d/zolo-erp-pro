@@ -4087,6 +4087,7 @@
     var editParam = urlParams.get('edit');
     var viewParam = urlParams.get('view_id') || urlParams.get('show_bill');
     var duplicateParam = urlParams.get('duplicate');
+    var searchParam = (urlParams.get('search') || urlParams.get('ref') || '').trim();
 
     if (editParam) {
         loadSaleToForm(editParam, 'edit');
