@@ -27,6 +27,7 @@
         <a href="{{ route('sales.index') }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-cart mr-1"></i> Sales Bills</a>
         <a href="{{ route('sales.index', ['orders' => 1]) }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-clipboard mr-1"></i> Sales Orders</a>
         <a href="{{ route('delivery-challans.index') }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-box mr-1"></i> Customer DC</a>
+        <a href="{{ route('sales.index', ['returns' => 1]) }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-return mr-1"></i> Returns</a>
         <a href="{{ route('report.outstandingDues', ['type' => 'receivables']) }}" class="btn btn-sm btn-outline-secondary py-0 px-2 u-fs-11px"><i class="dripicons-pulse mr-1"></i> Receivables Audit</a>
     </div>
 </div>

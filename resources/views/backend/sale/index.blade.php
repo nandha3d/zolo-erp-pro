@@ -889,44 +889,138 @@
     </div>
 </div>
 
-<!-- Modal: Sale Details Preview -->
+<!-- Modal: Sale Details Preview (Neat & Beautiful Unified Voucher Card) -->
 <div id="sale-details" tabindex="-1" role="dialog" aria-labelledby="saleDetailsLabel" aria-hidden="true" class="modal fade text-left">
-    <div role="document" class="modal-dialog modal-lg">
-      <div class="modal-content u-r-10px u-b-none u-sh-0-10px-25px-rgba-0-0-0-0_15">
-        <div class="container mt-3 pb-2 border-bottom">
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <button id="sale-print-btn" type="button" class="btn btn-outline-secondary btn-sm"><i class="dripicons-print"></i> {{__('db.Print')}}</button>
+    <div role="document" class="modal-dialog voucher-modal-dialog">
+        <div class="voucher-preview-card">
+            <!-- Modal Header -->
+            <div class="voucher-preview-header">
+                <div class="voucher-header-main">
+                    <div class="voucher-icon-badge sales">
+                        <i class="dripicons-cart"></i>
+                    </div>
+                    <div>
+                        <h4 class="voucher-doc-title">
+                            <span>Sales Invoice</span>
+                            <span id="sale-details-ref-badge" class="voucher-ref-badge">#REF</span>
+                        </h4>
+                        <div class="voucher-badges-strip">
+                            <span id="sale-details-status-badge" class="badge badge-success">Completed</span>
+                            <span id="sale-details-date-text" class="text-muted small"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6 text-center">
-                    <h3 id="saleDetailsLabel" class="modal-title font-weight-bold u-fs-16px">Sale Voucher Details</h3>
+                <div class="voucher-actions-toolbar">
+                    <a href="#" id="sale-details-edit-btn" class="voucher-edit-btn" title="Open Full Bill in Edit Mode">
+                        <i class="dripicons-document-edit"></i> Edit Bill
+                    </a>
+                    <button type="button" id="sale-print-btn" class="voucher-print-btn" title="Print Invoice">
+                        <i class="dripicons-print"></i> {{__('db.Print')}}
+                    </button>
+                    <button type="button" data-dismiss="modal" aria-label="Close" class="close ml-2">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="col-md-3 text-right">
-                    <button type="button" id="close-sale-modal-btn" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true">&times;</span></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div id="sale-details-print-area" class="voucher-preview-body">
+                <!-- Two-column info cards -->
+                <div class="voucher-info-grid">
+                    <div class="voucher-info-card">
+                        <div class="voucher-info-card-title">
+                            <i class="dripicons-user text-primary"></i> Customer (Billed To)
+                        </div>
+                        <div id="sale-details-customer-name" class="voucher-party-name">—</div>
+                        <div id="sale-details-customer-company" class="voucher-info-line text-muted"></div>
+                        <div id="sale-details-customer-phone" class="voucher-info-line"></div>
+                        <div id="sale-details-customer-address" class="voucher-info-line"></div>
+                    </div>
+
+                    <div class="voucher-info-card">
+                        <div class="voucher-info-card-title">
+                            <i class="dripicons-clipboard text-primary"></i> Voucher Meta &amp; Dispatch
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Invoice Date:</span>
+                            <span id="sale-details-date-val" class="voucher-meta-val">—</span>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Warehouse / Godown:</span>
+                            <span id="sale-details-warehouse-val" class="voucher-meta-val">—</span>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Biller / Store:</span>
+                            <span id="sale-details-biller-val" class="voucher-meta-val">—</span>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Created By:</span>
+                            <span id="sale-details-user-val" class="voucher-meta-val">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <div class="voucher-table-wrap">
+                    <table class="table voucher-items-table product-sale-list">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{{__('db.product')}}</th>
+                                <th>{{__('db.Batch No')}}</th>
+                                <th>Qty</th>
+                                <th>{{__('db.Unit Price')}}</th>
+                                <th>{{__('db.Tax')}}</th>
+                                <th>{{__('db.Discount')}}</th>
+                                <th class="text-right">{{__('db.Subtotal')}}</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Financial Totals & Notes -->
+                <div class="voucher-bottom-grid">
+                    <div class="voucher-notes-card">
+                        <div class="voucher-notes-title">
+                            <i class="dripicons-document text-muted"></i> Voucher Notes &amp; Remarks
+                        </div>
+                        <p id="sale-details-notes-val" class="voucher-notes-text">No remarks recorded for this bill.</p>
+                    </div>
+
+                    <div class="voucher-totals-card">
+                        <div class="voucher-totals-row">
+                            <span>Total Items Price:</span>
+                            <strong id="sale-details-items-price">₹0.00</strong>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Order Tax:</span>
+                            <span id="sale-details-order-tax">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Order Discount:</span>
+                            <span id="sale-details-order-discount">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Shipping / Freight:</span>
+                            <span id="sale-details-shipping-cost">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row grand-total-row">
+                            <span>Grand Total:</span>
+                            <span id="sale-details-grand-total">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Paid Amount:</span>
+                            <span id="sale-details-paid-amount" class="text-success font-weight-bold">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row due-row" id="sale-details-due-row">
+                            <span>Balance Due:</span>
+                            <span id="sale-details-due-amount">₹0.00</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="sale-content" class="modal-body"></div>
-        <br>
-        <div class="table-responsive document-lines px-3" tabindex="0" role="region" aria-label="{{__('db.Sale Details')}}">
-            <table class="table table-bordered product-sale-list">
-                <thead>
-                    <th>#</th>
-                    <th>{{__('db.product')}}</th>
-                    <th>{{__('db.Batch No')}}</th>
-                    <th>Qty</th>
-                    <th>{{__('db.Returned')}}</th>
-                    <th>{{__('db.Unit Price')}}</th>
-                    <th>{{__('db.Tax')}}</th>
-                    <th>{{__('db.Discount')}}</th>
-                    <th>{{__('db.Subtotal')}}</th>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
-        <div id="sale-footer" class="modal-body"></div>
-      </div>
     </div>
 </div>
 
@@ -4012,6 +4106,134 @@
         }
     }
 
+    // --- Detailed Sales Bill Modal (Neat & Beautiful Preview with Edit Option) ---
+    window.openSaleDetailsModal = function(sale) {
+        if (!sale) return;
+        if (typeof sale === 'string') {
+            try { sale = JSON.parse(sale); } catch (e) { return; }
+        }
+        var saleId = sale[13];
+        var ref = sale[1] || '';
+        var statusText = sale[2] || 'Completed';
+        var billDate = sale[0] || '';
+        var billerName = sale[3] || 'Store';
+        var billerCompany = sale[4] || '';
+        var custName = sale[9] || 'Walk-in Customer';
+        var custPhone = sale[10] ? ('📞 ' + sale[10]) : '';
+        var custAddress = (sale[11] ? sale[11] : '') + (sale[12] ? (', ' + sale[12]) : '');
+        var totalTax = parseFloat(sale[14]) || 0;
+        var totalDiscount = parseFloat(sale[15]) || 0;
+        var totalPrice = parseFloat(sale[16]) || 0;
+        var orderTax = parseFloat(sale[17]) || 0;
+        var orderTaxRate = parseFloat(sale[18]) || 0;
+        var orderDiscount = parseFloat(sale[19]) || 0;
+        var shippingCost = parseFloat(sale[20]) || 0;
+        var grandTotal = parseFloat(sale[21]) || 0;
+        var paidAmount = parseFloat(sale[22]) || 0;
+        var dueAmount = Math.max(0, grandTotal - paidAmount);
+        var notes = (sale[23] || '').replace(/<br\s*[\/]?>/gi, ' ') || 'No remarks recorded for this bill.';
+        var warehouse = sale[27] || 'Main Warehouse';
+        var userName = sale[25] || 'Admin';
+
+        // Header & Edit button linking to original edit page
+        $('#sale-details-ref-badge').text(ref);
+        $('#sale-details-status-badge').text(statusText);
+        $('#sale-details-date-text').text(billDate);
+        var editUrl = "{{ url('sales') }}/" + saleId + "/edit";
+        $('#sale-details-edit-btn').attr('href', editUrl);
+
+        // Customer Card
+        $('#sale-details-customer-name').text(custName);
+        $('#sale-details-customer-company').text(billerCompany ? ('Company: ' + billerCompany) : '').toggle(Boolean(billerCompany));
+        $('#sale-details-customer-phone').text(custPhone).toggle(Boolean(custPhone));
+        $('#sale-details-customer-address').text(custAddress ? ('📍 ' + custAddress) : '').toggle(Boolean(custAddress));
+
+        // Voucher Meta Card
+        $('#sale-details-date-val').text(billDate);
+        $('#sale-details-warehouse-val').text(warehouse);
+        $('#sale-details-biller-val').text(billerName);
+        $('#sale-details-user-val').text(userName);
+
+        // Totals Card
+        $('#sale-details-items-price').text('₹' + totalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        $('#sale-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2}) + (orderTaxRate ? ' (' + orderTaxRate + '%)' : ''));
+        $('#sale-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        $('#sale-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        $('#sale-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        $('#sale-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        $('#sale-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        if (dueAmount > 0.01) {
+            $('#sale-details-due-row').removeClass('settled').addClass('has-due');
+        } else {
+            $('#sale-details-due-row').removeClass('has-due').addClass('settled');
+        }
+        $('#sale-details-notes-val').text(notes);
+
+        // Fetch Line Items
+        var $table = $('#sale-details table.product-sale-list tbody');
+        $table.html('<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>');
+        $('#sale-details').modal('show');
+
+        $.get("{{ url('sales/product_sale') }}/" + saleId, function(data) {
+            $table.empty();
+            if (data && data[0] && data[0].length > 0) {
+                for (var i = 0; i < data[0].length; i++) {
+                    var name = data[0][i] || '';
+                    var qty = data[1][i] || '0';
+                    var unit = data[2][i] || '';
+                    var tax = parseFloat(data[3][i]) || 0;
+                    var taxRate = data[4][i] || '0';
+                    var discount = parseFloat(data[5][i]) || 0;
+                    var subtotal = parseFloat(data[6][i]) || 0;
+                    var batch = (data[7] && data[7][i]) ? data[7][i] : '—';
+                    var unitPrice = (qty > 0) ? (subtotal / qty) : subtotal;
+
+                    var rowHtml = '<tr>' +
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td><strong>' + name + '</strong></td>' +
+                        '<td><span class="badge badge-light border">' + batch + '</span></td>' +
+                        '<td><span class="badge badge-primary px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
+                        '<td>₹' + unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                        '<td>₹' + tax.toFixed(2) + ' <small class="text-muted">(' + taxRate + '%)</small></td>' +
+                        '<td>₹' + discount.toFixed(2) + '</td>' +
+                        '<td class="text-right font-weight-bold">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) + '</td>' +
+                        '</tr>';
+                    $table.append(rowHtml);
+                }
+            } else {
+                $table.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this voucher.</td></tr>');
+            }
+        }).fail(function() {
+            $table.html('<tr><td colspan="8" class="text-center text-danger py-3">Failed to load item lines.</td></tr>');
+        });
+    };
+
+    // Click handler for Action > View on datatable rows and cards
+    $(document).on('click', 'table.sale-list tbody .view, #sale-table tbody .view, .sale-link .view', function(e) {
+        e.preventDefault();
+        var saleData = $(this).closest('tr').data('sale');
+        if (!saleData && $(this).closest('tr').attr('data-sale')) {
+            saleData = $(this).closest('tr').attr('data-sale');
+        }
+        if (saleData) {
+            openSaleDetailsModal(saleData);
+        }
+    });
+
+    // Print button handler
+    $(document).on('click', '#sale-print-btn', function() {
+        var printArea = document.getElementById('sale-details-print-area');
+        var ref = $('#sale-details-ref-badge').text() || 'Voucher';
+        var printWindow = window.open('', 'Print-Window');
+        printWindow.document.open();
+        printWindow.document.write('<html><head><title>Sales Bill ' + ref + '</title>' +
+            '<link rel="stylesheet" href="{{ asset("vendor/bootstrap/css/bootstrap.min.css") }}">' +
+            '<link rel="stylesheet" href="{{ versioned_asset("css/pages/voucher-preview-modal.css") }}">' +
+            '</head><body onload="window.print()">' + printArea.innerHTML + '</body></html>');
+        printWindow.document.close();
+        setTimeout(function() { printWindow.close(); }, 500);
+    });
+
     initPanelState();
     window.commandCenterGrid = {addProductRow, applyProductToRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts};
 })();
@@ -4022,6 +4244,7 @@
 @include('backend.partials.command-center-form', ['kind' => 'sale'])
 
 @push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/voucher-preview-modal.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-purchase-index.css') }}">
     @if($returnsTab)<link rel="stylesheet" href="{{ versioned_asset('css/pages/commercial-returns.css') }}">@endif
     <link rel="stylesheet" href="<?php echo asset('css/commercial-entry.css') . '?v=' . (file_exists(public_path('css/commercial-entry.css')) ? filemtime(public_path('css/commercial-entry.css')) : time()) ?>" type="text/css">
