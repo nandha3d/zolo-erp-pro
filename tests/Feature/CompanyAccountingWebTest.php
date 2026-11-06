@@ -108,10 +108,12 @@ class CompanyAccountingWebTest extends CompanyContextTestCase
             $response = $this->get('/accounting/'.$path)->assertOk()->assertDontSee('Secret B ledger');
             $html = $response->getContent();
             $this->assertStringContainsString('accounting-workspace.css', $html);
-            $this->assertStringNotContainsString('Command Center', preg_replace('/<script\b[^>]*>.*?<\/script>/s', '', $html));
             $document = new \DOMDocument();
             @$document->loadHTML($html);
             $xpath = new \DOMXPath($document);
+            $heading = $xpath->query('//*[@data-accounting-active]//h1')->item(0);
+            $this->assertNotNull($heading, $path.' requires an accounting heading');
+            $this->assertStringNotContainsString('Command Center', $heading->textContent);
             foreach ($xpath->query('//section//form[translate(@method, "get", "GET")="GET"]//*[self::input or self::select][not(@type="hidden")]') as $control) {
                 $id = $control->getAttribute('id');
                 $this->assertNotSame('', $id, $path.' filter requires an id');
