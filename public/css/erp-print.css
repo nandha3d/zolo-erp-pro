@@ -10,7 +10,6 @@
 @page {
     size: A4 portrait;
     margin: 8mm 8mm 10mm;
-    @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter", "Segoe UI", Arial, sans-serif; color: #64748b; }
 }
 @page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }
 
@@ -86,14 +85,32 @@
 
 /* ---------- Global Printing Rules (@media print) ---------- */
 @media print {
+    html,
+    body,
     html.app-shell,
     html.app-shell body,
     html.app-shell .page,
-    html.app-shell #content {
+    .page,
+    #content,
+    html.app-shell #content,
+    section,
+    [class*="-workspace-view"],
+    .report-workspace-view,
+    :has(> .desk-card-wrapper),
+    .desk-card-wrapper,
+    .table-responsive,
+    .dataTables_wrapper,
+    .dataTables_wrapper .row {
         height: auto !important;
-        max-height: none !important;
         min-height: 0 !important;
+        max-height: none !important;
         overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        display: block !important;
+        flex: none !important;
+        position: static !important;
+        float: none !important;
     }
     html.app-shell .page { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
     html.app-shell #content { padding: 0 !important; margin: 0 !important; }
@@ -125,6 +142,14 @@
     .dataTables_filter,
     .dataTables_paginate,
     .dataTables_info,
+    div.dataTables_length,
+    div.dataTables_filter,
+    div.dataTables_paginate,
+    div.dataTables_info,
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_paginate,
+    .dataTables_wrapper .dataTables_info,
     .dataTables_wrapper .row:first-child,
     .dataTables_wrapper .row:last-child,
     .dt-buttons,
@@ -174,9 +199,9 @@
     .ledger-table {
         width: 100% !important;
         max-width: 100% !important;
-        table-layout: auto !important;
+        table-layout: fixed !important;
         border-collapse: collapse !important;
-        margin-bottom: 0 !important;
+        margin: 6px 0 12px 0 !important;
         font-size: 8pt !important;
     }
     table th,
@@ -212,14 +237,16 @@
         font-size: 8pt !important;
         padding: 5px 6px !important;
     }
+
+    /* Standardized 8 Printed Columns Percentage Widths (Total: 100%) */
     .ledger-table th:nth-child(2), .ledger-table td:nth-child(2) { width: 10% !important; white-space: nowrap !important; }
     .ledger-table th:nth-child(3), .ledger-table td:nth-child(3) { width: 12% !important; white-space: nowrap !important; }
-    .ledger-table th:nth-child(4), .ledger-table td:nth-child(4) { width: 14% !important; white-space: nowrap !important; }
-    .ledger-table th:nth-child(5), .ledger-table td:nth-child(5) { width: 13% !important; }
-    .ledger-table th:nth-child(6), .ledger-table td:nth-child(6) { width: auto !important; }
-    .ledger-table th:nth-child(7), .ledger-table td:nth-child(7) { width: 11% !important; text-align: right !important; }
-    .ledger-table th:nth-child(8), .ledger-table td:nth-child(8) { width: 11% !important; text-align: right !important; }
-    .ledger-table th:nth-child(9), .ledger-table td:nth-child(9) { width: 13% !important; text-align: right !important; }
+    .ledger-table th:nth-child(4), .ledger-table td:nth-child(4) { width: 13% !important; white-space: nowrap !important; }
+    .ledger-table th:nth-child(5), .ledger-table td:nth-child(5) { width: 12% !important; }
+    .ledger-table th:nth-child(6), .ledger-table td:nth-child(6) { width: 25% !important; }
+    .ledger-table th:nth-child(7), .ledger-table td:nth-child(7) { width: 9% !important; text-align: right !important; }
+    .ledger-table th:nth-child(8), .ledger-table td:nth-child(8) { width: 9% !important; text-align: right !important; }
+    .ledger-table th:nth-child(9), .ledger-table td:nth-child(9) { width: 10% !important; text-align: right !important; }
 
     .num,
     .text-right,
@@ -255,7 +282,8 @@
     .card,
     .comm-card { box-shadow: none !important; break-inside: avoid; }
     table { break-inside: auto; }
-    thead { display: table-header-group; }
+    thead { display: table-header-group !important; }
+    tfoot { display: table-footer-group !important; }
     tr { break-inside: avoid !important; page-break-inside: avoid !important; }
 
     /* Party Details Card for Statements & Ledgers */
