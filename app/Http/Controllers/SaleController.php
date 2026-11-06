@@ -243,7 +243,7 @@ class SaleController extends Controller
 
     public function getSaleJson($id)
     {
-        $sale = Sale::with(['customer', 'warehouse', 'biller', 'payments'])->find($id);
+        $sale = Sale::with(['customer', 'warehouse', 'biller', 'user', 'payments'])->find($id);
         if (!$sale) {
             return response()->json(['success' => false, 'message' => 'Sale not found'], 404);
         }
@@ -259,7 +259,7 @@ class SaleController extends Controller
                 'product_name' => $product->name ?? 'Unknown',
                 'product_code' => $product->code ?? '',
                 'qty' => (float)$ps->qty,
-                'net_unit_price' => (float)$ps->net_unit_price,
+                'net_unit_price' => (float)($ps->net_unit_price > 0 ? $ps->net_unit_price : ($ps->qty > 0 ? ($ps->total / $ps->qty) : 0)),
                 'discount' => (float)$ps->discount,
                 'tax_rate' => (float)$ps->tax_rate,
                 'tax' => (float)$ps->tax,

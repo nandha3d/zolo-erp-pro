@@ -933,6 +933,7 @@
                         </div>
                         <div id="sale-details-customer-name" class="voucher-party-name">—</div>
                         <div id="sale-details-customer-company" class="voucher-info-line text-muted"></div>
+                        <div id="sale-details-customer-gstin" class="voucher-info-line text-primary font-weight-bold" style="display: none;"></div>
                         <div id="sale-details-customer-phone" class="voucher-info-line"></div>
                         <div id="sale-details-customer-address" class="voucher-info-line"></div>
                     </div>
@@ -965,14 +966,14 @@
                     <table class="table voucher-items-table product-sale-list">
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th style="width: 45px;" class="text-center">#</th>
                                 <th>{{__('db.product')}}</th>
-                                <th>{{__('db.Batch No')}}</th>
-                                <th>Qty</th>
-                                <th>{{__('db.Unit Price')}}</th>
-                                <th>{{__('db.Tax')}}</th>
-                                <th>{{__('db.Discount')}}</th>
-                                <th class="text-right">{{__('db.Subtotal')}}</th>
+                                <th style="width: 110px;">{{__('db.Batch No')}}</th>
+                                <th style="width: 95px;" class="text-right">Qty</th>
+                                <th style="width: 110px;" class="text-right">{{__('db.Unit Price')}}</th>
+                                <th style="width: 110px;" class="text-right">{{__('db.Tax')}}</th>
+                                <th style="width: 95px;" class="text-right">{{__('db.Discount')}}</th>
+                                <th style="width: 120px;" class="text-right">{{__('db.Subtotal')}}</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -3492,11 +3493,10 @@
         if (!id) {
             var tr = $(this).closest('tr');
             var rowData = $('#sale-table').DataTable().row(tr).data();
-            id = rowData ? rowData.id : null;
+            id = rowData ? (rowData.id || (rowData.sale && rowData.sale[13])) : null;
         }
         if (id) {
-            switchWorkspaceMode('voucher');
-            loadSaleToForm(id, 'view');
+            openSaleDetailsModal(id);
         }
     });
 
@@ -4106,117 +4106,234 @@
         }
     }
 
-    // --- Detailed Sales Bill Modal (Neat & Beautiful Preview with Edit Option) ---
-    window.openSaleDetailsModal = function(sale) {
-        if (!sale) return;
-        if (typeof sale === 'string') {
-            try { sale = JSON.parse(sale); } catch (e) { return; }
+    // --- Detailed Sales Bill Modal (Neat & Beautiful Preview with Live Server Fetch & Edit Option) ---
+    window.openSaleDetailsModal = function(saleOrId) {
+        if (!saleOrId) return;
+
+        // Resolve saleId from number, string, object or array
+        var saleId = null;
+        if (typeof saleOrId === 'number' || (typeof saleOrId === 'string' && /^\d+$/.test(saleOrId.trim()))) {
+            saleId = parseInt(saleOrId, 10);
+        } else if (typeof saleOrId === 'object' && saleOrId !== null) {
+            if (saleOrId.id) {
+                saleId = parseInt(saleOrId.id, 10);
+            } else if (Array.isArray(saleOrId)) {
+                var rawId = saleOrId[13] || '';
+                var m = String(rawId).replace(/[^0-9]/g, '');
+                if (m) saleId = parseInt(m, 10);
+            }
+        } else if (typeof saleOrId === 'string') {
+            try {
+                var parsed = JSON.parse(saleOrId);
+                return window.openSaleDetailsModal(parsed);
+            } catch (e) {
+                var m = saleOrId.replace(/[^0-9]/g, '');
+                if (m) saleId = parseInt(m, 10);
+            }
         }
-        var saleId = sale[13];
-        var ref = sale[1] || '';
-        var statusText = sale[2] || 'Completed';
-        var billDate = sale[0] || '';
-        var billerName = sale[3] || 'Store';
-        var billerCompany = sale[4] || '';
-        var custName = sale[9] || 'Walk-in Customer';
-        var custPhone = sale[10] ? ('📞 ' + sale[10]) : '';
-        var custAddress = (sale[11] ? sale[11] : '') + (sale[12] ? (', ' + sale[12]) : '');
-        var totalTax = parseFloat(sale[14]) || 0;
-        var totalDiscount = parseFloat(sale[15]) || 0;
-        var totalPrice = parseFloat(sale[16]) || 0;
-        var orderTax = parseFloat(sale[17]) || 0;
-        var orderTaxRate = parseFloat(sale[18]) || 0;
-        var orderDiscount = parseFloat(sale[19]) || 0;
-        var shippingCost = parseFloat(sale[20]) || 0;
-        var grandTotal = parseFloat(sale[21]) || 0;
-        var paidAmount = parseFloat(sale[22]) || 0;
-        var dueAmount = Math.max(0, grandTotal - paidAmount);
-        var notes = (sale[23] || '').replace(/<br\s*[\/]?>/gi, ' ') || 'No remarks recorded for this bill.';
-        var warehouse = sale[27] || 'Main Warehouse';
-        var userName = sale[25] || 'Admin';
 
-        // Header & Edit button linking to original edit page
-        $('#sale-details-ref-badge').text(ref);
-        $('#sale-details-status-badge').text(statusText);
-        $('#sale-details-date-text').text(billDate);
-        var editUrl = "{{ url('sales') }}/" + saleId + "/edit";
-        $('#sale-details-edit-btn').attr('href', editUrl);
-
-        // Customer Card
-        $('#sale-details-customer-name').text(custName);
-        $('#sale-details-customer-company').text(billerCompany ? ('Company: ' + billerCompany) : '').toggle(Boolean(billerCompany));
-        $('#sale-details-customer-phone').text(custPhone).toggle(Boolean(custPhone));
-        $('#sale-details-customer-address').text(custAddress ? ('📍 ' + custAddress) : '').toggle(Boolean(custAddress));
-
-        // Voucher Meta Card
-        $('#sale-details-date-val').text(billDate);
-        $('#sale-details-warehouse-val').text(warehouse);
-        $('#sale-details-biller-val').text(billerName);
-        $('#sale-details-user-val').text(userName);
-
-        // Totals Card
-        $('#sale-details-items-price').text('₹' + totalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#sale-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2}) + (orderTaxRate ? ' (' + orderTaxRate + '%)' : ''));
-        $('#sale-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#sale-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#sale-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#sale-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#sale-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        if (dueAmount > 0.01) {
-            $('#sale-details-due-row').removeClass('settled').addClass('has-due');
-        } else {
-            $('#sale-details-due-row').removeClass('has-due').addClass('settled');
+        if (!saleId) {
+            console.error('Could not resolve sale ID for modal', saleOrId);
+            return;
         }
-        $('#sale-details-notes-val').text(notes);
 
-        // Fetch Line Items
-        var $table = $('#sale-details table.product-sale-list tbody');
-        $table.html('<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>');
+        // Show modal immediately with loading state
+        $('#sale-details-ref-badge').text('Loading...');
+        $('#sale-details-status-badge').text('...');
+        $('#sale-details-date-text').text('');
+        $('#sale-details-customer-name').text('Loading customer details...');
+        $('#sale-details-customer-company').hide();
+        $('#sale-details-customer-gstin').hide();
+        $('#sale-details-customer-phone').hide();
+        $('#sale-details-customer-address').hide();
+        $('#sale-details-date-val').text('—');
+        $('#sale-details-warehouse-val').text('—');
+        $('#sale-details-biller-val').text('—');
+        $('#sale-details-user-val').text('—');
+        $('#sale-details table.product-sale-list tbody').html(
+            '<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>'
+        );
+        $('#sale-details-items-price').text('₹0.00');
+        $('#sale-details-order-tax').text('₹0.00');
+        $('#sale-details-order-discount').text('₹0.00');
+        $('#sale-details-shipping-cost').text('₹0.00');
+        $('#sale-details-grand-total').text('₹0.00');
+        $('#sale-details-paid-amount').text('₹0.00');
+        $('#sale-details-due-amount').text('₹0.00');
+        $('#sale-details-notes-val').text('Loading...');
         $('#sale-details').modal('show');
 
-        $.get("{{ url('sales/product_sale') }}/" + saleId, function(data) {
-            $table.empty();
-            if (data && data[0] && data[0].length > 0) {
-                for (var i = 0; i < data[0].length; i++) {
-                    var name = data[0][i] || '';
-                    var qty = data[1][i] || '0';
-                    var unit = data[2][i] || '';
-                    var tax = parseFloat(data[3][i]) || 0;
-                    var taxRate = data[4][i] || '0';
-                    var discount = parseFloat(data[5][i]) || 0;
-                    var subtotal = parseFloat(data[6][i]) || 0;
-                    var batch = (data[7] && data[7][i]) ? data[7][i] : '—';
-                    var unitPrice = (qty > 0) ? (subtotal / qty) : subtotal;
-
-                    var rowHtml = '<tr>' +
-                        '<td>' + (i + 1) + '</td>' +
-                        '<td><strong>' + name + '</strong></td>' +
-                        '<td><span class="badge badge-light border">' + batch + '</span></td>' +
-                        '<td><span class="badge badge-primary px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
-                        '<td>₹' + unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
-                        '<td>₹' + tax.toFixed(2) + ' <small class="text-muted">(' + taxRate + '%)</small></td>' +
-                        '<td>₹' + discount.toFixed(2) + '</td>' +
-                        '<td class="text-right font-weight-bold">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) + '</td>' +
-                        '</tr>';
-                    $table.append(rowHtml);
+        // Fetch live authoritative sale JSON
+        $.ajax({
+            url: "{{ url('sales') }}/" + saleId,
+            type: "GET",
+            dataType: "json",
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+            success: function(res) {
+                if (!res || !res.sale) {
+                    $('#sale-details-ref-badge').text('Error');
+                    $('#sale-details table.product-sale-list tbody').html(
+                        '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load invoice details.</td></tr>'
+                    );
+                    return;
                 }
-            } else {
-                $table.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this voucher.</td></tr>');
+
+                var s = res.sale;
+                var ref = s.reference_no || ('#' + s.id);
+                var statusMap = { 1: 'Completed', 2: 'Draft', 3: 'Ordered', 4: 'Returned' };
+                var statusText = statusMap[s.sale_status] || (s.sale_status == 1 ? 'Completed' : 'Draft');
+                var rawDate = res.business_date || (s.created_at ? s.created_at.split('T')[0] : '');
+                var formattedDate = rawDate;
+                if (rawDate && rawDate.indexOf('-') > -1) {
+                    var dp = rawDate.split('-');
+                    if (dp.length === 3) formattedDate = dp[2] + '-' + dp[1] + '-' + dp[0];
+                }
+
+                // Header & Edit Button
+                $('#sale-details-ref-badge').text(ref);
+                $('#sale-details-status-badge').text(statusText);
+                $('#sale-details-date-text').text(formattedDate);
+                var editUrl = "{{ url('sales') }}/" + s.id + "/edit";
+                $('#sale-details-edit-btn').attr('href', editUrl);
+
+                // Customer Card
+                var c = s.customer || {};
+                var custName = c.name || 'Walk-in Customer';
+                var custCompany = c.company_name || '';
+                var custGstin = c.tax_no || c.vat_number || '';
+                var custPhone = c.phone_number ? ('📞 ' + c.phone_number) : '';
+                var addressParts = [c.address, c.city, c.postal_code].filter(Boolean);
+                var custAddress = addressParts.length ? ('📍 ' + addressParts.join(', ')) : '';
+
+                $('#sale-details-customer-name').text(custName);
+                if (custCompany) {
+                    $('#sale-details-customer-company').text('Company: ' + custCompany).show();
+                } else {
+                    $('#sale-details-customer-company').hide();
+                }
+                if (custGstin) {
+                    $('#sale-details-customer-gstin').text('GSTIN: ' + custGstin).show();
+                } else {
+                    $('#sale-details-customer-gstin').hide();
+                }
+                if (custPhone) {
+                    $('#sale-details-customer-phone').text(custPhone).show();
+                } else {
+                    $('#sale-details-customer-phone').hide();
+                }
+                if (custAddress) {
+                    $('#sale-details-customer-address').text(custAddress).show();
+                } else {
+                    $('#sale-details-customer-address').hide();
+                }
+
+                // Voucher Meta Card
+                var w = s.warehouse || {};
+                var warehouseName = w.name || 'Main Warehouse';
+                var b = s.biller || {};
+                var billerName = b.name || 'Store';
+                var userName = (s.user && s.user.name) ? s.user.name : 'Admin';
+
+                $('#sale-details-date-val').text(formattedDate || '—');
+                $('#sale-details-warehouse-val').text(warehouseName);
+                $('#sale-details-biller-val').text(billerName);
+                $('#sale-details-user-val').text(userName);
+
+                // Items Table (8 Columns 1:1)
+                var $tbody = $('#sale-details table.product-sale-list tbody');
+                $tbody.empty();
+                var items = res.items || [];
+                var itemsPriceTotal = 0;
+
+                if (items.length > 0) {
+                    items.forEach(function(item, idx) {
+                        var name = item.product_name || 'Product';
+                        var code = item.product_code || '';
+                        var batch = item.batch_no ? item.batch_no : '—';
+                        var qty = Number(item.qty || 0);
+                        var unit = item.unit_code || 'PCS';
+                        var unitPrice = Number(item.net_unit_price || (qty > 0 ? (item.total / qty) : 0));
+                        var tax = Number(item.tax || 0);
+                        var taxRate = Number(item.tax_rate || 0);
+                        var discount = Number(item.discount || 0);
+                        var subtotal = Number(item.total || 0);
+                        itemsPriceTotal += subtotal;
+
+                        var rowHtml = '<tr>' +
+                            '<td class="text-center align-middle">' + (idx + 1) + '</td>' +
+                            '<td class="align-middle">' +
+                                '<div class="font-weight-bold text-dark">' + name + '</div>' +
+                                (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                            '</td>' +
+                            '<td class="align-middle">' +
+                                (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
+                            '</td>' +
+                            '<td class="text-right align-middle"><span class="badge badge-primary px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
+                            '<td class="text-right align-middle font-weight-bold">₹' + unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle">₹' + tax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (taxRate > 0 ? ' <small class="text-muted">(' + taxRate + '%)</small>' : '') + '</td>' +
+                            '<td class="text-right align-middle">₹' + discount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle font-weight-bold text-primary">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '</tr>';
+                        $tbody.append(rowHtml);
+                    });
+                } else {
+                    $tbody.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this voucher.</td></tr>');
+                }
+
+                // Financial Totals
+                var totalPrice = Number(s.total_price || itemsPriceTotal || 0);
+                var orderTax = Number(s.order_tax || 0);
+                var orderTaxRate = Number(s.order_tax_rate || 0);
+                var orderDiscount = Number(s.order_discount || 0);
+                var shippingCost = Number(s.shipping_cost || 0);
+                var grandTotal = Number(s.grand_total || (totalPrice + orderTax + shippingCost - orderDiscount));
+                var paidAmount = Number(s.paid_amount || 0);
+                var dueAmount = Math.max(0, grandTotal - paidAmount);
+
+                $('#sale-details-items-price').text('₹' + totalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (orderTaxRate > 0 ? ' (' + orderTaxRate + '%)' : ''));
+                $('#sale-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+                if (dueAmount > 0.01) {
+                    $('#sale-details-due-row').removeClass('settled').addClass('has-due');
+                } else {
+                    $('#sale-details-due-row').removeClass('has-due').addClass('settled');
+                }
+
+                var note = (s.sale_note || s.staff_note || '').trim();
+                $('#sale-details-notes-val').text(note || 'No remarks recorded for this bill.');
+            },
+            error: function() {
+                $('#sale-details-ref-badge').text('Error');
+                $('#sale-details table.product-sale-list tbody').html(
+                    '<tr><td colspan="8" class="text-center text-danger py-3">Unable to retrieve invoice data from server.</td></tr>'
+                );
             }
-        }).fail(function() {
-            $table.html('<tr><td colspan="8" class="text-center text-danger py-3">Failed to load item lines.</td></tr>');
         });
     };
 
     // Click handler for Action > View on datatable rows and cards
     $(document).on('click', 'table.sale-list tbody .view, #sale-table tbody .view, .sale-link .view', function(e) {
         e.preventDefault();
-        var saleData = $(this).closest('tr').data('sale');
-        if (!saleData && $(this).closest('tr').attr('data-sale')) {
-            saleData = $(this).closest('tr').attr('data-sale');
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
+            var tr = $(this).closest('tr');
+            id = tr.data('id') || tr.attr('data-id');
+            if (!id) {
+                var rowData = $('#sale-table').DataTable().row(tr).data();
+                id = rowData ? (rowData.id || (rowData.sale && rowData.sale[13])) : null;
+            }
         }
-        if (saleData) {
-            openSaleDetailsModal(saleData);
+        if (id) {
+            openSaleDetailsModal(id);
+        } else {
+            var saleData = $(this).closest('tr').data('sale') || $(this).closest('tr').attr('data-sale');
+            if (saleData) openSaleDetailsModal(saleData);
         }
     });
 

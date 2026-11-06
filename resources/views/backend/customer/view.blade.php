@@ -287,22 +287,22 @@ $(function () {
     $(document).on('click', '.view-sale', function () {
         var saleId = $(this).data('id');
         $.get('/sales/' + saleId, function (data) {
-            var sale = data[0];
-            var saleDetails = data[1];
+            var sale = data.sale || data[0] || {};
+            var saleDetails = data.items || data[1] || [];
+            var customer = sale.customer || data[2] || {};
+            var biller = sale.biller || data[3] || {};
 
-            var customer = data[2];
-            var biller = data[3];
-
+            var saleDate = (data.business_date || sale.created_at || '').substring(0, 10);
             var html = `
                 <div class="row">
                     <div class="col-md-6">
-                        <strong>Date:</strong> ${sale.created_at}<br>
-                        <strong>Reference:</strong> ${sale.reference_no}<br>
+                        <strong>Date:</strong> ${saleDate}<br>
+                        <strong>Reference:</strong> ${sale.reference_no || '-'}<br>
                         <strong>Warehouse:</strong> ${sale.warehouse ? sale.warehouse.name : '-'}<br>
                     </div>
                     <div class="col-md-6 text-right">
-                        <strong>Customer:</strong> ${customer.name}<br>
-                        <strong>Phone:</strong> ${customer.phone_number}<br>
+                        <strong>Customer:</strong> ${customer.name || '-'}<br>
+                        <strong>Phone:</strong> ${customer.phone_number || '-'}<br>
                         <strong>Biller:</strong> ${biller ? biller.name : '-'}<br>
                     </div>
                 </div>
@@ -314,18 +314,23 @@ $(function () {
             var subtotal = 0;
 
             $.each(saleDetails, function (index, item) {
-                totalQty += parseFloat(item.qty);
-                subtotal += parseFloat(item.total);
+                var pQty = parseFloat(item.qty || 0);
+                var pTotal = parseFloat(item.total || 0);
+                var pPrice = parseFloat(item.net_unit_price || (pQty > 0 ? (pTotal / pQty) : 0));
+                var pName = item.product_name || item.name || '';
+                var pCode = item.product_code || item.code || '';
+                totalQty += pQty;
+                subtotal += pTotal;
 
                 rows += `
                     <tr>
                         <td>${index + 1}</td>
-                        <td>${item.code} - ${item.name}</td>
-                        <td>${item.qty}</td>
-                        <td>${parseFloat(item.net_unit_price).toFixed(2)}</td>
-                        <td>${parseFloat(item.tax).toFixed(2)}</td>
-                        <td>${parseFloat(item.discount).toFixed(2)}</td>
-                        <td>${parseFloat(item.total).toFixed(2)}</td>
+                        <td>${pCode ? pCode + ' - ' : ''}${pName}</td>
+                        <td>${pQty}</td>
+                        <td>₹${pPrice.toFixed(2)}</td>
+                        <td>₹${parseFloat(item.tax || 0).toFixed(2)}</td>
+                        <td>₹${parseFloat(item.discount || 0).toFixed(2)}</td>
+                        <td>₹${pTotal.toFixed(2)}</td>
                     </tr>
                 `;
             });
