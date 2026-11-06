@@ -116,5 +116,21 @@ class CustomerSupplierReportsNavigationTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('backend.report.customer_group_report');
     }
+
+    public function test_customer_report_renders_all_ledger_rows(): void
+    {
+        $customer = Customer::withoutGlobalScopes()->where('name', 'like', '%Tiruppur%')->first();
+        $this->assertNotNull($customer, 'Customer should exist');
+
+        $this->withSession(['company_id' => $customer->company_id]);
+
+        $response = $this->get(route('report.customer', ['customer_id' => $customer->id, 'start_date' => '2025-11-06', 'end_date' => '2026-11-06', 'transaction_type' => 'all']));
+        $response->assertOk();
+        $content = $response->getContent();
+        $this->assertStringContainsString('Opening Balance Brought Forward', $content);
+        $this->assertStringContainsString('MJ-00005', $content);
+        $this->assertStringContainsString('MJ-00006', $content);
+        $this->assertStringContainsString('MJ-00010', $content);
+    }
 }
 

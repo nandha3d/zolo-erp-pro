@@ -216,7 +216,7 @@
     <!-- Unified Single-View Ledger Table -->
     <div class="desk-card-wrapper">
         <div class="table-responsive">
-            <table id="customer-ledger-table" class="table ledger-table u-w-100pct">
+            <table id="customer-ledger-table" class="table ledger-table u-w-100pct" data-print-all-columns>
                 <thead>
                     <tr>
                         <th class="ledger-number-column not-exported-col">#</th>
@@ -403,45 +403,52 @@
     function applyFilter(filter) {
         if (!table) return;
 
-        // Custom filter function for DataTables
-        $.fn.dataTable.ext.search.pop(); // remove existing
+        // Cleanly remove any previously registered ledger filter
+        $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function(fn) {
+            return !fn._isCustomerLedgerFilter;
+        });
 
         if (filter !== 'all') {
-            $.fn.dataTable.ext.search.push(
-                function(settings, data, dataIndex) {
-                    if (settings.nTable.id !== 'customer-ledger-table') return true;
-                    var row = table.row(dataIndex).node();
-                    var type = $(row).data('type');
-                    if (filter === 'payment') {
-                        return type === 'payment' || type === 'deposit';
-                    }
-                    return type === filter;
+            var filterFn = function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'customer-ledger-table') return true;
+                var row = table.row(dataIndex).node();
+                if (!row) return true;
+                var type = $(row).data('type');
+                if (type === 'opening') return true; // Opening balance always stays in statement
+                if (filter === 'payment') {
+                    return type === 'payment' || type === 'deposit';
                 }
-            );
+                return type === filter;
+            };
+            filterFn._isCustomerLedgerFilter = true;
+            $.fn.dataTable.ext.search.push(filterFn);
         }
 
         table.draw();
     }
 
     function printReport(mode) {
-        var prevFilter = $('.btn-filter-pill.active').data('filter');
         var reportTitle = 'Customer Account Statement / Ledger';
 
         if (mode === 'all') {
             reportTitle = 'Complete Customer Account Statement / Ledger';
-            $('.btn-filter-pill[data-filter="all"]').trigger('click');
+            applyFilter('all');
+            $('.btn-filter-pill').removeClass('active');
+            $('.btn-filter-pill[data-filter="all"]').addClass('active');
         } else if (mode === 'current') {
-            var filterName = prevFilter.charAt(0).toUpperCase() + prevFilter.slice(1);
-            reportTitle = filterName === 'All' ? 'Complete Customer Account Statement / Ledger' : 'Customer ' + filterName + ' Statement';
+            var activeFilter = $('.btn-filter-pill.active').data('filter') || 'all';
+            reportTitle = activeFilter === 'all'
+                ? 'Complete Customer Account Statement / Ledger'
+                : 'Customer ' + activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1) + ' Statement';
         } else {
-            $('.btn-filter-pill[data-filter="' + mode + '"]').trigger('click');
-            var filterName = mode.charAt(0).toUpperCase() + mode.slice(1);
-            reportTitle = 'Customer ' + filterName + ' Statement';
+            applyFilter(mode);
+            $('.btn-filter-pill').removeClass('active');
+            $('.btn-filter-pill[data-filter="' + mode + '"]').addClass('active');
+            reportTitle = 'Customer ' + mode.charAt(0).toUpperCase() + mode.slice(1) + ' Statement';
         }
 
         $('[data-erp-print-title]').text(reportTitle);
 
-        // Expand all records and adjust columns for full print
         if (table) {
             var origLen = table.page.len();
             table.page.len(-1).draw();
@@ -450,10 +457,7 @@
                 window.print();
                 setTimeout(function() {
                     table.page.len(origLen).draw();
-                    if (mode === 'all' && prevFilter && prevFilter !== 'all') {
-                        $('.btn-filter-pill[data-filter="' + prevFilter + '"]').trigger('click');
-                    }
-                }, 300);
+                }, 500);
             }, 300);
         } else {
             window.print();
