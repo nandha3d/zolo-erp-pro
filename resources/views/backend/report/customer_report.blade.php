@@ -18,161 +18,9 @@
     $closingBal = (float)($ledgerData['closing_balance'] ?? 0);
 @endphp
 
-<style>
-.report-workspace-view {
-    padding: 12px 18px 24px;
-}
-.ledger-table th {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    background: #f8fafc;
-    color: #334155;
-    border-top: none;
-    border-bottom: 2px solid #e2e8f0;
-    padding: 9px 10px;
-    white-space: nowrap;
-}
-.ledger-table td {
-    font-size: 12.5px;
-    padding: 8px 10px;
-    vertical-align: middle;
-    border-color: #f1f5f9;
-}
-.ledger-table tfoot th {
-    font-size: 13px;
-    font-weight: 800;
-    background: #f8fafc;
-    border-top: 2px solid #0f172a;
-    border-bottom: 2px solid #0f172a;
-    padding: 10px;
-}
-.ledger-opening-row {
-    background-color: #f8fafc;
-    font-weight: 600;
-}
-.badge-type-pill {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 9999px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-.badge-type-sale { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-.badge-type-payment { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-.badge-type-return { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
-.badge-type-deposit { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-.badge-type-quotation { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
-.badge-type-opening { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-
-.quick-filter-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-}
-.quick-filter-pills .btn-filter-pill {
-    font-size: 11.5px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #475569;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.quick-filter-pills .btn-filter-pill:hover,
-.quick-filter-pills .btn-filter-pill.active {
-    background: #0f172a;
-    border-color: #0f172a;
-    color: #ffffff;
-}
-
-/* Dark mode compatibility */
-body.dark-mode .ledger-table th {
-    background: #1e293b;
-    color: #cbd5e1;
-    border-color: #334155;
-}
-body.dark-mode .ledger-table td {
-    border-color: #334155;
-}
-body.dark-mode .ledger-table tfoot th {
-    background: #1e293b;
-    border-color: #64748b;
-    color: #f8fafc;
-}
-body.dark-mode .ledger-opening-row {
-    background-color: #1e293b;
-}
-body.dark-mode .quick-filter-pills .btn-filter-pill {
-    background: #1e293b;
-    border-color: #334155;
-    color: #cbd5e1;
-}
-body.dark-mode .quick-filter-pills .btn-filter-pill.active {
-    background: #38bdf8;
-    border-color: #38bdf8;
-    color: #0f172a;
-}
-
-/* Print specific styling */
-@media print {
-    body, body.dark-mode {
-        background: #ffffff !important;
-        color: #0f172a !important;
-    }
-    .comm-command-bar,
-    .desk-filter-card,
-    .quick-filter-bar,
-    .not-exported-col,
-    .side-navbar,
-    header.header,
-    footer.main-footer,
-    .btn,
-    .dataTables_length,
-    .dataTables_filter,
-    .dataTables_info,
-    .dataTables_paginate {
-        display: none !important;
-    }
-    .report-workspace-view {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    .desk-card-wrapper {
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-    }
-    .print-only-header {
-        display: block !important;
-        margin-bottom: 15px;
-    }
-    .ledger-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-    }
-    .ledger-table th, .ledger-table td {
-        border: 1px solid #cbd5e1 !important;
-        padding: 5px 6px !important;
-        font-size: 8.5pt !important;
-    }
-    .ledger-table tfoot th {
-        background: #f1f5f9 !important;
-        border-top: 2px solid #0f172a !important;
-    }
-}
-@media screen {
-    .print-only-header {
-        display: none;
-    }
-}
-</style>
+@push('css')
+<link rel="stylesheet" href="{{ versioned_asset('css/pages/party-ledger.css') }}">
+@endpush
 
 <section class="report-workspace-view">
     <!-- Top Command Bar -->
@@ -210,38 +58,38 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
 
     <!-- Print Letterhead & Party Header (Only Visible When Printing) -->
     <div class="print-only-header">
-        <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div class="ledger-letterhead">
             <div>
-                <h2 style="margin: 0; font-size: 16pt; font-weight: 800; color: #0f172a;">{{ $general_setting->company_name ?? 'zoloERP Pro' }}</h2>
-                <div style="font-size: 9pt; color: #475569; margin-top: 3px;">
+                <h2 class="ledger-company-name">{{ $general_setting->company_name ?? 'zoloERP Pro' }}</h2>
+                <div class="ledger-company-address">
                     GSTIN: <strong>{{ $general_setting->vat_registration_number ?? '—' }}</strong> | Phone: {{ $general_setting->phone ?? '—' }}
                 </div>
-                <div style="font-size: 8.5pt; color: #64748b;">
+                <div class="ledger-print-detail">
                     {{ $general_setting->address ?? '' }}
                 </div>
             </div>
-            <div style="text-align: right;">
-                <h3 style="margin: 0; font-size: 13pt; font-weight: 800; text-transform: uppercase; color: #0f172a;" id="printDocTitle">Customer Account Statement / Ledger</h3>
-                <div style="font-size: 8.5pt; color: #64748b; margin-top: 4px;">
+            <div class="text-right">
+                <h3 class="ledger-print-title" id="printDocTitle">Customer Account Statement / Ledger</h3>
+                <div class="ledger-print-period">
                     Period: <strong>{{ date('d-m-Y', strtotime($start_date)) }}</strong> To <strong>{{ date('d-m-Y', strtotime($end_date)) }}</strong>
                 </div>
-                <div style="font-size: 8pt; color: #94a3b8;">Printed on: {{ date('d-m-Y H:i') }}</div>
+                <div class="ledger-print-date">Printed on: {{ date('d-m-Y H:i') }}</div>
             </div>
         </div>
 
         @if($customer)
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between;">
+        <div class="ledger-print-party">
             <div>
-                <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Customer / Debtor Details:</div>
-                <div style="font-size: 11.5pt; font-weight: 800; color: #0f172a;">{{ $customer->name }}</div>
-                <div style="font-size: 9pt; color: #334155;">{{ $customer->company_name ?? '' }}</div>
-                <div style="font-size: 8.5pt; color: #64748b;">Phone: {{ $customer->phone_number }} | Email: {{ $customer->email ?? '—' }}</div>
-                <div style="font-size: 8.5pt; color: #64748b;">GSTIN: <strong>{{ $customer->tax_no ?? 'Unregistered' }}</strong></div>
+                <div class="ledger-print-label">Customer / Debtor Details:</div>
+                <div class="ledger-party-name">{{ $customer->name }}</div>
+                <div class="ledger-party-company">{{ $customer->company_name ?? '' }}</div>
+                <div class="ledger-print-detail">Phone: {{ $customer->phone_number }} | Email: {{ $customer->email ?? '—' }}</div>
+                <div class="ledger-print-detail">GSTIN: <strong>{{ $customer->tax_no ?? 'Unregistered' }}</strong></div>
             </div>
-            <div style="text-align: right; min-width: 180px;">
-                <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Opening Balance:</div>
-                <div style="font-size: 10pt; font-weight: 700; color: #0f172a;">{{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Dr' : 'Cr' }}</div>
-                <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b; margin-top: 4px;">Current Outstanding:</div>
+            <div class="ledger-print-balances">
+                <div class="ledger-print-label">Opening Balance:</div>
+                <div class="ledger-opening-balance">{{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Dr' : 'Cr' }}</div>
+                <div class="ledger-print-label ledger-closing-label">Current Outstanding:</div>
                 <div style="font-size: 12pt; font-weight: 800; color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
                     {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }} {{ $closingBal >= 0 ? 'Dr' : 'Cr' }}
                 </div>
@@ -387,16 +235,16 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
             <table id="customer-ledger-table" class="table ledger-table u-w-100pct">
                 <thead>
                     <tr>
-                        <th class="not-exported-col" style="width: 35px;">#</th>
-                        <th style="width: 95px;">{{ __('db.date') }}</th>
-                        <th style="width: 120px;">{{ __('db.Type') }}</th>
-                        <th style="width: 130px;">{{ __('db.reference') }} No</th>
+                        <th class="ledger-number-column not-exported-col">#</th>
+                        <th class="u-w-95px">{{ __('db.date') }}</th>
+                        <th class="u-w-120px">{{ __('db.Type') }}</th>
+                        <th class="u-w-130px">{{ __('db.reference') }} No</th>
                         <th>{{ __('db.Warehouse') }}</th>
                         <th>{{ __('db.Description') }} / Particulars</th>
-                        <th class="text-right" style="width: 110px;">Debit ({{ $currencySymbol }})</th>
-                        <th class="text-right" style="width: 110px;">Credit ({{ $currencySymbol }})</th>
-                        <th class="text-right" style="width: 130px;">Running Balance ({{ $currencySymbol }})</th>
-                        <th class="not-exported-col" style="width: 85px;">{{ __('db.status') }}</th>
+                        <th class="u-w-110px text-right">Debit ({{ $currencySymbol }})</th>
+                        <th class="u-w-110px text-right">Credit ({{ $currencySymbol }})</th>
+                        <th class="u-w-130px text-right">Running Balance ({{ $currencySymbol }})</th>
+                        <th class="ledger-status-column not-exported-col">{{ __('db.status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -423,7 +271,7 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
                         $calcTotalCredit = 0.0;
                     @endphp
 
-                    @forelse($ledgerData['items'] as $index => $item)
+                    @foreach($ledgerData['items'] as $index => $item)
                         @php
                             $calcTotalDebit += $item->debit;
                             $calcTotalCredit += $item->credit;
@@ -470,13 +318,7 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
                                 <span class="badge badge-light border text-capitalize">{{ $item->status }}</span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10" class="text-center py-4 text-muted">
-                                <i class="dripicons-information mr-1"></i> No transactions found for the selected timeframe.
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
@@ -492,16 +334,21 @@ body.dark-mode .quick-filter-pills .btn-filter-pill.active {
                     </tr>
                 </tfoot>
             </table>
+            @if($ledgerData['items']->isEmpty())
+                <p class="text-center py-4 mb-0 text-muted">
+                    <i class="dripicons-information mr-1"></i> No transactions found for the selected timeframe.
+                </p>
+            @endif
         </div>
     </div>
 
     <!-- Print Footer Signatures (Only Visible When Printing) -->
-    <div class="print-only-header" style="margin-top: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 30px;">
-            <div style="text-align: center; border-top: 1px dashed #94a3b8; width: 220px; padding-top: 6px; font-size: 8.5pt;">
+    <div class="ledger-signatures print-only-header">
+        <div class="ledger-signature-row">
+            <div class="ledger-signature">
                 Customer Confirmation Signature
             </div>
-            <div style="text-align: center; border-top: 1px dashed #94a3b8; width: 220px; padding-top: 6px; font-size: 8.5pt;">
+            <div class="ledger-signature">
                 For {{ $general_setting->company_name ?? 'zoloERP Pro' }}<br>
                 <strong>Authorized Signatory</strong>
             </div>

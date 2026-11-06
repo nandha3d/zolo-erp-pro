@@ -123,3 +123,10 @@
         align-items: center !important;
         gap: 5px !important;
     }
+
+.journal-modal-wide { max-width: min(1080px, 96vw); }
+.journal-account-column { width: 36%; min-width: 220px; }
+.journal-memo-column { width: 28%; min-width: 160px; }
+.journal-amount-column { width: 16%; min-width: 110px; }
+.journal-actions-column { width: 4%; min-width: 38px; }
+.journal-line-input { padding: 4px 10px; }

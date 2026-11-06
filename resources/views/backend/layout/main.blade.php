@@ -194,6 +194,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <link rel="stylesheet" href="<?php echo versioned_asset('css/error-help.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/erp-print.css') ?>" type="text/css">
 
+  <link rel="stylesheet" href="{{ versioned_asset('css/pages/guided-tutorial.css') }}">
   @stack('css')
 
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-components.css') ?>" type="text/css">

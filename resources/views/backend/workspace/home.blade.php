@@ -240,21 +240,21 @@
                                     </div>
                                     <div class="zw-donut-legend-list">
                                         <div class="zw-donut-legend-row">
-                                            <span class="zw-donut-legend-dot" style="background-color: #10b981;"></span>
+                                            <span class="zw-legend-profit zw-donut-legend-dot"></span>
                                             <div class="zw-donut-legend-info">
                                                 <strong>Net Profit</strong>
                                                 <span>₹{{ number_format(max(0, $gRollup['net_profit']), 2) }}</span>
                                             </div>
                                         </div>
                                         <div class="zw-donut-legend-row">
-                                            <span class="zw-donut-legend-dot" style="background-color: #f59e0b;"></span>
+                                            <span class="zw-legend-breakeven zw-donut-legend-dot"></span>
                                             <div class="zw-donut-legend-info">
                                                 <strong>Purchases / COGS</strong>
                                                 <span>₹{{ number_format($gRollup['total_purchases'], 2) }}</span>
                                             </div>
                                         </div>
                                         <div class="zw-donut-legend-row">
-                                            <span class="zw-donut-legend-dot" style="background-color: #f43f5e;"></span>
+                                            <span class="zw-legend-loss zw-donut-legend-dot"></span>
                                             <div class="zw-donut-legend-info">
                                                 <strong>Operating Expenses</strong>
                                                 <span>₹{{ number_format($gRollup['total_expenses'], 2) }}</span>
@@ -322,13 +322,13 @@
 
                         <div class="zw-master-kpi">
                             <span class="zw-master-kpi-label"><i class="fa fa-credit-card"></i> Customer Receivables</span>
-                            <span class="zw-master-kpi-value text-purple" style="color: #7c3aed;">₹{{ number_format($gRollup['total_receivables'], 2) }}</span>
+                            <span class="zw-text-receivable zw-master-kpi-value text-purple">₹{{ number_format($gRollup['total_receivables'], 2) }}</span>
                             <span class="zw-master-kpi-sub">Total dues to collect</span>
                         </div>
 
                         <div class="zw-master-kpi">
                             <span class="zw-master-kpi-label"><i class="fa fa-truck"></i> Supplier Payables</span>
-                            <span class="zw-master-kpi-value text-amber" style="color: #d97706;">₹{{ number_format($gRollup['total_payables'], 2) }}</span>
+                            <span class="zw-text-payable zw-master-kpi-value text-amber">₹{{ number_format($gRollup['total_payables'], 2) }}</span>
                             <span class="zw-master-kpi-sub">Total dues to pay</span>
                         </div>
                     </div>
@@ -439,13 +439,13 @@
 
                                         <div class="zw-card-metric">
                                             <span class="zw-card-metric-label">Customer Dues</span>
-                                            <span class="zw-card-metric-val text-purple" style="color: #7c3aed;">₹{{ number_format($cInsight['receivables'], 2) }}</span>
+                                            <span class="zw-text-receivable zw-card-metric-val text-purple">₹{{ number_format($cInsight['receivables'], 2) }}</span>
                                             <span class="zw-card-metric-sub">Receivables</span>
                                         </div>
 
                                         <div class="zw-card-metric">
                                             <span class="zw-card-metric-label">Supplier Dues</span>
-                                            <span class="zw-card-metric-val text-amber" style="color: #d97706;">₹{{ number_format($cInsight['payables'], 2) }}</span>
+                                            <span class="zw-text-payable zw-card-metric-val text-amber">₹{{ number_format($cInsight['payables'], 2) }}</span>
                                             <span class="zw-card-metric-sub">Payables</span>
                                         </div>
                                     </div>
@@ -528,6 +528,10 @@
             return '₹' + Number(val || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
         }
 
+        var theme = getComputedStyle(document.body);
+        var salesColor = theme.getPropertyValue('--z-primary').trim();
+        var salesRgb = theme.getPropertyValue('--z-primary-rgb').trim().split(/\s+/).join(', ');
+
         // 1. Master Group Trend Multi-Bar / Line Charts
         document.querySelectorAll('canvas[data-zw-master-trend]').forEach(function (canvas) {
             var raw = canvas.getAttribute('data-zw-master-trend');
@@ -547,8 +551,8 @@
                             {
                                 label: 'Sales Revenue',
                                 data: sales,
-                                backgroundColor: 'rgba(124, 58, 237, 0.8)',
-                                borderColor: '#7c3aed',
+                                backgroundColor: 'rgba(' + salesRgb + ', 0.8)',
+                                borderColor: salesColor,
                                 borderWidth: 1.5
                             },
                             {
@@ -709,8 +713,8 @@
                             {
                                 label: 'Sales',
                                 data: sales,
-                                backgroundColor: 'rgba(124, 58, 237, 0.85)',
-                                borderColor: '#7c3aed',
+                                backgroundColor: 'rgba(' + salesRgb + ', 0.85)',
+                                borderColor: salesColor,
                                 borderWidth: 1
                             },
                             {
