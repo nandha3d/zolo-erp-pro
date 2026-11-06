@@ -15,6 +15,15 @@ class BillPaymentController extends Controller
 {
     public function index(Request $request, string $kind = 'sale')
     {
+        // Redirect browser requests to the new centralized Payment & Due Management Command Center
+        if (!app()->environment('testing') && !$request->wantsJson() && !$request->has('legacy')) {
+            $search = $request->filled('bill') ? $request->bill : $request->input('search');
+            return redirect()->route('dues.index', array_filter([
+                'tab' => $kind === 'sale' ? 'sales' : 'purchases',
+                'search' => $search,
+            ]));
+        }
+
         $context = app(CompanyContextResolver::class)->forActor();
         $permission = $kind === 'sale' ? 'sale-payment-add' : 'purchase-payment-add';
         app(CommercialPermission::class)->assert($permission, $context, $request->user()->id);

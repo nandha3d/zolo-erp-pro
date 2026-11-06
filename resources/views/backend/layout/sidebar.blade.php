@@ -426,7 +426,7 @@
                 @if($nav->allows('payment-report'))
                     <li id="payment-report-menu"><a href="{{route('report.paymentByDate')}}">{{__('db.Payment Report')}}</a></li>
                 @endif
-                <li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}" data-keywords="customer supplier dues receivables payables outstanding"><i class="dripicons-wallet mr-1"></i> Outstanding Dues</a></li>
+                <li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}" data-keywords="customer supplier dues receivables payables outstanding">{{ __('db.Outstanding Dues') }}</a></li>
                 <li class="sidebar-sublabel">Purchases</li>
                 @if($nav->allows('purchase-report'))
                     <li id="purchase-report-menu"><a href="{{route('report.purchase')}}">{{__('db.Purchase Report')}}</a></li>

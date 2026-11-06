@@ -163,50 +163,193 @@ body.dark-mode .dues-table-card {
         border: 1px solid #cbd5e1 !important;
     }
 }
+/* Navigation Toolbar & Theme Buttons */
+.dues-report-nav-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.dues-report-title-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.dues-report-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--neo-text-primary, #0f172a);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dues-nav-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.dues-nav-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+/* Receivables Pill */
+.dues-nav-pill.pill-receivables {
+    background: #fdf4ff;
+    color: var(--z-primary, #7d287e);
+    border-color: #f0abfc;
+}
+.dues-nav-pill.pill-receivables:hover {
+    background: #fae8ff;
+    color: var(--z-primary-hover, #6b21a8);
+}
+.dues-nav-pill.pill-receivables.is-active {
+    background: linear-gradient(135deg, var(--z-primary, #7d287e) 0%, var(--z-primary-hover, #6b21a8) 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 2px 4px rgba(125, 40, 126, 0.25);
+}
+/* Payables Pill */
+.dues-nav-pill.pill-payables {
+    background: #f0f9ff;
+    color: #0284c7;
+    border-color: #7dd3fc;
+}
+.dues-nav-pill.pill-payables:hover {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.dues-nav-pill.pill-payables.is-active {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
+}
+/* Ageing Pill */
+.dues-nav-pill.pill-ageing {
+    background: #f8fafc;
+    color: #475569;
+    border-color: #cbd5e1;
+}
+.dues-nav-pill.pill-ageing:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+/* Due Clearance Hub Pill */
+.dues-nav-pill.pill-hub {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+.dues-nav-pill.pill-hub:hover {
+    background: #d1fae5;
+    color: #047857;
+}
+/* Print Button */
+.dues-print-btn {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+body.dark-mode .dues-report-nav-toolbar {
+    background: #1e293b;
+    border-color: #334155;
+}
+body.dark-mode .dues-report-title {
+    color: #f8fafc;
+}
+body.dark-mode .dues-nav-pill.pill-receivables {
+    background: #2e106533;
+    border-color: #7e22ce;
+    color: #d8b4fe;
+}
+body.dark-mode .dues-nav-pill.pill-payables {
+    background: #0c4a6e33;
+    border-color: #0284c7;
+    color: #7dd3fc;
+}
+body.dark-mode .dues-nav-pill.pill-ageing {
+    background: #334155;
+    border-color: #475569;
+    color: #cbd5e1;
+}
+body.dark-mode .dues-nav-pill.pill-hub {
+    background: #064e3b33;
+    border-color: #059669;
+    color: #34d399;
+}
 .dues-print-header {
     display: none;
 }
 </style>
 
 <div class="outstanding-dues-workspace">
-    <!-- Top Command Bar -->
-    <div class="comm-command-bar mb-3">
-        <div class="comm-title-group">
-            <h1 class="h5 mb-0 font-weight-bold d-flex align-items-center">
-                <i class="dripicons-wallet text-primary mr-2"></i>
+    <!-- Top Navigation Toolbar with Theme Buttons -->
+    <div class="dues-report-nav-toolbar">
+        <div class="dues-report-title-box">
+            <h1 class="dues-report-title">
+                <i class="dripicons-wallet text-primary"></i>
                 Outstanding Payments (Dues) Command Center
             </h1>
-            <span class="comm-title-badge text-muted small ml-2">
-                <i class="dripicons-tag"></i> {{ $type === 'receivables' ? 'Customer Receivables' : 'Supplier Payables' }}
+            <span class="badge badge-light border text-muted px-2 py-1">
+                {{ $type === 'receivables' ? 'Customer Receivables' : 'Supplier Payables' }}
+                @if($customerId)
+                    · Filtered: Customer #{{ $customerId }}
+                @elseif($supplierId)
+                    · Filtered: Supplier #{{ $supplierId }}
+                @endif
             </span>
         </div>
 
-        <ul class="comm-nav-pills">
-            <li>
-                <a class="nav-link {{ $type === 'receivables' ? 'active' : '' }}" href="{{ route('report.outstandingDues', ['type' => 'receivables']) }}">
-                    <i class="dripicons-user mr-1"></i> Receivables (Customers)
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="dues-nav-btn-group">
+                <a class="dues-nav-pill pill-receivables {{ $type === 'receivables' ? 'is-active' : '' }}"
+                   href="{{ route('report.outstandingDues', ['type' => 'receivables'] + ($customerId ? ['customer_id' => $customerId] : [])) }}">
+                    <i class="dripicons-user"></i> Receivables (Customers)
                 </a>
-            </li>
-            <li>
-                <a class="nav-link {{ $type === 'payables' ? 'active' : '' }}" href="{{ route('report.outstandingDues', ['type' => 'payables']) }}">
-                    <i class="dripicons-user-id mr-1"></i> Payables (Suppliers)
+                <a class="dues-nav-pill pill-payables {{ $type === 'payables' ? 'is-active' : '' }}"
+                   href="{{ route('report.outstandingDues', ['type' => 'payables'] + ($supplierId ? ['supplier_id' => $supplierId] : [])) }}">
+                    <i class="dripicons-user-id"></i> Payables (Suppliers)
                 </a>
-            </li>
-            <li>
-                <a class="nav-link" href="{{ route('accounting.ageing') }}">
-                    <i class="dripicons-clock mr-1"></i> Ageing Ledger
+                <a class="dues-nav-pill pill-ageing" href="{{ route('accounting.ageing') }}">
+                    <i class="dripicons-clock"></i> Ageing Ledger
                 </a>
-            </li>
-            <li>
-                <a class="nav-link text-primary font-weight-bold" href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}">
-                    <i class="dripicons-wallet mr-1"></i> Due Clearance Hub
+                <a class="dues-nav-pill pill-hub font-weight-bold" href="{{ route('dues.index', ['tab' => $type === 'payables' ? 'purchases' : 'sales']) }}">
+                    <i class="dripicons-wallet"></i> Due Clearance Hub
                 </a>
-            </li>
-        </ul>
+            </div>
 
-        <div class="comm-actions d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">
-                <i class="dripicons-print mr-1"></i> Print
+            <button type="button" class="btn btn-outline-secondary dues-print-btn" onclick="window.print()">
+                <i class="dripicons-print"></i> Print
             </button>
         </div>
     </div>

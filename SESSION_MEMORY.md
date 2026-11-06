@@ -1,6 +1,34 @@
 # zoloERP Pro — Persistent Session Memory & State
 
 
+## Active Session & Follow-up — 2026-11-06: Outstanding Dues Theme Nav Buttons, Parties Action Menu Links, In-Window Payment Modal & Legacy Module Redirect (branch ui)
+
+- **Outstanding Dues Sidebar Clean-up (`resources/views/backend/layout/sidebar.blade.php`):**
+  - Removed the inline wallet icon `<i class="dripicons-wallet mr-1"></i>` on line 429 under the Reports dropdown. The menu item now renders cleanly as a standard bullet link (`• Outstanding Dues`), consistent with all sibling report links.
+- **Outstanding Dues Theme Navigation Pill Buttons (`resources/views/backend/report/outstanding_dues.blade.php`):**
+  - Upgraded the unstyled bullet list (`.comm-nav-pills`) to a modern responsive toolbar (`.dues-report-nav-toolbar`) with branded theme pill buttons:
+    - `Receivables (Customers)`: Theme purple gradient with active glow (`pill-receivables`).
+    - `Payables (Suppliers)`: Sky blue gradient (`pill-payables`).
+    - `Ageing Ledger`: Direct link to `/accounting/ageing` (`pill-ageing`).
+    - `Due Clearance Hub`: Direct link to `/transactions/dues` (`pill-hub`).
+    - `Print Report`: Direct print button alongside toolbar with icon.
+    - Full dark mode support and responsive behavior across mobile/desktop.
+- **Parties Datatable Action Menus Linked to Outstanding Dues Report:**
+  - `Parties > Customers` datatable (`app/Http/Controllers/CustomerController.php`): Updated `Due Report` action button to link directly to `route('report.outstandingDues', ['type' => 'receivables', 'customer_id' => $customer->id])`. Also hardened `customerData()` with null safety on `customerGroup` and proper JSON response.
+  - `Parties > Suppliers` index view (`resources/views/backend/supplier/index.blade.php`): Updated `Supplier Due Report` row action menu to link directly to `route('report.outstandingDues', ['type' => 'payables', 'supplier_id' => $supplier->id])`.
+- **Legacy Payment Module Browser Redirection & Command Center Unification:**
+  - `app/Http/Controllers/BillPaymentController.php`: Automatically redirects browser requests to `/selling/payments` and `/buying/payments` directly to the centralized Due Management Command Center (`/transactions/dues`), while preserving legacy access for tests or explicit API requests.
+  - `resources/views/backend/accounting/bill-payments.blade.php`: Added shortcut button linking directly to the Due Management Command Center.
+- **In-Window Modal Settlement on Sales & Purchase Bill Desks:**
+  - `resources/views/backend/sale/index.blade.php`: Replaced redirect link on side bill card "Add payment" with `button.add-payment` triggering the `#add-payment` modal in-place.
+  - Enhanced `#add-payment` modal with bill reference badge, party name, outstanding due amount, and a prominent header button: **"Go to Payment & Due Page →"** (`route('dues.index', ['tab' => 'sales', 'search' => $ref])`).
+  - `resources/views/backend/purchase/index.blade.php`: Applied identical in-place settlement modal and header redirect button for supplier purchase bills.
+- **Verification & Test Coverage:**
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php`: 8/8 passed (29 assertions).
+  - `tests/Feature/BillStockPaymentWorkflowTest.php`: 9/9 passed (114 assertions).
+  - `tests/Feature/CentralizedDueManagementTest.php`: 10/10 passed (52 assertions).
+  - `tests/Feature/CompanyGroupInsightTest.php`: 3/3 passed (37 assertions).
+
 ## Active Session & Follow-up — 2026-11-06: Rich Interactive Charts & Visual Graphs Workspace Dashboard (branch ui)
 
 - **Interactive Charts & Visual Dashboard Upgrade (`/workspace`):**

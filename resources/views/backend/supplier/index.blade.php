@@ -188,12 +188,9 @@
                                     @endif
                                     @if(in_array("supplier-due-report", $all_permission))
                                     <li>
-                                        {!! Form::open(['route' => 'report.supplierDueByDate', 'method' => 'post', 'id' => 'supplier-due-report-form-'.$supplier->id]) !!}
-                                        <input type="hidden" name="start_date" value="{{date('Y-m-d', strtotime('-30 year'))}}" />
-                                        <input type="hidden" name="end_date" value="{{date('Y-m-d')}}" />
-                                        <input type="hidden" name="supplier_id" value="{{$supplier->id}}" />
-                                        <button type="submit" class="btn btn-link"><i class="dripicons-pulse"></i> {{__('db.Supplier Due Report')}}</button>
-                                        {!! Form::close() !!}
+                                        <a href="{{ route('report.outstandingDues', ['type' => 'payables', 'supplier_id' => $supplier->id]) }}" class="btn btn-link">
+                                            <i class="dripicons-pulse"></i> {{ __('db.Supplier Due Report') }}
+                                        </a>
                                     </li>
                                     @endif
                                     <li>

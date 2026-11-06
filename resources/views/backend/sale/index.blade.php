@@ -505,7 +505,15 @@
                                 @endif
                                 @if(!$bill->reversed_at && $bill->posted_at && $bill->grand_total > $bill->paid_amount)
                                 @can('sale-payment-add')
-                                <a href="{{ route('selling.payments', ['bill' => $bill->id]) }}" class="btn btn-primary bill-payment-action side-payment-action" title="Receive payment against this bill"><i class="dripicons-wallet" aria-hidden="true"></i> Add payment</a>
+                                <button type="button" class="btn btn-primary bill-payment-action side-payment-action add-payment"
+                                    data-toggle="modal" data-target="#add-payment"
+                                    data-id="{{ $bill->id }}"
+                                    data-reference="{{ $bill->reference_no }}"
+                                    data-party="{{ $customerName }}"
+                                    data-due="{{ max(0, $bill->grand_total - $bill->paid_amount) }}"
+                                    title="Receive payment against this bill in popup">
+                                    <i class="dripicons-wallet" aria-hidden="true"></i> Add payment
+                                </button>
                                 @endcan
                                 @endif
                             </div>
@@ -1287,11 +1295,27 @@
 <div id="add-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
     <div role="document" class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Payment')}}</h5>
-                <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+            <div class="modal-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <h5 id="exampleModalLabel" class="modal-title font-weight-bold mb-0">{{__('db.Add Payment')}}</h5>
+                    <span id="add-payment-bill-ref" class="badge badge-primary px-2 py-1 ml-2 font-weight-bold"></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('dues.index', ['tab' => 'sales']) }}" id="modal-goto-due-page-btn" class="btn btn-outline-primary btn-sm font-weight-bold" target="_blank" title="Open in Payment & Due Management Command Center">
+                        <i class="fa fa-external-link mr-1"></i> Go to Payment & Due Page →
+                    </a>
+                    <button type="button" data-dismiss="modal" aria-label="Close" class="close ml-2"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+                </div>
             </div>
             <div class="modal-body">
+                <div class="p-2 mb-3 rounded bg-light border d-flex justify-content-between align-items-center" id="add-payment-info-bar">
+                    <div>
+                        <span class="text-muted small">Customer:</span> <strong id="add-payment-party-name">—</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted small">Outstanding Due:</span> <strong class="text-danger" id="add-payment-due-val">₹0.00</strong>
+                    </div>
+                </div>
                 {!! Form::open(['route' => 'sale.add-payment', 'method' => 'post', 'files' => true, 'class' => 'payment-form','id'=> 'add-payment-form' ]) !!}
                 @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
                     <div class="row">
@@ -1727,11 +1751,19 @@
     $(function() {
         $('#multi-item-modal, #quick-create-item-modal, #row-detail-modal, #charges-drawer, #sale-details, #view-payment, #add-payment, #edit-payment, #add-delivery, #send-sms, #quick-create-category-modal, #quick-create-brand-modal, #quick-create-party-modal').appendTo('body');
         // Register "Add Payment": the bill's id and due amount (restored after the command-center redesign dropped it).
-        $(document).on('click', 'table.sale-list tbody .add-payment, #sale-table tbody .add-payment', function () {
+        $(document).on('click', 'table.sale-list tbody .add-payment, #sale-table tbody .add-payment, .bill-payment-action.add-payment', function () {
             var due = parseFloat($(this).data('due')) || 0, $form = $('#add-payment');
+            var ref = $(this).data('reference') || '';
+            var party = $(this).data('party') || '';
             $form.find('input[name="sale_id"]').val(String($(this).data('id')));
             $form.find('input[name="balance"], input[name="amount"], input[name="paying_amount"]').val(due.toFixed(2));
             $form.find('.change').text('0.00');
+            $form.find('#add-payment-bill-ref').text(ref);
+            $form.find('#add-payment-party-name').text(party || 'Customer');
+            $form.find('#add-payment-due-val').text('₹' + due.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            var dueUrl = "{{ route('dues.index', ['tab' => 'sales']) }}";
+            if (ref) dueUrl += '?search=' + encodeURIComponent(ref);
+            $form.find('#modal-goto-due-page-btn').attr('href', dueUrl);
             $('#currency_id').val($(this).data('currency_id')); $('#exchange_rate').val(parseFloat($(this).data('exchange_rate')) || 1);
         });
     });

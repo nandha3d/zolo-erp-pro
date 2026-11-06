@@ -9,6 +9,7 @@
 @endphp
 <section class="product-workspace-view bill-payment-workspace">
     <x-section-command-bar :title="$sales ? 'Sales Payments & Receipts' : 'Supplier Payments & Vouchers'">
+        <a class="btn btn-primary btn-sm" href="{{ route('dues.index', ['tab' => $sales ? 'sales' : 'purchases']) }}"><i class="fa fa-bolt mr-1"></i> Due Management Command Center</a>
         <a class="btn btn-outline-primary btn-sm" href="{{ $sales ? route('sales.index') : route('purchases.index') }}">Bills</a>
         <a class="btn btn-outline-primary btn-sm" href="{{ route('accounting.vouchers', ['voucher_type' => $sales ? 'receipt' : 'payment']) }}">Allocate across bills</a>
     </x-section-command-bar>

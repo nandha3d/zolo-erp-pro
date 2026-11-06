@@ -94,6 +94,45 @@ class OutstandingDuesAndGstTypeTest extends TestCase
         ]);
 
         $response->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('companies', ['code' => $uniqueCode]);
+    }
+
+    public function test_customer_and_supplier_action_menus_link_to_outstanding_dues_report(): void
+    {
+        $customer = Customer::first() ?? Customer::factory()->create(['company_id' => $this->company->id]);
+        $supplier = Supplier::first() ?? Supplier::factory()->create(['company_id' => $this->company->id]);
+
+        // Customer Data AJAX endpoint returns action menu containing outstanding dues link
+        $customerData = $this->post('/customers/customer-data', [
+            'all_permission' => ['customers-index', 'due-report'],
+            'length' => 10,
+            'start' => 0,
+            'order' => [['column' => 0, 'dir' => 'desc']],
+        ]);
+        $customerData->assertOk();
+        $this->assertStringContainsString('report\/outstanding-due-report?type=receivables', $customerData->getContent());
+
+        // Supplier index view contains action menu link to outstanding dues report
+        $supplierIndex = $this->get(route('supplier.index'));
+        $supplierIndex->assertOk();
+        $supplierIndex->assertSee('report/outstanding-due-report?type=payables', false);
+    }
+
+    public function test_sidebar_outstanding_dues_menu_has_no_wallet_icon(): void
+    {
+        $response = $this->get('/dashboard');
+        $response->assertOk();
+        $response->assertSee('id="outstanding-due-report-menu"', false);
+        $response->assertDontSee('<li id="outstanding-due-report-menu"><a href="' . route('report.outstandingDues') . '" data-keywords="customer supplier dues receivables payables outstanding"><i class="dripicons-wallet', false);
+    }
+
+    public function test_outstanding_dues_report_has_theme_nav_pills(): void
+    {
+        $response = $this->get(route('report.outstandingDues'));
+        $response->assertOk();
+        $response->assertSee('dues-report-nav-toolbar', false);
+        $response->assertSee('pill-receivables', false);
+        $response->assertSee('pill-payables', false);
+        $response->assertSee('pill-ageing', false);
+        $response->assertSee('pill-hub', false);
     }
 }

@@ -91,7 +91,7 @@ class CustomerController extends Controller
             $limit = $totalData;
         $start = $request->input('start');
         $order = 'created_at';
-        $dir = $request->input('order.0.dir');
+        $dir = in_array(strtolower((string) $request->input('order.0.dir')), ['asc', 'desc']) ? strtolower((string) $request->input('order.0.dir')) : 'desc';
         //fetching custom fields data
         $custom_fields = CustomField::where([
                         ['belongs_to', 'customer'],
@@ -129,7 +129,7 @@ class CustomerController extends Controller
             {
                 $nestedData['id'] = $customer->id;
                 $nestedData['key'] = $key;
-                $nestedData['customer_group'] = $customer->customerGroup->name;
+                $nestedData['customer_group'] = $customer->customerGroup ? $customer->customerGroup->name : 'N/A';
                 $nestedData['customer_details'] = $customer->name;
                 if($customer->company_name)
                     $nestedData['customer_details'] .= '<br>'.$customer->company_name;
@@ -198,12 +198,9 @@ class CustomerController extends Controller
                 if($customer->type != 'walkin'){
                     if(in_array("due-report", $request['all_permission'])) {
                         $nestedData['options'] .= '<li>
-                            '.\Form::open(['route' => 'report.customerDueByDate', 'method' => 'post', 'id' => 'due-report-form']).'
-                                <input type="hidden" name="start_date" value="'.date('Y-m-d', strtotime('-30 year')).'" />
-                                <input type="hidden" name="end_date" value="'.date('Y-m-d').'" />
-                                <input type="hidden" name="customer_id" value="'.$customer->id.'" />
-                                <button type="submit" class="btn btn-link"><i class="dripicons-pulse"></i>'.__('db.Due Report').'</button>
-                            '.\Form::close().'
+                            <a href="'.route('report.outstandingDues', ['type' => 'receivables', 'customer_id' => $customer->id]).'" class="btn btn-link">
+                                <i class="dripicons-pulse"></i> '.__('db.Due Report').'
+                            </a>
                         </li>';
                     }
 
@@ -276,7 +273,7 @@ class CustomerController extends Controller
             "recordsFiltered" => intval($totalFiltered),
             "data"            => $data
         );
-        echo json_encode($json_data);
+        return response()->json($json_data);
     }
 
     public function clearDue(Request $request)
