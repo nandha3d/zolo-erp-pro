@@ -1,5 +1,34 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Source-Code Review Hardening & Merge Readiness Completion — 2026-11-08 (upgrade/laravel13-php85)
+
+Addressed all 6 audit priorities identified during static source-code and GitHub review:
+1. **Textile Migration Hardened:**
+   - Wrapped `database/migrations/2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php` in atomic `DB::transaction(fn () => $this->install())`.
+   - Restored `SemanticAccountResolver::seedCompany()` and `GstSetupService::ensureLedgers()` initialization.
+   - Enforced `catalogOnly: true` on `TextileMasterSeeder` to prevent direct unjournaled stock injection into `products.qty` or `product_warehouse.qty`.
+   - Added failure-recovery regression test in `tests/Feature/TextileCompanyMigrationTest.php` and `tests/Feature/MysqlCompanyMigrationTest.php` proving atomic transaction rollback upon error and clean retry.
+2. **Inventory Schema Fallback Corrected:**
+   - Updated `app/Services/Inventory/InventoryMovementService.php` (`nullableExpiry`): Never assumes a nullable column when introspection fails; safely falls back to `false` inside a try-catch guard.
+3. **PHP Deployment Configuration Aligned to PHP 8.5:**
+   - Updated `deploy/deploy.sh` to `PHP="${PHP:-php8.5}"` and `systemctl reload php8.5-fpm`.
+   - Updated `deploy/README.md` to document PHP 8.5 CLI, PHP 8.5-FPM pool `zolo-erp` (`/run/php/zolo-erp.sock`), and cron scheduler `php8.5 artisan schedule:run` without affecting other VPS apps.
+4. **GitHub Actions Updated:**
+   - Updated `.github/workflows/company-foundation.yml` matrix runner to `php-version: '8.5'`.
+   - Added independent clean-database migration job `clean-migration` against disposable MySQL running full migration status and execution verification.
+   - Included `TextileCompanyMigrationTest.php` in `phpunit.company.xml`.
+5. **Runtime Caches & Branch Divergence Resolved:**
+   - Cleanly merged latest `origin/main` changes (`79a1d03`) into `upgrade/laravel13-php85`.
+   - Preserved isolated `@media screen` print rules and merged party ledger classes, empty state handling, and signature issuers.
+   - Replaced tracked `bootstrap/cache/*.php` files with `.gitignore` rule to ensure runtime caches are dynamically generated during deployment.
+6. **Regression, Security & Platform Validation (100% Passed):**
+   - Upgraded `maatwebsite/excel` to `4.0.6` and `phpoffice/phpspreadsheet` to `5.11.0` (eliminating `<8.5.0` constraint).
+   - `composer validate --strict`: 100% valid.
+   - `composer check-platform-reqs`: All packages and extensions (GD, Zip, BCMath, Intl, etc.) passed cleanly on PHP 8.5.12.
+   - `composer audit`: 0 security vulnerabilities found.
+   - `php artisan optimize:clear`, `route:cache`, `view:cache`: 100% clean compilation.
+   - Verified test suites on PHP 8.5.12: `TextileCompanyMigrationTest` (1/1), `IndustryFlowIntegrationTest` (7/7), `TextileEndToEndLedgerTest` (1/1), `ManufacturingJobWorkTest` (10/10), `CustomerSupplierReportsNavigationTest` (7/7), `PartiesGlobalUiTest` (11/11), `OutstandingDuesAndGstTypeTest` (8/8), `ComplianceBrowserFixtureTest` & `ComplianceHttpTest` (6/6).
+
 ## Full Major Upgrade Completed: Laravel 10 → 11 → 12 → 13 on PHP 8.5.12 (upgrade/laravel13-php85) — 2026-11-08
 
 - **Execution Strategy & Worktree Isolation:**
