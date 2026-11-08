@@ -9,7 +9,7 @@
 
 | Package | Pre-Upgrade (L10) | Final (L13) | Constraint in `composer.json` | Upgrade Notes & Resolution |
 |---|---|---|---|---|
-| `php` | `^8.2` | `8.5.12` | `^8.5` | Verified with PHP 8.5.12 CLI (Herd) and strictly enforced in `composer.json`. |
+| `php` | `^8.2` | `8.5.12` | `>=8.5.12 <8.6` | Verified with PHP 8.5.12 CLI (Herd) and strictly enforced in `composer.json`. |
 | `laravel/framework` | `^10.0` | `v13.40.0` | `^13.2` | Sequentially upgraded: 10.48 → 11.57.1 → 12.71.0 → 13.40.0. |
 | `laravelcollective/html` | `v6.4.1` | **Replaced** | N/A | Replaced with drop-in fork `konekt/html: ^6.5` (version `6.8.0`). Maintains 100% backward compatibility for ~100 Blade views using `Form::` and `Html::`. |
 | `konekt/html` | *New* | `6.8.0` | `^6.5` | Drop-in replacement for abandoned `laravelcollective/html`. Supports illuminate 10 through 13. |

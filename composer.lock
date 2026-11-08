@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c0402f69feb3761fe0c8cc73aa77ed10",
+    "content-hash": "27d45a727a6d6adc181f664790923af7",
     "packages": [
         {
             "name": "automattic/woocommerce",
@@ -12212,12 +12212,9 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.5",
+        "php": ">=8.5.12 <8.6",
         "ext-zip": "*"
     },
     "platform-dev": {},
-    "platform-overrides": {
-        "php": "8.3.20"
-    },
     "plugin-api-version": "2.9.0"
 }
