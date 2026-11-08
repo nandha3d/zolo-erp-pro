@@ -1,5 +1,28 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Audit Review Hardening, Fresh-DB CI Fix & Merge Readiness Complete — 2026-11-08 (commit `91be69f` on `upgrade/laravel13-php85`)
+
+Addressed all audit items and CI blockers identified during the static source-code review:
+1. **Clean-Database CI Job Fixed (`.github/workflows/company-foundation.yml`):**
+   - Fixed execution order: In Laravel 13, `php artisan migrate:status` returns non-zero when the migrations tracking table does not exist.
+   - Reordered execution to: `php artisan migrate --force`, then `php artisan migrate:status`, followed by a repeat `php artisan migrate --force` to test idempotency cleanly.
+   - Added database-state assertion verifying migrated database records count matches migration files on disk (`$db >= $disk`).
+2. **Textile Company Migration Test Isolation & Stock Preservation:**
+   - Isolated `tests/Feature/TextileCompanyMigrationTest.php` with `UsesDisposableMysql` guard (`ERP_TEST_MYSQL=1`, `zolo_test_*`), preventing tests from touching the development database.
+   - Verified transactional rollback upon failure and clean retry.
+   - Added second regression test: `test_catalog_only_seeding_preserves_existing_nonzero_stock_quantities` confirming that catalog-only seeding preserves existing non-zero stock quantities and warehouse balances.
+   - Added `'company_id'` to `Product_Warehouse::$fillable`.
+3. **Strict PHP 8.5 Version Enforcement:**
+   - Updated `composer.json` root constraint to `"php": "^8.5"`.
+   - Upgraded `maatwebsite/excel` to `4.0.6` and `phpoffice/phpspreadsheet` to `5.11.0` (eliminating legacy `<8.5.0` constraint).
+   - Validated: `composer validate --strict` (valid), `composer check-platform-reqs` (27/27 reqs satisfied on PHP 8.5.12), `composer audit` (0 vulnerabilities).
+4. **Explicit Logging on Inventory Schema Inspection Fallback:**
+   - In `app/Services/Inventory/InventoryMovementService.php` (`nullableExpiry()`), added explicit `Log::warning(...)` with exception details before safely defaulting to non-nullable (`false`).
+5. **Documentation & Deliverables Updated:**
+   - Updated `docs/upgrades/laravel13-php85/uat-signoff.md` and `docs/upgrades/laravel13-php85/dependency-matrix.md`.
+   - All tests passing green (100%): `TextileCompanyMigrationTest` (2/2), `CustomerSupplierReportsNavigationTest` (7/7), `IndustryFlowIntegrationTest` (7/7).
+   - Branch `upgrade/laravel13-php85` pushed to `origin` at commit `91be69f`.
+
 ## Source-Code Review Hardening & Merge Readiness Completion — 2026-11-08 (upgrade/laravel13-php85)
 
 Addressed all 6 audit priorities identified during static source-code and GitHub review:
