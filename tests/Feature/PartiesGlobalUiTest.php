@@ -10,6 +10,7 @@ use App\Models\CustomerGroup;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PartiesGlobalUiTest extends TestCase
@@ -25,8 +26,28 @@ class PartiesGlobalUiTest extends TestCase
     {
         parent::setUp();
         config(['commercial.enabled' => true]);
-        $this->adminUser = User::where('role_id', 1)->first() ?? User::factory()->create(['role_id' => 1]);
-        $this->company = Company::first() ?? Company::factory()->create();
+        $this->adminUser = User::where('role_id', 1)->first() ?? User::create([
+            'name' => 'Admin User',
+            'email' => 'admin_ui@test.com',
+            'phone' => '9876543210',
+            'password' => bcrypt('password'),
+            'role_id' => 1,
+            'is_active' => true,
+            'is_deleted' => false,
+        ]);
+        $this->company = Company::first() ?? Company::create(['name' => 'Test Company', 'code' => 'TC', 'is_active' => true]);
+
+        if (!$this->company->users()->where('users.id', $this->adminUser->id)->exists()) {
+            $this->company->users()->attach($this->adminUser->id, ['is_default' => true]);
+        }
+        $branch = $this->company->branches()->first() ?? $this->company->branches()->create(['code' => 'MAIN', 'name' => 'Main Branch']);
+        DB::table('company_user_branches')->updateOrInsert(
+            ['company_id' => $this->company->id, 'user_id' => $this->adminUser->id, 'branch_id' => $branch->id],
+            ['company_id' => $this->company->id, 'user_id' => $this->adminUser->id, 'branch_id' => $branch->id]
+        );
+        $year = \App\Models\Accounting\FiscalYear::where('company_id', $this->company->id)->first() ?? \App\Models\Accounting\FiscalYear::create([
+            'company_id' => $this->company->id, 'name' => 'FY 2026', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'status' => 'open'
+        ]);
 
         $group = CustomerGroup::first() ?? CustomerGroup::create(['name' => 'General', 'percentage' => '0', 'is_active' => true]);
 
@@ -48,9 +69,11 @@ class PartiesGlobalUiTest extends TestCase
         ]);
 
         $this->actingAs($this->adminUser);
-        session([
+        $this->withSession([
             'company_id' => $this->company->id,
             'current_company_id' => $this->company->id,
+            'branch_id' => $branch->id,
+            'financial_year_id' => $year->id,
             'warehouse_id' => 1,
         ]);
     }

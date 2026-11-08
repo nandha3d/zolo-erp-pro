@@ -22,6 +22,18 @@
       0 => 'Barryvdh\\DomPDF\\ServiceProvider',
     ),
   ),
+  'konekt/html' => 
+  array (
+    'aliases' => 
+    array (
+      'Form' => 'Collective\\Html\\FormFacade',
+      'Html' => 'Collective\\Html\\HtmlFacade',
+    ),
+    'providers' => 
+    array (
+      0 => 'Collective\\Html\\HtmlServiceProvider',
+    ),
+  ),
   'laravel/sanctum' => 
   array (
     'providers' => 
@@ -52,18 +64,6 @@
     'providers' => 
     array (
       0 => 'Laravel\\Ui\\UiServiceProvider',
-    ),
-  ),
-  'laravelcollective/html' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Collective\\Html\\HtmlServiceProvider',
-    ),
-    'aliases' => 
-    array (
-      'Form' => 'Collective\\Html\\FormFacade',
-      'Html' => 'Collective\\Html\\HtmlFacade',
     ),
   ),
   'maatwebsite/excel' => 

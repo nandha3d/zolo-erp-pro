@@ -1,5 +1,32 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Upgrade Initiation: Dedicated Git Worktree & Baseline Audit (upgrade/laravel13-php85) — 2026-11-08
+
+- **Branch and Worktree Initialization:**
+  - Committed all in-progress UI, Textile master migrations, 9-column Job Work service bills, and authentic PDF replacements to branch `ui` at commit `01483a6`:
+    - `01483a6`: `feat(compliance): finalize 9-column job work service bill and authentic sample pdfs`.
+  - Created isolated Git Worktree at `v:\pers\Freelance\zolo-erp-pro-upgrade` linked to branch `upgrade/laravel13-php85` branched from `01483a6` (`ui`).
+  - Configured isolated `.env` in the worktree pointing to dedicated MariaDB database `zoloerp_upgrade` on port 3306 (user `root`, host `127.0.0.1`), ensuring zero interference with the active `zoloerp` database.
+  - Active workspace `v:\pers\Freelance\zolo-erp-pro` remains clean on branch `ui`.
+- **Runtime & Toolchain Baseline Verified:**
+  - **PHP CLI:** PHP `8.5.12` (built Oct 20 2026 04:19:56 Visual C++ 2022 x64, Zend Engine v4.5.12 with Zend OPcache) via Herd (`C:\Users\vigne\.config\herd\bin\php85\php.exe`).
+  - **Composer:** Version `2.10.3` (2026-08-27).
+  - **Node / npm:** Node `v24.22.1`, npm `11.19.1`.
+  - **Database Server:** Windows `VainaviMariaDB` active on `127.0.0.1:3306`.
+- **Phase 0 Dependency Blockers Identified (per Runbook):**
+  - `composer prohibits laravel/framework 11.0.0 --locked`:
+    - `laravelcollective/html v6.4.1`: requires `illuminate/* (^6.0|^7.0|^8.0|^9.0|^10.0)` — abandoned, primary blocker.
+    - `laravel/sanctum v3.3.3`: requires `illuminate/* (^9.21|^10.0)` — needs `^4.0`.
+    - `spatie/laravel-permission 5.11.1`: requires `illuminate/* (^7.0|^8.0|^9.0|^10.0)` — needs `^6.0`.
+    - `nunomaduro/collision v7.12.0`: conflicts `laravel/framework >=11.0.0` — needs `^8.1`.
+    - `milon/barcode v10.0.1`: requires `illuminate/support (^7.0|^8.0|^9.0|^10.0)` — needs `^11.0`.
+  - `composer prohibits php 8.5.12 --locked`:
+    - `phpoffice/phpspreadsheet 1.30.1` requires `<8.5.0` (via `maatwebsite/excel`).
+    - `sabberworm/php-css-parser v8.9.0` requires `~8.4.0` (via `dompdf/dompdf`).
+- **Next Steps:**
+  - Proceed with Phase 1: Address `laravelcollective/html` blocker, resolve initial package updates for Laravel 11 checkpoint in `v:\pers\Freelance\zolo-erp-pro-upgrade`.
+
+
 ## 100% Authentic Real Test Example PDF Replacement via Edge Headless & General Ledger Alignment — 2026-11-07 (branch ui)
 
 - **Client Requests Addressed:**

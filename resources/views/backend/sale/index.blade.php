@@ -1012,496 +1012,143 @@
         </div>
     </div>
 
-    <!-- Modal: Sale Details Preview -->
-    <div id="sale-details" tabindex="-1" role="dialog" aria-labelledby="saleDetailsLabel" aria-hidden="true"
-        class="modal fade text-left">
-        <div role="document" class="modal-dialog modal-lg">
-            <div class="modal-content u-r-10px u-b-none u-sh-0-10px-25px-rgba-0-0-0-0_15">
-                <div class="container mt-3 pb-2 border-bottom">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <button id="sale-print-btn" type="button" class="btn btn-outline-secondary btn-sm"><i
-                                    class="dripicons-print"></i> {{__('db.Print')}}</button>
-                        </div>
-                        <div class="col-md-6 text-center">
-                            <h3 id="saleDetailsLabel" class="modal-title font-weight-bold u-fs-16px">Sale Voucher Details
-                            </h3>
-                        </div>
-                        <div class="col-md-3 text-right">
-                            <button type="button" id="close-sale-modal-btn" data-dismiss="modal" aria-label="Close"
-                                class="close"><span aria-hidden="true">&times;</span></button>
+    <!-- Modal: Sale Details Preview (Neat & Beautiful Unified Voucher Card) -->
+<div id="sale-details" tabindex="-1" role="dialog" aria-labelledby="saleDetailsLabel" aria-hidden="true" class="modal fade text-left">
+    <div role="document" class="modal-dialog voucher-modal-dialog">
+        <div class="voucher-preview-card">
+            <!-- Modal Header -->
+            <div class="voucher-preview-header">
+                <div class="voucher-header-main">
+                    <div class="voucher-icon-badge sales">
+                        <i class="dripicons-cart"></i>
+                    </div>
+                    <div>
+                        <h4 class="voucher-doc-title">
+                            <span>Sales Invoice</span>
+                            <span id="sale-details-ref-badge" class="voucher-ref-badge">#REF</span>
+                        </h4>
+                        <div class="voucher-badges-strip">
+                            <span id="sale-details-status-badge" class="badge badge-success">Completed</span>
+                            <span id="sale-details-date-text" class="text-muted small"></span>
                         </div>
                     </div>
                 </div>
-                <div id="sale-content" class="modal-body"></div>
-                <br>
-                <div class="table-responsive document-lines px-3" tabindex="0" role="region"
-                    aria-label="{{__('db.Sale Details')}}">
-                    <table class="table table-bordered product-sale-list">
+                <div class="voucher-actions-toolbar">
+                    <a href="#" id="sale-details-edit-btn" class="voucher-edit-btn" title="Open Full Bill in Edit Mode">
+                        <i class="dripicons-document-edit"></i> Edit Bill
+                    </a>
+                    <button type="button" id="sale-print-btn" class="voucher-print-btn" title="Print Invoice">
+                        <i class="dripicons-print"></i> {{__('db.Print')}}
+                    </button>
+                    <button type="button" data-dismiss="modal" aria-label="Close" class="close ml-2">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div id="sale-details-print-area" class="voucher-preview-body">
+                <!-- Two-column info cards -->
+                <div class="voucher-info-grid">
+                    <div class="voucher-info-card">
+                        <div class="voucher-info-card-title">
+                            <i class="dripicons-user text-primary"></i> Customer (Billed To)
+                        </div>
+                        <div id="sale-details-customer-name" class="voucher-party-name">—</div>
+                        <div id="sale-details-customer-company" class="voucher-info-line text-muted"></div>
+                        <div id="sale-details-customer-gstin" class="voucher-info-line text-primary font-weight-bold" style="display: none;"></div>
+                        <div id="sale-details-customer-phone" class="voucher-info-line"></div>
+                        <div id="sale-details-customer-address" class="voucher-info-line"></div>
+                    </div>
+
+                    <div class="voucher-info-card">
+                        <div class="voucher-info-card-title">
+                            <i class="dripicons-clipboard text-primary"></i> Voucher Meta &amp; Dispatch
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Invoice Date:</span>
+                            <span id="sale-details-date-val" class="voucher-meta-val">—</span>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Warehouse / Godown:</span>
+                            <span id="sale-details-warehouse-val" class="voucher-meta-val">—</span>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Biller / Store:</span>
+                            <span id="sale-details-biller-val" class="voucher-meta-val">—</span>
+                        </div>
+                        <div class="voucher-meta-row">
+                            <span class="voucher-meta-label">Created By:</span>
+                            <span id="sale-details-user-val" class="voucher-meta-val">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <div class="voucher-table-wrap">
+                    <table class="table voucher-items-table product-sale-list">
                         <thead>
-                            <th>#</th>
-                            <th>{{__('db.product')}}</th>
-                            <th>{{__('db.Batch No')}}</th>
-                            <th>Qty</th>
-                            <th>{{__('db.Returned')}}</th>
-                            <th>{{__('db.Unit Price')}}</th>
-                            <th>{{__('db.Tax')}}</th>
-                            <th>{{__('db.Discount')}}</th>
-                            <th>{{__('db.Subtotal')}}</th>
+                            <tr>
+                                <th style="width: 45px;" class="text-center">#</th>
+                                <th>{{__('db.product')}}</th>
+                                <th style="width: 110px;">{{__('db.Batch No')}}</th>
+                                <th style="width: 95px;" class="text-right">Qty</th>
+                                <th style="width: 110px;" class="text-right">{{__('db.Unit Price')}}</th>
+                                <th style="width: 110px;" class="text-right">{{__('db.Tax')}}</th>
+                                <th style="width: 95px;" class="text-right">{{__('db.Discount')}}</th>
+                                <th style="width: 120px;" class="text-right">{{__('db.Subtotal')}}</th>
+                            </tr>
                         </thead>
-                        <tbody>
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
-                <div id="sale-footer" class="modal-body"></div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Row Detail Modal (Batch, Expiry, Serial/IMEI, Discount) -->
-    <div id="row-detail-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
-        <div class="modal-dialog u-maxw-480px">
-            <div class="modal-content u-r-10px u-b-1px-solid-border-strong">
-                <div
-                    class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
-                    <h5 class="modal-title u-fs-14px u-fw-700 u-c-text u-d-flex u-items-center u-gap-8px">
-                        <i class="dripicons-pencil u-c-primary"></i> <span id="row-detail-modal-title">Item Details</span>
-                    </h5>
-                    <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body u-p-16px-18px">
-                    <input type="hidden" id="modal-target-row-id" value="">
-                    <div class="form-group mb-2">
-                        <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Batch Number</label>
-                        <input type="text" id="modal-row-batch" class="form-control form-control-sm u-h-32px u-fs-12px"
-                            placeholder="e.g. BATCH-2026-01">
+                <!-- Financial Totals & Notes -->
+                <div class="voucher-bottom-grid">
+                    <div class="voucher-notes-card">
+                        <div class="voucher-notes-title">
+                            <i class="dripicons-document text-muted"></i> Voucher Notes &amp; Remarks
+                        </div>
+                        <p id="sale-details-notes-val" class="voucher-notes-text">No remarks recorded for this bill.</p>
                     </div>
-                    <div class="form-group mb-2">
-                        <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Expiry Date</label>
-                        <input type="date" id="modal-row-expire" class="form-control form-control-sm u-h-32px u-fs-12px">
+
+                    <div class="voucher-totals-card">
+                        <div class="voucher-totals-row">
+                            <span>Total Items Price:</span>
+                            <strong id="sale-details-items-price">₹0.00</strong>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Order Tax:</span>
+                            <span id="sale-details-order-tax">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Order Discount:</span>
+                            <span id="sale-details-order-discount">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Shipping / Freight:</span>
+                            <span id="sale-details-shipping-cost">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row grand-total-row">
+                            <span>Grand Total:</span>
+                            <span id="sale-details-grand-total">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row">
+                            <span>Paid Amount:</span>
+                            <span id="sale-details-paid-amount" class="text-success font-weight-bold">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row due-row" id="sale-details-due-row">
+                            <span>Balance Due:</span>
+                            <span id="sale-details-due-amount">₹0.00</span>
+                        </div>
                     </div>
-                    <div class="form-group mb-2">
-                        <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">IMEI / Serial Numbers</label>
-                        <textarea id="modal-row-imei" class="form-control form-control-sm u-fs-12px" rows="2"
-                            placeholder="Comma separated IMEIs or serials"></textarea>
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Item Discount (₹)</label>
-                        <input type="number" id="modal-row-discount" class="form-control form-control-sm u-h-32px u-fs-12px"
-                            placeholder="0.00" step="0.01">
-                    </div>
-                </div>
-                <div
-                    class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600"
-                        id="btn-save-row-detail">
-                        Save Details
-                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Multi-Item Selection Modal (Optech Grid) -->
-    <div id="multi-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
-        <div class="modal-dialog modal-lg u-maxw-850px">
-            <div class="modal-content u-r-10px u-b-1px-solid-border-strong">
-                <div
-                    class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
-                    <div>
-                        <h5 class="modal-title u-fs-14px u-fw-700 u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
-                            <i class="dripicons-menu u-c-primary"></i> Multi-Item Fast Batch Picker
-                        </h5>
-                        <div class="u-fs-11_5px u-c-text-muted u-mt-2px">
-                            Select multiple products with quantities and insert them all at once into the voucher table.
-                        </div>
-                    </div>
-                    <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body u-p-14px-18px">
-                    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                        <div class="u-pos-relative u-flex-1">
-                            <i
-                                class="fa fa-search text-muted u-pos-absolute u-left-10px u-top-50pct u-tf-translatey-50pct u-fs-12px"></i>
-                            <input type="text" id="multi-item-filter"
-                                class="form-control form-control-sm u-pl-30px u-h-32px u-fs-12px"
-                                placeholder="Filter items by name or code...">
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge badge-light border u-fs-11px u-p-5px-8px" id="multi-item-count-badge">0
-                                selected</span>
-                        </div>
-                    </div>
-                    <div class="table-responsive u-maxh-360px u-ovy-auto u-b-1px-solid-border u-r-6px">
-                        <table class="table table-sm table-hover mb-0 u-fs-12px" id="multi-item-table">
-                            <thead class="u-bg-surface-3 u-pos-sticky u-top-0 u-z-10">
-                                <tr>
-                                    <th class="u-w-36px u-ta-center">
-                                        <input type="checkbox" id="multi-item-select-all">
-                                    </th>
-                                    <th class="u-minw-240px">Item Name</th>
-                                    <th class="u-w-130px">Item Code</th>
-                                    <th class="u-w-110px u-ta-right">Rate</th>
-                                    <th class="u-w-90px u-ta-center">Qty</th>
-                                    <th class="u-w-70px u-ta-center">Unit</th>
-                                </tr>
-                            </thead>
-                            <tbody id="multi-item-tbody">
-                                <!-- Populated dynamically via JS from allProducts -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div
-                    class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600"
-                        id="btn-add-selected-items">
-                        + Add Selected Items to Voucher
-                    </button>
-                </div>
-                <!-- Unified Executive Add Product Modal (Catalog Master) -->
-                @include('backend.product.partials.quick_create_modal')
-
-                <!-- Quick Create Category Modal (Inline) -->
-                <div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true"
-                    class="modal fade text-left u-z-1065">
-                    <div class="modal-dialog modal-dialog-centered u-maxw-380px">
-                        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-12px-30px-rgba-0-0-0-0_25">
-                            <div
-                                class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
-                                <h5 class="modal-title font-weight-bold u-fs-13_5px u-c-text u-m-0">
-                                    <i class="dripicons-plus text-primary mr-1"></i> Create New Category
-                                </h5>
-                                <button type="button" class="close u-fs-18px u-ol-none" data-dismiss="modal"
-                                    aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body u-p-16px-18px">
-                                <div class="form-group mb-0">
-                                    <label class="u-fs-11_5px u-fw-600 u-c-text-2 u-mb-4px">Category Name *</label>
-                                    <input type="text" id="quick-cat-name-input" class="form-control u-h-34px u-fs-12_5px"
-                                        placeholder="e.g. Raw Material, Yarn...">
-                                </div>
-                            </div>
-                            <div
-                                class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
-                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600"
-                                    id="btn-submit-quick-cat">
-                                    Save Category
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Create Brand Modal (Inline) -->
-                <div id="quick-create-brand-modal" tabindex="-1" role="dialog" aria-hidden="true"
-                    class="modal fade text-left u-z-1065">
-                    <div class="modal-dialog modal-dialog-centered u-maxw-380px">
-                        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-12px-30px-rgba-0-0-0-0_25">
-                            <div
-                                class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
-                                <h5 class="modal-title font-weight-bold u-fs-13_5px u-c-text u-m-0">
-                                    <i class="dripicons-plus text-primary mr-1"></i> Create New Brand
-                                </h5>
-                                <button type="button" class="close u-fs-18px u-ol-none" data-dismiss="modal"
-                                    aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body u-p-16px-18px">
-                                <div class="form-group mb-0">
-                                    <label class="u-fs-11_5px u-fw-600 u-c-text-2 u-mb-4px">Brand Title *</label>
-                                    <input type="text" id="quick-brand-title-input"
-                                        class="form-control u-h-34px u-fs-12_5px" placeholder="e.g. Raymond, Vardhman...">
-                                </div>
-                            </div>
-                            <div
-                                class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
-                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600"
-                                    id="btn-submit-quick-brand">
-                                    Save Brand
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Create Party Modal (Inline Popup with All Options) -->
-                <div id="quick-create-party-modal" tabindex="-1" role="dialog" aria-hidden="true"
-                    class="modal fade text-left u-z-1065">
-                    <div class="modal-dialog modal-dialog-centered u-maxw-820px">
-                        <div
-                            class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-16px-40px-rgba-0-0-0-0_22 u-ov-hidden">
-                            <div
-                                class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-20px u-bb-1px-solid-border">
-                                <div>
-                                    <h5 class="modal-title font-weight-bold u-fs-14_5px u-c-text u-m-0">
-                                        <span id="quick-party-modal-title"><i class="fa fa-user-plus text-primary mr-1"></i>
-                                            Add Customer</span>
-                                    </h5>
-                                    <small class="text-muted italic d-block u-fs-11px u-mt-2px">The field labels marked with
-                                        * are required input fields.</small>
-                                </div>
-                                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal"
-                                    aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <form id="quick-create-party-form">
-                                @csrf
-                                <input type="hidden" id="party_type_input" name="party_type" value="customer">
-                                <div class="modal-body u-p-16px-22px u-maxh-calc-85vh-120px u-ovy-auto">
-
-                                    <!-- Top Options: Dual Nature & Customer Group (Cleanly Aligned Checkbox) -->
-                                    <div
-                                        class="d-flex align-items-center justify-content-between mb-3 px-3 py-2 u-bg-surface-2 u-r-8px u-b-1px-solid-border">
-                                        <label for="party-both-checkbox"
-                                            class="d-flex align-items-center mb-0 u-cur-pointer u-gap-9px u-us-none">
-                                            <input type="checkbox" id="party-both-checkbox" name="both" value="1"
-                                                class="u-w-16px u-h-16px u-m-0 u-acc-primary u-cur-pointer">
-                                            <span class="font-weight-bold u-fs-12_5px u-c-text">Both Customer and
-                                                Supplier</span>
-                                            <small class="text-muted ml-1 u-fs-11px">(creates linked account for reciprocal
-                                                trade)</small>
-                                        </label>
-                                        <div id="party-customer-group-col">
-                                            <div class="d-flex align-items-center u-gap-8px">
-                                                <label class="u-fs-11_5px u-fw-700 u-c-text-2 u-ws-nowrap u-m-0">Customer
-                                                    Group *</label>
-                                                <select id="party-customer-group-id" name="customer_group_id"
-                                                    class="form-control form-control-sm u-h-30px u-fs-12px u-w-150px">
-                                                    @if(isset($lims_customer_group_all) && count($lims_customer_group_all))
-                                                        @foreach($lims_customer_group_all as $cg)
-                                                            <option value="{{ $cg->id }}">{{ $cg->name }}</option>
-                                                        @endforeach
-                                                    @else
-                                                        <option value="1">General</option>
-                                                    @endif
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Section 1: GSTIN Auto-Fill & Verification Hero Panel -->
-                                    <div class="mb-3 p-3 u-bg-surface-3 u-r-8px u-b-1px-solid-border-strong">
-                                        <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <label
-                                                class="font-weight-bold text-uppercase mb-0 u-fs-11px u-ls-0_4px u-c-text-2">
-                                                <i class="fa fa-bolt text-warning mr-1"></i> GSTIN Auto-Fill & Statutory
-                                                Verification
-                                            </label>
-                                            <span id="party-modal-gst-badge" class="badge u-fs-10_5px u-p-3px-8px"
-                                                style="display:none"></span>
-                                        </div>
-                                        <div class="row align-items-center">
-                                            <div class="col-md-8">
-                                                <div class="input-group">
-                                                    <input type="text" id="party-vat-number" name="vat_number"
-                                                        class="form-control text-uppercase u-h-36px u-fs-13px u-ff-monospace u-fw-700 u-ls-0_5px"
-                                                        placeholder="Enter 15-char GSTIN (e.g. 33AIUPN6412D1ZA)"
-                                                        maxlength="15" autocomplete="off">
-                                                    <div class="input-group-append">
-                                                        <button type="button" id="btn-fetch-gstin"
-                                                            class="btn btn-primary u-bg-primary u-bc-primary u-h-36px u-fs-12px u-p-0-14px u-fw-700 u-d-flex u-items-center u-gap-5px"
-                                                            title="1-Click Auto-Fill all details from GST registry">
-                                                            <i class="fa fa-bolt"></i> <span>Fetch Details</span>
-                                                        </button>
-                                                        <a href="https://services.gst.gov.in/services/searchtp"
-                                                            target="_blank" id="btn-open-gst-portal"
-                                                            class="btn btn-outline-secondary u-h-36px u-fs-12px u-p-0-11px u-d-flex u-items-center"
-                                                            title="Verify on official Government GST Portal">
-                                                            <i class="fa fa-external-link"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="d-flex align-items-center u-gap-6px">
-                                                    <span class="text-muted u-fs-11_5px u-fw-600 u-ws-nowrap">PAN:</span>
-                                                    <input type="text" id="party-pan-display" readonly
-                                                        placeholder="Auto from GSTIN"
-                                                        class="form-control form-control-sm text-uppercase u-h-36px u-fs-12_5px u-ff-monospace u-fw-700 u-bg-surface-3 u-c-text">
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Full-Width GSTIN Details & Badges Strip -->
-                                        <div id="party-gst-preview-strip"
-                                            class="mt-2 p-2 u-r-6px u-b-1px-solid-border-strong u-bg-surface"
-                                            style="display:none">
-                                            <div class="d-flex align-items-center flex-wrap u-gap-6px">
-                                                <span id="gst-strip-state"
-                                                    class="badge badge-info u-fs-11px u-fw-600 u-p-4px-8px"></span>
-                                                <span id="gst-strip-const"
-                                                    class="badge badge-dark u-fs-11px u-fw-600 u-p-4px-8px"></span>
-                                                <span id="gst-strip-tax"
-                                                    class="badge badge-primary u-fs-11px u-fw-600 u-p-4px-8px"></span>
-                                                <span id="gst-strip-status" class="badge u-fs-11px u-fw-700 u-p-4px-8px"
-                                                    style="display:none"></span>
-                                                <span id="gst-strip-taxpayer"
-                                                    class="badge badge-secondary u-fs-11px u-fw-600 u-p-4px-8px"
-                                                    style="display:none"></span>
-                                                <span id="gst-strip-regdate"
-                                                    class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px"
-                                                    style="display:none"></span>
-                                                <span id="gst-strip-cancdate"
-                                                    class="badge badge-danger u-fs-11px u-fw-600 u-p-4px-8px"
-                                                    style="display:none"></span>
-                                                <span id="gst-strip-filing"
-                                                    class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px"
-                                                    style="display:none"></span>
-                                                <span id="gst-strip-nature"
-                                                    class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px"
-                                                    style="display:none"></span>
-                                            </div>
-                                            <div id="gst-strip-msg" class="text-muted mt-2 u-fs-11_5px u-lh-1_4"></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Section 2: Business & Identification Details -->
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="compact-field-block">
-                                                <label>Name / Contact Person *</label>
-                                                <input type="text" id="party-name" name="name"
-                                                    class="form-control u-h-34px u-fs-12_5px"
-                                                    placeholder="Contact or Customer Name" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="compact-field-block">
-                                                <label>Company / Trade Name *</label>
-                                                <input type="text" id="party-company-name" name="company_name"
-                                                    class="form-control u-h-34px u-fs-12_5px"
-                                                    placeholder="Company / Trade Name" required>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Section 3: Contact Details -->
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>Phone Number *</label>
-                                                <input type="text" id="party-phone-number" name="phone_number"
-                                                    class="form-control u-h-34px u-fs-12_5px" placeholder="Primary Phone"
-                                                    required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>Email</label>
-                                                <input type="email" id="party-email" name="email"
-                                                    class="form-control u-h-34px u-fs-12_5px"
-                                                    placeholder="email@example.com">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>WhatsApp Number</label>
-                                                <input type="text" id="party-wa-number" name="wa_number"
-                                                    class="form-control u-h-34px u-fs-12_5px" placeholder="WhatsApp Number">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Section 4: Registered Address Details (Auto-Filled) -->
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <div class="compact-field-block">
-                                                <label>Street Address *</label>
-                                                <input type="text" id="party-address" name="address"
-                                                    class="form-control u-h-34px u-fs-12_5px"
-                                                    placeholder="Building / Street / Door No / Locality" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>City *</label>
-                                                <input type="text" id="party-city" name="city"
-                                                    class="form-control u-h-34px u-fs-12_5px" placeholder="City" required>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>State *</label>
-                                                <input type="text" id="party-state" name="state"
-                                                    class="form-control u-h-34px u-fs-12_5px" placeholder="State">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>Postal / PIN Code</label>
-                                                <input type="text" id="party-postal-code" name="postal_code"
-                                                    class="form-control u-h-34px u-fs-12_5px" placeholder="PIN Code">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>Country</label>
-                                                <input type="text" id="party-country" name="country"
-                                                    class="form-control u-h-34px u-fs-12_5px" value="India"
-                                                    placeholder="Country">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Section 5: Credit Terms & Balance -->
-                                    <div class="row align-items-center">
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>Credit Days</label>
-                                                <input type="number" id="party-credit-days" name="credit_days"
-                                                    class="form-control u-h-34px u-fs-12_5px" value="30" min="0"
-                                                    placeholder="30">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="compact-field-block">
-                                                <label>Opening Balance (Due) <i class="fa fa-info-circle text-muted"
-                                                        title="Amount due at start"></i></label>
-                                                <input type="number" id="party-opening-balance" name="opening_balance"
-                                                    class="form-control u-h-34px u-fs-12_5px" value="0" step="any" min="0">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div id="party-form-error"
-                                                class="alert alert-danger mb-0 py-1 px-2 u-fs-11px u-r-6px"
-                                                style="display:none"></div>
-                                        </div>
-                                    </div>
-
-                                </div>
-                                <div
-                                    class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-20px u-bt-1px-solid-border">
-                                    <button type="button"
-                                        class="btn btn-sm btn-secondary u-h-34px u-p-0-16px u-r-6px u-fw-600"
-                                        data-dismiss="modal">Cancel</button>
-                                    <button type="submit"
-                                        class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-h-34px u-p-0-22px u-r-6px u-fw-700 u-fs-13px"
-                                        id="btn-save-party">
-                                        <i class="dripicons-checkmark mr-1"></i> Submit
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
+<div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
                     class="modal fade text-left">
                     <div role="document" class="modal-dialog">
                         <div class="modal-content">
@@ -4272,7 +3919,252 @@
                             }
                         }
 
-                        initPanelState();
+                            // --- Detailed Sales Invoice Modal (Neat & Beautiful Preview with Live Server Fetch & Edit Option) ---
+    window.openSaleDetailsModal = function(saleOrId) {
+        if (!saleOrId) return;
+
+        // Resolve saleId from number, string, object or array
+        var saleId = null;
+        if (typeof saleOrId === 'number' || (typeof saleOrId === 'string' && /^\d+$/.test(saleOrId.trim()))) {
+            saleId = parseInt(saleOrId, 10);
+        } else if (typeof saleOrId === 'object' && saleOrId !== null) {
+            if (saleOrId.id) {
+                saleId = parseInt(saleOrId.id, 10);
+            } else if (Array.isArray(saleOrId)) {
+                var rawId = saleOrId[13] || '';
+                var m = String(rawId).replace(/[^0-9]/g, '');
+                if (m) saleId = parseInt(m, 10);
+            }
+        } else if (typeof saleOrId === 'string') {
+            try {
+                var parsed = JSON.parse(saleOrId);
+                return window.openSaleDetailsModal(parsed);
+            } catch (e) {
+                var m = saleOrId.replace(/[^0-9]/g, '');
+                if (m) saleId = parseInt(m, 10);
+            }
+        }
+
+        if (!saleId) {
+            console.error('Could not resolve sale ID for modal', saleOrId);
+            return;
+        }
+
+        // Show modal immediately with loading state
+        $('#sale-details-ref-badge').text('Loading...');
+        $('#sale-details-status-badge').text('...');
+        $('#sale-details-date-text').text('');
+        $('#sale-details-customer-name').text('Loading customer details...');
+        $('#sale-details-customer-company').hide();
+        $('#sale-details-customer-gstin').hide();
+        $('#sale-details-customer-phone').hide();
+        $('#sale-details-customer-address').hide();
+        $('#sale-details-date-val').text('—');
+        $('#sale-details-warehouse-val').text('—');
+        $('#sale-details-biller-val').text('—');
+        $('#sale-details-user-val').text('—');
+        $('#sale-details table.product-sale-list tbody').html(
+            '<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>'
+        );
+        $('#sale-details-items-price').text('₹0.00');
+        $('#sale-details-order-tax').text('₹0.00');
+        $('#sale-details-order-discount').text('₹0.00');
+        $('#sale-details-shipping-cost').text('₹0.00');
+        $('#sale-details-grand-total').text('₹0.00');
+        $('#sale-details-paid-amount').text('₹0.00');
+        $('#sale-details-due-amount').text('₹0.00');
+        $('#sale-details-notes-val').text('Loading...');
+        $('#sale-details').modal('show');
+
+        // Fetch live authoritative sale JSON
+        $.ajax({
+            url: "{{ url('sales') }}/" + saleId,
+            type: "GET",
+            dataType: "json",
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+            success: function(res) {
+                if (!res || !res.sale) {
+                    $('#sale-details-ref-badge').text('Error');
+                    $('#sale-details table.product-sale-list tbody').html(
+                        '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load invoice details.</td></tr>'
+                    );
+                    return;
+                }
+
+                var s = res.sale;
+                var ref = s.reference_no || ('#' + s.id);
+                var statusMap = { 1: 'Completed', 2: 'Pending', 3: 'Draft' };
+                var statusText = statusMap[s.sale_status] || (s.sale_status == 1 ? 'Completed' : 'Draft');
+                var rawDate = res.business_date || (s.created_at ? s.created_at.split('T')[0] : '');
+                var formattedDate = rawDate;
+                if (rawDate && rawDate.indexOf('-') > -1) {
+                    var dp = rawDate.split('-');
+                    if (dp.length === 3) formattedDate = dp[2] + '-' + dp[1] + '-' + dp[0];
+                }
+
+                // Header & Edit Button
+                $('#sale-details-ref-badge').text(ref);
+                $('#sale-details-status-badge').text(statusText);
+                $('#sale-details-date-text').text(formattedDate);
+                var editUrl = "{{ url('sales') }}/" + s.id + "/edit";
+                $('#sale-details-edit-btn').attr('href', editUrl);
+
+                // Customer Card
+                var c = s.customer || {};
+                var customerName = c.name || 'Walk-in / Cash Customer';
+                var customerCompany = c.company_name || '';
+                var customerGstin = c.tax_no || c.vat_number || '';
+                var customerPhone = c.phone_number ? ('📞 ' + c.phone_number) : '';
+                var addressParts = [c.address, c.city, c.postal_code].filter(Boolean);
+                var customerAddress = addressParts.length ? ('📍 ' + addressParts.join(', ')) : '';
+
+                $('#sale-details-customer-name').text(customerName);
+                if (customerCompany) {
+                    $('#sale-details-customer-company').text('Company: ' + customerCompany).show();
+                } else {
+                    $('#sale-details-customer-company').hide();
+                }
+                if (customerGstin) {
+                    $('#sale-details-customer-gstin').text('GSTIN: ' + customerGstin).show();
+                } else {
+                    $('#sale-details-customer-gstin').hide();
+                }
+                if (customerPhone) {
+                    $('#sale-details-customer-phone').text(customerPhone).show();
+                } else {
+                    $('#sale-details-customer-phone').hide();
+                }
+                if (customerAddress) {
+                    $('#sale-details-customer-address').text(customerAddress).show();
+                } else {
+                    $('#sale-details-customer-address').hide();
+                }
+
+                // Warehouse & Biller Card
+                var w = s.warehouse || {};
+                var b = s.biller || {};
+                var warehouseName = w.name || 'Main Godown';
+                var billerName = b.name || 'Company Store';
+                var userName = (s.user && s.user.name) ? s.user.name : 'Admin';
+
+                $('#sale-details-date-val').text(formattedDate || '—');
+                $('#sale-details-warehouse-val').text(warehouseName);
+                $('#sale-details-biller-val').text(billerName);
+                $('#sale-details-user-val').text(userName);
+
+                // Items Table
+                var $tbody = $('#sale-details table.product-sale-list tbody');
+                $tbody.empty();
+                var items = res.items || [];
+                var itemsPriceTotal = 0;
+
+                if (items.length > 0) {
+                    items.forEach(function(item, idx) {
+                        var name = item.product_name || 'Product';
+                        var code = item.product_code || '';
+                        var batch = item.batch_no ? item.batch_no : '—';
+                        var qty = Number(item.qty || 0);
+                        var unit = item.unit_code || 'PCS';
+                        var unitPrice = Number(item.net_unit_price || (qty > 0 ? (item.total / qty) : 0));
+                        var tax = Number(item.tax || 0);
+                        var taxRate = Number(item.tax_rate || 0);
+                        var discount = Number(item.discount || 0);
+                        var subtotal = Number(item.total || 0);
+                        itemsPriceTotal += subtotal;
+
+                        var rowHtml = '<tr>' +
+                            '<td class="text-center align-middle">' + (idx + 1) + '</td>' +
+                            '<td class="align-middle">' +
+                                '<div class="font-weight-bold text-dark">' + name + '</div>' +
+                                (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                            '</td>' +
+                            '<td class="align-middle">' +
+                                (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
+                            '</td>' +
+                            '<td class="text-right align-middle"><span class="badge badge-info px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
+                            '<td class="text-right align-middle font-weight-bold">₹' + unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle">₹' + tax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (taxRate > 0 ? ' <small class="text-muted">(' + taxRate + '%)</small>' : '') + '</td>' +
+                            '<td class="text-right align-middle">₹' + discount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle font-weight-bold text-primary">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '</tr>';
+                        $tbody.append(rowHtml);
+                    });
+                } else {
+                    $tbody.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this invoice.</td></tr>');
+                }
+
+                // Financial Totals
+                var totalPrice = Number(s.total_price || itemsPriceTotal || 0);
+                var orderTax = Number(s.order_tax || 0);
+                var orderTaxRate = Number(s.order_tax_rate || 0);
+                var orderDiscount = Number(s.order_discount || 0);
+                var shippingCost = Number(s.shipping_cost || 0);
+                var grandTotal = Number(s.grand_total || (totalPrice + orderTax + shippingCost - orderDiscount));
+                var paidAmount = Number(s.paid_amount || 0);
+                var dueAmount = Math.max(0, grandTotal - paidAmount);
+
+                $('#sale-details-items-price').text('₹' + totalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (orderTaxRate > 0 ? ' (' + orderTaxRate + '%)' : ''));
+                $('#sale-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#sale-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+                if (dueAmount > 0.01) {
+                    $('#sale-details-due-row').removeClass('settled').addClass('has-due');
+                } else {
+                    $('#sale-details-due-row').removeClass('has-due').addClass('settled');
+                }
+
+                var note = (s.sale_note || s.staff_note || '').trim();
+                $('#sale-details-notes-val').text(note || 'No remarks recorded for this bill.');
+            },
+            error: function() {
+                $('#sale-details-ref-badge').text('Error');
+                $('#sale-details table.product-sale-list tbody').html(
+                    '<tr><td colspan="8" class="text-center text-danger py-3">Unable to retrieve invoice data from server.</td></tr>'
+                );
+            }
+        });
+    };
+
+    // Click handler for Action > View on datatable rows and cards
+    $(document).on('click', 'table.sale-list tbody .view, #sale-table tbody .view, .sale-link .view', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
+            var tr = $(this).closest('tr');
+            id = tr.data('id') || tr.attr('data-id');
+            if (!id) {
+                var rowData = $('#sale-table').DataTable().row(tr).data();
+                id = rowData ? (rowData.id || (rowData.sale && rowData.sale[13])) : null;
+            }
+        }
+        if (id) {
+            openSaleDetailsModal(id);
+        } else {
+            var saleData = $(this).closest('tr').data('sale') || $(this).closest('tr').attr('data-sale');
+            if (saleData) openSaleDetailsModal(saleData);
+        }
+    });
+
+    // Print button handler
+    $(document).on('click', '#sale-print-btn', function() {
+        var printArea = document.getElementById('sale-details-print-area');
+        var ref = $('#sale-details-ref-badge').text() || 'Voucher';
+        var printWindow = window.open('', 'Print-Window');
+        printWindow.document.open();
+        printWindow.document.write('<html><head><title>Sales Bill ' + ref + '</title>' +
+            '<link rel="stylesheet" href="{{ asset("vendor/bootstrap/css/bootstrap.min.css") }}">' +
+            '<link rel="stylesheet" href="{{ versioned_asset("css/pages/voucher-preview-modal.css") }}">' +
+            '</head><body onload="window.print()">' + printArea.innerHTML + '</body></html>');
+        printWindow.document.close();
+        setTimeout(function() { printWindow.close(); }, 500);
+    });
+
+    initPanelState();
                         window.commandCenterGrid = { addProductRow, applyProductToRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts };
                     })();
                 </script>
@@ -4282,6 +4174,7 @@
             @include('backend.partials.command-center-form', ['kind' => 'sale'])
 
             @push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/voucher-preview-modal.css') }}">
                 <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-purchase-index.css') }}">
                 @if($returnsTab)
                 <link rel="stylesheet" href="{{ versioned_asset('css/pages/commercial-returns.css') }}">@endif

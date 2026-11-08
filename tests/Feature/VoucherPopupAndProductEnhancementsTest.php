@@ -20,20 +20,34 @@ class VoucherPopupAndProductEnhancementsTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::where('role_id', 1)->first() ?? User::factory()->create(['role_id' => 1]);
-        $this->company = Company::first() ?? Company::factory()->create();
+        $this->admin = User::where('role_id', 1)->first() ?? User::first();
+        $this->company = Company::first();
 
+        if ($this->company) {
+            if (!$this->company->users()->where('users.id', $this->admin->id)->exists()) {
+                $this->company->users()->attach($this->admin->id, ['is_default' => true]);
+            }
+            $branch = $this->company->branches()->first() ?? $this->company->branches()->create(['code' => 'MAIN', 'name' => 'Main Branch']);
+            \Illuminate\Support\Facades\DB::table('company_user_branches')->updateOrInsert(
+                ['company_id' => $this->company->id, 'user_id' => $this->admin->id, 'branch_id' => $branch->id],
+                ['company_id' => $this->company->id, 'user_id' => $this->admin->id, 'branch_id' => $branch->id]
+            );
+            $year = \App\Models\Accounting\FiscalYear::where('company_id', $this->company->id)->first() ?? \App\Models\Accounting\FiscalYear::create([
+                'company_id' => $this->company->id, 'name' => 'FY 2026', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'status' => 'open'
+            ]);
+            $this->withSession([
+                'company_id' => $this->company->id,
+                'branch_id' => $branch->id,
+                'financial_year_id' => $year->id,
+                'warehouse_id' => 1,
+            ]);
+        }
         $this->actingAs($this->admin);
-        session([
-            'company_id' => $this->company->id,
-            'current_company_id' => $this->company->id,
-            'warehouse_id' => 1,
-        ]);
     }
 
     public function test_sale_index_has_modern_voucher_preview_card_and_edit_button()
     {
-        $response = $this->actingAs($this->admin)->get(route('sales.index'));
+        $response = $this->get(route('sales.index'));
 
         $response->assertStatus(200);
         $response->assertSee('voucher-preview-card', false);
@@ -46,7 +60,7 @@ class VoucherPopupAndProductEnhancementsTest extends TestCase
 
     public function test_purchase_index_has_modern_voucher_preview_card_and_edit_button()
     {
-        $response = $this->actingAs($this->admin)->get(route('purchases.index'));
+        $response = $this->get(route('purchases.index'));
 
         $response->assertStatus(200);
         $response->assertSee('voucher-preview-card', false);

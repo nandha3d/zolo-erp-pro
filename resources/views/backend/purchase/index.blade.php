@@ -984,52 +984,138 @@
         </div>
     </div>
 
-    <!-- VIEW DETAILS MODAL -->
-    <div id="purchase-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
-        class="modal fade text-left">
-        <div role="document" class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="container mt-3 pb-2 border-bottom">
-                    <div class="row">
-                        <div class="col-md-6 d-print-none">
-                            <button id="print-btn" type="button" class="btn btn-default btn-sm"><i
-                                    class="dripicons-print"></i> {{__('db.Print')}}</button>
+    <!-- Modal: Purchase Details Preview (Neat & Beautiful Unified Voucher Card) -->
+    <div id="purchase-details" tabindex="-1" role="dialog" aria-labelledby="purchaseDetailsLabel" aria-hidden="true" class="modal fade text-left">
+        <div role="document" class="modal-dialog voucher-modal-dialog">
+            <div class="voucher-preview-card">
+                <!-- Modal Header -->
+                <div class="voucher-preview-header">
+                    <div class="voucher-header-main">
+                        <div class="voucher-icon-badge purchase">
+                            <i class="dripicons-download"></i>
                         </div>
-                        <div class="col-md-6 d-print-none">
-                            <button type="button" id="close-btn" data-dismiss="modal" aria-label="Close" class="close"><span
-                                    aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+                        <div>
+                            <h4 class="voucher-doc-title">
+                                <span>Purchase Bill</span>
+                                <span id="purchase-details-ref-badge" class="voucher-ref-badge">#REF</span>
+                            </h4>
+                            <div class="voucher-badges-strip">
+                                <span id="purchase-details-status-badge" class="badge badge-success">Received</span>
+                                <span id="purchase-details-date-text" class="text-muted small"></span>
+                            </div>
                         </div>
-                        <div class="col-md-12">
-                            <h3 id="exampleModalLabel" class="modal-title text-center container-fluid">
-                                {{$general_setting->site_title}}
-                            </h3>
+                    </div>
+                    <div class="voucher-actions-toolbar">
+                        <a href="#" id="purchase-details-edit-btn" class="voucher-edit-btn" title="Open Full Bill in Edit Mode">
+                            <i class="dripicons-document-edit"></i> Edit Bill
+                        </a>
+                        <button type="button" id="purchase-print-btn" class="voucher-print-btn" title="Print Purchase Voucher">
+                            <i class="dripicons-print"></i> {{__('db.Print')}}
+                        </button>
+                        <button type="button" data-dismiss="modal" aria-label="Close" class="close ml-2">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div id="purchase-details-print-area" class="voucher-preview-body">
+                    <!-- Two-column info cards -->
+                    <div class="voucher-info-grid">
+                        <div class="voucher-info-card">
+                            <div class="voucher-info-card-title">
+                                <i class="dripicons-user-id text-primary"></i> Supplier (Billed From)
+                            </div>
+                            <div id="purchase-details-supplier-name" class="voucher-party-name">—</div>
+                            <div id="purchase-details-supplier-company" class="voucher-info-line text-muted"></div>
+                            <div id="purchase-details-supplier-gstin" class="voucher-info-line text-primary font-weight-bold" style="display: none;"></div>
+                            <div id="purchase-details-supplier-phone" class="voucher-info-line"></div>
+                            <div id="purchase-details-supplier-address" class="voucher-info-line"></div>
                         </div>
-                        <div class="col-md-12 text-center">
-                            <i class="u-fs-15px">{{__('db.Purchase Details')}}</i>
+
+                        <div class="voucher-info-card">
+                            <div class="voucher-info-card-title">
+                                <i class="dripicons-clipboard text-primary"></i> Purchase &amp; Warehouse Details
+                            </div>
+                            <div class="voucher-meta-row">
+                                <span class="voucher-meta-label">Bill Date:</span>
+                                <span id="purchase-details-date-val" class="voucher-meta-val">—</span>
+                            </div>
+                            <div class="voucher-meta-row">
+                                <span class="voucher-meta-label">Receiving Godown:</span>
+                                <span id="purchase-details-warehouse-val" class="voucher-meta-val">—</span>
+                            </div>
+                            <div class="voucher-meta-row">
+                                <span class="voucher-meta-label">Godown Contact:</span>
+                                <span id="purchase-details-warehouse-phone" class="voucher-meta-val">—</span>
+                            </div>
+                            <div class="voucher-meta-row">
+                                <span class="voucher-meta-label">Recorded By:</span>
+                                <span id="purchase-details-user-val" class="voucher-meta-val">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Table -->
+                    <div class="voucher-table-wrap">
+                        <table class="table voucher-items-table product-purchase-list">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45px;" class="text-center">#</th>
+                                    <th>{{__('db.product')}}</th>
+                                    <th style="width: 110px;">{{__('db.Batch No')}}</th>
+                                    <th style="width: 95px;" class="text-right">Qty</th>
+                                    <th style="width: 110px;" class="text-right">{{__('db.Unit Cost')}}</th>
+                                    <th style="width: 110px;" class="text-right">{{__('db.Tax')}}</th>
+                                    <th style="width: 95px;" class="text-right">{{__('db.Discount')}}</th>
+                                    <th style="width: 120px;" class="text-right">{{__('db.Subtotal')}}</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Financial Totals & Notes -->
+                    <div class="voucher-bottom-grid">
+                        <div class="voucher-notes-card">
+                            <div class="voucher-notes-title">
+                                <i class="dripicons-document text-muted"></i> Purchase Remarks &amp; Notes
+                            </div>
+                            <p id="purchase-details-notes-val" class="voucher-notes-text">No remarks recorded for this bill.</p>
+                        </div>
+
+                        <div class="voucher-totals-card">
+                            <div class="voucher-totals-row">
+                                <span>Total Items Cost:</span>
+                                <strong id="purchase-details-items-cost">₹0.00</strong>
+                            </div>
+                            <div class="voucher-totals-row">
+                                <span>Order Tax:</span>
+                                <span id="purchase-details-order-tax">₹0.00</span>
+                            </div>
+                            <div class="voucher-totals-row">
+                                <span>Order Discount:</span>
+                                <span id="purchase-details-order-discount">₹0.00</span>
+                            </div>
+                            <div class="voucher-totals-row">
+                                <span>Shipping / Freight:</span>
+                                <span id="purchase-details-shipping-cost">₹0.00</span>
+                            </div>
+                            <div class="voucher-totals-row grand-total-row">
+                                <span>Grand Total:</span>
+                                <span id="purchase-details-grand-total">₹0.00</span>
+                            </div>
+                            <div class="voucher-totals-row">
+                                <span>Paid Amount:</span>
+                                <span id="purchase-details-paid-amount" class="text-success font-weight-bold">₹0.00</span>
+                            </div>
+                            <div class="voucher-totals-row due-row" id="purchase-details-due-row">
+                                <span>Balance Due:</span>
+                                <span id="purchase-details-due-amount">₹0.00</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div id="purchase-content" class="modal-body"></div>
-                <br>
-                <div class="table-responsive document-lines px-3" tabindex="0" role="region"
-                    aria-label="{{__('db.Purchase Details')}}">
-                    <table class="table table-bordered product-purchase-list">
-                        <thead>
-                            <th>#</th>
-                            <th>{{__('db.product')}}</th>
-                            <th>{{__('db.Batch No')}}</th>
-                            <th>Qty</th>
-                            <th>{{__('db.Returned')}}</th>
-                            <th>{{__('db.Unit Cost')}}</th>
-                            <th>{{__('db.Tax')}}</th>
-                            <th>{{__('db.Discount')}}</th>
-                            <th>{{__('db.Subtotal')}}</th>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="purchase-footer" class="modal-body"></div>
             </div>
         </div>
     </div>
@@ -4012,7 +4098,251 @@
                 }
             }
 
-            initPanelState();
+                // --- Detailed Purchase Bill Modal (Neat & Beautiful Preview with Live Server Fetch & Edit Option) ---
+    window.openPurchaseDetailsModal = function(purchaseOrId) {
+        if (!purchaseOrId) return;
+
+        // Resolve purchaseId from number, string, object or array
+        var purchaseId = null;
+        if (typeof purchaseOrId === 'number' || (typeof purchaseOrId === 'string' && /^\d+$/.test(purchaseOrId.trim()))) {
+            purchaseId = parseInt(purchaseOrId, 10);
+        } else if (typeof purchaseOrId === 'object' && purchaseOrId !== null) {
+            if (purchaseOrId.id) {
+                purchaseId = parseInt(purchaseOrId.id, 10);
+            } else if (Array.isArray(purchaseOrId)) {
+                var rawId = purchaseOrId[3] || '';
+                var m = String(rawId).replace(/[^0-9]/g, '');
+                if (m) purchaseId = parseInt(m, 10);
+            }
+        } else if (typeof purchaseOrId === 'string') {
+            try {
+                var parsed = JSON.parse(purchaseOrId);
+                return window.openPurchaseDetailsModal(parsed);
+            } catch (e) {
+                var m = purchaseOrId.replace(/[^0-9]/g, '');
+                if (m) purchaseId = parseInt(m, 10);
+            }
+        }
+
+        if (!purchaseId) {
+            console.error('Could not resolve purchase ID for modal', purchaseOrId);
+            return;
+        }
+
+        // Show modal immediately with loading indicators
+        $('#purchase-details-ref-badge').text('Loading...');
+        $('#purchase-details-status-badge').text('...');
+        $('#purchase-details-date-text').text('');
+        $('#purchase-details-supplier-name').text('Loading supplier details...');
+        $('#purchase-details-supplier-company').hide();
+        $('#purchase-details-supplier-gstin').hide();
+        $('#purchase-details-supplier-phone').hide();
+        $('#purchase-details-supplier-address').hide();
+        $('#purchase-details-date-val').text('—');
+        $('#purchase-details-warehouse-val').text('—');
+        $('#purchase-details-warehouse-phone').text('—');
+        $('#purchase-details-user-val').text('—');
+        $('#purchase-details table.product-purchase-list tbody').html(
+            '<tr><td colspan="8" class="text-center text-muted py-3"><i class="fa fa-spinner fa-spin mr-1"></i> Loading items...</td></tr>'
+        );
+        $('#purchase-details-items-cost').text('₹0.00');
+        $('#purchase-details-order-tax').text('₹0.00');
+        $('#purchase-details-order-discount').text('₹0.00');
+        $('#purchase-details-shipping-cost').text('₹0.00');
+        $('#purchase-details-grand-total').text('₹0.00');
+        $('#purchase-details-paid-amount').text('₹0.00');
+        $('#purchase-details-due-amount').text('₹0.00');
+        $('#purchase-details-notes-val').text('Loading...');
+        $('#purchase-details').modal('show');
+
+        // Fetch live authoritative purchase JSON
+        $.ajax({
+            url: "{{ url('purchases') }}/" + purchaseId,
+            type: "GET",
+            dataType: "json",
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+            success: function(res) {
+                if (!res || !res.purchase) {
+                    $('#purchase-details-ref-badge').text('Error');
+                    $('#purchase-details table.product-purchase-list tbody').html(
+                        '<tr><td colspan="8" class="text-center text-danger py-3">Failed to load purchase details.</td></tr>'
+                    );
+                    return;
+                }
+
+                var p = res.purchase;
+                var ref = p.reference_no || ('#' + p.id);
+                var statusMap = { 1: 'Received', 2: 'Partial', 3: 'Pending', 4: 'Ordered' };
+                var statusText = statusMap[p.status] || (p.status == 1 ? 'Received' : 'Ordered');
+                var rawDate = res.business_date || (p.created_at ? p.created_at.split('T')[0] : '');
+                var formattedDate = rawDate;
+                if (rawDate && rawDate.indexOf('-') > -1) {
+                    var dp = rawDate.split('-');
+                    if (dp.length === 3) formattedDate = dp[2] + '-' + dp[1] + '-' + dp[0];
+                }
+
+                // Header & Edit Button
+                $('#purchase-details-ref-badge').text(ref);
+                $('#purchase-details-status-badge').text(statusText);
+                $('#purchase-details-date-text').text(formattedDate);
+                var editUrl = "{{ url('purchases') }}/" + p.id + "/edit";
+                $('#purchase-details-edit-btn').attr('href', editUrl);
+
+                // Supplier Card
+                var s = p.supplier || {};
+                var supplierName = s.name || 'Walk-in / Cash Supplier';
+                var supplierCompany = s.company_name || '';
+                var supplierGstin = s.vat_number || s.tax_no || '';
+                var supplierPhone = s.phone_number ? ('📞 ' + s.phone_number) : '';
+                var addressParts = [s.address, s.city, s.postal_code].filter(Boolean);
+                var supplierAddress = addressParts.length ? ('📍 ' + addressParts.join(', ')) : '';
+
+                $('#purchase-details-supplier-name').text(supplierName);
+                if (supplierCompany) {
+                    $('#purchase-details-supplier-company').text('Company: ' + supplierCompany).show();
+                } else {
+                    $('#purchase-details-supplier-company').hide();
+                }
+                if (supplierGstin) {
+                    $('#purchase-details-supplier-gstin').text('GSTIN: ' + supplierGstin).show();
+                } else {
+                    $('#purchase-details-supplier-gstin').hide();
+                }
+                if (supplierPhone) {
+                    $('#purchase-details-supplier-phone').text(supplierPhone).show();
+                } else {
+                    $('#purchase-details-supplier-phone').hide();
+                }
+                if (supplierAddress) {
+                    $('#purchase-details-supplier-address').text(supplierAddress).show();
+                } else {
+                    $('#purchase-details-supplier-address').hide();
+                }
+
+                // Warehouse & Metadata Card
+                var w = p.warehouse || {};
+                var warehouseName = w.name || 'Main Godown';
+                var warehousePhone = w.phone || w.email || '—';
+                var userName = (p.user && p.user.name) ? p.user.name : 'Admin';
+
+                $('#purchase-details-date-val').text(formattedDate || '—');
+                $('#purchase-details-warehouse-val').text(warehouseName);
+                $('#purchase-details-warehouse-phone').text(warehousePhone);
+                $('#purchase-details-user-val').text(userName);
+
+                // Items Table
+                var $tbody = $('#purchase-details table.product-purchase-list tbody');
+                $tbody.empty();
+                var items = res.items || [];
+                var itemsCostTotal = 0;
+
+                if (items.length > 0) {
+                    items.forEach(function(item, idx) {
+                        var name = item.product_name || 'Product';
+                        var code = item.product_code || '';
+                        var batch = item.batch_no ? item.batch_no : '—';
+                        var qty = Number(item.qty || 0);
+                        var unit = item.unit_code || 'PCS';
+                        var unitCost = Number(item.net_unit_cost || (qty > 0 ? (item.total / qty) : 0));
+                        var tax = Number(item.tax || 0);
+                        var taxRate = Number(item.tax_rate || 0);
+                        var discount = Number(item.discount || 0);
+                        var subtotal = Number(item.total || 0);
+                        itemsCostTotal += subtotal;
+
+                        var rowHtml = '<tr>' +
+                            '<td class="text-center align-middle">' + (idx + 1) + '</td>' +
+                            '<td class="align-middle">' +
+                                '<div class="font-weight-bold text-dark">' + name + '</div>' +
+                                (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                            '</td>' +
+                            '<td class="align-middle">' +
+                                (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
+                            '</td>' +
+                            '<td class="text-right align-middle"><span class="badge badge-info px-2 py-1 font-weight-bold">' + qty + ' ' + unit + '</span></td>' +
+                            '<td class="text-right align-middle font-weight-bold">₹' + unitCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle">₹' + tax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (taxRate > 0 ? ' <small class="text-muted">(' + taxRate + '%)</small>' : '') + '</td>' +
+                            '<td class="text-right align-middle">₹' + discount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '<td class="text-right align-middle font-weight-bold text-primary">₹' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>' +
+                            '</tr>';
+                        $tbody.append(rowHtml);
+                    });
+                } else {
+                    $tbody.html('<tr><td colspan="8" class="text-center text-muted py-3">No products recorded on this voucher.</td></tr>');
+                }
+
+                // Financial Totals
+                var totalCost = Number(p.total_cost || itemsCostTotal || 0);
+                var orderTax = Number(p.order_tax || 0);
+                var orderTaxRate = Number(p.order_tax_rate || 0);
+                var orderDiscount = Number(p.order_discount || 0);
+                var shippingCost = Number(p.shipping_cost || 0);
+                var grandTotal = Number(p.grand_total || (totalCost + orderTax + shippingCost - orderDiscount));
+                var paidAmount = Number(p.paid_amount || 0);
+                var dueAmount = Math.max(0, grandTotal - paidAmount);
+
+                $('#purchase-details-items-cost').text('₹' + totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-order-tax').text('₹' + orderTax.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + (orderTaxRate > 0 ? ' (' + orderTaxRate + '%)' : ''));
+                $('#purchase-details-order-discount').text('₹' + orderDiscount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-shipping-cost').text('₹' + shippingCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#purchase-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+                if (dueAmount > 0.01) {
+                    $('#purchase-details-due-row').removeClass('settled').addClass('has-due');
+                } else {
+                    $('#purchase-details-due-row').removeClass('has-due').addClass('settled');
+                }
+
+                var note = (p.note || '').trim();
+                $('#purchase-details-notes-val').text(note || 'No remarks recorded for this bill.');
+            },
+            error: function() {
+                $('#purchase-details-ref-badge').text('Error');
+                $('#purchase-details table.product-purchase-list tbody').html(
+                    '<tr><td colspan="8" class="text-center text-danger py-3">Unable to retrieve bill data from server.</td></tr>'
+                );
+            }
+        });
+    };
+
+    // Click handler for Action > View on datatable rows and cards
+    $(document).on('click', 'table.purchase-list tbody .view, #purchase-table tbody .view, .purchase-link .view', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        if (!id) {
+            var tr = $(this).closest('tr');
+            id = tr.data('id') || tr.attr('data-id');
+            if (!id) {
+                var rowData = $('#purchase-table').DataTable().row(tr).data();
+                id = rowData ? (rowData.id || (rowData.purchase && rowData.purchase[3])) : null;
+            }
+        }
+        if (id) {
+            openPurchaseDetailsModal(id);
+        } else {
+            var purchaseData = $(this).closest('tr').data('purchase') || $(this).closest('tr').attr('data-purchase');
+            if (purchaseData) openPurchaseDetailsModal(purchaseData);
+        }
+    });
+
+    // Print button handler
+    $(document).on('click', '#purchase-print-btn', function() {
+        var printArea = document.getElementById('purchase-details-print-area');
+        var ref = $('#purchase-details-ref-badge').text() || 'Voucher';
+        var printWindow = window.open('', 'Print-Window');
+        printWindow.document.open();
+        printWindow.document.write('<html><head><title>Purchase Bill ' + ref + '</title>' +
+            '<link rel="stylesheet" href="{{ asset("vendor/bootstrap/css/bootstrap.min.css") }}">' +
+            '<link rel="stylesheet" href="{{ versioned_asset("css/pages/voucher-preview-modal.css") }}">' +
+            '</head><body onload="window.print()">' + printArea.innerHTML + '</body></html>');
+        printWindow.document.close();
+        setTimeout(function() { printWindow.close(); }, 500);
+    });
+
+    initPanelState();
             window.commandCenterGrid = { addProductRow, applyProductToRow, resetFormToNew, recalcTableSummary, switchWorkspaceMode, products: allProducts };
         })();
     </script>
@@ -4022,6 +4352,7 @@
 @include('backend.partials.command-center-form', ['kind' => 'purchase'])
 
 @push('css')
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/voucher-preview-modal.css') }}">
     <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-purchase-index.css') }}">
     @if($returnsTab)
     <link rel="stylesheet" href="{{ versioned_asset('css/pages/commercial-returns.css') }}">@endif

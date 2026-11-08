@@ -616,7 +616,23 @@ class InventoryMovementService
 
     private function nullableExpiry(): bool
     {
-        return $this->nullableExpiry ??= !Schema::getConnection()->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
+        if ($this->nullableExpiry !== null) {
+            return $this->nullableExpiry;
+        }
+
+        if (method_exists(Schema::getFacadeRoot() ?? Schema::class, 'getColumns')) {
+            $col = collect(Schema::getColumns('product_batches'))->firstWhere('name', 'expired_date');
+            if ($col && isset($col['nullable'])) {
+                return $this->nullableExpiry = (bool) $col['nullable'];
+            }
+        }
+
+        $connection = Schema::getConnection();
+        if (method_exists($connection, 'getDoctrineColumn')) {
+            return $this->nullableExpiry = !$connection->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
+        }
+
+        return $this->nullableExpiry = true;
     }
 
     /** @return list<array{0: float, 1: ?StockIdentity}> */
