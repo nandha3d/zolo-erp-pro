@@ -11,6 +11,7 @@ use App\Models\Product_Warehouse;
 use App\Services\Platform\CompanyContext;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
@@ -632,8 +633,10 @@ class InventoryMovementService
             if (method_exists($connection, 'getDoctrineColumn')) {
                 return $this->nullableExpiry = !$connection->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
             }
-        } catch (\Throwable) {
-            // Never assume a nullable column when inspection fails.
+
+            Log::warning('InventoryMovementService: Schema inspection could not determine nullability for product_batches.expired_date. Defaulting to non-nullable.');
+        } catch (\Throwable $e) {
+            Log::warning('InventoryMovementService: Schema inspection failed for product_batches.expired_date: ' . $e->getMessage(), ['exception' => $e]);
             return $this->nullableExpiry = false;
         }
 

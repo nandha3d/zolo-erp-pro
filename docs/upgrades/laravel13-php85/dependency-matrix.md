@@ -9,7 +9,7 @@
 
 | Package | Pre-Upgrade (L10) | Final (L13) | Constraint in `composer.json` | Upgrade Notes & Resolution |
 |---|---|---|---|---|
-| `php` | `^8.2` | `8.5.12` | `^8.2` | Verified with PHP 8.5.12 CLI (Herd). |
+| `php` | `^8.2` | `8.5.12` | `^8.5` | Verified with PHP 8.5.12 CLI (Herd) and strictly enforced in `composer.json`. |
 | `laravel/framework` | `^10.0` | `v13.40.0` | `^13.2` | Sequentially upgraded: 10.48 → 11.57.1 → 12.71.0 → 13.40.0. |
 | `laravelcollective/html` | `v6.4.1` | **Replaced** | N/A | Replaced with drop-in fork `konekt/html: ^6.5` (version `6.8.0`). Maintains 100% backward compatibility for ~100 Blade views using `Form::` and `Html::`. |
 | `konekt/html` | *New* | `6.8.0` | `^6.5` | Drop-in replacement for abandoned `laravelcollective/html`. Supports illuminate 10 through 13. |
@@ -20,7 +20,8 @@
 | `milon/barcode` | `v10.0.1` | `v13.6.0` | `^13.0` | Upgraded through v11, v12, to v13 for Laravel 13 compatibility. |
 | `nwidart/laravel-modules` | `8.6.0` | `v13.3.0` | `^13.0` | Upgraded from v8 to v13. Migrated command loading to `ConsoleServiceProvider::defaultCommands()`. |
 | `spatie/laravel-permission` | `5.11.1` | `6.25.0` | `^6.0` | Upgraded from v5 to v6. Natively supports illuminate 8 through 13. |
-| `maatwebsite/excel` | `3.1.48` | `3.1.70` | `^3.1.48` | Minor update. Supports illuminate 13 and PHP 8.5. |
+| `maatwebsite/excel` | `3.1.48` | `4.0.6` | `^3.1.48 \|\| ^4.0` | Upgraded to 4.0.6 to support PHP 8.5 without upper platform bound. |
+| `phpoffice/phpspreadsheet` | `1.29.0` | `5.11.0` | transitive via excel | Upgraded to 5.11.0, eliminating legacy `<8.5.0` PHP constraint. |
 | `barryvdh/laravel-dompdf` | `2.1.1` | `v3.1.2` | `^2.1\|^3.0` | Supports illuminate 9 through 13 and dompdf 3. |
 | `intervention/image` | `^3` | `3.11.7` | `^3` | Modern v3 architecture. Compatible with PHP 8.5. |
 | `srmklive/paypal` | `3.0.40` | `3.2.0` | `^3.0` | Upgraded to 3.2.0. |

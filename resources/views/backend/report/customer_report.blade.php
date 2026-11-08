@@ -403,7 +403,8 @@
             </ul>
             <div class="comm-actions">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-secondary btn-action-pill" data-erp-print="#customer-ledger-table" data-erp-print-scope="all">
+                    <button type="button" class="btn btn-secondary btn-action-pill" data-erp-print="#customer-ledger-table"
+                        data-erp-print-scope="all">
                         <i class="dripicons-print"></i> Print Complete Ledger
                     </button>
                     <button type="button" class="btn btn-secondary btn-action-pill dropdown-toggle dropdown-toggle-split"
@@ -411,17 +412,18 @@
                         <span class="sr-only">Toggle Dropdown</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right">
-                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table" data-erp-print-scope="all"><i
-                                class="dripicons-document mr-1"></i> Print Complete Ledger</a>
-                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table" data-erp-print-scope="current"><i
-                                class="dripicons-view-list mr-1"></i> Print Current Filtered View</a>
+                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table"
+                            data-erp-print-scope="all"><i class="dripicons-document mr-1"></i> Print Complete Ledger</a>
+                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table"
+                            data-erp-print-scope="current"><i class="dripicons-view-list mr-1"></i> Print Current Filtered
+                            View</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table" data-erp-print-scope="sale"><i
-                                class="dripicons-cart mr-1"></i> Print Invoices Only</a>
-                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table" data-erp-print-scope="payment"><i
-                                class="dripicons-wallet mr-1"></i> Print Payments Only</a>
-                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table" data-erp-print-scope="return"><i
-                                class="dripicons-return mr-1"></i> Print Returns Only</a>
+                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table"
+                            data-erp-print-scope="sale"><i class="dripicons-cart mr-1"></i> Print Invoices Only</a>
+                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table"
+                            data-erp-print-scope="payment"><i class="dripicons-wallet mr-1"></i> Print Payments Only</a>
+                        <a class="dropdown-item" href="javascript:void(0)" data-erp-print="#customer-ledger-table"
+                            data-erp-print-scope="return"><i class="dripicons-return mr-1"></i> Print Returns Only</a>
                     </div>
                 </div>
             </div>
@@ -504,10 +506,11 @@
                     <i class="dripicons-checkmark u-fs-18px"></i>
                 </div>
             </div>
-        <div class="kpi-card {{ $closingBal > 0 ? 'ledger-kpi-due' : 'ledger-kpi-settled' }}">
+            <div class="kpi-card {{ $closingBal > 0 ? 'ledger-kpi-due' : 'ledger-kpi-settled' }}">
                 <div>
                     <div class="kpi-label">NET CLOSING BALANCE</div>
-                    <div class="kpi-number u-fs-16px u-fw-800 {{ $closingBal > 0 ? 'ledger-balance-due' : 'ledger-balance-settled' }}">
+                    <div
+                        class="kpi-number u-fs-16px u-fw-800 {{ $closingBal > 0 ? 'ledger-balance-due' : 'ledger-balance-settled' }}">
                         {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }}
                         <span
                             class="badge badge-sm {{ $closingBal >= 0 ? 'badge-danger' : 'badge-success' }}">{{ $closingBal >= 0 ? 'Dr' : 'Cr' }}</span>
@@ -608,19 +611,20 @@
                 <p class="text-center text-muted py-2 d-print-none">No transactions found for the selected timeframe.</p>
             @endif
             <div class="table-responsive">
-                <table id="customer-ledger-table" data-erp-print-ledger="Customer" class="table ledger-table u-w-100pct" data-print-all-columns>
+                <table id="customer-ledger-table" data-erp-print-ledger="Customer" class="table ledger-table u-w-100pct"
+                    data-print-all-columns>
                     <thead>
                         <tr>
-                        <th class="ledger-number-column not-exported-col">#</th>
-                        <th class="u-w-95px">{{ __('db.date') }}</th>
-                        <th class="u-w-120px">{{ __('db.Type') }}</th>
-                        <th class="u-w-130px">{{ __('db.reference') }} No</th>
+                            <th class="ledger-number-column not-exported-col">#</th>
+                            <th class="u-w-95px">{{ __('db.date') }}</th>
+                            <th class="u-w-120px">{{ __('db.Type') }}</th>
+                            <th class="u-w-130px">{{ __('db.reference') }} No</th>
                             <th>{{ __('db.Warehouse') }}</th>
                             <th>{{ __('db.Description') }} / Particulars</th>
-                        <th class="u-w-110px text-right">Debit ({{ $currencySymbol }})</th>
-                        <th class="u-w-110px text-right">Credit ({{ $currencySymbol }})</th>
-                        <th class="u-w-130px text-right">Running Balance ({{ $currencySymbol }})</th>
-                        <th class="ledger-status-column not-exported-col">{{ __('db.status') }}</th>
+                            <th class="u-w-110px text-right">Debit ({{ $currencySymbol }})</th>
+                            <th class="u-w-110px text-right">Credit ({{ $currencySymbol }})</th>
+                            <th class="u-w-130px text-right">Running Balance ({{ $currencySymbol }})</th>
+                            <th class="ledger-status-column not-exported-col">{{ __('db.status') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -634,9 +638,11 @@
                             <td class="text-muted">—</td>
                             <td><strong>Opening Balance Brought Forward</strong></td>
                             <td class="text-right font-weight-bold">
-                                {{ $openingBal > 0 ? number_format($openingBal, 2) : '0.00' }}</td>
+                                {{ $openingBal > 0 ? number_format($openingBal, 2) : '0.00' }}
+                            </td>
                             <td class="text-right font-weight-bold">
-                                {{ $openingBal < 0 ? number_format(abs($openingBal), 2) : '0.00' }}</td>
+                                {{ $openingBal < 0 ? number_format(abs($openingBal), 2) : '0.00' }}
+                            </td>
                             <td class="text-right font-weight-bold">
                                 {{ number_format(abs($openingBal), 2) }}
                                 <span
@@ -724,11 +730,11 @@
                         </tr>
                     </tfoot>
                 </table>
-            @if($ledgerData['items']->isEmpty())
-                <p class="text-center py-4 mb-0 text-muted">
-                    <i class="dripicons-information mr-1"></i> No transactions found for the selected timeframe.
-                </p>
-            @endif
+                @if($ledgerData['items']->isEmpty())
+                    <p class="text-center py-4 mb-0 text-muted">
+                        <i class="dripicons-information mr-1"></i> No transactions found for the selected timeframe.
+                    </p>
+                @endif
             </div>
         </div>
 
@@ -738,7 +744,7 @@
                 Customer Confirmation Signature
             </div>
             <div class="erp-print-sig-box">
-            For {{ $activeCompany->trade_name ?? $general_setting->company_name ?? 'zoloERP Pro' }}<br>
+                For {{ $activeCompany->trade_name ?? $general_setting->company_name ?? 'zoloERP Pro' }}<br>
                 <strong>Authorized Signatory</strong>
             </div>
         </div>
@@ -768,7 +774,7 @@
                     $('input[name="start_date"]').val(start_date);
                     $('input[name="end_date"]').val(end_date);
                 }
-            });
+                });
 
         // Initialize DataTable on the unified ledger table
         table = $('#customer-ledger-table').DataTable({
@@ -804,7 +810,7 @@
         if (initialType !== 'all') {
             $('.btn-filter-pill[data-filter="' + initialType + '"]').trigger('click');
         }
-        });
+            });
 
         function applyFilter(filter) {
             if (!table) return;

@@ -103,8 +103,18 @@ jobs:
           extensions: pdo_mysql, pdo_sqlite, zip, gd, bcmath
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
-      - name: Execute clean database migrations
+      - name: Execute clean database migrations and verify idempotency
         run: |
-          php artisan migrate:status
           php artisan migrate --force
           php artisan migrate:status
+          php artisan migrate --force
+      - name: Assert all expected migrations completed
+        run: |
+          php artisan tinker --execute="
+            \$disk = count(glob(database_path('migrations/*.php')));
+            \$db = \Illuminate\Support\Facades\DB::table('migrations')->count();
+            echo 'Migrated ' . \$db . ' of ' . \$disk . ' migrations.' . PHP_EOL;
+            if (\$db < \$disk) {
+                throw new \Exception('Migration assertion failed: expected ' . \$disk . ', got ' . \$db);
+            }
+          "

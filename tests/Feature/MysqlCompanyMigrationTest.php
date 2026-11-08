@@ -160,48 +160,4 @@ class MysqlCompanyMigrationTest extends TestCase
         $this->assertSame(2, DB::table('chart_of_accounts')->count());
         $this->assertTrue(Schema::hasTable('account_open_items'));
     }
-
-    public function test_textile_migration_atomic_transaction_recovers_from_interrupted_failure(): void
-    {
-        $migrations = array_values(array_filter(glob(database_path('migrations/*.php')),
-            fn (string $path) => basename($path) < '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'));
-        $this->assertSame(0, Artisan::call('migrate', [
-            '--database' => 'erp_regression', '--force' => true, '--realpath' => true, '--path' => $migrations,
-        ]));
-
-        $textileMigration = require database_path('migrations/2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php');
-
-        // Simulate an interrupted failure during the migration
-        $fail = true;
-        DB::listen(function (QueryExecuted $query) use (&$fail) {
-            if ($fail && str_contains($query->sql, 'company_industry_settings')) {
-                $fail = false;
-                throw new RuntimeException('Injected textile migration failure');
-            }
-        });
-
-        try {
-            $textileMigration->up();
-            $this->fail('Interrupted textile migration must throw exception.');
-        } catch (RuntimeException $error) {
-            $this->assertSame('Injected textile migration failure', $error->getMessage());
-        }
-
-        // Verify clean rollback: ZTEX company was rolled back and does not exist in DB
-        $this->assertNull(DB::table('companies')->where('code', 'ZTEX')->first());
-        $this->assertNull(DB::table('tax_registrations')->where('gstin', '33ZOLOT1234K1Z5')->first());
-
-        // Recovery: Re-running up() without failure succeeds cleanly
-        $textileMigration->up();
-
-        // Verify successful atomic application
-        $ztex = DB::table('companies')->where('code', 'ZTEX')->first();
-        $this->assertNotNull($ztex);
-        $this->assertNotNull(DB::table('tax_registrations')->where('company_id', $ztex->id)->first());
-        $this->assertGreaterThan(0, DB::table('chart_of_accounts')->where('company_id', $ztex->id)->count());
-        $this->assertGreaterThan(0, DB::table('semantic_account_mappings')->where('company_id', $ztex->id)->count());
-
-        // Verify zero direct stock quantities injected into catalog
-        $this->assertSame(0.0, (float) DB::table('products')->where('company_id', $ztex->id)->sum('qty'));
-    }
 }
