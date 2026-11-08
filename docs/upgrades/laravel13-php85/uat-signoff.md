@@ -42,10 +42,11 @@
    - **Resolution:** In `.github/workflows/company-foundation.yml`, adjusted the execution sequence to:
      ```bash
      php artisan migrate --force
-     php artisan migrate:status
+     php artisan migrate:status --pending=1
+     php artisan migrate:status --pending=1 --path=Modules/Manufacturing/Database/Migrations
      php artisan migrate --force
      ```
-     This tests initial migration execution, status reporting, and idempotency upon repeat execution. Added an automated state assertion comparing completed database records with filesystem migration files.
+     The check fails for pending migrations after the first pass, including when Manufacturing is not discovered by the application. The second migrate invocation rehearses idempotency. CI runs on MySQL 8.0 and 8.4.
 
 2. **Textile Migration Test Isolation & Stock Preservation:**
    - **Issue Addressed:** Tests performing migration and seeding operations must not touch development databases.
@@ -56,7 +57,7 @@
      - Added `test_catalog_only_seeding_preserves_existing_nonzero_stock_quantities` confirming that re-running `TextileMasterSeeder(catalogOnly: true)` preserves existing non-zero stock quantities and warehouse balances.
 
 3. **Strict PHP 8.5 Constraint Enforcement:**
-   - Enforced `"php": "^8.5"` in `composer.json` and synchronized `composer.lock`.
+   - Enforced `"php": ">=8.5.12 <8.6"` in `composer.json` and synchronized `composer.lock`.
    - `composer validate --strict`: 100% valid.
    - `composer check-platform-reqs`: 100% passed (27/27 platform requirements met on PHP 8.5.12).
    - `composer audit`: 0 security vulnerabilities.

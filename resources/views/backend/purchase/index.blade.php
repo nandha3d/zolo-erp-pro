@@ -4079,6 +4079,7 @@
             var editParam = urlParams.get('edit');
             var viewParam = urlParams.get('view_id') || urlParams.get('show_bill');
             var duplicateParam = urlParams.get('duplicate');
+            var searchParam = (urlParams.get('search') || urlParams.get('ref') || '').trim();
 
             if (editParam) {
                 loadPurchaseToForm(editParam, 'edit');
@@ -4088,7 +4089,7 @@
                 loadPurchaseToForm(duplicateParam, 'duplicate');
             } else if (searchParam) {
                 $('#side-search-input').val(searchParam);
-                filterSideBills();
+                filterSidePurchases();
                 var $exactCard = $('.side-bill-card').filter(function () {
                     var ref = String($(this).data('reference') || '').toLowerCase();
                     return ref === searchParam.toLowerCase();

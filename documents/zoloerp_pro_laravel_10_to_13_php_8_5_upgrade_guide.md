@@ -3,7 +3,8 @@
 **Document date:** 6 November 2026  
 **Repository:** [vigneshsinna/zolo-erp-pro](https://github.com/vigneshsinna/zolo-erp-pro)  
 **Branch inspected:** `main`  
-**Status:** Planning / migration specification. **No upgrades or runtime commands have been executed.**  
+**Status:** Historical upgrade plan. See the [release verification record](../docs/upgrades/laravel13-php85/uat-signoff.md) and [current VPS runbook](../deploy/README.md) for implementation and cutover evidence.
+
 **Audience:** Engineering, DevOps, QA, Product Owner and release approvers.
 
 > **Decision:** Target **Laravel 13.x + PHP 8.5.12 or later patched 8.5 version**, provided all dependency and platform tests pass. **PHP 8.4.27 or later patched 8.4 version** is the supported fallback. Keep the ERP's existing business architecture and front end during this migration. The target version is not a claim that all vulnerabilities are eliminated: ongoing patching and hardening remain necessary.

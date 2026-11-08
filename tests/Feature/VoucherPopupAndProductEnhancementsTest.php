@@ -56,6 +56,7 @@ class VoucherPopupAndProductEnhancementsTest extends TestCase
         $response->assertSee('voucher-preview-modal.css', false);
         $response->assertSee('openSaleDetailsModal', false);
         $response->assertSee('sale-details-customer-gstin', false);
+        $response->assertSee("var searchParam = (urlParams.get('search') || urlParams.get('ref') || '').trim();", false);
     }
 
     public function test_purchase_index_has_modern_voucher_preview_card_and_edit_button()
@@ -69,6 +70,7 @@ class VoucherPopupAndProductEnhancementsTest extends TestCase
         $response->assertSee('voucher-preview-modal.css', false);
         $response->assertSee('openPurchaseDetailsModal', false);
         $response->assertSee('purchase-details-supplier-gstin', false);
+        $response->assertSee("var searchParam = (urlParams.get('search') || urlParams.get('ref') || '').trim();", false);
     }
 
     public function test_purchase_ajax_show_returns_hydrated_supplier_and_items()

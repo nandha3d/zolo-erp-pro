@@ -9,6 +9,7 @@ current_php_version="${4:-}"
 case "$operation" in preflight|deploy|rollback) ;; *) exit 2 ;; esac
 [[ "$ref" =~ ^[0-9a-f]{40}$ ]] || exit 2
 [[ "$php_version" =~ ^8\.[345]$ && "$current_php_version" =~ ^8\.[345]$ ]] || exit 2
+[[ "$operation" != deploy || "$php_version" == 8.5 ]] || exit 2
 
 cd /var/www/zolo-erp
 php="php$php_version"
@@ -81,7 +82,18 @@ grep -Fq "fastcgi_pass unix:$socket;" /etc/nginx/sites-enabled/zolo-erp.conf
 if [[ ! -f storage/framework/down ]]; then
     "$current_php" artisan down --retry=15
 fi
-trap 'status=$?; rm -rf -- "$stage"; if (( status )); then echo "Release failed. Keep maintenance active and recover from $previous."; fi' EXIT
+test -f storage/framework/down
+cleanup_release() {
+    local status=$?
+    if (( status )); then
+        if [[ -n "${smoke_secret:-}" ]]; then
+            "$php" artisan down --retry=15 >/dev/null || true
+        fi
+        echo "Release failed. Keep maintenance active and recover from $previous."
+    fi
+    rm -rf -- "$stage"
+}
+trap cleanup_release EXIT
 git checkout --force --detach "$ref"
 if [[ -d vendor ]]; then
     mv vendor "$stage/previous-vendor"
@@ -97,5 +109,14 @@ if [[ "$operation" == deploy ]]; then
 fi
 "$php" artisan view:cache
 sudo -n /usr/bin/systemctl reload "$fpm"
+
+# Prove Nginx and the selected FPM pool can serve the candidate before reopening traffic.
+host=erp.samuraibuiness.in
+local_curl=(curl --fail --silent --show-error --max-time 15 --noproxy '*' --resolve "$host:443:127.0.0.1")
+smoke_secret=$("$php" -r 'echo bin2hex(random_bytes(32));')
+"$php" artisan down --retry=15 --secret="$smoke_secret" >/dev/null
+"${local_curl[@]}" --cookie-jar "$stage/cookies" --output /dev/null "https://$host/$smoke_secret"
+"${local_curl[@]}" --cookie "$stage/cookies" --output "$stage/login.html" "https://$host/login"
+grep -Fq 'id="login-form"' "$stage/login.html"
 "$php" artisan up
 echo "Released $(git rev-parse --short HEAD)"
