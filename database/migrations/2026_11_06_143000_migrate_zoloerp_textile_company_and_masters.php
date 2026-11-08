@@ -1,19 +1,12 @@
 <?php
 
 use App\Models\Company;
-use App\Services\Accounting\SemanticAccountResolver;
-use App\Services\Tax\GstSetupService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void
-    {
-        DB::transaction(fn () => $this->install());
-    }
-
-    private function install(): void
     {
         if (!Schema::hasTable('companies') || !Schema::hasTable('company_branches')) {
             return;
@@ -244,9 +237,6 @@ return new class extends Migration {
                         ->update(['parent_id' => $allAccounts[$account['parent_code']]]);
                 }
             }
-
-            app(SemanticAccountResolver::class)->seedCompany($company->id);
-            app(GstSetupService::class)->ensureLedgers($company->id);
         }
 
         if (class_exists(\App\Services\Platform\CompanyDirectoryService::class)) {
@@ -259,7 +249,7 @@ return new class extends Migration {
 
         // 10. Seed Textile Masters (Units, Brands, Categories, Suppliers, Products)
         if (class_exists(\Database\Seeders\TextileMasterSeeder::class)) {
-            (new \Database\Seeders\TextileMasterSeeder)->seedCompany($company, catalogOnly: true);
+            (new \Database\Seeders\TextileMasterSeeder)->seedCompany($company);
         }
 
         // 11. Seed Demo Customers for Textile Trading / Manufacturing

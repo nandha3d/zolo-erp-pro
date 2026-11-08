@@ -1,5 +1,90 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## 100% Authentic Real Test Example PDF Replacement via Edge Headless & General Ledger Alignment — 2026-11-07 (branch ui)
+
+- **Client Requests Addressed:**
+  - *"from the erp the bank account has this ledger, how it differs from yours? there is no ZTEX-BANK?"* with screenshot of `http://localhost:8080/accounting/general_ledger?account_id=3345` showing the real ERP General Ledger for Account `1020 - Bank Accounts (Asset)`.
+- **Root Cause & Fix:**
+  - Previously, Document #8 used a synthetic placeholder name `ZTEX-BANK` with made-up transactions and a fake opening balance of ₹50,000.
+  - Sourced 100% of Document #8 directly from the real ERP General Ledger for **`1020 - Bank Accounts`** (Account ID `3345`, Type `Asset`, Subtype `bank`):
+    - Opening Balance: **₹ 0.00**
+    - 4 KPI cards: Opening Balance (`₹ 0.00`), Period Debits (`₹ 101,000.00`), Period Credits (`₹ 13,800.00`), Closing Balance (`₹ 87,200.00`).
+    - Exact 5 posted Journal Entries matching the ERP screen:
+      1. `2026-11-06` | `JE-00026` | `VOUCHER ZT-DEMO-CAPITAL` | `Demo capital funding into Bank and Cash` | Debit: `₹ 90,000.00` | Balance: `₹ 90,000.00`
+      2. `2026-11-06` | `JE-00029` | `PAYMENT PAY-00004` | `Bank/Cash deduction for Supplier payment ref PAY-00004` | Credit: `₹ 7,500.00` | Balance: `₹ 82,500.00`
+      3. `2026-11-06` | `JE-00035` | `PAYMENT REC-00004` | `Payment received for Sale payment ref REC-00004` | Debit: `₹ 9,000.00` | Balance: `₹ 91,500.00`
+      4. `2026-11-06` | `JE-00048` | `PAYMENT PAY-00005` | `Bank/Cash deduction for Supplier payment ref PAY-00005` | Credit: `₹ 6,300.00` | Balance: `₹ 85,200.00`
+      5. `2026-11-06` | `JE-00049` | `MANUAL` | `internal transfer` | Debit: `₹ 2,000.00` | Balance: `₹ 87,200.00`
+    - Exact 7 columns: `DATE`, `ENTRY #`, `REFERENCE`, `MEMO / DESCRIPTION`, `DEBIT`, `CREDIT`, `RUNNING BALANCE`.
+    - Period Totals: Debits `₹ 101,000.00` | Credits `₹ 13,800.00` | Closing Balance `₹ 87,200.00`.
+- **Physical Deliverables Replaced & Verified (All 8 Documents):**
+  1. `01_Sales_Return_Credit_Note_SR-00001.pdf` (99.6 KB)
+  2. `02_Purchase_Return_Debit_Note_PR-00001.pdf` (98.9 KB)
+  3. `03_Material_DC_Return_JWDC-00006.pdf` (144.6 KB)
+  4. `04_Job_Work_GRN_Receipt_JWGRN-00007.pdf` (123.4 KB)
+  5. `05_Job_Work_Service_Bill_PUR-00012.pdf` (108.5 KB)
+  6. `06_Customer_Account_Ledger_Demo_Tiruppur_Garment_Works.pdf` (150.1 KB)
+  7. `07_Supplier_Account_Ledger_Demo_Erode_Grey_Fabric_Mill.pdf` (146.3 KB)
+  8. `08_Bank_Account_Ledger_1020_Bank_Accounts.pdf` (159.3 KB, also mirrored to `08_Bank_Account_Ledger_ZTEX-BANK.pdf`)
+  - Replaced in both `v:\pers\Freelance\zolo-erp-pro\documents\sample-pdfs\` and artifact directory `C:\Users\vigne\.gemini\antigravity\brain\39e6071d-bc2d-487d-b9e2-c899fba10a65\`.
+- **CLI Automation Command:**
+  - `php artisan erp:generate-example-pdfs {--company=14}`
+- **Automated Verification:**
+  - `IndustryFlowIntegrationTest`: 7/7 passed (100 assertions).
+  - `CustomerSupplierReportsNavigationTest`: 7/7 passed (45 assertions).
+  - `ComplianceBrowserFixtureTest` & `ComplianceHttpTest`: 6/6 passed (54 assertions).
+
+## Job Work Service Bill 9-Column Print Matching Textile Physical Invoice — 2026-11-07 (branch ui)
+
+- **Client Request Addressed:**
+  - *"Service bill should have all the coloumn from the 2nd image? The 1st image has less couloumn in our ERP. I want you to make the printing bill with all the coloumns"* with 1st image (ERP Job Work Service Bill printout PUR-00012) and 2nd image (physical job worker invoice from MJ APPAREL ERODE).
+- **Comparison & Requirements:**
+  - **1st image (Original ERP layout):** 8 columns (`S.No`, `Description of Goods / Services`, `HSN/SAC`, `GST %`, `Quantity`, `Rate`, `Rate incl. GST`, `Taxable Value`). Missing Date and Lot No columns.
+  - **2nd image (Job Worker Invoice layout):** Exactly 9 columns:
+    1. `S.No`
+    2. `Description`
+    3. `SAC Code`
+    4. `Date`
+    5. `LOT NO`
+    6. `Qty`
+    7. `Rate`
+    8. `Amount`
+    9. `Total Amount`
+    Footer: `Sub Total` with quantity sum and taxable totals under Amount and Total Amount.
+- **Architectural Implementation:**
+  1. **A4 Document Print Template (`resources/views/backend/compliance/tax-invoice.blade.php`):**
+     - Detected Service Bills via `$isServiceBill = ($d['title'] ?? '') === 'Job work service bill' || !empty($d['is_service_bill']);`.
+     - When rendering a Service Bill, outputs the exact 9 columns in 1:1 order with balanced column widths totaling 100%:
+       - `S.No` (4%, center)
+       - `Description` (27%, left)
+       - `SAC Code` (9%, center)
+       - `Date` (11%, center)
+       - `LOT NO` (9%, center)
+       - `Qty` (11%, right)
+       - `Rate` (9%, right)
+       - `Amount` (11%, right)
+       - `Total Amount` (11%, right)
+     - `<tfoot>` outputs `Sub Total` spanning the metadata columns, total quantity with unit under `Qty`, and formatted totals under `Amount` and `Total Amount`.
+     - Preserved standard 8-column layout for non-service goods invoices and purchase bills.
+  2. **Authoritative Line Enrichment (`app/Services/Documents/DocumentRenderingService.php`):**
+     - `capture()` extracts `lot_no` and `date` from `stock_details_json` and `product_batches`.
+     - `jobWorkBill()` enriches all lines with `lot_no`, `date`, `amount`, and `total_amount`. Automatically traces fallback lot numbers from receipt `lots.output`, `lots.input`, `stock_name_change`, dispatch line batches, and inventory movement lines, and extracts the receipt business date formatted as `d-m-Y`.
+  3. **Commercial Attribute Persistence & Workspace Input (`CommercialApplicationService.php`, `JobWorkService.php`, `job_work_workspace.blade.php`):**
+     - Whitelisted `lot_no` and `date` in `CommercialApplicationService` line `stock_details_json`.
+     - Added validation in `JobWorkService::serviceBill` for `items.*.lot_no` and `items.*.date`.
+     - Added `Lot no.` and `Process date` fields to the Service Bill modal in `job_work_workspace.blade.php`.
+- **Verification:**
+  - Automated tests passed: `tests/Feature/IndustryFlowIntegrationTest.php` (7/7 passed), `tests/Feature/ComplianceBrowserFixtureTest.php` and `tests/Feature/ComplianceHttpTest.php` (6/6 passed), `tests/Feature/ManufacturingJobWorkTest.php` (10/10 passed), `tests/Feature/JobWorkReturnsReworkTest.php` (5/5 passed), `tests/Feature/TextileEndToEndLedgerTest.php` (1/1 passed, 167 assertions).
+  - Clear and cached views with `php artisan view:clear` and `php artisan view:cache` (100% compiled).
+
+
+## Shared Report Printing and Print Spacing — 2026-11-06 (branch ui)
+
+- Customer and supplier ledger actions use the shared print document. Complete Ledger exports every transaction in the submitted date range, Current Filtered View uses the active table filters, and transaction-specific actions retain the opening balance. Print output includes the eight ledger columns, party details, totals and signatures. Filtered printouts label the totals as full-ledger figures. Ledger actions preserve the screen's search, pagination and column settings.
+- The Outstanding Dues command-bar button uses the shared report printer. Shared DataTables printing includes filtered client-side rows across pages. Server-side printing requests all matching rows, restores the original page after the request, and shows an error instead of printing an incomplete result. The app shell stylesheet applies only to screen media.
+- Applied 11 mm A4 top and side margins and a 12 mm bottom margin. Added vertical space around the letterhead, party card, table and closing section. Both ledger signature lines align and have 30 px of signing space above them.
+- Chromium verified the six-row demo customer ledger on one A4 page, each customer print scope, the supplier ledger and bills, an empty ledger and Outstanding Dues. A 151-row stress fixture paginated across 15 A4 pages with repeated headings. An intercepted server-side table verified 57 printed rows, page restoration and retry after an AJAX failure. All 15 targeted PHP tests passed with 74 assertions. Changes were verified locally on `ui`.
+
 ## Complete Ledger Printing Visibility, Zero-Overflow A4 Geometry & Screen Style Isolation — 2026-11-06 (branch ui)
 
 - **Client Requests Addressed:**
@@ -110,6 +195,98 @@
   - View cache: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
 
 ## Global Printing Rules, Spacing Standardization & Ledger Data Visibility — 2026-11-06 (branch ui)
+
+- **Client Requests Addressed:**
+  - *"printing options has the problem, kindly check all the printing options. Does it have the spaces correctly and all the datas are visible or not. Make a global printing rules to do that."* with print preview screenshot `media_1793965297080_cd11ba3c.png`.
+- **Diagnosis of Printing Defects:**
+  1. **Duplicate Header:** The print preview rendered the official ERP letterhead (`zoloERP Textiles`, Tiruppur address, GSTIN `33ZOLOT1234K1Z5`, phone, FY, user) AND right below it a duplicate company header (`zoloERP Pro`, `GSTIN: —`) from a custom `.print-only-header` block in the view.
+  2. **Unwanted Screen Chrome on Paper:** The 5-card KPI summary strip (`REPORT TIMEFRAME`, `OPENING BALANCE`, etc.) and DataTables controls (`All records per page`, `Search: [ ]`) were printing, cluttering the statement and pushing content down.
+  3. **Horizontal Table Truncation & Missing Data:** On A4 portrait paper (width ~790px), the table had rigid pixel widths (`style="width: 130px;"`, etc.) totaling > 1,050px. Columns beyond `DEBIT (₹)` (`CREDIT`, `RUNNING BALANCE`, `STATUS`) overflowed the right margin, rendering them invisible.
+- **Global Architecture & Implementation (`public/css/erp-print.css`):**
+  1. **Global Page Geometry & Margins:**
+     - Standardized `@page { size: A4 portrait; margin: 8mm 8mm 10mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter", sans-serif; color: #64748b; } }`.
+     - Added `@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }` for landscape registers.
+  2. **Comprehensive Screen Chrome Suppression:**
+     - Enforced `@media print { display: none !important; }` across all UI navigation and control wrappers:
+       `nav.side-navbar`, `#sidebar`, `header.header`, `nav.navbar`, `.reveal-topbar-strip`, `.z-icon-tile`, `footer.main-footer`, `.comm-command-bar`, `.desk-filter-card`, `.report-filter-card`, `.dues-filter-card`, `.kpi-summary-strip`, `.dues-kpi-grid`, `.party-kpi-grid`, `.quick-filter-bar`, `.quick-filter-pills`, `.dataTables_length`, `.dataTables_filter`, `.dataTables_paginate`, `.dataTables_info`, `.dataTables_wrapper .row:first-child`, `.dataTables_wrapper .row:last-child`, `.dt-buttons`, `.d-print-none`, `.not-exported-col`, `th.not-exported-col`, `td.not-exported-col`, `.no-print`, `.action-col`, `.btn`.
+  3. **Global Table Print Geometry & 100% Data Visibility:**
+     - `.table-responsive` set to `overflow: visible !important; width: 100% !important; height: auto !important; border: none !important; margin: 0 !important;`.
+     - `table, table.dataTable, .table, .ledger-table` set to `width: 100% !important; max-width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; font-size: 8pt !important;`.
+     - Balanced percentage column widths for statement ledgers (8 printed columns):
+       - Date: 10%
+       - Type: 12%
+       - Ref No: 14%
+       - Warehouse: 13%
+       - Particulars/Description: auto (expands dynamically, wraps naturally)
+       - Debit: 11% (right-aligned)
+       - Credit: 11% (right-aligned)
+       - Balance: 13% (right-aligned, Dr/Cr tags preserved)
+       - Unnecessary `#` index and `Status` columns hidden via `.not-exported-col`.
+     - Table header styled with crisp light gray fill (`#f1f5f9`), bold dark text (`#0f172a`), 1px subtle borders (`#94a3b8`).
+     - Table footer totals styled with `#f8fafc` background, top border `2px solid #0f172a`, and bold font.
+     - Type and Dr/Cr badges printed cleanly as bordered text pills without heavy dark background fills.
+     - Row break avoidance: `tr { break-inside: avoid !important; page-break-inside: avoid !important; }`.
+  4. **Standardized Party Statement Card (`.erp-print-party-card`):**
+     - Removed redundant company letterhead block in `customer_report.blade.php` and `supplier_report.blade.php`.
+     - Positioned dedicated `.erp-print-party-card` immediately below the official ERP letterhead:
+       - Left: Party details (Name, Company, Phone, Email, GSTIN).
+       - Right: Financial balance (Opening Balance Dr/Cr, Current Outstanding Dr/Cr).
+     - Hidden on screen via `@media screen { display: none !important; }`; shown on print as a neat 2-column card.
+  5. **Standardized Signatures Block (`.erp-print-signatures`):**
+     - Positioned at document end with `break-inside: avoid`:
+       - Left: "Customer Confirmation Signature" / "Supplier Confirmation / Verification".
+       - Right: "For [Company Name] / Authorized Signatory".
+- **Verification & Test Coverage:**
+  - Automated feature suite `Tests\Feature\CustomerSupplierReportsNavigationTest`: 6/6 passed (39 assertions).
+  - Clean view cache compilation: `php artisan view:clear` & `php artisan view:cache` (100% clean).
+  - Chrome / Print preview verification: zero double headers, zero horizontal truncation, all columns fully visible within A4 portrait printable area.
+
+## Global Printing Rules, Spacing Standardization & Ledger Data Visibility — 2026-11-06 (branch ui)
+
+- **Client Requests Addressed:**
+  - *"printing options has the problem, kindly check all the printing options. Does it have the spaces correctly and all the datas are visible or not. Make a global printing rules to do that."* with print preview screenshot `media_1793965297080_cd11ba3c.png`.
+- **Diagnosis of Printing Defects:**
+  1. **Duplicate Header:** The print preview rendered the official ERP letterhead (`zoloERP Textiles`, Tiruppur address, GSTIN `33ZOLOT1234K1Z5`, phone, FY, user) AND right below it a duplicate company header (`zoloERP Pro`, `GSTIN: —`) from a custom `.print-only-header` block in the view.
+  2. **Unwanted Screen Chrome on Paper:** The 5-card KPI summary strip (`REPORT TIMEFRAME`, `OPENING BALANCE`, etc.) and DataTables controls (`All records per page`, `Search: [ ]`) were printing, cluttering the statement and pushing content down.
+  3. **Horizontal Table Truncation & Missing Data:** On A4 portrait paper (width ~790px), the table had rigid pixel widths (`style="width: 130px;"`, etc.) totaling > 1,050px. Columns beyond `DEBIT (₹)` (`CREDIT`, `RUNNING BALANCE`, `STATUS`) overflowed the right margin, rendering them invisible.
+- **Global Architecture & Implementation (`public/css/erp-print.css`):**
+  1. **Global Page Geometry & Margins:**
+     - Standardized `@page { size: A4 portrait; margin: 8mm 8mm 10mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter", sans-serif; color: #64748b; } }`.
+     - Added `@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }` for landscape registers.
+  2. **Comprehensive Screen Chrome Suppression:**
+     - Enforced `@media print { display: none !important; }` across all UI navigation and control wrappers:
+       `nav.side-navbar`, `#sidebar`, `header.header`, `nav.navbar`, `.reveal-topbar-strip`, `.z-icon-tile`, `footer.main-footer`, `.comm-command-bar`, `.desk-filter-card`, `.report-filter-card`, `.dues-filter-card`, `.kpi-summary-strip`, `.dues-kpi-grid`, `.party-kpi-grid`, `.quick-filter-bar`, `.quick-filter-pills`, `.dataTables_length`, `.dataTables_filter`, `.dataTables_paginate`, `.dataTables_info`, `.dataTables_wrapper .row:first-child`, `.dataTables_wrapper .row:last-child`, `.dt-buttons`, `.d-print-none`, `.not-exported-col`, `th.not-exported-col`, `td.not-exported-col`, `.no-print`, `.action-col`, `.btn`.
+  3. **Global Table Print Geometry & 100% Data Visibility:**
+     - `.table-responsive` set to `overflow: visible !important; width: 100% !important; height: auto !important; border: none !important; margin: 0 !important;`.
+     - `table, table.dataTable, .table, .ledger-table` set to `width: 100% !important; max-width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; font-size: 8pt !important;`.
+     - Balanced percentage column widths for statement ledgers (8 printed columns):
+       - Date: 10%
+       - Type: 12%
+       - Ref No: 14%
+       - Warehouse: 13%
+       - Particulars/Description: auto (expands dynamically, wraps naturally)
+       - Debit: 11% (right-aligned)
+       - Credit: 11% (right-aligned)
+       - Balance: 13% (right-aligned, Dr/Cr tags preserved)
+       - Unnecessary `#` index and `Status` columns hidden via `.not-exported-col`.
+     - Table header styled with crisp light gray fill (`#f1f5f9`), bold dark text (`#0f172a`), 1px subtle borders (`#94a3b8`).
+     - Table footer totals styled with `#f8fafc` background, top border `2px solid #0f172a`, and bold font.
+     - Type and Dr/Cr badges printed cleanly as bordered text pills without heavy dark background fills.
+     - Row break avoidance: `tr { break-inside: avoid !important; page-break-inside: avoid !important; }`.
+  4. **Standardized Party Statement Card (`.erp-print-party-card`):**
+     - Removed redundant company letterhead block in `customer_report.blade.php` and `supplier_report.blade.php`.
+     - Positioned dedicated `.erp-print-party-card` immediately below the official ERP letterhead:
+       - Left: Party details (Name, Company, Phone, Email, GSTIN).
+       - Right: Financial balance (Opening Balance Dr/Cr, Current Outstanding Dr/Cr).
+     - Hidden on screen via `@media screen { display: none !important; }`; shown on print as a neat 2-column card.
+  5. **Standardized Signatures Block (`.erp-print-signatures`):**
+     - Positioned at document end with `break-inside: avoid`:
+       - Left: "Customer Confirmation Signature" / "Supplier Confirmation / Verification".
+       - Right: "For [Company Name] / Authorized Signatory".
+- **Verification & Test Coverage:**
+  - Automated feature suite `Tests\Feature\CustomerSupplierReportsNavigationTest`: 6/6 passed (39 assertions).
+  - Clean view cache compilation: `php artisan view:clear` & `php artisan view:cache` (100% clean).
+  - Chrome / Print preview verification: zero double headers, zero horizontal truncation, all columns fully visible within A4 portrait printable area.
 
 - **Client Requests Addressed:**
   - *"printing options has the problem, kindly check all the printing options. Does it have the spaces correctly and all the datas are visible or not. Make a global printing rules to do that."* with print preview screenshot `media_1793965297080_cd11ba3c.png`.
@@ -3462,6 +3639,24 @@ User: People, HRM and Settings did not follow the modern UI; add a developer rol
 - Earlier GitHub runs also found legacy styles, a stale expected party statement count, and an accounting rollback fixture that assumed an empty company table. Commit `60f2e97` moves inline CSS to page stylesheets, uses brand tokens, checks all six posted statement movements, and fixes the Guided Tour startup and empty ledger tables found during Chrome verification. Commit `0cca23f` rehearses accounting rollback before the Textile company and chart are created. Targeted design, Textile contract and rollback checks passed. Pushed both fixes to `main` from an isolated worktree.
 
 - Production rollout verified on 2026-11-06 at 17:47 IST. All seven suites passed in GitHub acceptance run `42214947217`. The automatic deployment `42216499752` deployed `0cca23faaced776e76149bea796bd578f04d865f`, ran the Textile company and masters migration successfully, and returned HTTP 200 for `/login`. A separate live request also returned HTTP 200 for the new ledger stylesheet. The release provisions `ZTEX` inside the existing production database with catalog and party masters and zero sample opening stock. Later edits on `ui` are outside this release snapshot.
+
+## KMTimbers purchase bill save diagnosis — 2026-11-06 (branch ui)
+
+- Reproduced the reported `Cannot read properties of undefined (reading 'recalcTableSummary')` on both Review and Save in Chrome using the purchase view from deployed commit `0cca23f`. The fixture used bill K78, 198 units at INR 2,000, 18% GST, and an INR 467,280 total. All browser requests were intercepted; the broken form sent neither a preview nor a save request.
+- Regression `263e8b8` removed the `searchParam` declaration but kept `else if (searchParam)` in both purchase and sales index scripts. On ordinary bill entry, the undefined variable throws before `window.commandCenterGrid` is assigned. Most form handlers have already bound, so totals update while the form still cannot submit. The October Returns script ordering test passes and covers a different failure.
+- A temporary browser fixture restored parsing of `search` and `ref` and used `filterSidePurchases()` in the purchase view (its existing `filterSideBills()` call names the sales helper). Review, Save, and both search URLs then worked without browser exceptions against intercepted responses. The sales view also needs the missing declaration. This was diagnosis only; application code and production records were not changed.
+
+## KMTimbers bill save and inline error help fix — 2026-11-06 (branch ui)
+
+- Restored `search` and `ref` parsing on purchase and sales bill entry and corrected the purchase filter helper. Bill form initialization now reports a clear recovery message and blocks submission if its item grid cannot load. Rejected requests show the first server field error when available.
+- Moved the bill form's How to fix guidance inside the red error banner. The first step is always visible and the remaining steps expand in the banner. The form scrolls the banner into view when an action fails.
+- Chrome verified Review, Save, query links, and inline validation guidance on both bill pages with intercepted responses. A 390 px purchase test verified the missing grid recovery and that submission stayed blocked. Error help and script order tests passed. Broader checks exposed existing fixture, redirect, and design issues: missing `company_menu_switches` in the commercial test fixture, `/sales/create` redirect precedence, pre-existing token and inline style violations, and the Guided Tour loading before jQuery on `ui`. The bill fix was verified locally only.
+
+## Bill and UI release rollout — 2026-11-06 (branch ui)
+
+- Published `origin/ui` at `8534fa1` and merged it into `origin/main` at `b33d737`. Local `main` fast-forwarded. HTTPS and SSH push authentication were unavailable, so the GitHub connector mirrored the commits and verified each tree hash. Local `ui` retains its original commit IDs and the same committed file tree as `origin/ui`.
+- Resolved customer and supplier ledger conflicts in the existing release worktree, keeping the global print letterhead and party details, moving shared styles out of Blade, and preserving the prior acceptance fixes. Voucher preview fields are escaped and the user relation exposes only the ID and name. The design, voucher, ledger navigation, and error help tests passed. Chrome passed both bill flows, mobile recovery, and eight print columns at a 1440 px viewport. At 794 px, the table fitting script can hide columns that the print view does not restore.
+- Acceptance run `42225114772` started for `b33d737`. The production deployment waits for its seven suites. Concurrent local ledger edits and debugging artifacts were excluded from the release snapshot.
 
 ## KMTimbers purchase bill save diagnosis — 2026-11-06 (branch ui)
 

@@ -38,6 +38,10 @@ class DocumentRenderingService
         foreach ($lines as $line) {
             if ((int) $line->company_id !== $context->companyId) throw new \LogicException('Document contains a foreign line.');
             $product = Product::forCompany($context)->findOrFail($line->product_id); $snapshot = $line->tax_snapshot_json ?? [];
+            $batchNo = !empty($line->product_batch_id) ? DB::table('product_batches')->where('id', $line->product_batch_id)->value('batch_no') : null;
+            $stockDetails = $line->stock_details_json ?? [];
+            $lotNo = $stockDetails['lot_no'] ?? $stockDetails['batch_no'] ?? $batchNo ?? null;
+            $lineDate = $stockDetails['date'] ?? null;
             $rows[] = ['name' => $snapshot['product_name'] ?? $product->name, 'code' => $snapshot['product_code'] ?? $product->code,
                 'unit' => $units[$line->{$sale ? 'sale_unit_id' : 'purchase_unit_id'}] ?? '', 'discount' => (float) ($snapshot['discount'] ?? $line->discount ?? 0),
                 'qty' => (float) $line->qty, 'price' => (float) $line->{$sale ? 'net_unit_price' : 'net_unit_cost'},
@@ -45,7 +49,8 @@ class DocumentRenderingService
                 'taxable_value' => $snapshot['taxable_value'] ?? (float) $line->total - (float) $line->tax,
                 'tax_rate' => $snapshot['rate'] ?? (float) $line->tax_rate, 'cess_rate' => $snapshot['cess_rate'] ?? 0,
                 'tax' => (float) $line->tax, 'total' => (float) $line->total, 'hsn_sac' => $snapshot['hsn_sac'] ?? $product->hsn_code,
-                'cgst' => $snapshot['cgst'] ?? 0, 'sgst' => $snapshot['sgst'] ?? 0, 'igst' => $snapshot['igst'] ?? 0, 'cess' => $snapshot['cess'] ?? 0];
+                'cgst' => $snapshot['cgst'] ?? 0, 'sgst' => $snapshot['sgst'] ?? 0, 'igst' => $snapshot['igst'] ?? 0, 'cess' => $snapshot['cess'] ?? 0,
+                'lot_no' => $lotNo, 'date' => $lineDate ? \Carbon\Carbon::parse($lineDate)->format('d-m-Y') : null];
         }
         $currency = DB::table('currencies')->where('id', $company->base_currency_id)->first();
         $partyGstin = $tax[$sale ? 'buyer_gstin' : 'seller_gstin'] ?? '';
@@ -153,8 +158,11 @@ class DocumentRenderingService
         if (!$receiptId) return $document;
         $refs = DB::table('job_work_receipts as r')->join('job_work_dispatches as d', 'd.id', '=', 'r.dispatch_id')
             ->join('job_work_orders as o', 'o.id', '=', 'd.job_work_order_id')->where('r.company_id', $context->companyId)->where('r.id', $receiptId)
-            ->first(['r.reference_no as grn', 'd.reference_no as dc', 'o.reference_no as job_order', 'r.details_json', 'r.service_purchase_id']);
+            ->first(['r.id as receipt_id', 'r.reference_no as grn', 'r.business_date as receipt_date', 'r.details_json', 'r.material_movement_id', 'r.output_movement_id', 'r.service_purchase_id',
+                'd.id as dispatch_id', 'd.reference_no as dc', 'd.business_date as dispatch_date',
+                'o.reference_no as job_order', 'o.business_date as order_date']);
         $document['title'] = 'Job work service bill';
+        $document['is_service_bill'] = true;
         if ($refs) $document['source_number'] = 'GRN '.$refs->grn.' · DC '.$refs->dc.' · Order '.$refs->job_order;
         $stockChange = $refs && (int) $refs->service_purchase_id === $source->id
             ? (json_decode($refs->details_json ?? '{}', true)['stock_name_change'] ?? null) : null;
@@ -163,6 +171,77 @@ class DocumentRenderingService
             $document['note'] = trim(($document['note'] ?? '').' · Returned stock: '.$summary);
         }
         if (($document['transport']['bale_no'] ?? null) === $document['number']) unset($document['transport']['bale_no']);
+
+        // Collect fallback lots from receipt, stock change, dispatch or movements
+        $defaultLots = [];
+        $receiptDetails = json_decode($refs->details_json ?? '{}', true) ?: [];
+        if (!empty($receiptDetails['lots']['output'])) {
+            $defaultLots = array_merge($defaultLots, (array) $receiptDetails['lots']['output']);
+        }
+        if (!empty($receiptDetails['lots']['input'])) {
+            $defaultLots = array_merge($defaultLots, (array) $receiptDetails['lots']['input']);
+        }
+        if (!empty($receiptDetails['stock_name_change']['items'])) {
+            foreach ($receiptDetails['stock_name_change']['items'] as $item) {
+                if (!empty($item['lot'])) $defaultLots[] = $item['lot'];
+            }
+        }
+        if (empty($defaultLots) && !empty($refs->dispatch_id)) {
+            $dispatchLines = DB::table('job_work_dispatch_lines')->where('dispatch_id', $refs->dispatch_id)->get(['stock_details_json']);
+            $batchIds = [];
+            foreach ($dispatchLines as $dl) {
+                $st = json_decode($dl->stock_details_json ?? '{}', true) ?: [];
+                if (!empty($st['product_batch_id'])) $batchIds[] = (int) $st['product_batch_id'];
+                if (!empty($st['lot_no'])) $defaultLots[] = $st['lot_no'];
+                if (!empty($st['batch_no'])) $defaultLots[] = $st['batch_no'];
+            }
+            if ($batchIds) {
+                $batchNos = DB::table('product_batches')->whereIn('id', array_unique($batchIds))->pluck('batch_no')->filter()->all();
+                $defaultLots = array_merge($defaultLots, $batchNos);
+            }
+        }
+        if (empty($defaultLots)) {
+            $movementIds = array_filter([(int) ($refs->material_movement_id ?? 0), (int) ($refs->output_movement_id ?? 0)]);
+            if ($movementIds) {
+                $movementBatches = DB::table('stock_movement_lines as sml')
+                    ->join('product_batches as pb', 'pb.id', '=', 'sml.batch_id')
+                    ->whereIn('sml.stock_movement_id', $movementIds)
+                    ->pluck('pb.batch_no')->filter()->all();
+                if ($movementBatches) $defaultLots = array_merge($defaultLots, $movementBatches);
+            }
+        }
+        $fallbackLot = !empty($defaultLots) ? implode(', ', array_unique($defaultLots)) : null;
+        $fallbackDate = !empty($refs->receipt_date) ? \Carbon\Carbon::parse($refs->receipt_date)->format('d-m-Y')
+            : (!empty($source->supplier_invoice_date) ? \Carbon\Carbon::parse($source->supplier_invoice_date)->format('d-m-Y') : null);
+
+        // Also check actual product_purchases for this purchase
+        $purchaseLines = DB::table('product_purchases as pp')
+            ->leftJoin('product_batches as pb', 'pb.id', '=', 'pp.product_batch_id')
+            ->where('pp.purchase_id', $source->id)
+            ->get(['pp.id', 'pp.product_id', 'pp.product_batch_id', 'pp.stock_details_json', 'pb.batch_no']);
+
+        // Enrich lines with lot_no, date, amount, total_amount
+        if (!empty($document['lines'])) {
+            $lines = [];
+            foreach ($document['lines'] as $i => $line) {
+                $pp = $purchaseLines[$i] ?? null;
+                $details = $pp && $pp->stock_details_json ? (is_array($pp->stock_details_json) ? $pp->stock_details_json : json_decode($pp->stock_details_json, true)) : [];
+                $lot = $line['lot_no'] ?? $details['lot_no'] ?? $details['batch_no'] ?? $pp?->batch_no ?? $fallbackLot;
+                $line['lot_no'] = $lot ?: '—';
+
+                $lineDate = $line['date'] ?? $details['date'] ?? null;
+                $line['date'] = $lineDate ? \Carbon\Carbon::parse($lineDate)->format('d-m-Y') : ($fallbackDate ?: \Carbon\Carbon::parse($document['date'])->format('d-m-Y'));
+
+                $price = (float) ($line['price'] ?? 0);
+                $qty = (float) ($line['qty'] ?? 0);
+                $taxable = (float) ($line['taxable_value'] ?? ($qty * $price));
+                $line['amount'] = (float) ($line['amount'] ?? round($qty * $price, 2));
+                $line['total_amount'] = (float) ($line['total_amount'] ?? round($taxable, 2));
+                $lines[] = $line;
+            }
+            $document['lines'] = $lines;
+        }
+
         return $document;
     }
 
