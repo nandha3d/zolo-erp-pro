@@ -40,3 +40,7 @@ yarn-error.log
 # Playwright temp run outputs
 /test-results/
 /tests-e2e/playwright-report/
+
+# Runtime caches
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore

@@ -1,6 +1,5 @@
 {
     "name": "laravel/laravel",
-    "version": "1.0.0",
     "type": "project",
     "description": "The Laravel Framework.",
     "keywords": [
@@ -24,7 +23,7 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^3.0",
         "laravel/ui": "^4.0",
-        "maatwebsite/excel": "^3.1.48",
+        "maatwebsite/excel": "^3.1.48 || ^4.0",
         "mike42/escpos-php": "^4.0",
         "milon/barcode": "^13.0",
         "nwidart/laravel-modules": "^13.0",
