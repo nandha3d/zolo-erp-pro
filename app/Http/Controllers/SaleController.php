@@ -243,7 +243,7 @@ class SaleController extends Controller
 
     public function getSaleJson($id)
     {
-        $sale = Sale::with(['customer', 'warehouse', 'biller', 'user', 'payments'])->find($id);
+        $sale = Sale::with(['customer', 'warehouse', 'biller', 'user:id,name', 'payments'])->find($id);
         if (!$sale) {
             return response()->json(['success' => false, 'message' => 'Sale not found'], 404);
         }

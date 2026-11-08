@@ -292,18 +292,19 @@ $(function () {
             var customer = sale.customer || data[2] || {};
             var biller = sale.biller || data[3] || {};
 
+            var escapeText = value => $('<span>').text(value ?? '').html();
             var saleDate = (data.business_date || sale.created_at || '').substring(0, 10);
             var html = `
                 <div class="row">
                     <div class="col-md-6">
-                        <strong>Date:</strong> ${saleDate}<br>
-                        <strong>Reference:</strong> ${sale.reference_no || '-'}<br>
-                        <strong>Warehouse:</strong> ${sale.warehouse ? sale.warehouse.name : '-'}<br>
+                        <strong>Date:</strong> ${escapeText(saleDate)}<br>
+                        <strong>Reference:</strong> ${escapeText(sale.reference_no || '-')}<br>
+                        <strong>Warehouse:</strong> ${escapeText(sale.warehouse ? sale.warehouse.name : '-')}<br>
                     </div>
                     <div class="col-md-6 text-right">
-                        <strong>Customer:</strong> ${customer.name || '-'}<br>
-                        <strong>Phone:</strong> ${customer.phone_number || '-'}<br>
-                        <strong>Biller:</strong> ${biller ? biller.name : '-'}<br>
+                        <strong>Customer:</strong> ${escapeText(customer.name || '-')}<br>
+                        <strong>Phone:</strong> ${escapeText(customer.phone_number || '-')}<br>
+                        <strong>Biller:</strong> ${escapeText(biller.name || '-')}<br>
                     </div>
                 </div>
             `;
@@ -325,7 +326,7 @@ $(function () {
                 rows += `
                     <tr>
                         <td>${index + 1}</td>
-                        <td>${pCode ? pCode + ' - ' : ''}${pName}</td>
+                        <td>${escapeText(pCode ? pCode + ' - ' : '')}${escapeText(pName)}</td>
                         <td>${pQty}</td>
                         <td>₹${pPrice.toFixed(2)}</td>
                         <td>₹${parseFloat(item.tax || 0).toFixed(2)}</td>

@@ -1089,14 +1089,14 @@
                     <table class="table voucher-items-table product-sale-list">
                         <thead>
                             <tr>
-                                <th style="width: 45px;" class="text-center">#</th>
+                                <th class="u-w-45px text-center">#</th>
                                 <th>{{__('db.product')}}</th>
-                                <th style="width: 110px;">{{__('db.Batch No')}}</th>
-                                <th style="width: 95px;" class="text-right">Qty</th>
-                                <th style="width: 110px;" class="text-right">{{__('db.Unit Price')}}</th>
-                                <th style="width: 110px;" class="text-right">{{__('db.Tax')}}</th>
-                                <th style="width: 95px;" class="text-right">{{__('db.Discount')}}</th>
-                                <th style="width: 120px;" class="text-right">{{__('db.Subtotal')}}</th>
+                                <th class="u-w-110px">{{__('db.Batch No')}}</th>
+                                <th class="u-w-95px text-right">Qty</th>
+                                <th class="u-w-110px text-right">{{__('db.Unit Price')}}</th>
+                                <th class="u-w-110px text-right">{{__('db.Tax')}}</th>
+                                <th class="u-w-95px text-right">{{__('db.Discount')}}</th>
+                                <th class="u-w-120px text-right">{{__('db.Subtotal')}}</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -4060,11 +4060,11 @@
 
                 if (items.length > 0) {
                     items.forEach(function(item, idx) {
-                        var name = item.product_name || 'Product';
-                        var code = item.product_code || '';
-                        var batch = item.batch_no ? item.batch_no : '—';
+                        var name = escapeHtml(item.product_name || 'Product');
+                        var code = escapeHtml(item.product_code || '');
+                        var batch = item.batch_no ? escapeHtml(item.batch_no) : '—';
                         var qty = Number(item.qty || 0);
-                        var unit = item.unit_code || 'PCS';
+                        var unit = escapeHtml(item.unit_code || 'PCS');
                         var unitPrice = Number(item.net_unit_price || (qty > 0 ? (item.total / qty) : 0));
                         var tax = Number(item.tax || 0);
                         var taxRate = Number(item.tax_rate || 0);
@@ -4153,7 +4153,7 @@
     // Print button handler
     $(document).on('click', '#sale-print-btn', function() {
         var printArea = document.getElementById('sale-details-print-area');
-        var ref = $('#sale-details-ref-badge').text() || 'Voucher';
+        var ref = escapeHtml($('#sale-details-ref-badge').text() || 'Voucher');
         var printWindow = window.open('', 'Print-Window');
         printWindow.document.open();
         printWindow.document.write('<html><head><title>Sales Bill ' + ref + '</title>' +

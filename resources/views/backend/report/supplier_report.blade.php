@@ -423,28 +423,25 @@
         @if($supplier)
             <div class="erp-print-party-card">
                 <div>
-                    <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Supplier /
-                        Creditor Details:</div>
-                    <div style="font-size: 11pt; font-weight: 800; color: #0f172a;">{{ $supplier->name }}</div>
+                    <div class="ledger-print-label">Supplier / Creditor Details:</div>
+                    <div class="ledger-party-name">{{ $supplier->name }}</div>
                     @if(!empty($supplier->company_name))
-                        <div style="font-size: 9pt; color: #334155; font-weight: 600;">{{ $supplier->company_name }}</div>
+                        <div class="ledger-party-company">{{ $supplier->company_name }}</div>
                     @endif
-                    <div style="font-size: 8.5pt; color: #64748b; margin-top: 2px;">
+                    <div class="ledger-print-detail ledger-print-contact">
                         Phone: {{ $supplier->phone_number }} | Email: {{ $supplier->email ?? '—' }}
                     </div>
-                    <div style="font-size: 8.5pt; color: #64748b;">
+                    <div class="ledger-print-detail">
                         GSTIN: <strong>{{ $supplier->vat_number ?? 'Unregistered' }}</strong>
                     </div>
                 </div>
-                <div style="text-align: right; min-width: 190px;">
-                    <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b;">Opening Balance:
-                    </div>
-                    <div style="font-size: 10pt; font-weight: 700; color: #0f172a;">
+                <div class="ledger-print-balances">
+                    <div class="ledger-print-label">Opening Balance:</div>
+                    <div class="ledger-opening-balance">
                         {{ $currencySymbol }} {{ number_format(abs($openingBal), 2) }} {{ $openingBal >= 0 ? 'Cr' : 'Dr' }}
                     </div>
-                    <div style="font-size: 8pt; text-transform: uppercase; font-weight: 700; color: #64748b; margin-top: 4px;">
-                        Current Outstanding Payable:</div>
-                    <div style="font-size: 12pt; font-weight: 800; color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
+                    <div class="ledger-print-label ledger-closing-label">Current Outstanding Payable:</div>
+                    <div class="ledger-closing-balance {{ $closingBal > 0 ? 'ledger-balance-due' : 'ledger-balance-settled' }}">
                         {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }} {{ $closingBal >= 0 ? 'Cr' : 'Dr' }}
                     </div>
                 </div>
@@ -499,11 +496,10 @@
                     <i class="dripicons-checkmark u-fs-18px"></i>
                 </div>
             </div>
-            <div class="kpi-card" style="border-left: 3px solid {{ $closingBal > 0 ? '#ef4444' : '#10b981' }};">
+        <div class="kpi-card {{ $closingBal > 0 ? 'ledger-kpi-due' : 'ledger-kpi-settled' }}">
                 <div>
                     <div class="kpi-label">NET CLOSING PAYABLE</div>
-                    <div class="kpi-number u-fs-16px u-fw-800"
-                        style="color: {{ $closingBal > 0 ? '#b91c1c' : '#15803d' }};">
+                    <div class="kpi-number u-fs-16px u-fw-800 {{ $closingBal > 0 ? 'ledger-balance-due' : 'ledger-balance-settled' }}">
                         {{ $currencySymbol }} {{ number_format(abs($closingBal), 2) }}
                         <span
                             class="badge badge-sm {{ $closingBal >= 0 ? 'badge-danger' : 'badge-success' }}">{{ $closingBal >= 0 ? 'Cr' : 'Dr' }}</span>
@@ -603,19 +599,19 @@
                 <p class="text-center text-muted py-2 d-print-none">No transactions found for the selected timeframe.</p>
             @endif
             <div class="table-responsive">
-                <table id="supplier-ledger-table" data-erp-print-ledger="Supplier" class="table ledger-table u-w-100pct">
+                <table id="supplier-ledger-table" data-erp-print-ledger="Supplier" class="table ledger-table u-w-100pct" data-print-all-columns>
                     <thead>
                         <tr>
-                            <th class="not-exported-col" style="width: 35px;">#</th>
-                            <th style="width: 95px;">{{ __('db.date') }}</th>
-                            <th style="width: 120px;">{{ __('db.Type') }}</th>
-                            <th style="width: 130px;">{{ __('db.reference') }} No</th>
+                        <th class="ledger-number-column not-exported-col">#</th>
+                        <th class="u-w-95px">{{ __('db.date') }}</th>
+                        <th class="u-w-120px">{{ __('db.Type') }}</th>
+                        <th class="u-w-130px">{{ __('db.reference') }} No</th>
                             <th>{{ __('db.Warehouse') }}</th>
                             <th>{{ __('db.Description') }} / Particulars</th>
-                            <th class="text-right" style="width: 110px;">Debit ({{ $currencySymbol }})</th>
-                            <th class="text-right" style="width: 110px;">Credit ({{ $currencySymbol }})</th>
-                            <th class="text-right" style="width: 130px;">Running Balance ({{ $currencySymbol }})</th>
-                            <th class="not-exported-col" style="width: 85px;">{{ __('db.status') }}</th>
+                        <th class="u-w-110px text-right">Debit ({{ $currencySymbol }})</th>
+                        <th class="u-w-110px text-right">Credit ({{ $currencySymbol }})</th>
+                        <th class="u-w-130px text-right">Running Balance ({{ $currencySymbol }})</th>
+                        <th class="ledger-status-column not-exported-col">{{ __('db.status') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -716,6 +712,11 @@
                         </tr>
                     </tfoot>
                 </table>
+            @if($ledgerData['items']->isEmpty())
+                <p class="text-center py-4 mb-0 text-muted">
+                    <i class="dripicons-information mr-1"></i> No transactions found for the selected timeframe.
+                </p>
+            @endif
             </div>
         </div>
 
@@ -725,7 +726,7 @@
                 Supplier Confirmation / Verification
             </div>
             <div class="erp-print-sig-box">
-                For {{ $supplier->company_name ?? ($activeCompany->trade_name ?? 'zoloERP Pro') }}<br>
+            For {{ $activeCompany->trade_name ?? $general_setting->company_name ?? 'zoloERP Pro' }}<br>
                 <strong>Authorized Signatory</strong>
             </div>
         </div>
@@ -828,4 +829,5 @@
         href="<?php echo asset('css/zolo-erp-neo.css') . '?v=' . (file_exists(public_path('css/zolo-erp-neo.css')) ? filemtime(public_path('css/zolo-erp-neo.css')) : time()) ?>"
         type="text/css">
     <link rel="stylesheet" href="{{ versioned_asset('css/pages/shared-report-biller-report.css') }}">
+    <link rel="stylesheet" href="{{ versioned_asset('css/pages/party-ledger.css') }}">
 @endpush

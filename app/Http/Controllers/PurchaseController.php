@@ -136,7 +136,7 @@ class PurchaseController extends Controller
             return redirect()->route('purchases.index', ['view_id' => $id]);
         }
 
-        $purchase = Purchase::with(['supplier', 'warehouse', 'user', 'payments'])->find($id);
+        $purchase = Purchase::with(['supplier', 'warehouse', 'user:id,name', 'payments'])->find($id);
         if (!$purchase) {
             return response()->json(['success' => false, 'message' => 'Purchase not found'], 404);
         }

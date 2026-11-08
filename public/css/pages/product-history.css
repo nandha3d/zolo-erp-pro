@@ -1,0 +1,97 @@
+.product-history-nav-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 18px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    background: #fff;
+    border-radius: 12px;
+    margin: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.product-history-nav-pills .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+/* Sales: Theme Purple */
+.product-history-nav-pills .pill-sales {
+    background: #fdf4ff;
+    color: var(--z-primary);
+    border-color: #f0abfc;
+}
+.product-history-nav-pills .pill-sales.active,
+.product-history-nav-pills .pill-sales:hover {
+    background: linear-gradient(135deg, var(--z-primary) 0%, var(--z-primary-hover) 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgb(var(--z-primary-rgb) / 0.3);
+    border-color: transparent;
+}
+/* Purchases: Theme Emerald */
+.product-history-nav-pills .pill-purchases {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+.product-history-nav-pills .pill-purchases.active,
+.product-history-nav-pills .pill-purchases:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    border-color: transparent;
+}
+/* Composition: Theme Amber */
+.product-history-nav-pills .pill-composition {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fde68a;
+}
+.product-history-nav-pills .pill-composition.active,
+.product-history-nav-pills .pill-composition:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+    border-color: transparent;
+}
+/* Returns: Rose & Orange */
+.product-history-nav-pills .pill-sale-return {
+    background: #fff1f2;
+    color: #e11d48;
+    border-color: #fecdd3;
+}
+.product-history-nav-pills .pill-sale-return.active,
+.product-history-nav-pills .pill-sale-return:hover {
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+    border-color: transparent;
+}
+.product-history-nav-pills .pill-purchase-return {
+    background: #fff7ed;
+    color: #ea580c;
+    border-color: #fed7aa;
+}
+.product-history-nav-pills .pill-purchase-return.active,
+.product-history-nav-pills .pill-purchase-return:hover {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+    border-color: transparent;
+}
+
+body.dark-mode .product-history-nav-pills {
+    background: #111827;
+    border-color: #374151;
+}
+body.dark-mode .product-history-nav-pills .pill-sales { background: #2e1065; color: #ddd6fe; border-color: #581c87; }
+body.dark-mode .product-history-nav-pills .pill-purchases { background: #064e3b; color: #a7f3d0; border-color: #065f46; }
+body.dark-mode .product-history-nav-pills .pill-composition { background: #451a03; color: #fde68a; border-color: #78350f; }
+body.dark-mode .product-history-nav-pills .pill-sale-return { background: #4c0519; color: #fecdd3; border-color: #881337; }
+body.dark-mode .product-history-nav-pills .pill-purchase-return { background: #431407; color: #fed7aa; border-color: #7c2d12; }

@@ -38,12 +38,13 @@
         const key = storageKey(table);
         const autoHidden = new Set();
         let busy = false;
+        let printVisibility = null;
 
         const setVisible = (index, visible) => { busy = true; dt.column(index).visible(visible, false); busy = false; };
         const overflowing = () => table.scrollWidth > wrapper[0].clientWidth + 2;
 
         function fit() {
-            if (read(key) || !wrapper.is(':visible')) return;
+            if (printVisibility || read(key) || !wrapper.is(':visible')) return;
             autoHidden.forEach(index => setVisible(index, true));
             autoHidden.clear();
             dt.columns.adjust();
@@ -100,6 +101,21 @@
             autoHidden.clear();
             label();
         });
+
+        if (table.hasAttribute('data-print-all-columns')) {
+            window.addEventListener('beforeprint', () => {
+                if (printVisibility) return;
+                printVisibility = dt.columns().visible().toArray();
+                printVisibility.forEach((visible, index) => { if (!visible) setVisible(index, true); });
+                dt.columns.adjust();
+            });
+            window.addEventListener('afterprint', () => {
+                if (!printVisibility) return;
+                printVisibility.forEach((visible, index) => { if (!visible) setVisible(index, false); });
+                printVisibility = null;
+                dt.columns.adjust();
+            });
+        }
 
         // Refit whenever the card changes width: window resize, split/full register switch, side panel docking.
         let timer = null, lastWidth = 0;

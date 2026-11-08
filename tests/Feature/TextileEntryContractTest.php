@@ -42,8 +42,9 @@ class TextileEntryContractTest extends CommercialTestCase
         $this->postJson('/commercial/sale/'.$first->id.'/payments', ['amount' => 3, 'paying_method' => 'Cash',
             'account_id' => 1, 'business_date' => '2026-10-03'], ['Idempotency-Key' => 'statement-payment'])->assertCreated();
         $statement = $this->getJson('/commercial/sale/party/1?statement=1')->assertOk()->json('data');
-        $this->assertCount(3, $statement['items']);
-        $this->assertEquals(32, array_sum(array_column($statement['items'], 'original_amount')));
+        $movements = array_map('floatval', array_column($statement['items'], 'original_amount'));
+        $this->assertEqualsCanonicalizing([-20, -5, -3, 20, 20, 20], $movements);
+        $this->assertEquals(32, array_sum($movements));
         app(CommercialReversalService::class)->reverse($first, '2026-10-03', 'Cancel first bill', $this->context());
         $this->getJson('/commercial/sale/party/1?pending=1')->assertOk()->assertJsonPath('data.previous', 15)->assertJsonCount(1, 'data.items');
     }

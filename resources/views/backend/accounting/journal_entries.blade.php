@@ -183,7 +183,7 @@
 
 <!-- Create Manual Voucher Modal -->
 <div id="createVoucherModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="create-voucher-title" class="modal fade" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: min(1080px, 96vw);">
+    <div class="journal-modal-wide modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
             <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
                 <h5 id="create-voucher-title" class="modal-title font-weight-bold u-fs-15px u-c-xffffff">
@@ -218,11 +218,11 @@
                 <caption class="sr-only">Journal entries</caption>
                             <thead class="u-bg-surface-3">
                                 <tr>
-                                    <th scope="col" style="width: 36%; min-width: 220px;" class="u-fs-11px u-tt-uppercase">Account <span class="text-danger">*</span></th>
-                                    <th scope="col" style="width: 28%; min-width: 160px;" class="u-fs-11px u-tt-uppercase">Line Memo</th>
-                                    <th scope="col" style="width: 16%; min-width: 110px;" class="text-right u-fs-11px u-tt-uppercase">Debit (₹)</th>
-                                    <th scope="col" style="width: 16%; min-width: 110px;" class="text-right u-fs-11px u-tt-uppercase">Credit (₹)</th>
-                                    <th scope="col" style="width: 4%; min-width: 38px;" class="text-center"></th>
+                                    <th scope="col" class="journal-account-column u-fs-11px u-tt-uppercase">Account <span class="text-danger">*</span></th>
+                                    <th scope="col" class="journal-memo-column u-fs-11px u-tt-uppercase">Line Memo</th>
+                                    <th scope="col" class="journal-amount-column text-right u-fs-11px u-tt-uppercase">Debit (₹)</th>
+                                    <th scope="col" class="journal-amount-column text-right u-fs-11px u-tt-uppercase">Credit (₹)</th>
+                                    <th scope="col" class="journal-actions-column text-center"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -235,9 +235,9 @@
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input aria-label="Line memo" type="text" name="items[0][memo]" class="form-control form-control-sm u-h-34px u-fs-12_5px" style="padding: 4px 10px;" placeholder="Optional line memo"></td>
-                                    <td><input aria-label="Debit amount" type="number" step="0.01" min="0" name="items[0][debit]" class="form-control form-control-sm text-right debit-input u-h-34px u-fs-12_5px font-monospace" style="padding: 4px 10px;" value="0.00"></td>
-                                    <td><input aria-label="Credit amount" type="number" step="0.01" min="0" name="items[0][credit]" class="form-control form-control-sm text-right credit-input u-h-34px u-fs-12_5px font-monospace" style="padding: 4px 10px;" value="0.00"></td>
+                                    <td><input aria-label="Line memo" type="text" name="items[0][memo]" class="journal-line-input form-control form-control-sm u-h-34px u-fs-12_5px" placeholder="Optional line memo"></td>
+                                    <td><input aria-label="Debit amount" type="number" step="0.01" min="0" name="items[0][debit]" class="journal-line-input form-control form-control-sm text-right debit-input u-h-34px u-fs-12_5px font-monospace" value="0.00"></td>
+                                    <td><input aria-label="Credit amount" type="number" step="0.01" min="0" name="items[0][credit]" class="journal-line-input form-control form-control-sm text-right credit-input u-h-34px u-fs-12_5px font-monospace" value="0.00"></td>
                                     <td class="text-center align-middle"><button type="button" aria-label="Remove journal line" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-18px" title="Remove line">&times;</button></td>
                                 </tr>
                                 <tr class="line-row">
@@ -249,9 +249,9 @@
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td><input aria-label="Line memo" type="text" name="items[1][memo]" class="form-control form-control-sm u-h-34px u-fs-12_5px" style="padding: 4px 10px;" placeholder="Optional line memo"></td>
-                                    <td><input aria-label="Debit amount" type="number" step="0.01" min="0" name="items[1][debit]" class="form-control form-control-sm text-right debit-input u-h-34px u-fs-12_5px font-monospace" style="padding: 4px 10px;" value="0.00"></td>
-                                    <td><input aria-label="Credit amount" type="number" step="0.01" min="0" name="items[1][credit]" class="form-control form-control-sm text-right credit-input u-h-34px u-fs-12_5px font-monospace" style="padding: 4px 10px;" value="0.00"></td>
+                                    <td><input aria-label="Line memo" type="text" name="items[1][memo]" class="journal-line-input form-control form-control-sm u-h-34px u-fs-12_5px" placeholder="Optional line memo"></td>
+                                    <td><input aria-label="Debit amount" type="number" step="0.01" min="0" name="items[1][debit]" class="journal-line-input form-control form-control-sm text-right debit-input u-h-34px u-fs-12_5px font-monospace" value="0.00"></td>
+                                    <td><input aria-label="Credit amount" type="number" step="0.01" min="0" name="items[1][credit]" class="journal-line-input form-control form-control-sm text-right credit-input u-h-34px u-fs-12_5px font-monospace" value="0.00"></td>
                                     <td class="text-center align-middle"><button type="button" aria-label="Remove journal line" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-18px" title="Remove line">&times;</button></td>
                                 </tr>
                             </tbody>
@@ -284,7 +284,7 @@
 
 <!-- View Entry Modal -->
 <div id="viewEntryModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="viewModalTitle" class="modal fade" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: min(1080px, 96vw);">
+    <div class="journal-modal-wide modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content u-r-8px u-ov-hidden u-b-1px-solid-border-strong">
             <div class="modal-header u-bg-ink u-c-xffffff u-p-12px-18px">
                 <div>
@@ -411,9 +411,9 @@
                         ${accountsOptions}
                     </select>
                 </td>
-                <td><input aria-label="Line memo" type="text" name="items[${lineIndex}][memo]" class="form-control form-control-sm u-h-34px u-fs-12_5px" style="padding: 4px 10px;" placeholder="Optional line memo"></td>
-                <td><input aria-label="Debit amount" type="number" step="0.01" min="0" name="items[${lineIndex}][debit]" class="form-control form-control-sm text-right debit-input u-h-34px u-fs-12_5px font-monospace" style="padding: 4px 10px;" value="0.00"></td>
-                <td><input aria-label="Credit amount" type="number" step="0.01" min="0" name="items[${lineIndex}][credit]" class="form-control form-control-sm text-right credit-input u-h-34px u-fs-12_5px font-monospace" style="padding: 4px 10px;" value="0.00"></td>
+                <td><input aria-label="Line memo" type="text" name="items[${lineIndex}][memo]" class="journal-line-input form-control form-control-sm u-h-34px u-fs-12_5px" placeholder="Optional line memo"></td>
+                <td><input aria-label="Debit amount" type="number" step="0.01" min="0" name="items[${lineIndex}][debit]" class="journal-line-input form-control form-control-sm text-right debit-input u-h-34px u-fs-12_5px font-monospace" value="0.00"></td>
+                <td><input aria-label="Credit amount" type="number" step="0.01" min="0" name="items[${lineIndex}][credit]" class="journal-line-input form-control form-control-sm text-right credit-input u-h-34px u-fs-12_5px font-monospace" value="0.00"></td>
                 <td class="text-center align-middle"><button type="button" aria-label="Remove journal line" class="btn btn-sm btn-link text-danger remove-line-btn p-0 font-weight-bold u-fs-18px" title="Remove line">&times;</button></td>
             </tr>
         `;

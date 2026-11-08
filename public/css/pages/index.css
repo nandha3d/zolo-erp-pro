@@ -176,3 +176,5 @@
   .dash-filters { width: 100%; }
   .dash-filter { flex: 1 1 0; flex-direction: column; align-items: stretch; gap: 2px; }
 }
+
+.dashboard-switch-company { height: 30px; border-radius: 6px; font-weight: 650; font-size: 11.5px; gap: 5px; }
