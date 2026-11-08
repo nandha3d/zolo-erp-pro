@@ -5,6 +5,7 @@
 - **Execution Strategy & Worktree Isolation:**
   - Carried out sequential, step-by-step upgrade (**10 → 11 → 12 → 13**) inside dedicated worktree `v:\pers\Freelance\zolo-erp-pro-upgrade` on branch `upgrade/laravel13-php85` with an isolated MariaDB database `zoloerp_upgrade` on port 3306.
   - Active workspace `v:\pers\Freelance\zolo-erp-pro` remains clean on branch `ui`.
+  - Pushed branch `upgrade/laravel13-php85` to GitHub remote `origin`: `https://github.com/vigneshsinna/zolo-erp-pro/pull/new/upgrade/laravel13-php85`.
 - **Milestone Checkpoints & Git Commits:**
   1. **Checkpoint A (Commit `5459a8f`): Laravel 10 → 11.57.1:**
      - Replaced abandoned `laravelcollective/html` with drop-in fork `konekt/html: ^6.5` (version `6.8.0`), preserving all ~100 Blade views using `Form::` and `Html::` with zero template rewrites.
