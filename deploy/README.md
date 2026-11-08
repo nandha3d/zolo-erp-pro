@@ -30,11 +30,11 @@ Migrations are additive, so an older release keeps running against the newer sch
 | Item | Location |
 |---|---|
 | App | `/var/www/zolo-erp` (owned by `zoloerp`), `.env` is server-only (mode 600) |
-| PHP | PHP 8.3-FPM pool `zolo-erp` running as `zoloerp`, socket `/run/php/zolo-erp.sock` |
+| PHP | PHP 8.5-FPM pool `zolo-erp` running as `zoloerp`, socket `/run/php/zolo-erp.sock` |
 | Web | Nginx `/etc/nginx/sites-available/zolo-erp.conf` (copy of [`nginx/erp.samuraibuiness.in.conf`](nginx/erp.samuraibuiness.in.conf)), certbot certificate |
 | Database | System MySQL 8.0, database and user `zolo_erp`, connected through the local socket |
-| Scheduler | `/etc/cron.d/zolo-erp` runs `artisan schedule:run` every minute |
-| Sudo | `zoloerp` may only run `systemctl reload php8.3-fpm` (`/etc/sudoers.d/zolo-erp`) |
+| Scheduler | `/etc/cron.d/zolo-erp` runs `artisan schedule:run` every minute using `php8.5` |
+| Sudo | `zoloerp` may only run `systemctl reload php8.5-fpm` (`/etc/sudoers.d/zolo-erp`) |
 | Logs | `storage/logs/laravel-*.log`, `/var/log/nginx/zolo-erp.*.log` |
 
 The same VPS also runs the loan app (`loan.samuraibuiness.in`, `zolofunds.com`, Node on port 3000)
@@ -46,9 +46,9 @@ and a trading platform. Do not change their Nginx sites, the `loanapp` database 
 ssh root@187.127.177.121
 sudo -u zoloerp -i
 cd /var/www/zolo-erp
-php8.3 artisan migrate:status
-php8.3 artisan erp:health --company=1 --branch=1 --year=1 --actor=1
+php8.5 artisan migrate:status
+php8.5 artisan erp:health --company=1 --branch=1 --year=1 --actor=1
 ```
 
-Always call `php8.3`: the server's default `php` is a separate LiteSpeed PHP 8.4 build.
+Always call `php8.5`: the server's default `php` is a separate LiteSpeed PHP 8.4 build.
 Do not run `config:cache`; controllers and middleware read `env()` at runtime.

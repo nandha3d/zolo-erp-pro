@@ -620,19 +620,25 @@ class InventoryMovementService
             return $this->nullableExpiry;
         }
 
-        if (method_exists(Schema::getFacadeRoot() ?? Schema::class, 'getColumns')) {
-            $col = collect(Schema::getColumns('product_batches'))->firstWhere('name', 'expired_date');
-            if ($col && isset($col['nullable'])) {
-                return $this->nullableExpiry = (bool) $col['nullable'];
+        try {
+            if (method_exists(Schema::getFacadeRoot() ?? Schema::class, 'getColumns')) {
+                $col = collect(Schema::getColumns('product_batches'))->firstWhere('name', 'expired_date');
+                if ($col && isset($col['nullable'])) {
+                    return $this->nullableExpiry = (bool) $col['nullable'];
+                }
             }
+
+            $connection = Schema::getConnection();
+            if (method_exists($connection, 'getDoctrineColumn')) {
+                return $this->nullableExpiry = !$connection->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
+            }
+        } catch (\Throwable) {
+            // Never assume a nullable column when inspection fails.
+            return $this->nullableExpiry = false;
         }
 
-        $connection = Schema::getConnection();
-        if (method_exists($connection, 'getDoctrineColumn')) {
-            return $this->nullableExpiry = !$connection->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
-        }
-
-        return $this->nullableExpiry = true;
+        // Never assume a nullable column when inspection fails.
+        return $this->nullableExpiry = false;
     }
 
     /** @return list<array{0: float, 1: ?StockIdentity}> */

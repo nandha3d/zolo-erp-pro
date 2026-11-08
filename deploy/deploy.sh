@@ -4,7 +4,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-PHP="${PHP:-php8.3}"
+PHP="${PHP:-php8.5}"
 
 "$PHP" /usr/local/bin/composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
 
@@ -17,6 +17,6 @@ trap '"$PHP" artisan up' EXIT
 "$PHP" artisan view:cache
 
 # Drop OPcache so PHP-FPM picks up the new code.
-sudo /usr/bin/systemctl reload php8.3-fpm
+sudo /usr/bin/systemctl reload php8.5-fpm
 
 echo "Deployed $(git rev-parse --short HEAD)"
