@@ -213,6 +213,7 @@ html.app-shell #content table.shell-fit-wide > tbody > tr > td { padding: 5px 6p
 
 /* ---------- DataTables, everywhere (table-polish.js) ----------
    One toolbar line (page size · search · buttons, vertically centred), one-line rows, and the table kept inside its card. */
+@media screen {
 html.app-shell #content .dataTables_wrapper.zolo-polished { max-width: 100%; }
 html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> .dataTables_length, > .dataTables_filter, > .dt-buttons),
 html.app-shell #content .dataTables_wrapper.zolo-polished > .row:has(> div > .dataTables_length, > div > .dataTables_filter) {
@@ -267,3 +268,4 @@ body.dark-mode .zolo-polished .buttons-colvis { background: #0f172a !important; 
 body.dark-mode .zolo-polished .dataTables_paginate .paginate_button.disabled,
 body.dark-mode .zolo-polished .dataTables_paginate .page-item.disabled .page-link { background: transparent !important; color: #475569 !important; border-color: #334155 !important; }
 html.app-shell body.dark-mode #content .dataTables_wrapper.zolo-polished .dt-buttons .btn { background: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+}

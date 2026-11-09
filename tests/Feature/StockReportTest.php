@@ -137,4 +137,29 @@ class StockReportTest extends TestCase
         $response->assertSee(route('report.stock'), false);
         $response->assertSee('Stock Report', false);
     }
+
+    public function test_stock_report_print_and_screen_layout_standards(): void
+    {
+        $response = $this->get(route('report.stock'));
+        $response->assertOk();
+        $html = $response->getContent();
+
+        // 1. Assert exactly ONE .erp-print-header in the rendered HTML (no duplicate header overlay)
+        $this->assertEquals(1, substr_count($html, 'class="erp-print-header"'), 'There must be exactly one .erp-print-header on the page');
+
+        // 2. Assert screen flex unconstraining rules are present to prevent vertical clipping
+        $response->assertSee('html.app-shell #content > .report-workspace-view', false);
+        $response->assertSee('html.app-shell #content .report-workspace-view .desk-card-wrapper', false);
+
+        // 3. Assert explicit 8-column layout classes for zero-overflow A4 print
+        $response->assertSee('col-product', false);
+        $response->assertSee('col-category', false);
+        $response->assertSee('col-warehouse', false);
+        $response->assertSee('col-qty', false);
+        $response->assertSee('col-cost', false);
+        $response->assertSee('col-val-cost', false);
+        $response->assertSee('col-price', false);
+        $response->assertSee('col-val-price', false);
+        $response->assertSee('erp-print-signatures', false);
+    }
 }

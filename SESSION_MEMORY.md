@@ -1,5 +1,70 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-09: Stock Report Screen Bottom Cutoff Fix & Print Overlay Elimination (branch ui)
+
+- **Client Requests Addressed:**
+  - *"page cuts at bottom? print statement overlays"* with two screenshots:
+    - Screen View (`media_1794203345540_641a777c.jpg`): Table clipped vertically inside viewport before reaching totals footer, records count, and pagination controls.
+    - Print View (`media_1794203366245_2dc1fed9.jpg`): Double letterhead overlay, DataTables screen chrome (`All records per page`, `Columns 1 hidden`, `Search: [ ]`) rendered on paper, and column text overlapping horizontally with truncated headers (`STOCK VALUE BY C...`).
+- **Root Cause Analysis:**
+  1. **Screen Bottom Cutoff:**
+     - In `public/css/app-shell.css`, `html.app-shell #content > :has(> .desk-card-wrapper)` forced `flex: 1 1 auto !important; min-height: 0; display: flex !important; flex-direction: column !important;`, and `.desk-card-wrapper` enforced `flex: 1 1 0 !important; min-height: 220px !important;`.
+     - `app-shell.css:109` only set `overflow-y: auto !important` if `.desk-card-wrapper:not(:has(.dataTables_wrapper))`.
+     - Because `#stock-inventory-table` had `.dataTables_wrapper`, `.desk-card-wrapper` did NOT receive `overflow-y: auto`, locked its height to the remaining screen space (~350px), and clipped the bottom of the table, totals footer, and pagination.
+  2. **Print Double Letterhead Overlay:**
+     - `backend.layout.partials.print-letterhead.blade.php` is automatically included in `#content` on every page via `backend.layout.main.blade.php`.
+     - `stock_report.blade.php` previously had a second `<div class="erp-print-header">` block embedded in the view, causing two letterhead headers to print stacked on top of each other.
+  3. **DataTables Screen Chrome Printing on Paper:**
+     - In `app-shell.css:217-231`, `.zolo-polished .dataTables_length`, `.dataTables_filter`, and `.dt-buttons` had `display: inline-flex !important;` with high selector specificity (0, 3, 2) without an `@media screen` wrapper, overriding `display: none !important;` from `erp-print.css` (0, 1, 0).
+  4. **Column Overlapping & Text Collision in Print:**
+     - In `app-shell.css:234-235`, `.zolo-polished table.dataTable > thead > tr > th` and `td` had `white-space: nowrap !important;`.
+     - In `stock_report.blade.php`, column widths used `:nth-child(...)`, which shifted when column 1 (`#`) was hidden, misaligning widths and causing wide product titles and categories to bleed horizontally over adjacent cells.
+- **Architectural Solution & Implementation:**
+  1. **Screen Height & Flex Isolation (`resources/views/backend/report/stock_report.blade.php`):**
+     - Under `@media screen`: Explicitly unconstrained `.report-workspace-view` and `.desk-card-wrapper`:
+       ```css
+       html.app-shell #content > .report-workspace-view {
+           display: block !important;
+           flex: none !important;
+           height: auto !important;
+           min-height: calc(100vh - 60px) !important;
+           overflow: visible !important;
+       }
+       html.app-shell #content .report-workspace-view .desk-card-wrapper {
+           flex: none !important;
+           height: auto !important;
+           min-height: 0 !important;
+           overflow: visible !important;
+       }
+       html.app-shell #content .report-workspace-view .table-responsive {
+           overflow-x: auto !important;
+           overflow-y: visible !important;
+       }
+       ```
+     - `#content` (with `overflow-y: auto`) now naturally scrolls the entire report without clipping the table footer, totals, or pagination controls.
+  2. **Eliminated Duplicate Print Header (`stock_report.blade.php`):**
+     - Removed redundant `<div class="erp-print-header">` from `stock_report.blade.php`.
+     - The single authoritative letterhead from `backend.layout.partials.print-letterhead` prints cleanly, populated dynamically with report title `STOCK INVENTORY & VALUATION REPORT` and active filter metadata via `erp-print.js`.
+  3. **Screen Chrome Suppression on Paper (`public/css/app-shell.css` & `public/css/erp-print.css`):**
+     - Wrapped DataTables toolbar rules in `app-shell.css` inside `@media screen { ... }`.
+     - Added high-specificity print suppression selectors in `erp-print.css` for all `.dataTables_wrapper > .row:first-child`, `.row:last-child`, length dropdowns, search inputs, column visibility buttons, and pagination.
+  4. **Standardized 8-Column Fixed Print Geometry (`stock_report.blade.php` & `erp-print.css`):**
+     - Replaced brittle `:nth-child` CSS with explicit classes: `.col-idx`, `.col-product` (25%), `.col-category` (15%), `.col-warehouse` (12%), `.col-qty` (10%), `.col-cost` (9%), `.col-val-cost` (10%), `.col-price` (9%), `.col-val-price` (10%), totaling exactly 100% width on A4.
+     - Enforced `white-space: normal !important; word-break: break-word !important;` on text columns, and `white-space: nowrap !important; text-align: right !important;` on numerical columns.
+     - Added `.foot-label` spanning 52% in `tfoot`, aligning totals under quantity, cost value, and retail value.
+     - Added `.erp-print-signatures` block at the bottom of the report.
+     - Updated `printStockReport()` to safely restore pagination 500ms after print trigger.
+- **Verification & Test Coverage:**
+  - `tests/Feature/StockReportTest.php`: 8/8 passed (53 assertions) including `test_stock_report_print_and_screen_layout_standards` verifying exactly one header, screen unconstraining rules, and explicit 8-column layout classes.
+  - Regression feature suites (all passing):
+    - `CustomerSupplierReportsNavigationTest`: 7/7 passed (45 assertions).
+    - `PartiesGlobalUiTest`: 11/11 passed (59 assertions).
+    - `OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
+    - `VoucherPopupAndProductEnhancementsTest`: 8/8 passed (65 assertions).
+    - `SingleViewVoucherDeskTest`: 8/8 passed (28 assertions).
+    - Combined total: 50 tests, 276 assertions passing.
+  - View cache: `php artisan view:clear; php artisan view:cache` compiled with 100% success.
+
 ## Active Session & Follow-up — 2026-11-09: Production Stock Report Desk Implementation & Verification (branch ui)
 
 - **Client Request Addressed:**
