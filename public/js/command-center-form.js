@@ -29,8 +29,20 @@
         const items = $('#order-table-body tr.order-item-row').toArray().map(row => {
             const $row = $(row);
             let id = $row.find('.row-product-id').val();
-            if (!Number(id)) {
-                const matches = grid.products.filter(p => p.name.toLowerCase() === $row.find('.row-item-name').val().trim().toLowerCase());
+            const typedName = ($row.find('.row-item-name').val() || '').trim();
+
+            // When a product was loaded (e.g. from GRN or existing row), but the user changed the name:
+            if (id && typedName) {
+                const bound = grid.products.find(p => String(p.id) === String(id));
+                if (bound && bound.name.toLowerCase() !== typedName.toLowerCase() && (bound.code || '').toLowerCase() !== typedName.toLowerCase()) {
+                    id = null;
+                    $row.find('.row-product-id').val('');
+                    $row.removeAttr('data-product-id data-material-document-id data-material-item-id data-material-unit-id data-material-base-factor');
+                }
+            }
+
+            if (!Number(id) && typedName) {
+                const matches = grid.products.filter(p => p.name.toLowerCase() === typedName.toLowerCase() || (p.code && p.code.toLowerCase() === typedName.toLowerCase()));
                 if (matches.length > 1) throw new Error('Several products have this name. Select the correct product code from the list.');
                 if (matches.length === 1) {
                     grid.applyProductToRow($row, matches[0]);
@@ -38,8 +50,7 @@
                 }
             }
             if (!Number(id)) {
-                const name = $row.find('.row-item-name').val().trim();
-                if (window.zoloUnknownProduct?.(name, $row)) throw new Error('Save the new product "' + name + '", then save the bill again.');
+                if (typedName && window.zoloUnknownProduct?.(typedName, $row)) throw new Error('Save the new product "' + typedName + '", then save the bill again.');
                 throw new Error('Select a catalog product for every row. Use Create item for a new product.');
             }
             const unit = config.units.find(u => u.unit_name === $row.find('.row-unit-select').val());
@@ -81,8 +92,23 @@
             values[purchase ? 'goods_received_note_ids' : 'delivery_challan_ids'] = sourceIds;
             items.forEach(item => { item.material_sources ??= []; });
         }
+        const product_id = items.map(i => i.product_id);
+        const product_code = items.map(i => i.product_code);
+        const qty = items.map(i => i.qty);
+        const net_unit_cost = items.map(i => i.net_unit_cost || 0);
+        const net_unit_price = items.map(i => i.net_unit_price || 0);
+        const subtotal = items.map(i => i.total || (Number(i.qty) * Number(i.net_unit_cost || i.net_unit_price || 0)));
+        const tax = items.map(i => i.tax || 0);
+        const tax_rate = items.map(i => i.tax_rate || 0);
+        const purchase_unit = items.map(i => i.purchase_unit || 'Unit');
+        const sale_unit = items.map(i => i.sale_unit || 'Unit');
+
         return {
-            ...values, ...context, items, business_date: values.created_at,
+            ...values, ...context, items,
+            product_id, product_code, qty,
+            net_unit_cost, net_unit_price, subtotal, tax, tax_rate,
+            purchase_unit, sale_unit,
+            business_date: values.created_at,
             transport_name: values.transporter_name || '', series_code: series?.code,
         };
     }

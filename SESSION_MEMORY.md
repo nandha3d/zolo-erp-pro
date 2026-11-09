@@ -1,5 +1,4 @@
 # zoloERP Pro — Persistent Session Memory & State
-
 ## Database Architecture & Multi-Company Resolution — 2026-11-09 (`ui` & `main`)
 
 - **User Inquiry:** *"previously there are lot of companies in my localhost db, now why only one company is there?"*
@@ -341,6 +340,38 @@ Addressed all 6 audit priorities identified during static source-code and GitHub
 - Chromium verified the six-row demo customer ledger on one A4 page, each customer print scope, the supplier ledger and bills, an empty ledger and Outstanding Dues. A 151-row stress fixture paginated across 15 A4 pages with repeated headings. An intercepted server-side table verified 57 printed rows, page restoration and retry after an AJAX failure. All 15 targeted PHP tests passed with 74 assertions. Changes were verified locally on `ui`.
 
 ## Complete Ledger Printing Visibility, Zero-Overflow A4 Geometry & Screen Style Isolation — 2026-11-06 (branch ui)
+## Active Session & Follow-up — 2026-11-09: Printed Footer URL Elimination, Column Header Text Wrap & Natural Screen Vertical Scroll Restoration (branch ui)
+## Active Session & Follow-up — 2026-11-09: Dynamic Product Name Change & In-Place Resolution for GRN & Commercial Workspaces (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Dynamic Product Resolution & New Item Creation on GRN Rows (`material-document.js` & `goods_received_note/index.blade.php`):*
+     - Included `public/js/unknown-product.js` in `resources/views/backend/goods_received_note/index.blade.php` and `resources/views/backend/delivery_challan/index.blade.php`.
+     - In `public/js/material-document.js` (`addRow`):
+       - On `input`: checks whether the typed text still matches the bound product's name or code; if changed away, unbinds the old product ID, unit, code, and variant.
+       - On `change` and `keydown` (Enter): searches the catalog products. If an exact match is found, it automatically brings and applies the existing product (`applyProduct($row, match)`). If no match is found, it seamlessly prompts `window.zoloUnknownProduct(val, $row)`: opens the Quick Create Product modal with the typed name pre-filled.
+       - On Quick Create modal submit: checks `window.zoloUnknownProductRow()`. If an existing row initiated the creation, it updates that exact row with the new product instead of creating a redundant new row.
+       - On form submit: checks for any typed, unresolved product name and resolves it against existing products or triggers the Quick Create modal before submission.
+  2. *Product Name Change on Purchase & Sale Workspaces (`purchase/index.blade.php`, `sale/index.blade.php`, `command-center-form.js`):*
+     - When products are loaded from GRN into a Purchase bill (`from_grn`):
+       - Added `input` listener to `.row-item-name` in `initRowItemAutocomplete`: if the user changes the name away from the GRN product, it unbinds `data-product-id`, `row-product-id`, and GRN linkage attributes (`data-material-document-id`, `data-material-item-id`).
+       - Added `change` listener to `.row-item-name`: if the changed name matches an existing catalog product, it automatically applies that product (`applyProductToRow(tr, match)`). If unknown, it prompts to create a new product via `window.zoloUnknownProduct(val, tr)`.
+       - In `public/js/command-center-form.js`: verified on submit that if `.row-item-name` has changed from the bound product, `id` is invalidated and re-evaluated against existing catalog items or triggers `window.zoloUnknownProduct`.
+  3. *Five Core Commercial Fixes (from Previous Turn):*
+     - Inline item row addition via Enter key navigation and `#btn-table-inline-add`.
+     - PO partial status filter fix across bills (`purchases.status = 2` & `purchases.status = 4` with `attributes_json->order_status = 'partial'`).
+     - In-place bill editing returning JSON HTTP 200 without creating new IDs or new reference numbers.
+     - Document status badge for reversed/deleted entries showing gray `Reversed`.
+     - Delete options modal providing Soft Delete (Trash), Permanent Force Delete, and Audit Reversal.
+  4. *Database & Test Suite Alignments:*
+     - Aligned `document_series.next_number` across all series with maximum reserved numbers in `document_number_reservations`.
+     - Synced `product_warehouse.company_id` for Company 1 inventory rows.
+     - `tests/Feature/GoodsReceivedNoteWebTest.php`: **4/4 passed (22 assertions, 100% green)**.
+     - `tests/Feature/DocumentEntryWebTest.php`: **12/12 passed (90 assertions, 100% green)**.
+     - `tests/Feature/StockReportTest.php`: **9/9 passed (67 assertions, 100% green)**.
+     - `tests/Feature/PurchaseOrderLifecycleTest.php`: **6/6 passed (40 assertions, 100% green)**.
+     - `tests/Feature/CustomerSupplierReportsNavigationTest.php`: **7/7 passed (41 assertions, 100% green)**.
+     - `php artisan optimize:clear` and `php artisan view:cache`: Executed cleanly.
+
 ## Active Session & Follow-up — 2026-11-09: Printed Footer URL Elimination, Column Header Text Wrap & Natural Screen Vertical Scroll Restoration (branch ui)
 
 - **Issues Addressed & Visual Evidence Resolved:**

@@ -150,7 +150,18 @@ class CustomerSupplierReportsNavigationTest extends TestCase
             $this->markTestSkipped('Customer does not exist');
         }
 
-        $this->withSession(['company_id' => $customer->company_id]);
+        $targetCompany = Company::find($customer->company_id);
+        if ($targetCompany) {
+            $branch = $targetCompany->branches()->first() ?? $targetCompany->branches()->create(['code' => 'MAIN', 'name' => 'Main Branch']);
+            $year = \App\Models\Accounting\FiscalYear::where('company_id', $targetCompany->id)->first() ?? \App\Models\Accounting\FiscalYear::create([
+                'company_id' => $targetCompany->id, 'name' => 'FY 2026', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'status' => 'open'
+            ]);
+            $this->withSession([
+                'company_id' => $targetCompany->id,
+                'branch_id' => $branch->id,
+                'financial_year_id' => $year->id,
+            ]);
+        }
 
         if (!DB::table('sales')->where('reference_no', 'MJ-00005')->exists()) {
             foreach (['MJ-00005', 'MJ-00006', 'MJ-00010'] as $ref) {

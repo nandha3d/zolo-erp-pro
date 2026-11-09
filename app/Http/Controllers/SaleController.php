@@ -576,14 +576,19 @@ class SaleController extends Controller
 
                 // Status logic (Sale Status)
                 $sale_status_text = '';
-                switch ($sale->sale_status) {
-                    case 1: $nestedData['sale_status'] = '<div class="badge badge-success">'.__('db.Completed').'</div>'; $sale_status_text = __('db.Completed'); break;
-                    case 2: $nestedData['sale_status'] = '<div class="badge badge-danger">'.__('db.Pending').'</div>'; $sale_status_text = __('db.Pending'); break;
-                    case 3: $nestedData['sale_status'] = '<div class="badge badge-warning">'.__('db.Draft').'</div>'; $sale_status_text = __('db.Draft'); break;
-                    case 4: $nestedData['sale_status'] = '<div class="badge badge-danger">'.__('db.Returned').'</div>'; $sale_status_text = __('db.Returned'); break;
-                    case 5: $nestedData['sale_status'] = '<div class="badge badge-info">'.__('db.Processing').'</div>'; $sale_status_text = __('db.Processing'); break;
-                    case 6: $nestedData['sale_status'] = '<div class="badge badge-danger">'.__('db.Cooked').'</div>'; $sale_status_text = __('db.Cooked'); break;
-                    case 7: $nestedData['sale_status'] = '<div class="badge badge-primary">'.__('db.Served').'</div>'; $sale_status_text = __('db.Served'); break;
+                if ($sale->reversed_at) {
+                    $nestedData['sale_status'] = '<div class="badge badge-secondary" style="background:#64748b;color:#fff;">Reversed</div>';
+                    $sale_status_text = 'Reversed';
+                } else {
+                    switch ($sale->sale_status) {
+                        case 1: $nestedData['sale_status'] = '<div class="badge badge-success">'.__('db.Completed').'</div>'; $sale_status_text = __('db.Completed'); break;
+                        case 2: $nestedData['sale_status'] = '<div class="badge badge-danger">'.__('db.Pending').'</div>'; $sale_status_text = __('db.Pending'); break;
+                        case 3: $nestedData['sale_status'] = '<div class="badge badge-warning">'.__('db.Draft').'</div>'; $sale_status_text = __('db.Draft'); break;
+                        case 4: $nestedData['sale_status'] = '<div class="badge badge-danger">'.__('db.Returned').'</div>'; $sale_status_text = __('db.Returned'); break;
+                        case 5: $nestedData['sale_status'] = '<div class="badge badge-info">'.__('db.Processing').'</div>'; $sale_status_text = __('db.Processing'); break;
+                        case 6: $nestedData['sale_status'] = '<div class="badge badge-danger">'.__('db.Cooked').'</div>'; $sale_status_text = __('db.Cooked'); break;
+                        case 7: $nestedData['sale_status'] = '<div class="badge badge-primary">'.__('db.Served').'</div>'; $sale_status_text = __('db.Served'); break;
+                    }
                 }
 
                 // Status logic (Payment Status)
@@ -716,13 +721,15 @@ class SaleController extends Controller
                     '<li>
                         <button type="button" class="add-delivery btn btn-link" data-id = "'.$sale->id.'"><i class="fa fa-truck"></i> '.__('db.Add Delivery').'</button>
                     </li>';
-                if(in_array("sales-delete", $request['all_permission']))
-                    $nestedData['options'] .= \Form::open(["route" => ["sales.destroy", $sale->id], "method" => "DELETE"] ).'
-                            <li>
-                                <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="dripicons-trash"></i> '.__("db.delete").'</button>
-                            </li>'.\Form::close().'
-                        </ul>
-                    </div>';
+                if(in_array("sales-delete", $request['all_permission'])) {
+                    $nestedData['options'] .= '<li>
+                        <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="'.($sale->reversed_at ? 1 : 0).'"><i class="dripicons-trash text-danger"></i> '.__("db.delete").' / Options</button>
+                    </li>
+                    </ul>
+                </div>';
+                } else {
+                    $nestedData['options'] .= '</ul></div>';
+                }
 
                 // data for sale details by one click
                 $coupon = Coupon::find($sale->coupon_id);
@@ -1339,7 +1346,15 @@ class SaleController extends Controller
                 return redirect('pos')->with('message', $message);
             }
         
-            return redirect('sales')->with('message', $message);
+            if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'id' => $lims_sale_data->id,
+                'data' => $lims_sale_data
+            ]);
+        }
+        return redirect('sales')->with('message', $message);
         }
 
     }
@@ -2864,7 +2879,15 @@ class SaleController extends Controller
                 }
             }
             DB::commit();
-            return redirect('sales')->with('message', $message);
+            if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'id' => $lims_sale_data->id,
+                'data' => $lims_sale_data
+            ]);
+        }
+        return redirect('sales')->with('message', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect('sales/sale_by_csv')->with('not_permitted', "Error in row $counter: " . $e->getMessage());
@@ -2951,6 +2974,32 @@ class SaleController extends Controller
         }
 
         $product_id = $data['product_id'] ?? [];
+        if (empty($product_id) && !empty($data['items']) && is_array($data['items'])) {
+            $data['product_id'] = [];
+            $data['product_code'] = [];
+            $data['qty'] = [];
+            $data['net_unit_price'] = [];
+            $data['sale_unit'] = [];
+            $data['discount'] = [];
+            $data['tax'] = [];
+            $data['tax_rate'] = [];
+            $data['subtotal'] = [];
+            $data['imei_number'] = [];
+
+            foreach ($data['items'] as $item) {
+                $data['product_id'][] = $item['product_id'] ?? ($item['id'] ?? 0);
+                $data['product_code'][] = $item['product_code'] ?? ($item['code'] ?? '');
+                $data['qty'][] = $item['qty'] ?? 1;
+                $data['net_unit_price'][] = $item['net_unit_price'] ?? ($item['price'] ?? 0);
+                $data['sale_unit'][] = $item['sale_unit'] ?? ($item['unit'] ?? 'Unit');
+                $data['discount'][] = $item['discount'] ?? 0;
+                $data['tax'][] = $item['tax'] ?? 0;
+                $data['tax_rate'][] = $item['tax_rate'] ?? 0;
+                $data['subtotal'][] = $item['total'] ?? ($item['subtotal'] ?? 0);
+                $data['imei_number'][] = $item['imei_number'] ?? null;
+            }
+            $product_id = $data['product_id'];
+        }
         $imei_number = $data['imei_number'] ?? array_fill(0, count($product_id), null);
         if(isset($data['product_batch_id'])){
             $product_batch_id = $data['product_batch_id'];
@@ -3150,6 +3199,14 @@ class SaleController extends Controller
             }
         }
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'id' => $lims_sale_data->id,
+                'data' => $lims_sale_data
+            ]);
+        }
         return redirect('sales')->with('message', $message);
     }
 
@@ -4618,7 +4675,32 @@ class SaleController extends Controller
         $lims_sale_data->delete();
         $this->fileDelete(public_path('documents/sale/'), $lims_sale_data->document);
 
-        return Redirect::to($url)->with('not_permitted', $message);
+        return request()->expectsJson()
+            ? response()->json(['success' => true, 'message' => $message])
+            : Redirect::to($url)->with('not_permitted', $message);
+    }
+
+    public function forceDelete($id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('sales-delete')) {
+            return request()->expectsJson()
+                ? response()->json(['success' => false, 'message' => __('db.not_permitted')], 403)
+                : redirect()->back()->with('not_permitted', __('db.not_permitted'));
+        }
+
+        return DB::transaction(function () use ($id) {
+            $sale = Sale::withTrashed()->findOrFail($id);
+            Product_Sale::where('sale_id', $id)->delete();
+            Payment::where('sale_id', $id)->delete();
+            $this->fileDelete(public_path('documents/sale/'), $sale->document);
+            $sale->forceDelete();
+
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Sale permanently deleted.']);
+            }
+            return redirect('sales')->with('message', 'Sale permanently deleted.');
+        });
     }
 
     public function registerIPN()

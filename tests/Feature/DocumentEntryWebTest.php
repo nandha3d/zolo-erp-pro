@@ -48,13 +48,13 @@ class DocumentEntryWebTest extends TestCase
     }
 
     #[DataProvider('kinds')]
-    public function test_plain_page_is_the_register_form_page(string $kind, string $path): void
+    public function test_plain_page_is_the_register_form_page(string $kind, string $path, ?string $key = null): void
     {
         $this->get($path)->assertOk()->assertSee('id="'.$kind.'-entry-form"', false);
     }
 
     #[DataProvider('kinds')]
-    public function test_the_page_script_defines_the_grid_before_the_form_scripts_read_it(string $kind, string $path): void
+    public function test_the_page_script_defines_the_grid_before_the_form_scripts_read_it(string $kind, string $path, ?string $key = null): void
     {
         // With the Returns tab on, a nested partial's @push once moved command-center-form.js ahead of the page script,
         // so window.commandCenterGrid was undefined and every save failed on recalcTableSummary.
@@ -68,9 +68,74 @@ class DocumentEntryWebTest extends TestCase
         }
     }
 
+    private function ensureSamplePurchase(): void
+    {
+        $supplier = DB::table('suppliers')->where('company_id', 1)->first();
+        if (!$supplier) {
+            $supplierId = DB::table('suppliers')->insertGetId([
+                'name' => 'NutriCrunch Agro Suppliers',
+                'company_name' => 'NutriCrunch Agro Suppliers Ltd',
+                'company_id' => 1,
+                'phone_number' => '9876543210',
+                'address' => 'Plot 10, Industrial Estate',
+                'city' => 'Coimbatore',
+                'state' => 'Tamil Nadu',
+                'country' => 'India',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $supplierId = $supplier->id;
+        }
+
+        if (!DB::table('purchases')->whereNull('deleted_at')->where('status', '!=', 4)->exists()) {
+            $purchaseId = DB::table('purchases')->insertGetId([
+                'reference_no' => 'pr-test-'.uniqid(),
+                'user_id' => User::first()?->id ?? 1,
+                'company_id' => 1,
+                'branch_id' => 1,
+                'warehouse_id' => 1,
+                'supplier_id' => $supplierId,
+                'currency_id' => 1,
+                'item' => 1,
+                'total_qty' => 10,
+                'total_discount' => 0,
+                'total_tax' => 0,
+                'total_cost' => 100,
+                'grand_total' => 100,
+                'paid_amount' => 0,
+                'status' => 1,
+                'payment_status' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $product = DB::table('products')->where('company_id', 1)->first();
+            if ($product) {
+                DB::table('product_purchases')->insert([
+                    'purchase_id' => $purchaseId,
+                    'product_id' => $product->id,
+                    'qty' => 10,
+                    'recieved' => 10,
+                    'purchase_unit_id' => $product->unit_id ?? 1,
+                    'net_unit_cost' => 10,
+                    'discount' => 0,
+                    'tax_rate' => 0,
+                    'tax' => 0,
+                    'total' => 100,
+                    'company_id' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
     public function test_purchase_orders_stay_out_of_the_bill_list(): void
     {
         config(['compliance.enabled' => true]);
+        $this->ensureSamplePurchase();
         $this->assertSame(1, preg_match('/data-bill-id="(\d+)"/', $this->get('/purchases')->assertOk()->getContent(), $first));
         DB::table('purchases')->where('id', $first[1])->update(['status' => 4]);
         $this->assertStringNotContainsString('data-bill-id="'.$first[1].'"', $this->get('/purchases')->getContent());
@@ -79,6 +144,7 @@ class DocumentEntryWebTest extends TestCase
     public function test_a_purchase_order_prints_on_the_a4_bill_layout(): void
     {
         config(['compliance.enabled' => true]);
+        $this->ensureSamplePurchase();
         $this->assertSame(1, preg_match('/data-bill-id="(\d+)"/', $this->get('/purchases')->assertOk()->getContent(), $first));
         DB::table('purchases')->where('id', $first[1])->update(['status' => 4, 'posted_at' => null, 'supplier_invoice_date' => '2026-11-05']);
         $html = $this->get('/compliance/documents/purchase/'.$first[1].'/print?format=a4')->assertOk()->getContent();
@@ -89,7 +155,7 @@ class DocumentEntryWebTest extends TestCase
     }
 
     #[DataProvider('kinds')]
-    public function test_linked_references_must_exist_in_the_trusted_company_context(string $kind, string $path): void
+    public function test_linked_references_must_exist_in_the_trusted_company_context(string $kind, string $path, ?string $key = null): void
     {
         $this->get($path.'?new=1&project_id=999999')->assertStatus(404);
         $this->get($path.'?new=1&purchase_order_id=999999')->assertStatus(404);
