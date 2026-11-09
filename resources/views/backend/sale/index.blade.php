@@ -275,10 +275,19 @@
                             <tbody id="order-table-body">
                                 <tr class="empty-placeholder-row">
                                     <td colspan="10" class="text-center text-muted py-4 u-fs-12px">
-                                        No items added yet. Scan barcode or search above, or click "+ Add row".
+                                        No items added yet. Scan barcode or enter item code / name below.
                                     </td>
                                 </tr>
                             </tbody>
+                            <tfoot class="order-table-tfoot">
+                                <tr>
+                                    <td colspan="10" class="py-2 px-3 border-top-0 bg-light">
+                                        <button type="button" class="btn btn-sm btn-link text-primary font-weight-bold p-0" id="btn-table-inline-add" style="text-decoration:none;font-size:12px;">
+                                            <i class="dripicons-plus"></i> + Add item row in table
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -513,9 +522,9 @@
                                     <i class="dripicons-return"></i> Return
                                 </a>
                                 @endif
-                                @if($canReverseBills && !$bill->reversed_at && !$isDraft && $bill->branch_id)
-                                <a href="{{ url('/commercial/sale/'.$bill->id.'/reverse') }}" class="side-action-btn reverse" title="Reverse: cancel this bill, stock comes back and its journal is reversed; the bill stays in history" aria-label="Reverse bill">
-                                    <i class="dripicons-return"></i>
+                                @if($canReverseBills && $bill->branch_id)
+                                <a href="javascript:void(0)" class="side-action-btn reverse btn-side-delete-options" data-id="{{ $bill->id }}" data-ref="{{ $bill->reference_no ?? ('#'.$bill->id) }}" data-status="{{ $bill->sale_status }}" data-reversed="{{ $bill->reversed_at ? 1 : 0 }}" title="Delete / Reverse Options">
+                                    <i class="dripicons-trash"></i>
                                 </a>
                                 @endif
                                 @if(!$bill->reversed_at && $bill->posted_at && $bill->grand_total > $bill->paid_amount)
@@ -728,6 +737,75 @@
     </div>
 
 </section>
+
+<!-- DOCUMENT DELETE & REVERSAL OPTIONS MODAL -->
+<div class="modal fade text-left" id="document-delete-modal" tabindex="-1" role="dialog" aria-labelledby="document-delete-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title font-weight-bold" id="document-delete-title">
+                    <i class="dripicons-warning text-warning mr-1"></i> Manage Document: <span id="del-modal-ref" class="text-primary"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-muted small mb-3">
+                    Choose how you want to handle this record. Select one of the options below:
+                </p>
+                <div class="list-group delete-options-list">
+                    <!-- Option 1: Soft Delete (Move to Trash) -->
+                    <a href="javascript:void(0)" class="list-group-item list-group-item-action del-opt-choice py-2" data-action="soft-delete">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <h6 class="mb-1 text-dark font-weight-bold"><i class="dripicons-trash text-warning mr-1"></i> Move to Trash (Soft Delete)</h6>
+                            <span class="badge badge-light border">Recoverable</span>
+                        </div>
+                        <p class="mb-0 small text-muted">Hides the invoice from active registers and reverses its inventory. Can be restored from Deleted Data if needed.</p>
+                    </a>
+
+                    <!-- Option 2: Delete Permanently -->
+                    <a href="javascript:void(0)" class="list-group-item list-group-item-action del-opt-choice py-2 mt-2" data-action="permanent-delete">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <h6 class="mb-1 text-danger font-weight-bold"><i class="dripicons-cross text-danger mr-1"></i> Delete Permanently</h6>
+                            <span class="badge badge-danger">Irreversible</span>
+                        </div>
+                        <p class="mb-0 small text-muted">Completely removes this document and its lines from the database and reverses all inventory movements.</p>
+                    </a>
+
+                    <!-- Option 3: Official Reverse Document -->
+                    <a href="javascript:void(0)" class="list-group-item list-group-item-action del-opt-choice py-2 mt-2" data-action="reverse-doc">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <h6 class="mb-1 text-secondary font-weight-bold"><i class="dripicons-return text-secondary mr-1"></i> Reverse Document (Audit Trail)</h6>
+                            <span class="badge badge-secondary">Accounting</span>
+                        </div>
+                        <p class="mb-0 small text-muted">Posts reversing journal entries, returns stock, and marks the invoice as <strong>Reversed</strong> while keeping history for tax &amp; audit.</p>
+                    </a>
+                </div>
+
+                <!-- Reversal Form (Revealed when Option 3 is clicked) -->
+                <div id="del-reversal-form" class="mt-3 p-3 bg-light rounded border" style="display:none;">
+                    <h6 class="font-weight-bold text-dark small mb-2"><i class="dripicons-document-edit mr-1"></i> Reversal Details</h6>
+                    <div class="form-group mb-2">
+                        <label class="small text-muted font-weight-bold mb-1">Reversal Date *</label>
+                        <input type="date" id="del-reversal-date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="small text-muted font-weight-bold mb-1">Reason for Reversal *</label>
+                        <input type="text" id="del-reversal-reason" class="form-control form-control-sm" placeholder="e.g. Wrong quantity entered, order cancelled" maxlength="500">
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-sm btn-secondary mr-2" id="btn-cancel-reversal">Back</button>
+                        <button type="button" class="btn btn-sm btn-danger" id="btn-confirm-reversal">Confirm Reversal</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Slide-Over Drawer: Charges, Transport & Remarks Modal -->
 <div class="modal fade right" id="charges-drawer" tabindex="-1" role="dialog" aria-labelledby="chargesDrawerLabel" aria-hidden="true">
@@ -2178,6 +2256,64 @@
             };
         }
 
+        $input.on('input', function() {
+            var tr = $(this).closest('tr');
+            var val = $(this).val().trim();
+            var currentId = tr.find('.row-product-id').val();
+            if (currentId) {
+                var curProd = allProducts.find(p => String(p.id) === String(currentId));
+                if (curProd && CommercialProductLookup.normalize(curProd.name) !== CommercialProductLookup.normalize(val) && CommercialProductLookup.normalize(curProd.code) !== CommercialProductLookup.normalize(val)) {
+                    // Name changed away from bound product; invalidate ID on this row
+                    tr.removeAttr('data-product-id data-material-document-id data-material-item-id data-material-unit-id data-material-base-factor');
+                    tr.find('.row-product-id').val('');
+                    tr.find('.row-product-code').val('');
+                }
+            }
+        });
+
+        $input.on('change', async function() {
+            var tr = $(this).closest('tr');
+            var val = $(this).val().trim();
+            if (!val) {
+                tr.removeAttr('data-product-id data-material-document-id data-material-item-id data-material-unit-id data-material-base-factor');
+                tr.find('.row-product-id').val('');
+                tr.find('.row-product-code').val('');
+                recalcTableSummary();
+                return;
+            }
+
+            var currentId = tr.find('.row-product-id').val();
+            if (currentId) {
+                var curProd = allProducts.find(p => String(p.id) === String(currentId));
+                if (curProd && (CommercialProductLookup.normalize(curProd.name) === CommercialProductLookup.normalize(val) || CommercialProductLookup.normalize(curProd.code) === CommercialProductLookup.normalize(val))) {
+                    return; // Still the same product
+                }
+            }
+
+            // User changed the name: check if matches an already existing product in allProducts
+            var normVal = CommercialProductLookup.normalize(val);
+            var exact = allProducts.find(p => matchesProductMode(p) && (
+                CommercialProductLookup.normalize(p.name) === normVal ||
+                CommercialProductLookup.normalize(p.code) === normVal
+            ));
+
+            if (!exact) {
+                try {
+                    var matches = await CommercialProductLookup.search(val, allProducts, 'sale', matchesProductMode);
+                    exact = CommercialProductLookup.exact(matches, val);
+                } catch(e) { console.warn(e); }
+            }
+
+            if (exact) {
+                applyProductToRow(tr, exact);
+            } else {
+                // If not found in catalog, prompt to create new product as present now
+                if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, tr)) {
+                    return;
+                }
+            }
+        });
+
         $input.on('keydown', async function(e) {
             if (e.which === 13) {
                 if (e.isDefaultPrevented()) return;
@@ -2358,8 +2494,8 @@
         $(document).trigger('command-center-row-added', [tr]);
     }
 
-    // Manual Add Row (+ Add row button)
-    $('#btn-add-item-row').on('click', function() {
+    // Manual Add Row (+ Add row button & inline table add button)
+    $('#btn-add-item-row, #btn-table-inline-add').on('click', function() {
         addProductRow({
             product_id: 0,
             product_name: '',
@@ -2371,6 +2507,19 @@
             qty: 1,
             is_manual: true
         });
+    });
+
+    // Enter / Tab navigation inside table rows to auto-add row
+    $(document).on('keydown', '.order-item-row .row-rate, .order-item-row .row-qty, .order-item-row .row-amount', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            var $row = $(this).closest('tr');
+            if ($row.is(':last-child')) {
+                addProductRow({ is_manual: true });
+            } else {
+                $row.next('tr').find('.row-item-name').focus();
+            }
+        }
     });
 
     // Multi-Item Modal Batch Picker
@@ -3540,6 +3689,115 @@
         }
     });
 
+    // --- Document Delete & Reversal Modal Handlers (Sales) ---
+    var activeDeleteDocId = null;
+    var activeDeleteDocRef = '';
+
+    $(document).on('click', '.btn-open-delete-modal, .btn-side-delete-options', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        activeDeleteDocId = $(this).data('id');
+        activeDeleteDocRef = $(this).data('ref') || ('#' + activeDeleteDocId);
+        var isReversed = $(this).data('reversed') == 1;
+
+        $('#del-modal-ref').text(activeDeleteDocRef);
+        $('#del-reversal-form').hide();
+        $('.delete-options-list').show();
+        $('#del-reversal-reason').val('');
+
+        if (isReversed) {
+            $('.del-opt-choice[data-action="reverse-doc"]').addClass('disabled').css('opacity', '0.5');
+        } else {
+            $('.del-opt-choice[data-action="reverse-doc"]').removeClass('disabled').css('opacity', '1');
+        }
+
+        $('#document-delete-modal').modal('show');
+    });
+
+    $(document).on('click', '.del-opt-choice', function(e) {
+        e.preventDefault();
+        var action = $(this).data('action');
+        if (!activeDeleteDocId) return;
+
+        if (action === 'soft-delete') {
+            if (!confirm('Move ' + activeDeleteDocRef + ' to trash? This can be restored from Deleted Data.')) return;
+            $.ajax({
+                url: '{{ url("sales") }}/' + activeDeleteDocId,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                dataType: 'json',
+                success: function(res) {
+                    $('#document-delete-modal').modal('hide');
+                    if (window.toastr) toastr.success(res.message || 'Invoice moved to trash.');
+                    else alert(res.message || 'Invoice moved to trash.');
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Delete failed.');
+                }
+            });
+        } else if (action === 'permanent-delete') {
+            if (!confirm('PERMANENT ACTION: Are you sure you want to permanently delete ' + activeDeleteDocRef + '? This action CANNOT be undone and purges all records and inventory.')) return;
+            $.ajax({
+                url: '{{ url("sales") }}/' + activeDeleteDocId + '/force-delete',
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                dataType: 'json',
+                success: function(res) {
+                    $('#document-delete-modal').modal('hide');
+                    if (window.toastr) toastr.success(res.message || 'Invoice permanently deleted.');
+                    else alert(res.message || 'Invoice permanently deleted.');
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Permanent delete failed.');
+                }
+            });
+        } else if (action === 'reverse-doc') {
+            if ($(this).hasClass('disabled')) return;
+            $('.delete-options-list').hide();
+            $('#del-reversal-form').slideDown(200);
+            $('#del-reversal-reason').focus();
+        }
+    });
+
+    $('#btn-cancel-reversal').on('click', function() {
+        $('#del-reversal-form').hide();
+        $('.delete-options-list').show();
+    });
+
+    $('#btn-confirm-reversal').on('click', function() {
+        var reason = $('#del-reversal-reason').val().trim();
+        var bDate = $('#del-reversal-date').val();
+        if (!reason || reason.length < 3) {
+            alert('Please provide a reason of at least 3 characters for the reversal.');
+            $('#del-reversal-reason').focus();
+            return;
+        }
+
+        $(this).prop('disabled', true).text('Reversing…');
+        $.ajax({
+            url: '{{ url("commercial/sale") }}/' + activeDeleteDocId + '/reverse',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                business_date: bDate,
+                reason: reason
+            },
+            dataType: 'json',
+            success: function(res) {
+                $('#document-delete-modal').modal('hide');
+                if (window.toastr) toastr.success('Sale invoice reversed successfully.');
+                else alert('Sale invoice reversed successfully.');
+                location.reload();
+            },
+            error: function(xhr) {
+                $('#btn-confirm-reversal').prop('disabled', false).text('Confirm Reversal');
+                alert(xhr.responseJSON?.message || 'Reversal failed. Check dates and permissions.');
+            }
+        });
+    });
+
     // --- Auto-retract all dropdowns when clicking anywhere outside ---
     $(document).on('click', function(e) {
         if (!$(e.target).closest('.bootstrap-select, .dropdown, .ui-autocomplete, #lims_productcodeSearch, .row-item-name').length) {
@@ -3768,6 +4026,18 @@
         syncTaxClassificationToRows();
         recalcTableSummary();
         $(document).trigger("command-center-reset");
+        // Auto-seed Row #1 in table itself so user can add product directly in table
+        addProductRow({
+            product_id: 0,
+            product_name: '',
+            product_code: '',
+            price: 0,
+            cost: 0,
+            tax_rate: 0,
+            unit: 'Unit',
+            qty: 1,
+            is_manual: true
+        });
     };
 
     // Actions triggering reset to new
@@ -4104,6 +4374,20 @@
         }).first();
         if ($exactCard.length) {
             $exactCard.trigger('click');
+        }
+    } else {
+        if ($('#order-table-body tr.order-item-row').length === 0) {
+            addProductRow({
+                product_id: 0,
+                product_name: '',
+                product_code: '',
+                price: 0,
+                cost: 0,
+                tax_rate: 0,
+                unit: 'Unit',
+                qty: 1,
+                is_manual: true
+            });
         }
     }
 

@@ -687,8 +687,18 @@ class PurchaseController extends Controller
         $this->staffAccessCheck($q);
         if($warehouse_id)
             $q = $q->where('warehouse_id', $warehouse_id);
-        if($purchase_status)
-            $q = $q->where('status', $purchase_status);
+        if($purchase_status) {
+            if ((string)$purchase_status === '2') {
+                $q = $q->where(function($sub) {
+                    $sub->where('status', 2)
+                        ->orWhere(function($po) {
+                            $po->where('status', 4)->where('attributes_json->order_status', 'partial');
+                        });
+                });
+            } else {
+                $q = $q->where('status', $purchase_status);
+            }
+        }
         if($payment_status)
             $q = $q->withLegacyPaymentStatus((int) $payment_status);
 
@@ -722,8 +732,18 @@ class PurchaseController extends Controller
             $this->staffAccessCheck($q);
             if($warehouse_id)
                 $q = $q->where('warehouse_id', $warehouse_id);
-            if($purchase_status)
-                $q = $q->where('status', $purchase_status);
+            if($purchase_status) {
+                if ((string)$purchase_status === '2') {
+                    $q = $q->where(function($sub) {
+                        $sub->where('status', 2)
+                            ->orWhere(function($po) {
+                                $po->where('status', 4)->where('attributes_json->order_status', 'partial');
+                            });
+                    });
+                } else {
+                    $q = $q->where('status', $purchase_status);
+                }
+            }
             if($payment_status)
                 $q = $q->withLegacyPaymentStatus((int) $payment_status);
             $purchases = $q->get();
@@ -749,7 +769,16 @@ class PurchaseController extends Controller
             }
 
             if ($purchase_status) {
-                $q->where('purchases.status', $purchase_status);
+                if ((string)$purchase_status === '2') {
+                    $q->where(function($sub) {
+                        $sub->where('purchases.status', 2)
+                            ->orWhere(function($po) {
+                                $po->where('purchases.status', 4)->where('purchases.attributes_json->order_status', 'partial');
+                            });
+                    });
+                } else {
+                    $q->where('purchases.status', $purchase_status);
+                }
             }
 
             if ($payment_status) {
@@ -835,12 +864,16 @@ class PurchaseController extends Controller
                 $nestedData['products'] = implode('', $productNames);      // no commas, just join directly
                 $nestedData['products_qty'] = implode('', $productQtys);
 
-                if ($purchase->status == 1) {
+                if ($purchase->reversed_at) {
+                    $nestedData['purchase_status'] = '<div class="badge badge-secondary" style="background:#64748b;color:#fff;">Reversed</div>';
+                    $purchase_status = 'Reversed';
+                }
+                elseif ($purchase->status == 1) {
                     $nestedData['purchase_status'] = '<div class="badge badge-success">' . __('db.Recieved') . '</div>';
                     $purchase_status = __('db.Recieved');
                 }
                 elseif($purchase->status == 2){
-                    $nestedData['purchase_status'] = '<div class="badge badge-success">'.__('db.Partial').'</div>';
+                    $nestedData['purchase_status'] = '<div class="badge badge-warning" style="background:#f59e0b;color:#fff;">'.__('db.Partial').'</div>';
                     $purchase_status = __('db.Partial');
                 }
                 elseif($purchase->status == 3){
@@ -850,8 +883,17 @@ class PurchaseController extends Controller
                 else{
                     // An order closes once bills have received everything on it.
                     $fulfilled = !empty((is_array($purchase->attributes_json) ? $purchase->attributes_json : json_decode((string) $purchase->attributes_json, true))['fulfilled_at'] ?? null);
-                    $nestedData['purchase_status'] = $fulfilled ? '<div class="badge badge-success">Fulfilled</div>' : '<div class="badge badge-danger">'.__('db.Ordered').'</div>';
-                    $purchase_status = $fulfilled ? 'Fulfilled' : __('db.Ordered');
+                    $orderStatus = (is_array($purchase->attributes_json) ? $purchase->attributes_json : json_decode((string) $purchase->attributes_json, true))['order_status'] ?? null;
+                    if ($fulfilled || $orderStatus === 'fulfilled') {
+                        $nestedData['purchase_status'] = '<div class="badge badge-success">Fulfilled</div>';
+                        $purchase_status = 'Fulfilled';
+                    } elseif ($orderStatus === 'partial') {
+                        $nestedData['purchase_status'] = '<div class="badge badge-warning" style="background:#f59e0b;color:#fff;">Partial</div>';
+                        $purchase_status = 'Partial';
+                    } else {
+                        $nestedData['purchase_status'] = '<div class="badge badge-info" style="background:#3b82f6;color:#fff;">'.__('db.Ordered').'</div>';
+                        $purchase_status = __('db.Ordered');
+                    }
                 }
 
                 if($purchase->paid_amount < $purchase->grand_total)
@@ -921,13 +963,15 @@ class PurchaseController extends Controller
                         </li>';
                     }
                 }
-                if(in_array("purchases-delete", $request['all_permission']))
-                    $nestedData['options'] .= \Form::open(["route" => ["purchases.destroy", $purchase->id], "method" => "DELETE"] ).'
-                            <li>
-                              <button type="submit" class="btn btn-link" onclick="return confirmDelete()"><i class="dripicons-trash"></i> '.__("db.delete").'</button>
-                            </li>'.\Form::close().'
-                        </ul>
-                    </div>';
+                if(in_array("purchases-delete", $request['all_permission'])) {
+                    $nestedData['options'] .= '<li>
+                        <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="'.($purchase->reversed_at ? 1 : 0).'"><i class="dripicons-trash text-danger"></i> '.__("db.delete").' / Options</button>
+                    </li>
+                    </ul>
+                </div>';
+                } else {
+                    $nestedData['options'] .= '</ul></div>';
+                }
 
                 // data for purchase details by one click                
                 if($purchase->currency_id) {
@@ -1201,6 +1245,29 @@ class PurchaseController extends Controller
             $tax = $data['tax'] ?? array_fill(0, count($product_id), 0);
             $total = $data['subtotal'] ?? [];
             $imei_number = $new_imei_number = $data['imei_number'] ?? array_fill(0, count($product_id), null);
+
+            if (empty($product_id) && !empty($data['items']) && is_array($data['items'])) {
+                foreach ($data['items'] as $item) {
+                    $product_id[] = $item['product_id'] ?? ($item['id'] ?? 0);
+                    $product_code[] = $item['product_code'] ?? ($item['code'] ?? '');
+                    $qty[] = $item['qty'] ?? 1;
+                    $net_unit_cost[] = $item['net_unit_cost'] ?? ($item['cost'] ?? 0);
+                    $total[] = $item['total'] ?? ($item['subtotal'] ?? 0);
+                    $tax[] = $item['tax'] ?? 0;
+                    $tax_rate[] = $item['tax_rate'] ?? 0;
+                    $purchase_unit[] = $item['purchase_unit'] ?? ($item['unit'] ?? 'Unit');
+                    $batch_no[] = $item['batch']['batch_no'] ?? ($item['batch_no'] ?? null);
+                    $expired_date[] = $item['batch']['expired_date'] ?? ($item['expired_date'] ?? null);
+                    $imei_number[] = $item['imei_number'] ?? null;
+                }
+                $recieved = $qty;
+                $unit_cost = $net_unit_cost;
+                $net_unit_margin = array_fill(0, count($product_id), 0);
+                $net_unit_margin_type = array_fill(0, count($product_id), 'percentage');
+                $net_unit_price = $net_unit_cost;
+                $discount = array_fill(0, count($product_id), 0);
+                $new_imei_number = $imei_number;
+            }
             $product_purchase = [];
 
             // Return what the purchase received before its lines change; the new lines are received after the update.
@@ -1357,9 +1424,20 @@ class PurchaseController extends Controller
                 DB::table('purchases')->where('id', $lims_purchase_data->id)->update($custom_field_data);
 
             DB::commit();
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('db.Purchase updated successfully'),
+                    'id' => $lims_purchase_data->id,
+                    'data' => $lims_purchase_data
+                ]);
+            }
             return redirect('purchases')->with('message', __('db.Purchase updated successfully'));
         } catch(\Exception $e) {
             DB::rollBack();
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
             return redirect()->route('purchases.edit', $id)->with('not_permitted', $e->getMessage());
         }
     }
@@ -1712,7 +1790,9 @@ class PurchaseController extends Controller
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
 
             if ($this->purchaseHasSale($lims_product_purchase_data)) {
-                return redirect('purchases')->with('not_permitted', __('db.Can not delete, purchase has sale!'));
+                return request()->expectsJson()
+                    ? response()->json(['success' => false, 'message' => __('db.Can not delete, purchase has sale!')], 422)
+                    : redirect('purchases')->with('not_permitted', __('db.Can not delete, purchase has sale!'));
             }
 
             $this->fileDelete(public_path('documents/purchase/'), $lims_purchase_data->document);
@@ -1765,9 +1845,35 @@ class PurchaseController extends Controller
             $lims_purchase_data->delete();
             $this->fileDelete(public_path('documents/purchase/'), $lims_purchase_data->document);
 
-            return redirect('purchases')->with('not_permitted', __('db.Purchase deleted successfully'));
+            return request()->expectsJson()
+                ? response()->json(['success' => true, 'message' => __('db.Purchase deleted successfully')])
+                : redirect('purchases')->with('not_permitted', __('db.Purchase deleted successfully'));
         }
 
+    }
+
+    public function forceDelete($id)
+    {
+        $role = Role::find(Auth::user()->role_id);
+        if (!$role->hasPermissionTo('purchases-delete')) {
+            return request()->expectsJson()
+                ? response()->json(['success' => false, 'message' => __('db.not_permitted')], 403)
+                : redirect()->back()->with('not_permitted', __('db.not_permitted'));
+        }
+
+        return DB::transaction(function () use ($id) {
+            $purchase = Purchase::withTrashed()->findOrFail($id);
+            $this->reversePurchaseStock($purchase);
+            ProductPurchase::where('purchase_id', $id)->delete();
+            Payment::where('purchase_id', $id)->delete();
+            $this->fileDelete(public_path('documents/purchase/'), $purchase->document);
+            $purchase->forceDelete();
+
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Purchase permanently deleted.']);
+            }
+            return redirect('purchases')->with('message', 'Purchase permanently deleted.');
+        });
     }
 
     public function updateFromClient(Request $request, $id)

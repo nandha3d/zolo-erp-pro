@@ -16,7 +16,17 @@
         const token = document.querySelector('meta[name="csrf-token"]')?.content || form?.querySelector('[name="_token"]')?.value;
         let page = 1, lastPage = 1, pending = false, generation = 0;
         let activeCommercialMode = 'bills';
+        let selectedOrderStatus = 'pending';
         const cell = value => $('<td>').text(value ?? '');
+
+        $(document).on('click', '.btn-order-filter', function(e) {
+            e.preventDefault();
+            $('.btn-order-filter').removeClass('active').css({background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1'});
+            $(this).addClass('active').css({background: '#022051', color: '#ffffff', border: 'none'});
+            selectedOrderStatus = $(this).data('status') || 'pending';
+            page = 1;
+            fetchSideOrders();
+        });
 
         // Order registration / fetch into side panel
         function fetchSideOrders() {
@@ -26,16 +36,20 @@
             $status.text('Loading orders…');
             $cards.empty();
             
-            const includeAll = $('#side-orders-all-toggle').prop('checked');
+            const includeAll = selectedOrderStatus === 'all' || $('#side-orders-all-toggle').prop('checked');
+            const statusParam = selectedOrderStatus || (includeAll ? 'all' : 'pending');
             const partyId = form?.querySelector('[name="' + (kind === 'sale' ? 'customer_id' : 'supplier_id') + '"]')?.value || '';
 
-            $.getJSON(base, {page, party_id: partyId, status: includeAll ? 'all' : 'pending'})
+            $.getJSON(base, {page, party_id: partyId, status: statusParam})
                 .done(data => {
                     if (current !== generation) return;
                     lastPage = data.last_page;
                     let count = 0;
                     (data.data || []).forEach(order => {
-                        if (!includeAll && (order.reversed || ['cancelled', 'fulfilled'].includes(order.status))) return;
+                        if (statusParam === 'partial' && order.status !== 'partial') return;
+                        if (statusParam === 'open' && order.status !== 'open') return;
+                        if (statusParam === 'fulfilled' && order.status !== 'fulfilled') return;
+                        if (statusParam === 'pending' && (order.reversed || ['cancelled', 'fulfilled'].includes(order.status))) return;
                         count++;
                         // An order nobody has received, delivered or billed against can be replaced in full or deleted.
                         const fullEdit = !order.reversed && order.status !== 'cancelled' && order.untouched;

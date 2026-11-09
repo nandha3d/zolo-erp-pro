@@ -1,6 +1,90 @@
 # zoloERP Pro — Persistent Session Memory & State
 
-## Active Session & Follow-up — 2026-11-09: Printed Footer URL Elimination, Column Header Text Wrap & Natural Screen Vertical Scroll Restoration (branch ui)
+## Active Session & Follow-up — 2026-11-09: Dynamic Product Name Change & In-Place Resolution for GRN & Commercial Workspaces (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Dynamic Product Resolution & New Item Creation on GRN Rows (`material-document.js` & `goods_received_note/index.blade.php`):*
+     - Included `public/js/unknown-product.js` in `resources/views/backend/goods_received_note/index.blade.php` and `resources/views/backend/delivery_challan/index.blade.php`.
+     - In `public/js/material-document.js` (`addRow`):
+       - On `input`: checks whether the typed text still matches the bound product's name or code; if changed away, unbinds the old product ID, unit, code, and variant.
+       - On `change` and `keydown` (Enter): searches the catalog products. If an exact match is found, it automatically brings and applies the existing product (`applyProduct($row, match)`). If no match is found, it seamlessly prompts `window.zoloUnknownProduct(val, $row)`: opens the Quick Create Product modal with the typed name pre-filled.
+       - On Quick Create modal submit: checks `window.zoloUnknownProductRow()`. If an existing row initiated the creation, it updates that exact row with the new product instead of creating a redundant new row.
+       - On form submit: checks for any typed, unresolved product name and resolves it against existing products or triggers the Quick Create modal before submission.
+  2. *Product Name Change on Purchase & Sale Workspaces (`purchase/index.blade.php`, `sale/index.blade.php`, `command-center-form.js`):*
+     - When products are loaded from GRN into a Purchase bill (`from_grn`):
+       - Added `input` listener to `.row-item-name` in `initRowItemAutocomplete`: if the user changes the name away from the GRN product, it unbinds `data-product-id`, `row-product-id`, and GRN linkage attributes (`data-material-document-id`, `data-material-item-id`).
+       - Added `change` listener to `.row-item-name`: if the changed name matches an existing catalog product, it automatically applies that product (`applyProductToRow(tr, match)`). If unknown, it prompts to create a new product via `window.zoloUnknownProduct(val, tr)`.
+       - In `public/js/command-center-form.js`: verified on submit that if `.row-item-name` has changed from the bound product, `id` is invalidated and re-evaluated against existing catalog items or triggers `window.zoloUnknownProduct`.
+  3. *Five Core Commercial Fixes (from Previous Turn):*
+     - Inline item row addition via Enter key navigation and `#btn-table-inline-add`.
+     - PO partial status filter fix across bills (`purchases.status = 2` & `purchases.status = 4` with `attributes_json->order_status = 'partial'`).
+     - In-place bill editing returning JSON HTTP 200 without creating new IDs or new reference numbers.
+     - Document status badge for reversed/deleted entries showing gray `Reversed`.
+     - Delete options modal providing Soft Delete (Trash), Permanent Force Delete, and Audit Reversal.
+  4. *Database & Test Suite Alignments:*
+     - Aligned `document_series.next_number` across all series with maximum reserved numbers in `document_number_reservations`.
+     - Synced `product_warehouse.company_id` for Company 1 inventory rows.
+     - `tests/Feature/GoodsReceivedNoteWebTest.php`: **4/4 passed (22 assertions, 100% green)**.
+     - `tests/Feature/DocumentEntryWebTest.php`: **12/12 passed (90 assertions, 100% green)**.
+     - `tests/Feature/StockReportTest.php`: **9/9 passed (67 assertions, 100% green)**.
+     - `tests/Feature/PurchaseOrderLifecycleTest.php`: **6/6 passed (40 assertions, 100% green)**.
+     - `tests/Feature/CustomerSupplierReportsNavigationTest.php`: **7/7 passed (41 assertions, 100% green)**.
+     - `php artisan optimize:clear` and `php artisan view:cache`: Executed cleanly.
+
+- **Issues Addressed & Status:**
+  1. *Full Restoration of NutriCrunch Foods (Company 1) 19-SKU Inventory Catalog:*
+     - Discarded and purged all Aran Cafe items (`Blueberry Muffin`, `Butter Croissant`, `Milk Loaf Bread 400g`, `Raw Dairy Milk (Bulk)`, `South Indian Filter Coffee`, `Special Masala Tea`, `White Cane Sugar`) and orphaned DK tables from `salepro_db`.
+     - Restored Warehouse 1 as `Test Shop` (Company 1, Branch 1) and purged redundant warehouse 2.
+     - Seeded and bound the authentic 19 SKUs across FMCG & Textile lines with exact stock balances in Warehouse 1 (`Test Shop`):
+       - `NutriCrunch Almond & Honey Granola Bar 40g` (`FMCG-FG-NUTRICRUNCH-40G`): 820.00 Pch @ ₹16.50 cost / ₹30.00 retail
+       - `Poly-Cotton Grey Sheeting Fabric (58 inch)` (`TEX-PC-SHT58`): 800.00 MTR @ ₹38.00 cost / ₹50.00 retail
+       - `Pure Cotton Poplin Dyed Fabric - Super White (58 inch)` (`TEX-POP-WHT`): 800.00 MTR @ ₹72.00 cost / ₹95.00 retail
+       - `Rayon / Viscose Liva Fabric 30s Dyed (Jet Black)` (`TEX-RAY-BLK`): 600.00 MTR @ ₹65.00 cost / ₹88.00 retail
+       - `Cotton Combed Yarn 40s (Auto-Coner)` (`TEX-YRN-40C`): 500.00 KGS @ ₹280.00 cost / ₹325.00 retail
+       - `Rolled Oats (Food Grade)` (`FMCG-OATS-KG`): 500.00 Kg @ ₹40.00 cost / ₹55.00 retail
+       - `Animazon Dyed Premium Fabric (Royal Blue)` (`TEX-DYED-BLUE`): 50.00 Pc @ ₹210.00 cost / ₹380.00 retail
+       - `Cotton Carded Hosiery Yarn 30s` (`TEX-YRN-30H`): 400.00 KGS @ ₹250.00 cost / ₹295.00 retail
+       - `Printed Nitrogen Barrier Pouches 40g` (`FMCG-PKG-POUCH`): 4,000.00 Pch @ ₹1.80 cost / ₹2.50 retail
+       - `Single Jersey Cotton Knit Fabric 180 GSM (Raw Grey)` (`TEX-KNT-180G`): 350.00 KGS @ ₹260.00 cost / ₹310.00 retail
+       - `High Tenacity Spun Polyester Sewing Thread 40/2 (Cone 1000m)` (`TEX-THD-40C`): 300.00 Pc @ ₹35.00 cost / ₹55.00 retail
+       - `Bio-Washed Combed Cotton Single Jersey (Navy Blue)` (`TEX-KNT-NVY`): 250.00 KGS @ ₹340.00 cost / ₹420.00 retail
+       - `Men's Combed Cotton Round Neck T-Shirt (Pack of 3)` (`TEX-TSH-PK3`): 200.00 Pc @ ₹290.00 cost / ₹499.00 retail
+       - `California Almond Kernels` (`FMCG-ALM-KG`): 200.00 Kg @ ₹450.00 cost / ₹580.00 retail
+       - `Premium Cotton Terry Bath Towel 500 GSM (75x150 cm)` (`TEX-TWL-500G`): 180.00 Pc @ ₹180.00 cost / ₹320.00 retail
+       - `Classic Gold Jari Border Cotton Dhoti (Double / 8 Muzham)` (`TEX-DHT-GOLD8`): 150.00 Pc @ ₹320.00 cost / ₹550.00 retail
+       - `Organic Wild Honey` (`FMCG-HNY-KG`): 150.00 Kg @ ₹200.00 cost / ₹270.00 retail
+       - `100% Cotton Grey Fabric 40x40 / 92x88 (63 inch Width)` (`TEX-GRY-63W`): 1,200.00 MTR @ ₹48.00 cost / ₹62.00 retail
+       - `Plain Grey Fabric (Cloth)` (`TEX-PLAIN-600`): 0.00 Pc (Out of Stock benchmark) @ ₹150.00 cost / ₹180.00 retail
+     - **Verified KPI Totals:** Exactly **19 Catalog SKUs** (18 In Stock, 1 Out of Stock), **11,450.00 Total Stock Units**, **₹920,730.00 Stock Value (Cost)**, **₹1,231,200.00 Stock Value (Retail)**, and **₹310,470.00 Projected Gross Profit (33.7% Margin)** matching user screenshots 100%.
+  2. *Cross-Company Warehouse Leakage Prevention in `ReportController`:*
+     - Fixed `ReportController::stockReport` and `stockReportData` by adding `->where(fn($q) => $q->where('warehouses.company_id', $companyId)->orWhereNull('warehouses.company_id'))` to the join on `product_warehouse`. This guarantees warehouse balances from Company 4 (`zoloERP Textiles`) cannot leak into Company 1 (`NutriCrunch Foods`) or double-count inventory.
+  3. *Fiscal Year De-duplication:*
+     - Consolidated duplicate fiscal year rows in `salepro_db.fiscal_years` to a single active `FY-2026` (`2026-04-01` to `2027-03-31`), preventing `CompanyFinancialYearSetupRequired` exceptions in `CompanyContextResolver`.
+  4. *Defensive Date Range Initialization in `stock_report.blade.php`:*
+     - In `resources/views/backend/report/stock_report.blade.php`, added fallback defaults for `$start_date` and `$end_date` preventing `Undefined variable $start_date` Ignition errors when navigating directly to `/report/stock`.
+  5. *Test Suite Verification:*
+     - `tests/Feature/StockReportTest.php`: **9/9 passed (67 assertions, 100% green)**.
+     - `tests/Feature/CustomerSupplierReportsNavigationTest.php`: **10/10 passed (49 assertions, 100% green)**.
+     - `php artisan optimize:clear` and `php artisan view:cache`: Executed cleanly.
+
+## Active Session & Follow-up — 2026-11-09: Repository Isolation Enforcement, Defensive Date Variable Initialization & Branch ui Sync (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Isolated zolo-erp-pro from DK Enterprises:*
+     - Discarded and purged all unrelated external water logistics/DK Enterprises files and seeders.
+     - Confirmed `zolo-erp-pro` branch `ui` is clean and directly tracked against `origin/ui` and `nandha-origin/ui`.
+  2. *Defensive Date Initialization in Stock Report:*
+     - Resolved `ErrorException: Undefined variable $start_date` by adding fallback default resolution in [`resources/views/backend/report/stock_report.blade.php`](file:///d:/PROJECTS/WEBSITES/zolo-erp-pro/resources/views/backend/report/stock_report.blade.php):
+       ```php
+       @php
+           $start_date = $start_date ?? request('start_date') ?? date('Y-m-01');
+           $end_date = $end_date ?? request('end_date') ?? date('Y-m-d');
+       @endphp
+       ```
+  3. *Branch Pull & Test Suite Verification:*
+     - Executed `git pull origin ui` and `git pull nandha-origin ui`: branch is completely up to date.
+     - Ran `tests/Feature/StockReportTest.php`: **9/9 passed (67 assertions, 100% green)**.
+     - Executed `php artisan optimize:clear` and `php artisan view:cache` cleanly.
 
 - **Issues Addressed & Visual Evidence Resolved:**
   1. *Printed Footer Link Text (`media_1794210333442_e6acc1b4.jpg`):*

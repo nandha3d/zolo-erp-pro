@@ -463,6 +463,7 @@
         ];
     @endphp
     <script type="application/json" id="material-document-data">@json($materialConfig)</script>
+    <script src="{{ asset('js/unknown-product.js') }}?v={{ filemtime(public_path('js/unknown-product.js')) }}"></script>
     <script src="{{ asset('js/document-drafts.js') }}?v={{ filemtime(public_path('js/document-drafts.js')) }}"></script>
     <script src="{{ asset('js/material-document.js') }}?v={{ filemtime(public_path('js/material-document.js')) }}"></script>
     <script src="{{ versioned_asset('js/quick-product-modal.js') }}"></script>

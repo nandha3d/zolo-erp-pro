@@ -1822,10 +1822,11 @@ body.dark-mode #comm-entry-workspace.is-view-mode .bootstrap-select button {
     border: 1px solid #fde68a;
 }
 
-.side-bill-card .side-card-status.draft {
+.side-bill-card .side-card-status.draft,
+.side-bill-card .side-card-status.reversed {
     background: #f1f5f9;
     color: #475569;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #94a3b8;
 }
 
 .side-bill-card .side-card-actions {
