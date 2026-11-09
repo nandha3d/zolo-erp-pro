@@ -275,7 +275,7 @@
                                 <tr>
                                     <td colspan="10" class="py-2 px-3 border-top-0 bg-light">
                                         <button type="button" class="btn btn-sm btn-link text-primary font-weight-bold p-0" id="btn-table-inline-add" style="text-decoration:none;font-size:12px;">
-                                            <i class="dripicons-plus"></i> + Add item row in table
+                                            <i class="dripicons-plus mr-1"></i> Add item row in table
                                         </button>
                                     </td>
                                 </tr>
@@ -1756,10 +1756,53 @@
         minLength: 1,
         autoFocus: false,
         source: function(request, response) {
-            CommercialProductLookup.search(request.term, allProducts, 'purchase', matchesProductMode).then(response).catch(function(error) { response([]); console.warn(error.message); });
+            CommercialProductLookup.search(request.term, allProducts, 'purchase', matchesProductMode).then(function(matches) {
+                var term = (request.term || '').trim();
+                var results = (matches || []).slice(0, 20);
+                if (term) {
+                    results.push({
+                        is_create_action: true,
+                        term: term,
+                        value: '',
+                        name: term,
+                        label: '+ Create "' + term + '" as new product'
+                    });
+                }
+                response(results);
+            }).catch(function(error) {
+                var term = (request.term || '').trim();
+                if (term) {
+                    response([{
+                        is_create_action: true,
+                        term: term,
+                        value: '',
+                        name: term,
+                        label: '+ Create "' + term + '" as new product'
+                    }]);
+                } else {
+                    response([]);
+                }
+                console.warn(error.message);
+            });
+        },
+        focus: function(event, ui) {
+            if (ui && ui.item && ui.item.is_create_action) {
+                event.preventDefault();
+                return false;
+            }
         },
         select: function(event, ui) {
             if (ui && ui.item) {
+                if (ui.item.is_create_action) {
+                    event.preventDefault();
+                    $(this).val('');
+                    if (window.zoloOpenQuickCreateProduct) {
+                        window.zoloOpenQuickCreateProduct(ui.item.term, null);
+                    } else if (window.zoloUnknownProduct) {
+                        window.zoloUnknownProduct(ui.item.term, null, true);
+                    }
+                    return false;
+                }
                 addProductRow({
                     product_id: ui.item.id,
                     product_name: ui.item.name,
@@ -1778,6 +1821,23 @@
 
     if ($productSearch.data('ui-autocomplete')) {
         $productSearch.data('ui-autocomplete')._renderItem = function(ul, item) {
+            if (item.is_create_action) {
+                return $("<li>")
+                    .addClass("ui-autocomplete-action-item")
+                    .append(`
+                        <div class="custom-ac-item d-flex align-items-center justify-content-between text-primary" style="background:#eef2ff; border-top:1px dashed #c7d2fe; padding:8px 12px; cursor:pointer; margin:2px 0; border-radius:4px;">
+                            <div class="d-flex align-items-center">
+                                <span class="badge badge-primary mr-2" style="background:#4f46e5; padding:4px 6px; font-size:11px;"><i class="dripicons-plus"></i></span>
+                                <div>
+                                    <div class="font-weight-bold" style="color:#3730a3; font-size:13px;">Create "<strong>${escapeHtml(item.term)}</strong>" as new product</div>
+                                    <div class="small" style="color:#6366f1; font-size:11px;">Open Quick Create form directly in this voucher</div>
+                                </div>
+                            </div>
+                            <span class="badge badge-pill badge-primary" style="background:#4f46e5; font-size:10px; padding:3px 7px;">+ Quick Create</span>
+                        </div>
+                    `)
+                    .appendTo(ul);
+            }
             var rateStr = '₹ ' + (parseFloat(item.cost || item.price || 0)).toFixed(decimalPlaces);
             return $("<li>")
                 .append(`
@@ -1868,13 +1928,22 @@
                         qty: 1
                     });
                 } else {
-                    window.zoloUnknownProduct(searchTerm.split('|')[1] || searchTerm);
+                    if (window.zoloOpenQuickCreateProduct) {
+                        window.zoloOpenQuickCreateProduct(searchTerm.split('|')[1] || searchTerm, null);
+                    } else if (window.zoloUnknownProduct) {
+                        window.zoloUnknownProduct(searchTerm.split('|')[1] || searchTerm, null, true);
+                    }
                 }
             },
             error: function(xhr) {
                 // The search answers 404 for a name that is not a product.
-                if (xhr.status === 404) window.zoloUnknownProduct(searchTerm.split('|')[1] || searchTerm);
-                else alert('Product search failed. Try again.');
+                if (xhr.status === 404) {
+                    if (window.zoloOpenQuickCreateProduct) {
+                        window.zoloOpenQuickCreateProduct(searchTerm.split('|')[1] || searchTerm, null);
+                    } else if (window.zoloUnknownProduct) {
+                        window.zoloUnknownProduct(searchTerm.split('|')[1] || searchTerm, null, true);
+                    }
+                } else alert('Product search failed. Try again.');
             }
         });
     }
@@ -1994,11 +2063,53 @@
             minLength: 1,
             autoFocus: false,
             source: function(request, response) {
-                CommercialProductLookup.search(request.term, allProducts, 'purchase', matchesProductMode).then(response).catch(function(error) { response([]); console.warn(error.message); });
+                CommercialProductLookup.search(request.term, allProducts, 'purchase', matchesProductMode).then(function(matches) {
+                    var term = (request.term || '').trim();
+                    var results = (matches || []).slice(0, 20);
+                    if (term) {
+                        results.push({
+                            is_create_action: true,
+                            term: term,
+                            value: '',
+                            name: term,
+                            label: '+ Create "' + term + '" as new product'
+                        });
+                    }
+                    response(results);
+                }).catch(function(error) {
+                    var term = (request.term || '').trim();
+                    if (term) {
+                        response([{
+                            is_create_action: true,
+                            term: term,
+                            value: '',
+                            name: term,
+                            label: '+ Create "' + term + '" as new product'
+                        }]);
+                    } else {
+                        response([]);
+                    }
+                    console.warn(error.message);
+                });
+            },
+            focus: function(event, ui) {
+                if (ui && ui.item && ui.item.is_create_action) {
+                    event.preventDefault();
+                    return false;
+                }
             },
             select: function(event, ui) {
                 if (ui && ui.item) {
                     var tr = $(this).closest('tr');
+                    if (ui.item.is_create_action) {
+                        event.preventDefault();
+                        if (window.zoloOpenQuickCreateProduct) {
+                            window.zoloOpenQuickCreateProduct(ui.item.term, tr);
+                        } else if (window.zoloUnknownProduct) {
+                            window.zoloUnknownProduct(ui.item.term, tr, true);
+                        }
+                        return false;
+                    }
                     applyProductToRow(tr, ui.item);
                     setTimeout(function() {
                         tr.find('.row-qty').focus().select();
@@ -2010,6 +2121,23 @@
 
         if ($input.data('ui-autocomplete')) {
             $input.data('ui-autocomplete')._renderItem = function(ul, item) {
+                if (item.is_create_action) {
+                    return $("<li>")
+                        .addClass("ui-autocomplete-action-item")
+                        .append(`
+                            <div class="custom-ac-item d-flex align-items-center justify-content-between text-primary" style="background:#eef2ff; border-top:1px dashed #c7d2fe; padding:8px 12px; cursor:pointer; margin:2px 0; border-radius:4px;">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-primary mr-2" style="background:#4f46e5; padding:4px 6px; font-size:11px;"><i class="dripicons-plus"></i></span>
+                                    <div>
+                                        <div class="font-weight-bold" style="color:#3730a3; font-size:13px;">Create "<strong>${escapeHtml(item.term)}</strong>" as new product</div>
+                                        <div class="small" style="color:#6366f1; font-size:11px;">Open Quick Create form directly for this row</div>
+                                    </div>
+                                </div>
+                                <span class="badge badge-pill badge-primary" style="background:#4f46e5; font-size:10px; padding:3px 7px;">+ Quick Create</span>
+                            </div>
+                        `)
+                        .appendTo(ul);
+                }
                 var rateStr = '₹ ' + (parseFloat(item.cost || item.price || 0)).toFixed(decimalPlaces);
                 return $("<li>")
                     .append(`
@@ -2084,8 +2212,10 @@
             if (exact) {
                 applyProductToRow(tr, exact);
             } else {
-                // If not found in catalog, prompt to create new product as present now
-                if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, tr)) {
+                // If not found in catalog, prompt to create new product directly
+                if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, tr)) {
+                    return;
+                } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, tr, true)) {
                     return;
                 }
             }
@@ -2128,13 +2258,18 @@
                                         tax_rate: parseFloat(data[3]) || 0,
                                         unit: data[6] ? data[6].split(',')[0] : 'Unit'
                                     });
-                                } else if (window.zoloUnknownProduct(val, tr)) {
+                                } else if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, tr)) {
+                                    return;
+                                } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, tr, true)) {
                                     return;
                                 }
                                 tr.find('.row-qty').focus().select();
                             },
                             error: function(xhr) {
-                                if (xhr.status === 404 && window.zoloUnknownProduct(val, tr)) return;
+                                if (xhr.status === 404) {
+                                    if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, tr)) return;
+                                    if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, tr, true)) return;
+                                }
                                 tr.find('.row-qty').focus().select();
                             }
                         });
@@ -2300,8 +2435,6 @@
                 $row.next('tr').find('.row-item-name').focus();
             }
         }
-    });
-        });
     });
 
     // Multi-Item Modal Batch Picker
