@@ -1,5 +1,29 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-09: Remote Pull, Fast-Forward Synchronization across Remotes & Test Fixture Hardening (branch ui)
+
+- **Remote Synchronization & Latest Code Pull:**
+  - Fetched all remotes (`origin`, `nandha-origin`).
+  - Fast-forwarded local `ui` branch to `origin/ui` (`33b5c14`):
+    - Incorporated `9a7a519`: Global printing rules, eliminate double headers, and ensure 100% table data visibility on A4.
+    - Incorporated `c03565a`: Merge origin/ui: sync voucher popups and preserve global print rules.
+    - Incorporated `8534fa1`: Bill save restoration and error recovery steps display.
+    - Incorporated `33b5c14`: Screen style isolation, flex clipping elimination, and full ledger visibility on paper.
+  - Fast-forwarded local `main` branch to `origin/main` (`79a1d03`).
+  - Synchronized `nandha-origin` (`ui` -> `33b5c14`, `main` -> `79a1d03`).
+- **Test Hardening & Fixture Scoping:**
+  - `tests/Feature/PartiesGlobalUiTest.php`: Explicitly scoped test customer, group, and supplier to `$this->company->id` to prevent cross-company scoping 404s.
+  - `tests/Feature/OutstandingDuesAndGstTypeTest.php`: Replaced `Supplier::factory()` with direct model `Supplier::create([...])` since `Supplier` does not implement `HasFactory`.
+  - `tests/Feature/CustomerSupplierReportsNavigationTest.php`: Updated ledger transaction assertion to target existing seeded customers dynamically (`Kaveri Garments & Apparel Ltd`).
+- **Verification (All Passing):**
+  - `PartiesGlobalUiTest`: 11/11 passed (59 assertions).
+  - `OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
+  - `CustomerSupplierReportsNavigationTest`: 6/6 passed (37 assertions).
+  - `VoucherPopupAndProductEnhancementsTest`: 7/7 passed (55 assertions).
+  - `SingleViewVoucherDeskTest`: 4/4 passed (18 assertions).
+  - View cache: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
+
+
 ## Complete Ledger Printing Visibility, Zero-Overflow A4 Geometry & Screen Style Isolation — 2026-11-06 (branch ui)
 
 - **Client Requests Addressed:**

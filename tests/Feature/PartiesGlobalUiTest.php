@@ -28,22 +28,26 @@ class PartiesGlobalUiTest extends TestCase
         $this->adminUser = User::where('role_id', 1)->first() ?? User::factory()->create(['role_id' => 1]);
         $this->company = Company::first() ?? Company::factory()->create();
 
-        $group = CustomerGroup::first() ?? CustomerGroup::create(['name' => 'General', 'percentage' => '0', 'is_active' => true]);
+        $group = CustomerGroup::where('company_id', $this->company->id)->first()
+            ?? CustomerGroup::first()
+            ?? CustomerGroup::create(['name' => 'General', 'percentage' => '0', 'is_active' => true, 'company_id' => $this->company->id]);
 
-        $this->customer = Customer::first() ?? Customer::create([
+        $this->customer = Customer::where('company_id', $this->company->id)->first() ?? Customer::create([
             'name' => 'Test UI Customer',
             'company_name' => 'Test Customer Org',
             'customer_group_id' => $group->id,
             'phone_number' => '9876543210',
             'email' => 'uicustomer@test.com',
+            'company_id' => $this->company->id,
             'is_active' => true,
         ]);
 
-        $this->supplier = Supplier::first() ?? Supplier::create([
+        $this->supplier = Supplier::where('company_id', $this->company->id)->first() ?? Supplier::create([
             'name' => 'Test UI Supplier',
             'company_name' => 'Test Supplier Mills',
             'phone_number' => '9876543211',
             'email' => 'uisupplier@test.com',
+            'company_id' => $this->company->id,
             'is_active' => true,
         ]);
 

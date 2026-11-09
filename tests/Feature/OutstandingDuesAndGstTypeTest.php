@@ -99,7 +99,14 @@ class OutstandingDuesAndGstTypeTest extends TestCase
     public function test_customer_and_supplier_action_menus_link_to_outstanding_dues_report(): void
     {
         $customer = Customer::first() ?? Customer::factory()->create(['company_id' => $this->company->id]);
-        $supplier = Supplier::first() ?? Supplier::factory()->create(['company_id' => $this->company->id]);
+        $supplier = Supplier::where('company_id', $this->company->id)->first() ?? Supplier::create([
+            'name' => 'Demo Test Supplier',
+            'company_name' => 'Test Supplier Co',
+            'phone_number' => '9894411999',
+            'email' => 'supplier@test.com',
+            'company_id' => $this->company->id,
+            'is_active' => true,
+        ]);
 
         // Customer Data AJAX endpoint returns action menu containing outstanding dues link
         $customerData = $this->post('/customers/customer-data', [
