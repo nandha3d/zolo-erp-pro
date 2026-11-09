@@ -17,10 +17,10 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold" style="font-size: 13px; letter-spacing: 0.5px;">
+                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold u-fs-13px u-ls-0_5px">
                                     <i class="fa fa-truck mr-1"></i> {{ $manifest['vehicle']['vehicle_number'] ?? 'TN-58-WA-101' }}
                                 </span>
-                                <span class="badge badge-info p-2 px-3 text-uppercase font-weight-bold" style="font-size: 12px;">
+                                <span class="badge badge-info p-2 px-3 text-uppercase font-weight-bold u-fs-12px">
                                     <i class="fa fa-road mr-1"></i> {{ $manifest['route']['name'] ?? 'Erode Commercial Route Beat A' }}
                                 </span>
                             </div>
@@ -117,11 +117,11 @@
                                         <td>
                                             <div class="small text-muted">{{ $stop['address'] }}</div>
                                             @if(!empty($stop['latitude']) && !empty($stop['longitude']))
-                                                <span class="badge badge-success px-2 py-1 small" style="font-size: 10px;">
+                                                <span class="badge badge-success px-2 py-1 small u-fs-10px">
                                                     <i class="fa fa-map-marker mr-1"></i> GPS Locked
                                                 </span>
                                             @else
-                                                <span class="badge badge-warning px-2 py-1 small" style="font-size: 10px;">
+                                                <span class="badge badge-warning px-2 py-1 small u-fs-10px">
                                                     <i class="fa fa-exclamation-triangle mr-1"></i> Need GPS Pin
                                                 </span>
                                             @endif

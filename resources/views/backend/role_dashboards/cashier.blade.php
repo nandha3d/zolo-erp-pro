@@ -17,10 +17,10 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <span class="badge badge-warning p-2 px-3 text-uppercase font-weight-bold" style="font-size: 13px; letter-spacing: 0.5px; background-color: #D97706; color: white;">
+                                <span class="badge badge-warning p-2 px-3 text-uppercase font-weight-bold u-fs-13px u-ls-0_5px">
                                     <i class="fa fa-shopping-bag mr-1"></i> Aran Cafe Cashier Desk
                                 </span>
-                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold" style="font-size: 12px;">
+                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold u-fs-12px">
                                     <i class="fa fa-check-circle mr-1"></i> Cash Drawer {{ $metrics['drawer_status'] ?? 'OPEN' }}
                                 </span>
                             </div>
@@ -73,7 +73,7 @@
                     <p class="text-muted small mb-4">Launch high-speed order billing or generate standard GST invoices for bakery &amp; catering orders.</p>
 
                     <div class="d-flex flex-column gap-3">
-                        <a href="{{ route('sale.pos') }}" class="btn btn-primary btn-block py-3 font-weight-bold" style="font-size: 15px;">
+                        <a href="{{ route('sale.pos') }}" class="btn btn-primary btn-block py-3 font-weight-bold u-fs-15px">
                             <i class="fa fa-calculator mr-2"></i> Open Touch POS Terminal (Touch Screen / Barcode)
                         </a>
                         <a href="{{ route('sales.index', ['new' => 1]) }}" class="btn btn-outline-secondary btn-block py-2">
@@ -90,7 +90,7 @@
                     </h5>
                     <p class="text-muted small mb-3">Reconcile cash float denominations, review UPI payments, and surrender shift revenue.</p>
 
-                    <div class="p-3 rounded mb-3" style="background-color: #F8FAFC; border: 1px solid #E2E8F0;">
+                    <div class="p-3 rounded mb-3 u-bg-surface-2 u-b-1px-solid-border">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="small text-muted font-weight-600 text-uppercase">Digital / UPI Payments</span>

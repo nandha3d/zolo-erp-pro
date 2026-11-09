@@ -162,13 +162,15 @@ class StockReportTest extends TestCase
         $response = $this->get(route('report.stock'));
         $response->assertOk();
         $html = $response->getContent();
+        $stylesheet = file_get_contents(public_path('css/pages/stock-report.css'));
 
         // 1. Assert exactly ONE .erp-print-header in the rendered HTML (no duplicate header overlay)
         $this->assertEquals(1, substr_count($html, 'class="erp-print-header"'), 'There must be exactly one .erp-print-header on the page');
 
         // 2. Assert screen flex unconstraining rules are present to prevent vertical clipping
-        $response->assertSee('html.app-shell #content > .report-workspace-view', false);
-        $response->assertSee('html.app-shell #content .report-workspace-view .desk-card-wrapper', false);
+        $response->assertSee('css/pages/stock-report.css', false);
+        $this->assertStringContainsString('html.app-shell #content > .report-workspace-view', $stylesheet);
+        $this->assertStringContainsString('html.app-shell #content .report-workspace-view .desk-card-wrapper', $stylesheet);
 
         // 3. Assert explicit 8-column layout classes for zero-overflow A4 print
         $response->assertSee('col-product', false);
@@ -186,13 +188,13 @@ class StockReportTest extends TestCase
         $response->assertSee('data-price-val', false);
 
         // 5. Assert print safety hides style and script tags to avoid raw CSS printing
-        $response->assertSee('style,', false);
+        $this->assertStringContainsString('style,', $stylesheet);
         $this->assertStringNotContainsString('<div id="content"><style>', $html);
 
         // 6. Assert Global Report Engine integration (data-erp-print and clean wrapped headers)
         $response->assertSee('data-erp-print', false);
         $response->assertSee('Stock Value (Cost)', false);
         $response->assertSee('Stock Value (Retail)', false);
-        $response->assertSee('margin: 0 !important;', false);
+        $this->assertStringContainsString('margin: 0 !important;', $stylesheet);
     }
 }

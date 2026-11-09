@@ -4,6 +4,7 @@
 
 - Local `main` and `ui` matched at `9d60d5a` before this commit. Both include the upgrade worktree tip `22fd2ff`.
 - The publication candidate includes the seven blank-line edits from the `ui` worktree. The database snapshot remains local and untracked. The push target is `origin/main`.
+- GitHub requires the ERP acceptance gate and a pull request for `main`. PR #5 publishes the integration. The first operations run flagged inline styles in four role dashboards and the stock report. The dashboards now use existing style classes. The stock report loads its styles in the document head and passes column widths through DataTables options.
 
 ## Remote UI Pull, Full Main Integration & Upgrade Worktree Parity Completed — 2026-11-09 (`ui` & `main` at `96653eb`)
 

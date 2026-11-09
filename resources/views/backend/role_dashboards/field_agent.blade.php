@@ -17,10 +17,10 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <span class="badge badge-primary p-2 px-3 text-uppercase font-weight-bold" style="font-size: 13px; letter-spacing: 0.5px; background-color: #4F46E5; color: white;">
+                                <span class="badge badge-primary p-2 px-3 text-uppercase font-weight-bold u-fs-13px u-ls-0_5px">
                                     <i class="fa fa-id-card-o mr-1"></i> Field Operations &amp; KYC Desk
                                 </span>
-                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold" style="font-size: 12px;">
+                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold u-fs-12px">
                                     <i class="fa fa-map-marker mr-1"></i> Active Beat Geocoding
                                 </span>
                             </div>
@@ -111,23 +111,23 @@
                                             <div><i class="fa fa-phone mr-1 text-muted"></i> <a href="tel:{{ $c['phone'] }}">{{ $c['phone'] }}</a></div>
                                             <small class="text-muted">{{ $c['city'] ?? 'Erode' }}</small>
                                         </td>
-                                        <td class="small text-muted" style="max-width: 250px;">{{ $c['address'] }}</td>
+                                        <td class="small text-muted u-maxw-250px">{{ $c['address'] }}</td>
                                         <td class="text-right">
                                             @if(($c['due_amount'] ?? 0) > 0)
-                                                <span class="badge badge-danger px-2 py-1" style="font-size: 12px;">
+                                                <span class="badge badge-danger px-2 py-1 u-fs-12px">
                                                     ₹ {{ number_format($c['due_amount'], 2) }}
                                                 </span>
                                             @else
-                                                <span class="badge badge-success px-2 py-1" style="font-size: 11px;">SETTLED</span>
+                                                <span class="badge badge-success px-2 py-1 u-fs-11px">SETTLED</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
                                             @if(!empty($c['latitude']) && !empty($c['longitude']))
-                                                <span class="badge badge-success px-2 py-1 small" style="font-size: 10px;">
+                                                <span class="badge badge-success px-2 py-1 small u-fs-10px">
                                                     <i class="fa fa-check-circle mr-1"></i> Geotagged
                                                 </span>
                                             @else
-                                                <span class="badge badge-warning px-2 py-1 small" style="font-size: 10px;">
+                                                <span class="badge badge-warning px-2 py-1 small u-fs-10px">
                                                     <i class="fa fa-exclamation-triangle mr-1"></i> No GPS Pin
                                                 </span>
                                             @endif

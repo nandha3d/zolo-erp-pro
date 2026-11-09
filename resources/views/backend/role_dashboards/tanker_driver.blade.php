@@ -17,10 +17,10 @@
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <span class="badge badge-info p-2 px-3 text-uppercase font-weight-bold" style="font-size: 13px; letter-spacing: 0.5px;">
+                                <span class="badge badge-info p-2 px-3 text-uppercase font-weight-bold u-fs-13px u-ls-0_5px">
                                     <i class="fa fa-truck mr-1"></i> {{ $manifest['vehicle']['vehicle_number'] ?? 'TN-58-BW-2001' }}
                                 </span>
-                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold" style="font-size: 12px;">
+                                <span class="badge badge-success p-2 px-3 text-uppercase font-weight-bold u-fs-12px">
                                     <i class="fa fa-lock mr-1"></i> Anti-Siphon Valve Secured
                                 </span>
                             </div>
@@ -82,7 +82,7 @@
                     </div>
 
                     @if(!empty($manifest['active_trip']))
-                        <div class="p-3 rounded-lg mb-3" style="background-color: #F8FAFC; border: 1px solid #E2E8F0;">
+                        <div class="p-3 rounded-lg mb-3 u-bg-surface-2 u-b-1px-solid-border">
                             <div class="row align-items-center">
                                 <div class="col-md-8">
                                     <h4 class="font-weight-bold text-dark m-0">{{ $manifest['active_trip']['customer_name'] }}</h4>
@@ -98,7 +98,7 @@
                                 </div>
                                 <div class="col-md-4 text-right">
                                     <div class="mb-2">
-                                        <span class="badge badge-pill badge-primary px-3 py-2" style="font-size: 13px;">
+                                        <span class="badge badge-pill badge-primary px-3 py-2 u-fs-13px">
                                             <i class="fa fa-tint mr-1"></i> {{ number_format($manifest['active_trip']['water_decanted_liters'] ?? 16000) }} Litres ({{ $manifest['active_trip']['water_quantity_kl'] ?? 16 }} KL)
                                         </span>
                                     </div>
@@ -145,7 +145,7 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <i class="fa fa-check-circle-o text-success" style="font-size: 48px;"></i>
+                            <i class="fa fa-check-circle-o text-success u-fs-48px"></i>
                             <h5 class="font-weight-bold mt-3">All Assigned Trips Completed</h5>
                             <p class="text-muted small">No pending bulk water deliveries currently assigned to this tanker.</p>
                         </div>
@@ -182,7 +182,7 @@
                         </li>
                     </ul>
 
-                    <div class="mt-4 p-3 rounded" style="background-color: #F0FDF4; border: 1px solid #BBF7D0;">
+                    <div class="mt-4 p-3 rounded u-bg-success-soft u-b-1px-solid-success-border">
                         <small class="text-success font-weight-600">
                             <i class="fa fa-info-circle mr-1"></i> Anti-siphon lock automatically releases only when geofence reaches registered customer delivery coordinates.
                         </small>
