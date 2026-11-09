@@ -1,5 +1,24 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## UI to Main and Upgrade Worktree Merges Completed — 2026-11-09 (`main`)
+
+- **Context & Safety Backups Established:**
+  - Git Branch Backups created locally and pushed to GitHub remote `origin`:
+    - `backup/main-pre-upgrade-merge-20261109` (points to `79a1d03`)
+    - `backup/ui-pre-upgrade-merge-20261109` (points to `4877236`)
+    - `backup/upgrade-pre-merge-20261109` (points to `22fd2ff`)
+  - Full Database SQL Snapshot exported to [`documents/backups/zoloerp_upgrade_backup_20261109_091503.sql`](file:///v:/pers/Freelance/zolo-erp-pro/documents/backups/zoloerp_upgrade_backup_20261109_091503.sql) (4.26 MB, 205 tables).
+- **Execution of Merge Sequence:**
+  1. **Phase 1: `ui` into `main`:**
+     - Cleanly merged commit `4877236` into `main` at `2111967`.
+     - Integrated 9-column Job Work Service Bill printout, authentic sample PDFs (`01_Sales_Return...` to `08_Bank_Account_Ledger...`), CLI generator `erp:generate-example-pdfs`, and shared ledger styling.
+  2. **Phase 2: `upgrade/laravel13-php85` into `main`:**
+     - Cleanly merged commit `22fd2ff` into `main` at `6fce22a`.
+     - Elevated `main` to **Laravel 13.40.0 on PHP 8.5.12**.
+     - Composer dependencies synchronized (`composer install`) and packages discovered cleanly.
+     - Routes cached (`php artisan route:cache`, 1,089 routes) and Blade templates compiled (`php artisan view:cache`) with 100% success.
+- **Verification:** Zero merge conflicts remaining across all application code, models, controllers, views, workflows, and configuration.
+
 ## End-to-End Comparison Test: UI Branch vs. Upgrade Worktree — 2026-11-09 (`upgrade/laravel13-php85`)
 
 - **Scope & Objective:** User requested a complete end-to-end comparison test between the `ui` branch (`V:\pers\Freelance\zolo-erp-pro`) and the upgrade worktree (`V:\pers\Freelance\zolo-erp-pro-upgrade`) to detect any bug or regression created during the Laravel 10 → 13 and PHP 8.5 upgrade.
