@@ -12,3 +12,4 @@ class MeApiController extends BaseApiController
         return app(AuthController::class)->me($request);
     }
 }
+

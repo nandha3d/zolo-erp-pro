@@ -1,5 +1,10 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Main publication candidate — 2026-11-09
+
+- Local `main` and `ui` matched at `9d60d5a` before this commit. Both include the upgrade worktree tip `22fd2ff`.
+- The publication candidate includes the seven blank-line edits from the `ui` worktree. The database snapshot remains local and untracked. The push target is `origin/main`.
+
 ## Remote UI Pull, Full Main Integration & Upgrade Worktree Parity Completed — 2026-11-09 (`ui` & `main` at `96653eb`)
 
 - **User Requests Addressed:**

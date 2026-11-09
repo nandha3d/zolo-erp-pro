@@ -36,3 +36,4 @@ class ExpenseApiController extends BaseApiController
         return $this->sendResponse($categories, 'Expense categories retrieved successfully');
     }
 }
+

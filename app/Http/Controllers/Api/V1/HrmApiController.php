@@ -32,3 +32,4 @@ class HrmApiController extends BaseApiController
         return $this->sendResponse([], 'Leave types retrieved successfully');
     }
 }
+

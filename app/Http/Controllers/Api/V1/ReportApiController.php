@@ -27,3 +27,4 @@ class ReportApiController extends BaseApiController
         return $this->sendResponse([], 'Customer ledger retrieved successfully');
     }
 }
+
