@@ -24,11 +24,12 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Stock Movements, Margins &amp; Valuation</span>
         </div>
         <ul class="comm-nav-pills">
-            <li><a class="nav-link" href="{{ url('report/sale_report') }}"><i class="dripicons-cart"></i> Sales Report</a></li>
-            <li><a class="nav-link" href="{{ url('report/purchase') }}"><i class="dripicons-basket"></i> Purchase Report</a></li>
+            <li><a class="nav-link" href="{{ route('report.stock') }}"><i class="dripicons-list"></i> Stock Report</a></li>
+            <li><a class="nav-link" href="{{ url('report/warehouse_stock') }}"><i class="dripicons-store"></i> Stock Chart</a></li>
             <li><a class="nav-link active" href="{{ url('report/product_report') }}"><i class="dripicons-box"></i> Product Report</a></li>
+            <li><a class="nav-link" href="{{ url('report/purchase') }}"><i class="dripicons-basket"></i> Purchase Report</a></li>
+            <li><a class="nav-link" href="{{ url('report/sale_report') }}"><i class="dripicons-cart"></i> Sales Report</a></li>
             <li><a class="nav-link" href="{{ route('report.qtyAlert') }}"><i class="dripicons-warning"></i> Qty Alerts</a></li>
-            <li><a class="nav-link" href="{{ route('report.productExpiry') }}"><i class="dripicons-hourglass"></i> Expiry Report</a></li>
         </ul>
         <div class="comm-actions">
             <button class="btn btn-secondary btn-action-pill" data-erp-print>

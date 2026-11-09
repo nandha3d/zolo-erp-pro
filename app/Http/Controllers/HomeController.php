@@ -249,6 +249,41 @@ class HomeController extends Controller
             return view('backend.customer_index', compact('customer', 'lims_sale_data', 'lims_payment_data', 'lims_quotation_data', 'lims_return_data', 'lims_reward_point_setting_data'));
         }
 
+        $user = Auth::user();
+        if ($user && ($user->role_id ?? 0) >= 4) {
+            $userName = strtolower(trim($user->name ?? ''));
+            $userEmail = strtolower(trim($user->email ?? ''));
+
+            $isTankerDriver = str_contains($userName, 'tanker') || str_contains($userEmail, 'tanker');
+            $isDeliveryDriver = (str_contains($userName, 'driver') || str_contains($userEmail, 'driver')) && !$isTankerDriver;
+            $isCashier = str_contains($userName, 'cashier') || str_contains($userEmail, 'cashier');
+            $isFieldAgent = str_contains($userName, 'agent') || str_contains($userEmail, 'agent') || str_contains($userName, 'field');
+
+            if ($isTankerDriver) {
+                $response = app(\App\Http\Controllers\Api\V1\WaterLogisticsApiController::class)->driverManifest($request);
+                $manifest = $response->getData(true)['data'] ?? [];
+                return view('backend.role_dashboards.tanker_driver', compact('manifest'));
+            }
+
+            if ($isDeliveryDriver) {
+                $response = app(\App\Http\Controllers\Api\V1\WaterLogisticsApiController::class)->driverManifest($request);
+                $manifest = $response->getData(true)['data'] ?? [];
+                return view('backend.role_dashboards.can_driver', compact('manifest'));
+            }
+
+            if ($isCashier) {
+                $response = app(\App\Http\Controllers\Api\V1\WaterLogisticsApiController::class)->roleDashboard($request, 'cashier');
+                $metrics = $response->getData(true)['data'] ?? [];
+                return view('backend.role_dashboards.cashier', compact('metrics'));
+            }
+
+            if ($isFieldAgent) {
+                $response = app(\App\Http\Controllers\Api\V1\WaterLogisticsApiController::class)->roleDashboard($request, 'fieldAgent');
+                $metrics = $response->getData(true)['data'] ?? [];
+                return view('backend.role_dashboards.field_agent', compact('metrics'));
+            }
+        }
+
         $context = $request->attributes->get(CompanyContext::class);
         $company = Company::findOrFail($context->companyId);
         $year = FiscalYear::where('company_id', $context->companyId)->findOrFail($context->financialYearId);
