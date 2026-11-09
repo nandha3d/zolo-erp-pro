@@ -175,6 +175,8 @@ class ReportController extends Controller
         $category_id = (int) $request->input('category_id', 0);
         $brand_id = (int) $request->input('brand_id', 0);
         $stock_status = (string) $request->input('stock_status', 'all');
+        $start_date = (string) ($request->input('start_date') ?: date('Y-m-01'));
+        $end_date = (string) ($request->input('end_date') ?: date('Y-m-d'));
 
         $lims_warehouse_list = Warehouse::where('is_active', true)
             ->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
@@ -201,6 +203,9 @@ class ReportController extends Controller
         }
         if ($brand_id > 0) {
             $productsQuery->where('brand_id', $brand_id);
+        }
+        if (!empty($end_date) && $end_date < date('Y-m-d')) {
+            $productsQuery->whereDate('products.created_at', '<=', $end_date);
         }
 
         $products = $productsQuery->orderBy('name')->get();
@@ -385,6 +390,8 @@ class ReportController extends Controller
             'category_id',
             'brand_id',
             'stock_status',
+            'start_date',
+            'end_date',
             'warehouseName',
             'categoryName',
             'brandName',
@@ -406,6 +413,8 @@ class ReportController extends Controller
         $category_id = (int) $request->input('category_id', 0);
         $brand_id = (int) $request->input('brand_id', 0);
         $stock_status = (string) $request->input('stock_status', 'all');
+        $start_date = (string) ($request->input('start_date') ?: date('Y-m-01'));
+        $end_date = (string) ($request->input('end_date') ?: date('Y-m-d'));
         $search = $request->input('search.value');
         $draw = (int) $request->input('draw', 1);
 
@@ -418,6 +427,9 @@ class ReportController extends Controller
         }
         if ($brand_id > 0) {
             $productsQuery->where('brand_id', $brand_id);
+        }
+        if (!empty($end_date) && $end_date < date('Y-m-d')) {
+            $productsQuery->whereDate('products.created_at', '<=', $end_date);
         }
         if (!empty($search)) {
             $productsQuery->where(function($q) use ($search) {

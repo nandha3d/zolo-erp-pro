@@ -513,7 +513,7 @@
             <li><a class="nav-link" href="{{ route('report.qtyAlert') }}"><i class="dripicons-warning"></i> Qty Alerts</a></li>
         </ul>
         <div class="comm-actions">
-            <button class="btn btn-secondary btn-action-pill" data-erp-print onclick="printStockReport(event)">
+            <button class="btn btn-secondary btn-action-pill" onclick="printStockReport(event)">
                 <i class="dripicons-print"></i> Print Statement
             </button>
             <button class="btn btn-primary btn-action-pill" onclick="exportStockCSV()">
@@ -580,6 +580,15 @@
     <div class="desk-filter-card d-print-none">
         {!! Form::open(['route' => 'report.stock', 'method' => 'get', 'id' => 'stock-filter-form', 'class' => 'form-inline d-flex align-items-center flex-wrap gap-2']) !!}
             <div class="form-group mr-2 mb-1">
+                <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-calendar"></i> {{ __('db.Choose Your Date') }}</label>
+                <div class="input-group">
+                    <input type="text" class="daterangepicker-field form-control form-control-sm u-h-30px u-fs-12px u-w-210px"
+                        value="{{ $start_date }} To {{ $end_date }}" required />
+                    <input type="hidden" name="start_date" value="{{ $start_date }}" />
+                    <input type="hidden" name="end_date" value="{{ $end_date }}" />
+                </div>
+            </div>
+            <div class="form-group mr-2 mb-1">
                 <label class="mr-2 font-weight-bold text-muted small"><i class="dripicons-store"></i> {{ __('db.Choose Warehouse') }}</label>
                 <select name="warehouse_id" class="form-control form-control-sm u-h-30px u-fs-12px u-minw-160px">
                     <option value="0">{{ __('db.All Warehouse') }}</option>
@@ -644,7 +653,7 @@
             </button>
         </div>
         <div class="text-muted small">
-            <span>Location: <strong>{{ $warehouseName }}</strong> | Category: <strong>{{ $categoryName }}</strong></span>
+            <span>Period: <strong>{{ date('d M Y', strtotime($start_date)) }} — {{ date('d M Y', strtotime($end_date)) }}</strong> | Location: <strong>{{ $warehouseName }}</strong> | Category: <strong>{{ $categoryName }}</strong></span>
         </div>
     </div>
 
@@ -785,30 +794,7 @@
             "paging": true,
             "pageLength": 25,
             "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            "dom": '<"row align-items-center mb-2"<"col-md-6 d-flex align-items-center gap-2"lB><"col-md-6 d-flex justify-content-end"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>',
-            "buttons": [
-                {
-                    extend: 'print',
-                    text: '<i title="print" class="fa fa-print text-primary"></i>',
-                    exportOptions: {
-                        columns: ':visible:not(.not-exported)',
-                        rows: ':visible'
-                    },
-                    action: function(e, dt, button, config) {
-                        $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
-                    },
-                    footer: true
-                },
-                {
-                    extend: 'csv',
-                    text: '<i title="export to csv" class="fa fa-file-text-o text-info"></i>',
-                    exportOptions: {
-                        columns: ':visible:not(.not-exported)',
-                        rows: ':visible'
-                    },
-                    footer: true
-                }
-            ],
+            "dom": '<"row align-items-center mb-2"<"col-md-6"l><"col-md-6 d-flex justify-content-end"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>',
             "language": {
                 "lengthMenu": '_MENU_ {{__("db.records per page")}}',
                 "info": '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
@@ -823,6 +809,18 @@
             ],
             "drawCallback": function() {
                 recalculateTotals();
+            }
+        });
+
+        // Initialize Date Range Picker
+        $(".daterangepicker-field").daterangepicker({
+            callback: function(startDate, endDate, period) {
+                var start_date = startDate.format('YYYY-MM-DD');
+                var end_date = endDate.format('YYYY-MM-DD');
+                var title = start_date + ' To ' + end_date;
+                $(this).val(title);
+                $('#stock-filter-form input[name="start_date"]').val(start_date);
+                $('#stock-filter-form input[name="end_date"]').val(end_date);
             }
         });
 
@@ -885,32 +883,21 @@
 
     function printStockReport(e) {
         if (e && e.preventDefault) e.preventDefault();
-        if (!stockTable) {
-            window.print();
-            return;
-        }
-
         $("[data-erp-print-title]").text("STOCK INVENTORY & VALUATION REPORT");
 
-        // 1. Prefer iframe printing via ErpPrint / DataTables Buttons if available
-        if (stockTable.buttons) {
-            var printBtn = stockTable.buttons('.buttons-print');
-            if (printBtn && printBtn.length) {
-                printBtn.trigger();
-                return;
-            }
-        }
+        if (stockTable) {
+            var prevLen = stockTable.page.len();
+            stockTable.page.len(-1).draw();
 
-        // 2. Direct browser print fallback: unwrap pagination and trigger window.print
-        var prevLen = stockTable.page.len();
-        stockTable.page.len(-1).draw();
-
-        setTimeout(function() {
-            window.print();
             setTimeout(function() {
-                stockTable.page.len(prevLen).draw();
-            }, 600);
-        }, 300);
+                window.print();
+                setTimeout(function() {
+                    stockTable.page.len(prevLen).draw();
+                }, 600);
+            }, 300);
+        } else {
+            window.print();
+        }
     }
 
     function exportStockCSV() {

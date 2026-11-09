@@ -1,5 +1,44 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-09: Stock Report Table Blank Screen Resolution & Date Range Filter Integration (branch ui)
+
+- **Client Requests Addressed:**
+  - *"continue where we left"* / *"also where is the date filter?"* with screenshot (`media_1794205876960_b65d72dc.png`):
+    - Stock inventory desk table was rendered completely blank/white inside `.desk-card-wrapper`.
+    - No date filter existed in the stock report filter card (unlike all other ERP reports).
+- **Root Cause Analysis:**
+  1. **DataTables Initialization Failure (TypeError in `buttons.printnew.js`):**
+     - In commit `52b7798`, `dom` was changed to include `lB` and an inline `buttons: [{ extend: 'print', ... }]` definition.
+     - In `vendor/datatable/buttons.printnew.js:126`, line `if (config.repeatingHead.logo)` was evaluated on button creation. Because `repeatingHead` was undefined on the generic button config, it threw an unhandled `TypeError: Cannot read properties of undefined (reading 'logo')`.
+     - This JavaScript exception crashed DataTables initialization before table drawing, leaving the `.desk-card-wrapper` table container completely empty.
+  2. **Missing Date Filter:**
+     - `ReportController::stockReport` only received `warehouse_id`, `category_id`, `brand_id`, and `stock_status`, omitting the standard date timeframe (`start_date` and `end_date`) expected by users and accountants.
+  3. **Composer Classmap Folder Name Stale Reference:**
+     - The vendor composer autoloader (`autoload_classmap.php`) had cached class paths targeting old project directory `D:\PROJECTS\WEBSITES\DK Enterprises\app\Http\Controllers\ReportController.php`. Running `composer dump-autoload` regenerated the classmaps cleanly for `zolo-erp-pro`.
+- **Architectural Solution & Implementation:**
+  1. **Restored Standard DataTables Initialization (`stock_report.blade.php`):**
+     - Reverted `dom` to clean standard:
+       `"dom": '<"row align-items-center mb-2"<"col-md-6"l><"col-md-6 d-flex justify-content-end"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>'`
+     - Removed redundant inline `buttons: [...]` array. `table-polish.js` now cleanly mounts the "Columns" visibility dropdown next to the search filter without DOM collisions or JS crashes.
+  2. **Integrated Standard ERP Date Range Picker (`stock_report.blade.php` & `ReportController.php`):**
+     - Filter Card: Added standard `.daterangepicker-field` input group with `start_date` and `end_date` hidden inputs.
+     - View Script: Attached `$(".daterangepicker-field").daterangepicker({...})` callback to update inputs on selection.
+     - Top Bar & Quick Info: Displays formatted timeframe `Period: 01 Jan 2026 — 09 Nov 2026 | Location: All Warehouses | Category: All Categories`.
+     - Controller: `ReportController::stockReport` and `stockReportData` now accept and sanitize `start_date` and `end_date` (defaulting to current month start and today), filtering active product catalogs by date if historical dates are specified.
+  3. **Robust Full-Document Multi-Page Printing (`printStockReport`):**
+     - When Print Statement is clicked, `stockTable.page.len(-1).draw()` unrolls all rows across all pages, triggers `window.print()` under the authoritative single letterhead with zero scrollbars, and restores pagination after 600ms.
+- **Verification & Test Coverage (100% Green):**
+  - `tests/Feature/StockReportTest.php`: 9/9 passed (59 assertions, 100%), including new test `test_stock_report_date_range_filter`.
+  - Full regression suite (42 tests, 223 assertions):
+    - `CustomerSupplierReportsNavigationTest`: 7/7 passed.
+    - `PartiesGlobalUiTest`: 11/11 passed.
+    - `OutstandingDuesAndGstTypeTest`: 8/8 passed.
+    - `VoucherPopupAndProductEnhancementsTest`: 8/8 passed.
+    - `SingleViewVoucherDeskTest`: 8/8 passed.
+    - Combined total: 51 tests, 282 assertions passing (100% green).
+  - View cache: `php artisan view:clear; php artisan view:cache` compiled with 100% success.
+
+
 ## Active Session & Follow-up — 2026-11-09: Stock Report Print Invisible Table Resolution, Duplicate Letterhead Elimination & Full Multi-Page A4 Inventory Layout (branch ui)
 
 - **Client Requests Addressed:**
