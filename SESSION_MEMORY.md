@@ -1,5 +1,23 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-09: Stock Report Print Invisible Table Resolution, Duplicate Letterhead Elimination & Full Multi-Page A4 Inventory Layout (branch ui)
+
+- **Client Requests Addressed:**
+  - *"why stocks are not showing in reports"* with screenshot (`media_1794204697732_e8e1f795.png`):
+    - Duplicate stacked company letterhead.
+    - Complete stock table missing, collapsed into a single-line horizontal/vertical scrollbar widget with 1/1 page limit.
+- **Root Cause Analysis & Resolution:**
+  1. **Duplicate Header Elimination:**
+     - Removed redundant in-view `<div class="erp-print-header">` so the single authoritative letterhead from `backend.layout.partials.print-letterhead.blade.php` prints cleanly with active company name, GSTIN, fiscal year, and metadata.
+  2. **App Shell Root Lockup & Container Overflow:**
+     - In `public/css/app-shell.css`, `html.app-shell`, `body`, `.page`, `.page-content`, and `#content` had `height: 100% / 100vh; overflow: hidden !important; display: flex !important;`. During Chromium printing, root containers locked at `100vh` clipped all overflowing content and forced children (`.table-responsive`, `.desk-card-wrapper`) to render as collapsed scroll containers on paper.
+     - In `public/css/erp-print.css` and `stock_report.blade.php`, comprehensively unlocked `html`, `body`, `.page`, `.page-content`, `#content`, `[class$="-workspace-view"]`, `.report-workspace-view`, `.desk-card-wrapper`, and `.table-responsive` with `height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; display: block !important; flex: none !important; position: static !important;`.
+  3. **`data-erp-print` Hidden Iframe Integration:**
+     - Wired `Print Statement` button to `data-erp-print` and DataTables Buttons (`buttons: [{ extend: 'print', ... }, { extend: 'csv', ... }]`). Now prints through `erp-print.js` hidden `<iframe>` (`.erp-print-doc`) with zero layout interference, clean Indian number formatting (`₹ 1,50,000.00`), running table headers, and signature blocks.
+     - Fallback: Direct browser printing (`Ctrl+P`) now unrolls all pages cleanly with zero scrollbars.
+- **Verification Status (100% Green):**
+  - `tests/Feature/StockReportTest.php`: 8/8 passed (53 assertions, 100%).
+
 ## Active Session & Follow-up — 2026-11-09: Stock Report Screen Bottom Cutoff Fix & Print Overlay Elimination (branch ui)
 
 - **Client Requests Addressed:**
