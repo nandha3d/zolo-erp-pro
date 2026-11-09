@@ -1,5 +1,40 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Remote UI Pull, Full Main Integration & Upgrade Worktree Parity Completed — 2026-11-09 (`ui` & `main` at `96653eb`)
+
+- **User Requests Addressed:**
+  - *"can you pull all the UI and merge everything from UI to the main? Now upgrade worktree are merged to main?"* with Herd screenshot (`media_1794211636007_5e9e7119.png`).
+- **Confirmation of Upgrade Worktree Status:**
+  - **YES, the upgrade worktree (`upgrade/laravel13-php85`) is 100% merged into `main`!**
+  - Commit `22fd2ff` was merged into `main` at `6fce22a` following full end-to-end regression tests and safety backups (`backup/main-pre-upgrade-merge-20261109`, `backup/ui-pre-upgrade-merge-20261109`, and SQL snapshot `documents/backups/zoloerp_upgrade_backup_20261109_091503.sql`).
+  - Active runtime: **Laravel 13.40.0 on PHP 8.5.12**.
+- **Remote UI Integration Sequence:**
+  1. **Remote Pull (`origin/ui` & `upstream/ui` at `7d90c80`):**
+     - Fetched remote commits including role-based operational dashboards (`can_driver`, `tanker_driver`, `cashier`, `field_agent`), stock valuation report (`resources/views/backend/report/stock_report.blade.php`), and water logistics APIs.
+     - Resolved conflicts cleanly in `public/css/erp-print.css` (unifying print margins with stock and ledger table geometries), `bootstrap/cache/packages.php` (removed for dynamic discovery), and `SESSION_MEMORY.md`.
+     - Committed merge on `ui` at `e5759d3`.
+  2. **Merge `ui` into `main`:**
+     - Cleanly merged `ui` into `main` without merge conflicts.
+  3. **Runtime & API Hardening Fixes Identified & Resolved:**
+     - **Missing API Controllers:** Commit `7d90c80` introduced routes referencing `MeApiController`, `ExpenseApiController`, `HrmApiController`, and `ReportApiController` without committing the controllers. Created standard controllers extending `BaseApiController` in `app/Http/Controllers/Api/V1/`.
+     - **Missing Columns in Database Schema:**
+       - Added migration `2026_11_07_000003_add_location_and_geofence_to_customers_table.php` (`latitude`, `longitude`, `geofence_radius` on `customers`).
+       - Added migration `2026_11_07_000004_add_fleet_metrics_to_water_tanker_tables.php` (`current_odometer_km`, `latitude`, `longitude` on `water_tankers`; `start_km`, `end_km` on `water_tanker_trips`).
+       - Added migration `2026_11_07_000005_add_delivery_lat_lng_to_water_can_deliveries.php` (`delivery_lat`, `delivery_lng` on `water_can_deliveries`).
+       - Added `"latitude"`, `"longitude"`, `"geofence_radius"` to `Customer::$fillable`.
+     - **Defensive Staff Seeding:** Guarded `2026_11_07_000002_seed_mobile_field_staff_users.php` against missing target company foreign key constraints.
+     - **Capability Gate for Mobile Public Endpoints:** In `CapabilityServiceProvider.php`, excluded `api.v1.mobile.login` and `api.v1.mobile.bootstrap` from forced `auth:sanctum` and `company.context` so mobile authentication functions correctly without pre-existing tokens.
+     - **Route Resolution:** Added missing `fleet.tracking` route to `routes/web.php` for driver operational dashboards.
+  4. **Parity Alignment (`main` -> `ui`):**
+     - Fast-forward merged `main` into `ui` at commit `96653eb`. Both branches are completely synchronized.
+- **Verification & Test Coverage (100% Green):**
+  - `StockReportTest`: 9/9 passed (67 assertions).
+  - `RoleDashboardIsolationTest`: 7/7 passed (80 assertions).
+  - `DriverIsolationAndLocationTest`: 8/8 passed (46 assertions).
+  - Full core suites (`CustomerSupplierReportsNavigationTest`, `PartiesGlobalUiTest`, `OutstandingDuesAndGstTypeTest`, `ManufacturingJobWorkTest`): 100% green.
+  - Route compilation: `php artisan route:cache` serialized all 1,118 routes cleanly.
+  - View compilation: `php artisan view:cache` compiled 100% with 0 errors.
+
 ## UI to Main and Upgrade Worktree Merges Completed — 2026-11-09 (`main`)
 
 - **Context & Safety Backups Established:**
