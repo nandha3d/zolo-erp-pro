@@ -40,6 +40,40 @@
   - Connected to isolated database `zoloerp_upgrade` on MariaDB/MySQL port 3306.
 - **Verification:** Both `http://zolo-erp-upgrade.test/login` (Herd) and `http://localhost:8080/login` return HTTP 200 OK with `<title>zoloERP Pro — Sign In</title>`.
 
+## Upgrade Worktree Localhost & Herd Linking — 2026-11-09 (upgrade/laravel13-php85)
+
+- **Context & User Request:** User requested to start the local host with the upgrade worktree (V:\pers\Freelance\zolo-erp-pro-upgrade) used for Laravel 13 and PHP 8.5, sharing a screenshot of Herd.
+- **Herd Sites Linked & Isolated:**
+  - http://zolo-erp-upgrade.test -> V:\pers\Freelance\zolo-erp-pro-upgrade (PHP 8.5 isolated, Nginx port 80).
+  - http://zolo-erp-pro-upgrade.test -> V:\pers\Freelance\zolo-erp-pro-upgrade (PHP 8.5 isolated, Nginx port 80).
+  - DNS entries automatically provisioned in Windows hosts (127.0.0.1 zolo-erp-upgrade.test).
+- **Artisan Serve Localhost Daemon:**
+  - Started background daemon on http://127.0.0.1:8080 (and http://localhost:8080) from V:\pers\Freelance\zolo-erp-pro-upgrade.
+  - Connected to isolated database zoloerp_upgrade on MariaDB/MySQL port 3306.
+- **Verification:** Both http://zolo-erp-upgrade.test/login (Herd) and http://localhost:8080/login return HTTP 200 OK with <title>zoloERP Pro — Sign In</title>.
+
+## PR #4 review fixes — 2026-11-09 (upgrade/laravel13-php85)
+
+- Returned PR #4 to draft while revalidating review findings. Commit fdf0c89 was pushed to the upgrade branch. GitHub acceptance run 42580211190 passed all nine jobs and the aggregate gate. PR #4 is ready for review and remains unmerged.
+- Catalog-only Textile seeding now skips existing products without changing product or warehouse quantities. The disposable MySQL test verifies 250 units remain in both tables with zero ledger movements.
+- Restored the Sales dialog markup from main, including the shared quick-create product include and its category and brand dialogs. The new Playwright test passed in Edge with multi-item selection, saved row detail, and intercepted quick-create party and product submissions.
+- Corrected Carbon 3 date differences and preserved Carbon 2 whole-minute and whole-day truncation. The payroll and due-view regression tests passed on a disposable MySQL fixture.
+- The legacy MySQL bootstrap now clears Laravel's global handlers before PHPUnit starts, and the suite fails on risky tests. Collection tests use stubs for return-only doubles and the company suite fails on PHPUnit notices.
+- VPS preflight run 42580258086 passed for fdf0c89. The live release and its scheduler were not changed. The user asked to hold the merge.
+
+
+## Laravel 13 release acceptance and VPS rehearsal — 2026-11-08 (upgrade/laravel13-php85)
+
+- [PR #4](https://github.com/vigneshsinna/zolo-erp-pro/pull/4) targets main. Main requires the strict ERP acceptance gate, including all seven acceptance suites and clean migrations on MySQL 8.0 and 8.4.
+- The branch requires PHP 8.5.12 or later in the 8.5 series, removes Composer's PHP 8.3.20 override, restores default advisory blocking, and audits the lock in CI. Fresh checkouts regenerate application and module caches. CI checks pending application and Manufacturing migrations by name.
+- Fixed release regressions found in CI and staging. Sales and purchase grids now initialize with ordinary, search, and reference URLs. The ledger views reuse the shared stylesheet. Collections use Brick Math's HalfUp enum case, preserving the prior rounding behavior.
+- VPS preflight passed for 038a27c in GitHub Actions run 42482801390. PHP 8.5.12 CLI and a separate ERP FPM pool are installed alongside PHP 8.3. The active ERP vhost, scheduler, and release 79a1d03 still use PHP 8.3. Prepared cutover and rollback scheduler configurations, and verified Laravel's PHP 8.5 schedule list.
+- Verified and restored an encrypted local VPS backup on MySQL 8.0.46 (205 tables and six verified archive entries). Tested on a private copy with primary identity fields masked and tokens cleared. Application and Manufacturing had no pending migrations. Stock, trial balance, AR/AP, sales and purchase fingerprints matched. Both the candidate and rollback releases rendered login through their own FPM pools.
+- Playwright verified both bill grids, intercepted Review and Save, a hydrated purchase voucher, and A4 customer and supplier ledger rendering. The maintenance rehearsal returned 503 without a bypass cookie and rendered login with it. Removed the temporary restore database, login, checkouts, and extracts. The encrypted backup and restore receipt remain on the VPS. No off-site backup destination is configured.
+- Acceptance run 42482762096 passed for 038a27c. All seven acceptance suites, both clean MySQL migration jobs and the aggregate gate passed. PR #4 was marked ready for review on 2026-11-09. Production cutover requires an accepted main SHA, an explicit manual dispatch, and the release window steps in deploy/README.md.
+- Preserved the user's pre-existing uncommitted TextileCompanyMigrationTest.php formatting changes. No edits were made in the ui checkout.
+
+
 ## Audit Review Hardening, Fresh-DB CI Fix & Merge Readiness Complete — 2026-11-08 (commit `91be69f` on `upgrade/laravel13-php85`)
 
 Addressed all audit items and CI blockers identified during the static source-code review:
@@ -98,6 +132,7 @@ Addressed all 6 audit priorities identified during static source-code and GitHub
   - Carried out sequential, step-by-step upgrade (**10 → 11 → 12 → 13**) inside dedicated worktree `v:\pers\Freelance\zolo-erp-pro-upgrade` on branch `upgrade/laravel13-php85` with an isolated MariaDB database `zoloerp_upgrade` on port 3306.
   - Active workspace `v:\pers\Freelance\zolo-erp-pro` remains clean on branch `ui`.
   - Pushed branch `upgrade/laravel13-php85` to GitHub remote `origin`: `https://github.com/vigneshsinna/zolo-erp-pro/pull/new/upgrade/laravel13-php85`.
+
 - **Milestone Checkpoints & Git Commits:**
   1. **Checkpoint A (Commit `5459a8f`): Laravel 10 → 11.57.1:**
      - Replaced abandoned `laravelcollective/html` with drop-in fork `konekt/html: ^6.5` (version `6.8.0`), preserving all ~100 Blade views using `Form::` and `Html::` with zero template rewrites.
@@ -3793,7 +3828,6 @@ User: People, HRM and Settings did not follow the modern UI; add a developer rol
 - Merged the bill fix, voucher previews, and global print changes into the production branch candidate. Resolved the ledger view conflicts by sharing the page stylesheet while keeping the print party card, signatures, and global letterhead.
 - Kept the production branch's existing acceptance repairs. Voucher popup text is escaped before rendering and the related user response contains only the ID and name. Design, error help, voucher popup, and ledger navigation tests passed on the merged tree.
 - The local customer ledger debug edits and generated render error capture are workspace diagnostics and remain local.
-
 - A second integration picked up the ledger print commit that landed during acceptance. Its print layout rules remain separate from screen styles. Ledger tables temporarily restore all columns for printing and restore the user's previous screen visibility afterward. Chrome verified all eight print columns at 794 px for both ledgers, and ledger feature and design checks passed.
 
 ## Bill and UI release rollout — 2026-11-06 (branch ui)

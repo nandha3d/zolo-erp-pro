@@ -65,3 +65,6 @@ foreach (App\Models\Company::pluck('id') as $companyId) {
 Illuminate\Support\Facades\DB::purge('mysql');
 Illuminate\Support\Facades\Facade::clearResolvedInstances();
 Mockery::close();
+
+// Laravel installed process-wide handlers during fixture preparation.
+Illuminate\Foundation\Bootstrap\HandleExceptions::flushState();

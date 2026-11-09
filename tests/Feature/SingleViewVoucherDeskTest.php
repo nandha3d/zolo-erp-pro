@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -23,7 +24,24 @@ class SingleViewVoucherDeskTest extends TestCase
         $this->actingAs($this->adminUser);
 
         $company = Company::find(14) ?? Company::first();
-        session(['company_id' => $company->id]);
+        if ($company) {
+            if (!$company->users()->where('users.id', $this->adminUser->id)->exists()) {
+                $company->users()->attach($this->adminUser->id, ['is_default' => true]);
+            }
+            $branch = $company->branches()->first() ?? $company->branches()->create(['code' => 'MAIN', 'name' => 'Main Branch']);
+            DB::table('company_user_branches')->updateOrInsert(
+                ['company_id' => $company->id, 'user_id' => $this->adminUser->id, 'branch_id' => $branch->id],
+                ['company_id' => $company->id, 'user_id' => $this->adminUser->id, 'branch_id' => $branch->id]
+            );
+            $year = \App\Models\Accounting\FiscalYear::where('company_id', $company->id)->first() ?? \App\Models\Accounting\FiscalYear::create([
+                'company_id' => $company->id, 'name' => 'FY 2026', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'status' => 'open'
+            ]);
+            $this->withSession([
+                'company_id' => $company->id,
+                'branch_id' => $branch->id,
+                'financial_year_id' => $year->id,
+            ]);
+        }
     }
 
     public function test_purchase_edit_redirects_to_single_view_workspace(): void

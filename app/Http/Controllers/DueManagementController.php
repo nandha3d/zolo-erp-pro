@@ -107,8 +107,8 @@ class DueManagementController extends Controller
                 $invoiceDate = Carbon::parse($sale->created_at);
                 $dueDate = (clone $invoiceDate)->addDays($creditDays);
                 $isOverdue = $today->greaterThan($dueDate);
-                $daysOverdue = $isOverdue ? $today->diffInDays($dueDate) : 0;
-                $daysLeft = !$isOverdue ? $dueDate->diffInDays($today) : 0;
+                $daysOverdue = $isOverdue ? (int) $dueDate->diffInDays($today, false) : 0;
+                $daysLeft = !$isOverdue ? (int) $today->diffInDays($dueDate, false) : 0;
 
                 if ($dueFilter === 'overdue' && !$isOverdue) continue;
                 if ($dueFilter === 'unpaid' && $paid > 0.009) continue;
@@ -195,8 +195,8 @@ class DueManagementController extends Controller
                 $invoiceDate = Carbon::parse($purchase->created_at);
                 $dueDate = (clone $invoiceDate)->addDays($creditDays);
                 $isOverdue = $today->greaterThan($dueDate);
-                $daysOverdue = $isOverdue ? $today->diffInDays($dueDate) : 0;
-                $daysLeft = !$isOverdue ? $dueDate->diffInDays($today) : 0;
+                $daysOverdue = $isOverdue ? (int) $dueDate->diffInDays($today, false) : 0;
+                $daysLeft = !$isOverdue ? (int) $today->diffInDays($dueDate, false) : 0;
 
                 if ($dueFilter === 'overdue' && !$isOverdue) continue;
                 if ($dueFilter === 'unpaid' && $paid > 0.009) continue;

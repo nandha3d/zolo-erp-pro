@@ -11,6 +11,7 @@ use App\Models\Product_Warehouse;
 use App\Services\Platform\CompanyContext;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
@@ -96,11 +97,11 @@ class InventoryMovementService
     /** Empty projection metadata preserves legacy warehouse product selectors; it has no stock effect. */
     public function initializeWarehouse(int $warehouseId, ?CompanyContext $context = null): void
     {
-        $this->shadow->paused(fn () => DB::transaction(function () use ($warehouseId, $context) {
+        $this->shadow->paused(fn() => DB::transaction(function () use ($warehouseId, $context) {
             $companyId = $this->companyFor($context, [$warehouseId]);
             $query = Product::query();
             if ($companyId !== null && $this->hasColumn('products', 'company_id')) {
-                $query->where(fn ($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'));
+                $query->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'));
             }
             foreach ($query->orderBy('id')->lockForUpdate()->get() as $product) {
                 $this->warehouseRow($companyId, $product->id, $warehouseId, null, null)->save();
@@ -115,23 +116,38 @@ class InventoryMovementService
      *
      * @param array<int, array{product_id:int, warehouse_id:int, value:float, batch_id?:?int, variant_id?:?int}> $lines
      */
-    public function revalue(string $date, array $lines, string $sourceType, int $sourceId, ?string $sourceNo, string $idempotencyKey,
-        ?int $userId, CompanyContext $context, ?string $reason = null): StockMovement
-    {
-        return $this->shadow->paused(fn () => DB::transaction(function () use ($date, $lines, $sourceType, $sourceId, $sourceNo, $idempotencyKey, $userId, $context, $reason) {
+    public function revalue(
+        string $date,
+        array $lines,
+        string $sourceType,
+        int $sourceId,
+        ?string $sourceNo,
+        string $idempotencyKey,
+        ?int $userId,
+        CompanyContext $context,
+        ?string $reason = null
+    ): StockMovement {
+        return $this->shadow->paused(fn() => DB::transaction(function () use ($date, $lines, $sourceType, $sourceId, $sourceNo, $idempotencyKey, $userId, $context, $reason) {
             if ($existing = $this->replay('revaluation', $idempotencyKey)) {
                 return $existing;
             }
-            $lines = array_values(array_filter($lines, fn ($line) => abs((float) $line['value']) >= 0.0001));
+            $lines = array_values(array_filter($lines, fn($line) => abs((float) $line['value']) >= 0.0001));
             if ($lines === []) {
                 throw new InvalidArgumentException('A revaluation needs at least one non-zero value.');
             }
-            $companyId = $this->companyFor($context, array_values(array_unique(array_map(fn ($line) => (int) $line['warehouse_id'], $lines))));
+            $companyId = $this->companyFor($context, array_values(array_unique(array_map(fn($line) => (int) $line['warehouse_id'], $lines))));
             $this->lockProducts(array_column($lines, 'product_id'), $companyId);
             $movement = $this->createHeader('revaluation', [
-                'company_id' => $companyId, 'branch_id' => $context->branchId, 'financial_year_id' => $context->financialYearId,
-                'movement_date' => Carbon::parse($date)->toDateString(), 'source_type' => $sourceType, 'source_id' => $sourceId,
-                'source_no' => $sourceNo, 'idempotency_key' => $idempotencyKey, 'reason' => $reason, 'created_by' => $userId,
+                'company_id' => $companyId,
+                'branch_id' => $context->branchId,
+                'financial_year_id' => $context->financialYearId,
+                'movement_date' => Carbon::parse($date)->toDateString(),
+                'source_type' => $sourceType,
+                'source_id' => $sourceId,
+                'source_no' => $sourceNo,
+                'idempotency_key' => $idempotencyKey,
+                'reason' => $reason,
+                'created_by' => $userId,
                 'projection_mode' => 'applied',
             ]);
             $this->valueLines($movement, $lines, 1);
@@ -146,10 +162,19 @@ class InventoryMovementService
         foreach ($lines as $line) {
             $line = (array) $line;
             StockMovementLine::create([
-                'stock_movement_id' => $movement->id, 'company_id' => $movement->company_id, 'line_no' => ++$lineNo,
-                'product_id' => (int) $line['product_id'], 'variant_id' => $line['variant_id'] ?? null, 'warehouse_id' => (int) $line['warehouse_id'],
-                'uom_id' => null, 'uom_qty' => null, 'qty_base' => 0, 'unit_cost' => 0, 'value' => round($sign * (float) $line['value'], 4),
-                'batch_id' => $line['batch_id'] ?? null, 'stock_identity_id' => null,
+                'stock_movement_id' => $movement->id,
+                'company_id' => $movement->company_id,
+                'line_no' => ++$lineNo,
+                'product_id' => (int) $line['product_id'],
+                'variant_id' => $line['variant_id'] ?? null,
+                'warehouse_id' => (int) $line['warehouse_id'],
+                'uom_id' => null,
+                'uom_qty' => null,
+                'qty_base' => 0,
+                'unit_cost' => 0,
+                'value' => round($sign * (float) $line['value'], 4),
+                'batch_id' => $line['batch_id'] ?? null,
+                'stock_identity_id' => null,
                 'attributes_json' => ($line['attributes_json'] ?? null) ? (is_string($line['attributes_json']) ? json_decode($line['attributes_json'], true) : $line['attributes_json']) : null,
             ]);
         }
@@ -161,7 +186,7 @@ class InventoryMovementService
             throw new InvalidArgumentException('A stock reversal needs a reason.');
         }
 
-        return $this->shadow->paused(fn () => DB::transaction(function () use ($movement, $reason, $userId, $date) {
+        return $this->shadow->paused(fn() => DB::transaction(function () use ($movement, $reason, $userId, $date) {
             $original = StockMovement::whereKey($movement instanceof StockMovement ? $movement->id : $movement)
                 ->lockForUpdate()->firstOrFail();
             if ($original->movement_type === 'reversal') {
@@ -175,12 +200,20 @@ class InventoryMovementService
                 // Value-only lines carry no quantity, so they are negated by value rather than rebuilt from qty × cost.
                 $this->lockProducts($lines->pluck('product_id')->all(), $original->company_id);
                 $reversal = $this->createHeader('reversal', [
-                    'company_id' => $original->company_id, 'branch_id' => $original->branch_id, 'financial_year_id' => $original->financial_year_id,
-                    'movement_date' => Carbon::parse($date ?? now())->toDateString(), 'source_type' => $original->source_type,
-                    'source_id' => $original->source_id, 'source_no' => $original->source_no, 'reversal_of_id' => $original->id,
-                    'idempotency_key' => 'reversal:'.$original->id, 'reason' => $reason, 'created_by' => $userId, 'projection_mode' => 'applied',
+                    'company_id' => $original->company_id,
+                    'branch_id' => $original->branch_id,
+                    'financial_year_id' => $original->financial_year_id,
+                    'movement_date' => Carbon::parse($date ?? now())->toDateString(),
+                    'source_type' => $original->source_type,
+                    'source_id' => $original->source_id,
+                    'source_no' => $original->source_no,
+                    'reversal_of_id' => $original->id,
+                    'idempotency_key' => 'reversal:' . $original->id,
+                    'reason' => $reason,
+                    'created_by' => $userId,
+                    'projection_mode' => 'applied',
                 ]);
-                $this->valueLines($reversal, $lines->map(fn ($line) => $line->only(['product_id', 'variant_id', 'warehouse_id', 'value', 'batch_id', 'attributes_json'])), -1);
+                $this->valueLines($reversal, $lines->map(fn($line) => $line->only(['product_id', 'variant_id', 'warehouse_id', 'value', 'batch_id', 'attributes_json'])), -1);
                 $original->status = 'reversed';
                 $original->save();
                 return $reversal->load('lines');
@@ -198,7 +231,7 @@ class InventoryMovementService
                 'warehouse_from_id' => $original->warehouse_to_id,
                 'warehouse_to_id' => $original->warehouse_from_id,
                 'reversal_of_id' => $original->id,
-                'idempotency_key' => 'reversal:'.$original->id,
+                'idempotency_key' => 'reversal:' . $original->id,
                 'reason' => $reason,
                 'created_by' => $userId,
                 'projection_mode' => $original->projection_mode ?? 'applied',
@@ -208,7 +241,7 @@ class InventoryMovementService
             $run = new PostingRun($reversal, $original->company_id, !$describes, 'removed', $original->projection_mode === 'shadow');
 
             // Remove stock before restoring it so identities never appear in two places.
-            foreach ($lines->sortBy(fn ($line) => [(float) $line->qty_base > 0 ? 0 : 1, $line->line_no]) as $line) {
+            foreach ($lines->sortBy(fn($line) => [(float) $line->qty_base > 0 ? 0 : 1, $line->line_no]) as $line) {
                 $this->postLine($run, $products[$line->product_id], [
                     'warehouse_id' => (int) $line->warehouse_id,
                     'qty' => -(float) $line->qty_base,
@@ -232,7 +265,7 @@ class InventoryMovementService
     {
         // The service's own projection writes are never captured as legacy shadow changes.
         $ledgerType ??= $type;
-        return $this->shadow->paused(fn () => DB::transaction(function () use ($type, $ledgerType, $command) {
+        return $this->shadow->paused(fn() => DB::transaction(function () use ($type, $ledgerType, $command) {
             if ($command->idempotencyKey !== null && ($existing = $this->replay($ledgerType, $command->idempotencyKey))) {
                 return $existing;
             }
@@ -252,7 +285,7 @@ class InventoryMovementService
                 $warehouseIds[] = $warehouseId;
             }
             $companyId = $this->companyFor($command->context, array_values(array_unique($warehouseIds)));
-            $products = $this->lockProducts(array_map(fn (StockLine $line) => $line->productId, $command->lines), $companyId);
+            $products = $this->lockProducts(array_map(fn(StockLine $line) => $line->productId, $command->lines), $companyId);
 
             $movement = $this->createHeader($ledgerType, [
                 'company_id' => $companyId,
@@ -269,12 +302,20 @@ class InventoryMovementService
                 'created_by' => $command->userId,
                 'projection_mode' => $command->shadow ? 'shadow' : 'applied',
             ]);
-            $run = new PostingRun($movement, $companyId, $type !== 'opening' && !$command->shadow,
-                $type === 'issue' ? StockIdentity::ISSUED : 'removed', $command->shadow, $command->purpose);
+            $run = new PostingRun(
+                $movement,
+                $companyId,
+                $type !== 'opening' && !$command->shadow,
+                $type === 'issue' ? StockIdentity::ISSUED : 'removed',
+                $command->shadow,
+                $command->purpose
+            );
             // Only taking goods OUT of quarantine is restricted; moving rejects or damaged goods INTO it is its purpose.
-            if (!$command->shadow && in_array($type, ['issue', 'transfer'], true) && $this->hasColumn('warehouses', 'is_quarantine')
+            if (
+                !$command->shadow && in_array($type, ['issue', 'transfer'], true) && $this->hasColumn('warehouses', 'is_quarantine')
                 && DB::table('warehouses')->whereIn('id', $type === 'transfer' ? [$from] : $warehouseIds)->where('is_quarantine', true)->exists()
-                && !in_array($command->purpose, ['disposal', 'purchase_return', 'rework'], true)) {
+                && !in_array($command->purpose, ['disposal', 'purchase_return', 'rework'], true)
+            ) {
                 throw new StockPolicyException('Quarantined stock cannot be sold or transferred through ordinary stock operations.');
             }
 
@@ -330,7 +371,7 @@ class InventoryMovementService
         // Openings mirror legacy projections, which may already be negative.
         $signed = $type === 'adjustment' || $type === 'opening';
         if (abs($qty) <= self::EPSILON || (!$signed && $qty < 0)) {
-            throw new InvalidArgumentException("Stock quantity for product {$product->id} must be ".($signed ? 'nonzero.' : 'positive.'));
+            throw new InvalidArgumentException("Stock quantity for product {$product->id} must be " . ($signed ? 'nonzero.' : 'positive.'));
         }
         $direction = $type === 'issue' || ($signed && $qty < 0) ? -1 : 1;
         $qty = abs($qty);
@@ -342,40 +383,63 @@ class InventoryMovementService
         $this->assertVariant($product, $line->variantId, $type, $run);
         // A sales line without a chosen lot consumes the product's combined warehouse stock.
         // Keep each actual lot in the movement so valuation, reversals and returns remain traceable.
-        if ($type === 'issue' && !$run->shadow && in_array($command->sourceType, ['sale', 'legacy:sales'], true)
+        if (
+            $type === 'issue' && !$run->shadow && in_array($command->sourceType, ['sale', 'legacy:sales'], true)
             && $line->batchId === null && $line->batch === null && $line->identityId === null
-            && $line->serials === [] && !$product->is_imei) {
+            && $line->serials === [] && !$product->is_imei
+        ) {
             $rows = Product_Warehouse::where('product_id', $product->id)->where('warehouse_id', $warehouseId)
                 ->where('company_id', $run->companyId)
-                ->where(fn ($q) => $line->variantId === null ? $q->whereNull('variant_id')->orWhere('variant_id', 0) : $q->where('variant_id', $line->variantId))
+                ->where(fn($q) => $line->variantId === null ? $q->whereNull('variant_id')->orWhere('variant_id', 0) : $q->where('variant_id', $line->variantId))
                 ->where('qty', '>', self::EPSILON)->orderBy('id')->lockForUpdate()->get();
-            if ($product->is_batch || $rows->contains(fn ($row) => (bool) $row->product_batch_id)) {
+            if ($product->is_batch || $rows->contains(fn($row) => (bool) $row->product_batch_id)) {
                 $batches = DB::table('product_batches')->where('product_id', $product->id)
                     ->where('company_id', $run->companyId)->get()->keyBy('id');
-                $rows = $rows->sortBy(fn ($row) => ($batches->get($row->product_batch_id)->expired_date ?? '9999-12-31').sprintf(':%010d', $row->id));
+                $rows = $rows->sortBy(fn($row) => ($batches->get($row->product_batch_id)->expired_date ?? '9999-12-31') . sprintf(':%010d', $row->id));
                 $remaining = $qty;
                 foreach ($rows as $row) {
                     $batch = $batches->get($row->product_batch_id);
-                    if ($row->product_batch_id && (!$batch || (isset($batch->status) && $batch->status !== 'active'))) continue;
-                    if (!$row->product_batch_id && $product->is_batch) continue;
-                    if ($batch && $batch->expired_date && substr($batch->expired_date, 0, 10) < $command->date
-                        && $this->policy->expiredBatch($run->companyId) === 'block') continue;
+                    if ($row->product_batch_id && (!$batch || (isset($batch->status) && $batch->status !== 'active')))
+                        continue;
+                    if (!$row->product_batch_id && $product->is_batch)
+                        continue;
+                    if (
+                        $batch && $batch->expired_date && substr($batch->expired_date, 0, 10) < $command->date
+                        && $this->policy->expiredBatch($run->companyId) === 'block'
+                    )
+                        continue;
                     $take = min($remaining, (float) $row->qty);
-                    if ($take <= self::EPSILON) continue;
-                    $picked = new StockLine($line->productId, abs($line->qty) * $take / $qty,
-                        $line->warehouseId, $line->variantId, $row->product_batch_id ?: null, $line->unitCost,
-                        $line->uomId, attributes: $line->attributes);
+                    if ($take <= self::EPSILON)
+                        continue;
+                    $picked = new StockLine(
+                        $line->productId,
+                        abs($line->qty) * $take / $qty,
+                        $line->warehouseId,
+                        $line->variantId,
+                        $row->product_batch_id ?: null,
+                        $line->unitCost,
+                        $line->uomId,
+                        attributes: $line->attributes
+                    );
                     // Unbatched stock needs no further expansion.
                     if (!$row->product_batch_id) {
-                        yield ['warehouse_id' => $warehouseId, 'qty' => -$take,
-                            'uom_qty' => $line->uomId === null ? null : -$picked->qty, 'unit_cost' => null,
-                            'variant_id' => $line->variantId, 'batch_id' => null, 'identity' => null,
-                            'uom_id' => $line->uomId, 'attributes' => $line->attributes];
+                        yield [
+                            'warehouse_id' => $warehouseId,
+                            'qty' => -$take,
+                            'uom_qty' => $line->uomId === null ? null : -$picked->qty,
+                            'unit_cost' => null,
+                            'variant_id' => $line->variantId,
+                            'batch_id' => null,
+                            'identity' => null,
+                            'uom_id' => $line->uomId,
+                            'attributes' => $line->attributes
+                        ];
                     } else {
                         yield from $this->expand($type, $command, $picked, $product, $run);
                     }
                     $remaining = round($remaining - $take, 4);
-                    if ($remaining <= self::EPSILON) return;
+                    if ($remaining <= self::EPSILON)
+                        return;
                 }
                 throw new StockPolicyException("Insufficient combined lot stock for {$product->name} in warehouse {$warehouseId}.");
             }
@@ -475,8 +539,13 @@ class InventoryMovementService
         $row = $this->warehouseRow($run->companyId, $product->id, $warehouseId, $posting['variant_id'], $posting['batch_id']);
         $after = (float) $row->qty + $qty;
         if ($qty < 0 && $after < -self::EPSILON) {
-            $message = sprintf('Insufficient stock for product %d in warehouse %d: %s available, %s requested.',
-                $product->id, $warehouseId, round((float) $row->qty, 4) + 0, -$qty);
+            $message = sprintf(
+                'Insufficient stock for product %d in warehouse %d: %s available, %s requested.',
+                $product->id,
+                $warehouseId,
+                round((float) $row->qty, 4) + 0,
+                -$qty
+            );
             match ($this->policy->negativeStock($run->companyId, $product)) {
                 'block' => throw new StockPolicyException($message),
                 'warn' => $run->warnings[] = $message,
@@ -509,7 +578,7 @@ class InventoryMovementService
         $query = Product_Warehouse::withoutGlobalScope('request_company')->where('product_id', $productId)->where('warehouse_id', $warehouseId);
         foreach (['variant_id' => $variantId, 'product_batch_id' => $batchId] as $column => $value) {
             $value === null
-                ? $query->where(fn ($q) => $q->whereNull($column)->orWhere($column, 0))
+                ? $query->where(fn($q) => $q->whereNull($column)->orWhere($column, 0))
                 : $query->where($column, $value);
         }
         // Ambiguous or foreign projection rows must be reconciled before any posting touches them.
@@ -519,7 +588,7 @@ class InventoryMovementService
         }
         $rows = $query->orderBy('id')->lockForUpdate()->get();
         $foreign = $companyId !== null && $this->hasColumn('product_warehouse', 'company_id')
-            && $rows->contains(fn ($row) => (int) $row->company_id !== $companyId);
+            && $rows->contains(fn($row) => (int) $row->company_id !== $companyId);
         if ($rows->count() > 1 || $foreign) {
             throw new StockPolicyException("Stock ownership or identity of product {$productId} in warehouse {$warehouseId} requires reconciliation.");
         }
@@ -527,8 +596,11 @@ class InventoryMovementService
             return $row;
         }
         $row = (new Product_Warehouse)->forceFill([
-            'product_id' => $productId, 'warehouse_id' => $warehouseId,
-            'variant_id' => $variantId, 'product_batch_id' => $batchId, 'qty' => 0,
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+            'variant_id' => $variantId,
+            'product_batch_id' => $batchId,
+            'qty' => 0,
         ]);
         if ($this->hasColumn('product_warehouse', 'company_id')) {
             $row->company_id = $companyId;
@@ -579,7 +651,7 @@ class InventoryMovementService
         }
         $date = $run->movement->movement_date->toDateString();
         if ($type === 'issue' && $run->movement->movement_type !== 'expiry_writeoff' && !in_array($run->purpose, ['disposal', 'purchase_return'], true) && $batch->expired_date !== null && substr((string) $batch->expired_date, 0, 10) < $date) {
-            $message = "Batch {$batch->batch_no} of product {$product->id} expired on ".substr((string) $batch->expired_date, 0, 10).'.';
+            $message = "Batch {$batch->batch_no} of product {$product->id} expired on " . substr((string) $batch->expired_date, 0, 10) . '.';
             match ($run->shadow ? 'warn' : $this->policy->expiredBatch($run->companyId)) {
                 'block' => throw new StockPolicyException($message),
                 'warn' => $run->warnings[] = $message,
@@ -616,7 +688,31 @@ class InventoryMovementService
 
     private function nullableExpiry(): bool
     {
-        return $this->nullableExpiry ??= !Schema::getConnection()->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
+        if ($this->nullableExpiry !== null) {
+            return $this->nullableExpiry;
+        }
+
+        try {
+            if (method_exists(Schema::getFacadeRoot() ?? Schema::class, 'getColumns')) {
+                $col = collect(Schema::getColumns('product_batches'))->firstWhere('name', 'expired_date');
+                if ($col && isset($col['nullable'])) {
+                    return $this->nullableExpiry = (bool) $col['nullable'];
+                }
+            }
+
+            $connection = Schema::getConnection();
+            if (method_exists($connection, 'getDoctrineColumn')) {
+                return $this->nullableExpiry = !$connection->getDoctrineColumn('product_batches', 'expired_date')->getNotnull();
+            }
+
+            Log::warning('InventoryMovementService: Schema inspection could not determine nullability for product_batches.expired_date. Defaulting to non-nullable.');
+        } catch (\Throwable $e) {
+            Log::warning('InventoryMovementService: Schema inspection failed for product_batches.expired_date: ' . $e->getMessage(), ['exception' => $e]);
+            return $this->nullableExpiry = false;
+        }
+
+        // Never assume a nullable column when inspection fails.
+        return $this->nullableExpiry = false;
     }
 
     /** @return list<array{0: float, 1: ?StockIdentity}> */
@@ -628,7 +724,7 @@ class InventoryMovementService
                 throw new StockPolicyException("Duplicate serial numbers for product {$product->id}.");
             }
             if (abs($qty - count($serials)) > self::EPSILON) {
-                throw new StockPolicyException("Product {$product->id} needs exactly {$qty} serial numbers; ".count($serials).' given.');
+                throw new StockPolicyException("Product {$product->id} needs exactly {$qty} serial numbers; " . count($serials) . ' given.');
             }
 
             return array_map(function (string $serial) use ($product, $outbound, $batchId, $run) {
@@ -640,11 +736,17 @@ class InventoryMovementService
                     return [1.0, null];
                 }
 
-                return [1.0, $identity ?? StockIdentity::create([
-                    'company_id' => $run->companyId, 'product_id' => $product->id,
-                    'identity_type' => StockIdentity::SERIAL, 'identity_no' => $serial,
-                    'batch_id' => $batchId, 'status' => 'new',
-                ])];
+                return [
+                    1.0,
+                    $identity ?? StockIdentity::create([
+                        'company_id' => $run->companyId,
+                        'product_id' => $product->id,
+                        'identity_type' => StockIdentity::SERIAL,
+                        'identity_no' => $serial,
+                        'batch_id' => $batchId,
+                        'status' => 'new',
+                    ])
+                ];
             }, $serials);
         }
         if ($line->identityId !== null) {
@@ -686,16 +788,21 @@ class InventoryMovementService
             throw new StockPolicyException("Piece {$number} of product {$product->id} already exists.");
         }
         $identity = StockIdentity::create([
-            'company_id' => $run->companyId, 'product_id' => $product->id,
-            'identity_type' => StockIdentity::PIECE, 'identity_no' => $number,
-            'batch_id' => $batchId, 'status' => 'new',
+            'company_id' => $run->companyId,
+            'product_id' => $product->id,
+            'identity_type' => StockIdentity::PIECE,
+            'identity_no' => $number,
+            'batch_id' => $batchId,
+            'status' => 'new',
         ]);
-        $size = fn ($key) => isset($dimensions[$key]) && is_numeric($dimensions[$key]) ? (float) $dimensions[$key] : null;
+        $size = fn($key) => isset($dimensions[$key]) && is_numeric($dimensions[$key]) ? (float) $dimensions[$key] : null;
         $pieces = max(1, (int) ($dimensions['pieces'] ?? 1));
         [$length, $width, $thickness] = [$size('length'), $size('width'), $size('thickness')];
         $values = [
             'stock_identity_id' => $identity->id,
-            'length' => $length, 'width' => $width, 'thickness' => $thickness,
+            'length' => $length,
+            'width' => $width,
+            'thickness' => $thickness,
             'dimension_uom' => $dimensions['dimension_uom'] ?? null,
             'pieces' => $pieces,
             'computed_volume' => $calculated['computed_volume'] ?? ($length !== null && $width !== null && $thickness !== null
@@ -704,7 +811,8 @@ class InventoryMovementService
             'grade' => $dimensions['grade'] ?? null,
         ];
         foreach (['computed_cbm', 'computed_cft', 'formula_version'] as $column) {
-            if ($this->hasColumn('stock_dimensions', $column)) $values[$column] = $dimensions[$column];
+            if ($this->hasColumn('stock_dimensions', $column))
+                $values[$column] = $dimensions[$column];
         }
         StockDimension::create($values);
 
@@ -715,7 +823,7 @@ class InventoryMovementService
     private function moveIdentity(PostingRun $run, StockIdentity $identity, int $warehouseId, float $qty): void
     {
         $identity = StockIdentity::lockForUpdate()->findOrFail($identity->id);
-        $label = ucfirst($identity->identity_type).' '.$identity->identity_no;
+        $label = ucfirst($identity->identity_type) . ' ' . $identity->identity_no;
         $inStockHere = $identity->status === StockIdentity::IN_STOCK && (int) $identity->warehouse_id === $warehouseId;
         if ($qty < 0) {
             if (Schema::hasTable('project_serial_reservations')) {
@@ -783,8 +891,10 @@ class InventoryMovementService
         if ($products->count() !== count($ids)) {
             throw new InvalidArgumentException('Unknown product in stock movement.');
         }
-        if ($companyId !== null && $this->hasColumn('products', 'company_id')
-            && $products->contains(fn ($product) => $product->company_id !== null && (int) $product->company_id !== $companyId)) {
+        if (
+            $companyId !== null && $this->hasColumn('products', 'company_id')
+            && $products->contains(fn($product) => $product->company_id !== null && (int) $product->company_id !== $companyId)
+        ) {
             throw new InvalidArgumentException('A product does not belong to the stock movement company.');
         }
 
@@ -798,10 +908,10 @@ class InventoryMovementService
             throw new InvalidArgumentException('Unknown warehouse in stock movement.');
         }
         $owners = $this->hasColumn('warehouses', 'company_id')
-            ? $warehouses->pluck('company_id')->filter(fn ($id) => $id !== null)->map(fn ($id) => (int) $id)->unique()->values()
+            ? $warehouses->pluck('company_id')->filter(fn($id) => $id !== null)->map(fn($id) => (int) $id)->unique()->values()
             : collect();
         if ($context !== null) {
-            if ($owners->contains(fn ($id) => $id !== $context->companyId)) {
+            if ($owners->contains(fn($id) => $id !== $context->companyId)) {
                 throw new InvalidArgumentException('A warehouse does not belong to the active company.');
             }
 
@@ -816,6 +926,6 @@ class InventoryMovementService
 
     private function hasColumn(string $table, string $column): bool
     {
-        return $this->columns[$table.'.'.$column] ??= Schema::hasColumn($table, $column);
+        return $this->columns[$table . '.' . $column] ??= Schema::hasColumn($table, $column);
     }
 }

@@ -1,18 +1,33 @@
 name: Deploy to VPS
 
 on:
-  # Deploy only the main commits that passed the acceptance suites.
-  workflow_run:
-    workflows: [ERP completion acceptance]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
+      operation:
+        description: Preflight, deploy an accepted main commit, or restore an older release
+        type: choice
+        options: [preflight, deploy, rollback]
+        default: preflight
       ref:
-        description: Commit SHA or branch to deploy (default is the selected branch head, use an older SHA to roll back)
-        required: false
+        description: Full commit SHA (preflight defaults to the selected branch head)
+        type: string
+      php_version:
+        description: PHP version for the target release
+        type: choice
+        options: ['8.5', '8.3', '8.4']
+        default: '8.5'
+      current_php_version:
+        description: CLI version for the currently checked-out release
+        type: choice
+        options: ['8.3', '8.5', '8.4']
+        default: '8.3'
+      approved:
+        description: Confirm staging, VPS cutover, backup and rollback checks are complete
+        type: boolean
+        default: false
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -21,32 +36,53 @@ concurrency:
 
 jobs:
   deploy:
-    name: erp.samuraibuiness.in
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    name: ERP VPS / ${{ inputs.operation }}
+    if: inputs.operation == 'preflight' || (github.ref == 'refs/heads/main' && inputs.approved)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      OPERATION: ${{ inputs.operation }}
+      REF: ${{ inputs.ref || (inputs.operation == 'preflight' && github.sha) || '' }}
+      PHP_VERSION: ${{ inputs.php_version }}
+      CURRENT_PHP_VERSION: ${{ inputs.current_php_version }}
     steps:
-      - name: Deploy over SSH
+      - name: Verify release selection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "Select a full commit SHA."; exit 1; }
+          if [[ "$OPERATION" == deploy ]]; then
+            accepted=$(gh api --method GET \
+              "repos/$GITHUB_REPOSITORY/actions/workflows/company-foundation.yml/runs" \
+              -f head_sha="$REF" -f branch=main -f event=push -f status=success \
+              --jq '.total_count')
+            [[ "$accepted" -gt 0 ]] || { echo "This main commit has no successful acceptance run."; exit 1; }
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run release script over SSH
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
-          APP_DIR: /var/www/zolo-erp
-          REF: ${{ inputs.ref || github.event.workflow_run.head_sha || github.sha }}
         run: |
-          [[ "$REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "Invalid ref: $REF"; exit 1; }
           install -m 700 -d ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
-          # Move the checkout first, so deploy.sh always runs from the version being deployed.
-          ssh -i ~/.ssh/deploy_key -p "${VPS_PORT:-22}" -o BatchMode=yes "$VPS_USER@$VPS_HOST" \
-            "set -e; cd $APP_DIR; git fetch --prune origin; git checkout --force --detach \$(git rev-parse --verify '$REF^{commit}' 2>/dev/null || git rev-parse --verify 'origin/$REF^{commit}'); bash deploy/deploy.sh"
+          ssh -i ~/.ssh/deploy_key -p "${VPS_PORT:-22}" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" "bash -s -- '$OPERATION' '$REF' '$PHP_VERSION' '$CURRENT_PHP_VERSION'" \
+            < deploy/deploy.sh
 
-      - name: Smoke check
+      - name: Check the public login
+        if: inputs.operation != 'preflight'
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' https://erp.samuraibuiness.in/login)
-          echo "GET /login -> $code"
+          code=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            https://erp.samuraibuiness.in/login)
+          echo "GET /login returned $code"
           test "$code" = 200

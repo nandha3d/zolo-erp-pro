@@ -44,8 +44,9 @@ class MysqlCompanyMigrationTest extends TestCase
         $migrationPermission = DB::table('permissions')->where('id', 4)->first();
         $this->assertNotNull($migrationPermission);
         $this->assertNotSame('products-edit', $migrationPermission->name);
-        $seed = fn () => Artisan::call('db:seed', [
-            '--class' => \Database\Seeders\Tenant\TenantDatabaseSeeder::class, '--force' => true,
+        $seed = fn() => Artisan::call('db:seed', [
+            '--class' => \Database\Seeders\Tenant\TenantDatabaseSeeder::class,
+            '--force' => true,
         ]);
         $this->assertSame(0, $seed());
         $this->assertEquals($migrationPermission, DB::table('permissions')->where('id', 4)->first());
@@ -58,7 +59,7 @@ class MysqlCompanyMigrationTest extends TestCase
         $this->assertSame(0, $seed());
         $this->assertSame($permissionCount, DB::table('permissions')->count());
         $this->assertSame($grantCount, DB::table('role_has_permissions')->count());
-        $this->assertSame([(int) $migrationPermission->id], DB::table('role_has_permissions')->where('role_id', 4)->pluck('permission_id')->map(fn ($id) => (int) $id)->all());
+        $this->assertSame([(int) $migrationPermission->id], DB::table('role_has_permissions')->where('role_id', 4)->pluck('permission_id')->map(fn($id) => (int) $id)->all());
     }
 
     public function test_committed_partial_ddl_can_resume_after_failure_without_losing_rows(): void
@@ -70,7 +71,7 @@ class MysqlCompanyMigrationTest extends TestCase
             });
             DB::table($name)->insert(['name' => 'Legacy retained record']);
         }
-        Schema::create('fiscal_years', fn (Blueprint $table) => $table->id());
+        Schema::create('fiscal_years', fn(Blueprint $table) => $table->id());
         $fail = true;
         DB::listen(function (QueryExecuted $query) use (&$fail) {
             if ($fail && str_starts_with($query->sql, 'alter table `customers` add `company_id`')) {
@@ -99,8 +100,8 @@ class MysqlCompanyMigrationTest extends TestCase
 
     public function test_existing_currency_column_is_widened_and_orphan_updates_are_rejected(): void
     {
-        Schema::create('users', fn (Blueprint $table) => $table->increments('id'));
-        Schema::create('currencies', fn (Blueprint $table) => $table->bigIncrements('id'));
+        Schema::create('users', fn(Blueprint $table) => $table->increments('id'));
+        Schema::create('currencies', fn(Blueprint $table) => $table->bigIncrements('id'));
         DB::table('currencies')->insert([['id' => 1], ['id' => 4294967296]]);
         (require database_path('migrations/2026_10_03_000001_create_company_context_tables.php'))->up();
         DB::table('companies')->insert(['code' => 'DEFAULT', 'legal_name' => 'Retained company', 'base_currency_id' => 1]);
@@ -116,10 +117,15 @@ class MysqlCompanyMigrationTest extends TestCase
     public function test_accounting_migration_resumes_committed_ddl_preserves_records_and_refuses_unsafe_rollback(): void
     {
         // Rehearse the accounting change before the Textile migration seeds a company and chart.
-        $migrations = array_values(array_filter(glob(database_path('migrations/*.php')),
-            fn (string $path) => basename($path) < '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'));
+        $migrations = array_values(array_filter(
+            glob(database_path('migrations/*.php')),
+            fn(string $path) => basename($path) < '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'
+        ));
         $this->assertSame(0, Artisan::call('migrate', [
-            '--database' => 'erp_regression', '--force' => true, '--realpath' => true, '--path' => $migrations,
+            '--database' => 'erp_regression',
+            '--force' => true,
+            '--realpath' => true,
+            '--path' => $migrations,
         ]));
         // Collection tracking references open items, so it rolls back first.
         (require database_path('migrations/2026_10_19_000012_create_collection_tracking.php'))->down();

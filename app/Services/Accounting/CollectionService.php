@@ -127,9 +127,9 @@ class CollectionService
         $eligible = $data['as_of_date'] <= $data['discount_eligible_until'] && $data['as_of_date'] >= $item->document_date->toDateString();
         // Brick Math is already installed by the framework; preserve ledger units even at the decimal(18,4) limit.
         $interest = \Brick\Math\BigDecimal::of($principal)->multipliedBy((string) $data['interest_rate'])->multipliedBy($days)
-            ->dividedBy(100 * (int) $data['day_basis'], 0, \Brick\Math\RoundingMode::HALF_UP);
+            ->dividedBy(100 * (int) $data['day_basis'], 0, \Brick\Math\RoundingMode::HalfUp);
         $discount = $eligible ? \Brick\Math\BigDecimal::of($principal)->multipliedBy((string) $data['discount_rate'])
-            ->dividedBy(100, 0, \Brick\Math\RoundingMode::HALF_UP) : \Brick\Math\BigDecimal::zero();
+            ->dividedBy(100, 0, \Brick\Math\RoundingMode::HalfUp) : \Brick\Math\BigDecimal::zero();
         if ($interest->compareTo('999999999999999999') > 0 || $discount->compareTo('999999999999999999') > 0) {
             throw ValidationException::withMessages(['interest_rate' => 'Preview exceeds ledger precision. Use a smaller rate or date range.']);
         }
