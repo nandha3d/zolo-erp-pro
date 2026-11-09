@@ -97,13 +97,54 @@
 
     function search($input, select) {
         $input.autocomplete({
-            minLength: 1, autoFocus: true,
+            minLength: 1, autoFocus: false,
             source: (request, response) => {
-                const term = request.term.toLowerCase().trim();
-                response(products.filter(p => (p.name + ' ' + p.code).toLowerCase().includes(term)).slice(0, 20));
+                const term = (request.term || '').trim().toLowerCase();
+                const matches = products.filter(p => (p.name + ' ' + (p.code || '')).toLowerCase().includes(term)).slice(0, 20);
+                if (term) {
+                    matches.push({
+                        is_create_action: true,
+                        term: request.term.trim(),
+                        id: 0,
+                        code: '+',
+                        name: 'Create "' + request.term.trim() + '" as new product'
+                    });
+                }
+                response(matches);
             },
-            select: (event, ui) => { event.preventDefault(); select(ui.item); }
-        }).autocomplete('instance')._renderItem = (ul, item) => $('<li>').append($('<div>').text(item.code + ' — ' + item.name)).appendTo(ul);
+            focus: (event, ui) => {
+                if (ui && ui.item && ui.item.is_create_action) {
+                    event.preventDefault();
+                    return false;
+                }
+            },
+            select: (event, ui) => {
+                event.preventDefault();
+                if (ui.item && ui.item.is_create_action) {
+                    const $row = $input.closest('tr.item-row');
+                    if (window.zoloOpenQuickCreateProduct) {
+                        window.zoloOpenQuickCreateProduct(ui.item.term, $row.length ? $row : null);
+                    } else if (window.zoloUnknownProduct) {
+                        window.zoloUnknownProduct(ui.item.term, $row.length ? $row : null, true);
+                    }
+                    return;
+                }
+                select(ui.item);
+            }
+        }).autocomplete('instance')._renderItem = (ul, item) => {
+            if (item.is_create_action) {
+                return $('<li>').addClass('ui-autocomplete-action-item').append(`
+                    <div style="background:#eef2ff; border-top:1px dashed #c7d2fe; padding:8px 12px; cursor:pointer; color:#3730a3; font-weight:600; font-size:12px; border-radius:4px; margin:2px 0; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <span style="background:#4f46e5; color:#fff; border-radius:3px; padding:2px 6px; font-size:11px; margin-right:6px;">+</span>
+                            Create "<strong>${$('<span>').text(item.term).html()}</strong>" as new product
+                        </div>
+                        <span class="badge badge-primary" style="background:#4f46e5; font-size:10px; padding:3px 6px;">+ Quick Create</span>
+                    </div>
+                `).appendTo(ul);
+            }
+            return $('<li>').append($('<div>').text(item.code + ' — ' + item.name)).appendTo(ul);
+        };
     }
 
     function addRow(item = {}, merge = true) {
@@ -177,7 +218,9 @@
                 applyProduct($row, matches[0]);
                 $row.find('.row-qty').focus().select();
             } else if (matches.length === 0) {
-                if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, $row)) {
+                if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, $row)) {
+                    return;
+                } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, $row, true)) {
                     return;
                 }
             }
@@ -192,7 +235,9 @@
                     applyProduct($row, matches[0]);
                     $row.find('.row-qty').focus().select();
                 } else if (matches.length === 0) {
-                    if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, $row)) {
+                    if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, $row)) {
+                        return;
+                    } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, $row, true)) {
                         return;
                     }
                     $row.find('.row-qty').focus().select();

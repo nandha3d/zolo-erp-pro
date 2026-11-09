@@ -63,7 +63,7 @@
                 }
             }
             if (!Number(id)) {
-                if (typedName && window.zoloUnknownProduct?.(typedName, $row)) throw new Error('Save the new product "' + typedName + '", then save the bill again.');
+                if (typedName && (window.zoloOpenQuickCreateProduct?.(typedName, $row) || window.zoloUnknownProduct?.(typedName, $row, true))) throw new Error('Save the new product "' + typedName + '", then save the bill again.');
                 throw new Error('Select a catalog product for every row. Use Create item for a new product.');
             }
             const unit = config.units.find(u => u.unit_name === $row.find('.row-unit-select').val());
