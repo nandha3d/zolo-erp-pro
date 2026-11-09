@@ -24,7 +24,9 @@
             <span class="comm-title-badge"><i class="dripicons-tag"></i> Inventory Valuation & Margin Distribution Analytics</span>
         </div>
         <ul class="comm-nav-pills">
+            <li><a class="nav-link" href="{{ route('report.stock') }}"><i class="dripicons-list"></i> Stock Report</a></li>
             <li><a class="nav-link active" href="{{ url('report/warehouse_stock') }}"><i class="dripicons-store"></i> Stock Chart</a></li>
+            <li><a class="nav-link" href="{{ route('inventory-reports.stock-by-lot') }}"><i class="dripicons-stack"></i> Stock by Lot</a></li>
             <li><a class="nav-link" href="{{ route('report.warehouse') }}"><i class="dripicons-archive"></i> Warehouse Report</a></li>
             <li><a class="nav-link" href="{{ route('report.product') }}"><i class="dripicons-box"></i> Product Report</a></li>
             <li><a class="nav-link" href="{{ route('report.qtyAlert') }}"><i class="dripicons-warning"></i> Qty Alerts</a></li>

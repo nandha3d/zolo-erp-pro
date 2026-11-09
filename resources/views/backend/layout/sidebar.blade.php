@@ -3,6 +3,8 @@
     $nav = new \App\Services\Platform\NavigationAccess($role_has_permissions_list ?? null);
     $role = $role ?? (\Spatie\Permission\Models\Role::find(Auth::user()->role_id ?? 1));
     $navigationContext = $nav->context;
+    $activeCompany = $navigationContext ? \App\Models\Company::find($navigationContext->companyId) : null;
+    $companyIndustry = $activeCompany?->industry;
     $isAdmin = $nav->isAdmin;
     $canNavigate = fn ($permission) => $nav->can($permission);
     $documentShortcuts = app(\App\Services\Platform\DocumentShortcutRegistry::class)->forUser($canNavigate, $isAdmin);
@@ -254,15 +256,40 @@
         <li>
             <a href="#distribution" aria-expanded="false" data-toggle="collapse">
                 <i class="dripicons-map"></i>
-                <span>Distribution</span>
+                @if($companyIndustry === 'bulk_water')
+                    <span>Bulk Water Tankers</span>
+                @elseif($companyIndustry === 'packaged_water')
+                    <span>20L Can Distribution</span>
+                @else
+                    <span>Distribution</span>
+                @endif
             </a>
             <ul id="distribution" class="collapse list-unstyled">
-                @if(config('commercial.enabled') && $nav->has('sales.route_distribution') && $nav->allows('sales-index'))
-                    <li id="route-sheet-menu"><a href="{{ url('/trade/routes') }}" data-keywords="route sheet van">Routes</a></li>
-                @endif
-                @if($nav->has('operations.water_logistics'))
-                    <li><a href="{{route('water-logistics.index')}}">Fleet Trips &amp; Can Routes</a></li>
-                    <li><a href="{{route('water-logistics.credit-aging')}}">Corporate Credit Aging</a></li>
+                @if($companyIndustry === 'bulk_water')
+                    <li><a href="{{route('water-logistics.index')}}">Tanker Fleet &amp; Trip Sheets</a></li>
+                    <li><a href="{{route('fleet.tracking')}}"><i class="fa fa-map-marker mr-1"></i> Live Fleet Telematics</a></li>
+                    @if(Auth::user()->role_id <= 2)
+                        <li><a href="{{route('water-logistics.credit-aging')}}">Corporate Credit Aging</a></li>
+                    @endif
+                @elseif($companyIndustry === 'packaged_water')
+                    <li><a href="{{route('water-logistics.index')}}">Deliveries &amp; Manifests</a></li>
+                    <li><a href="{{route('water-logistics.index')}}#tab-can-inventory">Customer Can Balances &amp; Deposits</a></li>
+                    @if(config('commercial.enabled') && $nav->has('sales.route_distribution') && $nav->allows('sales-index'))
+                        <li id="route-sheet-menu"><a href="{{ url('/trade/routes') }}" data-keywords="route sheet van">Beat Routes &amp; Tata Ace</a></li>
+                    @endif
+                    @if(Auth::user()->role_id <= 2)
+                        <li><a href="{{route('water-logistics.credit-aging')}}">Corporate Credit Aging</a></li>
+                    @endif
+                @else
+                    @if(config('commercial.enabled') && $nav->has('sales.route_distribution') && $nav->allows('sales-index'))
+                        <li id="route-sheet-menu"><a href="{{ url('/trade/routes') }}" data-keywords="route sheet van">Routes</a></li>
+                    @endif
+                    @if($nav->has('operations.water_logistics'))
+                        <li><a href="{{route('water-logistics.index')}}">Fleet Trips &amp; Can Routes</a></li>
+                        @if(Auth::user()->role_id <= 2)
+                            <li><a href="{{route('water-logistics.credit-aging')}}">Corporate Credit Aging</a></li>
+                        @endif
+                    @endif
                 @endif
             </ul>
         </li>
@@ -457,6 +484,9 @@
                 @endif
                 <li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}" data-keywords="customer supplier dues receivables payables outstanding">{{ __('db.Outstanding Dues') }}</a></li>
                 <li class="sidebar-sublabel">Inventory</li>
+                @if($nav->allows('warehouse-stock-report') || $nav->allows('product-report'))
+                    <li id="stock-report-menu"><a href="{{route('report.stock')}}" data-keywords="stock report inventory balance valuation godown warehouse">{{__('db.Stock Report')}}</a></li>
+                @endif
                 @if($nav->allows('product-report'))
                     <li id="product-report-menu"><a href="{{route('report.product')}}">{{__('db.Product Report')}}</a></li>
                 @endif
@@ -466,6 +496,7 @@
                 @if($nav->allows('warehouse-stock-report'))
                     <li id="warehouse-stock-report-menu"><a href="{{route('report.warehouseStock')}}">{{__('db.Warehouse Stock Chart')}}</a></li>
                 @endif
+                <li id="stock-by-lot-menu"><a href="{{route('inventory-reports.stock-by-lot')}}" data-keywords="stock by lot batch inventory">{{__('db.Stock by Lot')}}</a></li>
                 @if($nav->allows('product-expiry-report'))
                     <li id="productExpiry-report-menu"><a href="{{route('report.productExpiry')}}" data-keywords="batch near expiry">{{__('db.Product Expiry Report')}}</a></li>
                 @endif

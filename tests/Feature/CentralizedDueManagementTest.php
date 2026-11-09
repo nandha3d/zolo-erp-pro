@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Accounting\SettlementAccountService;
 use App\Services\Platform\CompanyContext;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CentralizedDueManagementTest extends TestCase
@@ -25,11 +26,38 @@ class CentralizedDueManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = User::first() ?? User::factory()->create();
+        $this->user = User::where('role_id', 1)->first() ?? User::create([
+            'name' => 'Admin User',
+            'email' => 'admin_centralized@test.com',
+            'phone' => '9876543210',
+            'password' => bcrypt('password'),
+            'role_id' => 1,
+            'is_active' => true,
+            'is_deleted' => false,
+        ]);
         $this->actingAs($this->user);
-        $this->company = Company::find(2) ?? Company::first();
-        session(['company_id' => $this->company->id]);
-        $this->context = new CompanyContext($this->company->id, 2, 2);
+        $this->company = Company::first() ?? Company::create(['name' => 'Test Company', 'code' => 'TC', 'is_active' => true]);
+
+        if (!$this->company->users()->where('users.id', $this->user->id)->exists()) {
+            $this->company->users()->attach($this->user->id, ['is_default' => true]);
+        }
+        $branch = $this->company->branches()->first() ?? $this->company->branches()->create(['code' => 'MAIN', 'name' => 'Main Branch']);
+        DB::table('company_user_branches')->updateOrInsert(
+            ['company_id' => $this->company->id, 'user_id' => $this->user->id, 'branch_id' => $branch->id],
+            ['company_id' => $this->company->id, 'user_id' => $this->user->id, 'branch_id' => $branch->id]
+        );
+        $year = \App\Models\Accounting\FiscalYear::where('company_id', $this->company->id)->first() ?? \App\Models\Accounting\FiscalYear::create([
+            'company_id' => $this->company->id, 'name' => 'FY 2026', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'status' => 'open'
+        ]);
+
+        $this->withSession([
+            'company_id' => $this->company->id,
+            'current_company_id' => $this->company->id,
+            'branch_id' => $branch->id,
+            'financial_year_id' => $year->id,
+            'warehouse_id' => 1,
+        ]);
+        $this->context = new CompanyContext($this->company->id, $branch->id, $year->id);
     }
 
     public function test_dues_hub_loads_sales_tab(): void

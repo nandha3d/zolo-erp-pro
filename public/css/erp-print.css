@@ -9,28 +9,76 @@
 
 @page {
     size: A4 portrait;
-    margin: 8mm 8mm 10mm;
+    margin: 0;
 }
-@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }
 
-.page .erp-print-header { display: none; }
-.erp-print-frame { position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0; visibility: hidden; }
+@page wide {
+    size: A4 landscape;
+    margin: 0;
+}
+
+.page .erp-print-header {
+    display: none;
+}
+
+.erp-print-frame {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 0;
+    visibility: hidden;
+}
 
 /* ---------- Letterhead (both paths) ---------- */
 .erp-print-header {
-    margin-bottom: 8px;
-    padding-bottom: 6px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
     border-bottom: 2px solid var(--z-ink);
     color: var(--z-text);
 }
-.erp-print-letterhead { display: flex; align-items: flex-start; gap: 12px; }
-.erp-print-logo { max-width: 110px; max-height: 50px; object-fit: contain; }
-.erp-print-company { flex: 1; min-width: 0; }
-.erp-print-company-name { font-size: 15pt; font-weight: 700; line-height: 1.2; color: var(--z-ink); }
-.erp-print-company-line { font-size: 8.5pt; line-height: 1.4; color: var(--z-text-2); }
-.erp-print-stamp { font-size: 8pt; line-height: 1.5; text-align: right; white-space: nowrap; color: var(--z-text-muted); }
+
+.erp-print-letterhead {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.erp-print-logo {
+    max-width: 110px;
+    max-height: 50px;
+    object-fit: contain;
+}
+
+.erp-print-company {
+    flex: 1;
+    min-width: 0;
+}
+
+.erp-print-company-name {
+    font-size: 15pt;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--z-ink);
+}
+
+.erp-print-company-line {
+    font-size: 8.5pt;
+    line-height: 1.4;
+    color: var(--z-text-2);
+}
+
+.erp-print-stamp {
+    font-size: 8pt;
+    line-height: 1.5;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--z-text-muted);
+}
+
 .erp-print-title {
-    margin: 8px 0 2px;
+    margin: 14px 0 6px;
     font-size: 12.5pt;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -38,25 +86,64 @@
     text-transform: uppercase;
     color: var(--z-ink);
 }
-.erp-print-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 18px; font-size: 8.5pt; color: var(--z-text); }
-.erp-print-meta b { font-weight: 600; color: var(--z-text-muted); }
+
+.erp-print-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 18px;
+    font-size: 8.5pt;
+    color: var(--z-text);
+}
+
+.erp-print-meta b {
+    font-weight: 600;
+    color: var(--z-text-muted);
+}
 
 /* ---------- Printed document (iframe) ---------- */
 .erp-print-doc {
     margin: 0;
+    padding: 8mm 10mm 10mm 10mm;
+    box-sizing: border-box;
     background: var(--z-surface);
     color: var(--z-text);
     font: 9pt/1.35 "Inter", "Segoe UI", Arial, sans-serif;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
 }
-.erp-print-doc.erp-print-wide { page: wide; }
-.erp-print-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
-.erp-print-table thead { display: table-header-group; }
-.erp-print-table tfoot { display: table-row-group; }
-.erp-print-table tr { break-inside: avoid; }
+
+.erp-print-doc.erp-print-wide {
+    page: wide;
+}
+
+.erp-print-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+}
+
+.erp-print-table thead {
+    display: table-header-group;
+}
+
+.erp-print-table tfoot {
+    display: table-row-group;
+    break-inside: avoid;
+}
+
+.erp-print-table tr {
+    break-inside: avoid;
+}
+
+.erp-print-table th,
+.erp-print-table td {
+    overflow-wrap: anywhere;
+}
+
 .erp-print-table th {
-    padding: 5px 6px;
+    padding: 6px 7px;
     border: 1px solid var(--z-border-strong);
     background: var(--z-surface-2);
     font-size: 7.5pt;
@@ -66,16 +153,69 @@
     text-transform: uppercase;
     color: var(--z-ink);
 }
-.erp-print-table td { padding: 3px 6px; border: 1px solid var(--z-border); vertical-align: top; }
-.erp-print-table tbody tr:nth-child(even) td { background: var(--z-surface-2); }
-.erp-print-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.erp-print-table th.num { text-align: right; }
-.erp-print-table tfoot td { border-top: 2px solid var(--z-ink); background: var(--z-surface-2); font-weight: 700; }
-.erp-print-empty { padding: 14px; text-align: center; color: var(--z-text-muted); }
-.erp-print-end { display: flex; justify-content: space-between; margin-top: 6px; font-size: 8pt; color: var(--z-text-muted); }
+
+.erp-print-table td {
+    padding: 5px 7px;
+    border: 1px solid var(--z-border);
+    vertical-align: top;
+}
+
+.erp-print-table tbody tr:nth-child(even) td {
+    background: var(--z-surface-2);
+}
+
+.erp-print-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.erp-print-table th.num {
+    text-align: right;
+}
+
+.erp-print-ledger-table td.num,
+.erp-print-ledger-table tbody td:first-child {
+    white-space: nowrap;
+}
+
+.erp-print-ledger-table th {
+    overflow-wrap: normal;
+}
+
+.erp-print-table tfoot td {
+    border-top: 2px solid var(--z-ink);
+    background: var(--z-surface-2);
+    font-weight: 700;
+}
+
+.erp-print-table tfoot td[colspan] {
+    text-align: right;
+}
+
+.erp-print-table tfoot .erp-print-close {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-weight: normal;
+}
+
+.erp-print-empty {
+    padding: 14px;
+    text-align: center;
+    color: var(--z-text-muted);
+}
+
+.erp-print-end {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 8pt;
+    color: var(--z-text-muted);
+}
 
 /* ---------- Screen Hiding for Print-Only Elements ---------- */
 @media screen {
+
     .erp-print-party-card,
     .erp-print-signatures,
     .print-only-block {
@@ -85,6 +225,7 @@
 
 /* ---------- Global Printing Rules (@media print) ---------- */
 @media print {
+
     html,
     body,
     html.app-shell,
@@ -112,17 +253,34 @@
         position: static !important;
         float: none !important;
     }
-    html.app-shell .page { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-    html.app-shell #content { padding: 0 !important; margin: 0 !important; }
+
+    html.app-shell .page {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    html.app-shell #content {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
     /* Paper is white in dark mode too. */
-    body, body.dark-mode { background: white !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body,
+    body.dark-mode {
+        background: white !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 
     /* Hide entire app chrome, navigation, cards, filter bars, controls */
     nav.side-navbar,
     #sidebar,
     .side-navbar,
-    html.app-shell .page > header.container-fluid,
-    .page > header,
+    html.app-shell .page>header.container-fluid,
+    .page>header,
     header.header,
     nav.navbar,
     .reveal-topbar-strip,
@@ -150,9 +308,27 @@
     .dataTables_wrapper .dataTables_filter,
     .dataTables_wrapper .dataTables_paginate,
     .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .row:first-child,
-    .dataTables_wrapper .row:last-child,
     .dt-buttons,
+    .buttons-colvis,
+    .zolo-hidden-count,
+    .zolo-polished .dataTables_length,
+    .zolo-polished .dataTables_filter,
+    .zolo-polished .dt-buttons,
+    .zolo-polished .buttons-colvis,
+    .zolo-polished .dataTables_info,
+    .zolo-polished .dataTables_paginate,
+    html.app-shell #content .dataTables_wrapper > .row:first-child,
+    html.app-shell #content .dataTables_wrapper > .row:last-child,
+    html.app-shell #content .dataTables_wrapper .dataTables_length,
+    html.app-shell #content .dataTables_wrapper .dataTables_filter,
+    html.app-shell #content .dataTables_wrapper .dt-buttons,
+    html.app-shell #content .dataTables_wrapper .buttons-colvis,
+    html.app-shell #content .dataTables_wrapper .dataTables_info,
+    html.app-shell #content .dataTables_wrapper .dataTables_paginate,
+    html.app-shell #content .zolo-polished .dataTables_length,
+    html.app-shell #content .zolo-polished .dataTables_filter,
+    html.app-shell #content .zolo-polished .dt-buttons,
+    html.app-shell #content .zolo-polished .buttons-colvis,
     .d-print-none,
     .modal,
     .modal-backdrop,
@@ -167,18 +343,79 @@
     .actions-column,
     .btn-filter-pill,
     .btn,
-    button { display: none !important; }
+    button {
+        display: none !important;
+    }
 
     /* Show official ERP print header letterhead */
     .page .erp-print-header { display: block !important; }
-    #content,
-    #content > section { background: white !important; padding: 0 !important; margin: 0 !important; }
-    /* One-screen layouts clip their panels to the viewport; paper gets everything. */
-    html.app-shell body #content * { overflow: visible !important; max-height: none !important; }
-    html.app-shell body #content > section,
-    html.app-shell body #content > section > * { height: auto !important; min-height: 0 !important; flex: none !important; }
 
-    #content a { color: inherit !important; text-decoration: none !important; }
+    /* Never display style, script, or head metadata in print */
+    style,
+    script,
+    head {
+        display: none !important;
+    }
+
+    /* Unlock app shell root containers so multi-page printing works on the main window */
+    html,
+    html.app-shell,
+    body,
+    html.app-shell body,
+    .page,
+    html.app-shell .page,
+    .page-content,
+    html.app-shell .page-content,
+    #content,
+    html.app-shell #content,
+    html.app-shell #content [class$="-workspace-view"],
+    html.app-shell #content > .report-workspace-view,
+    .report-workspace-view,
+    .desk-card-wrapper,
+    html.app-shell .desk-card-wrapper,
+    html.app-shell #content > :has(> .desk-card-wrapper),
+    html.app-shell #content .report-workspace-view .desk-card-wrapper,
+    .table-responsive,
+    html.app-shell #content .report-workspace-view .table-responsive,
+    .dataTables_wrapper,
+    .dataTables_scroll,
+    .dataTables_scrollBody {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        display: block !important;
+        flex: none !important;
+        float: none !important;
+        position: static !important;
+    }
+
+    #content,
+    #content > section {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* One-screen layouts clip their panels to the viewport; paper gets everything. */
+    html.app-shell body #content * {
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    html.app-shell body #content>section,
+    html.app-shell body #content>section>* {
+        height: auto !important;
+        min-height: 0 !important;
+        flex: none !important;
+    }
+
+    #content a {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
 
     /* Global Table Print Geometry */
     html.app-shell body #content .table-responsive,
@@ -193,10 +430,8 @@
         padding: 0 !important;
         border: none !important;
     }
-    table,
-    table.dataTable,
-    .table,
-    .ledger-table {
+
+    #content table {
         width: 100% !important;
         max-width: 100% !important;
         table-layout: fixed !important;
@@ -204,8 +439,9 @@
         margin: 6px 0 12px 0 !important;
         font-size: 8pt !important;
     }
-    table th,
-    table td {
+
+    #content table th,
+    #content table td {
         padding: 4px 6px !important;
         border: 1px solid #cbd5e1 !important;
         vertical-align: middle !important;
@@ -213,10 +449,11 @@
         line-height: 1.25 !important;
         color: #0f172a !important;
         word-break: normal !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
     }
-    table thead th,
-    #content table thead th,
-    .ledger-table thead th {
+
+    #content table thead th {
         background: #f1f5f9 !important;
         color: #0f172a !important;
         font-size: 7.5pt !important;
@@ -226,9 +463,9 @@
         border: 1px solid #94a3b8 !important;
         padding: 5px 6px !important;
     }
-    table tfoot th,
-    table tfoot td,
-    .ledger-table tfoot th {
+
+    #content table tfoot th,
+    #content table tfoot td {
         background: #f8fafc !important;
         color: #0f172a !important;
         font-weight: 800 !important;
@@ -239,14 +476,138 @@
     }
 
     /* Standardized 8 Printed Columns Percentage Widths (Total: 100%) */
-    .ledger-table th:nth-child(2), .ledger-table td:nth-child(2) { width: 10% !important; white-space: nowrap !important; }
-    .ledger-table th:nth-child(3), .ledger-table td:nth-child(3) { width: 12% !important; white-space: nowrap !important; }
-    .ledger-table th:nth-child(4), .ledger-table td:nth-child(4) { width: 13% !important; white-space: nowrap !important; }
-    .ledger-table th:nth-child(5), .ledger-table td:nth-child(5) { width: 12% !important; }
-    .ledger-table th:nth-child(6), .ledger-table td:nth-child(6) { width: 25% !important; }
-    .ledger-table th:nth-child(7), .ledger-table td:nth-child(7) { width: 9% !important; text-align: right !important; }
-    .ledger-table th:nth-child(8), .ledger-table td:nth-child(8) { width: 9% !important; text-align: right !important; }
-    .ledger-table th:nth-child(9), .ledger-table td:nth-child(9) { width: 10% !important; text-align: right !important; }
+    .ledger-table th:nth-child(2),
+    .ledger-table td:nth-child(2) {
+        width: 10% !important;
+        white-space: nowrap !important;
+    }
+
+    .ledger-table th:nth-child(3),
+    .ledger-table td:nth-child(3) {
+        width: 12% !important;
+        white-space: nowrap !important;
+    }
+
+    .ledger-table th:nth-child(4),
+    .ledger-table td:nth-child(4) {
+        width: 13% !important;
+        white-space: nowrap !important;
+    }
+
+    .ledger-table th:nth-child(5),
+    .ledger-table td:nth-child(5) {
+        width: 12% !important;
+    }
+
+    .ledger-table th:nth-child(6),
+    .ledger-table td:nth-child(6) {
+        width: 25% !important;
+    }
+
+    .ledger-table th:nth-child(7),
+    .ledger-table td:nth-child(7) {
+        width: 9% !important;
+        text-align: right !important;
+    }
+
+    .ledger-table th:nth-child(8),
+    .ledger-table td:nth-child(8) {
+        width: 9% !important;
+        text-align: right !important;
+    }
+
+    .ledger-table th:nth-child(9),
+    .ledger-table td:nth-child(9) {
+        width: 10% !important;
+        text-align: right !important;
+    }
+
+    /* Stock Inventory & Valuation Table Print Geometry (100% A4 Fixed Geometry) */
+    .stock-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        margin: 6px 0 12px 0 !important;
+        font-size: 8pt !important;
+    }
+    .stock-table th,
+    .stock-table td {
+        padding: 5px 6px !important;
+        border: 1px solid #94a3b8 !important;
+        font-size: 8pt !important;
+        line-height: 1.25 !important;
+        vertical-align: top !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    .stock-table thead th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-size: 7.5pt !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        border-bottom: 2px solid #0f172a !important;
+    }
+    .stock-table tfoot th {
+        background: #f8fafc !important;
+        border-top: 2px solid #0f172a !important;
+        border-bottom: 2px solid #0f172a !important;
+        font-weight: 800 !important;
+        font-size: 8pt !important;
+    }
+    .stock-table .col-idx,
+    .stock-table .col-alert,
+    .stock-table .col-status {
+        display: none !important;
+    }
+    .stock-table th.col-product,
+    .stock-table td.col-product {
+        width: 25% !important;
+    }
+    .stock-table th.col-category,
+    .stock-table td.col-category {
+        width: 15% !important;
+    }
+    .stock-table th.col-warehouse,
+    .stock-table td.col-warehouse {
+        width: 12% !important;
+    }
+    .stock-table th.col-qty,
+    .stock-table td.col-qty {
+        width: 10% !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+    }
+    .stock-table th.col-cost,
+    .stock-table td.col-cost {
+        width: 9% !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+    }
+    .stock-table th.col-val-cost,
+    .stock-table td.col-val-cost {
+        width: 10% !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+    }
+    .stock-table th.col-price,
+    .stock-table td.col-price {
+        width: 9% !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+    }
+    .stock-table th.col-val-price,
+    .stock-table td.col-val-price {
+        width: 10% !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+    }
+    .stock-table tfoot th.foot-label {
+        width: 52% !important;
+        text-align: right !important;
+    }
 
     .num,
     .text-right,
@@ -256,6 +617,7 @@
         white-space: nowrap !important;
         font-variant-numeric: tabular-nums !important;
     }
+
     .badge,
     .badge-type-pill {
         background: transparent !important;
@@ -267,6 +629,7 @@
         border-radius: 3px !important;
         display: inline-block !important;
     }
+
     .badge-type-pill i,
     .badge i {
         display: none !important;
@@ -278,13 +641,30 @@
         padding: 0 !important;
         background: transparent !important;
     }
+
     .kpi-card,
     .card,
-    .comm-card { box-shadow: none !important; break-inside: avoid; }
-    table { break-inside: auto; }
-    thead { display: table-header-group !important; }
-    tfoot { display: table-footer-group !important; }
-    tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+    .comm-card {
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    #content table {
+        break-inside: auto;
+    }
+
+    #content thead {
+        display: table-header-group !important;
+    }
+
+    #content tfoot {
+        display: table-footer-group !important;
+    }
+
+    #content tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
 
     /* Party Details Card for Statements & Ledgers */
     .erp-print-party-card {
@@ -294,25 +674,33 @@
         background: #f8fafc !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 8px 12px !important;
-        margin: 6px 0 10px !important;
+        gap: 20px;
+        padding: 11px 14px !important;
+        margin: 0 0 16px !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
     }
+
     .erp-print-signatures {
         display: flex !important;
         justify-content: space-between !important;
-        align-items: flex-end !important;
+        align-items: flex-start !important;
         margin-top: 30px !important;
         padding-top: 20px !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
     }
+
+    .erp-print-close .erp-print-signatures {
+        margin-top: 0 !important;
+        padding-top: 30px !important;
+    }
+
     .erp-print-sig-box {
         text-align: center !important;
         border-top: 1px dashed #64748b !important;
         width: 200px !important;
-        padding-top: 6px !important;
+        padding-top: 8px !important;
         font-size: 8pt !important;
         color: #334155 !important;
     }

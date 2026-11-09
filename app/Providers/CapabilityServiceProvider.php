@@ -60,7 +60,7 @@ class CapabilityServiceProvider extends ServiceProvider
                 if ($route->getName() === 'sale.wappnotification') {
                     $key = 'communications.whatsapp';
                 }
-                if ($key) {
+                if ($key && !in_array($route->getName(), ['api.v1.mobile.login', 'api.v1.mobile.bootstrap'], true)) {
                     $auth = str_starts_with($route->uri(), 'api/') ? 'auth:sanctum' : 'auth';
                     $route->middleware([$auth, 'company.context', RequireCapability::class.':'.$key]);
                     $operationsArea = match ($controller) {

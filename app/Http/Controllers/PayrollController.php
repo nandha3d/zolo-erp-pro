@@ -428,7 +428,7 @@ class PayrollController extends Controller
                 if ($att->checkin && $att->checkout) {
                     $checkin = Carbon::parse($att->checkin);
                     $checkout = Carbon::parse($att->checkout);
-                    $totalHours += $checkout->diffInMinutes($checkin) / 60;
+                    $totalHours += (int) $checkin->diffInMinutes($checkout, true) / 60;
                 }
             }
             $employee->total_work_hours = number_format($totalHours, 2);

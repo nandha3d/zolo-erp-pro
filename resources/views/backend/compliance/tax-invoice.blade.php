@@ -3,6 +3,7 @@
     $states = \App\Services\Tax\Gstin::$states;
     $d = $document; $p = $d['print'] ?? []; $kind = $d['kind'];
     $sale = str_starts_with($kind, 'sale'); $note = str_ends_with($kind, '_note');
+    $isServiceBill = ($d['title'] ?? '') === 'Job work service bill' || !empty($d['is_service_bill']);
     $money = fn ($value) => $Doc::inr((float) $value);
     $scale = $d['quantity_scale'] ?? 4;
     $qty = function ($value) use ($scale) { $text = number_format((float) $value, $scale, '.', ','); return str_contains($text, '.') ? rtrim(rtrim($text, '0'), '.') : $text; };
@@ -162,6 +163,44 @@ td, th { padding: 2px 4px; vertical-align: top; }
         </tr>
     </table>
 
+    @if($isServiceBill)
+    <table class="box items" style="border-top:0">
+        <thead><tr>
+            <th style="width:4%">S.No</th>
+            <th>Description</th>
+            <th style="width:9%">SAC Code</th>
+            <th style="width:11%">Date</th>
+            <th style="width:9%">LOT NO</th>
+            <th style="width:11%">Qty</th>
+            <th style="width:9%">Rate</th>
+            <th style="width:11%">Amount</th>
+            <th style="width:11%">Total Amount</th>
+        </tr></thead>
+        <tbody>
+        @foreach($d['lines'] as $i => $line)
+            <tr>
+                <td class="c">{{ $i + 1 }}</td>
+                <td><span class="desc">{{ $line['name'] }}</span>
+                    @if($dimension = $line['dimensions'] ?? null)<div class="small">Piece {{ $dimension['identity_no'] ?? '' }} · {{ $dimension['length'] }} × {{ $dimension['width'] }} × {{ $dimension['thickness'] }} {{ $dimension['dimension_uom'] }}</div>@endif</td>
+                <td class="c">{{ $line['hsn_sac'] ?: '—' }}</td>
+                <td class="c">{{ $line['date'] ?? (!empty($d['supplier_bill_date']) ? \Carbon\Carbon::parse($d['supplier_bill_date'])->format('d-m-Y') : (!empty($d['date']) ? \Carbon\Carbon::parse($d['date'])->format('d-m-Y') : '—')) }}</td>
+                <td class="c">{{ $line['lot_no'] ?? '—' }}</td>
+                <td class="num">{{ $qty($line['qty']) }} {{ $line['unit'] ?? '' }}</td>
+                <td class="num">{{ $money($line['price']) }}</td>
+                <td class="num">{{ $money($line['amount'] ?? ($line['qty'] * $line['price'])) }}</td>
+                <td class="num">{{ $money($line['total_amount'] ?? $line['taxable_value']) }}</td>
+            </tr>
+        @endforeach
+        </tbody>
+        <tfoot><tr>
+            <td colspan="5" class="num">Sub Total</td>
+            <td class="num">@foreach($quantities as $unit => $sum){{ $qty($sum) }} {{ $unit }}@if(!$loop->last)<br>@endif @endforeach</td>
+            <td></td>
+            <td class="num">{{ $money($totals['taxable']) }}</td>
+            <td class="num">{{ $money($totals['taxable']) }}</td>
+        </tr></tfoot>
+    </table>
+    @else
     <table class="box items" style="border-top:0">
         <thead><tr>
             <th style="width:4%">S.No</th><th>Description of Goods / Services</th><th style="width:9%">HSN/SAC</th><th style="width:7%">GST %</th>
@@ -192,6 +231,7 @@ td, th { padding: 2px 4px; vertical-align: top; }
             <td class="num">{{ $money($totals['taxable']) }}</td>
         </tr></tfoot>
     </table>
+    @endif
 
     <table class="box" style="border-top:0">
         <tr>

@@ -61,7 +61,7 @@
                 </a>
             </div>
 
-            <button type="button" class="btn btn-outline-secondary dues-print-btn" onclick="window.print()">
+            <button type="button" class="btn btn-outline-secondary dues-print-btn" data-erp-print="#outstanding-dues-table">
                 <i class="dripicons-print"></i> Print
             </button>
         </div>
@@ -258,7 +258,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($rows as $idx => $r)
+                    @foreach($rows as $idx => $r)
                         <tr>
                             <td class="text-center font-weight-600 text-muted">{{ $idx + 1 }}</td>
                             <td>{{ date('d-m-Y', strtotime($r->created_at)) }}</td>
@@ -322,14 +322,7 @@
                             </td>
                             
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ $type === 'payables' ? 12 : 11 }}" class="text-center py-4 text-muted">
-                                <div class="mb-1"><i class="dripicons-checkmark text-success u-fs-24px"></i></div>
-                                <div>No outstanding dues found matching the active filters.</div>
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
                 @if($rows->count() > 0)
                     <tfoot class="bg-light font-weight-bold">
@@ -373,10 +366,12 @@ $(document).ready(function() {
                 extend: 'print',
                 text: '<i class="fa fa-print mr-1"></i> Print',
                 className: 'btn btn-sm btn-outline-secondary',
+                footer: true,
                 exportOptions: { columns: ':visible:not(.not-exported)' }
             }
         ],
         "language": {
+            "emptyTable": "No outstanding dues found matching the active filters.",
             "search": "_INPUT_",
             "searchPlaceholder": "Search table...",
             "paginate": {
