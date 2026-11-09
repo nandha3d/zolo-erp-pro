@@ -1,5 +1,45 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## End-to-End Comparison Test: UI Branch vs. Upgrade Worktree — 2026-11-09 (`upgrade/laravel13-php85`)
+
+- **Scope & Objective:** User requested a complete end-to-end comparison test between the `ui` branch (`V:\pers\Freelance\zolo-erp-pro`) and the upgrade worktree (`V:\pers\Freelance\zolo-erp-pro-upgrade`) to detect any bug or regression created during the Laravel 10 → 13 and PHP 8.5 upgrade.
+- **Architectural & Dependency Audit:**
+  - `composer validate --strict`: 100% valid.
+  - `composer check-platform-reqs`: 27/27 requirements satisfied on PHP 8.5.12.
+  - `composer audit`: 0 security vulnerabilities.
+  - `php artisan route:cache`: 1,089 routes serialized and cached with 100% success.
+  - `php artisan view:cache`: 100% of Blade templates compiled with 0 errors.
+- **Automated Feature & Integration Test Execution (100% Green):**
+  - `IndustryFlowIntegrationTest`: 7/7 PASSED (100 assertions).
+  - `TextileEndToEndLedgerTest`: 1/1 PASSED (167 assertions).
+  - `ManufacturingJobWorkTest`: 10/10 PASSED.
+  - `JobWorkReturnsReworkTest`: 5/5 PASSED.
+  - `CustomerSupplierReportsNavigationTest`: 7/7 PASSED.
+  - `PartiesGlobalUiTest`: 11/11 PASSED.
+  - `OutstandingDuesAndGstTypeTest`: 8/8 PASSED.
+  - `SingleViewVoucherDeskTest`: 8/8 PASSED.
+  - `VoucherPopupAndProductEnhancementsTest`: 8/8 PASSED.
+  - `BillStockPaymentWorkflowTest`: 9/9 PASSED.
+  - `ComplianceBrowserFixtureTest` & `ComplianceHttpTest`: 6/6 PASSED (54 assertions).
+  - `CarbonDateDifferencesTest`: 2/2 PASSED.
+  - `CentralizedDueManagementTest`: 10/10 PASSED.
+- **Live HTTP E2E Audit (`http://127.0.0.1:8080` & `zolo-erp-upgrade.test`):**
+  - Authenticated as `admin` and executed automated HTTP sweeps across core production endpoints:
+  - `/login` (GET 200, POST 302 -> `/dashboard` 200), `/report/customer_report` (200 OK), `/report/supplier_report` (200 OK), `/report/outstanding-dues` (200 OK), `/accounting/general-ledger` (200 OK), `/accounting/journal-entries` (200 OK), `/accounting/trial-balance` (200 OK), `/sales` (200 OK), `/purchases` (200 OK), `/products` (200 OK), `/transfers` (200 OK), `/quotations` (200 OK).
+- **Finding:** Zero bugs or functional regressions created. All recent UI features (9-column job work print, voucher preview modals, A4 zero-overflow print rules) are fully retained and operational on Laravel 13 + PHP 8.5.
+
+## Upgrade Worktree Localhost & Herd Linking — 2026-11-09 (`upgrade/laravel13-php85`)
+
+- **Context & User Request:** User requested to start the local host with the upgrade worktree (`V:\pers\Freelance\zolo-erp-pro-upgrade`) used for Laravel 13 and PHP 8.5, sharing a screenshot of Herd.
+- **Herd Sites Linked & Isolated:**
+  - `http://zolo-erp-upgrade.test` -> `V:\pers\Freelance\zolo-erp-pro-upgrade` (PHP 8.5 isolated, Nginx port 80).
+  - `http://zolo-erp-pro-upgrade.test` -> `V:\pers\Freelance\zolo-erp-pro-upgrade` (PHP 8.5 isolated, Nginx port 80).
+  - DNS entries automatically provisioned in Windows `hosts` (`127.0.0.1 zolo-erp-upgrade.test`).
+- **Artisan Serve Localhost Daemon:**
+  - Started background daemon on `http://127.0.0.1:8080` (and `http://localhost:8080`) from `V:\pers\Freelance\zolo-erp-pro-upgrade`.
+  - Connected to isolated database `zoloerp_upgrade` on MariaDB/MySQL port 3306.
+- **Verification:** Both `http://zolo-erp-upgrade.test/login` (Herd) and `http://localhost:8080/login` return HTTP 200 OK with `<title>zoloERP Pro — Sign In</title>`.
+
 ## Audit Review Hardening, Fresh-DB CI Fix & Merge Readiness Complete — 2026-11-08 (commit `91be69f` on `upgrade/laravel13-php85`)
 
 Addressed all audit items and CI blockers identified during the static source-code review:
