@@ -570,11 +570,6 @@ class TextileMasterSeeder extends Seeder
                 ->where('code', $item['code'])
                 ->first();
             if ($catalogOnly && $product) {
-                // Opening quantities must enter production through the stock and accounting ledgers.
-                if ((float)$product->qty > 0 && DB::table('stock_movements')->where('company_id', $companyId)->count() === 0) {
-                    $product->update(['qty' => 0]);
-                    Product_Warehouse::where('product_id', $product->id)->where('company_id', $companyId)->update(['qty' => 0]);
-                }
                 continue;
             }
 

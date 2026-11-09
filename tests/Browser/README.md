@@ -11,6 +11,8 @@ They never use a standalone entry screen, so they are what certifies the consoli
 | `document-layout.spec.mjs` | Desktop viewport fit at 1366×768 and 1280×720, visible Save/actions with growing item lists and expanded details, Enter/Tab/Shift+Tab, modal focus return, item search after new/reset, and register placement. Optional rendered fixtures cover source-bound returns, edit forms, quotation conversions, packing challans, and legacy exchange entry. |
 | `bill-stock-payment.spec.mjs` | Rendered Blade fixtures with real local scripts: payment due defaults and validation, dynamic required markers, product switching clears old stock references, mobile layout, and separate receipt/voucher printing. Backend effects are verified by `BillStockPaymentWorkflowTest`; browser requests never post business records. |
 
+Run `node tests/Browser/sale-dialogs.spec.mjs` against the same seeded disposable server to verify multi-item selection, row detail editing, and the quick-create dialogs on Sales. Quick-create responses are intercepted.
+
 For the isolated bill/payment browser check, set `ERP_EXPORT_BILL_PAYMENT_BROWSER=1` and run `BillStockPaymentWorkflowTest` and `DocumentEntryWebTest` first. Then run `node tests/Browser/bill-stock-payment.spec.mjs` with `PLAYWRIGHT_CORE` configured. Fixture HTML and screenshots stay under `scratch/`.
 
 ## Running them

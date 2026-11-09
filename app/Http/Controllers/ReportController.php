@@ -5330,8 +5330,8 @@ class ReportController extends Controller
                 $invoiceDate = Carbon::parse($record->created_at);
                 $dueDate = (clone $invoiceDate)->addDays($creditDays);
                 $isOverdue = ($due > 0.009) && $today->greaterThan($dueDate);
-                $daysOverdue = $isOverdue ? $today->diffInDays($dueDate) : 0;
-                $daysLeft = (!$isOverdue && $due > 0.009) ? $dueDate->diffInDays($today) : 0;
+                $daysOverdue = $isOverdue ? (int) $dueDate->diffInDays($today, false) : 0;
+                $daysLeft = (!$isOverdue && $due > 0.009) ? (int) $today->diffInDays($dueDate, false) : 0;
 
                 if ($dueStatus === 'all_dues' && $due <= 0.009) continue;
                 if ($dueStatus === 'unpaid' && ($paid > 0.009 || $due <= 0.009)) continue;
@@ -5417,8 +5417,8 @@ class ReportController extends Controller
                 $invoiceDate = Carbon::parse($record->created_at);
                 $dueDate = (clone $invoiceDate)->addDays($creditDays);
                 $isOverdue = ($due > 0.009) && $today->greaterThan($dueDate);
-                $daysOverdue = $isOverdue ? $today->diffInDays($dueDate) : 0;
-                $daysLeft = (!$isOverdue && $due > 0.009) ? $dueDate->diffInDays($today) : 0;
+                $daysOverdue = $isOverdue ? (int) $dueDate->diffInDays($today, false) : 0;
+                $daysLeft = (!$isOverdue && $due > 0.009) ? (int) $today->diffInDays($dueDate, false) : 0;
 
                 if ($dueStatus === 'all_dues' && $due <= 0.009) continue;
                 if ($dueStatus === 'unpaid' && ($paid > 0.009 || $due <= 0.009)) continue;

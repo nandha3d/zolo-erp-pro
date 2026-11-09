@@ -90,7 +90,7 @@ class TextileCompanyMigrationTest extends TestCase
         }
     }
 
-    public function test_catalog_only_seeding_preserves_existing_nonzero_stock_quantities(): void
+    public function test_catalog_only_seeding_preserves_existing_stock_without_ledger_movements(): void
     {
         // 1. Run migrations including textile migration on disposable database
         $migrations = array_values(array_filter(glob(database_path('migrations/*.php')),
@@ -107,24 +107,14 @@ class TextileCompanyMigrationTest extends TestCase
             ->where('code', 'TEX-GRY-63W')
             ->firstOrFail();
 
-        // 3. Establish legitimate non-zero stock and corresponding stock movement
+        // 3. Establish non-zero stock awaiting the opening ledger import
         $product->update(['qty' => 250.0]);
         Product_Warehouse::where('product_id', $product->id)->update([
             'qty' => 250.0,
             'company_id' => $company->id,
         ]);
 
-        DB::table('stock_movements')->insert([
-            'company_id' => $company->id,
-            'branch_id' => 1,
-            'movement_no' => 'SM-TEST-001',
-            'movement_type' => 'receipt',
-            'movement_date' => now()->toDateString(),
-            'warehouse_to_id' => 1,
-            'status' => 'posted',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->assertDatabaseMissing('stock_movements', ['company_id' => $company->id]);
 
         // 4. Re-run TextileMasterSeeder with catalogOnly = true
         (new TextileMasterSeeder)->seedCompany($company, catalogOnly: true);

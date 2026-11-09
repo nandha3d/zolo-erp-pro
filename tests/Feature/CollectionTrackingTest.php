@@ -242,14 +242,14 @@ class CollectionTrackingTest extends CompanyErpServiceTestCase
     {
         $item = $this->invoice();
         $balance = '10000000000000.0001';
-        $report = $this->createMock(FinancialReportService::class);
+        $report = $this->createStub(FinancialReportService::class);
         $report->method('ageing')->willReturnCallback(fn () => ['rows' => [['item' => $item, 'open_amount' => $balance]]]);
         $this->app->instance(FinancialReportService::class, $report);
         $input = ['open_item_id' => $item->id, 'as_of_date' => '2026-10-03', 'interest_rate' => '0', 'day_basis' => 365,
             'discount_rate' => '100', 'discount_eligible_until' => '2026-10-03'];
         $this->assertSame($balance, app(CollectionService::class)->preview($input, $this->context)['discount_preview']);
         $maximum = '99999999999999.9999';
-        $report = $this->createMock(FinancialReportService::class);
+        $report = $this->createStub(FinancialReportService::class);
         $report->method('ageing')->willReturn(['rows' => [['item' => $item, 'open_amount' => $maximum]]]);
         $this->app->instance(FinancialReportService::class, $report);
         $this->assertSame($maximum, app(CollectionService::class)->preview($input, $this->context)['discount_preview']);

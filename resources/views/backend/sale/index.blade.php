@@ -1148,6 +1148,355 @@
     </div>
 </div>
 
+<!-- Row Detail Modal (Batch, Expiry, Serial/IMEI, Discount) -->
+<div id="row-detail-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
+    <div class="modal-dialog u-maxw-480px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <h5 class="modal-title u-fs-14px u-fw-700 u-c-text u-d-flex u-items-center u-gap-8px">
+                    <i class="dripicons-pencil u-c-primary"></i> <span id="row-detail-modal-title">Item Details</span>
+                </h5>
+                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body u-p-16px-18px">
+                <input type="hidden" id="modal-target-row-id" value="">
+                <div class="form-group mb-2">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Batch Number</label>
+                    <input type="text" id="modal-row-batch" class="form-control form-control-sm u-h-32px u-fs-12px" placeholder="e.g. BATCH-2026-01">
+                </div>
+                <div class="form-group mb-2">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Expiry Date</label>
+                    <input type="date" id="modal-row-expire" class="form-control form-control-sm u-h-32px u-fs-12px">
+                </div>
+                <div class="form-group mb-2">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">IMEI / Serial Numbers</label>
+                    <textarea id="modal-row-imei" class="form-control form-control-sm u-fs-12px" rows="2" placeholder="Comma separated IMEIs or serials"></textarea>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="u-fs-11px u-fw-700 u-c-text-2 u-mb-2px">Item Discount (₹)</label>
+                    <input type="number" id="modal-row-discount" class="form-control form-control-sm u-h-32px u-fs-12px" placeholder="0.00" step="0.01">
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-save-row-detail">
+                    Save Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Multi-Item Selection Modal (Optech Grid) -->
+<div id="multi-item-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left">
+    <div class="modal-dialog modal-lg u-maxw-850px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <div>
+                    <h5 class="modal-title u-fs-14px u-fw-700 u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
+                        <i class="dripicons-menu u-c-primary"></i> Multi-Item Fast Batch Picker
+                    </h5>
+                    <div class="u-fs-11_5px u-c-text-muted u-mt-2px">
+                        Select multiple products with quantities and insert them all at once into the voucher table.
+                    </div>
+                </div>
+                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body u-p-14px-18px">
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                    <div class="u-pos-relative u-flex-1">
+                        <i class="fa fa-search text-muted u-pos-absolute u-left-10px u-top-50pct u-tf-translatey-50pct u-fs-12px"></i>
+                        <input type="text" id="multi-item-filter" class="form-control form-control-sm u-pl-30px u-h-32px u-fs-12px" placeholder="Filter items by name or code...">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge badge-light border u-fs-11px u-p-5px-8px" id="multi-item-count-badge">0 selected</span>
+                    </div>
+                </div>
+                <div class="table-responsive u-maxh-360px u-ovy-auto u-b-1px-solid-border u-r-6px">
+                    <table class="table table-sm table-hover mb-0 u-fs-12px" id="multi-item-table">
+                        <thead class="u-bg-surface-3 u-pos-sticky u-top-0 u-z-10">
+                            <tr>
+                                <th class="u-w-36px u-ta-center">
+                                    <input type="checkbox" id="multi-item-select-all">
+                                </th>
+                                <th class="u-minw-240px">Item Name</th>
+                                <th class="u-w-130px">Item Code</th>
+                                <th class="u-w-110px u-ta-right">Rate</th>
+                                <th class="u-w-90px u-ta-center">Qty</th>
+                                <th class="u-w-70px u-ta-center">Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="multi-item-tbody">
+                            <!-- Populated dynamically via JS from allProducts -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-add-selected-items">
+                    + Add Selected Items to Voucher
+                </button>
+            </div>
+<!-- Unified Executive Add Product Modal (Catalog Master) -->
+@include('backend.product.partials.quick_create_modal', ['billUsage' => 'sale'])
+
+<!-- Quick Create Category Modal (Inline) -->
+<div id="quick-create-category-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
+    <div class="modal-dialog modal-dialog-centered u-maxw-380px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-12px-30px-rgba-0-0-0-0_25">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <h5 class="modal-title font-weight-bold u-fs-13_5px u-c-text u-m-0">
+                    <i class="dripicons-plus text-primary mr-1"></i> Create New Category
+                </h5>
+                <button type="button" class="close u-fs-18px u-ol-none" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body u-p-16px-18px">
+                <div class="form-group mb-0">
+                    <label class="u-fs-11_5px u-fw-600 u-c-text-2 u-mb-4px">Category Name *</label>
+                    <input type="text" id="quick-cat-name-input" class="form-control u-h-34px u-fs-12_5px" placeholder="e.g. Raw Material, Yarn...">
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-submit-quick-cat">
+                    Save Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Create Brand Modal (Inline) -->
+<div id="quick-create-brand-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
+    <div class="modal-dialog modal-dialog-centered u-maxw-380px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-12px-30px-rgba-0-0-0-0_25">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-18px u-bb-1px-solid-border">
+                <h5 class="modal-title font-weight-bold u-fs-13_5px u-c-text u-m-0">
+                    <i class="dripicons-plus text-primary mr-1"></i> Create New Brand
+                </h5>
+                <button type="button" class="close u-fs-18px u-ol-none" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body u-p-16px-18px">
+                <div class="form-group mb-0">
+                    <label class="u-fs-11_5px u-fw-600 u-c-text-2 u-mb-4px">Brand Title *</label>
+                    <input type="text" id="quick-brand-title-input" class="form-control u-h-34px u-fs-12_5px" placeholder="e.g. Raymond, Vardhman...">
+                </div>
+            </div>
+            <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-10px-18px u-bt-1px-solid-border">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-fw-600" id="btn-submit-quick-brand">
+                    Save Brand
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Create Party Modal (Inline Popup with All Options) -->
+<div id="quick-create-party-modal" tabindex="-1" role="dialog" aria-hidden="true" class="modal fade text-left u-z-1065">
+    <div class="modal-dialog modal-dialog-centered u-maxw-820px">
+        <div class="modal-content u-r-10px u-b-1px-solid-border-strong u-sh-0-16px-40px-rgba-0-0-0-0_22 u-ov-hidden">
+            <div class="modal-header d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-20px u-bb-1px-solid-border">
+                <div>
+                    <h5 class="modal-title font-weight-bold u-fs-14_5px u-c-text u-m-0">
+                        <span id="quick-party-modal-title"><i class="fa fa-user-plus text-primary mr-1"></i> Add Customer</span>
+                    </h5>
+                    <small class="text-muted italic d-block u-fs-11px u-mt-2px">The field labels marked with * are required input fields.</small>
+                </div>
+                <button type="button" class="close u-fs-20px u-ol-none" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="quick-create-party-form">
+                @csrf
+                <input type="hidden" id="party_type_input" name="party_type" value="customer">
+                <div class="modal-body u-p-16px-22px u-maxh-calc-85vh-120px u-ovy-auto">
+
+                    <!-- Top Options: Dual Nature & Customer Group (Cleanly Aligned Checkbox) -->
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-3 py-2 u-bg-surface-2 u-r-8px u-b-1px-solid-border">
+                        <label for="party-both-checkbox" class="d-flex align-items-center mb-0 u-cur-pointer u-gap-9px u-us-none">
+                            <input type="checkbox" id="party-both-checkbox" name="both" value="1" class="u-w-16px u-h-16px u-m-0 u-acc-primary u-cur-pointer">
+                            <span class="font-weight-bold u-fs-12_5px u-c-text">Both Customer and Supplier</span>
+                            <small class="text-muted ml-1 u-fs-11px">(creates linked account for reciprocal trade)</small>
+                        </label>
+                        <div id="party-customer-group-col">
+                            <div class="d-flex align-items-center u-gap-8px">
+                                <label class="u-fs-11_5px u-fw-700 u-c-text-2 u-ws-nowrap u-m-0">Customer Group *</label>
+                                <select id="party-customer-group-id" name="customer_group_id" class="form-control form-control-sm u-h-30px u-fs-12px u-w-150px">
+                                    @if(isset($lims_customer_group_all) && count($lims_customer_group_all))
+                                        @foreach($lims_customer_group_all as $cg)
+                                            <option value="{{ $cg->id }}">{{ $cg->name }}</option>
+                                        @endforeach
+                                    @else
+                                        <option value="1">General</option>
+                                    @endif
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 1: GSTIN Auto-Fill & Verification Hero Panel -->
+                    <div class="mb-3 p-3 u-bg-surface-3 u-r-8px u-b-1px-solid-border-strong">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="font-weight-bold text-uppercase mb-0 u-fs-11px u-ls-0_4px u-c-text-2">
+                                <i class="fa fa-bolt text-warning mr-1"></i> GSTIN Auto-Fill & Statutory Verification
+                            </label>
+                            <span id="party-modal-gst-badge" class="badge u-fs-10_5px u-p-3px-8px" style="display:none"></span>
+                        </div>
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" id="party-vat-number" name="vat_number" class="form-control text-uppercase u-h-36px u-fs-13px u-ff-monospace u-fw-700 u-ls-0_5px" placeholder="Enter 15-char GSTIN (e.g. 33AIUPN6412D1ZA)" maxlength="15" autocomplete="off">
+                                    <div class="input-group-append">
+                                        <button type="button" id="btn-fetch-gstin" class="btn btn-primary u-bg-primary u-bc-primary u-h-36px u-fs-12px u-p-0-14px u-fw-700 u-d-flex u-items-center u-gap-5px" title="1-Click Auto-Fill all details from GST registry">
+                                            <i class="fa fa-bolt"></i> <span>Fetch Details</span>
+                                        </button>
+                                        <a href="https://services.gst.gov.in/services/searchtp" target="_blank" id="btn-open-gst-portal" class="btn btn-outline-secondary u-h-36px u-fs-12px u-p-0-11px u-d-flex u-items-center" title="Verify on official Government GST Portal">
+                                            <i class="fa fa-external-link"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center u-gap-6px">
+                                    <span class="text-muted u-fs-11_5px u-fw-600 u-ws-nowrap">PAN:</span>
+                                    <input type="text" id="party-pan-display" readonly placeholder="Auto from GSTIN" class="form-control form-control-sm text-uppercase u-h-36px u-fs-12_5px u-ff-monospace u-fw-700 u-bg-surface-3 u-c-text">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Full-Width GSTIN Details & Badges Strip -->
+                        <div id="party-gst-preview-strip" class="mt-2 p-2 u-r-6px u-b-1px-solid-border-strong u-bg-surface" style="display:none">
+                            <div class="d-flex align-items-center flex-wrap u-gap-6px">
+                                <span id="gst-strip-state" class="badge badge-info u-fs-11px u-fw-600 u-p-4px-8px"></span>
+                                <span id="gst-strip-const" class="badge badge-dark u-fs-11px u-fw-600 u-p-4px-8px"></span>
+                                <span id="gst-strip-tax" class="badge badge-primary u-fs-11px u-fw-600 u-p-4px-8px"></span>
+                                <span id="gst-strip-status" class="badge u-fs-11px u-fw-700 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-taxpayer" class="badge badge-secondary u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-regdate" class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-cancdate" class="badge badge-danger u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-filing" class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                                <span id="gst-strip-nature" class="badge badge-light border u-fs-11px u-fw-600 u-p-4px-8px" style="display:none"></span>
+                            </div>
+                            <div id="gst-strip-msg" class="text-muted mt-2 u-fs-11_5px u-lh-1_4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Business & Identification Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="compact-field-block">
+                                <label>Name / Contact Person *</label>
+                                <input type="text" id="party-name" name="name" class="form-control u-h-34px u-fs-12_5px" placeholder="Contact or Customer Name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="compact-field-block">
+                                <label>Company / Trade Name *</label>
+                                <input type="text" id="party-company-name" name="company_name" class="form-control u-h-34px u-fs-12_5px" placeholder="Company / Trade Name" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Contact Details -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Phone Number *</label>
+                                <input type="text" id="party-phone-number" name="phone_number" class="form-control u-h-34px u-fs-12_5px" placeholder="Primary Phone" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Email</label>
+                                <input type="email" id="party-email" name="email" class="form-control u-h-34px u-fs-12_5px" placeholder="email@example.com">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>WhatsApp Number</label>
+                                <input type="text" id="party-wa-number" name="wa_number" class="form-control u-h-34px u-fs-12_5px" placeholder="WhatsApp Number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Registered Address Details (Auto-Filled) -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="compact-field-block">
+                                <label>Street Address *</label>
+                                <input type="text" id="party-address" name="address" class="form-control u-h-34px u-fs-12_5px" placeholder="Building / Street / Door No / Locality" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>City *</label>
+                                <input type="text" id="party-city" name="city" class="form-control u-h-34px u-fs-12_5px" placeholder="City" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>State *</label>
+                                <input type="text" id="party-state" name="state" class="form-control u-h-34px u-fs-12_5px" placeholder="State">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Postal / PIN Code</label>
+                                <input type="text" id="party-postal-code" name="postal_code" class="form-control u-h-34px u-fs-12_5px" placeholder="PIN Code">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Country</label>
+                                <input type="text" id="party-country" name="country" class="form-control u-h-34px u-fs-12_5px" value="India" placeholder="Country">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Credit Terms & Balance -->
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Credit Days</label>
+                                <input type="number" id="party-credit-days" name="credit_days" class="form-control u-h-34px u-fs-12_5px" value="30" min="0" placeholder="30">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="compact-field-block">
+                                <label>Opening Balance (Due) <i class="fa fa-info-circle text-muted" title="Amount due at start"></i></label>
+                                <input type="number" id="party-opening-balance" name="opening_balance" class="form-control u-h-34px u-fs-12_5px" value="0" step="any" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div id="party-form-error" class="alert alert-danger mb-0 py-1 px-2 u-fs-11px u-r-6px" style="display:none"></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer d-flex align-items-center justify-content-between u-bg-surface-2 u-p-12px-20px u-bt-1px-solid-border">
+                    <button type="button" class="btn btn-sm btn-secondary u-h-34px u-p-0-16px u-r-6px u-fw-600" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary u-bg-primary u-bc-primary u-h-34px u-p-0-22px u-r-6px u-fw-700 u-fs-13px" id="btn-save-party">
+                        <i class="dripicons-checkmark mr-1"></i> Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div id="view-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
                     class="modal fade text-left">
                     <div role="document" class="modal-dialog">
