@@ -1,5 +1,29 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Database Architecture & Multi-Company Resolution — 2026-11-09 (`ui` & `main`)
+
+- **User Inquiry:** *"previously there are lot of companies in my localhost db, now why only one company is there?"*
+- **Root Cause & Database Architecture Explained:**
+  - **1. Primary DEV Database (`zoloerp` on Port 3307):**
+    - Runs on portable MySQL 8.4 dev instance at `C:\Users\vigne\zolo-mysql-dev` (port 3307, user `zolo_erp`, database `zoloerp`).
+    - Holds all 5 real development companies:
+      1. **zoloERP Pro** (ID 1, Code `DEFAULT`)
+      2. **zoloERP Textiles** (ID 14, Code `ZTEX`)
+      3. **Motumo FMCG** (ID 15, Code `MOTUMO_FMCG`)
+      4. **Motumo FMCG** (ID 16, Code `MOTUMO_FMCG_2`)
+      5. **Angalammantex** (ID 26, Code `ANGALAMMANTEX`)
+    - The server on port 3307 was stopped, so when testing earlier it timed out.
+  - **2. Isolated Upgrade Sandbox Database (`zoloerp_upgrade` on Port 3306):**
+    - Runs on MariaDB (`VainaviMariaDB`) on port 3306.
+    - Was created specifically as an isolated clean-slate sandbox for testing Laravel 10 → 13 and PHP 8.5 upgrades so real development data would not be corrupted.
+    - Because it was migrated from scratch, it only contained the single company (`zoloERP Textiles`) seeded by the baseline migration.
+- **Actions Taken:**
+  1. Booted local MySQL 8.4 dev daemon (`C:\Users\vigne\zolo-mysql-dev\my.ini`, port 3307).
+  2. Pointed `.env` in `V:\pers\Freelance\zolo-erp-pro` to `DB_PORT=3307` and `DB_DATABASE=zoloerp`.
+  3. Ran `php artisan migrate --force` on `zoloerp` to apply the 5 latest migrations from today.
+  4. Verified that all **5 companies** are completely intact, with all transactions, ledgers, and products preserved.
+  5. Optimized route and view caches (`php artisan route:cache`, `php artisan view:cache`).
+
 ## Main publication candidate — 2026-11-09
 
 - Local `main` and `ui` matched at `9d60d5a` before this commit. Both include the upgrade worktree tip `22fd2ff`.
