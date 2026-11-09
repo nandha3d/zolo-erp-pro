@@ -364,9 +364,9 @@
                     </div>
 
                     <!-- Extended Conditional Details Container (4-column grid mirroring dedicated page) -->
-                    <div class="product-extended-details-container mt-2">
+                    <div class="product-extended-details-container mt-2 d-none">
                         <!-- Warehouse Initial Stock Section -->
-                        <div id="quick-initial-stock-section" class="u-d-none">
+                        <div id="quick-initial-stock-section" class="d-none u-d-none">
                             <x-ui.section-box variant="amber" title="{{__('db.Warehouse Initial Stock')}}" icon="inventory">
                                 <div class="table-responsive">
                                     <table class="table table-hover table-sm">
@@ -393,7 +393,7 @@
                         </div>
 
                         <!-- Warehouse Differential Price Section -->
-                        <div data-usage-side="sale" id="quick-diffPrice-section" class="u-d-none">
+                        <div data-usage-side="sale" id="quick-diffPrice-section" class="d-none u-d-none">
                             <x-ui.section-box variant="emerald" title="{{__('db.Different Warehouse Price')}}" icon="pricing">
                                 <div class="table-responsive">
                                     <table class="table table-hover table-sm">
@@ -420,7 +420,7 @@
                         </div>
 
                         <!-- Product Variants Section -->
-                        <div id="quick-variant-section" class="u-d-none">
+                        <div id="quick-variant-section" class="d-none u-d-none">
                             <x-ui.section-box variant="purple" title="{{__('db.Product Variants')}}" icon="tag">
                                 <div class="row align-items-end mb-2">
                                     <div class="col-md-4 form-group mb-0">
@@ -436,7 +436,7 @@
                         </div>
 
                         <!-- Warehouse Batch & Expiry Date Section -->
-                        <div id="quick-batch-section" class="u-d-none">
+                        <div id="quick-batch-section" class="d-none u-d-none">
                             <x-ui.section-box variant="amber" title="{{__('db.Batch & Expiry Date')}}" icon="inventory">
                                 <div class="table-responsive">
                                     <table class="table table-hover table-sm">
@@ -467,7 +467,7 @@
                         </div>
 
                         <!-- Warehouse IMEI / Serial Numbers Section -->
-                        <div id="quick-imei-section" class="u-d-none">
+                        <div id="quick-imei-section" class="d-none u-d-none">
                             <x-ui.section-box variant="blue" title="{{__('db.IMEI / Serial numbers')}}" icon="tag">
                                 <div class="table-responsive">
                                     <table class="table table-hover table-sm">
@@ -494,7 +494,7 @@
                         </div>
 
                         <!-- Promotional Price Section -->
-                        <div data-usage-side="sale" id="quick-promo-container" class="u-d-none">
+                        <div data-usage-side="sale" id="quick-promo-container" class="d-none u-d-none">
                             <x-ui.section-box variant="blue" title="{{__('db.Promotional Price')}}" icon="pricing">
                                 <div class="zolo-promo-vertical-form">
                                     <div class="form-group mb-2">

@@ -53,7 +53,18 @@
   4. *Elimination of Jarring Browser `confirm()` Popups:*
      - Enhanced `public/js/unknown-product.js` with `window.zoloOpenQuickCreateProduct` and `skipConfirm = true` support.
      - Replaced blocking browser `window.confirm()` popups across `purchase/index.blade.php`, `sale/index.blade.php`, and `material-document.js` with the smooth Quick Create modal.
-  5. *Test Suite Verification (100% Green):*
+  5. *Fix for Disabled Modules Rendering as Extended Sections in Quick Create Modal (`media_1794233578063_9d63ba40.png`):*
+     - User screenshot showed the Quick Create item modal with toggle switches (Initial Stock, Variants, Batch & Expiry, IMEI/Serial) toggled OFF (disabled), yet their corresponding 4 sections ("WAREHOUSE INITIAL STOCK", "PRODUCT VARIANTS", "BATCH & EXPIRY DATE", "IMEI / SERIAL NUMBERS") were visible and rendered in the 4-column extended details grid.
+     - Root Causes:
+       1. In `resources/views/backend/product/partials/quick_create_modal.blade.php`, sections were given `class="u-d-none"` instead of standard Bootstrap `class="d-none"`. `u-d-none` was not defined in any CSS file, so no `display: none` was applied.
+       2. In `public/css/zolo-erp-neo.css`, `.product-extended-details-container` used `display: grid !important`, causing the browser to lay out all 4 unhidden sections across the 4 grid columns.
+       3. In `public/js/quick-product-modal.js`, visibility logic only ran on `change` of the checkboxes, and never synced when the modal initially opened, was triggered from the search dropdown, or was reset.
+     - Solution:
+       - Defined `.product-extended-details-container.d-none, .product-extended-details-container > .d-none, .u-d-none { display: none !important; }` in `public/css/zolo-erp-neo.css`.
+       - Replaced `u-d-none` with `d-none u-d-none` on all extended sections and the container in `quick_create_modal.blade.php`.
+       - Added `syncQuickSections()` to `public/js/quick-product-modal.js` and hooked it to `show.bs.modal`, `shown.bs.modal`, form reset, and document ready.
+       - If no toggle is active (`count === 0`), the container and all sections are completely hidden (`d-none`). When a toggle is turned ON, only that section slides down and cleanly spans the dynamic grid.
+  6. *Test Suite Verification (100% Green):*
      - `tests/Feature/DocumentEntryWebTest.php`: **12/12 passed (90 assertions, 100% green)**.
      - `tests/Feature/GoodsReceivedNoteWebTest.php`: **4/4 passed (22 assertions, 100% green)**.
      - `tests/Feature/PurchaseOrderLifecycleTest.php`: **6/6 passed (40 assertions, 100% green)**.

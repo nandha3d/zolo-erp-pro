@@ -2467,10 +2467,18 @@ body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
 /* Extended conditional sections below the top primary grid:
    Arranges conditional boxes dynamically in a balanced row with NO gaps. */
 .product-extended-details-container {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 10px !important;
-  align-items: stretch !important;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.product-extended-details-container.d-none,
+.product-extended-details-container.u-d-none,
+.product-extended-details-container > .d-none,
+.product-extended-details-container > .u-d-none,
+.u-d-none {
+  display: none !important;
 }
 
 /* Dynamic Responsive Spans: never leave an empty gap in any row */

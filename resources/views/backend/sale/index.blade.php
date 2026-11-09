@@ -3426,6 +3426,7 @@
         e.preventDefault();
         e.stopPropagation();
         $('#quick-create-item-form')[0].reset();
+        if (window.syncQuickSections) window.syncQuickSections();
         $('#btn-quick-gen-code').trigger('click');
         $('#quick-create-item-modal').modal('show');
     });

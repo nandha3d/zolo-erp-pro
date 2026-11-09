@@ -59,7 +59,12 @@
         });
 
         var count = activeSections.length;
-        if (count === 0) return;
+        var $container = $('#quick-create-item-modal .product-extended-details-container');
+        if (count === 0) {
+            $container.addClass('d-none u-d-none');
+            return;
+        }
+        $container.removeClass('d-none u-d-none');
 
         if (count === 1) {
             activeSections[0].$el.addClass('zolo-grid-span-4');
@@ -98,7 +103,35 @@
         }
     }
 
+    function syncQuickSections() {
+        var targetMap = {
+            '#quick_chk_initial_stock': '#quick-initial-stock-section',
+            '#quick_is_diffPrice': '#quick-diffPrice-section',
+            '#quick_is_variant': '#quick-variant-section',
+            '#quick_is_batch': '#quick-batch-section',
+            '#quick_is_imei': '#quick-imei-section',
+            '#quick_promotion': '#quick-promo-container'
+        };
+
+        var isCombo = $('#quick-item-type').val() === 'combo';
+
+        $.each(targetMap, function (chkId, sectionId) {
+            var isChecked = !isCombo && $(chkId).is(':checked');
+            var $pill = $(chkId).closest('.zolo-toggle-pill');
+            $pill.toggleClass('is-active', isChecked);
+            if (isChecked) {
+                $(sectionId).removeClass('d-none u-d-none').show();
+            } else {
+                $(sectionId).addClass('d-none u-d-none').hide();
+            }
+        });
+
+        applyQuickModalDynamicGridSpans();
+    }
+
     $(function () {
+        syncQuickSections();
+
         // Switch toggles within quick modal
         $('#quick-create-item-modal .zolo-toggle-pill input[type="checkbox"]').on('change', function () {
             var $pill = $(this).closest('.zolo-toggle-pill');
@@ -117,10 +150,10 @@
             var target = targetMap[id];
             if (target) {
                 if ($(this).is(':checked')) {
-                    $(target).removeClass('u-d-none').hide().slideDown(200);
+                    $(target).removeClass('d-none u-d-none').hide().slideDown(200);
                 } else {
                     $(target).slideUp(200, function () {
-                        $(this).addClass('u-d-none');
+                        $(this).addClass('d-none u-d-none');
                     });
                 }
             }
@@ -173,19 +206,20 @@
         });
 
         // Refresh selectpickers and spans when modal opens
-        $('#quick-create-item-modal').on('shown.bs.modal', function () {
+        $('#quick-create-item-modal').on('show.bs.modal shown.bs.modal', function () {
+            syncQuickSections();
             if ($.fn.selectpicker) {
                 $(this).find('.selectpicker').selectpicker('render');
             }
             if (!$('#quick-item-code').val()) {
                 $('#quick-item-code').val('ITM-' + Math.floor(100000 + Math.random() * 900000));
             }
-            applyQuickModalDynamicGridSpans();
             setTimeout(function () {
                 $('#quick-item-name').focus();
             }, 100);
         });
 
         window.applyQuickModalDynamicGridSpans = applyQuickModalDynamicGridSpans;
+        window.syncQuickSections = syncQuickSections;
     });
 })(window.jQuery);

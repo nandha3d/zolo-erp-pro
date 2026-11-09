@@ -11,6 +11,7 @@
         var $modal = $('#quick-create-item-modal');
         if (!$modal.length) return false;
         $('#btn-create-item-modal').trigger('click'); // resets the form, generates a code and opens modal
+        if (window.syncQuickSections) window.syncQuickSections();
         $modal.data('replace-row', $row && $row.length ? $row : null);
         if (name) {
             $('#quick-item-name').val(name).trigger('input');
