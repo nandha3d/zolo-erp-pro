@@ -141,10 +141,9 @@ return [
     | you can simply comment them out.
     |
     */
-    'commands' => ConsoleServiceProvider::defaultCommands()
-        ->merge([
-            // Custom module commands can be added here
-        ])->toArray(),
+    'commands' => method_exists(ConsoleServiceProvider::class, 'defaultCommands')
+        ? ConsoleServiceProvider::defaultCommands()->toArray()
+        : [],
 
     /*
     |--------------------------------------------------------------------------
