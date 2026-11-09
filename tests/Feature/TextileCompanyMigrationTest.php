@@ -33,10 +33,15 @@ class TextileCompanyMigrationTest extends TestCase
     public function test_textile_migration_recovers_from_failure_and_seeds_accounting_without_direct_stock(): void
     {
         // 1. Run prerequisite migrations up to immediately before the textile migration
-        $migrations = array_values(array_filter(glob(database_path('migrations/*.php')),
-            fn (string $path) => basename($path) < '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'));
+        $migrations = array_values(array_filter(
+            glob(database_path('migrations/*.php')),
+            fn(string $path) => basename($path) < '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'
+        ));
         $this->assertSame(0, Artisan::call('migrate', [
-            '--database' => 'erp_regression', '--force' => true, '--realpath' => true, '--path' => $migrations,
+            '--database' => 'erp_regression',
+            '--force' => true,
+            '--realpath' => true,
+            '--path' => $migrations,
         ]));
 
         $migration = require database_path('migrations/2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php');
@@ -93,10 +98,15 @@ class TextileCompanyMigrationTest extends TestCase
     public function test_catalog_only_seeding_preserves_existing_stock_without_ledger_movements(): void
     {
         // 1. Run migrations including textile migration on disposable database
-        $migrations = array_values(array_filter(glob(database_path('migrations/*.php')),
-            fn (string $path) => basename($path) <= '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'));
+        $migrations = array_values(array_filter(
+            glob(database_path('migrations/*.php')),
+            fn(string $path) => basename($path) <= '2026_11_06_143000_migrate_zoloerp_textile_company_and_masters.php'
+        ));
         $this->assertSame(0, Artisan::call('migrate', [
-            '--database' => 'erp_regression', '--force' => true, '--realpath' => true, '--path' => $migrations,
+            '--database' => 'erp_regression',
+            '--force' => true,
+            '--realpath' => true,
+            '--path' => $migrations,
         ]));
 
         $company = Company::withoutGlobalScopes()->where('code', 'ZTEX')->firstOrFail();
