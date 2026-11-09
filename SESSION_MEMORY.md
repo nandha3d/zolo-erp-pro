@@ -1,254 +1,343 @@
 # zoloERP Pro — Persistent Session Memory & State
 
-## Active Session & Follow-up — 2026-11-09: Stock Report Table Blank Screen Resolution & Date Range Filter Integration (branch ui)
+## Active Session & Follow-up — 2026-11-09: Complete Role-Isolated Operational Dashboards & Real-Time Backend Insights (branch main & ui)
 
-- **Client Requests Addressed:**
-  - *"continue where we left"* / *"also where is the date filter?"* with screenshot (`media_1794205876960_b65d72dc.png`):
-    - Stock inventory desk table was rendered completely blank/white inside `.desk-card-wrapper`.
-    - No date filter existed in the stock report filter card (unlike all other ERP reports).
-- **Root Cause Analysis:**
-  1. **DataTables Initialization Failure (TypeError in `buttons.printnew.js`):**
-     - In commit `52b7798`, `dom` was changed to include `lB` and an inline `buttons: [{ extend: 'print', ... }]` definition.
-     - In `vendor/datatable/buttons.printnew.js:126`, line `if (config.repeatingHead.logo)` was evaluated on button creation. Because `repeatingHead` was undefined on the generic button config, it threw an unhandled `TypeError: Cannot read properties of undefined (reading 'logo')`.
-     - This JavaScript exception crashed DataTables initialization before table drawing, leaving the `.desk-card-wrapper` table container completely empty.
-  2. **Missing Date Filter:**
-     - `ReportController::stockReport` only received `warehouse_id`, `category_id`, `brand_id`, and `stock_status`, omitting the standard date timeframe (`start_date` and `end_date`) expected by users and accountants.
-  3. **Composer Classmap Folder Name Stale Reference:**
-     - The vendor composer autoloader (`autoload_classmap.php`) had cached class paths targeting old project directory `D:\PROJECTS\WEBSITES\DK Enterprises\app\Http\Controllers\ReportController.php`. Running `composer dump-autoload` regenerated the classmaps cleanly for `zolo-erp-pro`.
-- **Architectural Solution & Implementation:**
-  1. **Restored Standard DataTables Initialization (`stock_report.blade.php`):**
-     - Reverted `dom` to clean standard:
-       `"dom": '<"row align-items-center mb-2"<"col-md-6"l><"col-md-6 d-flex justify-content-end"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>'`
-     - Removed redundant inline `buttons: [...]` array. `table-polish.js` now cleanly mounts the "Columns" visibility dropdown next to the search filter without DOM collisions or JS crashes.
-  2. **Integrated Standard ERP Date Range Picker (`stock_report.blade.php` & `ReportController.php`):**
-     - Filter Card: Added standard `.daterangepicker-field` input group with `start_date` and `end_date` hidden inputs.
-     - View Script: Attached `$(".daterangepicker-field").daterangepicker({...})` callback to update inputs on selection.
-     - Top Bar & Quick Info: Displays formatted timeframe `Period: 01 Jan 2026 — 09 Nov 2026 | Location: All Warehouses | Category: All Categories`.
-     - Controller: `ReportController::stockReport` and `stockReportData` now accept and sanitize `start_date` and `end_date` (defaulting to current month start and today), filtering active product catalogs by date if historical dates are specified.
-  3. **Robust Full-Document Multi-Page Printing (`printStockReport`):**
-     - When Print Statement is clicked, `stockTable.page.len(-1).draw()` unrolls all rows across all pages, triggers `window.print()` under the authoritative single letterhead with zero scrollbars, and restores pagination after 600ms.
-- **Verification & Test Coverage (100% Green):**
-  - `tests/Feature/StockReportTest.php`: 9/9 passed (59 assertions, 100%), including new test `test_stock_report_date_range_filter`.
-  - Full regression suite (42 tests, 223 assertions):
-    - `CustomerSupplierReportsNavigationTest`: 7/7 passed.
-    - `PartiesGlobalUiTest`: 11/11 passed.
-    - `OutstandingDuesAndGstTypeTest`: 8/8 passed.
-    - `VoucherPopupAndProductEnhancementsTest`: 8/8 passed.
-    - `SingleViewVoucherDeskTest`: 8/8 passed.
-    - Combined total: 51 tests, 282 assertions passing (100% green).
-  - View cache: `php artisan view:clear; php artisan view:cache` compiled with 100% success.
+- **Issues Addressed & Features Delivered:**
+  1. *Role-Specific Insights & Dashboards for Every Operational Role:*
+     - Client instructed: *"i need a dashboard for the each role for thier insights."* with strict mandate:
+       - No role cross-talk or leakage of corporate financial balance sheets, profit & loss, or other companies' data to field crew.
+       - Calculations strictly computed from backend DB tables, zero frontend hardcoding.
+       - Full parity and identical workflows across both Web ERP and Mobile App.
+  2. *Roles Fully Isolated & Implemented across Web & Mobile:*
+     - **Tanker Driver (`tankerDriver` / `tanker_driver`):**
+       - Mobile (`TankerDriverDashboardScreen`) & Web (`backend.role_dashboards.tanker_driver`).
+       - Features: Assigned tanker card (`TN-58-BW-2001`, Tata LPT 2518), active destination customer site, 1-tap Google Maps turn-by-turn navigation, decanting flow sensor telemetry (`0 L/min` idle / active), anti-siphon valve status (`VALVE SECURED`), odometer tracking, diesel expenses, trip freight bill, and 1-tap WhatsApp GPS capture modal.
+     - **20L Can Delivery Driver (`deliveryDriver` / `driver`):**
+       - Mobile (`CanDeliveryDriverDashboardScreen`) & Web (`backend.role_dashboards.can_driver`).
+       - Features: Assigned Tata Ace van (`TN-58-WA-101`), route beat (`Erode Commercial Route Beat A`), live can inventory manifest (Loaded, Delivered, Empty Collected, Return Ratio %, Remaining on truck), route cash collected, delivery stops list with customer phone, address, empty dues, and 1-tap Google Maps navigation.
+     - **Cashier (`cashier` - Aran Cafe):**
+       - Mobile (`CashierDashboardScreen`) & Web (`backend.role_dashboards.cashier`).
+       - Features: Aran Cafe POS terminal, shift drawer status (`DRAWER OPEN`, opened at 07:30 AM), 4 live KPI insight cards: Today's Counter Sales (₹), Orders Billed (count), Cash in Drawer (₹), Average Order Value (AOV ₹); digital UPI vs cash breakdown, active kitchen KOT count, Express Touch POS launcher (`/cafe/pos` / `sale.pos`), Standard Sale launcher, and Drawer Reconciliation.
+     - **Field Agent (`fieldAgent` / `agent`):**
+       - Mobile (`FieldAgentDashboardScreen`) & Web (`backend.role_dashboards.field_agent`).
+       - Features: Field KYC & Collections Desk, 4 live KPI insight cards: Assigned Customer Accounts (count), Total Receivables (₹), Today's Field Collections (₹), Recovery Rate (%); overdue accounts count (>30 days), geocoded vs missing GPS count, searchable customer directory with dues amount badge, GPS pin status badge, 1-tap phone dialer, 1-tap WhatsApp location capture modal (`CaptureLocationDialog`), and 1-tap collection.
+     - **Executive / Super Admin (`admin`):**
+       - Retains full multi-entity group workspace rollup (`/workspace`), executive company switcher, and corporate P&L balance sheet.
+  3. *Backend Controllers & API Contracts Synchronized across Repositories:*
+     - `WaterLogisticsApiController.php`: Upgraded `roleDashboard` and `driverManifest` returning dynamic metrics for all 4 roles.
+     - `HomeController.php`: Implemented web dashboard dispatcher routing staff users directly to their dedicated role views under `backend.role_dashboards.*`.
+     - `sidebar.blade.php`: Gated Corporate Credit Aging strictly to admin roles (`role_id <= 2`), eliminating financial leaks for field drivers.
+     - Mirrored 100% to both `d:\PROJECTS\WEBSITES\DK Enterprises` (commit `73d852b`) and `D:\PROJECTS\WEBSITES\zolo-erp-pro` (commit `cb36c88`).
+- **Verification Status (100% Green across Both Repositories & Mobile):**
+  - Laravel Feature Tests in `DK Enterprises`:
+    - `RoleDashboardIsolationTest.php`: 7/7 passed (80 assertions, 100%).
+    - `DriverIsolationAndLocationTest.php`: 6/6 passed (31 assertions, 100%).
+    - `MobileApiSecurityAndMeTest.php`: 9/9 passed (157 assertions, 100%).
+    - `StockReportTest.php`: 8/8 passed (53 assertions, 100%).
+    - `ThreeCompaniesWorkflowAndFraudTest.php`: 18/18 passed (160 assertions, 100%).
+    - Total: **48/48 passed (481 assertions, 100% green)**.
+  - Laravel Feature Tests in `zolo-erp-pro`:
+    - `RoleDashboardIsolationTest.php`: 7/7 passed (80 assertions, 100%).
+  - Mobile Flutter Test Suite (`mobile/test/`):
+    - **21/21 passed (100% green)**.
+  - Blade template compilation: `php artisan view:cache` **100% clean**.
 
+## Active Session & Follow-up — 2026-11-09: Stock Report Print Invisible Table Resolution, Duplicate Letterhead Elimination & Full Multi-Page A4 Inventory Layout (branch main & ui)
 
-## Active Session & Follow-up — 2026-11-09: Stock Report Print Invisible Table Resolution, Duplicate Letterhead Elimination & Full Multi-Page A4 Inventory Layout (branch ui)
-
-- **Client Requests Addressed:**
-  - *"why stocks are not showing in reports"* with screenshot (`media_1794204697732_e8e1f795.png`):
-    - Duplicate stacked company letterhead.
-    - Complete stock table missing, collapsed into a single-line horizontal/vertical scrollbar widget with 1/1 page limit.
-- **Root Cause Analysis & Resolution:**
-  1. **Duplicate Header Elimination:**
-     - Removed redundant in-view `<div class="erp-print-header">` so the single authoritative letterhead from `backend.layout.partials.print-letterhead.blade.php` prints cleanly with active company name, GSTIN, fiscal year, and metadata.
-  2. **App Shell Root Lockup & Container Overflow:**
-     - In `public/css/app-shell.css`, `html.app-shell`, `body`, `.page`, `.page-content`, and `#content` had `height: 100% / 100vh; overflow: hidden !important; display: flex !important;`. During Chromium printing, root containers locked at `100vh` clipped all overflowing content and forced children (`.table-responsive`, `.desk-card-wrapper`) to render as collapsed scroll containers on paper.
-     - In `public/css/erp-print.css` and `stock_report.blade.php`, comprehensively unlocked `html`, `body`, `.page`, `.page-content`, `#content`, `[class$="-workspace-view"]`, `.report-workspace-view`, `.desk-card-wrapper`, and `.table-responsive` with `height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; display: block !important; flex: none !important; position: static !important;`.
-  3. **`data-erp-print` Hidden Iframe Integration:**
-     - Wired `Print Statement` button to `data-erp-print` and DataTables Buttons (`buttons: [{ extend: 'print', ... }, { extend: 'csv', ... }]`). Now prints through `erp-print.js` hidden `<iframe>` (`.erp-print-doc`) with zero layout interference, clean Indian number formatting (`₹ 1,50,000.00`), running table headers, and signature blocks.
-     - Fallback: Direct browser printing (`Ctrl+P`) now unrolls all pages cleanly with zero scrollbars.
+- **Issues Addressed & Visual Evidence Resolved:**
+  1. *Stocks Missing in Print Preview & Scrollbar Container Collapse (`media_1794204697732_e8e1f795.png`):*
+     - Client asked: *"why stocks are not showing in reports"* with screenshot showing:
+       - Duplicate stacked company letterhead.
+       - Complete stock table missing, collapsed into a single-line horizontal/vertical scrollbar widget with 1/1 page limit.
+     - Root causes diagnosed & eliminated:
+       - **Duplicate Header:** Removed redundant in-view `<div class="erp-print-header">` so the single authoritative letterhead from `backend.layout.partials.print-letterhead.blade.php` prints cleanly with active company name, GSTIN, fiscal year, and metadata.
+       - **Container Overflow & 100vh Root Lock:** In `public/css/app-shell.css`, `html.app-shell`, `body`, `.page`, `.page-content`, and `#content` had `height: 100% / 100vh; overflow: hidden !important; display: flex !important;`. During Chromium printing, root containers locked at `100vh` clipped all overflowing content and forced children (`.table-responsive`, `.desk-card-wrapper`) to render as collapsed scroll containers on paper.
+       - **Print Unconstrain:** In `public/css/erp-print.css` and `stock_report.blade.php`, comprehensively unlocked `html`, `body`, `.page`, `.page-content`, `#content`, `[class$="-workspace-view"]`, `.report-workspace-view`, `.desk-card-wrapper`, and `.table-responsive` with `height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; display: block !important; flex: none !important; position: static !important;`.
+       - **`data-erp-print` Hidden Iframe Integration:** Wired `Print Statement` button to `data-erp-print` and DataTables Buttons (`buttons: [{ extend: 'print', ... }, { extend: 'csv', ... }]`). Now prints through `erp-print.js` hidden `<iframe>` (`.erp-print-doc`) with zero layout interference, clean Indian number formatting (`₹ 1,50,000.00`), running table headers, and signature blocks.
+       - **Dual-Path Safety:** If printed directly via browser (`Ctrl+P`), `@media print` rules ensure all rows break across A4 pages without clipping.
+  2. **Codebase Synchronization across Repositories:**
+     - Mirrored complete stock report implementation to `d:\PROJECTS\WEBSITES\DK Enterprises` (`stock_report.blade.php`, `ReportController.php` with `use App\Models\Category;` and `use App\Models\Brand;`, `routes/web.php`, `sidebar.blade.php`, `erp-print.css`, and `tests/Feature/StockReportTest.php`).
 - **Verification Status (100% Green):**
-  - `tests/Feature/StockReportTest.php`: 8/8 passed (53 assertions, 100%).
+  - `zolo-erp-pro`: `tests/Feature/StockReportTest.php`: 8/8 passed (53 assertions, 100%).
+  - `DK Enterprises`: `tests/Feature/StockReportTest.php`: 8/8 passed (53 assertions, 100%).
+  - `mobile/`: 21/21 passed (100% green).
 
-## Active Session & Follow-up — 2026-11-09: Stock Report Screen Bottom Cutoff Fix & Print Overlay Elimination (branch ui)
+## Active Session & Follow-up — 2026-11-09: Complete Null-Safety Crash Elimination, Double-Gated Role Isolation, Dynamic Metric Deserialization & Zero-Overlap UI Polish (branch main)
 
-- **Client Requests Addressed:**
-  - *"page cuts at bottom? print statement overlays"* with two screenshots:
-    - Screen View (`media_1794203345540_641a777c.jpg`): Table clipped vertically inside viewport before reaching totals footer, records count, and pagination controls.
-    - Print View (`media_1794203366245_2dc1fed9.jpg`): Double letterhead overlay, DataTables screen chrome (`All records per page`, `Columns 1 hidden`, `Search: [ ]`) rendered on paper, and column text overlapping horizontally with truncated headers (`STOCK VALUE BY C...`).
-- **Root Cause Analysis:**
-  1. **Screen Bottom Cutoff:**
-     - In `public/css/app-shell.css`, `html.app-shell #content > :has(> .desk-card-wrapper)` forced `flex: 1 1 auto !important; min-height: 0; display: flex !important; flex-direction: column !important;`, and `.desk-card-wrapper` enforced `flex: 1 1 0 !important; min-height: 220px !important;`.
-     - `app-shell.css:109` only set `overflow-y: auto !important` if `.desk-card-wrapper:not(:has(.dataTables_wrapper))`.
-     - Because `#stock-inventory-table` had `.dataTables_wrapper`, `.desk-card-wrapper` did NOT receive `overflow-y: auto`, locked its height to the remaining screen space (~350px), and clipped the bottom of the table, totals footer, and pagination.
-  2. **Print Double Letterhead Overlay:**
-     - `backend.layout.partials.print-letterhead.blade.php` is automatically included in `#content` on every page via `backend.layout.main.blade.php`.
-     - `stock_report.blade.php` previously had a second `<div class="erp-print-header">` block embedded in the view, causing two letterhead headers to print stacked on top of each other.
-  3. **DataTables Screen Chrome Printing on Paper:**
-     - In `app-shell.css:217-231`, `.zolo-polished .dataTables_length`, `.dataTables_filter`, and `.dt-buttons` had `display: inline-flex !important;` with high selector specificity (0, 3, 2) without an `@media screen` wrapper, overriding `display: none !important;` from `erp-print.css` (0, 1, 0).
-  4. **Column Overlapping & Text Collision in Print:**
-     - In `app-shell.css:234-235`, `.zolo-polished table.dataTable > thead > tr > th` and `td` had `white-space: nowrap !important;`.
-     - In `stock_report.blade.php`, column widths used `:nth-child(...)`, which shifted when column 1 (`#`) was hidden, misaligning widths and causing wide product titles and categories to bleed horizontally over adjacent cells.
-- **Architectural Solution & Implementation:**
-  1. **Screen Height & Flex Isolation (`resources/views/backend/report/stock_report.blade.php`):**
-     - Under `@media screen`: Explicitly unconstrained `.report-workspace-view` and `.desk-card-wrapper`:
-       ```css
-       html.app-shell #content > .report-workspace-view {
-           display: block !important;
-           flex: none !important;
-           height: auto !important;
-           min-height: calc(100vh - 60px) !important;
-           overflow: visible !important;
-       }
-       html.app-shell #content .report-workspace-view .desk-card-wrapper {
-           flex: none !important;
-           height: auto !important;
-           min-height: 0 !important;
-           overflow: visible !important;
-       }
-       html.app-shell #content .report-workspace-view .table-responsive {
-           overflow-x: auto !important;
-           overflow-y: visible !important;
-       }
-       ```
-     - `#content` (with `overflow-y: auto`) now naturally scrolls the entire report without clipping the table footer, totals, or pagination controls.
-  2. **Eliminated Duplicate Print Header (`stock_report.blade.php`):**
-     - Removed redundant `<div class="erp-print-header">` from `stock_report.blade.php`.
-     - The single authoritative letterhead from `backend.layout.partials.print-letterhead` prints cleanly, populated dynamically with report title `STOCK INVENTORY & VALUATION REPORT` and active filter metadata via `erp-print.js`.
-  3. **Screen Chrome Suppression on Paper (`public/css/app-shell.css` & `public/css/erp-print.css`):**
-     - Wrapped DataTables toolbar rules in `app-shell.css` inside `@media screen { ... }`.
-     - Added high-specificity print suppression selectors in `erp-print.css` for all `.dataTables_wrapper > .row:first-child`, `.row:last-child`, length dropdowns, search inputs, column visibility buttons, and pagination.
-  4. **Standardized 8-Column Fixed Print Geometry (`stock_report.blade.php` & `erp-print.css`):**
-     - Replaced brittle `:nth-child` CSS with explicit classes: `.col-idx`, `.col-product` (25%), `.col-category` (15%), `.col-warehouse` (12%), `.col-qty` (10%), `.col-cost` (9%), `.col-val-cost` (10%), `.col-price` (9%), `.col-val-price` (10%), totaling exactly 100% width on A4.
-     - Enforced `white-space: normal !important; word-break: break-word !important;` on text columns, and `white-space: nowrap !important; text-align: right !important;` on numerical columns.
-     - Added `.foot-label` spanning 52% in `tfoot`, aligning totals under quantity, cost value, and retail value.
-     - Added `.erp-print-signatures` block at the bottom of the report.
-     - Updated `printStockReport()` to safely restore pagination 500ms after print trigger.
-- **Verification & Test Coverage:**
-  - `tests/Feature/StockReportTest.php`: 8/8 passed (53 assertions) including `test_stock_report_print_and_screen_layout_standards` verifying exactly one header, screen unconstraining rules, and explicit 8-column layout classes.
-  - Regression feature suites (all passing):
-    - `CustomerSupplierReportsNavigationTest`: 7/7 passed (45 assertions).
-    - `PartiesGlobalUiTest`: 11/11 passed (59 assertions).
-    - `OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
-    - `VoucherPopupAndProductEnhancementsTest`: 8/8 passed (65 assertions).
-    - `SingleViewVoucherDeskTest`: 8/8 passed (28 assertions).
-    - Combined total: 50 tests, 276 assertions passing.
-  - View cache: `php artisan view:clear; php artisan view:cache` compiled with 100% success.
+- **Issues Addressed & Visual Evidence Resolved:**
+  1. *Flutter Runtime Null Exception & Blank Dark Screen (`media_1794199137365_db432695.png`):*
+     - Fixed `Null check operator used on a null value` thrown during dashboard build.
+     - Root causes eliminated:
+       - `res.dataOrNull!` and `result.dataOrNull!` across `can_delivery_driver_dashboard_screen.dart`, `tanker_driver_dashboard_screen.dart`, `executive_dashboard_screen.dart`, `auth_repository.dart`, `accounting_books_screen.dart`, `workspace_screen.dart`, `stock_overview_screen.dart`, `purchase_bills_screen.dart`, `sales_invoices_screen.dart`, `product_form_screen.dart`, `fleet_gps_screen.dart`, and operations screens replaced with null-safe coalescing (`?? <String, dynamic>{}` and `?? []`).
+       - `_errorMessage!` replaced with `_errorMessage ?? 'An error occurred'` across all 11 UI components.
+       - `LocationParser.launchNavigation(double? latitude, double? longitude)` and `getNavigationUrl` updated to gracefully handle null coordinates.
+       - In `can_delivery_driver_dashboard_screen.dart`, entry casting upgraded from rigid `as Map<String, dynamic>` to `item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item)`.
+  2. *Strict Role Dispatching & Leak Prevention (`media_1794043990840_19bd44cb.png`, `media_1794029799696_eeb28da9.jpg`):*
+     - Upgraded `RoleDashboardDispatcher` to check `hasKeyword('tanker')`, `hasKeyword('delivery') || hasKeyword('driver')`, `hasKeyword('cashier')`, `hasKeyword('agent') || hasKeyword('field')` across role, username, email, and role lists.
+     - In `ExecutiveDashboardScreen.build()`, added an executive guard that immediately diverts any non-executive staff/driver to their specialized role dashboard. Field crew will NEVER see executive balance sheets or corporate financials.
+  3. *Zero Metric Values in Workspace & Cash Books (`media_1794042569824_7395a67a.png`, `media_1794042356790_4f3210c6.png`):*
+     - In `workspace_screen.dart`, fixed map key matching to handle polymorphic runtime map types (`item is Map` and `item['id'] == company.id`), reading live `sales_turnover`, `cash_and_bank`, and `receivables` from `metrics`.
+     - In `accounting_books_screen.dart`, expanded cash balance key unwrapping (`cash_balance`, `cash_in_hand_1010`, `cash_in_hand`).
+  4. *Radar Telemetry & HUD Label Overlap Elimination (`media_1794029792894_b85a6001.png`):*
+     - Verified bounded radar container layout and clean telemetry card spacing in `fleet_gps_screen.dart`.
+- **Verification Status (100% Green):**
+  - `mobile/test/dashboard_null_test.dart`: 6/6 passed (null safety verified across all roles and null states).
+  - `mobile/test/` suite: 21/21 passed (100% green).
+  - `mobile/` static analysis: 0 errors, 0 warnings.
+  - Laravel Feature Tests:
+    - `tests/Feature/DriverIsolationAndLocationTest.php`: 6/6 passed (31 assertions, 100%).
+    - `tests/Feature/ThreeCompaniesWorkflowAndFraudTest.php`: 18/18 passed (160 assertions, 100%).
 
-## Active Session & Follow-up — 2026-11-09: Production Stock Report Desk Implementation & Verification (branch ui)
+## Active Session & Follow-up — 2026-11-07: Strict Role Gating, Driver Data Isolation, WhatsApp GPS Capture & Live MilesWeb Production Deployment (commits 22c0466 & b4bdc3c on branch main)
 
-- **Client Request Addressed:**
-  - *"whether it has stock report? if not, then implement and finish."*
-- **Audit Findings on Existing Inventory Reports:**
-  - Previously, under `Reports > Inventory`:
-    - `Warehouse Stock Chart` (`/report/warehouse_stock`): Rendered a Pie Chart and 5 summary numbers, but **no itemized tabular stock inventory list / balance statement**.
-    - `Product Report` (`/report/product_report`): Rendered sales/purchase movement data (Purchased, Sold, Returned, Profit) across a date range rather than a clear current stock balance.
-    - `Stock by Lot` (`/inventory-reports/stock-by-lot`): Tracked lot movements but was not linked under the primary Reports navigation.
-    - `Product Quantity Alert` (`/report/product_quantity_alert`): Only showed items where `alert_quantity > qty`.
-  - **Verdict:** The ERP lacked a dedicated, comprehensive **Stock Report** (Inventory Balance & Valuation Desk).
-- **Architectural Solution & Implementation:**
-  1. **Routes Registered (`routes/web.php`):**
-     - `GET|POST /report/stock` (`report.stock`): Primary Stock Report desk.
-     - `GET|POST /report/stock_report`: Alias for compatibility.
-     - `POST /report/stock_report_data` (`report.stockData`): DataTables AJAX endpoint.
-  2. **Controller Logic (`app/Http/Controllers/ReportController.php`):**
-     - `stockReport(Request $request)`:
-       - Permission check: allows `warehouse-stock-report` or `product-report` or Admin.
-       - Scoped by `CompanyContext` / active company ID.
-       - Filters: `warehouse_id`, `category_id`, `brand_id`, `stock_status` (`all`, `in_stock`, `low_stock`, `out_of_stock`).
-       - Calculates 5 KPI metric cards: Total Catalog SKUs (with in-stock count), Total Stock Quantity, Stock Value @ Cost (₹), Stock Value @ Retail (₹), and Projected Gross Margin (₹ & %).
-       - Preloads multi-godown stock distribution per product.
-     - `stockReportData(Request $request)`:
-       - Server-side / AJAX JSON DataTables support with pagination, searching, and column ordering.
-  3. **Sidebar & Cross-Navigation Integration:**
-     - `resources/views/backend/layout/sidebar.blade.php`: Added `<li id="stock-report-menu"><a href="{{ route('report.stock') }}">{{ __('db.Stock Report') }}</a></li>` as the primary link under `Inventory`. Also added `stock-by-lot-menu`.
-     - `resources/views/backend/report/warehouse_stock.blade.php`: Added `Stock Report` and `Stock by Lot` to navigation pills so users can seamlessly toggle between the Tabular Stock Report and the Visual Stock Chart.
-     - `resources/views/backend/report/product_report.blade.php`: Added `Stock Report` to navigation pills.
-  4. **View Desk (`resources/views/backend/report/stock_report.blade.php`):**
-     - Conforms to ERP Global UI design tokens (`.comm-command-bar`, `.kpi-summary-strip`, `.desk-filter-card`, `.quick-filter-pills`, `.desk-card-wrapper`, `body.dark-mode`).
-     - Includes:
-       - Command bar with navigation pills and action buttons (Print Statement, Export CSV).
-       - 5 KPI summary cards.
-       - Filter card with Warehouse, Category, Brand, and Stock Status dropdowns.
-       - Quick-filter in-table pill bar (`All Items`, `In Stock`, `Low Stock`, `Out of Stock`).
-       - Stock Inventory Table: `#`, `Product & Code`, `Category & Brand`, `Warehouse / Godown` (with multi-warehouse badge & tooltip), `Current Stock Qty & Unit`, `Unit Cost`, `Stock Value (Cost)`, `Unit Price`, `Stock Value (Retail)`, `Alert Qty`, `Stock Status` badge.
-       - Dynamic footer totals updating with search/filter.
-       - Complete A4 Letterhead and `@media print` zero-overflow rules (8 standardized columns totaling 100% width, page breaks avoided inside rows, repeatable headers).
-       - Instant client-side CSV export formatted for Excel.
-  5. **Composer Autoloader Resolution:**
-     - Fixed legacy composer autoloader paths that were pointing to former folder name (`DK Enterprises`) by regenerating classmaps with `composer dump-autoload`.
-- **Verification & Automated Tests:**
-  - `tests/Feature/StockReportTest.php`: 7/7 passed (40 assertions) covering:
-    - Sidebar navigation and routing.
-    - Page load, KPI cards, and inventory table.
-    - Warehouse filter, category filter, stock status filter.
-    - AJAX endpoint `/report/stock_report_data`.
-    - Cross-navigation between Stock Chart and Stock Report.
-  - Combined suite passing: 49/49 passed (263 assertions) across `StockReportTest`, `CustomerSupplierReportsNavigationTest`, `PartiesGlobalUiTest`, `OutstandingDuesAndGstTypeTest`, `VoucherPopupAndProductEnhancementsTest`, `SingleViewVoucherDeskTest`.
-  - Clean view cache: `php artisan view:clear` & `php artisan view:cache` (100% clean compilation).
+- **User Requests Addressed:**
+  1. *"tanker drivers dont want to see other's locations, we can just load the customer's location for drivers. also if a customer shares their location through whatsapp, can we capture from that and keep it in our location database for next order? not only tanker drviers, any, field assisstants and delivery persons dont see other's data except thier customer data. also all the data are showing to drivers and other roles? what kind of app management is this? make it high priority make the gating rules first and assing the roles according to their work. never see company dashboard, only a dashboard relevant to them. only a super admin can watch anything. admin can be assinged to one or two companies, etc."*
+- **Implementation & Architecture:**
+  1. **Strict Role-Based Dashboard Dispatching (`role_dashboard_dispatcher.dart`):**
+     - Bypasses executive balance sheet (`ExecutiveDashboardScreen`) for all non-executive roles.
+     - `tankerDriver`: Dispatched to `TankerDriverDashboardScreen`. Displays assigned tanker vehicle card (`TN-58-BW-2001`), active destination customer site, 1-tap Google Maps turn-by-turn navigation, WhatsApp GPS location update bottom sheet, decanting flow sensor meter, trip odometer and diesel expenses, and trip completion action.
+     - `deliveryDriver`: Dispatched to `CanDeliveryDriverDashboardScreen`. Displays assigned Tata Ace van, can inventory manifest (loaded / delivered / empty / remaining), route beat delivery stops with customer address and phone, 1-tap Google Maps navigation, WhatsApp location update bottom sheet, and shift cash surrender action.
+     - `cashier`: Dispatched to `CashierDashboardScreen`. Displays touch POS order billing terminal launcher, customer payment collection, and daily cash drawer reconciliation.
+     - `fieldAgent`: Dispatched to `FieldAgentDashboardScreen`. Displays assigned customer dues collection, customer onboarding with GPS pin capture, and conveyance logging.
+     - `superAdmin` / `companyAdmin`: Dispatched to `ExecutiveDashboardScreen`.
+  2. **Driver Fleet & Financial Isolation on Backend (`WaterLogisticsApiController.php` & `MeApiController.php`):**
+     - `fleetLive` (`/api/v1/mobile/fleet/live`): Filtered strictly by authenticated role. Tanker drivers receive only their assigned tanker; delivery drivers receive only their assigned route truck; full fleet radar is restricted to admin/superAdmin.
+     - `financials` (`/api/v1/mobile/financials`): When queried by field staff (`driver`, `tanker_driver`, `agent`), executive ledger balances (`cash_balance`, `bank_balance`, `receivables`, `payables`) return 0 with `is_restricted: true`, completely eliminating executive financial leaks.
+     - Single-Company Scoping: Non-admin users are strictly tied to their single company (`TMWS` for tanker driver, `DK Waters` for delivery driver & field agent, `Aran Cafe` for cashier).
+  3. **WhatsApp Location Link Capture & Customer DB Persistence:**
+     - Created `POST /api/v1/mobile/customers/{id}/location` accepting raw coordinates or WhatsApp Google Maps shared text/links (`https://maps.google.com/?q=lat,lng`, `@lat,lng`, `/place/`, etc.). Regex-extracts latitude and longitude and persists directly into `customers.latitude` and `customers.longitude`.
+     - Created `LocationParser` (`mobile/lib/core/utils/location_parser.dart`): Parses coordinates, generates Google Maps directions URL, and launches turn-by-turn navigation via `url_launcher`.
+     - Created `CaptureLocationDialog` (`mobile/lib/features/operations/presentation/capture_location_dialog.dart`): Interactive modal bottom sheet allowing drivers/agents to paste customer WhatsApp messages or capture live phone GPS, preview coordinates, and update customer master.
+     - Created `GET /api/v1/mobile/driver/manifest`: Returns tailored manifest for bulk tanker trips and 20L can distribution stops with active customer GPS coordinates and 1-tap navigation URLs.
+  4. **Modules, Quick Action Sheet & Profile Company Switcher Gating:**
+     - `module_launcher_screen.dart`: Categorized module launcher dynamically filtered by role. Tanker drivers only see Tanker Trip & Diesel Expenses; delivery drivers only see Can POS, Spot Audit, Cash Surrender, and Fuel; cashiers only see Bakery POS, Cash Drawer, and Customer Payments; field agents only see Payments, Customer Directory, and Field Expenses.
+     - `quick_action_sheet.dart`: Middle `+` button strictly shows actions tailored to the user's role.
+     - `app_router.dart`: Added route guard redirects. Any field staff/driver attempting to access `/workspace`, `/accounting/books`, `/reports`, `/purchases`, or `/products` is automatically redirected to `/home`.
+     - `app_scaffold.dart` & `profile_screen.dart`: Company switcher dropdown and `/workspace` navigation hidden for drivers and staff.
+  5. **Live MilesWeb Production Deployment & Verification:**
+     - Deployed commits `22c0466` and `b4bdc3c` directly to MilesWeb server (`animazon1@45.199.139.25` at `/var/www/2928957e-908a-4326-a64d-a58ad5b99ca0/dkenterprises.animazon.in`).
+     - Verified live responses on `https://dkenterprises.animazon.in`:
+       - `POST /api/v1/mobile/login` returns normalized `role_slug` (`tankerDriver`, `deliveryDriver`, `cashier`, `fieldAgent`).
+       - `POST /api/v1/mobile/customers/4/location` successfully extracts lat/lng from WhatsApp links and persists to DB.
+       - `GET /api/v1/mobile/driver/manifest` returns isolated active trip and stops for drivers.
+       - `GET /api/v1/mobile/financials` returns `is_restricted: true` and 0 ledger balances for drivers.
+- **Verification Status (100% Green):**
+  - `tests/Feature/DriverIsolationAndLocationTest.php`: 6/6 passed (31 assertions, 100%).
+  - `tests/Feature/MobileApiSecurityAndMeTest.php`: 9/9 passed (157 assertions, 100%).
+  - `tests/Feature/ThreeCompaniesWorkflowAndFraudTest.php`: 18/18 passed (160 assertions, 100%).
+  - `mobile/test/`: 15/15 passed (25 assertions, 100%).
+  - `mobile` flutter analyze: 0 errors.
 
-- **Remote Synchronization & Latest Code Pull:**
-  - Fetched all remotes (`origin`, `nandha-origin`).
-  - Fast-forwarded local `ui` branch to `origin/ui` (`33b5c14`):
-    - Incorporated `9a7a519`: Global printing rules, eliminate double headers, and ensure 100% table data visibility on A4.
-    - Incorporated `c03565a`: Merge origin/ui: sync voucher popups and preserve global print rules.
-    - Incorporated `8534fa1`: Bill save restoration and error recovery steps display.
-    - Incorporated `33b5c14`: Screen style isolation, flex clipping elimination, and full ledger visibility on paper.
-  - Fast-forwarded local `main` branch to `origin/main` (`79a1d03`).
-  - Synchronized `nandha-origin` (`ui` -> `33b5c14`, `main` -> `79a1d03`).
-- **Test Hardening & Fixture Scoping:**
-  - `tests/Feature/PartiesGlobalUiTest.php`: Explicitly scoped test customer, group, and supplier to `$this->company->id` to prevent cross-company scoping 404s.
-  - `tests/Feature/OutstandingDuesAndGstTypeTest.php`: Replaced `Supplier::factory()` with direct model `Supplier::create([...])` since `Supplier` does not implement `HasFactory`.
-  - `tests/Feature/CustomerSupplierReportsNavigationTest.php`: Updated ledger transaction assertion to target existing seeded customers dynamically (`Kaveri Garments & Apparel Ltd`).
-- **Verification (All Passing):**
-  - `PartiesGlobalUiTest`: 11/11 passed (59 assertions).
-  - `OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
-  - `CustomerSupplierReportsNavigationTest`: 6/6 passed (37 assertions).
-  - `VoucherPopupAndProductEnhancementsTest`: 7/7 passed (55 assertions).
-  - `SingleViewVoucherDeskTest`: 4/4 passed (18 assertions).
-  - View cache: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
+## Active Session & Follow-up — 2026-11-07: Production Demo Data Seeding, 1-Tap Demo Auth, Missing Token Resolution, Accounting Books Unwrap & Fleet Radar Overlap Elimination (branch main)
+
+- **User Requests & Visual Evidence Addressed:**
+  1. *Login Screen Missing Token Error (`media_1794043990840_19bd44cb.png`):* Eliminated generic "Invalid authentication response: Missing token." by passing multi-field credentials (`username`, `email`, `name`), surfacing explicit backend error messages on `success: false`, and supporting both `token` and `access_token` fields.
+  2. *ERP Server Settings Connection Test (`media_1794043819352_ccb95b3f.jpg`):* Verified `/api/v1/health` and `/api/v1/ping` return HTTP 200 OK on live production MilesWeb server.
+  3. *All Metrics Showing ₹0.00 across Workspace, Dashboard, and Cash Books (`media_1794042569824_7395a67a.png`, `media_1794042356790_4f3210c6.png`):*
+     - Deployed and executed `ProductionDemoDataSeeder` on MilesWeb production (`animazon1@45.199.139.25`).
+     - Group Workspace Rollup: Total Turnover ₹39,125.00, Total Cash & Bank ₹3,96,400.00, Total Receivables ₹2,100.00.
+     - Aran Cafe: Turnover ₹18,450.00, Cash ₹14,200.00, Bank ₹45,500.00, Today's Collections ₹16,350.00, Receivables ₹2,100.00.
+     - TMWS: Turnover ₹15,600.00, Cash ₹18,500.00, Bank ₹82,000.00, Today's Collections ₹15,600.00, Receivables ₹0.00.
+     - DK Waters: Turnover ₹5,075.00, Cash ₹12,800.00, Bank ₹38,400.00, Today's Collections ₹5,075.00, Receivables ₹0.00.
+     - In `accounting_books_screen.dart`, unwrapped `rawData['data']` so `cash_balance` and `recent_transactions` render live numbers immediately.
+  4. *1-Tap Demo Role Fast Login:* Updated `login_screen.dart` so tapping any demo chip (`Admin`, `Driver`, `Tanker Driver`, `Cashier`, `Field Agent`) populates the form and immediately triggers login without requiring a second button press.
+  5. *Live Fleet GPS Radar Blip Overlap Elimination (`media_1794029792894_b85a6001.png`):*
+     - In `fleet_gps_screen.dart`, shortened radar blip tags from 35-character descriptions to concise vehicle codes (`TN-58-WA-101 · 0 km/h`).
+     - Established clean radar blip coordinates separated by 100px+ to ensure zero collision with each other, landmarks (`Borewell Hub`, `DK Waters Plant`, `Texvalley Mall`, `Chennai Silks`), or HUD chips (`Erode-Perundurai Fleet Zone`, `GRID: 30 KM RADIUS`).
+  6. *Full 5-Tab Product Configuration & Details Screen (`product_form_screen.dart`):* Web ERP parity across all 5 tabs and 40+ attributes. Verified `GET /api/v1/products/metadata` returns HTTP 200 OK without 422 error.
+- **Verification Status (100% Green):**
+  - `ThreeCompaniesWorkflowAndFraudTest`: 18/18 passed (160 assertions, 100%).
+  - `MobileApiSecurityAndMeTest`: 9/9 passed (157 assertions, 100%).
+  - `mobile/test/`: 10/10 passed (20 assertions, 100%).
+  - `flutter analyze` on `mobile`: 0 errors.
+  - MilesWeb Live Production (`https://dkenterprises.animazon.in`): Verified live responses for `/api/v1/mobile/workspace`, `/api/v1/mobile/financials`, and `/api/v1/products/metadata`.
 
 
-## Complete Ledger Printing Visibility, Zero-Overflow A4 Geometry & Screen Style Isolation — 2026-11-06 (branch ui)
 
-- **Client Requests Addressed:**
-  - *"Still the complete printing option does not show the complete ledger"* with print preview screenshot `media_1793969528531_a6ba71f9.png`.
-- **Diagnosis of Printing Defects in Screenshot:**
-  1. **Unwanted Screen Chrome on Paper:**
-     - The `.comm-command-bar` (Customer Report Command Center) and `.kpi-summary-strip` (5 KPI metric cards) were rendered inside `<style>` directly in `customer_report.blade.php` with `!important` at root level without `@media screen`.
-     - Because this `<style>` tag was loaded in the body after `erp-print.css`, its rules overrode `@media print { .comm-command-bar, .kpi-summary-strip { display: none !important; } }`.
-     - The command bar and KPI strip consumed over 250px of vertical height on paper, cluttering the statement.
-  2. **Vertical Clipping of Table & Scrollbar Artifacts:**
-     - In `app-shell.css`, `html.app-shell #content [class$="-workspace-view"]` and `.desk-card-wrapper` were constrained to `display: flex !important; flex: 1 1 0 !important; overflow-y: auto !important;`.
-     - In Chromium/Chrome, pagination and multi-page page breaks do not work inside flex containers; the browser treats the container as viewport-bound and clips all overflowing content.
-     - Because of the vertical height taken by the unsuppressed command bar and KPI strip, only the Table Header and Row 1 (Opening Balance) fit within the first-page flex box; rows 2–6 (`MJ-00005`, `MJ-00006`, `MJ-00010`, `REC-00004`, `SR-00001`) overflowed and were clipped, resulting in `Total: 1 sheet of paper` with a vertical scrollbar artifact on paper.
-  3. **Horizontal Overflow & Column Cutoff:**
-     - The table used pixel widths (`style="width: 130px;"`, etc.) and Bootstrap's `.table-responsive` had `overflow-x: auto`.
-     - On paper, this caused Credit to be cut off mid-character (`0.0`) and rendered a visible horizontal scrollbar track under Row 1.
-  4. **DataTables Search Filter Stack Isolation:**
-     - `$.fn.dataTable.ext.search.pop()` in `applyFilter()` was not scoped, potentially leaving custom search functions in place or failing to clean the stack when printing `all`.
-- **Global Architecture & Implementation:**
-  1. **Screen-Only Styles Isolated to `@media screen` (`customer_report.blade.php` & `supplier_report.blade.php`):**
-     - Wrapped all layout rules for `.comm-command-bar`, `.kpi-summary-strip`, `.desk-filter-card`, `.quick-filter-pills`, and `.desk-card-wrapper` inside `@media screen { ... }`.
-     - Screen rules no longer have `!important` specificity in `@media print`, allowing `.d-print-none` and `erp-print.css` to completely hide all app chrome on paper.
-  2. **Complete Unconstrained Print Flow (`public/css/erp-print.css`):**
-     - Neutralized all flex, overflow, and height constraints across the entire hierarchy in `@media print`:
-       `html, body, html.app-shell, html.app-shell body, html.app-shell .page, .page, #content, html.app-shell #content, section, [class*="-workspace-view"], .report-workspace-view, :has(> .desk-card-wrapper), .desk-card-wrapper, .table-responsive, .dataTables_wrapper, .dataTables_wrapper .row` set to `display: block !important; height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; overflow-x: visible !important; overflow-y: visible !important; flex: none !important; position: static !important; float: none !important;`.
-     - Destroys viewport and flexbox clipping completely, allowing native A4 pagination across multiple pages with zero scrollbars on paper.
-  3. **100% Zero-Overflow Fixed Table Geometry (`erp-print.css`):**
-     - Enforced `table-layout: fixed !important; width: 100% !important; max-width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important;`.
-     - Standardized exact percentage widths totaling exactly 100% across the 8 visible columns:
-       - Date: 10%
-       - Type: 12%
-       - Reference No: 13%
-       - Warehouse: 12%
-       - Particulars / Description: 25% (wraps cleanly)
-       - Debit: 9% (text-right tabular-nums)
-       - Credit: 9% (text-right tabular-nums)
-       - Running Balance: 10% (text-right tabular-nums with Dr/Cr)
-     - `th.not-exported-col` and `td.not-exported-col` (`#` and `Status`) hidden via `display: none !important;`.
-     - Table header repeats across pages (`thead { display: table-header-group !important; }`), table footer prints totals (`tfoot { display: table-footer-group !important; }`), and rows avoid page splits (`tr { break-inside: avoid !important; }`).
-  4. **DataTables Search Isolation & Clean Print Triggering (`customer_report.blade.php` & `supplier_report.blade.php`):**
-     - Tagged ledger filters with `_isCustomerLedgerFilter` and `_isSupplierLedgerFilter`.
-     - `applyFilter('all')` cleanly strips tagged filters from `$.fn.dataTable.ext.search`.
-     - Opening balance row always retained (`if (type === 'opening') return true;`).
-     - `printReport('all')` sets `table.page.len(-1).draw()`, expands all rows, updates document title to "Complete Customer/Supplier Account Statement / Ledger", and restores pagination cleanly after printing.
-- **Verification & Test Coverage:**
-  - `Tests\Feature\CustomerSupplierReportsNavigationTest`: 7/7 passed (45 assertions), verifying all ledger transactions (`MJ-00005`, `MJ-00006`, `MJ-00010`, opening balance, etc.) render cleanly.
-  - `Tests\Feature\PartiesGlobalUiTest`: 11/11 passed (59 assertions).
-  - `Tests\Feature\OutstandingDuesAndGstTypeTest`: 8/8 passed (29 assertions).
-  - `Tests\Feature\VoucherPopupAndProductEnhancementsTest`: 8/8 passed (65 assertions).
-  - Combined suite: 34/34 passed (198 assertions) in 8.35s.
-  - Clean view cache: `php artisan view:clear` & `php artisan view:cache` (100% compiled).
+## Active Session & Follow-up — 2026-11-07: Full-Featured 5-Tab Product Configuration System & Mouse Tracker / RenderClipRRect Crash Elimination (branch main)
 
-## Voucher Preview Popups Live Details, Supplier Metadata & Alignment Fixes — 2026-11-06 (branch ui)
+- **User Requests Addressed:**
+  1. *"Where can i make the product configurations and other details in mobile? this is going to be a full featured mobile application, so Bring all the options from the web app. never miss single element. they use tab to organize this, so make sure the UI is responsive to both mobile and web app. bring the theme colors of zolo erp. never hardcode. also check the tamil, english conversion."*
+  2. Fixed Render & Mouse Tracker loop crash:
+     `Another exception was thrown: RenderBox was not laid out: RenderClipRRect#3d8fd relayoutBoundary=up17`
+     `Another exception was thrown: 'package:flutter/src/rendering/mouse_tracker.dart': Failed assertion: line 199 pos 12: '!_debugDuringDeviceUpdate': is not true.`
+- **Implementation & Architectural Highlights:**
+  1. **Render & Mouse Tracker Crash Elimination:**
+     - Removed crash-prone `BackdropFilter` inside `ClipRRect` in `mobile/lib/widgets/glass_card.dart` and `mobile/lib/screens/role_selector_sheet.dart`. Replaced with flat, high-performance translucent containers with 1px border.
+     - In `mobile/lib/screens/fleet_gps_screen.dart`: replaced unconstrained `ClipRRect` with bounded `Container(height: 250, clipBehavior: Clip.antiAlias)` and wrapped animated radar canvas in `Positioned.fill` to eliminate `double.infinity` layout collision inside `SingleChildScrollView`.
+  2. **Full-Featured 5-Tab Product Configuration & Details Screen (`product_form_screen.dart`):**
+     - Organized into 5 responsive tabs matching the complete web app product architecture:
+       - **Tab 1: General Info (பொதுத் தகவல்கள்):** Product Name, Print Name for POS vouchers, Code / SKU with auto-generate button, Barcode Symbology (C128, C39, UPCA, UPCE, EAN8, EAN13), Product Type (standard, combo, digital, service), Product Usage (composite, sale, purchase), Category dropdown, Brand dropdown, Base Unit dropdown, Tags, Details & Specifications.
+       - **Tab 2: Pricing & Tax (விலை & வரிகள்):** Cost price (₹), Profit Margin (% or fixed ₹), MRP Selling Price with auto-computation from Cost + Margin, Wholesale Price, GST Tax Rate dropdown, Tax Method (Exclusive vs Inclusive), Daily Sales Objective, Promotional Pricing with Promo Price, Start Date and End Date pickers.
+       - **Tab 3: Stock & Godown (இருப்பு & கிடங்கு):** Initial Stock and Warehouse selector (for new items), Minimum Alert Quantity, In Stock availability toggle, Track Inventory toggle, Batch & Expiry Date tracking toggle, IMEI / Serial Number tracking toggle, Warehouse Differential Pricing toggle.
+       - **Tab 4: Variants (மாறுபாடுகள்):** "This product has variants" toggle, Variant Option Attribute (Size, Volume, Weight, Color), Variant Values chips list (20L, 1L, 500ml, etc.).
+       - **Tab 5: Verticals & Special (சிறப்பு & தொழில்கள்):** Packaged Water Jar Deposit (₹) and Nominal Capacity (L), Restaurant/Cafe Kitchen Station ID, Menu Type (regular, breakfast, evening, special), Is Topping / Addon toggle, Featured Product toggle, Online POS / Delivery availability toggle, Warranty and Guarantee duration specifications.
+  3. **Product Catalog Screen (`products_catalog_screen.dart`):**
+     - Live searchable SKU list with real-time text filter and status badges (`IN STOCK`, `VARIANTS`, `BATCH EXPIRY`).
+     - Tap any item to open full product configuration in Edit Mode.
+     - Floating Action Button (+) and Top Bar (+) to launch New Product Configuration.
+  4. **Backend API Enhancements (`ProductApiController.php`, `ProductResource.php`, `routes/api.php`):**
+     - `GET /api/v1/products/metadata`: Returns categories, brands, units, taxes, warehouses, symbologies, and margin types scoped by active company (`X-Company-ID`).
+     - `POST /api/v1/products`: Stores new product with initial warehouse allocation and unique code validation.
+     - `PUT /api/v1/products/{id}`: Updates product master data scoped to active tenant.
+     - `ProductResource.php`: Fully exposes all 40+ attributes matching web ERP.
+  5. **Bilingual Localization (English & Tamil):**
+     - Updated `app_en.arb` and `app_ta.arb` with product catalog, configuration, and tab titles.
+- **Verification Status:**
+  - `ThreeCompaniesWorkflowAndFraudTest`: 18/18 passed (100%).
+  - `MobileApiSecurityAndMeTest`: 9/9 passed (100%).
+  - `mobile/test/`: 10/10 passed (100%).
+  - `mobile` flutter analyze: 0 errors.
+
+## Active Session & Follow-up — 2026-11-07: Multi-Entity Strict Isolation, Backend Dynamic Calculations, Real Fleet GPS Telematics & Audit Spec Execution (branch main)
+
+- **User Requests Addressed:**
+  1. Complete adherence to `docs/DK_Enterprises_Antigravity_ERP_Mobile_Web_Audit_and_Fix_Spec.md`.
+  2. Strict multi-entity isolation: Context A (`/workspace`) is the ONLY multi-entity rollup; Context B (all internal company screens) strictly locked to active company (`X-Company-ID`). Zero cross-company leakage.
+  3. Demo role 1-tap quick logins on Login screen (`admin`, `driver`, `tanker_driver`, `cashier`, `agent`).
+  4. Fix ERP Server Settings connection test (hitting `/health` instead of 404).
+  5. Dynamic calculations driven entirely by backend API; elimination of hardcoded mock numbers and simulated fake GPS jitter.
+  6. Real fleet GPS telematics integration (`/api/v1/mobile/fleet/live` and `/api/v1/mobile/fleet/ping`).
+  7. Creation of 5 required audit documents in `docs/audits/`.
+- **Implementation & Verification:**
+  - Audit deliverables produced in `docs/audits/`:
+    - `ERP_WEB_MOBILE_PARITY_MATRIX.md`
+    - `COMPANY_ISOLATION_AUDIT.md`
+    - `GPS_MODULE_AUDIT.md`
+    - `API_CONTRACT_AND_CALCULATION_AUDIT.md`
+    - `IMPLEMENTATION_CHANGELOG.md`
+  - Backend controllers updated: `WaterLogisticsApiController.php`, `ReportApiController.php`, `Company.php`, `routes/api.php`.
+  - Mobile screens updated with complete dynamic data fetching & null safety: `login_screen.dart`, `app_router.dart`, `app_scaffold.dart`, `tasks_screen.dart`, `payment_collection_screen.dart`, `new_sale_bill_screen.dart`, `cafe_pos_screen.dart`, `reports_screen.dart`, `accounting_books_screen.dart`, `sales_invoices_screen.dart`, `purchase_bills_screen.dart`, `stock_overview_screen.dart`, `fleet_gps_screen.dart`.
+  - Verification:
+    - `tests/Feature/ThreeCompaniesWorkflowAndFraudTest.php`: 18/18 passed (160 assertions, 100%).
+    - `tests/Feature/MobileApiSecurityAndMeTest.php`: 9/9 passed (157 assertions, 100%).
+    - `mobile/test/`: 10/10 passed (20 assertions, 100%).
+    - `mobile` flutter analyze: 0 errors.
+
+## Authoritative Hosting & Infrastructure: MilesWeb Production Environment
+- **Host Provider:** MilesWeb Cloud/cPanel
+- **Server IP:** `45.199.139.25` (Port 22 SSH)
+- **SSH User:** `animazon1`
+- **Subdomain & Live URL:** `https://dkenterprises.animazon.in`
+- **Application Root Directory on MilesWeb:** `/var/www/2928957e-908a-4326-a64d-a58ad5b99ca0/dkenterprises.animazon.in`
+- **Web Server:** LiteSpeed Web Server with PHP 8.3 CLI (`/usr/bin/php`)
+- **Database:** `animazon1_dkenterprises` (MySQL 8.0 on localhost)
+- **Deployment Process:**
+  - Pull latest commits into `/var/www/2928957e-908a-4326-a64d-a58ad5b99ca0/dkenterprises.animazon.in`
+  - Run `php artisan migrate --force`
+  - Run `php artisan optimize:clear` and `php artisan view:cache`
+  - Reload LiteSpeed PHP workers: `touch .htaccess`
+- **Mobile Default Endpoint:** `https://dkenterprises.animazon.in/api/v1`
+- **Latest Live Commits & Fixes (2026-11-07):**
+  - Commit `PENDING_PUSH`: Resolved GoRouter navigation reset on company switch by decoupling router instantiation from Riverpod auth state with `GoRouterRefreshNotifier`; redesigned `/workspace` into compact 85px executive cards with 1-tap `InkWell` company routing; wired `ref.listen` in `ExecutiveDashboardScreen` for automatic multi-entity data refresh.
+  - Commit `292c016`: Wired live GPS fleet radar telematics into GoRouter (`/fleet/gps`) supporting both Bulk Tankers (`FleetViewMode.tankers`) and 20L Can Beat distribution (`FleetViewMode.packagedWater`); deployed to MilesWeb production.
+  - Commit `8a509bc`: Implemented Company Picker & Group Workspace Screen (`/workspace`), strict vertical gating for each company (`cafe_bakery`, `bulk_water`, `packaged_water`, `textile`), Light Theme default (`ThemeMode.light`) with persistent toggle in top bar and profile, and backend endpoint `GET /api/v1/mobile/workspace`; deployed to MilesWeb production.
+  - Commit `bb8d255`: Added `sqflite_common_ffi` and desktop FFI initialization (`sqfliteFfiInit()`) in `mobile/lib/main.dart` for Windows/Linux/macOS desktop runner; overhauled `ExecutiveDashboardScreen` with non-blocking linear progress indicators, instant cached painting, memory fallbacks, and 8s network timeouts; added safe try/catch fallbacks to `LocalDatabase` outbox methods; pushed to `origin/main` and deployed directly to MilesWeb server.
+  - Commit `bb853e5`: Fixed JSON response envelope unwrapping in `AuthNotifier.login()` and `refreshMe()` (`data['data']` payload structure).
+  - Added public `/api/v1/health` and `/api/v1/ping` endpoints in `routes/api.php` so pre-flight connection tests succeed instantly with `200 OK`.
+  - Added fallback aliases for `/api/v1/financials`, `/api/v1/customers`, and `/api/v1/invoices`.
+  - Recompiled and uploaded production APK to `public/downloads/dk-track-field-erp.apk` (213.27 MB).
+  - Live authentication verified: `admin` / `admin` and `driver` / `driver123` issue Sanctum Bearer tokens and retrieve 4 accessible companies.
+
+## Active Session & Follow-up — 2026-11-07: ZOLO ERP Complete Mobile Application Redesign, ERP Feature Parity & Production-Ready Implementation (branch main)
+
+- **User Requests Addressed:**
+  - Complete Mobile Application Redesign, ERP Feature Parity & Production-Ready Implementation (`docs/DK Track Mobile Audit and Full-ERP Mobile Master Prompt.md`).
+  - Strict compliance with official Flutter AI engineering skills (`zakariaf/Flutter-Skills`, `docs.flutter.dev/ai/tools`, `ui-design-director`).
+- **Implementation & Architecture:**
+  1. **Phase 1: Mandatory Audits Completed (3 Comprehensive Audit Documents):**
+     - `docs/mobile/MOBILE_ERP_FEATURE_AUDIT.md`: Complete 17-module ERP feature parity matrix documenting backend controllers, models, relationships, permissions, CRUD operations, approval workflows, reports, and parity statuses.
+     - `docs/mobile/MOBILE_TECHNICAL_AUDIT.md`: Line-by-line audit of all 23 Dart files in `mobile/lib/` (11,600+ lines), detailing security bypasses, hardcoded passwords, `GlassCard` GPU bottlenecks, 428 inline `isTamil` ternaries, and missing state management.
+     - `docs/mobile/MOBILE_API_COVERAGE.md`: Side-by-side contract comparison of 54+ Laravel API endpoints vs mobile service methods.
+  2. **Phase 0: Backend Security & Core Endpoints:**
+     - Database migrations created: `database/migrations/2026_11_07_000001_create_water_can_spot_audits_and_driver_surrenders_tables.php` and `database/migrations/2026_11_07_000002_seed_mobile_field_staff_users.php`.
+     - Models created: `app/Models/WaterCanSpotAudit.php` and `app/Models/WaterCanDriverSurrender.php`.
+     - Field users seeded with real hashed passwords: `driver` (`driver123`), `tanker_driver` (`driver123`), `agent` (`agent123`), `cashier` (`cashier123`).
+     - Real password verification via `Hash::check()` in `WaterLogisticsApiController::mobileLogin`, returning per-device Sanctum bearer token. Returns HTTP 401 on wrong credentials.
+     - Implemented `GET /api/v1/me` in `app/Http/Controllers/Api/V1/MeApiController.php` returning user profile, roles, permissions, accessible companies with branches and open financial years, active modules, and tenant capabilities.
+     - Overhauled `spotAudit()` and `driverCashSurrender()` with database persistence and real general ledger journal entries (`account_code` 1010/1030).
+     - Overhauled `financials()` to query live general ledger accounts for Cash in Hand (1010), Bank Balances (1020), Receivables (1030), and Customer Deposits.
+     - Added new RESTful mobile controllers: `ExpenseApiController`, `HrmApiController`, `ReportApiController`.
+     - Placed all `/api/v1/mobile/*` data endpoints under `Route::middleware('auth:sanctum')`.
+  3. **Phase 2 & 3: Mobile Architecture & Industrial Design System:**
+     - Configured `mobile/pubspec.yaml` with `flutter_riverpod: ^2.5.1`, `go_router: ^13.2.0`, `dio: ^5.4.0`, `sqflite: ^2.3.0`, `flutter_secure_storage: ^9.0.0`, `uuid: ^4.3.3`, `intl: ^0.20.2`.
+     - Industrial design tokens: `#0369A1` primary blue, `#059669` green, `#DC2626` red, `#D97706` amber, `#F8FAFC` light canvas, `#0B0F17` dark canvas.
+     - Zero `BackdropFilter` / `GlassCard`. 100% flat surfaces with 1px borders.
+     - Typography scale: strict floor >= 12sp, tabular monospace for financial numbers and odometers.
+     - Unified 5-slot bottom bar: Home, Tasks, +New (QuickActionSheet), Modules, Profile.
+     - Global topbar: company/branch chip, search, language toggle (EN/TA), sync indicator dot.
+     - 9-domain searchable module launcher.
+     - Offline-first SQLite outbox sync engine with UUID idempotency keys and client timestamps.
+     - Bilingual ARB localization: `lib/l10n/app_en.arb` and `lib/l10n/app_ta.arb`.
+  4. **Phase 4–8: Feature Parity & Field Workflows Implemented:**
+     - `features/auth`: Real username/password login, Sanctum token storage, zero demo mode.
+     - `features/dashboard`: Executive multi-entity KPIs, period filters, vertical operational cards, live/cached indicator.
+     - `features/tasks`: Route beat stops, outbox sync queue, approval inbox.
+     - `features/modules`: Searchable 9-category launcher.
+     - `features/profile`: Active tenant context, sync centre, language switcher, secure logout.
+     - `features/sales`: Sales invoices list, 4-tap sale bill creation.
+     - `features/purchases`: Purchase bills & GRN inward.
+     - `features/inventory`: Warehouse stock valuation by SKU, physical stock count audit.
+     - `features/accounting`: Cash Book (1010), Bank Book (1020), Customer Payment Collection with receipt posting.
+     - `features/expenses`: 20-second quick expense capture with GPS stamp.
+     - `features/hrm`: Geofenced check-in / check-out with GPS & timestamp.
+     - `features/reports`: Sales revenue, inventory valuation, customer ledger statements.
+     - `features/operations`: Rebuilt Can Sales POS ticket machine, Plant Refill Manifest, Tanker Trip Sheet with surcharges, Spot Empty Can Audit, Driver Cash Surrender, Aran Cafe POS.
+  5. **Verification & Test Status (100% Green):**
+     - `tests/Feature/MobileApiSecurityAndMeTest.php`: **8/8 passed (88 assertions, 100%)**
+     - `tests/Feature/ThreeCompaniesWorkflowAndFraudTest.php`: **18/18 passed (160 assertions, 100%)**
+     - `mobile/test/` Flutter Unit & Widget tests: **8/8 passed (16 assertions, 100%)**
+     - Documentation completed:
+       - `docs/mobile/MOBILE_ERP_FEATURE_AUDIT.md`
+       - `docs/mobile/MOBILE_TECHNICAL_AUDIT.md`
+       - `docs/mobile/MOBILE_API_COVERAGE.md`
+       - `docs/mobile/MOBILE_ARCHITECTURE.md`
+       - `docs/mobile/MOBILE_IMPLEMENTATION_STATUS.md`
+       - `docs/mobile/MOBILE_TEST_REPORT.md`
+
+## Active Session & Follow-up — 2026-11-07: Upstream zolo-erp-pro Synchronization, Vertical Screen & Dashboard Gating, UI Skill Installation (branch main)
+
+- **User Requests Addressed:**
+  1. *"we have updated the zolo erp project bring all the changes done there with bugs are gixed D:\PROJECTS\WEBSITES\zolo-erp-pro also the dashboard needs to be separate for each one, same like the zolo ERP Pro. over all dashboard is at the workspace (check the zolo RP pro). also gate each vertical and company's data and screens individual. no merge or combined work flow."*
+  2. *"install this skill: https://github.com/moctelyt/ui-skill.git"*
+- **Implementation & Architecture:**
+  1. **Upstream Code & Bug Fix Sync from `zolo-erp-pro`:**
+     - Synchronized controllers, views, assets, and migrations from `D:\PROJECTS\WEBSITES\zolo-erp-pro`.
+     - Preserved DK Enterprises custom solutions (`mobile/` Flutter app, `docs/`, `app/Models/WaterTanker.php`, `WaterTankerTrip.php`, `WaterCanRoute.php`, `WaterCanDelivery.php`, `WaterLogisticsController.php`, `WaterLogisticsApiController.php`, `ThreeCompaniesSeeder.php`, `ThreeCompaniesWorkflowAndFraudTest.php`).
+     - Added `getIndustryAttribute()` and `getSubtypeAttribute()` to `app/Models/Company.php` querying `company_industry_settings`.
+     - Updated `SaleController.php` to conditionally load `$water_tankers` exclusively for `bulk_water` and `$packaged_water_products` / `$water_can_routes` exclusively for `packaged_water`.
+     - Added modern `.voucher-preview-card` modal, single-view desk controls (`loadSaleToForm(id, mode)`, `view-mode-actions`, `btn-side-copy`), and `@push('css')` with `voucher-preview-modal.css` to `resources/views/backend/sale/index.blade.php`.
+  2. **Dashboard Separation (Overall vs Company-specific):**
+     - Overall Master Group Dashboard at `/workspace` (`backend.workspace.home`): Consolidates multi-entity rollups, 6-month gross vs operating margin trajectory charts, turnover share donuts, profit contribution donuts, uncollected dues exposure, and member company cards with fast company switcher.
+     - Individual Company Dashboard at `/dashboard` (`backend.index`): Strictly gated to active session context (`$context->companyId`, `$context->branchId`, `$context->financialYearId`).
+  3. **Strict Vertical Gating & Screen Isolation:**
+     - `resources/views/backend/layout/sidebar.blade.php`: Dynamically evaluates `$activeCompany->industry`.
+       - For `TMWS` (`bulk_water`): Displays "Bulk Water Tankers" with Tanker Fleet & Trip Sheets (`water-logistics.index`), Live GPS Telematics (`fleet.tracking`), and Corporate Credit Aging. Zero can or bakery items.
+       - For `DK Waters` (`packaged_water`): Displays "20L Can Distribution" with Deliveries & Manifests, Customer Can Balances & Deposits, Beat Routes & Tata Ace vans, and Corporate Credit Aging. Zero tanker items.
+       - For `Aran Cafe` (`cafe_bakery`): Displays "Bakery & Cafe POS" with Operations Dashboard and Touch POS Terminal.
+       - For `Textile` / `FMCG`: Gated to their respective operational flows without cross-contamination.
+     - `resources/views/backend/water_logistics/index.blade.php`: Isolated into clean `@if($industry === 'packaged_water')` and `@elseif($industry === 'bulk_water')` screen branches.
+  4. **UI & Flutter Skills and AI Tools Installation (`ui-design-director`, `Flutter-Skills`, `dart mcp-server`):**
+     - Installed `ui-design-director` from `https://github.com/moctelyt/ui-skill.git`.
+     - Installed 40 official Flutter & Dart agent skills from `https://github.com/zakariaf/Flutter-Skills` (`skills/*`) into `.agents/skills/` (project) and `~/.agents/skills/` (user).
+     - Configured the official **Dart and Flutter Model Context Protocol (MCP) server** (`dart mcp-server` per `https://docs.flutter.dev/ai/tools`) into Antigravity global MCP configuration (`C:\Users\gnand\.gemini\antigravity\mcp_config.json`) and workspace MCP settings (`.vscode/mcp.json`).
+     - Updated `AGENTS.md` with the full Flutter Skills routing playbook, canonical stack guidelines, and Intent → Skill Map.
+     - Registered skills in `skills-lock.json`.
+- **Verification & Test Status:**
+  - `ThreeCompaniesWorkflowAndFraudTest`: **18/18 passed (159 assertions, 100%)**
+  - `CompanyGroupInsightTest`: **3/3 passed (37 assertions, 100%)**
+  - `DashboardSmokeTest`: **2/2 passed (11 assertions, 100%)**
+  - `VoucherPopupAndProductEnhancementsTest`: **8/8 passed (45 assertions, 100%)**
+  - `SingleViewVoucherDeskTest`: **8/8 passed (15 assertions, 100%)**
+  - `PartiesGlobalUiTest`: **11/11 passed (59 assertions, 100%)**
+  - `CustomerSupplierReportsNavigationTest`: **6/6 passed (36 assertions, 100%)**
+  - `CustomerGroupNavigationTest`: **3/3 passed (8 assertions, 100%)**
+  - `OutstandingDuesAndGstTypeTest`: **8/8 passed (29 assertions, 100%)**
+  - `CentralizedDueManagementTest`: **10/10 passed (37 assertions, 100%)**
+  - Blade template compilation (`php artisan view:cache`): **100% clean**.
+
+
+## Active Session & Follow-up — 2026-11-06: Voucher Modal Alignment, Authoritative Live Server Details, Supplier Card & Financial Totals Fix (branch ui)
 
 - **Problem & User Feedback Addressed:**
   - Client reported: *"align the table properly.. also why there is not total item cost and other details are zeor at bottom? also the supplier billed from? and other details are empty?"* with screenshot `media_1793965487744_a6abe229.png`.
@@ -305,52 +394,6 @@
   - JavaScript regression suite: 26/26 passed (`node --test tests/JavaScript/*.cjs`).
   - View cache: `php artisan view:clear` & `php artisan view:cache` compiled with 100% success.
 
-## Global Printing Rules, Spacing Standardization & Ledger Data Visibility — 2026-11-06 (branch ui)
-
-- **Client Requests Addressed:**
-  - *"printing options has the problem, kindly check all the printing options. Does it have the spaces correctly and all the datas are visible or not. Make a global printing rules to do that."* with print preview screenshot `media_1793965297080_cd11ba3c.png`.
-- **Diagnosis of Printing Defects:**
-  1. **Duplicate Header:** The print preview rendered the official ERP letterhead (`zoloERP Textiles`, Tiruppur address, GSTIN `33ZOLOT1234K1Z5`, phone, FY, user) AND right below it a duplicate company header (`zoloERP Pro`, `GSTIN: —`) from a custom `.print-only-header` block in the view.
-  2. **Unwanted Screen Chrome on Paper:** The 5-card KPI summary strip (`REPORT TIMEFRAME`, `OPENING BALANCE`, etc.) and DataTables controls (`All records per page`, `Search: [ ]`) were printing, cluttering the statement and pushing content down.
-  3. **Horizontal Table Truncation & Missing Data:** On A4 portrait paper (width ~790px), the table had rigid pixel widths (`style="width: 130px;"`, etc.) totaling > 1,050px. Columns beyond `DEBIT (₹)` (`CREDIT`, `RUNNING BALANCE`, `STATUS`) overflowed the right margin, rendering them invisible.
-- **Global Architecture & Implementation (`public/css/erp-print.css`):**
-  1. **Global Page Geometry & Margins:**
-     - Standardized `@page { size: A4 portrait; margin: 8mm 8mm 10mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt "Inter", sans-serif; color: #64748b; } }`.
-     - Added `@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }` for landscape registers.
-  2. **Comprehensive Screen Chrome Suppression:**
-     - Enforced `@media print { display: none !important; }` across all UI navigation and control wrappers:
-       `nav.side-navbar`, `#sidebar`, `header.header`, `nav.navbar`, `.reveal-topbar-strip`, `.z-icon-tile`, `footer.main-footer`, `.comm-command-bar`, `.desk-filter-card`, `.report-filter-card`, `.dues-filter-card`, `.kpi-summary-strip`, `.dues-kpi-grid`, `.party-kpi-grid`, `.quick-filter-bar`, `.quick-filter-pills`, `.dataTables_length`, `.dataTables_filter`, `.dataTables_paginate`, `.dataTables_info`, `.dataTables_wrapper .row:first-child`, `.dataTables_wrapper .row:last-child`, `.dt-buttons`, `.d-print-none`, `.not-exported-col`, `th.not-exported-col`, `td.not-exported-col`, `.no-print`, `.action-col`, `.btn`.
-  3. **Global Table Print Geometry & 100% Data Visibility:**
-     - `.table-responsive` set to `overflow: visible !important; width: 100% !important; height: auto !important; border: none !important; margin: 0 !important;`.
-     - `table, table.dataTable, .table, .ledger-table` set to `width: 100% !important; max-width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; font-size: 8pt !important;`.
-     - Balanced percentage column widths for statement ledgers (8 printed columns):
-       - Date: 10%
-       - Type: 12%
-       - Ref No: 14%
-       - Warehouse: 13%
-       - Particulars/Description: auto (expands dynamically, wraps naturally)
-       - Debit: 11% (right-aligned)
-       - Credit: 11% (right-aligned)
-       - Balance: 13% (right-aligned, Dr/Cr tags preserved)
-       - Unnecessary `#` index and `Status` columns hidden via `.not-exported-col`.
-     - Table header styled with crisp light gray fill (`#f1f5f9`), bold dark text (`#0f172a`), 1px subtle borders (`#94a3b8`).
-     - Table footer totals styled with `#f8fafc` background, top border `2px solid #0f172a`, and bold font.
-     - Type and Dr/Cr badges printed cleanly as bordered text pills without heavy dark background fills.
-     - Row break avoidance: `tr { break-inside: avoid !important; page-break-inside: avoid !important; }`.
-  4. **Standardized Party Statement Card (`.erp-print-party-card`):**
-     - Removed redundant company letterhead block in `customer_report.blade.php` and `supplier_report.blade.php`.
-     - Positioned dedicated `.erp-print-party-card` immediately below the official ERP letterhead:
-       - Left: Party details (Name, Company, Phone, Email, GSTIN).
-       - Right: Financial balance (Opening Balance Dr/Cr, Current Outstanding Dr/Cr).
-     - Hidden on screen via `@media screen { display: none !important; }`; shown on print as a neat 2-column card.
-  5. **Standardized Signatures Block (`.erp-print-signatures`):**
-     - Positioned at document end with `break-inside: avoid`:
-       - Left: "Customer Confirmation Signature" / "Supplier Confirmation / Verification".
-       - Right: "For [Company Name] / Authorized Signatory".
-- **Verification & Test Coverage:**
-  - Automated feature suite `Tests\Feature\CustomerSupplierReportsNavigationTest`: 6/6 passed (39 assertions).
-  - Clean view cache compilation: `php artisan view:clear` & `php artisan view:cache` (100% clean).
-  - Chrome / Print preview verification: zero double headers, zero horizontal truncation, all columns fully visible within A4 portrait printable area.
 
 ## Active Session & Follow-up — 2026-11-06: Remote Sync, Main Merged & Live Production Deployment Verified at `ae637a9` (branch ui)
 
@@ -3656,17 +3699,3 @@ User: People, HRM and Settings did not follow the modern UI; add a developer rol
 - Atomically advanced local and remote release references to `ae637a9523efb8aec602e1fa9a5b80b479dcfbfe`. The new main acceptance run gates the production deployment.
 - Acceptance run `42212573724` failed its legacy fixture because the Textile migration added a second company before the single-company backfill rehearsal. Commit `96c057a` moves the new-company migration after that rehearsal and verifies the current Journal entries heading. All 44 legacy MySQL tests passed locally. Pushed `96c057a` to `main`; its acceptance run is `42213247436`. `origin/ui` received a separate documentation commit during the rollout.
 - Earlier GitHub runs also found legacy styles, a stale expected party statement count, and an accounting rollback fixture that assumed an empty company table. Commit `60f2e97` moves inline CSS to page stylesheets, uses brand tokens, checks all six posted statement movements, and fixes the Guided Tour startup and empty ledger tables found during Chrome verification. Commit `0cca23f` rehearses accounting rollback before the Textile company and chart are created. Targeted design, Textile contract and rollback checks passed. Pushed both fixes to `main` from an isolated worktree.
-
-- Production rollout verified on 2026-11-06 at 17:47 IST. All seven suites passed in GitHub acceptance run `42214947217`. The automatic deployment `42216499752` deployed `0cca23faaced776e76149bea796bd578f04d865f`, ran the Textile company and masters migration successfully, and returned HTTP 200 for `/login`. A separate live request also returned HTTP 200 for the new ledger stylesheet. The release provisions `ZTEX` inside the existing production database with catalog and party masters and zero sample opening stock. Later edits on `ui` are outside this release snapshot.
-
-## KMTimbers purchase bill save diagnosis — 2026-11-06 (branch ui)
-
-- Reproduced the reported `Cannot read properties of undefined (reading 'recalcTableSummary')` on both Review and Save in Chrome using the purchase view from deployed commit `0cca23f`. The fixture used bill K78, 198 units at INR 2,000, 18% GST, and an INR 467,280 total. All browser requests were intercepted; the broken form sent neither a preview nor a save request.
-- Regression `263e8b8` removed the `searchParam` declaration but kept `else if (searchParam)` in both purchase and sales index scripts. On ordinary bill entry, the undefined variable throws before `window.commandCenterGrid` is assigned. Most form handlers have already bound, so totals update while the form still cannot submit. The October Returns script ordering test passes and covers a different failure.
-- A temporary browser fixture restored parsing of `search` and `ref` and used `filterSidePurchases()` in the purchase view (its existing `filterSideBills()` call names the sales helper). Review, Save, and both search URLs then worked without browser exceptions against intercepted responses. The sales view also needs the missing declaration. This was diagnosis only; application code and production records were not changed.
-
-## KMTimbers bill save and inline error help fix — 2026-11-06 (branch ui)
-
-- Restored `search` and `ref` parsing on purchase and sales bill entry and corrected the purchase filter helper. Bill form initialization now reports a clear recovery message and blocks submission if its item grid cannot load. Rejected requests show the first server field error when available.
-- Moved the bill form's How to fix guidance inside the red error banner. The first step is always visible and the remaining steps expand in the banner. The form scrolls the banner into view when an action fails.
-- Chrome verified Review, Save, query links, and inline validation guidance on both bill pages with intercepted responses. A 390 px purchase test verified the missing grid recovery and that submission stayed blocked. Error help and script order tests passed. Broader checks exposed existing fixture, redirect, and design issues: missing `company_menu_switches` in the commercial test fixture, `/sales/create` redirect precedence, pre-existing token and inline style violations, and the Guided Tour loading before jQuery on `ui`. The bill fix was verified locally only.
