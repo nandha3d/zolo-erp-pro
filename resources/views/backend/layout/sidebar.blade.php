@@ -457,6 +457,9 @@
                 @endif
                 <li id="outstanding-due-report-menu"><a href="{{ route('report.outstandingDues') }}" data-keywords="customer supplier dues receivables payables outstanding">{{ __('db.Outstanding Dues') }}</a></li>
                 <li class="sidebar-sublabel">Inventory</li>
+                @if($nav->allows('warehouse-stock-report') || $nav->allows('product-report'))
+                    <li id="stock-report-menu"><a href="{{route('report.stock')}}" data-keywords="stock report inventory balance valuation godown warehouse">{{__('db.Stock Report')}}</a></li>
+                @endif
                 @if($nav->allows('product-report'))
                     <li id="product-report-menu"><a href="{{route('report.product')}}">{{__('db.Product Report')}}</a></li>
                 @endif
@@ -466,6 +469,7 @@
                 @if($nav->allows('warehouse-stock-report'))
                     <li id="warehouse-stock-report-menu"><a href="{{route('report.warehouseStock')}}">{{__('db.Warehouse Stock Chart')}}</a></li>
                 @endif
+                <li id="stock-by-lot-menu"><a href="{{route('inventory-reports.stock-by-lot')}}" data-keywords="stock by lot batch inventory">{{__('db.Stock by Lot')}}</a></li>
                 @if($nav->allows('product-expiry-report'))
                     <li id="productExpiry-report-menu"><a href="{{route('report.productExpiry')}}" data-keywords="batch near expiry">{{__('db.Product Expiry Report')}}</a></li>
                 @endif
