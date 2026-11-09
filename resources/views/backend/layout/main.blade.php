@@ -189,7 +189,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-utilities.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/zolo-erp-neo.css') ?>" type="text/css" id="zolo-neo-style">
   <!-- One-screen app shell: compact header, viewport-locked page, lists sized to fit -->
-  <link rel="stylesheet" href="<?php echo versioned_asset('css/app-shell.css') ?>" type="text/css">
+  <link rel="stylesheet" href="<?php echo versioned_asset('css/app-shell.css') ?>" type="text/css" media="screen">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/field-help.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/error-help.css') ?>" type="text/css">
   <link rel="stylesheet" href="<?php echo versioned_asset('css/erp-print.css') ?>" type="text/css">

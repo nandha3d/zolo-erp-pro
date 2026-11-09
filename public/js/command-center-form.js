@@ -6,30 +6,17 @@
     const grid = window.commandCenterGrid;
     const purchase = config.kind === 'purchase';
     let busy = false, paymentError = '';
-    const $message = $('<div class="alert" role="status" data-inline-error-help style="display:none">').insertBefore(form);
-    const show = (text, failed = false) => {
-        $message.removeClass('alert-danger alert-success').addClass(failed ? 'alert-danger' : 'alert-success').text(text).show();
-        if (failed) $message[0].scrollIntoView({block: 'nearest'});
-    };
-    if (typeof grid?.recalcTableSummary !== 'function') {
-        $(form).on('submit', event => event.preventDefault());
-        $('#btn-form-review, #btn-form-save, #btn-form-save-as').prop('disabled', true);
-        show('The bill form could not load. Review and Save are unavailable.', true);
-        return;
-    }
-    const failure = xhr => {
-        const response = xhr.responseJSON;
-        const fieldError = Object.values(response?.errors || {}).flat().find(message => typeof message === 'string' && message.trim());
-        show(fieldError || response?.message || xhr.message || 'The ERP did not return a readable response.', true);
-    };
+    const $message = $('<div class="alert" role="status" style="display:none">').insertBefore(form);
+    const show = (text, failed = false) => $message.removeClass('alert-danger alert-success').addClass(failed ? 'alert-danger' : 'alert-success').text(text).show();
+    const failure = xhr => show(xhr.responseJSON?.message || xhr.message || 'Unable to complete this action.', true);
     const $reason = $('<div class="form-group" hidden><label for="replacement-reason">Reason for replacement *</label><input id="replacement-reason" name="reason" class="form-control" maxlength="500"></div>').prependTo(form);
     const token = () => $(form).find('[name="_token"]').val();
-    for (const name of ['shipping_cost', 'order_discount']) $('<input type="hidden">').attr({name, id: 'hidden-' + name.replaceAll('_', '-')}).val(0).appendTo(form);
-    const api = (path, data, method = 'POST') => $.ajax({url: config.baseUrl + path, method, dataType: 'json', data: {...data, _token: token()}});
+    for (const name of ['shipping_cost', 'order_discount']) $('<input type="hidden">').attr({ name, id: 'hidden-' + name.replaceAll('_', '-') }).val(0).appendTo(form);
+    const api = (path, data, method = 'POST') => $.ajax({ url: config.baseUrl + path, method, dataType: 'json', data: { ...data, _token: token() } });
 
     function fields() {
         const values = {};
-        $(form).serializeArray().forEach(({name, value}) => {
+        $(form).serializeArray().forEach(({ name, value }) => {
             if (name.endsWith('[]')) (values[name.slice(0, -2)] ??= []).push(value);
             else values[name] = value;
         });
@@ -63,38 +50,41 @@
                 discount: $row.find('.row-discount-val').val() || 0,
                 imei_number: $row.find('.row-imei-val').val() || '',
                 product_batch_id: $row.attr('data-batch-id') || null,
-                ...(purchase && $row.find('.row-batch-val').val() ? {batch: {batch_no: $row.find('.row-batch-val').val(), expired_date: $row.find('.row-expire-val').val() || null}} : {})
+                ...(purchase && $row.find('.row-batch-val').val() ? { batch: { batch_no: $row.find('.row-batch-val').val(), expired_date: $row.find('.row-expire-val').val() || null } } : {})
             };
             const taxOverride = window.zoloLineTax?.override(row);
             if (taxOverride !== undefined) line.tax_rate_override = taxOverride;
             if ($row.attr('data-order-item-id')) line.order_item_id = Number($row.attr('data-order-item-id'));
             if ($row.attr('data-variant-id')) line.variant_id = Number($row.attr('data-variant-id'));
             const orderBatch = $row.attr('data-order-batch-no');
-            if (orderBatch && !line.batch) line.batch = {batch_no: orderBatch};
+            if (orderBatch && !line.batch) line.batch = { batch_no: orderBatch };
             if ($row.attr('data-material-item-id')) {
                 if ($row.attr('data-material-unit-id') && Number($row.attr('data-material-unit-id')) !== Number(line[purchase ? 'purchase_unit_id' : 'sale_unit_id'])) throw new Error('Keep the selected source unit, or remove this source line and load it again.');
-                line.material_sources = [{document_id: Number($row.attr('data-material-document-id')),
-                    item_id: Number($row.attr('data-material-item-id')), qty_base: Number(line.qty) * Number($row.attr('data-material-base-factor'))}];
+                line.material_sources = [{
+                    document_id: Number($row.attr('data-material-document-id')),
+                    item_id: Number($row.attr('data-material-item-id')), qty_base: Number(line.qty) * Number($row.attr('data-material-base-factor'))
+                }];
             }
             // Extended tracking (variant, piece, HSN, freight, dimensions, batch MRP/mfg date) is added by document-aids.js.
             const extras = window.zoloDocumentAids ? window.zoloDocumentAids.lineExtras(row) : {};
-            if (extras.batch) { if (line.batch) line.batch = {...line.batch, ...extras.batch}; delete extras.batch; }
-            return {...line, ...extras};
+            if (extras.batch) { if (line.batch) line.batch = { ...line.batch, ...extras.batch }; delete extras.batch; }
+            return { ...line, ...extras };
         });
         if (!items.length) throw new Error('Add at least one item.');
         for (const key of Object.keys(values)) if (Array.isArray(values[key])) delete values[key];
         for (const key of ['_method', 'pos', 'grand_total', 'order_tax', 'total_tax', 'total_price', 'total_cost', 'total_qty', 'total_discount']) delete values[key];
         const series = config.series.find(s => String(s.id) === String(values.series_id));
         const entryContext = window.zoloDocumentWorkspace?.config.context || config.context;
-        const context = ['project_id', 'purchase_order_id', 'sales_order_id', 'exchange_return_id'].reduce((refs, key) => entryContext?.[key] ? {...refs, [key]: entryContext[key]} : refs, {});
+        const context = ['project_id', 'purchase_order_id', 'sales_order_id', 'exchange_return_id'].reduce((refs, key) => entryContext?.[key] ? { ...refs, [key]: entryContext[key] } : refs, {});
         const sourceIds = [...new Set(items.flatMap(item => (item.material_sources || []).map(source => source.document_id)))];
         if (sourceIds.length) {
             values[purchase ? 'goods_received_note_ids' : 'delivery_challan_ids'] = sourceIds;
             items.forEach(item => { item.material_sources ??= []; });
         }
-        return {...values, ...context, items, business_date: values.created_at,
+        return {
+            ...values, ...context, items, business_date: values.created_at,
             transport_name: values.transporter_name || '', series_code: series?.code,
-            };
+        };
     }
     function preview(data) {
         return api('/preview', data).then(result => {
@@ -117,7 +107,7 @@
             $('#hidden-total-cost, #hidden-total-price').val(net.toFixed(4));
             $('#hidden-total-tax').val(totals.total_tax);
             $('#hidden-grand-total').val(totals.grand_total);
-            return {...data, items: totals.items, grand_total: totals.grand_total};
+            return { ...data, items: totals.items, grand_total: totals.grand_total };
         });
     }
     $('#btn-form-review').on('click', () => {
@@ -141,10 +131,14 @@
             const salesOrder = ordersMode && !purchase;
             $(form).find('[type="submit"]').prop('disabled', true);
             preview(data).then(checked => salesOrder
-                ? $.ajax({url: config.ordersUrl, method: 'POST', dataType: 'json',
-                    data: {...checked, promised_date: fields().entry_date || null, note: fields().sale_note || '', _token: token()}})
-                : $.ajax({url: config.context?.post_url || form.action, method: $('#entry-form-method').val() === 'PUT' ? 'PUT' : 'POST',
-                    dataType: 'json', data: {...checked, _token: token()}}))
+                ? $.ajax({
+                    url: config.ordersUrl, method: 'POST', dataType: 'json',
+                    data: { ...checked, promised_date: fields().entry_date || null, note: fields().sale_note || '', _token: token() }
+                })
+                : $.ajax({
+                    url: config.context?.post_url || form.action, method: $('#entry-form-method').val() === 'PUT' ? 'PUT' : 'POST',
+                    dataType: 'json', data: { ...checked, _token: token() }
+                }))
                 .done(() => { window.zoloDocumentWorkspace?.leave?.(); window.location.href = config.listUrl + (ordersMode ? '?orders=1' : ''); }).fail(failure)
                 .always(() => { busy = false; $(form).find('[type="submit"]').prop('disabled', false); });
         } catch (error) { busy = false; $(form).find('[type="submit"]').prop('disabled', false); failure(error); }
@@ -190,7 +184,7 @@
             result.items.forEach((item, i) => {
                 const $row = $('<tr>').appendTo($body);
                 [i + 1, item.product_name, item.batch_no || '—', item.qty + ' ' + item.unit_code, item.return_qty || 0,
-                    item[purchase ? 'net_unit_cost' : 'net_unit_price'], item.tax, item.discount, item.total]
+                item[purchase ? 'net_unit_cost' : 'net_unit_price'], item.tax, item.discount, item.total]
                     .forEach(value => $('<td>').text(value).appendTo($row));
             });
             $('#' + config.kind + '-footer').text('Grand total: ₹ ' + Number(doc.grand_total).toFixed(2) + (order ? '' : ' · Paid: ₹ ' + Number(doc.paid_amount || 0).toFixed(2)));
@@ -232,7 +226,7 @@
         $('#side-bill-list .side-bill-card:visible').each(function () {
             const $card = $(this);
             const row = [$card.find('.side-card-ref').text().trim(), $card.find('.side-card-party').text().trim(),
-                $card.attr('data-date'), $card.find('.side-card-status').text().trim(), $card.find('.side-card-amount').text().replace(/[^\d.-]/g, '')];
+            $card.attr('data-date'), $card.find('.side-card-status').text().trim(), $card.find('.side-card-amount').text().replace(/[^\d.-]/g, '')];
             if (textile) row.push($card.find('.side-card-transport').attr('data-bale-no') || '', $card.find('.side-card-transport').attr('data-transporter') || '');
             rows.push(row);
         });
@@ -248,7 +242,7 @@
     $('#side-export-excel, #side-export-csv').on('click', () => {
         const rows = registerRows();
         const csv = rows.map(row => row.map(value => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replaceAll('"', '""') + '"').join(',')).join('\r\n');
-        const url = URL.createObjectURL(new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8;'}));
+        const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }));
         const link = document.createElement('a'); link.href = url; link.download = config.kind + '-register.csv'; link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     });

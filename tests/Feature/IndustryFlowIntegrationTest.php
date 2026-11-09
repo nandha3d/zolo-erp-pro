@@ -44,6 +44,12 @@ class IndustryFlowIntegrationTest extends ReturnsDocumentTestCase
         $this->assertStringContainsString('DYE/118', $html); $this->assertStringContainsString('Our Ref.', $html);
         $this->assertStringContainsString('GRN '.$receipt->reference_no, $bill['source_number']);
         $this->assertArrayNotHasKey('bale_no', $bill['transport'] ?? []);
+        // Service bill has all columns matching the job worker's physical invoice:
+        $this->assertStringContainsString('SAC Code', $html);
+        $this->assertStringContainsString('LOT NO', $html);
+        $this->assertStringContainsString('Total Amount', $html);
+        $this->assertStringContainsString('Sub Total', $html);
+        $this->assertStringContainsString('03-10-2026', $html);
         $this->get('/operations/receipt/'.$receipt->id.'/print')->assertOk()->assertSee('Job Work GRN')->assertSee($receipt->reference_no)->assertSee($dispatch->reference_no);
         $sale = app(SaleApplicationService::class)->create(new SaleCommand($this->saleData($fabric, [
             'items' => [['product_id' => $fabric->id, 'qty' => 480, 'net_unit_price' => 3]],

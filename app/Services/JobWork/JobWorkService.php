@@ -319,6 +319,7 @@ class JobWorkService
                     throw ValidationException::withMessages(['receipt' => 'Material returned unprocessed carries no processing charge.']);
                 }
                 validator($data, ['items' => 'required|array|min:1|max:500', 'charge_mode' => 'sometimes|in:capitalise,expense',
+                    'items.*.lot_no' => 'nullable|string|max:50', 'items.*.date' => 'nullable|string|max:20',
                     'their_names' => 'sometimes|array|max:50', 'their_names.*' => 'nullable|string|max:150',
                     'stock_names' => 'sometimes|array|max:50', 'stock_names.*' => 'nullable|string|max:150',
                     'supplier_invoice_no' => 'nullable|string|max:60', 'supplier_invoice_date' => 'nullable|date_format:Y-m-d',
