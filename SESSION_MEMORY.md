@@ -1,5 +1,34 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-09: Elimination of Raw Printed CSS Text, Screen Table Layout Restoration, and Attribute-Based Zero-TypeError Recalculation (branch ui)
+
+- **Issues Addressed & Visual Evidence Resolved:**
+  1. *Raw CSS Code Printed Directly on Paper (`media_1794208622631_002a1048.jpg`):*
+     - User screenshot showed Chrome Print Preview rendering raw stylesheet source text directly below the company letterhead:
+       `@media screen { /* Unconstrain flex and height so #content scrolls full page without clipping footers or pagination */ html.app-shell #content > .report-workspace-view { display: block !important; ...`
+     - Root Cause: In `resources/views/backend/report/stock_report.blade.php`, `<style>` was located directly inside `@section('content')` (child of `<div id="content">`). Additionally, `@media print` in `erp-print.css` (line 206) and `stock_report.blade.php` (line 346) specified `html.app-shell #content > *,` with `display: block !important;`. The browser applied `display: block !important;` to `<style>`, rendering its CSS text contents on paper.
+     - Solution:
+       - Moved `<style>` into `@push('css') ... @endpush` at the top of `stock_report.blade.php`, which renders inside `<head>` via `@stack('css')` in `backend.layout.main.blade.php`, completely outside `#content`.
+       - Removed `html.app-shell #content > *,` from `public/css/erp-print.css` and `stock_report.blade.php`.
+       - Added explicit rule `style, script, head { display: none !important; }` to `@media print` in both stylesheets.
+  2. *Stock Report Table Blank on Screen (`media_1794208630475_afd0d89f.png`):*
+     - User screenshot showed the Stock Report table card (`.desk-card-wrapper`) completely empty/white below the Quick Filter bar.
+     - Root Causes:
+       - Conflicting root layout rules in `@media screen` (`display: block !important; flex: none !important;` on `#content > .report-workspace-view` and `.desk-card-wrapper`) collided with `app-shell.css:91-98` flex layout.
+       - In `recalculateTotals()`, `data[6].replace(/,/g, '')` threw a JavaScript `TypeError` if DataTables auto-detected numeric types for column 6, halting subsequent table draw routines.
+     - Solution:
+       - Removed conflicting screen overrides from `stock_report.blade.php`, letting `app-shell.css` naturally manage workspace padding, height, and scrolling (`overflow-y: auto !important`).
+       - Added explicit `data-cost-val="{{ $item['stock_value_cost'] }}"` and `data-price-val="{{ $item['stock_value_price'] }}"` to each row in `<tbody>`.
+       - Overhauled `recalculateTotals()` to iterate over `stockTable.rows({ filter: 'applied' }).nodes()` and extract numbers directly from `$row.attr('data-qty')`, `$row.attr('data-cost-val')`, and `$row.attr('data-price-val')`. Zero column index dependencies, zero string parsing errors.
+  3. *Composer Classmap & View Cache Synchronization:*
+     - Ran `composer dump-autoload` to eliminate stale references to former directory names (`DK Enterprises`).
+     - Ran `php artisan view:clear` and `php artisan view:cache` to ensure newly compiled blade templates are loaded cleanly.
+- **Verification Status (100% Green):**
+  - `tests/Feature/StockReportTest.php`: 9/9 passed (63 assertions, 100%).
+  - Full Feature Test Regression Suite: 44/44 passed (210 assertions, 100%). Total: 53 tests passing.
+  - Zero `<style>` tags exist inside `#content`.
+  - Date Range Filter, 8-column 100% A4 print layout, single authoritative letterhead, and Quick Filter status pills verified working.
+
 ## Active Session & Follow-up — 2026-11-09: Complete Role-Isolated Operational Dashboards & Real-Time Backend Insights (branch main & ui)
 
 - **Issues Addressed & Features Delivered:**

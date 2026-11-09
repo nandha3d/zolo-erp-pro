@@ -192,6 +192,13 @@
     /* Show official ERP print header letterhead */
     .page .erp-print-header { display: block !important; }
     
+    /* Never display style, script, or head metadata in print */
+    style,
+    script,
+    head {
+        display: none !important;
+    }
+
     /* Unlock app shell root containers so multi-page printing works on the main window */
     html,
     html.app-shell,
@@ -203,7 +210,6 @@
     html.app-shell .page-content,
     #content,
     html.app-shell #content,
-    html.app-shell #content > *,
     html.app-shell #content [class$="-workspace-view"],
     html.app-shell #content > .report-workspace-view,
     .report-workspace-view,

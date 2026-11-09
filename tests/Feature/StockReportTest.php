@@ -180,5 +180,13 @@ class StockReportTest extends TestCase
         $response->assertSee('col-price', false);
         $response->assertSee('col-val-price', false);
         $response->assertSee('erp-print-signatures', false);
+
+        // 4. Assert row attributes for zero-TypeError numeric recalculation
+        $response->assertSee('data-cost-val', false);
+        $response->assertSee('data-price-val', false);
+
+        // 5. Assert print safety hides style and script tags to avoid raw CSS printing
+        $response->assertSee('style,', false);
+        $this->assertStringNotContainsString('<div id="content"><style>', $html);
     }
 }

@@ -1,32 +1,13 @@
 @extends('backend.layout.main')
-@section('content')
 
-<x-error-message key="not_permitted" />
-
+@push('css')
 <style>
 @media screen {
-    /* Unconstrain flex and height so #content scrolls full page without clipping footers or pagination */
-    html.app-shell #content > .report-workspace-view {
-        display: block !important;
-        flex: none !important;
-        height: auto !important;
-        min-height: calc(100vh - 60px) !important;
-        overflow: visible !important;
-    }
-    html.app-shell #content .report-workspace-view .desk-card-wrapper {
-        flex: none !important;
-        height: auto !important;
-        min-height: 0 !important;
-        overflow: visible !important;
-    }
-    html.app-shell #content .report-workspace-view .table-responsive {
-        overflow-x: auto !important;
-        overflow-y: visible !important;
-    }
     .report-workspace-view {
         padding: 10px 18px 24px 18px !important;
         background: #f8fafc;
         min-height: calc(100vh - 70px);
+        overflow-y: auto !important;
     }
     body.dark-mode .report-workspace-view {
         background: #0b1120 !important;
@@ -332,6 +313,13 @@
 
 /* Print Specific Rules */
 @media print {
+    /* Never display style, script, or head metadata in print */
+    style,
+    script,
+    head {
+        display: none !important;
+    }
+
     /* 1. Reset all app shell overflow & flex lockups so the document paginates completely */
     html,
     html.app-shell,
@@ -343,7 +331,6 @@
     html.app-shell .page-content,
     #content,
     html.app-shell #content,
-    html.app-shell #content > *,
     html.app-shell #content [class$="-workspace-view"],
     html.app-shell #content > .report-workspace-view,
     .report-workspace-view,
@@ -496,6 +483,11 @@
     }
 }
 </style>
+@endpush
+
+@section('content')
+
+<x-error-message key="not_permitted" />
 
 <section class="report-workspace-view">
     <!-- Top Command Bar -->
@@ -678,7 +670,7 @@
                 </thead>
                 <tbody>
                     @forelse($stockItems as $index => $item)
-                        <tr data-status="{{ $item['status'] }}" data-qty="{{ $item['qty'] }}">
+                        <tr data-status="{{ $item['status'] }}" data-qty="{{ $item['qty'] }}" data-cost-val="{{ $item['stock_value_cost'] }}" data-price-val="{{ $item['stock_value_price'] }}">
                             <td class="col-idx not-exported not-exported-col text-muted font-italic">{{ $index + 1 }}</td>
                             <td class="col-product">
                                 <div class="d-flex align-items-center">
@@ -863,17 +855,11 @@
         var totalCost = 0;
         var totalPrice = 0;
 
-        stockTable.rows({ filter: 'applied' }).every(function(rowIdx, tableLoop, rowLoop) {
-            var rowNode = this.node();
-            var qty = parseFloat($(rowNode).attr('data-qty')) || 0;
-            // Cost and Price column data: column 6 is cost valuation, column 8 is price valuation
-            var data = this.data();
-            var costVal = parseFloat(data[6].replace(/,/g, '')) || 0;
-            var priceVal = parseFloat(data[8].replace(/,/g, '')) || 0;
-
-            totalQty += qty;
-            totalCost += costVal;
-            totalPrice += priceVal;
+        stockTable.rows({ filter: 'applied' }).nodes().each(function() {
+            var $row = $(this);
+            totalQty += parseFloat($row.attr('data-qty')) || 0;
+            totalCost += parseFloat($row.attr('data-cost-val')) || 0;
+            totalPrice += parseFloat($row.attr('data-price-val')) || 0;
         });
 
         $('#foot-total-qty').text(totalQty.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
