@@ -590,6 +590,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::match(['get', 'post'], 'daily_sale_objective', 'dailySaleObjective');
             Route::post('daily-sale-objective-data', 'dailySaleObjectiveData');
             Route::get('product-expiry', 'productExpiry')->name('report.productExpiry');
+            Route::match(['get', 'post'], 'stock', 'stockReport')->name('report.stock');
+            Route::match(['get', 'post'], 'stock_report', 'stockReport');
+            Route::post('stock_report_data', 'stockReportData')->name('report.stockData');
             Route::get('warehouse_stock', 'warehouseStock')->name('report.warehouseStock');
             Route::get('daily_sale/{year}/{month}', 'dailySale');
             Route::post('daily_sale/{year}/{month}', 'dailySaleByWarehouse')->name('report.dailySaleByWarehouse');

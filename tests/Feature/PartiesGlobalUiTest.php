@@ -49,22 +49,26 @@ class PartiesGlobalUiTest extends TestCase
             'company_id' => $this->company->id, 'name' => 'FY 2026', 'start_date' => '2026-04-01', 'end_date' => '2027-03-31', 'status' => 'open'
         ]);
 
-        $group = CustomerGroup::first() ?? CustomerGroup::create(['name' => 'General', 'percentage' => '0', 'is_active' => true]);
+        $group = CustomerGroup::where('company_id', $this->company->id)->first()
+            ?? CustomerGroup::first()
+            ?? CustomerGroup::create(['name' => 'General', 'percentage' => '0', 'is_active' => true, 'company_id' => $this->company->id]);
 
-        $this->customer = Customer::first() ?? Customer::create([
+        $this->customer = Customer::where('company_id', $this->company->id)->first() ?? Customer::create([
             'name' => 'Test UI Customer',
             'company_name' => 'Test Customer Org',
             'customer_group_id' => $group->id,
             'phone_number' => '9876543210',
             'email' => 'uicustomer@test.com',
+            'company_id' => $this->company->id,
             'is_active' => true,
         ]);
 
-        $this->supplier = Supplier::first() ?? Supplier::create([
+        $this->supplier = Supplier::where('company_id', $this->company->id)->first() ?? Supplier::create([
             'name' => 'Test UI Supplier',
             'company_name' => 'Test Supplier Mills',
             'phone_number' => '9876543211',
             'email' => 'uisupplier@test.com',
+            'company_id' => $this->company->id,
             'is_active' => true,
         ]);
 
