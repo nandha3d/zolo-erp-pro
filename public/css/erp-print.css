@@ -191,6 +191,43 @@
 
     /* Show official ERP print header letterhead */
     .page .erp-print-header { display: block !important; }
+    
+    /* Unlock app shell root containers so multi-page printing works on the main window */
+    html,
+    html.app-shell,
+    body,
+    html.app-shell body,
+    .page,
+    html.app-shell .page,
+    .page-content,
+    html.app-shell .page-content,
+    #content,
+    html.app-shell #content,
+    html.app-shell #content > *,
+    html.app-shell #content [class$="-workspace-view"],
+    html.app-shell #content > .report-workspace-view,
+    .report-workspace-view,
+    .desk-card-wrapper,
+    html.app-shell .desk-card-wrapper,
+    html.app-shell #content > :has(> .desk-card-wrapper),
+    html.app-shell #content .report-workspace-view .desk-card-wrapper,
+    .table-responsive,
+    html.app-shell #content .report-workspace-view .table-responsive,
+    .dataTables_wrapper,
+    .dataTables_scroll,
+    .dataTables_scrollBody {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        display: block !important;
+        flex: none !important;
+        float: none !important;
+        position: static !important;
+    }
+
     #content,
     #content > section { background: white !important; padding: 0 !important; margin: 0 !important; }
     /* One-screen layouts clip their panels to the viewport; paper gets everything. */

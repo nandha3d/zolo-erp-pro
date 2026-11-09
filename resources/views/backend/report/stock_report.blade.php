@@ -332,15 +332,55 @@
 
 /* Print Specific Rules */
 @media print {
-    .report-workspace-view {
+    /* 1. Reset all app shell overflow & flex lockups so the document paginates completely */
+    html,
+    html.app-shell,
+    body,
+    html.app-shell body,
+    .page,
+    html.app-shell .page,
+    .page-content,
+    html.app-shell .page-content,
+    #content,
+    html.app-shell #content,
+    html.app-shell #content > *,
+    html.app-shell #content [class$="-workspace-view"],
+    html.app-shell #content > .report-workspace-view,
+    .report-workspace-view,
+    .desk-card-wrapper,
+    html.app-shell .desk-card-wrapper,
+    html.app-shell #content > :has(> .desk-card-wrapper),
+    html.app-shell #content .report-workspace-view .desk-card-wrapper,
+    .table-responsive,
+    html.app-shell #content .report-workspace-view .table-responsive,
+    .dataTables_wrapper,
+    .dataTables_scroll,
+    .dataTables_scrollBody {
+        display: block !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        flex: none !important;
+        float: none !important;
+        position: static !important;
+        border: none !important;
+        box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         background: transparent !important;
     }
+
+    /* 2. Hide screen-only chrome */
     .comm-command-bar,
     .kpi-summary-strip,
     .desk-filter-card,
     .quick-filter-bar,
+    .not-exported,
     .not-exported-col,
     .col-idx,
     .col-alert,
@@ -353,20 +393,11 @@
     .dataTables_info,
     .dt-buttons,
     .buttons-colvis,
-    .d-print-none {
+    .d-print-none,
+    .product-thumb,
+    .btn,
+    button {
         display: none !important;
-    }
-    .desk-card-wrapper {
-        border: none !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-    .table-responsive {
-        overflow: visible !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
     }
     .stock-table {
         width: 100% !important;
@@ -482,7 +513,7 @@
             <li><a class="nav-link" href="{{ route('report.qtyAlert') }}"><i class="dripicons-warning"></i> Qty Alerts</a></li>
         </ul>
         <div class="comm-actions">
-            <button class="btn btn-secondary btn-action-pill" onclick="printStockReport()">
+            <button class="btn btn-secondary btn-action-pill" data-erp-print onclick="printStockReport(event)">
                 <i class="dripicons-print"></i> Print Statement
             </button>
             <button class="btn btn-primary btn-action-pill" onclick="exportStockCSV()">
@@ -623,7 +654,7 @@
             <table id="stock-inventory-table" class="table stock-table u-w-100pct">
                 <thead>
                     <tr>
-                        <th class="col-idx not-exported-col" style="width: 35px;">#</th>
+                        <th class="col-idx not-exported not-exported-col" style="width: 35px;">#</th>
                         <th class="col-product" style="width: 240px;">{{ __('db.product') }}</th>
                         <th class="col-category" style="width: 140px;">{{ __('db.category') }} / {{ __('db.Brand') }}</th>
                         <th class="col-warehouse" style="width: 130px;">{{ __('db.Warehouse') }}</th>
@@ -633,13 +664,13 @@
                         <th class="col-price text-right" style="width: 100px;">{{ __('db.Unit Price') }} ({{ $currencySymbol }})</th>
                         <th class="col-val-price text-right" style="width: 120px;">{{ __('db.Stock Value by Price') }}</th>
                         <th class="col-alert text-right" style="width: 80px;">{{ __('db.Alert Quantity') }}</th>
-                        <th class="col-status text-center not-exported-col" style="width: 100px;">{{ __('db.Stock Status') }}</th>
+                        <th class="col-status text-center not-exported not-exported-col" style="width: 100px;">{{ __('db.Stock Status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($stockItems as $index => $item)
                         <tr data-status="{{ $item['status'] }}" data-qty="{{ $item['qty'] }}">
-                            <td class="col-idx not-exported-col text-muted font-italic">{{ $index + 1 }}</td>
+                            <td class="col-idx not-exported not-exported-col text-muted font-italic">{{ $index + 1 }}</td>
                             <td class="col-product">
                                 <div class="d-flex align-items-center">
                                     <div class="product-thumb mr-2 d-print-none">
@@ -686,7 +717,7 @@
                             <td class="col-price text-right">{{ number_format($item['price'], 2) }}</td>
                             <td class="col-val-price text-right font-weight-bold text-primary">{{ number_format($item['stock_value_price'], 2) }}</td>
                             <td class="col-alert text-right text-muted">{{ $item['alert_quantity'] > 0 ? number_format($item['alert_quantity'], 2) : '—' }}</td>
-                            <td class="col-status text-center not-exported-col">
+                            <td class="col-status text-center not-exported not-exported-col">
                                 <span class="stock-status-pill stock-status-{{ $item['status_class'] }}">
                                     @if($item['status'] == 'in_stock')
                                         <i class="dripicons-checkmark"></i>
@@ -710,7 +741,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th class="col-idx not-exported-col"></th>
+                        <th class="col-idx not-exported not-exported-col"></th>
                         <th colspan="3" class="text-right foot-label">Filtered Inventory Totals:</th>
                         <th class="col-qty text-right text-dark" id="foot-total-qty">{{ number_format($kpiTotalQty, 2) }}</th>
                         <th class="col-cost"></th>
@@ -718,7 +749,7 @@
                         <th class="col-price"></th>
                         <th class="col-val-price text-right text-primary" id="foot-total-price">{{ number_format($kpiTotalPrice, 2) }}</th>
                         <th class="col-alert"></th>
-                        <th class="col-status not-exported-col"></th>
+                        <th class="col-status not-exported not-exported-col"></th>
                     </tr>
                 </tfoot>
             </table>
@@ -754,7 +785,30 @@
             "paging": true,
             "pageLength": 25,
             "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            "dom": '<"row align-items-center mb-2"<"col-md-6"l><"col-md-6 text-right"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 text-right"p>>',
+            "dom": '<"row align-items-center mb-2"<"col-md-6 d-flex align-items-center gap-2"lB><"col-md-6 d-flex justify-content-end"f>>rt<"row align-items-center mt-2"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>',
+            "buttons": [
+                {
+                    extend: 'print',
+                    text: '<i title="print" class="fa fa-print text-primary"></i>',
+                    exportOptions: {
+                        columns: ':visible:not(.not-exported)',
+                        rows: ':visible'
+                    },
+                    action: function(e, dt, button, config) {
+                        $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
+                    },
+                    footer: true
+                },
+                {
+                    extend: 'csv',
+                    text: '<i title="export to csv" class="fa fa-file-text-o text-info"></i>',
+                    exportOptions: {
+                        columns: ':visible:not(.not-exported)',
+                        rows: ':visible'
+                    },
+                    footer: true
+                }
+            ],
             "language": {
                 "lengthMenu": '_MENU_ {{__("db.records per page")}}',
                 "info": '<small>{{__("db.Showing")}} _START_ - _END_ (_TOTAL_)</small>',
@@ -829,7 +883,8 @@
         $('#foot-total-price').text(totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     }
 
-    function printStockReport() {
+    function printStockReport(e) {
+        if (e && e.preventDefault) e.preventDefault();
         if (!stockTable) {
             window.print();
             return;
@@ -837,6 +892,16 @@
 
         $("[data-erp-print-title]").text("STOCK INVENTORY & VALUATION REPORT");
 
+        // 1. Prefer iframe printing via ErpPrint / DataTables Buttons if available
+        if (stockTable.buttons) {
+            var printBtn = stockTable.buttons('.buttons-print');
+            if (printBtn && printBtn.length) {
+                printBtn.trigger();
+                return;
+            }
+        }
+
+        // 2. Direct browser print fallback: unwrap pagination and trigger window.print
         var prevLen = stockTable.page.len();
         stockTable.page.len(-1).draw();
 
@@ -844,7 +909,7 @@
             window.print();
             setTimeout(function() {
                 stockTable.page.len(prevLen).draw();
-            }, 500);
+            }, 600);
         }, 300);
     }
 
