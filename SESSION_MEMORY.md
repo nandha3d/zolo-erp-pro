@@ -1,5 +1,34 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## UI Remote Pull, Conflict Resolution, Parity Verification & Push Complete — 2026-11-09 (`ui` at `fb6fb6e`)
+
+- **User Request Addressed:**
+  - *"can you pull the update from git in UI, check if everything is correct and then merge correctly and push it."*
+- **Remote Integration & Conflict Resolution:**
+  1. Fetched remote commits from `origin/ui` and `upstream/ui`:
+     - `26cee6f`: dynamic product resolution on GRN rows, in-place bill edit, inline table row adding (`+ Add item row in table`), and PO partial status filter.
+     - `47a9f0d`: grid syntax error fix (redundant closing brackets in purchase index), in-search product creation option (`+ Create "[term]" as new product`), and double-plus button label cleanup.
+  2. Resolved merge conflicts cleanly in:
+     - `public/js/command-center-form.js` (harmonized parallel table arrays mapping with business date and series code).
+     - `resources/views/backend/purchase/index.blade.php` and `resources/views/backend/sale/index.blade.php` (integrated latest search product creation, inline row adding, and delete options modal).
+     - `tests/Feature/DocumentEntryWebTest.php` (adjusted PHPUnit 12 DataProvider parameter signature `?string $key = null`).
+     - `tests/Feature/CustomerSupplierReportsNavigationTest.php` (configured target company session context for multi-company isolation).
+     - `SESSION_MEMORY.md` (unified session history).
+- **Test Suite Verification (100% Green):**
+  - `DocumentEntryWebTest`: 12/12 passed (90 assertions).
+  - `GoodsReceivedNoteWebTest`: 4/4 passed (22 assertions).
+  - `PurchaseOrderLifecycleTest`: 6/6 passed (40 assertions).
+  - `StockReportTest`: 9/9 passed (67 assertions).
+  - `CustomerSupplierReportsNavigationTest`: 7/7 passed (41 assertions).
+  - `PartiesGlobalUiTest`: 11/11 passed.
+  - `OutstandingDuesAndGstTypeTest`: 8/8 passed.
+  - Asset & Route Compilation: `php artisan view:cache` (100% compiled), `php artisan route:cache` (1,118 routes serialized).
+- **Branch Synchronization & Remote Push:**
+  - Merged cleanly and pushed `ui` to `origin/ui` (`fb6fb6e`).
+  - Pushed `ui` to `upstream/ui` (`fb6fb6e`).
+  - Fast-forward merged local `main` to parity with `ui` at `fb6fb6e`.
+  - Repository branch remains on `ui`, completely clean (`working tree clean`).
+
 ## Active Session & Follow-up — 2026-11-09: Grid Syntax Error Fix, Search Dropdown In-Place Product Creation & Zero-Confirm Workflow (branch ui)
 
 - **Issues Addressed & Status:**
