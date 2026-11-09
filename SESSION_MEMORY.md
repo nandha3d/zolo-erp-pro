@@ -1,5 +1,39 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-09: Printed Footer URL Elimination, Column Header Text Wrap & Natural Screen Vertical Scroll Restoration (branch ui)
+
+- **Issues Addressed & Visual Evidence Resolved:**
+  1. *Printed Footer Link Text (`media_1794210333442_e6acc1b4.jpg`):*
+     - User screenshot showed printed page displaying browser URL and pagination in the page footer:
+       `zolo-erp-pro.test/report/stock?start_date=2026-08-12&end_date=2026-11-09&warehouse_id=0&category_id=0&brand_id=0&stock_status=all     1/1`
+     - Root Cause: In `stock_report.blade.php`, the print button used `onclick="printStockReport(event)"` which invoked `window.print()` directly on the active browser window. In Chromium, printing the parent window with non-zero `@page` margins causes Chrome to render browser headers and footers (URL string and `1/1`).
+     - Solution:
+       - Configured `@page { size: A4 portrait; margin: 0 !important; }` and `@page wide { size: A4 landscape; margin: 0 !important; }` in both `public/css/erp-print.css` and `@media print` in `stock_report.blade.php`. With zero page margins, Chromium suppresses browser URL and page number chrome completely.
+       - Added `padding: 8mm 10mm 10mm 10mm` to `body` / `.erp-print-doc` to supply the physical document margins cleanly.
+       - Wired the Command Bar button to `<button class="btn btn-secondary btn-action-pill" data-erp-print>`, fully integrating with the Global Report Engine (`public/js/erp-print.js`).
+       - Configured DataTables `buttons: [...]` (`print`, `csv`, `colvis`) so `erp-print.js` hidden `<iframe>` printing is triggered with full letterhead, alternating row styling, and Indian number formatting (`₹ 1,50,000.00`).
+  2. *Column Header Truncation (`STOCK VALUE BY C` and `STOCK VALUE BY P`):*
+     - Root Cause: Under `@media print`, `.stock-table th.col-val-cost` and `th.col-val-price` had `white-space: nowrap !important;` on 10% column widths. "STOCK VALUE BY COST" and "STOCK VALUE BY PRICE" overflowed and were clipped at their boundaries.
+     - Solution:
+       - Changed `.stock-table th` to `white-space: normal !important; line-height: 1.15 !important;`, while keeping numeric data cells on `td` as `white-space: nowrap !important;`.
+       - Updated column headers in `thead` to `Stock Value (Cost)` and `Stock Value (Retail)`.
+       - Tagged `.col-alert` as `not-exported not-exported-col` on `th`, `td`, and `tfoot th`, ensuring exactly 8 valuation columns print across 100% A4 width, matching the footer total layout (52% label + 10% qty + 9% cost + 10% cost val + 9% price + 10% price val).
+  3. *Screen Page Cut at Bottom with Zero Vertical Scroll (`media_1794205429569_4da9ba42.png`):*
+     - Root Cause: `app-shell.css:91-98` clamped `.report-workspace-view` and `.desk-card-wrapper` inside flex items with `min-height: 0; flex: 1 1 0 !important;`. Because DataTables is present, `.desk-card-wrapper` did not receive `overflow-y: auto`, and `.report-workspace-view` took up exactly the viewport height, causing `#content` to see zero overflow and display no scrollbar. Rows 10–25, table footer totals, and pagination were cut off.
+     - Solution:
+       - In `@media screen`, explicitly unconstrained `#content > .report-workspace-view` and `.desk-card-wrapper` with `display: block !important; flex: none !important; height: auto !important; min-height: calc(100vh - 60px) !important;`.
+       - Set `html.app-shell #content { overflow-y: auto !important; overflow-x: hidden !important; }`.
+       - Added `data-no-fit="1"` and `data-length-chosen="1"` to `#stock-inventory-table` so `app-shell.js` does not truncate page length.
+       - `#content` now provides full, smooth vertical scrolling across the entire 1500px+ height of the report.
+  4. *Composer Autoloader BaseDir Path Synchronization:*
+     - In `vendor/composer/autoload_psr4.php`, `$baseDir` had been hardcoded to `.../DK Enterprises`.
+     - Executed `composer dump-autoload` in `d:\PROJECTS\WEBSITES\zolo-erp-pro`, resetting `$baseDir = dirname($vendorDir);` to point directly to `zolo-erp-pro`.
+- **Verification Status (100% Green):**
+  - `tests/Feature/StockReportTest.php`: 9/9 passed (67 assertions, 100%).
+  - Core Report Regression Suites (`CustomerSupplierReportsNavigationTest.php`, `CustomerGroupNavigationTest.php`, `OutstandingDuesAndGstTypeTest.php`, `PartiesGlobalUiTest.php`): 29/29 passed (138 assertions, 100%).
+  - Total verified: **38 tests passing, 205 assertions, 100% green**.
+  - Mirrored changes to `d:\PROJECTS\WEBSITES\DK Enterprises`.
+
 ## Active Session & Follow-up — 2026-11-09: Elimination of Raw Printed CSS Text, Screen Table Layout Restoration, and Attribute-Based Zero-TypeError Recalculation (branch ui)
 
 - **Issues Addressed & Visual Evidence Resolved:**

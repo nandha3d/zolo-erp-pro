@@ -188,5 +188,11 @@ class StockReportTest extends TestCase
         // 5. Assert print safety hides style and script tags to avoid raw CSS printing
         $response->assertSee('style,', false);
         $this->assertStringNotContainsString('<div id="content"><style>', $html);
+
+        // 6. Assert Global Report Engine integration (data-erp-print and clean wrapped headers)
+        $response->assertSee('data-erp-print', false);
+        $response->assertSee('Stock Value (Cost)', false);
+        $response->assertSee('Stock Value (Retail)', false);
+        $response->assertSee('margin: 0 !important;', false);
     }
 }

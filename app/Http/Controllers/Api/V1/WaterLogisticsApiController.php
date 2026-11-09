@@ -336,13 +336,23 @@ class WaterLogisticsApiController extends BaseApiController
     }
 
     /**
-     * Customer Onboarding & KYC (Field Agent)
+     * Customer Onboarding & Creation (Delivery Driver, Tanker Driver, Field Agent, Cashier, Admin)
      */
     public function customerOnboard(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $name = $request->input('name') ?? $request->input('customer_name');
+        $phone = $request->input('phone_number') ?? $request->input('phone') ?? $request->input('mobile');
+        $address = $request->input('address') ?? $request->input('street') ?? 'Site Address';
+        $companyName = $request->input('company_name') ?? $request->input('business_name') ?? $name;
+        $city = $request->input('city') ?? 'Erode';
+
+        $validator = Validator::make([
+            'name' => $name,
+            'phone' => $phone,
+            'address' => $address,
+        ], [
             'name' => 'required|string|max:255',
-            'phone_number' => 'required|string',
+            'phone' => 'required|string',
             'address' => 'required|string',
         ]);
 
@@ -350,18 +360,55 @@ class WaterLogisticsApiController extends BaseApiController
             return $this->sendError('Validation error', $validator->errors()->toArray(), 422);
         }
 
-        $companyId = $request->company_id ?? 3; // Default DK Waters
+        $authUser = Auth::user();
+        $authName = strtolower($authUser?->name ?? '');
+
+        // Company scoping: Header > Request > AuthUser company > Default based on role
+        $companyId = $request->header('X-Company-ID')
+            ?? $request->company_id
+            ?? $authUser?->company_id
+            ?? ($authName === 'tanker_driver' || $authName === 'tanker' ? 2 : 3);
+
+        // Parse coordinates from whatsapp_location / whatsapp_text / location_link or raw lat/lng
+        $lat = null;
+        $lng = null;
+        $rawLocation = $request->input('whatsapp_location')
+            ?? $request->input('whatsapp_text')
+            ?? $request->input('location_link')
+            ?? $request->input('location');
+
+        if ($rawLocation && is_string($rawLocation)) {
+            if (preg_match('/(?:q=|@|loc:)?(-?\d{1,2}\.\d{4,8})[\s,]+(-?\d{1,3}\.\d{4,8})/', $rawLocation, $matches)) {
+                $lat = (float) $matches[1];
+                $lng = (float) $matches[2];
+            }
+        }
+
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $lat = (float) $request->latitude;
+            $lng = (float) $request->longitude;
+        }
+
         $customer = \App\Models\Customer::create([
-            'name' => $request->name,
-            'phone_number' => $request->phone_number,
-            'address' => $request->address,
-            'city' => $request->city ?? 'Madurai',
+            'name' => $name,
+            'company_name' => $companyName,
+            'contact_person' => $request->input('contact_person') ?? $name,
+            'phone_number' => $phone,
+            'wa_number' => $request->input('wa_number') ?? $phone,
+            'address' => $address,
+            'city' => $city,
             'company_id' => $companyId,
-            'customer_group_id' => 1,
+            'customer_group_id' => (int) ($request->input('customer_group_id', 1)),
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'tax_no' => $request->input('tax_no') ?? $request->input('gstin'),
+            'opening_balance' => (float) ($request->input('opening_balance', 0)),
+            'credit_limit' => (float) ($request->input('credit_limit', 0)),
+            'user_id' => $authUser?->id ?? 1,
             'is_active' => true,
         ]);
 
-        $initialCans = (int)($request->opening_cans_held ?? 0);
+        $initialCans = (int)($request->opening_cans_held ?? $request->initial_cans ?? 0);
         $depositHeld = (float)($request->deposit_held ?? ($initialCans * 150));
 
         if ($initialCans > 0 || $depositHeld > 0) {
@@ -377,9 +424,45 @@ class WaterLogisticsApiController extends BaseApiController
             );
         }
 
+        // If delivery driver or route assigned, register an active delivery stop
+        $routeId = $request->input('route_id');
+        if (!$routeId && ($authName === 'driver' || $authName === 'delivery_driver')) {
+            $routeId = 1;
+        }
+        if ($routeId && \Illuminate\Support\Facades\Schema::hasTable('water_can_deliveries')) {
+            $deliveryNo = 'DEL-' . date('Ymd') . '-' . str_pad(DB::table('water_can_deliveries')->count() + 1, 4, '0', STR_PAD_LEFT);
+            DB::table('water_can_deliveries')->insert([
+                'delivery_no' => $deliveryNo,
+                'delivery_date' => now()->toDateString(),
+                'route_id' => (int) $routeId,
+                'customer_id' => $customer->id,
+                'morning_loaded_cans' => max(1, $initialCans),
+                'cans_delivered' => $initialCans,
+                'empty_cans_returned' => 0,
+                'can_rate' => 35.0,
+                'total_amount' => $depositHeld,
+                'paid_amount' => $depositHeld,
+                'payment_mode' => 'cash',
+                'balance_cans_held' => $initialCans,
+                'status' => $initialCans > 0 ? 'completed' : 'pending',
+                'delivery_lat' => $lat,
+                'delivery_lng' => $lng,
+                'created_by' => $authUser?->id ?? 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         return $this->sendResponse([
             'customer' => $customer,
             'customer_code' => 'CUST-' . str_pad($customer->id, 5, '0', STR_PAD_LEFT),
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'phone' => $customer->phone_number,
+            'address' => $customer->address,
+            'city' => $customer->city,
+            'latitude' => $customer->latitude,
+            'longitude' => $customer->longitude,
             'initial_cans_held' => $initialCans,
             'deposit_held' => $depositHeld,
         ], 'Customer onboarded successfully', 201);
@@ -599,6 +682,7 @@ class WaterLogisticsApiController extends BaseApiController
 
             $metrics = [
                 'role' => 'fieldAgent',
+                'desk_name' => 'Field Operations & KYC Desk',
                 'company_name' => 'DK Waters',
                 'company_id' => 3,
                 'summary' => [
@@ -606,10 +690,15 @@ class WaterLogisticsApiController extends BaseApiController
                     'total_receivables' => $totalReceivables,
                     'today_collected' => $todayCollected,
                     'recovery_rate' => $recoveryRate,
+                    'recovery_rate_percent' => $recoveryRate,
                     'overdue_accounts' => 4,
+                    'overdue_accounts_count' => 4,
                     'geocoded_accounts' => $geocoded,
+                    'geocoded_customers' => $geocoded,
                     'missing_gps' => $missingGps,
+                    'missing_gps_customers' => $missingGps,
                 ],
+                'customers' => $topDue,
                 'assigned_customers' => $topDue,
                 'quick_actions' => [
                     ['title' => 'Collect Dues', 'route' => '/accounting/collect', 'icon' => 'payments'],
@@ -795,13 +884,23 @@ class WaterLogisticsApiController extends BaseApiController
         $query = DB::table('customers')
             ->leftJoin('water_can_inventories', 'customers.id', '=', 'water_can_inventories.customer_id')
             ->when($companyId, fn ($q) => $q->where('customers.company_id', $companyId))
-            ->when($authName === 'driver' || $authName === 'delivery_driver', function ($q) {
+            ->when($authName === 'driver' || $authName === 'delivery_driver', function ($q) use ($authUser) {
                 $routeCustomerIds = DB::table('water_can_deliveries')->where('route_id', 1)->pluck('customer_id');
-                $q->whereIn('customers.id', $routeCustomerIds);
+                $q->where(function ($sub) use ($routeCustomerIds, $authUser) {
+                    $sub->whereIn('customers.id', $routeCustomerIds);
+                    if ($authUser) {
+                        $sub->orWhere('customers.user_id', $authUser->id);
+                    }
+                });
             })
-            ->when($authName === 'tanker_driver' || $authName === 'tanker', function ($q) {
+            ->when($authName === 'tanker_driver' || $authName === 'tanker', function ($q) use ($authUser) {
                 $tripCustomerIds = DB::table('water_tanker_trips')->pluck('customer_id');
-                $q->whereIn('customers.id', $tripCustomerIds);
+                $q->where(function ($sub) use ($tripCustomerIds, $authUser) {
+                    $sub->whereIn('customers.id', $tripCustomerIds);
+                    if ($authUser) {
+                        $sub->orWhere('customers.user_id', $authUser->id);
+                    }
+                });
             })
             ->when($request->filled('updated_since'), fn ($q) => $q->where('customers.updated_at', '>=', $request->updated_since))
             ->when($request->filled('search'), function ($q) use ($request) {

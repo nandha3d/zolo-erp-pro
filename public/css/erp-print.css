@@ -9,9 +9,9 @@
 
 @page {
     size: A4 portrait;
-    margin: 8mm 8mm 10mm;
+    margin: 0;
 }
-@page wide { size: A4 landscape; margin: 8mm 8mm 10mm; }
+@page wide { size: A4 landscape; margin: 0; }
 
 .page .erp-print-header { display: none; }
 .erp-print-frame { position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0; visibility: hidden; }
@@ -44,6 +44,8 @@
 /* ---------- Printed document (iframe) ---------- */
 .erp-print-doc {
     margin: 0;
+    padding: 8mm 10mm 10mm 10mm;
+    box-sizing: border-box;
     background: var(--z-surface);
     color: var(--z-text);
     font: 9pt/1.35 "Inter", "Segoe UI", Arial, sans-serif;

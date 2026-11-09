@@ -14,6 +14,10 @@ use App\Http\Controllers\Api\V1\WaterLogisticsApiController;
 use App\Http\Controllers\Api\V1\CafeApiController;
 use App\Http\Controllers\Api\V1\RepairApiController;
 use App\Http\Controllers\Api\V1\AddonApiController;
+use App\Http\Controllers\Api\V1\MeApiController;
+use App\Http\Controllers\Api\V1\ExpenseApiController;
+use App\Http\Controllers\Api\V1\HrmApiController;
+use App\Http\Controllers\Api\V1\ReportApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,9 +32,32 @@ use App\Http\Controllers\Api\V1\AddonApiController;
 
 Route::prefix('v1')->group(function () {
 
+    // Public Health & Ping Endpoints
+    Route::get('health', function () {
+        return response()->json([
+            'status' => 'OK',
+            'system' => 'DK Enterprises ERP API v1',
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    })->name('api.v1.health');
+
+    Route::get('ping', function () {
+        return response()->json([
+            'status' => 'OK',
+            'system' => 'DK Enterprises ERP API v1',
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    })->name('api.v1.ping');
+
     // Public Authentication Endpoints
     Route::prefix('auth')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:api-login')->name('api.v1.auth.login');
+    });
+
+    // Public Mobile Authentication & Bootstrap
+    Route::prefix('mobile')->group(function () {
+        Route::post('login', [WaterLogisticsApiController::class, 'mobileLogin'])->name('api.v1.mobile.login');
+        Route::get('bootstrap', [WaterLogisticsApiController::class, 'mobileBootstrap'])->name('api.v1.mobile.bootstrap');
     });
 
     // Public Tenant Addons Status
@@ -39,15 +66,44 @@ Route::prefix('v1')->group(function () {
     // Protected ERP Endpoints (Sanctum Token Required)
     Route::middleware('auth:sanctum')->group(function () {
 
+        // Global Me & Identity Endpoint
+        Route::get('me', [MeApiController::class, 'me'])->name('api.v1.me');
+
         // Setup deliberately does not require an existing branch or financial year.
         Route::get('company-context/financial-years', [\App\Http\Controllers\CompanyFinancialYearController::class, 'index'])->name('api.v1.company.financial-years.setup');
         Route::post('company-context/financial-years', [\App\Http\Controllers\CompanyFinancialYearController::class, 'store'])->name('api.v1.company.financial-years.store');
 
         // User & Session
         Route::prefix('auth')->group(function () {
-            Route::get('me', [AuthController::class, 'me'])->name('api.v1.auth.me');
+            Route::get('me', [MeApiController::class, 'me'])->name('api.v1.auth.me');
             Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.auth.logout');
         });
+
+        // Protected Mobile API Endpoints (Sanctum Required)
+        Route::prefix('mobile')->group(function () {
+            Route::get('dashboard/{role}', [WaterLogisticsApiController::class, 'roleDashboard'])->name('api.v1.mobile.dashboard');
+            Route::get('workspace', [WaterLogisticsApiController::class, 'groupWorkspaceInsights'])->name('api.v1.mobile.workspace');
+            Route::get('customers', [WaterLogisticsApiController::class, 'customersList'])->name('api.v1.mobile.customers');
+            Route::post('customers', [WaterLogisticsApiController::class, 'customerOnboard'])->name('api.v1.mobile.customers.create');
+            Route::get('products', [WaterLogisticsApiController::class, 'productsList'])->name('api.v1.mobile.products');
+            Route::get('invoices', [WaterLogisticsApiController::class, 'invoicesList'])->name('api.v1.mobile.invoices');
+            Route::get('financials', [WaterLogisticsApiController::class, 'financials'])->name('api.v1.mobile.financials');
+            Route::post('customer-onboard', [WaterLogisticsApiController::class, 'customerOnboard'])->name('api.v1.mobile.customer-onboard');
+            Route::post('collect-payment', [WaterLogisticsApiController::class, 'collectPayment'])->name('api.v1.mobile.collect-payment');
+            Route::post('spot-audit', [WaterLogisticsApiController::class, 'spotAudit'])->name('api.v1.mobile.spot-audit');
+            Route::post('driver-surrender', [WaterLogisticsApiController::class, 'driverCashSurrender'])->name('api.v1.mobile.driver-surrender');
+            Route::get('fleet/live', [WaterLogisticsApiController::class, 'fleetLive'])->name('api.v1.mobile.fleet.live');
+            Route::post('fleet/ping', [WaterLogisticsApiController::class, 'fleetPing'])->name('api.v1.mobile.fleet.ping');
+            Route::post('customers/{id}/location', [WaterLogisticsApiController::class, 'updateCustomerLocation'])->name('api.v1.mobile.customers.location');
+            Route::get('driver/manifest', [WaterLogisticsApiController::class, 'driverManifest'])->name('api.v1.mobile.driver.manifest');
+        });
+
+        // Direct Mobile Convenience Aliases
+        Route::get('customers', [WaterLogisticsApiController::class, 'customersList'])->name('api.v1.customers.alias');
+        Route::post('customers', [WaterLogisticsApiController::class, 'customerOnboard'])->name('api.v1.customers.create.alias');
+        Route::post('customer-onboard', [WaterLogisticsApiController::class, 'customerOnboard'])->name('api.v1.customer-onboard.alias');
+        Route::get('financials', [WaterLogisticsApiController::class, 'financials'])->name('api.v1.financials.alias');
+        Route::get('invoices', [WaterLogisticsApiController::class, 'invoicesList'])->name('api.v1.invoices.alias');
 
         // Sales & Invoicing
         Route::prefix('sales')->group(function () {
@@ -67,9 +123,12 @@ Route::prefix('v1')->group(function () {
 
         // Products & Catalog
         Route::prefix('products')->group(function () {
+            Route::get('metadata', [ProductApiController::class, 'metadata'])->middleware('company.context')->name('api.v1.products.metadata');
             Route::get('/', [ProductApiController::class, 'index'])->middleware('company.context')->name('api.v1.products.index');
+            Route::post('/', [ProductApiController::class, 'store'])->middleware('company.context')->name('api.v1.products.store');
             Route::get('search/{term}', [ProductApiController::class, 'search'])->middleware('company.context')->name('api.v1.products.search');
             Route::get('{id}', [ProductApiController::class, 'show'])->middleware('company.context')->name('api.v1.products.show');
+            Route::put('{id}', [ProductApiController::class, 'update'])->middleware('company.context')->name('api.v1.products.update');
         });
 
         // Inventory & Warehouse Logistics
@@ -115,6 +174,7 @@ Route::prefix('v1')->group(function () {
             Route::get('routes', [WaterLogisticsApiController::class, 'routes'])->name('api.v1.water.routes');
             Route::post('trip-sheets', [WaterLogisticsApiController::class, 'storeTripSheet'])->name('api.v1.water.trip-sheets');
             Route::post('can-deliveries', [WaterLogisticsApiController::class, 'storeCanDelivery'])->name('api.v1.water.can-deliveries');
+            Route::post('plant-intakes', [WaterLogisticsApiController::class, 'storePlantIntake'])->name('api.v1.water.plant-intakes');
             Route::post('driver-surrender', [WaterLogisticsApiController::class, 'driverCashSurrender'])->name('api.v1.water.driver-surrender');
         });
 
@@ -130,6 +190,30 @@ Route::prefix('v1')->group(function () {
             Route::get('jobs', [RepairApiController::class, 'jobs'])->name('api.v1.repair.jobs');
             Route::post('jobs', [RepairApiController::class, 'storeJob'])->name('api.v1.repair.store-job');
             Route::put('jobs/{id}/status', [RepairApiController::class, 'updateStatus'])->name('api.v1.repair.update-status');
+        });
+
+        // Expenses & Operational Outflows
+        Route::prefix('expenses')->group(function () {
+            Route::get('/', [ExpenseApiController::class, 'index'])->name('api.v1.expenses.index');
+            Route::post('/', [ExpenseApiController::class, 'store'])->name('api.v1.expenses.store');
+            Route::get('categories', [ExpenseApiController::class, 'categories'])->name('api.v1.expenses.categories');
+        });
+
+        // Organization & HRM (Attendance & Leaves)
+        Route::prefix('hrm')->group(function () {
+            Route::post('attendance/check-in', [HrmApiController::class, 'checkIn'])->name('api.v1.hrm.check-in');
+            Route::post('attendance/check-out', [HrmApiController::class, 'checkOut'])->name('api.v1.hrm.check-out');
+            Route::get('leaves', [HrmApiController::class, 'leaves'])->name('api.v1.hrm.leaves');
+            Route::post('leaves', [HrmApiController::class, 'applyLeave'])->name('api.v1.hrm.apply-leave');
+            Route::get('leave-types', [HrmApiController::class, 'leaveTypes'])->name('api.v1.hrm.leave-types');
+        });
+
+        // Mobile Analytics & Reporting
+        Route::prefix('reports')->group(function () {
+            Route::get('sales', [ReportApiController::class, 'sales'])->name('api.v1.reports.sales');
+            Route::get('purchases', [ReportApiController::class, 'purchases'])->name('api.v1.reports.purchases');
+            Route::get('stock', [ReportApiController::class, 'stock'])->name('api.v1.reports.stock');
+            Route::get('customers/{id}/ledger', [ReportApiController::class, 'customerLedger'])->name('api.v1.reports.customer-ledger');
         });
     });
 });
