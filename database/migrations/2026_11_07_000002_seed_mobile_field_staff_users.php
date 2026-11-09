@@ -68,24 +68,29 @@ return new class extends Migration
                 ]);
             }
 
+            // Resolve target company (fallback to primary company if specific company doesn't exist)
+            $targetCompanyId = DB::table('companies')->where('id', $u['company_id'])->exists()
+                ? $u['company_id']
+                : DB::table('companies')->value('id');
+
             // Assign to company_user
-            if (Schema::hasTable('company_user')) {
+            if ($targetCompanyId && Schema::hasTable('company_user')) {
                 DB::table('company_user')->updateOrInsert(
-                    ['company_id' => $u['company_id'], 'user_id' => $userId],
+                    ['company_id' => $targetCompanyId, 'user_id' => $userId],
                     ['is_default' => true, 'updated_at' => now()]
                 );
             }
 
             // Assign to company branch
-            if (Schema::hasTable('company_branches') && Schema::hasTable('company_user_branches')) {
+            if ($targetCompanyId && Schema::hasTable('company_branches') && Schema::hasTable('company_user_branches')) {
                 $branchId = DB::table('company_branches')
-                    ->where('company_id', $u['company_id'])
+                    ->where('company_id', $targetCompanyId)
                     ->where('is_active', true)
                     ->value('id');
 
                 if ($branchId) {
                     DB::table('company_user_branches')->updateOrInsert(
-                        ['company_id' => $u['company_id'], 'user_id' => $userId, 'branch_id' => $branchId],
+                        ['company_id' => $targetCompanyId, 'user_id' => $userId, 'branch_id' => $branchId],
                         []
                     );
                 }

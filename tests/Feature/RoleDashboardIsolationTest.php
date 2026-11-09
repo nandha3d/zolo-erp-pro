@@ -8,6 +8,16 @@ use Illuminate\Support\Facades\DB;
 
 class RoleDashboardIsolationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app->bind(\App\Services\Platform\CapabilityService::class, fn () => new class extends \App\Services\Platform\CapabilityService {
+            public function enabled(string $key, $company = null): bool {
+                return true;
+            }
+        });
+    }
     /**
      * Tanker driver logs in on web and sees dedicated tanker operations dashboard
      */
@@ -108,7 +118,10 @@ class RoleDashboardIsolationTest extends TestCase
         $admin = User::where('name', 'admin')->first();
         $this->assertNotNull($admin, 'Admin user must exist');
 
-        $response = $this->actingAs($admin)->get('/dashboard');
+        $company = \App\Models\Company::first();
+        $response = $this->actingAs($admin)
+            ->withSession(['company_id' => $company?->id ?? 1])
+            ->get('/dashboard');
         $response->assertStatus(200);
         $response->assertViewIs('backend.index');
         $response->assertSee('Dashboard');

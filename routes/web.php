@@ -941,6 +941,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     // Module: Water Supply & Fleet Logistics
     Route::controller(\App\Http\Controllers\WaterLogisticsController::class)->group(function () {
         Route::get('water-logistics', 'index')->name('water-logistics.index');
+        Route::get('water-logistics/fleet/tracking', 'index')->name('fleet.tracking');
         Route::post('water-logistics/trip-sheets', 'storeTripSheet')->name('water-logistics.trip-sheets.store');
         Route::post('water-logistics/trip', 'storeTripSheet')->name('water-logistics.trip.store');
         Route::post('water-logistics/can-deliveries', 'storeCanDelivery')->name('water-logistics.can-deliveries.store');
