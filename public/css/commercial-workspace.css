@@ -4233,7 +4233,7 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focu
 
 @media (min-width: 992px) {
     .doc-primary-fields .fields-compact-row.doc-row-a {
-        grid-template-columns: minmax(100px, .8fr) minmax(112px, .9fr) minmax(128px, 136px) minmax(128px, 136px) minmax(180px, 1.5fr) minmax(220px, 2.4fr);
+        grid-template-columns: minmax(95px, .8fr) minmax(110px, .9fr) minmax(105px, .9fr) minmax(120px, 130px) minmax(120px, 130px) minmax(170px, 1.4fr) minmax(200px, 2.2fr);
     }
 
     .doc-primary-fields .fields-compact-row.doc-row-b {

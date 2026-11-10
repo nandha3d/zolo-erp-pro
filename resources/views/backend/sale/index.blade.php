@@ -106,6 +106,13 @@
                             <label for="customer_po_no" data-help="The customer's purchase order or reference number, printed on the invoice.|PO/2026/118">Customer PO / Ref</label>
                             <input type="text" id="customer_po_no" name="customer_po_no" class="form-control" placeholder="From purchase order">
                         </div>
+                        <div class="field-compact-item u-w-150px u-shrink-0">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="lot_number" data-help="Lot or Batch number for inventory tracking. Auto-syncs with Customer PO or Bill No by default, but can be overridden anytime.|LOT-1001">Lot / Batch No</label>
+                                <span class="badge badge-light border text-primary u-fs-9px px-1 py-0 rounded u-cur-pointer" id="sale-lot-mode" title="Click to reset to Auto sync">Auto</span>
+                            </div>
+                            <input type="text" id="lot_number" name="lot_number" class="form-control" placeholder="Auto lot / batch" autocomplete="off">
+                        </div>
                         <div class="field-compact-item u-w-125px u-shrink-0">
                             <label for="bill_date" data-help="Invoice date. GST, stock and accounts post on this date and the credit due date counts from it.|Today">Bill Date</label>
                             <input type="date" id="bill_date" name="created_at" class="form-control" value="{{ date('Y-m-d') }}">
@@ -2536,14 +2543,22 @@
         var taxAmount = amount * (taxRate / 100);
         var lineTotal = amount + taxAmount;
         var unitVal = item.unit || item.unit_code || 'Pc';
+        var docLot = ($('#lot_number').val() || '').trim();
+        var initialBatch = (item.batch_no !== undefined && item.batch_no !== null && item.batch_no !== '') ? String(item.batch_no).trim() : docLot;
+        var isCustomBatch = (initialBatch && docLot && initialBatch !== docLot) ? '1' : '0';
 
         var tr = $(`
-            <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}" data-batch-id="${Number(item.product_batch_id) || ''}">
+            <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}" data-batch-id="${Number(item.product_batch_id) || ''}" data-batch-custom="${isCustomBatch}">
                 <td class="u-ta-center u-fw-600 u-c-text-muted u-va-middle">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
                     <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${escapeHtml(item.product_name || '')}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
                     <input type="hidden" name="product_id[]" class="row-product-id" value="${item.product_id || 0}">
                     <input type="hidden" name="product_code[]" class="row-product-code" value="${escapeHtml(item.product_code || '')}">
+                    <div class="row-lot-badge-container mt-1 ${initialBatch ? '' : 'd-none'}">
+                        <span class="badge badge-light border text-muted u-fs-10px row-lot-badge" title="Lot / Batch for this item">
+                            <i class="dripicons-tag mr-1 text-primary"></i>Lot: <span class="row-lot-text">${escapeHtml(initialBatch)}</span>
+                        </span>
+                    </div>
                 </td>
                 <td>
                     <select name="sale_type_line[]" class="form-control form-control-sm custom-select-native row-type-select">
@@ -2603,7 +2618,7 @@
                     </div>
                     <input type="hidden" name="discount[]" class="row-discount-val" value="${item.discount || 0}">
                     <input type="hidden" name="recieved[]" value="${qty}">
-                    <input type="hidden" name="batch_no[]" class="row-batch-val" value="${escapeHtml(item.batch_no || '')}">
+                    <input type="hidden" name="batch_no[]" class="row-batch-val" value="${escapeHtml(initialBatch || '')}">
                     <input type="hidden" name="expired_date[]" class="row-expire-val" value="${escapeHtml(item.expired_date || '')}">
                     <input type="hidden" name="imei_number[]" class="row-imei-val" value="${escapeHtml(item.imei_number || '')}">
                 </td>
@@ -3384,6 +3399,52 @@
 
     $('#sale_type_id').on('change', syncTaxClassificationToRows);
 
+    // --- Lot / Batch Synchronization & Propagation ---
+    var lotOverridden = false;
+
+    function propagateLotToRows(lotValue) {
+        lotValue = (lotValue || '').trim();
+        $('#order-table-body tr.order-item-row').each(function() {
+            var tr = $(this);
+            if (tr.attr('data-batch-custom') !== '1') {
+                tr.find('.row-batch-val').val(lotValue);
+                var badgeCont = tr.find('.row-lot-badge-container');
+                if (lotValue) {
+                    badgeCont.removeClass('d-none').find('.row-lot-text').text(lotValue);
+                } else {
+                    badgeCont.addClass('d-none');
+                }
+            }
+        });
+    }
+
+    function syncLotFromBillNo() {
+        if (!lotOverridden) {
+            var billNo = ($('#customer_po_no').val() || '').trim() || ($('#reference_no').val() || '').trim();
+            $('#lot_number').val(billNo);
+            $('#sale-lot-mode').text('Auto').removeClass('badge-warning text-dark').addClass('badge-light text-primary border');
+            propagateLotToRows(billNo);
+        }
+    }
+
+    $('#customer_po_no, #reference_no').on('input change', function() {
+        if (!lotOverridden) {
+            syncLotFromBillNo();
+        }
+    });
+
+    $('#lot_number').on('input change', function() {
+        var val = $(this).val().trim();
+        lotOverridden = true;
+        $('#sale-lot-mode').text('Custom').removeClass('badge-light text-primary border').addClass('badge-warning text-dark border');
+        propagateLotToRows(val);
+    });
+
+    $('#sale-lot-mode').on('click', function() {
+        lotOverridden = false;
+        syncLotFromBillNo();
+    });
+
     // Open Row Detail Modal on Pencil Click
     $(document).on('click', '.btn-edit-row', function(e) {
         e.preventDefault();
@@ -3404,10 +3465,25 @@
         var rowId = $('#modal-target-row-id').val();
         var tr = $('#order-table-body tr.order-item-row[data-row-id="' + rowId + '"]');
         if (tr.length) {
-            tr.find('.row-batch-val').val($('#modal-row-batch').val());
+            var newBatch = ($('#modal-row-batch').val() || '').trim();
+            tr.find('.row-batch-val').val(newBatch);
             tr.find('.row-expire-val').val($('#modal-row-expire').val());
             tr.find('.row-imei-val').val($('#modal-row-imei').val());
             tr.find('.row-discount-val').val($('#modal-row-discount').val());
+
+            var docLot = ($('#lot_number').val() || '').trim();
+            if (newBatch && newBatch !== docLot) {
+                tr.attr('data-batch-custom', '1');
+            } else {
+                tr.removeAttr('data-batch-custom');
+            }
+
+            var badgeCont = tr.find('.row-lot-badge-container');
+            if (newBatch) {
+                badgeCont.removeClass('d-none').find('.row-lot-text').text(newBatch);
+            } else {
+                badgeCont.addClass('d-none');
+            }
         }
         $('#row-detail-modal').modal('hide');
     });
@@ -4041,6 +4117,21 @@
                     }
                 }
                 
+                if (s.lot_number) {
+                    $('#lot_number').val(s.lot_number);
+                    if (s.lot_number !== s.customer_po_no && s.lot_number !== s.reference_no) {
+                        lotOverridden = true;
+                        $('#sale-lot-mode').text('Custom').removeClass('badge-light text-primary border').addClass('badge-warning text-dark border');
+                    } else {
+                        lotOverridden = false;
+                        $('#sale-lot-mode').text('Auto').removeClass('badge-warning text-dark').addClass('badge-light text-primary border');
+                    }
+                } else {
+                    $('#lot_number').val('');
+                    lotOverridden = false;
+                    $('#sale-lot-mode').text('Auto').removeClass('badge-warning text-dark').addClass('badge-light text-primary border');
+                }
+                
                 $('#customer_id').val(s.customer_id).trigger('change');
                 $('.selectpicker').selectpicker('refresh');
                 if (s.warehouse_id) $('#form_warehouse_id').val(s.warehouse_id);
@@ -4139,6 +4230,9 @@
 
         $('#reference_no').val('');
         $('#customer_po_no').val('');
+        $('#lot_number').val('');
+        lotOverridden = false;
+        $('#sale-lot-mode').text('Auto').removeClass('badge-warning text-dark').addClass('badge-light text-primary border');
         $('#bill_date').val('{{ date("Y-m-d") }}');
         $('#entry_date').val('{{ date("Y-m-d") }}');
         $('#customer_id').val('').trigger('change');
@@ -4423,6 +4517,15 @@
                 if (ch.lr_no) $('#hidden-lr-no, #drawer-lr-no').val(ch.lr_no);
                 if (ch.lr_date) $('#hidden-lr-date, #drawer-lr-date').val(ch.lr_date.substring(0, 10));
                 if (ch.bale_no) $('#hidden-bale-no, #drawer-bale-no').val(ch.bale_no);
+                if (ch.lot_number) {
+                    $('#lot_number').val(ch.lot_number);
+                    lotOverridden = true;
+                    $('#sale-lot-mode').text('Custom').removeClass('badge-light text-primary border').addClass('badge-warning text-dark border');
+                } else if (ch.bale_no) {
+                    $('#lot_number').val(ch.bale_no);
+                    lotOverridden = false;
+                    $('#sale-lot-mode').text('Auto').removeClass('badge-warning text-dark').addClass('badge-light text-primary border');
+                }
                 if (ch.no_of_bales) $('#hidden-no-of-bales, #drawer-no-of-bales').val(ch.no_of_bales);
                 if (ch.station_to) $('#hidden-station-to, #drawer-station-to').val(ch.station_to);
                 if (ch.remarks) $('#hidden-note, #drawer-note').val(ch.remarks);

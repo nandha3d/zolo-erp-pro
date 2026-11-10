@@ -1,5 +1,30 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-10: Automated & Overridable Lot/Batch Numbers & Autoloader Parity (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Automated & Overridable Lot/Batch Numbers next to Bill Number:*
+     - Header UI placement: Integrated dedicated `#lot_number` input and `#purchase-lot-mode` / `#sale-lot-mode` badge (`Auto` / `Custom`) in the document header row right next to bill numbers (`Supplier Bill No` in Purchases; `Customer PO / Ref` in Sales).
+     - Automation: In `Auto` mode, typing or changing the bill number automatically fills the lot number in real time.
+     - Overridable anytime: Typing directly into the lot number field switches mode to `Custom` (orange badge), retaining custom values without being overwritten by bill number changes; clicking the badge toggles/resets back to `Auto`.
+     - Line Item Inheritance & Connectivity: Line items automatically inherit this document lot number, displaying a visible `Lot: [value]` badge under the product name. Individual lines can be overridden via the row detail modal (`#row-detail-modal`, setting `data-batch-custom="1"`).
+     - Database & Model Persistence:
+       - Migration `2026_11_10_000006_add_lot_number_to_commercial_tables.php` added indexed `lot_number` to `purchases`, `sales`, `goods_received_notes`, and `delivery_challans`.
+       - Models `Purchase` and `Sale` updated with `lot_number` in `$fillable`.
+       - `Unit` updated with `company_id` in `$fillable`.
+       - In `PurchaseController`/`PurchaseService` and `SaleController`/`SaleService`, fallback logic links or creates `ProductBatch` records with `batch_no = lot_number`, establishing FIFO cost and margin traceability across the ERP.
+       - `ValidatesMaterialDocuments`, `GoodsReceivedNoteController`, and `DeliveryChallanController` pass `lot_number` and row batch numbers through when converting GRN → Purchase or DC → Sale.
+  2. *Autoloader Workspace Parity Fix:*
+     - Ran `composer dump-autoload -o --ignore-platform-reqs` to purge obsolete hardcoded paths pointing to `DK Enterprises` from `vendor/composer/autoload_static.php` and `autoload_psr4.php`. All 12,726 classes now map cleanly to `zolo-erp-pro`.
+  3. *Test Suite Verification (100% Green):*
+     - `tests/Feature/LotNumberCommercialTest.php`: **3/3 passed (18 assertions, 100% green)**.
+     - `tests/Unit/DesignTokensTest.php`: **4/4 passed (100% green)**.
+     - `tests/Feature/DocumentEntryWebTest.php`: **12/12 passed (90 assertions, 100% green)**.
+     - `tests/Feature/GoodsReceivedNoteWebTest.php`: **4/4 passed (22 assertions, 100% green)**.
+     - `tests/Feature/StockReportTest.php`: **9/9 passed (68 assertions, 100% green)**.
+     - View cache recompiled cleanly via `php artisan optimize:clear; php artisan view:cache`.
+
+
 ## Active Session & Follow-up — 2026-11-10: Resolution of "Two Boxes in Fields" in Voucher Table Rows (branch ui)
 
 - **Issues Addressed & Status:**

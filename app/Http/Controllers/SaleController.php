@@ -990,12 +990,14 @@ class SaleController extends Controller
             $mail_data['grand_total'] = $lims_sale_data->grand_total;
             $mail_data['paid_amount'] = $lims_sale_data->paid_amount;
 
-            $product_id = $data['product_id'];
-            $product_batch_id = $data['product_batch_id'];
-            $imei_number = $data['imei_number'];
-            $product_code = $data['product_code'];
-            $qty = $data['qty'];
-            $sale_unit = $data['sale_unit'];
+            $product_id = $data['product_id'] ?? [];
+            $product_batch_id = $data['product_batch_id'] ?? [];
+            $batch_no = $data['batch_no'] ?? [];
+            $expired_date = $data['expired_date'] ?? [];
+            $imei_number = $data['imei_number'] ?? [];
+            $product_code = $data['product_code'] ?? [];
+            $qty = $data['qty'] ?? [];
+            $sale_unit = $data['sale_unit'] ?? [];
             $net_unit_price = $data['net_unit_price'];
             $discount = $data['discount'];
             $tax_rate = $data['tax_rate'];
@@ -1042,8 +1044,25 @@ class SaleController extends Controller
                         $lims_product_variant_data = ProductVariant::select('id', 'variant_id')->FindExactProductWithCode($id, $product_code[$i])->first();
                         $product_sale['variant_id'] = $lims_product_variant_data->variant_id;
                     }
-                    if($lims_product_data->is_batch && $product_batch_id[$i]) {
-                        $product_sale['product_batch_id'] = $product_batch_id[$i];
+                    $lineBatchId = $product_batch_id[$i] ?? null;
+                    $lineBatchNo = !empty($batch_no[$i]) ? $batch_no[$i] : (!empty($data['lot_number']) ? $data['lot_number'] : null);
+                    if(!$lineBatchId && !empty($lineBatchNo) && $lims_product_data) {
+                        $product_batch_data = ProductBatch::where([
+                            ['product_id', $lims_product_data->id],
+                            ['batch_no', $lineBatchNo]
+                        ])->first();
+                        if(!$product_batch_data) {
+                            $product_batch_data = ProductBatch::create([
+                                'product_id' => $lims_product_data->id,
+                                'batch_no' => $lineBatchNo,
+                                'expired_date' => $expired_date[$i] ?? null,
+                                'qty' => 0
+                            ]);
+                        }
+                        $lineBatchId = $product_batch_data->id;
+                    }
+                    if($lineBatchId) {
+                        $product_sale['product_batch_id'] = $lineBatchId;
                     }
                 }
                 else
@@ -2997,9 +3016,13 @@ class SaleController extends Controller
                 $data['tax_rate'][] = $item['tax_rate'] ?? 0;
                 $data['subtotal'][] = $item['total'] ?? ($item['subtotal'] ?? 0);
                 $data['imei_number'][] = $item['imei_number'] ?? null;
+                $data['batch_no'][] = $item['batch_no'] ?? ($item['batch']['batch_no'] ?? null);
+                $data['expired_date'][] = $item['expired_date'] ?? ($item['batch']['expired_date'] ?? null);
             }
             $product_id = $data['product_id'];
         }
+        $batch_no = $data['batch_no'] ?? array_fill(0, count($product_id), null);
+        $expired_date = $data['expired_date'] ?? array_fill(0, count($product_id), null);
         $imei_number = $data['imei_number'] ?? array_fill(0, count($product_id), null);
         if(isset($data['product_batch_id'])){
             $product_batch_id = $data['product_batch_id'];
@@ -3107,7 +3130,24 @@ class SaleController extends Controller
             } else {
                 $product_sale['imei_number'] = null;
             }
-            $product_sale['product_batch_id'] = $product_batch_id[$key] ?? null;
+            $lineBatchId = $product_batch_id[$key] ?? null;
+            $lineBatchNo = !empty($batch_no[$key]) ? $batch_no[$key] : (!empty($data['lot_number']) ? $data['lot_number'] : null);
+            if(!$lineBatchId && !empty($lineBatchNo) && $lims_product_data) {
+                $product_batch_data = ProductBatch::where([
+                    ['product_id', $lims_product_data->id],
+                    ['batch_no', $lineBatchNo]
+                ])->first();
+                if(!$product_batch_data) {
+                    $product_batch_data = ProductBatch::create([
+                        'product_id' => $lims_product_data->id,
+                        'batch_no' => $lineBatchNo,
+                        'expired_date' => $expired_date[$key] ?? null,
+                        'qty' => 0
+                    ]);
+                }
+                $lineBatchId = $product_batch_data->id;
+            }
+            $product_sale['product_batch_id'] = $lineBatchId;
             $product_sale['qty'] = $mail_data['qty'][$key] = $qty[$key];
             $product_sale['sale_unit_id'] = $sale_unit_id;
             $product_sale['net_unit_price'] = $net_unit_price[$key];
