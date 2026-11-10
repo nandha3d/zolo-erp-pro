@@ -2546,7 +2546,7 @@
                     <input type="hidden" name="product_code[]" class="row-product-code" value="${escapeHtml(item.product_code || '')}">
                 </td>
                 <td>
-                    <select name="sale_type_line[]" class="form-control form-control-sm row-type-select">
+                    <select name="sale_type_line[]" class="form-control form-control-sm custom-select-native row-type-select">
                         <option value="Sale" selected>Sale</option>
                         <option value="Taxable">Taxable</option>
                         <option value="Exempt">Exempt</option>
@@ -2554,7 +2554,7 @@
                     </select>
                 </td>
                 <td>
-                    <select name="sale_unit[]" class="form-control form-control-sm row-unit-select">
+                    <select name="sale_unit[]" class="form-control form-control-sm custom-select-native row-unit-select">
                         ${unitList.map(u => `<option value="${escapeHtml(u.unit_name)}" ${u.unit_name === unitVal || u.unit_code === unitVal ? 'selected' : ''}>${escapeHtml(u.unit_name)}</option>`).join('')}
                     </select>
                 </td>
@@ -2569,7 +2569,7 @@
                     <input type="hidden" name="subtotal[]" class="row-subtotal-input" value="${lineTotal.toFixed(decimalPlaces)}">
                 </td>
                 <td>
-                    <select name="tax_rate[]" class="form-control form-control-sm row-tax-rate ${isTaxLocked ? 'is-locked' : ''}">
+                    <select name="tax_rate[]" class="form-control form-control-sm custom-select-native row-tax-rate ${isTaxLocked ? 'is-locked' : ''}">
                         <option value="0" ${taxRate == 0 ? 'selected' : ''}>0%</option>
                         ${(function() {
                             var opts = '';

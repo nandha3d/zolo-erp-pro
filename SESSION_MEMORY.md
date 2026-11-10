@@ -1,5 +1,23 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-10: Resolution of "Two Boxes in Fields" in Voucher Table Rows (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Root Cause for "Two Boxes in Fields" (`media_1794283221610_852db731.png`):*
+     - User screenshot showed the `TYPE` ("Purchase") and `UNIT` ("piece") table cells having an outer container box with an inner button box nested inside it.
+     - Root Cause: In `public/js/front.js` (and `front_rtl.js`), the global initializer runs `$('select:not(...)').selectpicker()`. Because the table row selects in `purchase/index.blade.php` and `sale/index.blade.php` had class `form-control form-control-sm`, Bootstrap-Select wrapped them in a `<div class="btn-group bootstrap-select form-control form-control-sm">` containing a `<button class="btn dropdown-toggle">`. The outer `form-control` wrapper received border, background, and padding (Box 1), and the inner `btn` received its own border, background, and padding (Box 2), creating a double box.
+  2. *Solution & Defense-in-Depth:*
+     - Added `custom-select-native` class to all table row selects (`row-type-select`, `row-unit-select`, `row-tax-rate`) in `purchase/index.blade.php` and `sale/index.blade.php`.
+     - Updated `public/js/front.js` and `public/js/front_rtl.js` to exclude `:not(.desk-grid-table select):not(.order-item-row select)` from automatic `selectpicker` initialization.
+     - Added defensive CSS in `public/css/commercial-workspace.css` stripping borders, padding, and backgrounds from `.desk-grid-table .bootstrap-select.form-control` and `.order-item-row .bootstrap-select.form-control` to prevent double boxes even if dynamically re-rendered.
+     - Verified table row inputs render as clean, single native boxes matching the inputs in height, border, and radius.
+  3. *Test Suite Verification (100% Green):*
+     - `tests/Unit/DesignTokensTest.php`: 4/4 passed (100% green).
+     - `tests/Feature/DocumentEntryWebTest.php`: 12/12 passed (90 assertions, 100% green).
+     - `tests/Feature/GoodsReceivedNoteWebTest.php`: 4/4 passed (22 assertions, 100% green).
+     - `tests/Feature/StockReportTest.php`: 9/9 passed (68 assertions, 100% green).
+     - Views cleared and cached cleanly via `php artisan optimize:clear; php artisan view:cache`.
+
 ## Active Session & Follow-up — 2026-11-10: Theme Colors Integration, Table Header Modernization & Inline Row Add Removal (branch ui)
 
 - **Issues Addressed & Status:**

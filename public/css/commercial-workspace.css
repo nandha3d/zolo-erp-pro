@@ -4563,6 +4563,32 @@ body.dark-mode .desk-grid-table tbody td select.form-control {
     background-size: 8px 5px !important;
 }
 
+/* Strip outer borders and padding from bootstrap-select inside table cells to prevent double box */
+.desk-grid-table .bootstrap-select.form-control,
+.desk-grid-table div.bootstrap-select,
+.order-item-row .bootstrap-select.form-control,
+.order-item-row div.bootstrap-select,
+table.desk-grid-table td .bootstrap-select {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+}
+.desk-grid-table .bootstrap-select > .btn.dropdown-toggle,
+.order-item-row .bootstrap-select > .btn.dropdown-toggle,
+table.desk-grid-table td .bootstrap-select > .btn.dropdown-toggle {
+    height: 28px !important;
+    font-size: 12px !important;
+    padding: 3px 8px !important;
+    border: 1px solid var(--z-field-border, #cbd5e1) !important;
+    border-radius: var(--z-radius-sm, 4px) !important;
+    background-color: var(--z-field-bg, #ffffff) !important;
+    box-shadow: none !important;
+}
+
 /* Narrow grid (small screens / zoomed browser / list panel docked): rebalance so Type, Unit and Actions stay readable. */
 .table-responsive:has(> table.desk-grid-table) {
     container-type: inline-size;
