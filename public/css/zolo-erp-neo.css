@@ -2577,6 +2577,17 @@ body.dark-mode .zolo-toggle-pill[data-role="rose"]:has(input:checked) {
   margin: 0 !important;
 }
 
+.product-extended-details-container .table thead th {
+  background-color: var(--z-primary) !important;
+  color: var(--z-primary-contrast, #ffffff) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  padding: 6px 10px !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
 /* Tags Input (Variant values, Product tags) */
 .tagsinput {
   background: var(--neo-input-bg, #ffffff) !important;

@@ -259,7 +259,7 @@
                     <div class="table-responsive u-flex-1-1-auto u-ovy-auto u-minh-200px u-h-100pct u-m-0">
                         <table class="desk-grid-table cozy table table-sm mb-0 u-w-100pct" id="order-table">
                             <thead>
-                                <tr class="u-bg-ink u-c-xffffff u-fs-11px">
+                                <tr class="u-bg-primary u-c-xffffff u-fs-11px">
                                     <th class="u-w-36px u-ta-center">#</th>
                                     <th class="u-minw-240px">ITEM</th>
                                     <th title="Sale type" class="u-w-110px">TYPE</th>
@@ -279,15 +279,6 @@
                                     </td>
                                 </tr>
                             </tbody>
-                            <tfoot class="order-table-tfoot">
-                                <tr>
-                                    <td colspan="10" class="py-2 px-3 border-top-0 bg-light">
-                                        <button type="button" class="btn btn-sm btn-link text-primary font-weight-bold p-0" id="btn-table-inline-add" style="text-decoration:none;font-size:12px;">
-                                            <i class="dripicons-plus mr-1"></i> Add item row in table
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -1044,14 +1035,14 @@
                     <table class="table voucher-items-table product-sale-list">
                         <thead>
                             <tr>
-                                <th style="width: 45px;" class="text-center">#</th>
+                                <th class="u-w-45px text-center">#</th>
                                 <th>{{__('db.product')}}</th>
-                                <th style="width: 110px;">{{__('db.Batch No')}}</th>
-                                <th style="width: 95px;" class="text-right">Qty</th>
-                                <th style="width: 110px;" class="text-right">{{__('db.Unit Price')}}</th>
-                                <th style="width: 110px;" class="text-right">{{__('db.Tax')}}</th>
-                                <th style="width: 95px;" class="text-right">{{__('db.Discount')}}</th>
-                                <th style="width: 120px;" class="text-right">{{__('db.Subtotal')}}</th>
+                                <th class="u-w-110px">{{__('db.Batch No')}}</th>
+                                <th class="u-w-95px text-right">Qty</th>
+                                <th class="u-w-110px text-right">{{__('db.Unit Price')}}</th>
+                                <th class="u-w-110px text-right">{{__('db.Tax')}}</th>
+                                <th class="u-w-95px text-right">{{__('db.Discount')}}</th>
+                                <th class="u-w-120px text-right">{{__('db.Subtotal')}}</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -2050,15 +2041,15 @@
                 return $("<li>")
                     .addClass("ui-autocomplete-action-item")
                     .append(`
-                        <div class="custom-ac-item d-flex align-items-center justify-content-between text-primary" style="background:#eef2ff; border-top:1px dashed #c7d2fe; padding:8px 12px; cursor:pointer; margin:2px 0; border-radius:4px;">
+                        <div class="custom-ac-item ac-quick-create-card">
                             <div class="d-flex align-items-center">
-                                <span class="badge badge-primary mr-2" style="background:#4f46e5; padding:4px 6px; font-size:11px;"><i class="dripicons-plus"></i></span>
+                                <span class="ac-quick-create-icon"><i class="dripicons-plus"></i></span>
                                 <div>
-                                    <div class="font-weight-bold" style="color:#3730a3; font-size:13px;">Create "<strong>${escapeHtml(item.term)}</strong>" as new product</div>
-                                    <div class="small" style="color:#6366f1; font-size:11px;">Open Quick Create form directly in this voucher</div>
+                                    <div class="ac-quick-create-title">Create "<strong>${escapeHtml(item.term)}</strong>" as new product</div>
+                                    <div class="ac-quick-create-sub">Open Quick Create form directly in this voucher</div>
                                 </div>
                             </div>
-                            <span class="badge badge-pill badge-primary" style="background:#4f46e5; font-size:10px; padding:3px 7px;">+ Quick Create</span>
+                            <span class="ac-quick-create-pill">+ Quick Create</span>
                         </div>
                     `)
                     .appendTo(ul);
@@ -2348,15 +2339,15 @@
                     return $("<li>")
                         .addClass("ui-autocomplete-action-item")
                         .append(`
-                            <div class="custom-ac-item d-flex align-items-center justify-content-between text-primary" style="background:#eef2ff; border-top:1px dashed #c7d2fe; padding:8px 12px; cursor:pointer; margin:2px 0; border-radius:4px;">
+                            <div class="custom-ac-item ac-quick-create-card">
                                 <div class="d-flex align-items-center">
-                                    <span class="badge badge-primary mr-2" style="background:#4f46e5; padding:4px 6px; font-size:11px;"><i class="dripicons-plus"></i></span>
+                                    <span class="ac-quick-create-icon"><i class="dripicons-plus"></i></span>
                                     <div>
-                                        <div class="font-weight-bold" style="color:#3730a3; font-size:13px;">Create "<strong>${escapeHtml(item.term)}</strong>" as new product</div>
-                                        <div class="small" style="color:#6366f1; font-size:11px;">Open Quick Create form directly for this row</div>
+                                        <div class="ac-quick-create-title">Create "<strong>${escapeHtml(item.term)}</strong>" as new product</div>
+                                        <div class="ac-quick-create-sub">Open Quick Create form directly for this row</div>
                                     </div>
                                 </div>
-                                <span class="badge badge-pill badge-primary" style="background:#4f46e5; font-size:10px; padding:3px 7px;">+ Quick Create</span>
+                                <span class="ac-quick-create-pill">+ Quick Create</span>
                             </div>
                         `)
                         .appendTo(ul);
@@ -2629,8 +2620,8 @@
         $(document).trigger('command-center-row-added', [tr]);
     }
 
-    // Manual Add Row (+ Add row button & inline table add button)
-    $('#btn-add-item-row, #btn-table-inline-add').on('click', function() {
+    // Manual Add Row (+ Add row button)
+    $('#btn-add-item-row').on('click', function() {
         addProductRow({
             product_id: 0,
             product_name: '',

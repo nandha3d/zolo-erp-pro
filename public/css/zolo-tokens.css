@@ -73,8 +73,8 @@
   --z-field-disabled-bg: var(--z-surface-3);
 
   /* ---- Tables ---- */
-  --z-table-head-bg: var(--z-ink);
-  --z-table-head-text: var(--z-on-ink);
+  --z-table-head-bg: var(--z-primary);
+  --z-table-head-text: var(--z-primary-contrast);
   --z-table-border: var(--z-border);
   --z-table-stripe: var(--z-surface-2);
   --z-table-hover: var(--z-primary-soft);

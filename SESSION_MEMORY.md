@@ -1,5 +1,27 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-10: Theme Colors Integration, Table Header Modernization & Inline Row Add Removal (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Elimination of Pitch-Dark Black Headers in Voucher Tables & ERP-Wide Tables (`media_1794282795938_988b185e.png`):*
+     - Replaced `.u-bg-ink` on `#order-table thead tr` with `.u-bg-primary` in both `resources/views/backend/purchase/index.blade.php` and `resources/views/backend/sale/index.blade.php`.
+     - Updated `--z-table-head-bg` to `var(--z-primary)` and `--z-table-head-text` to `var(--z-primary-contrast)` in `public/css/zolo-tokens.css`.
+     - Styled modal sub-tables in `.product-extended-details-container .table thead th` in `public/css/zolo-erp-neo.css` so cards ("Warehouse Initial Stock", "Batch & Expiry Date", "IMEI / Serial Numbers") display clean theme-colored headers instead of harsh dark navy blocks.
+  2. *Removed "+ Add item row in table" Button & Footer:*
+     - Completely removed the `<tfoot class="order-table-tfoot">` with `#btn-table-inline-add` from both `purchase/index.blade.php` and `sale/index.blade.php`.
+     - Cleaned up event listeners in JavaScript to target `#btn-add-item-row`. Enter key navigation and top toolbar "+ Add row" button continue to work seamlessly.
+  3. *Polished Search Autocomplete Quick Create Card Theme Colors (`media_1794282824047_00963aed.png`):*
+     - Replaced harsh/dark inline styling (`#4f46e5`, `#3730a3`, `#6366f1`, `#eef2ff`) with design token classes in `public/css/zolo-components.css`:
+       `.ac-quick-create-card`, `.ac-quick-create-icon`, `.ac-quick-create-title`, `.ac-quick-create-sub`, `.ac-quick-create-pill`.
+     - Applied to top product search (`#lims_productcodeSearch`) and in-row search (`.row-item-name`) across `purchase/index.blade.php`, `sale/index.blade.php`, and `material-document.js`.
+     - Features high-contrast brand purple badges, soft tint background, and crisp legible white text.
+  4. *Design Tokens & Automated Test Suite Verification (100% Green):*
+     - `tests/Unit/DesignTokensTest.php`: 4/4 passed (100% green).
+     - `tests/Feature/DocumentEntryWebTest.php`: 12/12 passed (90 assertions, 100% green).
+     - `tests/Feature/GoodsReceivedNoteWebTest.php`: 4/4 passed (22 assertions, 100% green).
+     - `tests/Feature/StockReportTest.php`: 9/9 passed (68 assertions, 100% green).
+     - Views cleared and re-cached cleanly via `php artisan optimize:clear; php artisan view:cache`.
+
 ## Active Session & Follow-up — 2026-11-10: CSRF Middleware Class Resolution (`VerifyCsrfToken` Import Parity) (branch ui)
 
 - **Issues Addressed & Status:**

@@ -134,12 +134,14 @@
         }).autocomplete('instance')._renderItem = (ul, item) => {
             if (item.is_create_action) {
                 return $('<li>').addClass('ui-autocomplete-action-item').append(`
-                    <div style="background:#eef2ff; border-top:1px dashed #c7d2fe; padding:8px 12px; cursor:pointer; color:#3730a3; font-weight:600; font-size:12px; border-radius:4px; margin:2px 0; display:flex; align-items:center; justify-content:space-between;">
-                        <div>
-                            <span style="background:#4f46e5; color:#fff; border-radius:3px; padding:2px 6px; font-size:11px; margin-right:6px;">+</span>
-                            Create "<strong>${$('<span>').text(item.term).html()}</strong>" as new product
+                    <div class="custom-ac-item ac-quick-create-card">
+                        <div class="d-flex align-items-center">
+                            <span class="ac-quick-create-icon">+</span>
+                            <div>
+                                <div class="ac-quick-create-title">Create "<strong>${$('<span>').text(item.term).html()}</strong>" as new product</div>
+                            </div>
                         </div>
-                        <span class="badge badge-primary" style="background:#4f46e5; font-size:10px; padding:3px 6px;">+ Quick Create</span>
+                        <span class="ac-quick-create-pill">+ Quick Create</span>
                     </div>
                 `).appendTo(ul);
             }

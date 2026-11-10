@@ -529,3 +529,72 @@ body.dark-mode :is(input:not([type]), input[type="text"], input[type="number"], 
   border-color: var(--z-field-border);
   color: var(--z-field-text);
 }
+
+/* ---------- Autocomplete Quick Create Action Item ---------- */
+html body .ac-quick-create-card {
+  background: var(--z-primary-soft) !important;
+  border: 1px solid var(--z-primary-border) !important;
+  border-radius: var(--z-radius-sm, 6px);
+  padding: 8px 12px;
+  cursor: pointer;
+  margin: 4px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+html body .ac-quick-create-card:hover {
+  background: var(--z-primary-soft-strong) !important;
+}
+html body .ac-quick-create-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--z-primary) !important;
+  color: #ffffff !important;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+html body .ac-quick-create-title {
+  color: var(--z-primary) !important;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+html body .ac-quick-create-sub {
+  color: var(--z-text-muted, #64748b) !important;
+  font-size: 11px;
+  line-height: 1.3;
+}
+html body .ac-quick-create-pill {
+  background: var(--z-primary) !important;
+  color: #ffffff !important;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+  border: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Side Orders Status Filter Pills ---------- */
+html body .btn-order-filter {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: var(--z-surface-3);
+  color: var(--z-text-2);
+  border: 1px solid var(--z-border);
+}
+html body .btn-order-filter.active,
+html body .btn-order-filter:hover {
+  background: var(--z-primary) !important;
+  color: var(--z-primary-contrast, #ffffff) !important;
+  border: 1px solid var(--z-primary) !important;
+}
