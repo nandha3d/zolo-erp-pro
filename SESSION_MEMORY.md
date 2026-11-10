@@ -1,5 +1,21 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-10: CSRF Middleware Class Resolution (`VerifyCsrfToken` Import Parity) (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Root Cause & Resolution for Ignition Error (`media_1794282427742_e1e0f22a.jpg`):*
+     - Error: `Class "Illuminate\Foundation\Http\Middleware\PreventRequestForgery" not found in app/Http/Middleware/VerifyCsrfToken.php:7`
+     - Root Cause: In `app/Http/Middleware/VerifyCsrfToken.php`, line 5 had been modified to import `use Illuminate\Foundation\Http\Middleware\PreventRequestForgery as Middleware;`. The installed Laravel framework uses `Illuminate\Foundation\Http\Middleware\VerifyCsrfToken`, causing a fatal class not found error whenever the HTTP kernel handled any request.
+     - Solution: Restored line 5 to `use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;`.
+     - Verified:
+       - `php -l app/Http/Middleware/VerifyCsrfToken.php`: No syntax errors.
+       - Simulated HTTP requests to `/login` and `/`: returned HTTP 200 and HTTP 302 cleanly.
+       - Route listing: `php artisan route:list` loaded 1,135 routes cleanly.
+       - Full test suites passed:
+         - `DocumentEntryWebTest`: 12/12 passed (90 assertions, 100% green).
+         - `GoodsReceivedNoteWebTest`: 4/4 passed (22 assertions, 100% green).
+         - `StockReportTest`: 9/9 passed (68 assertions, 100% green).
+
 ## UI Remote Pull, Conflict Resolution, Parity Verification & Push Complete — 2026-11-09 (`ui` at `fb6fb6e`)
 
 - **User Request Addressed:**
