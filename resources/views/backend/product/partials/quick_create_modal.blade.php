@@ -14,18 +14,20 @@
         <div class="modal-content">
             <div class="modal-header d-flex align-items-center justify-content-between">
                 <div>
-                    <h5 class="modal-title font-weight-bold u-fs-15px u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
+                    <h5 id="quick-modal-title" class="modal-title font-weight-bold u-fs-15px u-c-text u-d-flex u-items-center u-gap-8px u-m-0">
                         <i class="fa fa-plus-circle u-c-primary u-fs-18px"></i> {{ __('db.add_product') }} (Catalog Master)
                     </h5>
-                    <span class="u-fs-11_5px u-c-text-muted">{{ __('db.The field labels marked with * are required input fields') }}. Once created, the item is immediately selected and added to the voucher.</span>
+                    <span id="quick-modal-subtitle" class="u-fs-11_5px u-c-text-muted">{{ __('db.The field labels marked with * are required input fields') }}. Once created, the item is immediately selected and added to the voucher.</span>
                 </div>
                 <button type="button" class="close u-fs-22px u-ol-none" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="quick-create-item-form" enctype="multipart/form-data" @isset($billUsage) data-product-usage="{{ $billUsage }}" @endisset>
+            <form id="quick-create-item-form" enctype="multipart/form-data" data-quick-edit-base="{{ url('/products') }}" @isset($billUsage) data-product-usage="{{ $billUsage }}" @endisset>
                 @csrf
+                <input type="hidden" id="quick-edit-product-id" name="edit_product_id" value="">
                 <div class="modal-body p-2">
+                    <div id="quick-modal-error-banner" class="alert alert-danger py-2 px-3 mb-2 d-none u-fs-12px" role="alert"></div>
                     <div class="zolo-product-grid">
 
                         <!-- BOX 1: Primary Identity & Categorization (Blue) -->

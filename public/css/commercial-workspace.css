@@ -4815,3 +4815,79 @@ body.dark-mode .comm-register-card .dataTables_wrapper .form-control {
     font-weight: 600;
     color: var(--z-warning);
 }
+
+/* Inline hover "Edit" action on product cells in Purchase/Sale/GRN/DC grids */
+.row-item-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.row-item-input-wrap .row-item-name {
+    width: 100%;
+    transition: padding-right 140ms ease;
+}
+
+.row-item-input-wrap .btn-quick-edit-product {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 6;
+    display: none;
+    align-items: center;
+    gap: 3px;
+    height: 21px;
+    padding: 0 7px;
+    border: 1px solid var(--z-primary);
+    border-radius: 4px;
+    background: var(--z-surface-1, #fff);
+    color: var(--z-primary);
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+    transition: opacity 140ms ease, transform 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.row-item-input-wrap.has-product .btn-quick-edit-product,
+tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]) .row-item-input-wrap .btn-quick-edit-product {
+    display: inline-flex;
+}
+
+tr:hover .row-item-input-wrap.has-product .btn-quick-edit-product,
+tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]):hover .row-item-input-wrap .btn-quick-edit-product,
+.row-item-input-wrap.has-product:hover .btn-quick-edit-product,
+.row-item-input-wrap.has-product:focus-within .btn-quick-edit-product,
+tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]) .row-item-input-wrap:focus-within .btn-quick-edit-product {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) scale(1);
+}
+
+tr:hover .row-item-input-wrap.has-product .row-item-name,
+tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]):hover .row-item-input-wrap .row-item-name,
+.row-item-input-wrap.has-product:hover .row-item-name {
+    padding-right: 52px;
+}
+
+.row-item-input-wrap .btn-quick-edit-product:hover {
+    background: var(--z-primary);
+    color: var(--z-primary-contrast, #fff);
+}
+
+@media (hover: none) {
+    .row-item-input-wrap.has-product .btn-quick-edit-product,
+    tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]) .row-item-input-wrap .btn-quick-edit-product {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(-50%) scale(1);
+    }
+    .row-item-input-wrap.has-product .row-item-name {
+        padding-right: 52px;
+    }
+}

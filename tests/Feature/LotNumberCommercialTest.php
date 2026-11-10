@@ -47,7 +47,6 @@ class LotNumberCommercialTest extends TestCase
         $this->warehouse = Warehouse::where('company_id', $companyId)->first();
         $this->supplier = Supplier::where('company_id', $companyId)->first();
         $this->customer = Customer::where('company_id', $companyId)->first();
-        $this->product = Product::where('company_id', $companyId)->first();
         $this->unit = \App\Models\Unit::firstOrCreate(
             ['company_id' => $companyId, 'unit_code' => 'LOT-PC'],
             ['unit_name' => 'Lot Piece', 'operator' => '*', 'operation_value' => 1, 'is_active' => 1]
@@ -56,12 +55,28 @@ class LotNumberCommercialTest extends TestCase
             ['company_id' => $companyId, 'rate' => 5],
             ['name' => 'GST 5%', 'is_active' => 1]
         );
-        $this->product->update([
+        $this->product = Product::forceCreate([
+            'company_id' => $companyId,
+            'name' => 'Lot Automation Test Fabric',
+            'code' => 'LOT-TEST-' . mt_rand(10000, 99999),
+            'type' => 'standard',
+            'barcode_symbology' => 'C128',
+            'category_id' => \App\Models\Category::where('company_id', $companyId)->value('id') ?? 1,
             'unit_id' => $this->unit->id,
             'purchase_unit_id' => $this->unit->id,
             'sale_unit_id' => $this->unit->id,
+            'cost' => 100,
+            'price' => 150,
             'tax_id' => $tax->id,
+            'tax_category_id' => null,
+            'product_usage' => 'composite',
+            'negative_stock_policy' => 'allow',
+            'is_active' => 1,
         ]);
+        \Illuminate\Support\Facades\DB::table('tax_registrations')
+            ->where('company_id', $companyId)
+            ->where('branch_id', 5)
+            ->update(['status' => 'inactive']);
         $this->context = new CompanyContext(4, 5, 4);
     }
 

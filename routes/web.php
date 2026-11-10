@@ -261,6 +261,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     });
 
     Route::post('products/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreProduct'])->name('products.quick-store');
+    Route::get('products/{id}/quick-edit', [App\Http\Controllers\CommercialController::class, 'quickEditProduct'])->whereNumber('id')->name('products.quick-edit');
+    Route::post('products/{id}/quick-update', [App\Http\Controllers\CommercialController::class, 'quickUpdateProduct'])->whereNumber('id')->name('products.quick-update');
     Route::post('categories/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreCategory'])->name('categories.quick-store');
     Route::post('brands/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreBrand'])->name('brands.quick-store');
     Route::post('parties/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreParty'])->name('parties.quick-store');

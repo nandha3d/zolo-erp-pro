@@ -1,5 +1,34 @@
 # zoloERP Pro — Persistent Session Memory & State
 
+## Active Session & Follow-up — 2026-11-10: Inline Hover Product Edit on Voucher Rows & Tax UI Clarification (branch ui)
+
+- **Issues Addressed & Status:**
+  1. *Hover "Edit" Button on Voucher Product Cells (`media_1794290306012_92ff49a0.png`):*
+     - User requested an in-page hover **Edit** action directly on product rows that opens the same product form popup (`#quick-create-item-modal`) pre-filled with the product's catalog master details.
+     - UI Styling (`public/css/commercial-workspace.css`): Added `.row-item-input-wrap` and `.btn-quick-edit-product` using design tokens (`var(--z-primary)` / `var(--z-surface-1)`). Appears smoothly on hover or focus-within whenever a valid `product_id > 0` is bound (hidden on blank/unlinked rows), with padding transition so names are never obscured.
+     - Shared Popup Edit Mode (`resources/views/backend/product/partials/quick_create_modal.blade.php` & `public/js/quick-product-modal.js`):
+       - Extended `#quick-create-item-modal` with `#quick-edit-product-id`, `#quick-modal-error-banner`, and `window.zoloOpenQuickEditProduct(productId, $sourceRow)` / `window.zoloSubmitQuickEditProduct(formEl)`.
+       - Automatically pre-populates all catalog fields (name, code, type, barcode symbology, brand, category, base/sale/purchase units, `product_usage`, cost, margin, price, wholesale price, GST/Tax category & HSN/SAC, negative stock policy, warranty/guarantee, details, alert qty, checkboxes, differential warehouse prices, variants, IMEI, promotions) and opens active toggle sections via `syncQuickSections()`.
+       - Updates voucher grids in-place without losing bill draft (`window.zoloSyncUpdatedProductInGrid` on Purchase & Sale; row-sync listener in `public/js/material-document.js` for GRN & DC), updates in-memory autocomplete arrays, recalculates row/bill totals, and calls `window.ZoloGstEntry.refresh()` in GST mode.
+       - Automatically resets back to Create mode when modal closes or `+ Create item` is clicked.
+     - Backend Endpoints (`routes/web.php`, `app/Http/Controllers/CommercialController.php`, `app/Services/ERP/ProductMasterService.php`):
+       - Extracted shared helpers in `CommercialController` (`validateQuickProduct`, `resolveQuickProductAttributes`, `persistQuickProductExtensions`, `formatQuickProductPayload`).
+       - Added `ProductMasterService::update()` and `$ignoreProductId` support on `validateCreation()` so updating an existing item reuses all company-scoped uniqueness, UOM conversion, and GST/HSN validation rules.
+       - Added `GET /products/{id}/quick-edit` and `POST /products/{id}/quick-update` guarded by `products-edit` permission and `Product::forCompany($context)`.
+  2. *Explained Live (`Tax Classification`) vs Local (`GST · Place of supply` + `RCM`) UI difference:*
+     - Verified via `app/Services/Tax/GstSetupService.php` (`entryConfig()`, `enabled()`, `registration()`), `resources/views/backend/partials/gst-entry.blade.php`, and `public/js/gst-entry.js`.
+     - Local shows `GST · Place of supply` + `RCM` because `.env` has `ERP_COMPLIANCE_ENABLED=true` and `zoloERP Textiles` (`company_id = 4`, `branch_id = 5`) has an active Indian registration in `tax_registrations`. Live shows `Tax Classification` when `ERP_COMPLIANCE_ENABLED=false` or the active company/branch lacks an active GST registration row.
+  3. *Test Suite & Cache Verification (100% Green):*
+     - `tests/Feature/QuickEditProductModalTest.php`: **3/3 passed (45 assertions, 100% green)**.
+     - `tests/Unit/DesignTokensTest.php`: **4/4 passed (100% green)**.
+     - `tests/Feature/LotNumberCommercialTest.php`: **3/3 passed (18 assertions, 100% green)**.
+     - `tests/Feature/DocumentEntryWebTest.php`: **12/12 passed (90 assertions, 100% green)**.
+     - `tests/Feature/GoodsReceivedNoteWebTest.php`: **4/4 passed (22 assertions, 100% green)**.
+     - `tests/Feature/StockReportTest.php`: **9/9 passed (68 assertions, 100% green)**.
+     - Combined suite run: **35/35 passed (247 assertions, 100% green)**.
+     - Cleared & cached views cleanly via `php artisan optimize:clear; php artisan view:cache`.
+
+
 ## Active Session & Follow-up — 2026-11-10: Automated & Overridable Lot/Batch Numbers & Autoloader Parity (branch ui)
 
 - **Issues Addressed & Status:**

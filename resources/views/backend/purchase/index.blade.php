@@ -1956,6 +1956,7 @@
         tr.find('.row-product-id').val(p.id);
         tr.find('.row-product-code').val(p.code);
         tr.find('.row-item-name').val(p.name).attr('title', p.code ? 'Code: ' + p.code : '');
+        tr.find('.row-item-input-wrap').toggleClass('has-product', Number(p.id) > 0);
 
         var rate = Number(p.cost ?? p.price ?? 0);
         tr.find('.row-rate').val(rate);
@@ -2170,6 +2171,7 @@
                     tr.removeAttr('data-product-id data-material-document-id data-material-item-id data-material-unit-id data-material-base-factor');
                     tr.find('.row-product-id').val('');
                     tr.find('.row-product-code').val('');
+                    tr.find('.row-item-input-wrap').removeClass('has-product');
                 }
             }
         });
@@ -2181,6 +2183,7 @@
                 tr.removeAttr('data-product-id data-material-document-id data-material-item-id data-material-unit-id data-material-base-factor');
                 tr.find('.row-product-id').val('');
                 tr.find('.row-product-code').val('');
+                tr.find('.row-item-input-wrap').removeClass('has-product');
                 recalcTableSummary();
                 return;
             }
@@ -2327,7 +2330,12 @@
             <tr class="order-item-row" data-row-id="${rowCounter}" data-product-id="${item.product_id || 0}" data-batch-id="${Number(item.product_batch_id) || ''}" data-batch-custom="${isCustomBatch}">
                 <td class="u-ta-center u-fw-600 u-c-text-muted u-va-middle">${$('#order-table-body tr.order-item-row').length + 1}</td>
                 <td>
-                    <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${escapeHtml(item.product_name || '')}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
+                    <div class="row-item-input-wrap ${Number(item.product_id) > 0 ? 'has-product' : ''}">
+                        <input type="text" name="product_name_text[]" class="form-control form-control-sm row-item-name" value="${escapeHtml(item.product_name || '')}" placeholder="Search item or scan..." title="${item.product_code ? 'Code: ' + item.product_code : ''}" autocomplete="off">
+                        <button type="button" class="btn-quick-edit-product" title="Edit product master" aria-label="Edit Product">
+                            <i class="dripicons-document-edit"></i><span>Edit</span>
+                        </button>
+                    </div>
                     <input type="hidden" name="product_id[]" class="row-product-id" value="${item.product_id || 0}">
                     <input type="hidden" name="product_code[]" class="row-product-code" value="${escapeHtml(item.product_code || '')}">
                     <div class="row-lot-badge-container mt-1 ${initialBatch ? '' : 'd-none'}">
@@ -2955,8 +2963,25 @@
         });
     });
 
+    $(document).on('zolo:product-updated', function(e, p, prevMaster) {
+        if (window.zoloSyncUpdatedProductInGrid) {
+            window.zoloSyncUpdatedProductInGrid(p, prevMaster, {
+                products: allProducts,
+                codes: lims_product_code,
+                units: unitList,
+                rateField: 'cost',
+                escapeHtml: escapeHtml,
+                recalc: recalcTableSummary,
+            });
+        }
+    });
+
     $('#quick-create-item-form').on('submit', function(e) {
         e.preventDefault();
+        if ($('#quick-edit-product-id').val()) {
+            if (window.zoloSubmitQuickEditProduct) window.zoloSubmitQuickEditProduct(this);
+            return;
+        }
         var name = $('#quick-item-name').val().trim();
         var code = $('#quick-item-code').val().trim();
         var cost = parseFloat($('#quick-item-cost').val()) || 0;
@@ -3277,6 +3302,7 @@
     $('#btn-create-item-modal').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        if (window.zoloResetQuickModalMode) window.zoloResetQuickModalMode();
         $('#quick-create-item-form')[0].reset();
         if (window.syncQuickSections) window.syncQuickSections();
         $('#btn-quick-gen-code').trigger('click');
