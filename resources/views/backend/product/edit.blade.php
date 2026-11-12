@@ -2261,46 +2261,54 @@
             $('#submit-btn').on("click", function (e) {
                 e.preventDefault();
                 if ( $("#product-form").valid() && validate() ) {
-                    tinyMCE.triggerSave();
                     submitLabel = $(this).html();
-                    $(this).attr('disabled','true').html('<span class="spinner-border text-light" role="status"></span> {{__("db.Saving")}}...');
-                    if(myDropzone.getAcceptedFiles().length) {
-                        myDropzone.processQueue();
-                    }
-                    else {
-                        var formData = new FormData();
-                        //$("#product-form").serialize();
-                        var data = $("#product-form").serializeArray();
-                        $.each(data, function (key, el) {
-                            formData.append(el.name, el.value);
-                        });
-                        var file = $('#file')[0].files;
-                        if(file.length > 0)
-                            formData.append('file',file[0]);
-                        $.ajax({
-                            type:'POST',
-                            url:'../update',
-                            data: formData,
-                            contentType: false,
-                            processData: false,
-                            success:function(response) {
-                                window.location.reload(true);
-                            },
-                            error:function(response) {
-                              var json = response.responseJSON || {};
-                              var errors = json.errors || {};
-                              if(errors.name) {
-                                  $("#name-error").text(errors.name);
-                              }
-                              else if(errors.code) {
-                                  $("#code-error").text(errors.code);
-                              }
-                              else {
-                                  alert(json.message || 'Product could not be saved.');
-                              }
-                              restoreSubmit();
-                            },
-                        });
+                    $(this).prop('disabled', true).html('<span class="spinner-border text-light" role="status"></span> {{__("db.Saving")}}...');
+                    try {
+                        if (typeof tinyMCE !== 'undefined' && typeof tinyMCE.triggerSave === 'function') {
+                            tinyMCE.triggerSave();
+                        }
+                        if(myDropzone.getAcceptedFiles().length) {
+                            myDropzone.processQueue();
+                        }
+                        else {
+                            var formData = new FormData();
+                            //$("#product-form").serialize();
+                            var data = $("#product-form").serializeArray();
+                            $.each(data, function (key, el) {
+                                formData.append(el.name, el.value);
+                            });
+                            var fileInput = document.getElementById('file');
+                            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                                formData.append('file', fileInput.files[0]);
+                            }
+                            $.ajax({
+                                type:'POST',
+                                url:'../update',
+                                data: formData,
+                                contentType: false,
+                                processData: false,
+                                success:function(response) {
+                                    window.location.reload(true);
+                                },
+                                error:function(response) {
+                                  var json = response.responseJSON || {};
+                                  var errors = json.errors || {};
+                                  if(errors.name) {
+                                      $("#name-error").text(errors.name);
+                                  }
+                                  else if(errors.code) {
+                                      $("#code-error").text(errors.code);
+                                  }
+                                  else {
+                                      alert(json.message || 'Product could not be saved.');
+                                  }
+                                  restoreSubmit();
+                                },
+                            });
+                        }
+                    } catch (err) {
+                        restoreSubmit();
+                        alert((err && err.message) || 'Product could not be saved.');
                     }
                 }
             });
@@ -2311,9 +2319,10 @@
                 $.each(data, function (key, el) {
                     formData.append(el.name, el.value);
                 });
-                var file = $('#file')[0].files;
-                if(file.length > 0)
-                    formData.append('file',file[0]);
+                var fileInput = document.getElementById('file');
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    formData.append('file', fileInput.files[0]);
+                }
             });
         },
         error: function (file, response) {
