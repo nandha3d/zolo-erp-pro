@@ -76,6 +76,7 @@ jobs:
       APP_ENV: testing
       APP_KEY: base64:dGVzdC1vbmx5LWF1ZGl0LWZpeHR1cmUta2V5LTEyMzQ=
       AI_EVALUATION_ENABLED: 'true'
+      AI_EVALUATION_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
       ERP_TEST_MYSQL: '1'
       ERP_TEST_MYSQL_DATABASE: zolo_test_ai_release
       ERP_TEST_MYSQL_USER: zolo_test
@@ -91,6 +92,7 @@ jobs:
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       CACHE_DRIVER: array
+      CACHE_STORE: array
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
 
@@ -110,23 +112,35 @@ jobs:
         run: php artisan migrate --database=mysql --force
 
       - name: Create Artifacts Directory
-        run: mkdir -p artifacts/ai-evaluation
+        run: |
+          mkdir -p artifacts/ai-evaluation
+          rm -f artifacts/scenario-events.jsonl artifacts/junit-ai.xml
 
       - name: Execute Full AI PHPUnit Suite (Prepaid Safety, Metering, 250 Scenarios, Security)
+        id: phpunit
         run: |
+          php vendor/bin/phpunit -c phpunit.ai.xml --list-tests-xml artifacts/ai-test-plan.xml
           php vendor/bin/phpunit -c phpunit.ai.xml --log-junit artifacts/junit-ai.xml
 
       - name: Export Verified Evaluation Evidence & Release Artifacts
+        if: ${{ !cancelled() && steps.phpunit.outcome != 'skipped' }}
         run: |
           php scripts/export_ai_evaluation_report.php \
             --junit=artifacts/junit-ai.xml \
-            --scenario-events=artifacts/scenario-events.jsonl
+            --test-plan=artifacts/ai-test-plan.xml \
+            --scenario-events=artifacts/scenario-events.jsonl \
+            --output-dir=artifacts/ai-evaluation/current
 
       - name: Upload AI Evaluation Release Artifacts
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: ai-evaluation-evidence-${{ github.sha }}
-          path: artifacts/ai-evaluation/
+          path: |
+            artifacts/ai-evaluation/current/
+            artifacts/junit-ai.xml
+            artifacts/ai-test-plan.xml
+            artifacts/scenario-events.jsonl
           retention-days: 14
 
   live-omni-benchmark:

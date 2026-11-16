@@ -43,6 +43,7 @@ final class GoodsReceivedNoteActionTest extends TestCase
         config()->set('ai_actions.foundation_enabled', true);
         config()->set('ai_actions.execution_enabled', true);
         config()->set('commercial.enabled', true);
+        config()->set('compliance.enabled', true);
         config()->set('erp_ai.enabled', true);
         config()->set('erp_ai.read_only', false);
         $this->app->forgetInstance(\App\Ai\Services\AiFeatureGate::class);
@@ -324,6 +325,7 @@ final class GoodsReceivedNoteActionTest extends TestCase
 
     public function test_grn_execution_against_purchase_order_consumes_order_delivery_stage(): void
     {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-16 10:00:00', 'UTC'));
         $this->actingAs($this->adminUser, 'sanctum');
 
         // Create an open Purchase Order first

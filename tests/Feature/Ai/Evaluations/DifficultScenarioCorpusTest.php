@@ -88,6 +88,7 @@ final class DifficultScenarioCorpusTest extends TestCase
 
         $seenIds = [];
         foreach ($manifest as $entry) {
+            $assertionsBefore = self::getCount();
             $id = $entry['scenario_id'];
             $this->assertArrayNotHasKey($id, $seenIds, "Scenario ID [{$id}] is duplicated in difficult manifest.");
             $seenIds[$id] = true;
@@ -107,11 +108,12 @@ final class DifficultScenarioCorpusTest extends TestCase
                 'scenario_id' => $id,
                 'status' => 'passed',
                 'test_file' => 'tests/Feature/Ai/Evaluations/DifficultScenarioCorpusTest.php',
-                'execution_mode' => 'fixture_mocked_model',
+                'test_class' => self::class,
+                'test_method' => __FUNCTION__,
+                'evidence_scope' => 'dataset_validation',
+                'execution_mode' => 'dataset_validation',
                 'expected_snapshot_sha256' => hash_file('sha256', $expectedFile),
-                'assertion_count' => 4,
-                'error_codes' => [$entry['expected_error_code']],
-                'latency_ms' => 85,
+                'assertion_count' => self::getCount() - $assertionsBefore,
             ]);
         }
     }

@@ -46,6 +46,7 @@ final class NaturalLanguagePurchaseOrderWorkflowTest extends TestCase
         config()->set('ai_actions.foundation_enabled', true);
         config()->set('ai_actions.execution_enabled', true);
         config()->set('commercial.enabled', true);
+        config()->set('compliance.enabled', true);
         config()->set('erp_ai.enabled', true);
         config()->set('erp_ai.read_only', false);
 
@@ -363,6 +364,7 @@ final class NaturalLanguagePurchaseOrderWorkflowTest extends TestCase
             ],
         ]);
         $res = json_decode($tool->handle($request), true);
+        $this->assertSame('ok', $res['status'], json_encode($res, JSON_THROW_ON_ERROR));
         $proposalId = $res['data']['proposal_id'];
 
         // 1. Action Review Center desk loads HTTP 200 with pending proposal

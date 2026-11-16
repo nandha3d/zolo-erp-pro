@@ -429,6 +429,7 @@ final class PurchaseBillActionTest extends TestCase
 
     public function test_purchase_bill_against_open_po_consumes_order_billing_stage(): void
     {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-16 10:00:00', 'UTC'));
         $this->actingAs($this->adminUser, 'sanctum');
 
         // Create an open Purchase Order first for 100 units

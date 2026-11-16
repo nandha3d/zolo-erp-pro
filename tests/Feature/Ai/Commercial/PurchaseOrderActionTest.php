@@ -42,6 +42,8 @@ final class PurchaseOrderActionTest extends TestCase
         config()->set('ai_actions.foundation_enabled', true);
         config()->set('ai_actions.execution_enabled', true);
         config()->set('commercial.enabled', true);
+        // Opt in only for these disposable GST calculation/execution fixtures.
+        config()->set('compliance.enabled', true);
         config()->set('erp_ai.enabled', true);
         config()->set('erp_ai.read_only', false);
         $this->app->forgetInstance(\App\Ai\Services\AiFeatureGate::class);
@@ -292,6 +294,28 @@ final class PurchaseOrderActionTest extends TestCase
         $this->assertSame($orderItemsCount, DB::table('commercial_order_items')->count());
     }
 
+    public function test_disabled_compliance_rejects_taxable_proposal_without_writes(): void
+    {
+        config()->set('compliance.enabled', false);
+        $this->actingAs($this->adminUser, 'sanctum');
+        $tables = ['ai_action_proposals', 'purchases', 'stock_movements', 'journal_entries'];
+        $before = [];
+        foreach ($tables as $table) {
+            $before[$table] = DB::table($table)->where('company_id', $this->company->id)->count();
+        }
+
+        $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', [
+            'action_key' => 'purchase_order.create.v1',
+            'slots' => ['supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+                'items' => [['product_id' => $this->productA->id, 'qty' => '10.00', 'net_unit_cost' => '250.00']]],
+        ])->assertUnprocessable()->assertJsonValidationErrors('gst')
+            ->assertJsonPath('message', 'GST posting remains disabled pending compliance acceptance.');
+
+        foreach ($tables as $table) {
+            $this->assertSame($before[$table], DB::table($table)->where('company_id', $this->company->id)->count(), $table);
+        }
+    }
+
     public function test_change_request_updates_line_items_and_increments_version(): void
     {
         $this->actingAs($this->adminUser, 'sanctum');
@@ -307,6 +331,7 @@ final class PurchaseOrderActionTest extends TestCase
             ],
         ]);
 
+        $createResponse->assertCreated();
         $proposalId = $createResponse->json('proposal.id');
         $v1Hash = $createResponse->json('proposal.payload_hash');
 
@@ -362,6 +387,7 @@ final class PurchaseOrderActionTest extends TestCase
             ],
         ]);
 
+        $createResponse->assertCreated();
         $proposalId = $createResponse->json('proposal.id');
 
         // Approve and execute

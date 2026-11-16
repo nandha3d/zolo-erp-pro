@@ -36,6 +36,7 @@ final class BootstrapCompanyCreationTest extends TestCase
 
         config()->set('ai_actions.foundation_enabled', true);
         config()->set('ai_actions.execution_enabled', true);
+        config()->set('erp_ai.enabled', true);
 
         // Ensure roles exist
         DB::table('roles')->updateOrInsert(['id' => 1], ['name' => 'Admin', 'is_active' => true, 'guard_name' => 'web']);

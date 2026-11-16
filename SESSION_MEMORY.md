@@ -1,3 +1,16 @@
+## CI failure remediation and evidence authenticity — 2026-11-17
+
+- Active branch: `feature/ai-unified-input-clarification`; the checkout was clean when this task started.
+- The authoritative GitHub Actions run 43921298315 failed with 294 tests, 3,093 assertions, 16 failures and 2 errors. Earlier entries claiming release readiness do not establish CI or production readiness.
+- Explicitly enabled compliance only inside five disposable GST fixture classes. Production compliance defaults and all posting restrictions remain unchanged. Added a regression that disables compliance and verifies HTTP 422 with no proposal, purchase, stock movement or journal writes.
+- The proposal 404 responses and missing `data` keys were downstream of failed preparation. Added assertions at preparation boundaries. Fixed the quota overlap test to use the actual held tokens, bootstrap tests to set installation policy explicitly, and time-sensitive schedule/fulfilment fixtures to freeze time.
+- Replaced the synthetic evaluation exporter with a read-only artifact aggregator. Removed manufactured credits, latency, ledger totals, security passes, and serial-loop concurrency claims. Dataset events now identify their exact test method and honestly report dataset validation only. Missing, malformed, skipped, stale, duplicate, partial-suite or mismatched evidence cannot pass. Reports never approve production; genuine concurrency and live-model gates remain unrun.
+- GitHub workflow now discovers the full test plan, clears stale events, exports diagnostics after PHPUnit failures and uploads current-run reports plus raw evidence. Optional paid live benchmark remains disabled by default.
+- Validation so far: the initial targeted reproduction had 13 failures and 2 errors; after fixture fixes, 50/51 targeted tests passed, exposing a date-sensitive GRN fixture. A clean disposable database `zolo_test_ai_ci_20261117` was created and migrated with an explicit name guard and `ERP_TEST_MYSQL=1`; the active development database was not migrated or modified. Seven evidence-parser unit tests passed (30 assertions). The clean disposable suite passed all 302 tests with 3,283 assertions, zero failures/errors/skips (2m 39s). Evidence is in `scratch/ci-final.log` and `scratch/ci-final-junit.xml`.
+- Export validation: `php scripts/export_ai_evaluation_report.php --junit=scratch/ci-final-junit.xml --test-plan=scratch/ai-final-test-plan.xml --scenario-events=scratch/ci-final-events.jsonl --run-id=local-ci-final-20261117 --output-dir=scratch/ai-ci-evidence` returned 0, with 302 passing JUnit cases and 250/250 verified dataset records. Reproduction-failure JUnit and missing-JUnit exports each returned 1; no fabricated PASS. All 16 changed/new PHP files passed syntax lint and `git diff --check` passed.
+- Next steps: commit and push the CI fix; follow GitHub Actions to completion and record actual results. Keep concurrency, corpus workflow execution and live-model validation limitations explicit.
+
+---
 ## CI Failure Resolution, Syntax Verification, PHPUnit Database Alignment & Genuine Evidence Pipeline — 2026-11-16 (`feature/ai-unified-input-clarification`)
 
 - **Resolution of CI Failure & Verification Invariants:**

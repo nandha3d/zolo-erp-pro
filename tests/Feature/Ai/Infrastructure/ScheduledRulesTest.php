@@ -138,6 +138,8 @@ final class ScheduledRulesTest extends TestCase
 
     public function test_daily_caps_and_expiry_prevent_more_runs(): void
     {
+        // Keep both claims within one company-local quota day on every runner.
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-16 10:00:00', 'Asia/Kolkata'));
         Bus::fake([RunScheduledRule::class]);
         $rule = app(ScheduledRuleService::class)->create($this->principal(), $this->input());
         DB::table('ai_scheduled_rules')->where('company_id', $this->company->id)->where('id', $rule['id'])->update(['max_runs_per_day' => 1]);

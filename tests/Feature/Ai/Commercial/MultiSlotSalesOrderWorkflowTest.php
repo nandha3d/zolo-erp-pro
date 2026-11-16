@@ -58,6 +58,7 @@ final class MultiSlotSalesOrderWorkflowTest extends TestCase
         config()->set('ai_actions.foundation_enabled', true);
         config()->set('ai_actions.execution_enabled', true);
         config()->set('commercial.enabled', true);
+        config()->set('compliance.enabled', true);
         config()->set('erp_ai.enabled', true);
         config()->set('erp_ai.read_only', false);
 
@@ -439,6 +440,7 @@ final class MultiSlotSalesOrderWorkflowTest extends TestCase
         ]));
 
         $response = json_decode($rawResponse, true);
+        $this->assertSame('ok', $response['status'], $rawResponse);
         $proposalId = $response['data']['proposal_id'];
 
         $approveResponse = $this->actingAs($this->adminUser)

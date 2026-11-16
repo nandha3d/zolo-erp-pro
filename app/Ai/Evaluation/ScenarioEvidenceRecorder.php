@@ -16,7 +16,7 @@ class ScenarioEvidenceRecorder
     public static function getRunId(): string
     {
         if (self::$currentRunId === null) {
-            self::$currentRunId = (string) Str::uuid();
+            self::$currentRunId = getenv('AI_EVALUATION_RUN_ID') ?: (string) Str::uuid();
         }
 
         return self::$currentRunId;
@@ -63,6 +63,9 @@ class ScenarioEvidenceRecorder
      *     scenario_id: string,
      *     status: string,
      *     test_file: string,
+     *     test_class?: string,
+     *     test_method?: string,
+     *     evidence_scope?: string,
      *     execution_mode: string,
      *     assertion_count?: int,
      *     provider_attempt_ids?: array<string>,
@@ -87,6 +90,9 @@ class ScenarioEvidenceRecorder
             'git_sha' => self::getGitSha(),
             'test_run_id' => self::getRunId(),
             'test_file' => (string) ($data['test_file'] ?? 'unknown'),
+            'test_class' => (string) ($data['test_class'] ?? ''),
+            'test_method' => (string) ($data['test_method'] ?? ''),
+            'evidence_scope' => (string) ($data['evidence_scope'] ?? 'unspecified'),
             'execution_mode' => (string) ($data['execution_mode'] ?? 'fixture_mocked_model'),
             'status' => (string) ($data['status'] ?? 'passed'),
             'assertion_count' => (int) ($data['assertion_count'] ?? 1),
@@ -95,7 +101,7 @@ class ScenarioEvidenceRecorder
             'source_media_sha256' => $data['source_media_sha256'] ?? null,
             'expected_snapshot_sha256' => $data['expected_snapshot_sha256'] ?? null,
             'actual_output_sha256' => $data['actual_output_sha256'] ?? null,
-            'latency_ms' => (int) ($data['latency_ms'] ?? 0),
+            'latency_ms' => isset($data['latency_ms']) ? (int) $data['latency_ms'] : null,
             'error_codes' => $data['error_codes'] ?? [],
             'details' => $data['details'] ?? [],
             'recorded_at' => now()->toIso8601String(),
@@ -108,7 +114,7 @@ class ScenarioEvidenceRecorder
             @mkdir($artifactsDir, 0755, true);
         }
 
-        $filePath = $artifactsDir . DIRECTORY_SEPARATOR . 'scenario-events.jsonl';
+        $filePath = getenv('AI_SCENARIO_EVENTS_PATH') ?: $artifactsDir . DIRECTORY_SEPARATOR . 'scenario-events.jsonl';
         file_put_contents($filePath, json_encode($event, JSON_UNESCAPED_SLASHES) . PHP_EOL, FILE_APPEND | LOCK_EX);
 
         return $event;

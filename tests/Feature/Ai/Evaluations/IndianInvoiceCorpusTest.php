@@ -89,6 +89,7 @@ final class IndianInvoiceCorpusTest extends TestCase
 
         $seenIds = [];
         foreach ($manifest as $entry) {
+            $assertionsBefore = self::getCount();
             $id = $entry['scenario_id'];
             $this->assertArrayNotHasKey($id, $seenIds, "Scenario ID [{$id}] is duplicated in invoice manifest.");
             $seenIds[$id] = true;
@@ -116,11 +117,13 @@ final class IndianInvoiceCorpusTest extends TestCase
                 'scenario_id' => $id,
                 'status' => 'passed',
                 'test_file' => 'tests/Feature/Ai/Evaluations/IndianInvoiceCorpusTest.php',
-                'execution_mode' => ($id === 'BILL-001' && file_exists(base_path('artifacts/ai-evaluation/live-benchmarks/live_omni_benchmark_BILL-001.json'))) ? 'live_model_dispatch' : 'fixture_mocked_model',
+                'test_class' => self::class,
+                'test_method' => __FUNCTION__,
+                'evidence_scope' => 'dataset_validation',
+                'execution_mode' => 'dataset_validation',
                 'source_media_sha256' => $entry['sha256'],
                 'expected_snapshot_sha256' => hash_file('sha256', $expectedFile),
-                'assertion_count' => 4,
-                'latency_ms' => ($id === 'BILL-001') ? 5193 : 320,
+                'assertion_count' => self::getCount() - $assertionsBefore,
             ]);
         }
     }

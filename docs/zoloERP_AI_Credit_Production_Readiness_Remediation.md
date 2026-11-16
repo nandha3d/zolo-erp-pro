@@ -10,6 +10,8 @@
 
 > **Release decision:** Do not enable customer-paid AI billing until the P0 issues and their reproducible tests pass on the exact commit intended for release. A local/generated `PASSED_READY_FOR_DEPLOYMENT` JSON value is not deployment authorization.
 
+**17 November implementation update:** The exporter now reads JUnit, the full PHPUnit discovery plan and run-bound dataset events without booting Laravel or writing database records. It rejects missing, skipped, duplicate, stale, partial or mismatched evidence. The 250 events establish dataset validation, not 250 completed commercial workflows. It no longer manufactures model usage, latency, credits, ledger reconciliation or security passes. Unmapped security rules remain `NOT_EVIDENCED`; simultaneous reservation testing, run-bound ledger reconciliation and live-model validation remain separate unfinished gates. Automated checks can pass while the release gate remains `INCOMPLETE`. The findings below describe the reviewed baseline unless this update explicitly supersedes them.
+
 ---
 
 ## 1. Executive summary — what must change
@@ -418,16 +420,22 @@ The repository currently has `company-foundation.yml` and `deploy.yml` in `.gith
 ```bash
 set -euo pipefail
 find app tests scripts -name '*.php' -print0 | xargs -0 -n1 php -l
-php artisan migrate:fresh --env=testing --force
+test "${ERP_TEST_MYSQL}" = 1
+[[ "${DB_DATABASE}" =~ ^zolo_test_[a-z0-9_]+$ ]]
+export AI_EVALUATION_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+mkdir -p artifacts/ai-evaluation
+rm -f artifacts/scenario-events.jsonl artifacts/junit-ai.xml
+php artisan migrate --env=testing --force
+php vendor/bin/phpunit -c phpunit.ai.xml --list-tests-xml artifacts/ai-test-plan.xml
 php vendor/bin/phpunit -c phpunit.ai.xml --log-junit artifacts/junit-ai.xml
 php scripts/export_ai_evaluation_report.php \
   --junit=artifacts/junit-ai.xml \
+  --test-plan=artifacts/ai-test-plan.xml \
   --scenario-events=artifacts/scenario-events.jsonl \
-  --db-snapshot=artifacts/credit-ledger-db.json \
-  --k6=artifacts/k6-summary.json
+  --output-dir=artifacts/ai-evaluation/current
 ```
 
-These CLI args **do not exist yet**; add and validate them during implementation. Do not claim the snippet runs unchanged against the current branch.
+These exporter arguments are implemented. For local runs, assign a unique `AI_EVALUATION_RUN_ID` instead of the GitHub expression. The workflow exports diagnostic evidence and uploads raw artifacts after a test failure. It does not convert a failed test run into a successful check. No ledger snapshot or k6 input is currently accepted as a verified release gate; those reports explicitly remain unevidenced or unrun.
 
 ### Make benchmark cap meaningful
 

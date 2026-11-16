@@ -426,7 +426,7 @@ class AiChatApiAndWorkspaceTest extends TestCase
 
     public function test_step_reservation_blocks_an_overlapping_company_call_and_releases_unused_tokens(): void
     {
-        config(['erp_ai.daily_company_tokens' => 9500, 'erp_ai.max_output_tokens' => 1536]);
+        config(['erp_ai.daily_company_tokens' => 500000, 'erp_ai.max_output_tokens' => 1536]);
         $this->configureProvider();
         $this->actingAs($this->adminUser)->withSession($this->workspaceContext());
         $date = now('UTC')->toDateString();
@@ -435,7 +435,10 @@ class AiChatApiAndWorkspaceTest extends TestCase
         Http::fake([
             'https://provider.example/v1/responses' => function () use ($date, $gateway, $otherActor) {
                 $step = new PendingStep(0, true, 'openai', 'gpt-4o', 'instructions', [], [], null, null);
-                $this->assertGreaterThan(0, DB::table('ai_usage_counters')->where('company_id', $this->company->id)->sum('reserved_tokens'));
+                $reservedTokens = (int) DB::table('ai_usage_counters')->where('company_id', $this->company->id)->sum('reserved_tokens');
+                $this->assertGreaterThan(0, $reservedTokens);
+                // Exhaust the quota using the actual hold, independent of prompt size.
+                config(['erp_ai.daily_company_tokens' => $reservedTokens]);
                 try {
                     $gateway->budgetStep($otherActor, $date, $step, fn() => $this->fail('Overlapping step exceeded quota'));
                     $this->fail('Expected company quota denial');

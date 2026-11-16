@@ -9,6 +9,9 @@
   <php>
     <env name="APP_ENV" value="testing" force="true"/>
     <env name="CACHE_DRIVER" value="array" force="true"/>
+    <env name="CACHE_STORE" value="array" force="true"/>
+    <env name="AI_ENABLED" value="false" force="true"/>
+    <env name="ERP_COMPLIANCE_ENABLED" value="false" force="true"/>
     <env name="SESSION_DRIVER" value="array" force="true"/>
     <env name="QUEUE_CONNECTION" value="sync" force="true"/>
     <env name="ERP_TEST_MYSQL" value="1" force="true"/>
