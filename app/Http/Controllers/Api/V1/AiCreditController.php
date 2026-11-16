@@ -304,6 +304,7 @@ class AiCreditController extends Controller
             return response()->json([
                 'success' => true,
                 'reservation_id' => $reservation->id,
+                'credits_debited' => $settlement->creditsDebited,
                 'settlement' => [
                     'status' => $settlement->status,
                     'credits_debited' => $settlement->creditsDebited,

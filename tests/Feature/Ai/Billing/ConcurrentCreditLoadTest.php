@@ -122,6 +122,29 @@ final class ConcurrentCreditLoadTest extends TestCase
         $this->assertEquals(1, $ledgerCount);
     }
 
+    public function test_concurrent_reserve_and_settle_endpoint_executes_atomically(): void
+    {
+        $this->actingAs($this->user);
+
+        for ($i = 0; $i < 10; $i++) {
+            $response = $this->postJson('/__test/ai/credit-reserve-settle', [
+                'idempotency_key' => 'concur_test_' . $i . '_' . Str::random(8),
+                'max_credits' => 10,
+                'actual_credits' => 8,
+                'fake_provider_delay_ms' => 0,
+                'company_id' => $this->company->id,
+                'actor_id' => $this->user->id,
+            ]);
+            $response->assertStatus(200);
+            $this->assertTrue($response->json('success'));
+            $this->assertEquals(8, $response->json('credits_debited'));
+        }
+
+        $balance = app(AiCreditMeter::class)->balance($this->company->id);
+        $this->assertGreaterThanOrEqual(0, $balance->availableCredits);
+        $this->assertFalse($balance->isNegativeBreach);
+    }
+
     private function runConcurrentReservationProfile(int $vus, int $walletCredits, int $reservePerUser): void
     {
         $creditMeter = app(AiCreditMeter::class);

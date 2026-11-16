@@ -80,6 +80,8 @@ jobs:
       ERP_TEST_MYSQL_DATABASE: zolo_test_ai_release
       ERP_TEST_MYSQL_USER: zolo_test
       ERP_TEST_MYSQL_PASSWORD: fixture-only
+      ERP_TEST_MYSQL_HOST: 127.0.0.1
+      ERP_TEST_MYSQL_PORT: 3306
       DB_CONNECTION: mysql
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
