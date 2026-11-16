@@ -32,7 +32,11 @@ class AiCreditReservationService
         int $estimatedMaxCredits
     ): CreditReservation {
         if (! (bool) config('ai_credits.enabled', true)) {
-            // If credit metering is globally disabled, return zero-charge stub reservation
+            if (app()->environment('production')) {
+                throw new AiCreditException('CREDIT_METERING_DISABLED', 'AI credit metering is disabled in configuration. Commercial model dispatch is blocked in production.', 403);
+            }
+
+            // In non-production testing/development, return zero-charge stub reservation
             return new CreditReservation(
                 id: (string) Str::uuid(),
                 accountId: 'disabled',
@@ -60,6 +64,16 @@ class AiCreditReservationService
         $ttlMinutes = (int) config('ai_credits.reservation_ttl_minutes', 10);
         $expiresAt = now()->addMinutes($ttlMinutes);
 
+        $requestDigest = hash('sha256', json_encode([
+            $account->id,
+            $period->id,
+            $runId,
+            $operationKey,
+            $provider,
+            $model,
+            $estimatedMaxCredits,
+        ]));
+
         return DB::transaction(function () use (
             $principal,
             $account,
@@ -68,6 +82,7 @@ class AiCreditReservationService
             $operationKey,
             $model,
             $idempotencyKey,
+            $requestDigest,
             $estimatedMaxCredits,
             $expiresAt
         ): CreditReservation {
@@ -78,6 +93,11 @@ class AiCreditReservationService
                 ->first();
 
             if ($existing) {
+                // P1-08 / PR-02: Bound payload digest verification
+                if ($existing->request_digest && $existing->request_digest !== $requestDigest) {
+                    throw AiCreditException::idempotencyConflict($idempotencyKey);
+                }
+
                 return new CreditReservation(
                     id: $existing->id,
                     accountId: $existing->account_id,
@@ -100,6 +120,11 @@ class AiCreditReservationService
                 ->where('id', $period->id)
                 ->lockForUpdate()
                 ->first();
+
+            // P1-08: Reject new reservations if period requires reconciliation or is frozen
+            if ($periodRow->reconcile_required) {
+                throw AiCreditException::accountFrozen('AI dispatch is paused pending credit reconciliation for this billing period.');
+            }
 
             $totalGranted = (int) ($periodRow->included_granted + $periodRow->topups_granted + $periodRow->refunded_credits);
             $totalCommitted = (int) ($periodRow->spent_credits + $periodRow->reserved_credits);
@@ -125,6 +150,7 @@ class AiCreditReservationService
                 'remaining_held_credits' => $estimatedMaxCredits,
                 'status' => 'active',
                 'idempotency_key' => $idempotencyKey,
+                'request_digest' => $requestDigest,
                 'expires_at' => $expiresAt->toDateTimeString(),
                 'created_at' => now(),
                 'updated_at' => now(),

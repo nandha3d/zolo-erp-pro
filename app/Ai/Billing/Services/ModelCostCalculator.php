@@ -49,16 +49,17 @@ class ModelCostCalculator
 
         $totalUsd = bcadd(bcadd($inputUsd, $outputUsd, 10), bcadd($imageUsd, $audioUsd, 10), 10);
 
-        // Convert USD to INR
+        // Convert USD to INR using exact decimal arithmetic
         $totalInr = bcmul($totalUsd, (string) $fxRate, 8);
 
-        // Convert INR to paise (minor units)
-        $costMinorInr = (int) round((float) $totalInr * 100);
+        // Convert INR to paise (minor units) with mathematical half-up rounding (no float precision loss)
+        $paiseDecimal = bcmul($totalInr, '100', 6);
+        $costMinorInr = (int) bcadd($paiseDecimal, '0.5', 0);
 
-        // 1 credit = 1 paisa (₹0.01). Debited credits = ceil(cost_in_inr / 0.01) = ceil(costMinorInr)
-        // If cost is > 0 but less than 1 paisa, round up to 1 credit minimum billable unit.
-        $floatCredits = (float) $totalInr / 0.01;
-        $credits = (int) ceil($floatCredits);
+        // 1 credit = 1 paisa (₹0.01). Debited credits = ceil(cost_in_inr / 0.01) = ceil(cost_in_paise)
+        // Exact decimal ceil without intermediate binary float casting
+        $creditsDecimal = bcmul($totalInr, '100', 8);
+        $credits = self::decimalCeilToInt($creditsDecimal);
 
         if ($credits === 0 && ($inputTokens > 0 || $outputTokens > 0 || $imagesCount > 0)) {
             $credits = 1;
@@ -76,6 +77,72 @@ class ModelCostCalculator
     }
 
     /**
+     * Exact decimal ceiling without binary float casting.
+     */
+    public static function decimalCeilToInt(string $decimalStr): int
+    {
+        $trimmed = trim($decimalStr);
+        if ($trimmed === '' || $trimmed === '0') {
+            return 0;
+        }
+
+        if (! str_contains($trimmed, '.')) {
+            return (int) $trimmed;
+        }
+
+        [$intPart, $fracPart] = explode('.', $trimmed, 2);
+        $cleanFrac = rtrim($fracPart, '0');
+
+        if ($cleanFrac === '') {
+            return (int) $intPart;
+        }
+
+        return (int) bcadd($intPart, '1', 0);
+    }
+
+    /**
+     * Compute conservative maximum charge and enforce per-request safety bounds.
+     *
+     * @return array{
+     *     credits: int,
+     *     cost_minor_inr: int,
+     *     usd_cost: float,
+     *     rate_card_version: string,
+     *     fx_rate_version: string,
+     *     fx_rate: float
+     * }
+     */
+    public function estimateMaximumCharge(
+        string $provider,
+        string $model,
+        int $estimatedInputTokens,
+        int $maxOutputTokens,
+        int $imagesCount = 0,
+        int $audioSeconds = 0,
+        ?string $rateCardVersion = null,
+        ?string $fxRateVersion = null
+    ): array {
+        $calc = $this->calculate(
+            $provider,
+            $model,
+            $estimatedInputTokens,
+            $maxOutputTokens,
+            $imagesCount,
+            $audioSeconds,
+            $rateCardVersion,
+            $fxRateVersion
+        );
+
+        $configuredMax = (int) config('ai_credits.max_credits_per_request', 5000);
+
+        if ($calc['credits'] > $configuredMax) {
+            throw AiCreditException::requestExceedsCreditLimit($calc['credits'], $configuredMax);
+        }
+
+        return $calc;
+    }
+
+    /**
      * Estimate worst-case credits needed for preflight reservation.
      */
     public function estimatePreflightCredits(
@@ -86,7 +153,7 @@ class ModelCostCalculator
         int $imagesCount = 0,
         ?string $rateCardVersion = null
     ): int {
-        $calc = $this->calculate(
+        $estimate = $this->estimateMaximumCharge(
             $provider,
             $model,
             $estimatedInputTokens,
@@ -96,13 +163,7 @@ class ModelCostCalculator
             $rateCardVersion
         );
 
-        $configuredMax = (int) config('ai_credits.max_credits_per_request', 5000);
-
-        if ($calc['credits'] > $configuredMax) {
-            throw AiCreditException::requestExceedsCreditLimit($calc['credits'], $configuredMax);
-        }
-
-        return max(1, $calc['credits']);
+        return max(1, $estimate['credits']);
     }
 
     private function resolveUnitPrice(
@@ -131,7 +192,7 @@ class ModelCostCalculator
         }
 
         // If unit is optional (e.g. image price for a text-only model when 0 images are passed)
-        if (! $isRequired) {
+        if (!$isRequired) {
             return '0.00000000';
         }
 

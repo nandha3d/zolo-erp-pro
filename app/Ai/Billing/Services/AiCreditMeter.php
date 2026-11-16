@@ -78,4 +78,14 @@ class AiCreditMeter implements AiCreditMeterInterface
     {
         return $this->calculator;
     }
+
+    public function settlementService(): AiCreditSettlementService
+    {
+        return $this->settlementService;
+    }
+
+    public function reservationService(): AiCreditReservationService
+    {
+        return $this->reservationService;
+    }
 }

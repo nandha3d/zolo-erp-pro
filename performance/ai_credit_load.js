@@ -1,6 +1,6 @@
 // performance/ai_credit_load.js
 // zoloERP AI Credit Metering & Wallet Concurrency Load Test Suite
-// Executes 5, 10, and 20 VU scenarios across Balance, Packs, and Estimate APIs.
+// Executes 5, 10, and 20 VU scenarios across Balance, Packs, Estimate, and atomic Reserve/Settle write APIs (P0-03).
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
@@ -34,6 +34,14 @@ export const options = {
   },
 };
 
+function generateUuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export default function () {
   const baseUrl = __ENV.BASE_URL || 'http://127.0.0.1:8000';
   const token = __ENV.TEST_TOKEN || 'testing-bearer-token';
@@ -65,6 +73,21 @@ export default function () {
   check(estimateRes, {
     'estimate status is 200': (r) => r.status === 200,
     'estimate returns positive credits': (r) => r.json('estimated_credits') > 0,
+  });
+
+  // 4. P0-03: Write-capable atomic reserve and settle test endpoint
+  const idempKey = 'load_' + generateUuid();
+  const writePayload = JSON.stringify({
+    idempotency_key: idempKey,
+    max_credits: 10,
+    actual_credits: 8,
+    fake_provider_delay_ms: 10,
+  });
+
+  const writeRes = http.post(`${baseUrl}/__test/ai/credit-reserve-settle`, writePayload, { headers });
+  check(writeRes, {
+    'reserve-settle accepted or handled': (r) => [200, 201, 402, 409].includes(r.status),
+    'settlement status valid if 200': (r) => r.status !== 200 || r.json('success') === true,
   });
 
   sleep(0.5);

@@ -226,4 +226,99 @@ class AiCreditController extends Controller
             'status' => $order->status,
         ]);
     }
+
+    /**
+     * POST /__test/ai/credit-reserve-settle
+     * Testing-only endpoint to atomically reserve and settle credits for concurrent load testing.
+     * Strictly disabled in non-testing environments (P0-03).
+     */
+    public function testReserveSettle(Request $request): JsonResponse
+    {
+        if (! app()->environment('testing')) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'idempotency_key' => 'required|string',
+            'max_credits' => 'nullable|integer|min:1',
+            'actual_credits' => 'nullable|integer|min:0',
+            'fake_provider_delay_ms' => 'nullable|integer|min:0|max:1000',
+            'company_id' => 'nullable|integer',
+            'actor_id' => 'nullable|integer',
+        ]);
+
+        $companyId = (int) ($validated['company_id'] ?? Auth::user()?->company_id ?? 1);
+        $actorId = (int) ($validated['actor_id'] ?? Auth::id() ?? 1);
+
+        $principal = new \App\Ai\DTOs\AiPrincipal(
+            actorId: $actorId,
+            companyId: $companyId,
+            branchId: 1,
+            financialYearId: 1,
+            permittedToolNames: ['*'],
+            requestId: (string) \Illuminate\Support\Str::uuid(),
+            effectiveRole: 'Admin'
+        );
+
+        $idempotencyKey = (string) $validated['idempotency_key'];
+        $maxCredits = (int) ($validated['max_credits'] ?? 10);
+        $actualCredits = (int) ($validated['actual_credits'] ?? min($maxCredits, 8));
+        $delayMs = (int) ($validated['fake_provider_delay_ms'] ?? 0);
+
+        try {
+            // 1. Reserve preflight credits atomically
+            $reservation = $this->creditMeter->reserve(
+                $principal,
+                $principal->requestId,
+                'test.concurrent_settle',
+                'nvidia',
+                'nvidia/nemotron-3.5-lightning-30b-a3b',
+                $idempotencyKey,
+                $maxCredits
+            );
+
+            // 2. Simulate provider delay if requested
+            if ($delayMs > 0) {
+                usleep(min(100000, $delayMs * 1000));
+            }
+
+            // 3. Atomically settle credits
+            // Compute input token count that cleanly produces exactly $actualCredits
+            $fx = (float) config('ai_credits.default_fx_rate_usd_inr', 84.50);
+            $inputTokens = $actualCredits > 0
+                ? (int) floor(($actualCredits * 0.01 / $fx) / 0.00000020)
+                : 0;
+
+            $settlement = $this->creditMeter->settlementService()->settle(
+                $reservation->id,
+                'test_att_' . $idempotencyKey,
+                'nvidia',
+                'nvidia/nemotron-3.5-lightning-30b-a3b',
+                inputTokens: $inputTokens,
+                outputTokens: 0,
+                isChargeable: $actualCredits > 0
+            );
+
+            $balance = $this->creditMeter->balance($companyId);
+
+            return response()->json([
+                'success' => true,
+                'reservation_id' => $reservation->id,
+                'settlement' => [
+                    'status' => $settlement->status,
+                    'credits_debited' => $settlement->creditsDebited,
+                    'credits_released' => $settlement->creditsReleased,
+                ],
+                'balance' => $balance->toArray(),
+            ], 200);
+
+        } catch (\App\Ai\Billing\Exceptions\AiCreditException $e) {
+            return response()->json([
+                'success' => false,
+                'error_code' => $e->errorCode,
+                'message' => $e->getMessage(),
+                'details' => $e->details,
+            ], $e->getStatusCode());
+        }
+    }
 }

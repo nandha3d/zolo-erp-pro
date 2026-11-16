@@ -18,7 +18,8 @@ class AiCreditSettlementService
         protected CreditAccountResolver $accountResolver,
         protected MonthlyCreditGrantService $periodGrantService,
         protected ModelCostCalculator $calculator
-    ) {}
+    ) {
+    }
 
     /**
      * Atomically settle debited credits for a completed provider attempt.
@@ -37,7 +38,7 @@ class AiCreditSettlementService
         ?string $rateCardVersion = null,
         ?string $fxRateVersion = null
     ): CreditSettlement {
-        if ($reservationId === 'disabled' || ! (bool) config('ai_credits.enabled', true)) {
+        if ($reservationId === 'disabled' || !(bool) config('ai_credits.enabled', true)) {
             return new CreditSettlement(
                 reservationId: $reservationId,
                 providerAttemptId: $providerAttemptId,
@@ -70,6 +71,8 @@ class AiCreditSettlementService
         return DB::transaction(function () use (
             $reservationId,
             $providerAttemptId,
+            $provider,
+            $model,
             $creditsToDebit,
             $costMinorInr,
             $cost,
@@ -102,7 +105,7 @@ class AiCreditSettlementService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $reservation) {
+            if (!$reservation) {
                 throw new InvalidArgumentException("Credit reservation [{$reservationId}] not found.");
             }
 
@@ -112,17 +115,64 @@ class AiCreditSettlementService
                 ->first();
 
             $held = (int) $reservation->remaining_held_credits;
-            // Strict Accounting Invariant: Always debit the FULL actual usage ($creditsToDebit).
-            // Never cap debits at $held, which would cause LLM usage overspend to be hidden and uncharged.
-            $debited = $creditsToDebit;
-            $released = max(0, $held - $debited);
-            $overage = max(0, $debited - $held);
+            $excess = max(0, $creditsToDebit - $held);
 
-            $status = $reconcileReason !== null
-                ? 'reconcile_required'
-                : ($overage > 0 ? 'settled_with_overage' : 'settled');
+            $totalGranted = (int) ($period->included_granted + $period->topups_granted + $period->refunded_credits);
+            $totalCommitted = (int) ($period->spent_credits + $period->reserved_credits);
+            $unreservedAvailable = max(0, $totalGranted - $totalCommitted);
 
-            // Post immutable usage debit to ledger (full actual cost debited)
+            if ($excess > 0) {
+                if ($unreservedAvailable >= $excess) {
+                    // Customer wallet has sufficient unreserved credits to cover the full overage
+                    $debited = $creditsToDebit;
+                    $released = 0;
+                    $status = $reconcileReason !== null ? 'reconcile_required' : 'settled_with_overage';
+                    $customerFundedMinorInr = $costMinorInr;
+                } else {
+                    // Critical Invariant (P0-01): Customer wallet cannot go negative!
+                    // Customer can only be debited up to held + available funds.
+                    $debited = $held + $unreservedAvailable;
+                    $released = 0;
+                    $unfundedCredits = $creditsToDebit - $debited;
+                    $customerFundedMinorInr = min($costMinorInr, (int) round((float) $debited));
+                    $unfundedCostMinorInr = max(0, $costMinorInr - $customerFundedMinorInr);
+                    $status = 'reconcile_required';
+
+                    // Record variance in ai_provider_cost_variances so provider costs are fully accounted for
+                    DB::table('ai_provider_cost_variances')->insert([
+                        'id' => (string) Str::uuid(),
+                        'account_id' => $reservation->account_id,
+                        'period_id' => $reservation->period_id,
+                        'reservation_id' => $reservation->id,
+                        'provider_attempt_id' => $providerAttemptId,
+                        'provider' => $provider,
+                        'model' => $model,
+                        'actual_cost_minor_inr' => $costMinorInr,
+                        'customer_funded_credits' => $debited,
+                        'unfunded_cost_minor_inr' => $unfundedCostMinorInr,
+                        'unfunded_credits' => $unfundedCredits,
+                        'rate_card_version' => $cost['rate_card_version'],
+                        'fx_rate_version' => $cost['fx_rate_version'],
+                        'incident_status' => 'unfunded_overage',
+                        'resolution_reason' => 'Actual provider usage exceeded reservation and customer available credits.',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    // Flag period as requiring reconciliation (freezes new dispatches)
+                    DB::table('ai_credit_periods')
+                        ->where('id', $period->id)
+                        ->update(['reconcile_required' => 1]);
+                }
+            } else {
+                // Normal settlement within held reservation
+                $debited = $creditsToDebit;
+                $released = max(0, $held - $debited);
+                $status = $reconcileReason !== null ? 'reconcile_required' : 'settled';
+                $customerFundedMinorInr = $costMinorInr;
+            }
+
+            // Post immutable usage debit to ledger (customer funded credits debited)
             $ledgerId = (string) Str::uuid();
             DB::table('ai_credit_ledger')->insert([
                 'id' => $ledgerId,
@@ -133,9 +183,9 @@ class AiCreditSettlementService
                 'run_id' => $reservation->run_id,
                 'provider_attempt_id' => $providerAttemptId,
                 'kind' => 'usage_debit',
-                'amount_credits' => -$debited, // full actual cost debited
+                'amount_credits' => -$debited,
                 'currency' => 'INR',
-                'cost_minor_inr' => $costMinorInr,
+                'cost_minor_inr' => $customerFundedMinorInr,
                 'rate_card_version' => $cost['rate_card_version'],
                 'fx_rate_version' => $cost['fx_rate_version'],
                 'source_type' => 'model_invocation',
@@ -153,6 +203,15 @@ class AiCreditSettlementService
                     'reserved_credits' => DB::raw("GREATEST(0, reserved_credits - {$held})"),
                     'updated_at' => now(),
                 ]);
+
+            // Invariant verification: Assert raw available >= 0
+            $periodAfter = DB::table('ai_credit_periods')->where('id', $period->id)->first();
+            $rawAvailableAfter = ((int) $periodAfter->included_granted + (int) $periodAfter->topups_granted + (int) $periodAfter->refunded_credits)
+                - ((int) $periodAfter->spent_credits + (int) $periodAfter->reserved_credits);
+
+            if ($rawAvailableAfter < 0) {
+                throw new \RuntimeException("Prepaid wallet negative invariant breached: raw available is {$rawAvailableAfter}");
+            }
 
             // Mark reservation as settled and release remaining hold
             DB::table('ai_credit_reservations')
@@ -184,7 +243,7 @@ class AiCreditSettlementService
      */
     public function releaseUnsent(string $reservationId, string $reason = 'request_cancelled'): void
     {
-        if ($reservationId === 'disabled' || ! (bool) config('ai_credits.enabled', true)) {
+        if ($reservationId === 'disabled' || !(bool) config('ai_credits.enabled', true)) {
             return;
         }
 
@@ -194,7 +253,7 @@ class AiCreditSettlementService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $reservation || $reservation->status !== 'active') {
+            if (!$reservation || $reservation->status !== 'active') {
                 return;
             }
 
@@ -235,7 +294,14 @@ class AiCreditSettlementService
         $granted = (int) ($periodRow->included_granted + $periodRow->topups_granted + $periodRow->refunded_credits);
         $spent = (int) $periodRow->spent_credits;
         $reserved = (int) $periodRow->reserved_credits;
-        $available = max(0, $granted - ($spent + $reserved));
+        $rawAvailable = $granted - ($spent + $reserved);
+        $isNegativeBreach = $rawAvailable < 0;
+        $available = max(0, $rawAvailable);
+        $reconcileRequired = (bool) ($periodRow->reconcile_required ?? false);
+
+        if ($isNegativeBreach) {
+            \Illuminate\Support\Facades\Log::critical("CRITICAL: AI prepaid credit negative breach on account [{$account->id}], period [{$periodRow->id}]: raw available is [{$rawAvailable}] credits.");
+        }
 
         // Count media pages processed in current monthly period
         $monthlyMediaCap = (int) config('ai_credits.monthly_media_pages', 100);
@@ -260,6 +326,9 @@ class AiCreditSettlementService
             mediaPagesRemaining: $mediaPagesRemaining,
             policyVersion: (string) $account->credit_policy_version,
             status: (string) $account->status,
+            rawAvailableCredits: $rawAvailable,
+            isNegativeBreach: $isNegativeBreach,
+            reconcileRequired: $reconcileRequired,
         );
     }
 }

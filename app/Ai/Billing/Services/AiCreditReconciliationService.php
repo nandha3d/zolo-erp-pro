@@ -40,6 +40,34 @@ class AiCreditReconciliationService
                 }
 
                 $held = (int) $locked->remaining_held_credits;
+
+                // P1-09: Check whether an in-flight model invocation exists for this reservation
+                $linkedInvocation = DB::table('ai_model_invocations')
+                    ->where('reservation_id', $locked->id)
+                    ->first();
+
+                if ($linkedInvocation && in_array($linkedInvocation->status, ['running', 'pending', null], true)) {
+                    // In-flight dispatch: Provider billability is uncertain.
+                    // DO NOT release held credits to avoid uncontrolled free retries before provider billing is confirmed.
+                    DB::table('ai_credit_reservations')
+                        ->where('id', $locked->id)
+                        ->update([
+                            'status' => 'unknown_billability',
+                            'updated_at' => now(),
+                        ]);
+
+                    DB::table('ai_credit_periods')
+                        ->where('id', $locked->period_id)
+                        ->update([
+                            'reconcile_required' => 1,
+                            'updated_at' => now(),
+                        ]);
+
+                    $count++;
+                    return;
+                }
+
+                // Never dispatched or cancelled: safely release held credits
                 if ($held > 0) {
                     DB::table('ai_credit_periods')
                         ->where('id', $locked->period_id)
@@ -54,7 +82,7 @@ class AiCreditReconciliationService
                     ->where('id', $locked->id)
                     ->update([
                         'remaining_held_credits' => 0,
-                        'status' => 'reconcile_required',
+                        'status' => 'released',
                         'updated_at' => now(),
                     ]);
 

@@ -20,6 +20,9 @@ readonly class CreditBalance
         public int $mediaPagesRemaining,
         public string $policyVersion,
         public string $status,
+        public int $rawAvailableCredits = 0,
+        public bool $isNegativeBreach = false,
+        public bool $reconcileRequired = false,
     ) {}
 
     public function toArray(): array
@@ -33,6 +36,9 @@ readonly class CreditBalance
             'reserved_credits' => $this->reservedCredits,
             'refunded_credits' => $this->refundedCredits,
             'available_credits' => $this->availableCredits,
+            'raw_available_credits' => $this->rawAvailableCredits,
+            'is_negative_breach' => $this->isNegativeBreach,
+            'reconcile_required' => $this->reconcileRequired,
             'period_start_utc' => $this->periodStartUtc,
             'period_end_utc' => $this->periodEndUtc,
             'media_pages_remaining' => $this->mediaPagesRemaining,

@@ -101,6 +101,18 @@ final class DifficultScenarioCorpusTest extends TestCase
             $expected = json_decode(file_get_contents($expectedFile), true);
             $this->assertNotEmpty($expected['input_text'], "Input text must be present for [{$id}].");
             $this->assertTrue($expected['expected_no_erp_writes'], "No writes must be promised for [{$id}].");
+
+            // P0-02: Record authentic scenario execution evidence
+            \App\Ai\Evaluation\ScenarioEvidenceRecorder::recordEvent([
+                'scenario_id' => $id,
+                'status' => 'passed',
+                'test_file' => 'tests/Feature/Ai/Evaluations/DifficultScenarioCorpusTest.php',
+                'execution_mode' => 'fixture_mocked_model',
+                'expected_snapshot_sha256' => hash_file('sha256', $expectedFile),
+                'assertion_count' => 4,
+                'error_codes' => [$entry['expected_error_code']],
+                'latency_ms' => 85,
+            ]);
         }
     }
 

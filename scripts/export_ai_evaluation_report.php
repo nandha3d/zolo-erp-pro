@@ -35,7 +35,17 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
-// 1. Determine Git SHA
+// 1. Determine Git SHA & CLI Options
+$options = getopt('', ['junit:', 'scenario-events:', 'db-snapshot:', 'k6:', 'allow-staging', 'token:']);
+$allowStaging = isset($options['allow-staging']);
+$stagingToken = $options['token'] ?? null;
+
+// P0-04 / PR-03: Assert strict safe evaluation environment before any DB write
+\App\Support\AiEvaluation\AssertSafeEvaluationEnvironment::assertSafe($allowStaging, $stagingToken);
+
+$calculator = app(ModelCostCalculator::class);
+$creditMeter = app(AiCreditMeter::class);
+
 $gitSha = trim(shell_exec('git rev-parse HEAD') ?? 'unknown-sha');
 $shortSha = substr($gitSha, 0, 8);
 $outputDir = base_path("artifacts/ai-evaluation/{$shortSha}");
@@ -46,7 +56,7 @@ if (!is_dir($outputDir)) {
 
 echo "Generating 100% Authentic AI Evaluation Artifacts in: {$outputDir}\n";
 
-// Ensure evaluation company and user exist for live assertions
+// Ensure evaluation company and user exist for live assertions with ephemeral random credentials
 $evalCompany = Company::firstOrCreate(
     ['code' => 'EVAL-CORP-2026'],
     [
@@ -58,12 +68,13 @@ $evalCompany = Company::firstOrCreate(
     ]
 );
 
+$ephemeralCreds = \App\Support\AiEvaluation\AssertSafeEvaluationEnvironment::generateEphemeralCredentials();
 $evalUser = User::firstOrCreate(
     ['email' => 'ai_evaluator_2026@zoloerp.com'],
     [
         'name' => 'AI Evaluation Engine',
         'phone' => '9888877777',
-        'password' => bcrypt('secret-eval-2026'),
+        'password' => bcrypt($ephemeralCreds['password']),
         'company_id' => $evalCompany->id,
         'role_id' => 1,
         'is_active' => true,
@@ -226,10 +237,17 @@ foreach ($invoices as $idx => $inv) {
             $outputTokens = 420 + ($idx % 30);
         }
 
-        // Multimodal rate card calculation
-        $usdCost = round(($inputTokens * 0.00000030) + ($outputTokens * 0.00000090) + ($imageCount * 0.00150000), 6);
-        $inrCost = round($usdCost * 84.50, 4);
-        $credits = (int) ceil($inrCost / 0.01);
+        // Authoritative multimodal rate card calculation via ModelCostCalculator
+        $calc = $calculator->calculate(
+            'nvidia',
+            'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
+            $inputTokens,
+            $outputTokens,
+            imagesCount: $imageCount
+        );
+        $usdCost = $calc['usd_cost'];
+        $inrCost = round($usdCost * $calc['fx_rate'], 4);
+        $credits = $calc['credits'];
         $latencyMs = $isMultipage ? rand(520, 680) : ($isDense ? rand(380, 510) : rand(280, 420));
         $executionMode = 'automated_invariant_verification';
 
@@ -258,17 +276,17 @@ foreach ($invoices as $idx => $inv) {
         $variantNum = (int) filter_var($variantCode, FILTER_SANITIZE_NUMBER_INT);
         if ($variantNum === 2) {
             // Thermal narrow bill: drops trailing optional state text
-            $rawExtracted['place_of_supply'] = substr((string)$rawExtracted['place_of_supply'], 0, 2);
+            $rawExtracted['place_of_supply'] = substr((string) $rawExtracted['place_of_supply'], 0, 2);
         } elseif ($variantNum === 4) {
             // Low-light blur: minor supplier name OCR spacing difference
-            $rawExtracted['supplier_name'] = trim((string)$rawExtracted['supplier_name']) . ' ';
+            $rawExtracted['supplier_name'] = trim((string) $rawExtracted['supplier_name']) . ' ';
         } elseif ($variantNum === 7) {
             // Bilingual invoice: regional language suffix attached
-            $rawExtracted['place_of_supply'] = (string)$rawExtracted['place_of_supply'] . ' (TN)';
+            $rawExtracted['place_of_supply'] = (string) $rawExtracted['place_of_supply'] . ' (TN)';
         }
 
         // Run through InvoiceExtractionV1 normalizer
-        $normalized = $normalizer->validateAndNormalize((int)$evalCompany->id, $rawExtracted);
+        $normalized = $normalizer->validateAndNormalize((int) $evalCompany->id, $rawExtracted);
 
         $extractedFields = [
             'document_type' => $normalized['document_type'] ?? 'purchase_bill',
@@ -322,7 +340,7 @@ foreach ($invoices as $idx => $inv) {
 
         $fieldComparisons = [
             'invoice_number_match' => ($expected['invoice_number'] ?? '') === ($extractedFields['invoice_number'] ?? ''),
-            'supplier_name_match' => trim((string)($expected['supplier_name'] ?? '')) === trim((string)($extractedFields['supplier_name'] ?? '')),
+            'supplier_name_match' => trim((string) ($expected['supplier_name'] ?? '')) === trim((string) ($extractedFields['supplier_name'] ?? '')),
             'supplier_gstin_match' => ($expected['supplier_gstin'] ?? null) === ($extractedFields['supplier_gstin'] ?? null),
             'supplier_gstin_checksum_verified' => $gstinValid,
             'tax_split_verified' => $taxValid,
@@ -330,7 +348,7 @@ foreach ($invoices as $idx => $inv) {
             'header_discount_captured' => true,
             'freight_charges_captured' => true,
             'reconciliation_formula_valid' => $reconciliationFormulaValid,
-            'grand_total_match' => abs($grandTotalVal - (float)$extractedFields['grand_total']) < 0.01,
+            'grand_total_match' => abs($grandTotalVal - (float) $extractedFields['grand_total']) < 0.01,
             'ocr_field_accuracy' => $ocrAccuracy,
         ];
     }
@@ -422,10 +440,16 @@ foreach ($copilot as $idx => $cop) {
     $inputTokens = 480 + ($inputLen * 2) + ($idx % 35);
     $outputTokens = 160 + ($idx % 45);
 
-    // Rate card: nvidia/nemotron-3.5-lightning-30b-a3b (In: $0.00000020, Out: $0.00000060)
-    $usdCost = round(($inputTokens * 0.00000020) + ($outputTokens * 0.00000060), 6);
-    $inrCost = round($usdCost * 84.50, 4);
-    $credits = (int) ceil($inrCost / 0.01);
+    // Authoritative calculation via ModelCostCalculator
+    $calc = $calculator->calculate(
+        'nvidia',
+        'nvidia/nemotron-3.5-lightning-30b-a3b',
+        $inputTokens,
+        $outputTokens
+    );
+    $usdCost = $calc['usd_cost'];
+    $inrCost = round($usdCost * $calc['fx_rate'], 4);
+    $credits = $calc['credits'];
     $totalCopilotCredits += $credits;
 
     $proposalId = (string) Str::uuid();

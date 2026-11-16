@@ -297,4 +297,9 @@ Route::prefix('v1')->group(function () {
     });
 });
 
+if (app()->environment('testing')) {
+    Route::post('/__test/ai/credit-reserve-settle', [\App\Http\Controllers\Api\V1\AiCreditController::class, 'testReserveSettle'])
+        ->name('api.test.ai.credit-reserve-settle');
+}
+
 require __DIR__ . '/compliance_api.php';

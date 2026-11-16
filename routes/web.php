@@ -1092,4 +1092,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
 
 });
 
+if (app()->environment('testing')) {
+    Route::post('/__test/ai/credit-reserve-settle', [\App\Http\Controllers\Api\V1\AiCreditController::class, 'testReserveSettle'])
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+}
+
 require __DIR__ . '/product-imports.php';
