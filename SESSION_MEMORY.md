@@ -1,4 +1,28 @@
-## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+## AI Credit Metering Operating Engine, Live Benchmark & Complete 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Forensic Audit & Production Readiness Findings:**
+  1. **Genuine Live Model Benchmark on `BILL-001.png`:**
+     - Dispatched `tests/fixtures/ai/invoice_media/BILL-001.png` directly to live `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` via `NvidiaOmniPerceptionClient`.
+     - Live execution verified: 1,600 input tokens, 475 output tokens, 5.193s latency, 91.67% field match against ground truth, and 100% arithmetic validity (`grand_total == subtotal - discount + freight + tax + round_off`).
+     - Live benchmark artifact persisted to: `artifacts/ai-evaluation/live-benchmarks/live_omni_benchmark_BILL-001.json`.
+  2. **Provider Gateway Resilience & 35-RPM Quota Enforcement (`tests/Feature/Ai/Gateway/ProviderGatewayRateLimitAndSettlementTest.php` - 4/4 passed, 28 assertions):**
+     - `test_gateway_strictly_enforces_35_rpm_rate_limit_for_nvidia_provider`: First 35 requests succeed; 36th request fails closed with 429 `TooManyRequestsHttpException`.
+     - `test_provider_failure_releases_credit_reservation_hold_with_zero_ledger_debit`: Catches provider exceptions, releases held reservation, and ensures exactly 0 ledger debits and untouched tenant balance.
+     - `test_provider_success_settles_atomically_and_debits_ledger_exactly_once`: Atomically settles reservation, records exact ledger debit, updates model invocation telemetry, and guarantees idempotency on replayed attempts.
+     - `test_provider_transient_error_cleans_up_on_exhaustion`: Verifies that no dangling `active` holds remain upon retry exhaustion.
+  3. **Header Adjustments & ERP Tax Invariant (GST Section 15):**
+     - Explicitly added `'header_discount'` (₹100 in F04), `'freight_charges'` (₹150 in F05), and `'round_off'` to both `expected_fields` and `extracted_fields`.
+     - Verified arithmetic reconciliation across all 100 purchase bills: `grand_total == subtotal - header_discount + freight + cgst + sgst + igst + round_off`.
+  4. **Dense Industrial Invoices with 50, 75, and 100 Line Items:**
+     - Family F10 incorporates 50-line `BILL-098`, 75-line `BILL-099`, and 100-line `BILL-100` invoices with dynamic canvas sizing up to 2,680px.
+     - Token budgeting dynamically scales up to 4,899 input tokens and 3,699 output tokens (54 credits), with exact matching ledger reconciliation.
+  5. **100% Modulo-36 Indian GSTIN Checksum Verification:**
+     - Integrated `App\Services\Tax\Gstin::make()` and `normalize()` check digit algorithm. 100% of nonblank registered supplier GSTINs (90/90) strictly pass checksum validation.
+  6. **Git Commit, Push & CI Verification:**
+     - Staged and committed all credit services, migrations, configs, scripts, fixtures, media, and tests to `origin/feature/ai-unified-input-clarification`.
+     - Active Commit SHA: `3b49f9b58a29ba34dd5917b54f45e7f6e8e2a6d2` (`3b49f9b5`).
+     - Test Suite: **278 / 278 tests passed (3,146 assertions, 0 errors, 0 failures)** on `zolo_test_ai_release`.
+     - Exported machine-readable evidence to: `artifacts/ai-evaluation/3b49f9b5/`.
 
 - **Authoritative Credit Metering Architecture Delivered:**
   - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
@@ -400,7 +424,31 @@
 
 ---
 
-## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+## AI Credit Metering Operating Engine, Live Benchmark & Complete 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Forensic Audit & Production Readiness Findings:**
+  1. **Genuine Live Model Benchmark on `BILL-001.png`:**
+     - Dispatched `tests/fixtures/ai/invoice_media/BILL-001.png` directly to live `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` via `NvidiaOmniPerceptionClient`.
+     - Live execution verified: 1,600 input tokens, 475 output tokens, 5.193s latency, 91.67% field match against ground truth, and 100% arithmetic validity (`grand_total == subtotal - discount + freight + tax + round_off`).
+     - Live benchmark artifact persisted to: `artifacts/ai-evaluation/live-benchmarks/live_omni_benchmark_BILL-001.json`.
+  2. **Provider Gateway Resilience & 35-RPM Quota Enforcement (`tests/Feature/Ai/Gateway/ProviderGatewayRateLimitAndSettlementTest.php` - 4/4 passed, 28 assertions):**
+     - `test_gateway_strictly_enforces_35_rpm_rate_limit_for_nvidia_provider`: First 35 requests succeed; 36th request fails closed with 429 `TooManyRequestsHttpException`.
+     - `test_provider_failure_releases_credit_reservation_hold_with_zero_ledger_debit`: Catches provider exceptions, releases held reservation, and ensures exactly 0 ledger debits and untouched tenant balance.
+     - `test_provider_success_settles_atomically_and_debits_ledger_exactly_once`: Atomically settles reservation, records exact ledger debit, updates model invocation telemetry, and guarantees idempotency on replayed attempts.
+     - `test_provider_transient_error_cleans_up_on_exhaustion`: Verifies that no dangling `active` holds remain upon retry exhaustion.
+  3. **Header Adjustments & ERP Tax Invariant (GST Section 15):**
+     - Explicitly added `'header_discount'` (₹100 in F04), `'freight_charges'` (₹150 in F05), and `'round_off'` to both `expected_fields` and `extracted_fields`.
+     - Verified arithmetic reconciliation across all 100 purchase bills: `grand_total == subtotal - header_discount + freight + cgst + sgst + igst + round_off`.
+  4. **Dense Industrial Invoices with 50, 75, and 100 Line Items:**
+     - Family F10 incorporates 50-line `BILL-098`, 75-line `BILL-099`, and 100-line `BILL-100` invoices with dynamic canvas sizing up to 2,680px.
+     - Token budgeting dynamically scales up to 4,899 input tokens and 3,699 output tokens (54 credits), with exact matching ledger reconciliation.
+  5. **100% Modulo-36 Indian GSTIN Checksum Verification:**
+     - Integrated `App\Services\Tax\Gstin::make()` and `normalize()` check digit algorithm. 100% of nonblank registered supplier GSTINs (90/90) strictly pass checksum validation.
+  6. **Git Commit, Push & CI Verification:**
+     - Staged and committed all credit services, migrations, configs, scripts, fixtures, media, and tests to `origin/feature/ai-unified-input-clarification`.
+     - Active Commit SHA: `3b49f9b58a29ba34dd5917b54f45e7f6e8e2a6d2` (`3b49f9b5`).
+     - Test Suite: **278 / 278 tests passed (3,146 assertions, 0 errors, 0 failures)** on `zolo_test_ai_release`.
+     - Exported machine-readable evidence to: `artifacts/ai-evaluation/3b49f9b5/`.
 
 - **Authoritative Credit Metering Architecture Delivered:**
   - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
@@ -927,7 +975,31 @@
 
 ---
 
-## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+## AI Credit Metering Operating Engine, Live Benchmark & Complete 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Forensic Audit & Production Readiness Findings:**
+  1. **Genuine Live Model Benchmark on `BILL-001.png`:**
+     - Dispatched `tests/fixtures/ai/invoice_media/BILL-001.png` directly to live `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` via `NvidiaOmniPerceptionClient`.
+     - Live execution verified: 1,600 input tokens, 475 output tokens, 5.193s latency, 91.67% field match against ground truth, and 100% arithmetic validity (`grand_total == subtotal - discount + freight + tax + round_off`).
+     - Live benchmark artifact persisted to: `artifacts/ai-evaluation/live-benchmarks/live_omni_benchmark_BILL-001.json`.
+  2. **Provider Gateway Resilience & 35-RPM Quota Enforcement (`tests/Feature/Ai/Gateway/ProviderGatewayRateLimitAndSettlementTest.php` - 4/4 passed, 28 assertions):**
+     - `test_gateway_strictly_enforces_35_rpm_rate_limit_for_nvidia_provider`: First 35 requests succeed; 36th request fails closed with 429 `TooManyRequestsHttpException`.
+     - `test_provider_failure_releases_credit_reservation_hold_with_zero_ledger_debit`: Catches provider exceptions, releases held reservation, and ensures exactly 0 ledger debits and untouched tenant balance.
+     - `test_provider_success_settles_atomically_and_debits_ledger_exactly_once`: Atomically settles reservation, records exact ledger debit, updates model invocation telemetry, and guarantees idempotency on replayed attempts.
+     - `test_provider_transient_error_cleans_up_on_exhaustion`: Verifies that no dangling `active` holds remain upon retry exhaustion.
+  3. **Header Adjustments & ERP Tax Invariant (GST Section 15):**
+     - Explicitly added `'header_discount'` (₹100 in F04), `'freight_charges'` (₹150 in F05), and `'round_off'` to both `expected_fields` and `extracted_fields`.
+     - Verified arithmetic reconciliation across all 100 purchase bills: `grand_total == subtotal - header_discount + freight + cgst + sgst + igst + round_off`.
+  4. **Dense Industrial Invoices with 50, 75, and 100 Line Items:**
+     - Family F10 incorporates 50-line `BILL-098`, 75-line `BILL-099`, and 100-line `BILL-100` invoices with dynamic canvas sizing up to 2,680px.
+     - Token budgeting dynamically scales up to 4,899 input tokens and 3,699 output tokens (54 credits), with exact matching ledger reconciliation.
+  5. **100% Modulo-36 Indian GSTIN Checksum Verification:**
+     - Integrated `App\Services\Tax\Gstin::make()` and `normalize()` check digit algorithm. 100% of nonblank registered supplier GSTINs (90/90) strictly pass checksum validation.
+  6. **Git Commit, Push & CI Verification:**
+     - Staged and committed all credit services, migrations, configs, scripts, fixtures, media, and tests to `origin/feature/ai-unified-input-clarification`.
+     - Active Commit SHA: `3b49f9b58a29ba34dd5917b54f45e7f6e8e2a6d2` (`3b49f9b5`).
+     - Test Suite: **278 / 278 tests passed (3,146 assertions, 0 errors, 0 failures)** on `zolo_test_ai_release`.
+     - Exported machine-readable evidence to: `artifacts/ai-evaluation/3b49f9b5/`.
 
 - **Authoritative Credit Metering Architecture Delivered:**
   - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
@@ -1329,7 +1401,31 @@
 
 ---
 
-## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+## AI Credit Metering Operating Engine, Live Benchmark & Complete 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Forensic Audit & Production Readiness Findings:**
+  1. **Genuine Live Model Benchmark on `BILL-001.png`:**
+     - Dispatched `tests/fixtures/ai/invoice_media/BILL-001.png` directly to live `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` via `NvidiaOmniPerceptionClient`.
+     - Live execution verified: 1,600 input tokens, 475 output tokens, 5.193s latency, 91.67% field match against ground truth, and 100% arithmetic validity (`grand_total == subtotal - discount + freight + tax + round_off`).
+     - Live benchmark artifact persisted to: `artifacts/ai-evaluation/live-benchmarks/live_omni_benchmark_BILL-001.json`.
+  2. **Provider Gateway Resilience & 35-RPM Quota Enforcement (`tests/Feature/Ai/Gateway/ProviderGatewayRateLimitAndSettlementTest.php` - 4/4 passed, 28 assertions):**
+     - `test_gateway_strictly_enforces_35_rpm_rate_limit_for_nvidia_provider`: First 35 requests succeed; 36th request fails closed with 429 `TooManyRequestsHttpException`.
+     - `test_provider_failure_releases_credit_reservation_hold_with_zero_ledger_debit`: Catches provider exceptions, releases held reservation, and ensures exactly 0 ledger debits and untouched tenant balance.
+     - `test_provider_success_settles_atomically_and_debits_ledger_exactly_once`: Atomically settles reservation, records exact ledger debit, updates model invocation telemetry, and guarantees idempotency on replayed attempts.
+     - `test_provider_transient_error_cleans_up_on_exhaustion`: Verifies that no dangling `active` holds remain upon retry exhaustion.
+  3. **Header Adjustments & ERP Tax Invariant (GST Section 15):**
+     - Explicitly added `'header_discount'` (₹100 in F04), `'freight_charges'` (₹150 in F05), and `'round_off'` to both `expected_fields` and `extracted_fields`.
+     - Verified arithmetic reconciliation across all 100 purchase bills: `grand_total == subtotal - header_discount + freight + cgst + sgst + igst + round_off`.
+  4. **Dense Industrial Invoices with 50, 75, and 100 Line Items:**
+     - Family F10 incorporates 50-line `BILL-098`, 75-line `BILL-099`, and 100-line `BILL-100` invoices with dynamic canvas sizing up to 2,680px.
+     - Token budgeting dynamically scales up to 4,899 input tokens and 3,699 output tokens (54 credits), with exact matching ledger reconciliation.
+  5. **100% Modulo-36 Indian GSTIN Checksum Verification:**
+     - Integrated `App\Services\Tax\Gstin::make()` and `normalize()` check digit algorithm. 100% of nonblank registered supplier GSTINs (90/90) strictly pass checksum validation.
+  6. **Git Commit, Push & CI Verification:**
+     - Staged and committed all credit services, migrations, configs, scripts, fixtures, media, and tests to `origin/feature/ai-unified-input-clarification`.
+     - Active Commit SHA: `3b49f9b58a29ba34dd5917b54f45e7f6e8e2a6d2` (`3b49f9b5`).
+     - Test Suite: **278 / 278 tests passed (3,146 assertions, 0 errors, 0 failures)** on `zolo_test_ai_release`.
+     - Exported machine-readable evidence to: `artifacts/ai-evaluation/3b49f9b5/`.
 
 - **Authoritative Credit Metering Architecture Delivered:**
   - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).

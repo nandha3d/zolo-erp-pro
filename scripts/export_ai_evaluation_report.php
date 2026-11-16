@@ -212,21 +212,6 @@ foreach ($invoices as $idx => $inv) {
         'latency_ms' => $isMultipage ? rand(520, 680) : ($isDense ? rand(380, 510) : rand(280, 420)),
         'evaluated_at' => $now,
     ];
-        'field_verification' => $fieldComparisons,
-        'zero_unapproved_writes' => true,
-        'status' => $passed ? 'passed' : 'failed',
-        'credit_settlement' => [
-            'input_tokens' => $inputTokens,
-            'output_tokens' => $outputTokens,
-            'image_count' => $imageCount,
-            'credits_debited' => $credits,
-            'cost_usd' => $usdCost,
-            'cost_inr' => $inrCost,
-            'currency' => 'INR',
-        ],
-        'latency_ms' => $isMultipage ? rand(520, 680) : ($isDense ? rand(380, 510) : rand(280, 420)),
-        'evaluated_at' => $now,
-    ];
     fwrite($invoiceResultsHandle, json_encode($resultRow) . "\n");
 
     $csvRows[] = [
