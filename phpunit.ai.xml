@@ -11,5 +11,11 @@
     <env name="CACHE_DRIVER" value="array" force="true"/>
     <env name="SESSION_DRIVER" value="array" force="true"/>
     <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+    <env name="ERP_TEST_MYSQL" value="1" force="true"/>
+    <env name="ERP_TEST_MYSQL_DATABASE" value="zolo_test_ai_release" force="true"/>
+    <env name="DB_DATABASE" value="zolo_test_ai_release" force="true"/>
+    <env name="DB_PORT" value="3307" force="true"/>
+    <env name="DB_USERNAME" value="zolo_erp" force="true"/>
+    <env name="DB_PASSWORD" value="zolo_password_123" force="true"/>
   </php>
 </phpunit>

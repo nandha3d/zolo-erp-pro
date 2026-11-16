@@ -64,6 +64,11 @@
                                     </div>
                                 </details>
                             @endif
+                            <div class="ai-credit-meter-pill d-inline-flex align-items-center bg-light border rounded px-2 py-1 mx-1" id="ai-credit-meter-pill" title="Subscription AI Credit Balance">
+                                <i class="dripicons-wallet mr-1 text-primary" aria-hidden="true"></i>
+                                <span class="font-weight-bold small text-dark mr-1" id="credit-available-val">Loading…</span>
+                                <button type="button" class="btn btn-xs btn-outline-primary" id="btn-open-topup-modal" style="padding: 1px 6px; font-size: 11px;">Top Up</button>
+                            </div>
                             @if($isAdmin ?? false)
                                 <button id="btn-toggle-telemetry" class="btn ai-telemetry-toggle-btn" type="button"
                                     aria-controls="ai-telemetry-panel" aria-expanded="false">
@@ -96,6 +101,11 @@
                                 <div class="ai-usage-stat">
                                     <span>Company tokens today (UTC)</span><strong id="telemetry-tokens-used">—</strong>
                                     <span>Daily limit: <span id="telemetry-token-limit">—</span></span>
+                                </div>
+                                <div class="ai-usage-stat">
+                                    <span>Subscription Monthly Credits</span><strong id="telemetry-credits-available">—</strong>
+                                    <span id="telemetry-credits-detail">Loading credits…</span>
+                                    <div class="ai-usage-track"><span id="telemetry-credits-fill" style="width: 0%;"></span></div>
                                 </div>
                             </div>
                             <p class="ai-usage-explainer"><span id="telemetry-provider">Provider</span>: shared provider limit
@@ -221,6 +231,26 @@
                 </div>
                 <div class="modal-body p-0 bg-secondary" style="height: calc(100% - 55px);">
                     <iframe id="ai-pdf-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Credit Top-Up Modal -->
+    <div class="modal fade" id="aiTopupModal" tabindex="-1" role="dialog" aria-labelledby="aiTopupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-weight-bold" id="aiTopupModalLabel"><i class="dripicons-wallet mr-1 text-primary"></i> Top Up AI Credits</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Add credits to your subscription pool. All authorized users in your company draw from this shared pool. 1 credit = ₹0.01 of model computation.</p>
+                    <div id="ai-topup-packs-container">
+                        <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading available packs…</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1967,11 +1997,92 @@
                     $('#ai-pdf-iframe').attr('src', '');
                 });
 
+                // Credit Balance & Metering
+                function loadCreditsBalance() {
+                    $.ajax({
+                        url: '{{ route("ai.credits.balance") }}',
+                        method: 'GET',
+                        headers: headers,
+                        success: function (res) {
+                            if (res && res.data) {
+                                const d = res.data;
+                                const avail = Number(d.available_credits).toLocaleString();
+                                const granted = Number(d.included_granted + d.topups_granted).toLocaleString();
+                                const spent = Number(d.spent_credits).toLocaleString();
+                                const held = Number(d.reserved_credits).toLocaleString();
+                                $('#credit-available-val').text(avail + ' credits');
+                                $('#telemetry-credits-available').text(avail);
+                                $('#telemetry-credits-detail').text(granted + ' granted · ' + spent + ' used · ' + held + ' held');
+                                const total = d.included_granted + d.topups_granted;
+                                const pct = total > 0 ? Math.min(100, Math.max(0, (d.available_credits / total) * 100)) : 0;
+                                $('#telemetry-credits-fill').css('width', pct + '%');
+                            }
+                        },
+                        error: function () {
+                            $('#credit-available-val').text('Credits unavailable');
+                        }
+                    });
+                }
+                loadCreditsBalance();
+
+                $('#btn-open-topup-modal').on('click', function () {
+                    $.ajax({
+                        url: '{{ route("ai.credits.packs") }}',
+                        method: 'GET',
+                        headers: headers,
+                        success: function (res) {
+                            if (res && res.packs) {
+                                let packHtml = '<div class="list-group">';
+                                res.packs.forEach(function (p) {
+                                    const inrPrice = (p.price_minor_inr / 100).toFixed(2);
+                                    const totalInr = (p.total_minor_inr / 100).toFixed(2);
+                                    packHtml += `
+                                        <div class="list-group-item d-flex justify-content-between align-items-center mb-2 border rounded">
+                                            <div>
+                                                <h6 class="mb-1 font-weight-bold">${p.name}</h6>
+                                                <p class="mb-0 text-muted small">${Number(p.credits).toLocaleString()} AI Credits · ₹${inrPrice} + 18% GST (Total: ₹${totalInr})</p>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-primary btn-select-pack" data-sku="${p.sku}">Select Pack</button>
+                                        </div>
+                                    `;
+                                });
+                                packHtml += '</div>';
+                                $('#ai-topup-packs-container').html(packHtml);
+                                $('#aiTopupModal').modal('show');
+                            }
+                        }
+                    });
+                });
+
+                $(document).on('click', '.btn-select-pack', function () {
+                    const sku = $(this).data('sku');
+                    const $btn = $(this);
+                    $btn.prop('disabled', true).text('Creating order...');
+                    $.ajax({
+                        url: '{{ route("ai.credits.topup-orders") }}',
+                        method: 'POST',
+                        headers: Object.assign({}, headers, { 'Idempotency-Key': 'topup_' + Date.now() }),
+                        data: { pack_sku: sku },
+                        success: function (res) {
+                            alert('Top-up order created: ' + res.order.id + ' for pack ' + sku + '. Ready for payment gateway.');
+                            $('#aiTopupModal').modal('hide');
+                            loadCreditsBalance();
+                        },
+                        error: function (xhr) {
+                            alert('Order creation failed: ' + (xhr.responseJSON?.message || 'Error'));
+                        },
+                        complete: function () {
+                            $btn.prop('disabled', false).text('Select Pack');
+                        }
+                    });
+                });
+
                 // Expose safe bridge for modular multimodal JS plugin
                 window.zoloAiWorkspace = {
                     appendMessage: appendMessage,
                     loadThreads: loadThreads,
                     loadTelemetry: loadTelemetry,
+                    loadCreditsBalance: loadCreditsBalance,
                     getCurrentThreadId: function () { return currentThreadId; },
                     setCurrentThreadId: function (id) { currentThreadId = id; },
                     aiBaseUrl: aiBaseUrl,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Gateway;
 
+use App\Ai\Billing\Contracts\AiCreditMeterInterface;
+use App\Ai\Billing\Services\AiCreditMeter;
 use App\Ai\DTOs\AiPrincipal;
 use App\Ai\Multimodal\DTOs\PerceptionResult;
 use App\Ai\Multimodal\Enums\ModelPurpose;
@@ -62,7 +64,12 @@ class ApprovedModelGateway
         ],
     ];
 
-    public function __construct(protected AiFeatureGate $featureGate) {}
+    protected AiCreditMeter $creditMeter;
+
+    public function __construct(protected AiFeatureGate $featureGate, ?AiCreditMeter $creditMeter = null)
+    {
+        $this->creditMeter = $creditMeter ?? app(AiCreditMeter::class);
+    }
 
     /** @return array{provider: string, model: string} */
     public function resolveApprovedModel(): array
@@ -255,6 +262,27 @@ class ApprovedModelGateway
             }
         }, 3);
 
+        // Preflight credit metering reservation
+        $inputTokensEstimate = max(1024, (int) ceil($estimatedInputBytes / 4));
+        $estimatedCredits = $this->creditMeter->calculator()->estimatePreflightCredits(
+            $provider,
+            $model,
+            $inputTokensEstimate,
+            $outputLimit,
+            imagesCount: 1
+        );
+        $attemptId = 'att_' . Str::uuid();
+        $idempotencyKey = 'res_perc_' . ($mediaId ?: Str::uuid()) . '_' . $attemptId;
+        $creditReservation = $this->creditMeter->reserve(
+            $principal,
+            $principal->requestId,
+            'perception.extract',
+            $provider,
+            $model,
+            $idempotencyKey,
+            $estimatedCredits
+        );
+
         $start = microtime(true);
 
         try {
@@ -269,6 +297,19 @@ class ApprovedModelGateway
                 $reserved,
                 new TextUsage($result->inputTokens, $result->outputTokens)
             );
+
+            // Settle actual credit debit
+            $settlement = $this->creditMeter->settle(
+                $creditReservation->id,
+                $attemptId,
+                $provider,
+                $model,
+                $result->inputTokens,
+                $result->outputTokens,
+                imagesCount: 1,
+                isChargeable: true
+            );
+
             $this->recordModelInvocation(
                 $principal,
                 1,
@@ -281,11 +322,21 @@ class ApprovedModelGateway
                 httpAttempts: $result->httpAttempts,
                 modelPurpose: $purpose->value,
                 mediaId: $mediaId,
+                providerAttemptId: $attemptId,
+                reservationId: $creditReservation->id,
+                billingAccountId: $settlement->accountId,
+                chargeStatus: $settlement->status,
+                rateCardVersion: $settlement->rateCardVersion,
+                fxRateVersion: $settlement->fxRateVersion,
+                chargeMinorInr: $settlement->costMinorInr,
+                creditsDebited: $settlement->creditsDebited,
             );
 
             return $result;
         } catch (Throwable $e) {
             $this->settleStep($principal, $date, $reserved, new TextUsage());
+            $this->creditMeter->releaseUnsent($creditReservation->id, 'perception_failed');
+
             $durationMs = (int) round((microtime(true) - $start) * 1000);
             $errorCode = $e instanceof MultimodalException ? $e->errorCode : class_basename($e);
             $errorMessage = $errorCode . ': ' . substr($e->getMessage(), 0, 200);
@@ -303,6 +354,10 @@ class ApprovedModelGateway
                 httpAttempts: 1,
                 modelPurpose: $purpose->value,
                 mediaId: $mediaId,
+                providerAttemptId: $attemptId,
+                reservationId: $creditReservation->id,
+                chargeStatus: 'failed',
+                creditsDebited: 0,
             );
 
             throw $e;
@@ -353,6 +408,14 @@ class ApprovedModelGateway
                 throw new TooManyRequestsHttpException(message: 'Daily company AI token quota cannot cover the next model step.');
             }
 
+            DB::table('ai_usage_counters')->insertOrIgnore([
+                'company_id' => $principal->companyId,
+                'user_id' => $principal->actorId,
+                'date' => $date,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
             if ($this->counter($principal, $date)->increment('reserved_tokens', $reserved) !== 1) {
                 throw new ServiceUnavailableHttpException(message: 'AI usage accounting is unavailable.');
             }
@@ -360,6 +423,26 @@ class ApprovedModelGateway
 
         $start = microtime(true);
         $stepNumber = $step->number + 1;
+
+        // Preflight credit metering reservation
+        $inputTokensEstimate = (int) ceil($inputAllowance / 4);
+        $estimatedCredits = $this->creditMeter->calculator()->estimatePreflightCredits(
+            $provider,
+            $model,
+            $inputTokensEstimate,
+            $outputLimit
+        );
+        $attemptId = 'att_' . Str::uuid();
+        $idempotencyKey = 'res_step_' . $principal->requestId . '_' . $stepNumber . '_' . $attemptId;
+        $creditReservation = $this->creditMeter->reserve(
+            $principal,
+            $principal->requestId,
+            'reasoning.step',
+            $provider,
+            $model,
+            $idempotencyKey,
+            $estimatedCredits
+        );
 
         $this->dispatchProvider = $provider;
         $this->dispatchAttempts = 0;
@@ -369,12 +452,24 @@ class ApprovedModelGateway
             $attempts = $this->dispatchAttempts;
             if ($result->stopped() && $attempts === 0) {
                 $this->settleStep($principal, $date, $reserved, new TextUsage());
+                $this->creditMeter->releaseUnsent($creditReservation->id, 'step_stopped');
                 return $result;
             }
             return $result->then(
-                function (StepResponse $response) use ($principal, $date, $reserved, $provider, $model, $stepNumber, $start, $attempts): void {
+                function (StepResponse $response) use ($principal, $date, $reserved, $provider, $model, $stepNumber, $start, $attempts, $creditReservation, $attemptId): void {
                     $durationMs = (int) round((microtime(true) - $start) * 1000);
                     $this->settleStep($principal, $date, $reserved, $response->usage);
+
+                    $settlement = $this->creditMeter->settle(
+                        $creditReservation->id,
+                        $attemptId,
+                        $provider,
+                        $model,
+                        $response->usage->inputTokens,
+                        $response->usage->outputTokens,
+                        isChargeable: true
+                    );
+
                     $this->recordModelInvocation(
                         $principal,
                         $stepNumber,
@@ -385,14 +480,35 @@ class ApprovedModelGateway
                         $response->usage->outputTokens,
                         $durationMs,
                         httpAttempts: $attempts,
+                        providerAttemptId: $attemptId,
+                        reservationId: $creditReservation->id,
+                        billingAccountId: $settlement->accountId,
+                        chargeStatus: $settlement->status,
+                        rateCardVersion: $settlement->rateCardVersion,
+                        fxRateVersion: $settlement->fxRateVersion,
+                        chargeMinorInr: $settlement->costMinorInr,
+                        creditsDebited: $settlement->creditsDebited,
                     );
                 }
             );
         } catch (Throwable $e) {
             if ($this->dispatchAttempts === 0) {
                 $this->settleStep($principal, $date, $reserved, new TextUsage());
+                $this->creditMeter->releaseUnsent($creditReservation->id, 'dispatch_aborted');
                 throw $e;
             }
+
+            $settlement = $this->creditMeter->settle(
+                $creditReservation->id,
+                $attemptId,
+                $provider,
+                $model,
+                0,
+                0,
+                isChargeable: true,
+                reconcileReason: class_basename($e)
+            );
+
             $durationMs = (int) round((microtime(true) - $start) * 1000);
             $this->recordModelInvocation(
                 $principal,
@@ -405,6 +521,11 @@ class ApprovedModelGateway
                 $durationMs,
                 class_basename($e),
                 $this->dispatchAttempts,
+                providerAttemptId: $attemptId,
+                reservationId: $creditReservation->id,
+                billingAccountId: $settlement->accountId,
+                chargeStatus: $settlement->status,
+                creditsDebited: $settlement->creditsDebited,
             );
             throw $e;
         } finally {
@@ -527,6 +648,14 @@ class ApprovedModelGateway
         ?int $httpAttempts = null,
         ?string $modelPurpose = null,
         ?string $mediaId = null,
+        ?string $providerAttemptId = null,
+        ?string $reservationId = null,
+        ?string $billingAccountId = null,
+        ?string $chargeStatus = null,
+        ?string $rateCardVersion = null,
+        ?string $fxRateVersion = null,
+        ?int $chargeMinorInr = null,
+        ?int $creditsDebited = null,
     ): void {
         try {
             DB::table('ai_model_invocations')->insert([
@@ -544,6 +673,14 @@ class ApprovedModelGateway
                 'duration_ms' => $durationMs,
                 'error_message' => $errorMessage,
                 'http_attempts' => $httpAttempts,
+                'provider_attempt_id' => $providerAttemptId,
+                'reservation_id' => $reservationId,
+                'billing_account_id' => $billingAccountId,
+                'charge_status' => $chargeStatus,
+                'rate_card_version' => $rateCardVersion,
+                'fx_rate_version' => $fxRateVersion,
+                'charge_minor_inr' => $chargeMinorInr,
+                'credits_debited' => $creditsDebited,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

@@ -49,6 +49,9 @@ Route::prefix('v1')->group(function () {
         ]);
     })->name('api.v1.ping');
 
+    // Public Billing Webhooks (Signature verified server-side)
+    Route::post('billing/webhooks/{provider}', [\App\Http\Controllers\Api\V1\AiCreditController::class, 'webhook'])->name('api.v1.billing.webhooks');
+
     // Public Authentication Endpoints
     Route::prefix('auth')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:api-login')->name('api.v1.auth.login');
@@ -252,6 +255,15 @@ Route::prefix('v1')->group(function () {
             Route::post('proposals/{id}/reject', [\App\Http\Controllers\Api\V1\AiChatController::class, 'rejectProposal'])->whereUuid('id')->name('api.v1.ai.proposals.reject');
             Route::get('documents/{type}/{id}/pdf', [\App\Http\Controllers\Api\V1\AiChatController::class, 'downloadDocumentPdf'])->name('api.v1.ai.documents.pdf');
             Route::get('proposals/{id}/pdf', [\App\Http\Controllers\Api\V1\AiChatController::class, 'downloadProposalPdf'])->whereUuid('id')->name('api.v1.ai.proposals.pdf');
+
+            // Centralized AI Credit Metering & Top-Ups
+            Route::prefix('credits')->controller(\App\Http\Controllers\Api\V1\AiCreditController::class)->group(function () {
+                Route::get('balance', 'balance')->name('api.v1.ai.credits.balance');
+                Route::get('usage', 'usage')->name('api.v1.ai.credits.usage');
+                Route::get('packs', 'packs')->name('api.v1.ai.credits.packs');
+                Route::post('topup-orders', 'createTopupOrder')->name('api.v1.ai.credits.topup-orders');
+                Route::get('estimate', 'estimate')->name('api.v1.ai.credits.estimate');
+            });
 
             // Phase 2.1: Unified Multi-Slot Input Collection & Clarification Engine
             Route::prefix('workflow-tasks')->controller(\App\Http\Controllers\Api\V1\AiWorkflowTaskController::class)->group(function () {

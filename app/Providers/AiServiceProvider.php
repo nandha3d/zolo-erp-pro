@@ -4,6 +4,15 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Ai\Billing\Contracts\AiCreditMeterInterface;
+use App\Ai\Billing\Services\AiCreditMeter;
+use App\Ai\Billing\Services\AiCreditReconciliationService;
+use App\Ai\Billing\Services\AiCreditReservationService;
+use App\Ai\Billing\Services\AiCreditSettlementService;
+use App\Ai\Billing\Services\AiTopupService;
+use App\Ai\Billing\Services\CreditAccountResolver;
+use App\Ai\Billing\Services\ModelCostCalculator;
+use App\Ai\Billing\Services\MonthlyCreditGrantService;
 use App\Ai\Contracts\AiPrincipalAuthorizerInterface;
 use App\Ai\DTOs\AiToolRegistration;
 use App\Ai\Gateway\ApprovedModelGateway;
@@ -97,7 +106,21 @@ class AiServiceProvider extends ServiceProvider
             $app->make(AiFeatureGate::class),
             max(0, (int) config('erp_ai.max_tools_per_run', 3)),
         ));
-        $this->app->scoped(ApprovedModelGateway::class);
+        // AI Credit Metering & Billing Engine
+        $this->app->singleton(CreditAccountResolver::class);
+        $this->app->singleton(MonthlyCreditGrantService::class);
+        $this->app->singleton(ModelCostCalculator::class);
+        $this->app->scoped(AiCreditReservationService::class);
+        $this->app->scoped(AiCreditSettlementService::class);
+        $this->app->scoped(AiCreditMeter::class);
+        $this->app->bind(AiCreditMeterInterface::class, AiCreditMeter::class);
+        $this->app->singleton(AiTopupService::class);
+        $this->app->singleton(AiCreditReconciliationService::class);
+
+        $this->app->scoped(ApprovedModelGateway::class, fn ($app) => new ApprovedModelGateway(
+            $app->make(AiFeatureGate::class),
+            $app->make(AiCreditMeter::class)
+        ));
         $this->app->singleton(AiPrincipalFactory::class);
         $this->app->singleton(\App\Ai\Registries\ActionCapabilityRegistry::class, function () {
             $registry = new \App\Ai\Registries\ActionCapabilityRegistry();

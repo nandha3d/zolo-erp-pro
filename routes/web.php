@@ -204,6 +204,15 @@ Route::middleware(['auth', 'company.context'])->prefix('ai')->name('ai.')->group
         Route::get('proposals/{id}/pdf', 'downloadProposalPdf')->whereUuid('id')->name('proposals.pdf');
     });
 
+    // AI Credit Metering & Top-Ups (Session-authenticated workspace routes)
+    Route::prefix('credits')->controller(\App\Http\Controllers\Api\V1\AiCreditController::class)->group(function () {
+        Route::get('balance', 'balance')->name('credits.balance');
+        Route::get('usage', 'usage')->name('credits.usage');
+        Route::get('packs', 'packs')->name('credits.packs');
+        Route::post('topup-orders', 'createTopupOrder')->name('credits.topup-orders');
+        Route::get('estimate', 'estimate')->name('credits.estimate');
+    });
+
     // Phase 2.1 & 2.2: Workflow Tasks & Dependent Masters (Session-authenticated workspace routes)
     Route::prefix('workflow-tasks')->controller(\App\Http\Controllers\Api\V1\AiWorkflowTaskController::class)->group(function () {
         Route::post('/', 'store')->name('workflow-tasks.store');

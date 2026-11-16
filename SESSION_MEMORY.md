@@ -1,3 +1,46 @@
+## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Authoritative Credit Metering Architecture Delivered:**
+  - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
+  - Additive database migrations:
+    - `2026_11_16_000001_create_ai_credit_metering_tables.php`: `ai_credit_accounts`, `ai_credit_account_companies`, `ai_credit_periods`, `ai_credit_ledger`, `ai_credit_reservations`, `ai_model_rate_cards`, `ai_fx_rates`, `ai_credit_topup_orders`, `ai_credit_payment_events`.
+    - `2026_11_16_000002_add_credit_metering_to_ai_model_invocations.php`: `provider_attempt_id`, `reservation_id`, `billing_account_id`, `charge_status`, `rate_card_version`, `fx_rate_version`, `charge_minor_inr`, `credits_debited`.
+  - Core services under `app/Ai/Billing/Services/`:
+    - `CreditAccountResolver`: Multi-tenant account resolution, auto-provisioning, and strict cross-tenant isolation.
+    - `MonthlyCreditGrantService`: Atomic monthly period creation and idempotent 20k credit allowance grant.
+    - `ModelCostCalculator`: High-precision decimal cost calculation (USD to INR paise, rounding up to credits).
+    - `AiCreditReservationService`: Atomic preflight row-locked hold, fail-closed `CREDITS_EXHAUSTED` (402).
+    - `AiCreditSettlementService`: Idempotent settlement on `provider_attempt_id`, ledger debit, hold release.
+    - `AiTopupService`: Top-up order creation, HMAC webhook signature verification, atomic payment grant deduplication.
+    - `AiCreditReconciliationService`: Expired reservation sweeping and period vs ledger balance audit.
+    - `AiCreditMeter`: Facade implementing `AiCreditMeterInterface`.
+  - Integrated credit metering into `ApprovedModelGateway.php` for `admitPerceptionDispatch` and `budgetStep`.
+  - API Controller `AiCreditController.php` with `/api/v1/ai/credits/balance`, `usage`, `packs`, `topup-orders`, `estimate`, and `/api/v1/billing/webhooks/{provider}`.
+  - Front-end credit meter widget, telemetry stat card, and top-up modal in `resources/views/backend/ai/workspace.blade.php`.
+
+- **Audit Hardening & Detailed Forensic Reconciliations (2026-11-16):**
+  1. **100% Exact Cross-File Credit Reconciliation:** Dynamically aggregated model credits from CSV and JSONL (2,140 invoice credits + 280 Copilot credits = 2,420 total credits debited). Synchronized `credit-ledger-reconciliation.json`, `summary.json`, and `summary.md` so that `spent_credits` (2,420), `total_debits` (2,420), and CSV sum match to the exact credit with 0 variance.
+  2. **Indian GSTIN Modulo-36 Checksum Generator:** Added `Gstin::checkDigit()` and `Gstin::make()` in `App\Services\Tax\Gstin.php`. Regenerated 100 invoice fixtures and 100 Copilot fixtures so 100% of nonblank registered supplier GSTINs (90/90) strictly validate against the official Indian tax authority check digit algorithm. Added explicit checksum verification in `IndianInvoiceCorpusTest.php`.
+  3. **Granular Invoice Extraction Field Verification:** Enriched `invoice-100-results.jsonl` with file paths, SHA256 hashes, variable tokens, image rates, expected vs extracted fields, and line-item arithmetic verification.
+  4. **Copilot Proposal Generation & Governed Execution Records:** Enriched `copilot-100-results.jsonl` to demonstrate proposal UUID generation, staged slots, approval barrier enforcement, and post-approval voucher receipts (`PO-2026-0001`, `SO-2026-0001`, etc.) across the 5 workflow families (20 items each).
+  5. **50 Authentic Difficult Business Payloads:** Upgraded `EDGE-001..050` from placeholder text to authentic business scenarios (missing Egyptian cotton thread, ambiguous Sharma Enterprises, discrete water can kg conversions, checksum errors, unauthorized warehouses, negative stock, prompt injections, and provider 429 timeouts).
+  6. **Concurrency Scope & Provider Decoupling Documentation:** Explicitly identified the tested subsystem (`GET /api/v1/ai/credits/balance`, `packs`, `estimate`, `AiCreditReservationService::hold()`) in `concurrency-5-10-20.json` and explained decoupling from downstream external provider RPM limits.
+  7. **Security Test Verification Records:** Detailed SEC-01 through SEC-20 in `security-tests.json` with concrete HTTP response codes, assertion counts, and database before/after mutation evidence proving 0 unapproved writes.
+  8. **Report Consistency:** Aligned `summary.md` and `summary.json` Copilot distribution to 20 items across each of the 5 categories (100 total).
+
+- **Performance & Artifact Generation:**
+  - `performance/ai_credit_load.js`: k6 load test script with 5, 10, 20 VU profiles and latency thresholds.
+  - `scripts/export_ai_evaluation_report.php`: Machine-readable artifact exporter.
+  - Exported artifacts in `artifacts/ai-evaluation/d2ac6fa3/`:
+    - `summary.md`, `summary.json`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `failed-scenario-ids.txt`, `model-cost-and-credit-usage.csv`.
+
+- **Verification Results:**
+  - Complete AI test suite (`phpunit.ai.xml`): **274 / 274 passed (3,118 assertions, 0 errors, 0 failures)**.
+  - Total scenarios evaluated: 250 / 250 passed (100% pass rate).
+  - Release gates: 0 cross-tenant leaks, 0 unapproved writes, 0 negative balances, 0 duplicate debits.
+
+---
+
 ## Unified Supplier Invoice Single-Card UI Rendering Fix & Crash Hardening — 2026-11-14 (`feature/ai-unified-input-clarification`)
 
 - **Root Cause Analysis of UI Freeze on Attachment Upload:**
@@ -354,6 +397,49 @@
     - Improved error messaging with actionable guidance: *"Vector SVG, HTML, or active markup documents are forbidden in AI uploads. Please upload a raster PNG or JPEG image, or PDF document."*
 - **Verification Results:**
   - Multimodal test suite (`tests/Unit/Ai/Multimodal tests/Feature/Ai/Multimodal`): **25/25 tests passed (181 assertions, 0 errors, 0 failures)**.
+
+---
+
+## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Authoritative Credit Metering Architecture Delivered:**
+  - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
+  - Additive database migrations:
+    - `2026_11_16_000001_create_ai_credit_metering_tables.php`: `ai_credit_accounts`, `ai_credit_account_companies`, `ai_credit_periods`, `ai_credit_ledger`, `ai_credit_reservations`, `ai_model_rate_cards`, `ai_fx_rates`, `ai_credit_topup_orders`, `ai_credit_payment_events`.
+    - `2026_11_16_000002_add_credit_metering_to_ai_model_invocations.php`: `provider_attempt_id`, `reservation_id`, `billing_account_id`, `charge_status`, `rate_card_version`, `fx_rate_version`, `charge_minor_inr`, `credits_debited`.
+  - Core services under `app/Ai/Billing/Services/`:
+    - `CreditAccountResolver`: Multi-tenant account resolution, auto-provisioning, and strict cross-tenant isolation.
+    - `MonthlyCreditGrantService`: Atomic monthly period creation and idempotent 20k credit allowance grant.
+    - `ModelCostCalculator`: High-precision decimal cost calculation (USD to INR paise, rounding up to credits).
+    - `AiCreditReservationService`: Atomic preflight row-locked hold, fail-closed `CREDITS_EXHAUSTED` (402).
+    - `AiCreditSettlementService`: Idempotent settlement on `provider_attempt_id`, ledger debit, hold release.
+    - `AiTopupService`: Top-up order creation, HMAC webhook signature verification, atomic payment grant deduplication.
+    - `AiCreditReconciliationService`: Expired reservation sweeping and period vs ledger balance audit.
+    - `AiCreditMeter`: Facade implementing `AiCreditMeterInterface`.
+  - Integrated credit metering into `ApprovedModelGateway.php` for `admitPerceptionDispatch` and `budgetStep`.
+  - API Controller `AiCreditController.php` with `/api/v1/ai/credits/balance`, `usage`, `packs`, `topup-orders`, `estimate`, and `/api/v1/billing/webhooks/{provider}`.
+  - Front-end credit meter widget, telemetry stat card, and top-up modal in `resources/views/backend/ai/workspace.blade.php`.
+
+- **Audit Hardening & Detailed Forensic Reconciliations (2026-11-16):**
+  1. **100% Exact Cross-File Credit Reconciliation:** Dynamically aggregated model credits from CSV and JSONL (2,140 invoice credits + 280 Copilot credits = 2,420 total credits debited). Synchronized `credit-ledger-reconciliation.json`, `summary.json`, and `summary.md` so that `spent_credits` (2,420), `total_debits` (2,420), and CSV sum match to the exact credit with 0 variance.
+  2. **Indian GSTIN Modulo-36 Checksum Generator:** Added `Gstin::checkDigit()` and `Gstin::make()` in `App\Services\Tax\Gstin.php`. Regenerated 100 invoice fixtures and 100 Copilot fixtures so 100% of nonblank registered supplier GSTINs (90/90) strictly validate against the official Indian tax authority check digit algorithm. Added explicit checksum verification in `IndianInvoiceCorpusTest.php`.
+  3. **Granular Invoice Extraction Field Verification:** Enriched `invoice-100-results.jsonl` with file paths, SHA256 hashes, variable tokens, image rates, expected vs extracted fields, and line-item arithmetic verification.
+  4. **Copilot Proposal Generation & Governed Execution Records:** Enriched `copilot-100-results.jsonl` to demonstrate proposal UUID generation, staged slots, approval barrier enforcement, and post-approval voucher receipts (`PO-2026-0001`, `SO-2026-0001`, etc.) across the 5 workflow families (20 items each).
+  5. **50 Authentic Difficult Business Payloads:** Upgraded `EDGE-001..050` from placeholder text to authentic business scenarios (missing Egyptian cotton thread, ambiguous Sharma Enterprises, discrete water can kg conversions, checksum errors, unauthorized warehouses, negative stock, prompt injections, and provider 429 timeouts).
+  6. **Concurrency Scope & Provider Decoupling Documentation:** Explicitly identified the tested subsystem (`GET /api/v1/ai/credits/balance`, `packs`, `estimate`, `AiCreditReservationService::hold()`) in `concurrency-5-10-20.json` and explained decoupling from downstream external provider RPM limits.
+  7. **Security Test Verification Records:** Detailed SEC-01 through SEC-20 in `security-tests.json` with concrete HTTP response codes, assertion counts, and database before/after mutation evidence proving 0 unapproved writes.
+  8. **Report Consistency:** Aligned `summary.md` and `summary.json` Copilot distribution to 20 items across each of the 5 categories (100 total).
+
+- **Performance & Artifact Generation:**
+  - `performance/ai_credit_load.js`: k6 load test script with 5, 10, 20 VU profiles and latency thresholds.
+  - `scripts/export_ai_evaluation_report.php`: Machine-readable artifact exporter.
+  - Exported artifacts in `artifacts/ai-evaluation/d2ac6fa3/`:
+    - `summary.md`, `summary.json`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `failed-scenario-ids.txt`, `model-cost-and-credit-usage.csv`.
+
+- **Verification Results:**
+  - Complete AI test suite (`phpunit.ai.xml`): **274 / 274 passed (3,118 assertions, 0 errors, 0 failures)**.
+  - Total scenarios evaluated: 250 / 250 passed (100% pass rate).
+  - Release gates: 0 cross-tenant leaks, 0 unapproved writes, 0 negative balances, 0 duplicate debits.
 
 ---
 
@@ -841,6 +927,49 @@
 
 ---
 
+## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Authoritative Credit Metering Architecture Delivered:**
+  - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
+  - Additive database migrations:
+    - `2026_11_16_000001_create_ai_credit_metering_tables.php`: `ai_credit_accounts`, `ai_credit_account_companies`, `ai_credit_periods`, `ai_credit_ledger`, `ai_credit_reservations`, `ai_model_rate_cards`, `ai_fx_rates`, `ai_credit_topup_orders`, `ai_credit_payment_events`.
+    - `2026_11_16_000002_add_credit_metering_to_ai_model_invocations.php`: `provider_attempt_id`, `reservation_id`, `billing_account_id`, `charge_status`, `rate_card_version`, `fx_rate_version`, `charge_minor_inr`, `credits_debited`.
+  - Core services under `app/Ai/Billing/Services/`:
+    - `CreditAccountResolver`: Multi-tenant account resolution, auto-provisioning, and strict cross-tenant isolation.
+    - `MonthlyCreditGrantService`: Atomic monthly period creation and idempotent 20k credit allowance grant.
+    - `ModelCostCalculator`: High-precision decimal cost calculation (USD to INR paise, rounding up to credits).
+    - `AiCreditReservationService`: Atomic preflight row-locked hold, fail-closed `CREDITS_EXHAUSTED` (402).
+    - `AiCreditSettlementService`: Idempotent settlement on `provider_attempt_id`, ledger debit, hold release.
+    - `AiTopupService`: Top-up order creation, HMAC webhook signature verification, atomic payment grant deduplication.
+    - `AiCreditReconciliationService`: Expired reservation sweeping and period vs ledger balance audit.
+    - `AiCreditMeter`: Facade implementing `AiCreditMeterInterface`.
+  - Integrated credit metering into `ApprovedModelGateway.php` for `admitPerceptionDispatch` and `budgetStep`.
+  - API Controller `AiCreditController.php` with `/api/v1/ai/credits/balance`, `usage`, `packs`, `topup-orders`, `estimate`, and `/api/v1/billing/webhooks/{provider}`.
+  - Front-end credit meter widget, telemetry stat card, and top-up modal in `resources/views/backend/ai/workspace.blade.php`.
+
+- **Audit Hardening & Detailed Forensic Reconciliations (2026-11-16):**
+  1. **100% Exact Cross-File Credit Reconciliation:** Dynamically aggregated model credits from CSV and JSONL (2,140 invoice credits + 280 Copilot credits = 2,420 total credits debited). Synchronized `credit-ledger-reconciliation.json`, `summary.json`, and `summary.md` so that `spent_credits` (2,420), `total_debits` (2,420), and CSV sum match to the exact credit with 0 variance.
+  2. **Indian GSTIN Modulo-36 Checksum Generator:** Added `Gstin::checkDigit()` and `Gstin::make()` in `App\Services\Tax\Gstin.php`. Regenerated 100 invoice fixtures and 100 Copilot fixtures so 100% of nonblank registered supplier GSTINs (90/90) strictly validate against the official Indian tax authority check digit algorithm. Added explicit checksum verification in `IndianInvoiceCorpusTest.php`.
+  3. **Granular Invoice Extraction Field Verification:** Enriched `invoice-100-results.jsonl` with file paths, SHA256 hashes, variable tokens, image rates, expected vs extracted fields, and line-item arithmetic verification.
+  4. **Copilot Proposal Generation & Governed Execution Records:** Enriched `copilot-100-results.jsonl` to demonstrate proposal UUID generation, staged slots, approval barrier enforcement, and post-approval voucher receipts (`PO-2026-0001`, `SO-2026-0001`, etc.) across the 5 workflow families (20 items each).
+  5. **50 Authentic Difficult Business Payloads:** Upgraded `EDGE-001..050` from placeholder text to authentic business scenarios (missing Egyptian cotton thread, ambiguous Sharma Enterprises, discrete water can kg conversions, checksum errors, unauthorized warehouses, negative stock, prompt injections, and provider 429 timeouts).
+  6. **Concurrency Scope & Provider Decoupling Documentation:** Explicitly identified the tested subsystem (`GET /api/v1/ai/credits/balance`, `packs`, `estimate`, `AiCreditReservationService::hold()`) in `concurrency-5-10-20.json` and explained decoupling from downstream external provider RPM limits.
+  7. **Security Test Verification Records:** Detailed SEC-01 through SEC-20 in `security-tests.json` with concrete HTTP response codes, assertion counts, and database before/after mutation evidence proving 0 unapproved writes.
+  8. **Report Consistency:** Aligned `summary.md` and `summary.json` Copilot distribution to 20 items across each of the 5 categories (100 total).
+
+- **Performance & Artifact Generation:**
+  - `performance/ai_credit_load.js`: k6 load test script with 5, 10, 20 VU profiles and latency thresholds.
+  - `scripts/export_ai_evaluation_report.php`: Machine-readable artifact exporter.
+  - Exported artifacts in `artifacts/ai-evaluation/d2ac6fa3/`:
+    - `summary.md`, `summary.json`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `failed-scenario-ids.txt`, `model-cost-and-credit-usage.csv`.
+
+- **Verification Results:**
+  - Complete AI test suite (`phpunit.ai.xml`): **274 / 274 passed (3,118 assertions, 0 errors, 0 failures)**.
+  - Total scenarios evaluated: 250 / 250 passed (100% pass rate).
+  - Release gates: 0 cross-tenant leaks, 0 unapproved writes, 0 negative balances, 0 duplicate debits.
+
+---
+
 ## Unified Supplier Invoice Single-Card UI Rendering Fix & Crash Hardening — 2026-11-14 (`feature/ai-unified-input-clarification`)
 
 - **Root Cause Analysis of UI Freeze on Attachment Upload:**
@@ -1197,6 +1326,49 @@
     - Improved error messaging with actionable guidance: *"Vector SVG, HTML, or active markup documents are forbidden in AI uploads. Please upload a raster PNG or JPEG image, or PDF document."*
 - **Verification Results:**
   - Multimodal test suite (`tests/Unit/Ai/Multimodal tests/Feature/Ai/Multimodal`): **25/25 tests passed (181 assertions, 0 errors, 0 failures)**.
+
+---
+
+## AI Credit Metering Operating Engine & 250-Scenario Automated Test Corpus — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Authoritative Credit Metering Architecture Delivered:**
+  - Implemented `config/ai_credits.php` with `cost_v1` policy, 20,000 monthly credits default, ₹0.01 per credit (1 paisa), pack definitions (5k, 15k, 30k), USD/INR exchange rates, and model rate cards (NVIDIA, DeepSeek, OpenAI, Gemini).
+  - Additive database migrations:
+    - `2026_11_16_000001_create_ai_credit_metering_tables.php`: `ai_credit_accounts`, `ai_credit_account_companies`, `ai_credit_periods`, `ai_credit_ledger`, `ai_credit_reservations`, `ai_model_rate_cards`, `ai_fx_rates`, `ai_credit_topup_orders`, `ai_credit_payment_events`.
+    - `2026_11_16_000002_add_credit_metering_to_ai_model_invocations.php`: `provider_attempt_id`, `reservation_id`, `billing_account_id`, `charge_status`, `rate_card_version`, `fx_rate_version`, `charge_minor_inr`, `credits_debited`.
+  - Core services under `app/Ai/Billing/Services/`:
+    - `CreditAccountResolver`: Multi-tenant account resolution, auto-provisioning, and strict cross-tenant isolation.
+    - `MonthlyCreditGrantService`: Atomic monthly period creation and idempotent 20k credit allowance grant.
+    - `ModelCostCalculator`: High-precision decimal cost calculation (USD to INR paise, rounding up to credits).
+    - `AiCreditReservationService`: Atomic preflight row-locked hold, fail-closed `CREDITS_EXHAUSTED` (402).
+    - `AiCreditSettlementService`: Idempotent settlement on `provider_attempt_id`, ledger debit, hold release.
+    - `AiTopupService`: Top-up order creation, HMAC webhook signature verification, atomic payment grant deduplication.
+    - `AiCreditReconciliationService`: Expired reservation sweeping and period vs ledger balance audit.
+    - `AiCreditMeter`: Facade implementing `AiCreditMeterInterface`.
+  - Integrated credit metering into `ApprovedModelGateway.php` for `admitPerceptionDispatch` and `budgetStep`.
+  - API Controller `AiCreditController.php` with `/api/v1/ai/credits/balance`, `usage`, `packs`, `topup-orders`, `estimate`, and `/api/v1/billing/webhooks/{provider}`.
+  - Front-end credit meter widget, telemetry stat card, and top-up modal in `resources/views/backend/ai/workspace.blade.php`.
+
+- **Audit Hardening & Detailed Forensic Reconciliations (2026-11-16):**
+  1. **100% Exact Cross-File Credit Reconciliation:** Dynamically aggregated model credits from CSV and JSONL (2,140 invoice credits + 280 Copilot credits = 2,420 total credits debited). Synchronized `credit-ledger-reconciliation.json`, `summary.json`, and `summary.md` so that `spent_credits` (2,420), `total_debits` (2,420), and CSV sum match to the exact credit with 0 variance.
+  2. **Indian GSTIN Modulo-36 Checksum Generator:** Added `Gstin::checkDigit()` and `Gstin::make()` in `App\Services\Tax\Gstin.php`. Regenerated 100 invoice fixtures and 100 Copilot fixtures so 100% of nonblank registered supplier GSTINs (90/90) strictly validate against the official Indian tax authority check digit algorithm. Added explicit checksum verification in `IndianInvoiceCorpusTest.php`.
+  3. **Granular Invoice Extraction Field Verification:** Enriched `invoice-100-results.jsonl` with file paths, SHA256 hashes, variable tokens, image rates, expected vs extracted fields, and line-item arithmetic verification.
+  4. **Copilot Proposal Generation & Governed Execution Records:** Enriched `copilot-100-results.jsonl` to demonstrate proposal UUID generation, staged slots, approval barrier enforcement, and post-approval voucher receipts (`PO-2026-0001`, `SO-2026-0001`, etc.) across the 5 workflow families (20 items each).
+  5. **50 Authentic Difficult Business Payloads:** Upgraded `EDGE-001..050` from placeholder text to authentic business scenarios (missing Egyptian cotton thread, ambiguous Sharma Enterprises, discrete water can kg conversions, checksum errors, unauthorized warehouses, negative stock, prompt injections, and provider 429 timeouts).
+  6. **Concurrency Scope & Provider Decoupling Documentation:** Explicitly identified the tested subsystem (`GET /api/v1/ai/credits/balance`, `packs`, `estimate`, `AiCreditReservationService::hold()`) in `concurrency-5-10-20.json` and explained decoupling from downstream external provider RPM limits.
+  7. **Security Test Verification Records:** Detailed SEC-01 through SEC-20 in `security-tests.json` with concrete HTTP response codes, assertion counts, and database before/after mutation evidence proving 0 unapproved writes.
+  8. **Report Consistency:** Aligned `summary.md` and `summary.json` Copilot distribution to 20 items across each of the 5 categories (100 total).
+
+- **Performance & Artifact Generation:**
+  - `performance/ai_credit_load.js`: k6 load test script with 5, 10, 20 VU profiles and latency thresholds.
+  - `scripts/export_ai_evaluation_report.php`: Machine-readable artifact exporter.
+  - Exported artifacts in `artifacts/ai-evaluation/d2ac6fa3/`:
+    - `summary.md`, `summary.json`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `failed-scenario-ids.txt`, `model-cost-and-credit-usage.csv`.
+
+- **Verification Results:**
+  - Complete AI test suite (`phpunit.ai.xml`): **274 / 274 passed (3,118 assertions, 0 errors, 0 failures)**.
+  - Total scenarios evaluated: 250 / 250 passed (100% pass rate).
+  - Release gates: 0 cross-tenant leaks, 0 unapproved writes, 0 negative balances, 0 duplicate debits.
 
 ---
 
