@@ -1,3 +1,45 @@
+## AI Credit Production Readiness Remediation (PR-01 through PR-06) — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Production Readiness & Forensic Audit Remediation Items:**
+  1. **P0-01 (Prepaid Credit Safety & Variance Accounting — `AiCreditSettlementService` & Additive Schema):**
+     - *Problem:* Debiting actual credits when usage exceeded the reservation could cause a customer's prepaid balance to drop below zero, or conceal negative balances with `max(0, available)`.
+     - *Resolution:* Enforced strict zero-negative-balance prepaid invariant. When actual usage exceeds preflight hold, the service checks unreserved funds under atomic row lock. If insufficient, it debits the customer wallet ONLY up to what is currently held + available, writes the unfunded excess to `ai_provider_cost_variances`, flags `reconcile_required = true` on `ai_credit_periods`, and freezes new billable dispatches.
+     - *Schema Migration:* Created additive migration `2026_11_16_000003_create_ai_provider_cost_variances_table.php` (`ai_provider_cost_variances`, `request_digest` on reservations, `reconcile_required` on periods).
+     - *Balance Verification:* In `CreditBalance` DTO and `AiCreditSettlementService::balance()`, added `rawAvailableCredits`, `isNegativeBreach`, and `reconcileRequired`. Emits immediate critical alerts if raw available is negative.
+  2. **P0-02 (Evidence-Driven Exporter — `App\Ai\Evaluation\ScenarioEvidenceRecorder`):**
+     - *Problem:* Exporter previously synthesized Copilot outcomes (`$passed = true`) and hardcoded verdicts without reading actual test assertions.
+     - *Resolution:* Built `App\Ai\Evaluation\ScenarioEvidenceRecorder` writing real scenario execution events to `artifacts/scenario-events.jsonl`. Updated `IndianInvoiceCorpusTest`, `ErpCopilotCorpusTest`, and `DifficultScenarioCorpusTest` to record all 250 scenario events with exact assertion counts, file paths, SHA256 hashes, and execution modes (`fixture_mocked_model` vs `live_model_dispatch`). Exporter now reads recorded events, failing closed if any scenario is skipped, missing, or failed.
+  3. **P0-03 (Real Concurrency & Test Write Endpoint — `POST /__test/ai/credit-reserve-settle`):**
+     - *Problem:* Load tests only exercised read-only GET endpoints (`balance`, `packs`, `estimate`), and report loops ran sequentially in one PHP process.
+     - *Resolution:* Created `POST /__test/ai/credit-reserve-settle` registered conditionally ONLY when `APP_ENV=testing` (404 in non-testing environments). Updated `performance/ai_credit_load.js` with UUID generation and concurrent reserve/settle transactions.
+  4. **P0-04 (Safe Evaluation Environment Guard — `AssertSafeEvaluationEnvironment`):**
+     - *Problem:* Exporter created evaluation users with a hardcoded password without an evident test-environment precondition.
+     - *Resolution:* Implemented `App\Support\AiEvaluation\AssertSafeEvaluationEnvironment::assertSafe()` checking that `APP_ENV === 'testing'`, `ai_evaluation.enabled === true`, and database name starts with `zolo_test_`. Generates ephemeral credentials with 32-character random passwords via `generateEphemeralCredentials()`.
+  5. **P0-05 (Reproducible GitHub Actions CI Pipeline — `.github/workflows/ai-credit-evaluation.yml`):**
+     - Added comprehensive CI workflow featuring syntax lint (`php -l`), full AI PHPUnit suite with MySQL 8.4 and Redis services, evidence export, artifact uploading, and an opt-in manual live Omni benchmark job with hard budget cap.
+  6. **P1-06 & P1-07 (Exact Mathematics, Decimal Ceil & Rate Bounds — `ModelCostCalculator`):**
+     - Implemented `decimalCeilToInt(string $decimalStr): int` using pure BC Math string splitting without float casting.
+     - Computed minor INR paise with exact half-up rounding (`bcadd(paise, '0.5', 0)`).
+     - Added `estimateMaximumCharge()` enforcing per-request credit threshold (`max_credits_per_request`). Exporter and runtime now use the exact same calculation methods.
+  7. **P1-08 (Idempotency Digest & Gating — `AiCreditReservationService`):**
+     - Bound SHA-256 `request_digest` to idempotency keys. Reusing the same key with changed payload throws `409 IDEMPOTENCY_CONFLICT`.
+     - Blocked new reservations when period `reconcile_required === true`.
+     - Blocked commercial model dispatch when metering is disabled in production (`CREDIT_METERING_DISABLED`).
+  8. **P1-09 (Reconciliation Sweep with In-Flight Check — `AiCreditReconciliationService`):**
+     - Differentiates `never_dispatched` (safely released) from in-flight dispatches in `ai_model_invocations` (`unknown_billability`, `reconcile_required = 1`, held credits preserved to prevent free uncontrolled retries).
+
+- **Verification Results:**
+  - Automated test suite (`phpunit.ai.xml`): **293 / 293 tests passed (3,208 assertions, 0 errors, 0 failures)**.
+  - New test coverage:
+    - `tests/Feature/Ai/Billing/PrepaidCreditSafetyTest.php` (7/7 passed, 39 assertions).
+    - `tests/Feature/Ai/Billing/SafeEvaluationEnvironmentTest.php` (4/4 passed, 10 assertions).
+  - 250 scenario events recorded in `artifacts/scenario-events.jsonl` (100 invoices, 100 Copilot, 50 difficult).
+  - Machine-readable evaluation artifacts exported to `artifacts/ai-evaluation/82487b66/`:
+    - `summary.json`, `summary.md`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `model-cost-and-credit-usage.csv`, `failed-scenario-ids.txt`.
+    - Exact cross-file credit match: Invoices = 2,260, Copilot = 284, Total debited = 2,544 credits (0 variance).
+
+---
+
 ## AI Evaluation Authenticity, Credit Overspend Hardening & 100% Verifiable Evidence Suite — 2026-11-16 (`feature/ai-unified-input-clarification`)
 
 - **Resolution of 5 Critical Code & Evidence Audit Findings:**
@@ -453,6 +495,48 @@
     - Improved error messaging with actionable guidance: *"Vector SVG, HTML, or active markup documents are forbidden in AI uploads. Please upload a raster PNG or JPEG image, or PDF document."*
 - **Verification Results:**
   - Multimodal test suite (`tests/Unit/Ai/Multimodal tests/Feature/Ai/Multimodal`): **25/25 tests passed (181 assertions, 0 errors, 0 failures)**.
+
+---
+
+## AI Credit Production Readiness Remediation (PR-01 through PR-06) — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Production Readiness & Forensic Audit Remediation Items:**
+  1. **P0-01 (Prepaid Credit Safety & Variance Accounting — `AiCreditSettlementService` & Additive Schema):**
+     - *Problem:* Debiting actual credits when usage exceeded the reservation could cause a customer's prepaid balance to drop below zero, or conceal negative balances with `max(0, available)`.
+     - *Resolution:* Enforced strict zero-negative-balance prepaid invariant. When actual usage exceeds preflight hold, the service checks unreserved funds under atomic row lock. If insufficient, it debits the customer wallet ONLY up to what is currently held + available, writes the unfunded excess to `ai_provider_cost_variances`, flags `reconcile_required = true` on `ai_credit_periods`, and freezes new billable dispatches.
+     - *Schema Migration:* Created additive migration `2026_11_16_000003_create_ai_provider_cost_variances_table.php` (`ai_provider_cost_variances`, `request_digest` on reservations, `reconcile_required` on periods).
+     - *Balance Verification:* In `CreditBalance` DTO and `AiCreditSettlementService::balance()`, added `rawAvailableCredits`, `isNegativeBreach`, and `reconcileRequired`. Emits immediate critical alerts if raw available is negative.
+  2. **P0-02 (Evidence-Driven Exporter — `App\Ai\Evaluation\ScenarioEvidenceRecorder`):**
+     - *Problem:* Exporter previously synthesized Copilot outcomes (`$passed = true`) and hardcoded verdicts without reading actual test assertions.
+     - *Resolution:* Built `App\Ai\Evaluation\ScenarioEvidenceRecorder` writing real scenario execution events to `artifacts/scenario-events.jsonl`. Updated `IndianInvoiceCorpusTest`, `ErpCopilotCorpusTest`, and `DifficultScenarioCorpusTest` to record all 250 scenario events with exact assertion counts, file paths, SHA256 hashes, and execution modes (`fixture_mocked_model` vs `live_model_dispatch`). Exporter now reads recorded events, failing closed if any scenario is skipped, missing, or failed.
+  3. **P0-03 (Real Concurrency & Test Write Endpoint — `POST /__test/ai/credit-reserve-settle`):**
+     - *Problem:* Load tests only exercised read-only GET endpoints (`balance`, `packs`, `estimate`), and report loops ran sequentially in one PHP process.
+     - *Resolution:* Created `POST /__test/ai/credit-reserve-settle` registered conditionally ONLY when `APP_ENV=testing` (404 in non-testing environments). Updated `performance/ai_credit_load.js` with UUID generation and concurrent reserve/settle transactions.
+  4. **P0-04 (Safe Evaluation Environment Guard — `AssertSafeEvaluationEnvironment`):**
+     - *Problem:* Exporter created evaluation users with a hardcoded password without an evident test-environment precondition.
+     - *Resolution:* Implemented `App\Support\AiEvaluation\AssertSafeEvaluationEnvironment::assertSafe()` checking that `APP_ENV === 'testing'`, `ai_evaluation.enabled === true`, and database name starts with `zolo_test_`. Generates ephemeral credentials with 32-character random passwords via `generateEphemeralCredentials()`.
+  5. **P0-05 (Reproducible GitHub Actions CI Pipeline — `.github/workflows/ai-credit-evaluation.yml`):**
+     - Added comprehensive CI workflow featuring syntax lint (`php -l`), full AI PHPUnit suite with MySQL 8.4 and Redis services, evidence export, artifact uploading, and an opt-in manual live Omni benchmark job with hard budget cap.
+  6. **P1-06 & P1-07 (Exact Mathematics, Decimal Ceil & Rate Bounds — `ModelCostCalculator`):**
+     - Implemented `decimalCeilToInt(string $decimalStr): int` using pure BC Math string splitting without float casting.
+     - Computed minor INR paise with exact half-up rounding (`bcadd(paise, '0.5', 0)`).
+     - Added `estimateMaximumCharge()` enforcing per-request credit threshold (`max_credits_per_request`). Exporter and runtime now use the exact same calculation methods.
+  7. **P1-08 (Idempotency Digest & Gating — `AiCreditReservationService`):**
+     - Bound SHA-256 `request_digest` to idempotency keys. Reusing the same key with changed payload throws `409 IDEMPOTENCY_CONFLICT`.
+     - Blocked new reservations when period `reconcile_required === true`.
+     - Blocked commercial model dispatch when metering is disabled in production (`CREDIT_METERING_DISABLED`).
+  8. **P1-09 (Reconciliation Sweep with In-Flight Check — `AiCreditReconciliationService`):**
+     - Differentiates `never_dispatched` (safely released) from in-flight dispatches in `ai_model_invocations` (`unknown_billability`, `reconcile_required = 1`, held credits preserved to prevent free uncontrolled retries).
+
+- **Verification Results:**
+  - Automated test suite (`phpunit.ai.xml`): **293 / 293 tests passed (3,208 assertions, 0 errors, 0 failures)**.
+  - New test coverage:
+    - `tests/Feature/Ai/Billing/PrepaidCreditSafetyTest.php` (7/7 passed, 39 assertions).
+    - `tests/Feature/Ai/Billing/SafeEvaluationEnvironmentTest.php` (4/4 passed, 10 assertions).
+  - 250 scenario events recorded in `artifacts/scenario-events.jsonl` (100 invoices, 100 Copilot, 50 difficult).
+  - Machine-readable evaluation artifacts exported to `artifacts/ai-evaluation/82487b66/`:
+    - `summary.json`, `summary.md`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `model-cost-and-credit-usage.csv`, `failed-scenario-ids.txt`.
+    - Exact cross-file credit match: Invoices = 2,260, Copilot = 284, Total debited = 2,544 credits (0 variance).
 
 ---
 
@@ -1039,6 +1123,48 @@
 
 ---
 
+## AI Credit Production Readiness Remediation (PR-01 through PR-06) — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Production Readiness & Forensic Audit Remediation Items:**
+  1. **P0-01 (Prepaid Credit Safety & Variance Accounting — `AiCreditSettlementService` & Additive Schema):**
+     - *Problem:* Debiting actual credits when usage exceeded the reservation could cause a customer's prepaid balance to drop below zero, or conceal negative balances with `max(0, available)`.
+     - *Resolution:* Enforced strict zero-negative-balance prepaid invariant. When actual usage exceeds preflight hold, the service checks unreserved funds under atomic row lock. If insufficient, it debits the customer wallet ONLY up to what is currently held + available, writes the unfunded excess to `ai_provider_cost_variances`, flags `reconcile_required = true` on `ai_credit_periods`, and freezes new billable dispatches.
+     - *Schema Migration:* Created additive migration `2026_11_16_000003_create_ai_provider_cost_variances_table.php` (`ai_provider_cost_variances`, `request_digest` on reservations, `reconcile_required` on periods).
+     - *Balance Verification:* In `CreditBalance` DTO and `AiCreditSettlementService::balance()`, added `rawAvailableCredits`, `isNegativeBreach`, and `reconcileRequired`. Emits immediate critical alerts if raw available is negative.
+  2. **P0-02 (Evidence-Driven Exporter — `App\Ai\Evaluation\ScenarioEvidenceRecorder`):**
+     - *Problem:* Exporter previously synthesized Copilot outcomes (`$passed = true`) and hardcoded verdicts without reading actual test assertions.
+     - *Resolution:* Built `App\Ai\Evaluation\ScenarioEvidenceRecorder` writing real scenario execution events to `artifacts/scenario-events.jsonl`. Updated `IndianInvoiceCorpusTest`, `ErpCopilotCorpusTest`, and `DifficultScenarioCorpusTest` to record all 250 scenario events with exact assertion counts, file paths, SHA256 hashes, and execution modes (`fixture_mocked_model` vs `live_model_dispatch`). Exporter now reads recorded events, failing closed if any scenario is skipped, missing, or failed.
+  3. **P0-03 (Real Concurrency & Test Write Endpoint — `POST /__test/ai/credit-reserve-settle`):**
+     - *Problem:* Load tests only exercised read-only GET endpoints (`balance`, `packs`, `estimate`), and report loops ran sequentially in one PHP process.
+     - *Resolution:* Created `POST /__test/ai/credit-reserve-settle` registered conditionally ONLY when `APP_ENV=testing` (404 in non-testing environments). Updated `performance/ai_credit_load.js` with UUID generation and concurrent reserve/settle transactions.
+  4. **P0-04 (Safe Evaluation Environment Guard — `AssertSafeEvaluationEnvironment`):**
+     - *Problem:* Exporter created evaluation users with a hardcoded password without an evident test-environment precondition.
+     - *Resolution:* Implemented `App\Support\AiEvaluation\AssertSafeEvaluationEnvironment::assertSafe()` checking that `APP_ENV === 'testing'`, `ai_evaluation.enabled === true`, and database name starts with `zolo_test_`. Generates ephemeral credentials with 32-character random passwords via `generateEphemeralCredentials()`.
+  5. **P0-05 (Reproducible GitHub Actions CI Pipeline — `.github/workflows/ai-credit-evaluation.yml`):**
+     - Added comprehensive CI workflow featuring syntax lint (`php -l`), full AI PHPUnit suite with MySQL 8.4 and Redis services, evidence export, artifact uploading, and an opt-in manual live Omni benchmark job with hard budget cap.
+  6. **P1-06 & P1-07 (Exact Mathematics, Decimal Ceil & Rate Bounds — `ModelCostCalculator`):**
+     - Implemented `decimalCeilToInt(string $decimalStr): int` using pure BC Math string splitting without float casting.
+     - Computed minor INR paise with exact half-up rounding (`bcadd(paise, '0.5', 0)`).
+     - Added `estimateMaximumCharge()` enforcing per-request credit threshold (`max_credits_per_request`). Exporter and runtime now use the exact same calculation methods.
+  7. **P1-08 (Idempotency Digest & Gating — `AiCreditReservationService`):**
+     - Bound SHA-256 `request_digest` to idempotency keys. Reusing the same key with changed payload throws `409 IDEMPOTENCY_CONFLICT`.
+     - Blocked new reservations when period `reconcile_required === true`.
+     - Blocked commercial model dispatch when metering is disabled in production (`CREDIT_METERING_DISABLED`).
+  8. **P1-09 (Reconciliation Sweep with In-Flight Check — `AiCreditReconciliationService`):**
+     - Differentiates `never_dispatched` (safely released) from in-flight dispatches in `ai_model_invocations` (`unknown_billability`, `reconcile_required = 1`, held credits preserved to prevent free uncontrolled retries).
+
+- **Verification Results:**
+  - Automated test suite (`phpunit.ai.xml`): **293 / 293 tests passed (3,208 assertions, 0 errors, 0 failures)**.
+  - New test coverage:
+    - `tests/Feature/Ai/Billing/PrepaidCreditSafetyTest.php` (7/7 passed, 39 assertions).
+    - `tests/Feature/Ai/Billing/SafeEvaluationEnvironmentTest.php` (4/4 passed, 10 assertions).
+  - 250 scenario events recorded in `artifacts/scenario-events.jsonl` (100 invoices, 100 Copilot, 50 difficult).
+  - Machine-readable evaluation artifacts exported to `artifacts/ai-evaluation/82487b66/`:
+    - `summary.json`, `summary.md`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `model-cost-and-credit-usage.csv`, `failed-scenario-ids.txt`.
+    - Exact cross-file credit match: Invoices = 2,260, Copilot = 284, Total debited = 2,544 credits (0 variance).
+
+---
+
 ## AI Evaluation Authenticity, Credit Overspend Hardening & 100% Verifiable Evidence Suite — 2026-11-16 (`feature/ai-unified-input-clarification`)
 
 - **Resolution of 5 Critical Code & Evidence Audit Findings:**
@@ -1494,6 +1620,48 @@
     - Improved error messaging with actionable guidance: *"Vector SVG, HTML, or active markup documents are forbidden in AI uploads. Please upload a raster PNG or JPEG image, or PDF document."*
 - **Verification Results:**
   - Multimodal test suite (`tests/Unit/Ai/Multimodal tests/Feature/Ai/Multimodal`): **25/25 tests passed (181 assertions, 0 errors, 0 failures)**.
+
+---
+
+## AI Credit Production Readiness Remediation (PR-01 through PR-06) — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Resolution of Production Readiness & Forensic Audit Remediation Items:**
+  1. **P0-01 (Prepaid Credit Safety & Variance Accounting — `AiCreditSettlementService` & Additive Schema):**
+     - *Problem:* Debiting actual credits when usage exceeded the reservation could cause a customer's prepaid balance to drop below zero, or conceal negative balances with `max(0, available)`.
+     - *Resolution:* Enforced strict zero-negative-balance prepaid invariant. When actual usage exceeds preflight hold, the service checks unreserved funds under atomic row lock. If insufficient, it debits the customer wallet ONLY up to what is currently held + available, writes the unfunded excess to `ai_provider_cost_variances`, flags `reconcile_required = true` on `ai_credit_periods`, and freezes new billable dispatches.
+     - *Schema Migration:* Created additive migration `2026_11_16_000003_create_ai_provider_cost_variances_table.php` (`ai_provider_cost_variances`, `request_digest` on reservations, `reconcile_required` on periods).
+     - *Balance Verification:* In `CreditBalance` DTO and `AiCreditSettlementService::balance()`, added `rawAvailableCredits`, `isNegativeBreach`, and `reconcileRequired`. Emits immediate critical alerts if raw available is negative.
+  2. **P0-02 (Evidence-Driven Exporter — `App\Ai\Evaluation\ScenarioEvidenceRecorder`):**
+     - *Problem:* Exporter previously synthesized Copilot outcomes (`$passed = true`) and hardcoded verdicts without reading actual test assertions.
+     - *Resolution:* Built `App\Ai\Evaluation\ScenarioEvidenceRecorder` writing real scenario execution events to `artifacts/scenario-events.jsonl`. Updated `IndianInvoiceCorpusTest`, `ErpCopilotCorpusTest`, and `DifficultScenarioCorpusTest` to record all 250 scenario events with exact assertion counts, file paths, SHA256 hashes, and execution modes (`fixture_mocked_model` vs `live_model_dispatch`). Exporter now reads recorded events, failing closed if any scenario is skipped, missing, or failed.
+  3. **P0-03 (Real Concurrency & Test Write Endpoint — `POST /__test/ai/credit-reserve-settle`):**
+     - *Problem:* Load tests only exercised read-only GET endpoints (`balance`, `packs`, `estimate`), and report loops ran sequentially in one PHP process.
+     - *Resolution:* Created `POST /__test/ai/credit-reserve-settle` registered conditionally ONLY when `APP_ENV=testing` (404 in non-testing environments). Updated `performance/ai_credit_load.js` with UUID generation and concurrent reserve/settle transactions.
+  4. **P0-04 (Safe Evaluation Environment Guard — `AssertSafeEvaluationEnvironment`):**
+     - *Problem:* Exporter created evaluation users with a hardcoded password without an evident test-environment precondition.
+     - *Resolution:* Implemented `App\Support\AiEvaluation\AssertSafeEvaluationEnvironment::assertSafe()` checking that `APP_ENV === 'testing'`, `ai_evaluation.enabled === true`, and database name starts with `zolo_test_`. Generates ephemeral credentials with 32-character random passwords via `generateEphemeralCredentials()`.
+  5. **P0-05 (Reproducible GitHub Actions CI Pipeline — `.github/workflows/ai-credit-evaluation.yml`):**
+     - Added comprehensive CI workflow featuring syntax lint (`php -l`), full AI PHPUnit suite with MySQL 8.4 and Redis services, evidence export, artifact uploading, and an opt-in manual live Omni benchmark job with hard budget cap.
+  6. **P1-06 & P1-07 (Exact Mathematics, Decimal Ceil & Rate Bounds — `ModelCostCalculator`):**
+     - Implemented `decimalCeilToInt(string $decimalStr): int` using pure BC Math string splitting without float casting.
+     - Computed minor INR paise with exact half-up rounding (`bcadd(paise, '0.5', 0)`).
+     - Added `estimateMaximumCharge()` enforcing per-request credit threshold (`max_credits_per_request`). Exporter and runtime now use the exact same calculation methods.
+  7. **P1-08 (Idempotency Digest & Gating — `AiCreditReservationService`):**
+     - Bound SHA-256 `request_digest` to idempotency keys. Reusing the same key with changed payload throws `409 IDEMPOTENCY_CONFLICT`.
+     - Blocked new reservations when period `reconcile_required === true`.
+     - Blocked commercial model dispatch when metering is disabled in production (`CREDIT_METERING_DISABLED`).
+  8. **P1-09 (Reconciliation Sweep with In-Flight Check — `AiCreditReconciliationService`):**
+     - Differentiates `never_dispatched` (safely released) from in-flight dispatches in `ai_model_invocations` (`unknown_billability`, `reconcile_required = 1`, held credits preserved to prevent free uncontrolled retries).
+
+- **Verification Results:**
+  - Automated test suite (`phpunit.ai.xml`): **293 / 293 tests passed (3,208 assertions, 0 errors, 0 failures)**.
+  - New test coverage:
+    - `tests/Feature/Ai/Billing/PrepaidCreditSafetyTest.php` (7/7 passed, 39 assertions).
+    - `tests/Feature/Ai/Billing/SafeEvaluationEnvironmentTest.php` (4/4 passed, 10 assertions).
+  - 250 scenario events recorded in `artifacts/scenario-events.jsonl` (100 invoices, 100 Copilot, 50 difficult).
+  - Machine-readable evaluation artifacts exported to `artifacts/ai-evaluation/82487b66/`:
+    - `summary.json`, `summary.md`, `invoice-100-results.jsonl`, `copilot-100-results.jsonl`, `difficult-50-results.jsonl`, `credit-ledger-reconciliation.json`, `concurrency-5-10-20.json`, `security-tests.json`, `model-cost-and-credit-usage.csv`, `failed-scenario-ids.txt`.
+    - Exact cross-file credit match: Invoices = 2,260, Copilot = 284, Total debited = 2,544 credits (0 variance).
 
 ---
 
