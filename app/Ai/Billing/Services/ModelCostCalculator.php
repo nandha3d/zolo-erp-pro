@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ai\Billing\Services;
 
+use App\Ai\Billing\Exceptions\AiCreditException;
 use Illuminate\Support\Facades\DB;
 
 class ModelCostCalculator
@@ -35,8 +36,8 @@ class ModelCostCalculator
 
         $inputPrice = $this->resolveUnitPrice($policyVersion, $provider, $model, 'input_token');
         $outputPrice = $this->resolveUnitPrice($policyVersion, $provider, $model, 'output_token');
-        $imagePrice = $this->resolveUnitPrice($policyVersion, $provider, $model, 'image');
-        $audioPrice = $this->resolveUnitPrice($policyVersion, $provider, $model, 'audio_second');
+        $imagePrice = $this->resolveUnitPrice($policyVersion, $provider, $model, 'image', $imagesCount > 0);
+        $audioPrice = $this->resolveUnitPrice($policyVersion, $provider, $model, 'audio_second', $audioSeconds > 0);
 
         $fxRate = $this->resolveFxRate($fxVersion);
 
@@ -97,11 +98,20 @@ class ModelCostCalculator
 
         $configuredMax = (int) config('ai_credits.max_credits_per_request', 5000);
 
-        return min($configuredMax, max(1, $calc['credits']));
+        if ($calc['credits'] > $configuredMax) {
+            throw AiCreditException::requestExceedsCreditLimit($calc['credits'], $configuredMax);
+        }
+
+        return max(1, $calc['credits']);
     }
 
-    private function resolveUnitPrice(string $version, string $provider, string $model, string $unit): string
-    {
+    private function resolveUnitPrice(
+        string $version,
+        string $provider,
+        string $model,
+        string $unit,
+        bool $isRequired = true
+    ): string {
         $dbRate = DB::table('ai_model_rate_cards')
             ->where('version', $version)
             ->where('provider', $provider)
@@ -113,25 +123,20 @@ class ModelCostCalculator
             return (string) $dbRate;
         }
 
-        // Check fallback config
-        $configCards = config("ai_credits.default_rate_cards.{$version}.{$provider}.{$model}.{$unit}");
-        if ($configCards !== null) {
-            return (string) $configCards;
+        // Check configured rate cards for this specific provider and model.
+        // Avoid using dot-notation on $model because model names may contain dots (e.g. 3.5).
+        $providerCards = config("ai_credits.default_rate_cards.{$version}.{$provider}");
+        if (is_array($providerCards) && isset($providerCards[$model][$unit])) {
+            return (string) $providerCards[$model][$unit];
         }
 
-        $defaultCard = config("ai_credits.default_rate_cards.{$version}.default.{$unit}");
-        if ($defaultCard !== null) {
-            return (string) $defaultCard;
+        // If unit is optional (e.g. image price for a text-only model when 0 images are passed)
+        if (! $isRequired) {
+            return '0.00000000';
         }
 
-        // Conservative safe default: $0.50/1M input ($0.00000050), $1.50/1M output ($0.00000150)
-        return match ($unit) {
-            'input_token' => '0.00000050',
-            'output_token' => '0.00000150',
-            'image' => '0.00200000',
-            'audio_second' => '0.00050000',
-            default => '0.00000100',
-        };
+        // Fail-closed security rule (SEC-17): Never silently fall back to generic rates.
+        throw AiCreditException::rateCardMissing($provider, $model, $unit);
     }
 
     private function resolveFxRate(string $version): float

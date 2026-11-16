@@ -22,10 +22,38 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-echo "=== Live NVIDIA Nano Omni Benchmark for BILL-001 ===" . PHP_EOL;
+$opts = getopt('', ['provider::', 'budget-cap-usd::', 'scenario::']);
+$provider = (string) ($opts['provider'] ?? 'nvidia');
+$budgetCapUsd = isset($opts['budget-cap-usd']) ? (float) $opts['budget-cap-usd'] : 5.00;
+$scenarioId = (string) ($opts['scenario'] ?? 'BILL-001');
 
-$imagePath = __DIR__ . '/../tests/fixtures/ai/invoice_media/BILL-001.png';
-$expectedPath = __DIR__ . '/../tests/fixtures/ai/expected/BILL-001.json';
+echo "=== Live AI Benchmark [Scenario: {$scenarioId}, Provider: {$provider}, Budget Cap: \${$budgetCapUsd}] ===" . PHP_EOL;
+
+$outputDir = __DIR__ . '/../artifacts/ai-evaluation/live-benchmarks';
+if (! is_dir($outputDir)) {
+    mkdir($outputDir, 0755, true);
+}
+
+// 1. Budget Cap Preflight Check: compute cumulative past live spend
+$pastSpendUsd = 0.0;
+foreach (glob($outputDir . '/*.json') as $file) {
+    $content = json_decode(file_get_contents($file), true);
+    if (isset($content['cost_usd'])) {
+        $pastSpendUsd += (float) $content['cost_usd'];
+    } elseif (isset($content['usd_cost'])) {
+        $pastSpendUsd += (float) $content['usd_cost'];
+    }
+}
+
+// Estimated dispatch cost (conservative max 4k tokens + 1 image = ~$0.005 USD)
+$estimatedDispatchCostUsd = 0.0050;
+if (($pastSpendUsd + $estimatedDispatchCostUsd) > $budgetCapUsd) {
+    echo "ERROR: Live benchmark budget cap exceeded! Past spent: \${$pastSpendUsd}, Max Est: \${$estimatedDispatchCostUsd}, Budget Cap: \${$budgetCapUsd}" . PHP_EOL;
+    exit(2);
+}
+
+$imagePath = __DIR__ . "/../tests/fixtures/ai/invoice_media/{$scenarioId}.png";
+$expectedPath = __DIR__ . "/../tests/fixtures/ai/expected/{$scenarioId}.json";
 
 if (! file_exists($imagePath)) {
     echo "ERROR: Fixture image not found: {$imagePath}" . PHP_EOL;
@@ -208,12 +236,30 @@ $accuracyPct = round(($matchedFields / $totalFields) * 100, 2);
 $calcGrandTotal = round($subtotal - $discountAmount + $freightCharges + $taxAmount + $roundOff, 2);
 $arithmeticValid = abs($calcGrandTotal - $grandTotal) < 0.05 && $grandTotal > 0;
 
+$costCalculator = app(\App\Ai\Billing\Services\ModelCostCalculator::class);
+$pricing = $costCalculator->calculate(
+    provider: $provider,
+    model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
+    inputTokens: $inputTokens,
+    outputTokens: $outputTokens,
+    imagesCount: 1
+);
+
+$actualCostUsd = $pricing['usd_cost'];
+$totalSpentUsd = round($pastSpendUsd + $actualCostUsd, 6);
+
 $benchmarkRecord = [
     'benchmark_timestamp' => now()->toIso8601String(),
-    'scenario_id' => 'BILL-001',
-    'provider' => 'nvidia',
+    'scenario_id' => $scenarioId,
+    'provider' => $provider,
     'model' => 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
     'execution_mode' => 'live_model_dispatch',
+    'budget_cap_usd' => $budgetCapUsd,
+    'cost_usd' => $actualCostUsd,
+    'cost_inr' => round($pricing['cost_minor_inr'] / 100, 4),
+    'credits_debited' => $pricing['credits'],
+    'cumulative_usd_spent' => $totalSpentUsd,
+    'budget_cap_respected' => $totalSpentUsd <= $budgetCapUsd,
     'media_sha256' => $imageSha256,
     'input_tokens' => $inputTokens,
     'output_tokens' => $outputTokens,
@@ -231,10 +277,11 @@ $benchmarkRecord = [
     'raw_model_response' => $rawText,
 ];
 
-$outputFile = $outputDir . '/live_omni_benchmark_BILL-001.json';
+$outputFile = $outputDir . "/live_omni_benchmark_{$scenarioId}.json";
 file_put_contents($outputFile, json_encode($benchmarkRecord, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
 echo "Benchmark record written to: {$outputFile}" . PHP_EOL;
+echo "Cost: \${$actualCostUsd} USD (~{$pricing['credits']} credits) | Cumulative Spent: \${$totalSpentUsd} / \${$budgetCapUsd}" . PHP_EOL;
 echo "Field Accuracy: {$accuracyPct}% ({$matchedFields}/{$totalFields})" . PHP_EOL;
 echo "Arithmetic Formula Valid: " . ($arithmeticValid ? 'YES' : 'NO') . PHP_EOL;
 echo "Input Tokens: {$inputTokens}, Output Tokens: {$outputTokens}" . PHP_EOL;

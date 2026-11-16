@@ -332,4 +332,22 @@ final class CreditSecurityTest extends TestCase
         $this->assertEquals($settle1->ledgerEntryId, $settle2->ledgerEntryId);
         $this->assertEquals($balanceAfterFirst->spentCredits, $balanceAfterSecond->spentCredits);
     }
+
+    /**
+     * SEC-17: Missing model pricing fails closed with RATE_CARD_MISSING (422), never allowing unmetered calls.
+     */
+    public function test_sec_17_missing_model_pricing_fails_closed(): void
+    {
+        $calculator = app(\App\Ai\Billing\Services\ModelCostCalculator::class);
+
+        $this->expectException(\App\Ai\Billing\Exceptions\AiCreditException::class);
+        $this->expectExceptionMessage('No billable rate card configured');
+
+        $calculator->calculate(
+            provider: 'nvidia',
+            model: 'non-existent-unmetered-model-99',
+            inputTokens: 1000,
+            outputTokens: 500
+        );
+    }
 }

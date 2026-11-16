@@ -352,4 +352,92 @@ final class CreditLedgerRulesTest extends TestCase
         $this->assertFalse($tamperedAudit['is_reconciled']);
         $this->assertNotEmpty($tamperedAudit['discrepancies']);
     }
+
+    /**
+     * CR-26: Overspend prevention - Actual usage exceeding held reservation debits the FULL amount.
+     * Prevents silent undercharging or unmetered LLM spend.
+     */
+    public function test_settlement_when_actual_usage_exceeds_held_reservation_debits_full_amount(): void
+    {
+        $creditMeter = app(AiCreditMeter::class);
+        $settlementService = app(\App\Ai\Billing\Services\AiCreditSettlementService::class);
+
+        // Preflight hold 10 credits
+        $reservation = $creditMeter->reserve(
+            $this->principal,
+            (string) Str::uuid(),
+            'test.overage_settlement',
+            'nvidia',
+            'nvidia/nemotron-3.5-lightning-30b-a3b',
+            'res_overage_' . Str::uuid(),
+            10
+        );
+
+        $this->assertSame(10, $reservation->remainingHeldCredits);
+
+        // Settle with large usage that costs 35 credits
+        $attemptId = 'att_overage_' . Str::uuid();
+        $settlement = $settlementService->settle(
+            $reservation->id,
+            $attemptId,
+            'nvidia',
+            'nvidia/nemotron-3.5-lightning-30b-a3b',
+            inputTokens: 100000, // Large token count
+            outputTokens: 25000,
+            isChargeable: true
+        );
+
+        $this->assertGreaterThan(10, $settlement->creditsDebited);
+        $this->assertSame('settled_with_overage', $settlement->status);
+
+        // Assert ledger has the full debited amount
+        $ledgerEntry = DB::table('ai_credit_ledger')
+            ->where('provider_attempt_id', $attemptId)
+            ->first();
+
+        $this->assertNotNull($ledgerEntry);
+        $this->assertSame(-$settlement->creditsDebited, (int) $ledgerEntry->amount_credits);
+
+        // Assert reservation has 0 remaining held credits and status settled_with_overage
+        $updatedRes = DB::table('ai_credit_reservations')->where('id', $reservation->id)->first();
+        $this->assertSame(0, (int) $updatedRes->remaining_held_credits);
+        $this->assertSame('settled_with_overage', $updatedRes->status);
+    }
+
+    /**
+     * SEC-17: Missing model pricing must fail closed (422 RATE_CARD_MISSING), never falling back to generic rates.
+     */
+    public function test_sec_17_missing_rate_card_fails_closed_with_rate_card_missing_exception(): void
+    {
+        $calculator = app(ModelCostCalculator::class);
+
+        $this->expectException(AiCreditException::class);
+        $this->expectExceptionMessage('No billable rate card configured for model [unconfigured-model-999]');
+
+        $calculator->calculate(
+            provider: 'nvidia',
+            model: 'unconfigured-model-999',
+            inputTokens: 1000,
+            outputTokens: 500
+        );
+    }
+
+    /**
+     * Overspend prevention: Preflight estimate exceeding configured maximum credit threshold fails closed.
+     */
+    public function test_preflight_estimate_exceeding_max_credits_per_request_throws_request_exceeds_credit_limit(): void
+    {
+        $calculator = app(ModelCostCalculator::class);
+        config()->set('ai_credits.max_credits_per_request', 100);
+
+        $this->expectException(AiCreditException::class);
+        $this->expectExceptionMessage('exceeds the maximum configured per-request threshold [100]');
+
+        $calculator->estimatePreflightCredits(
+            provider: 'nvidia',
+            model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+            estimatedInputTokens: 500000,
+            maxOutputTokens: 200000
+        );
+    }
 }

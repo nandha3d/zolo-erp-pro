@@ -112,12 +112,17 @@ class AiCreditSettlementService
                 ->first();
 
             $held = (int) $reservation->remaining_held_credits;
-            $debited = min($held, $creditsToDebit);
+            // Strict Accounting Invariant: Always debit the FULL actual usage ($creditsToDebit).
+            // Never cap debits at $held, which would cause LLM usage overspend to be hidden and uncharged.
+            $debited = $creditsToDebit;
             $released = max(0, $held - $debited);
+            $overage = max(0, $debited - $held);
 
-            $status = $reconcileReason !== null ? 'reconcile_required' : 'settled';
+            $status = $reconcileReason !== null
+                ? 'reconcile_required'
+                : ($overage > 0 ? 'settled_with_overage' : 'settled');
 
-            // Post immutable usage debit to ledger
+            // Post immutable usage debit to ledger (full actual cost debited)
             $ledgerId = (string) Str::uuid();
             DB::table('ai_credit_ledger')->insert([
                 'id' => $ledgerId,
@@ -128,7 +133,7 @@ class AiCreditSettlementService
                 'run_id' => $reservation->run_id,
                 'provider_attempt_id' => $providerAttemptId,
                 'kind' => 'usage_debit',
-                'amount_credits' => -$debited, // negative for debits
+                'amount_credits' => -$debited, // full actual cost debited
                 'currency' => 'INR',
                 'cost_minor_inr' => $costMinorInr,
                 'rate_card_version' => $cost['rate_card_version'],

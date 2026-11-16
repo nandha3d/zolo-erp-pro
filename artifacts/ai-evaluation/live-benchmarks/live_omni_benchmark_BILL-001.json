@@ -1,13 +1,19 @@
 {
-    "benchmark_timestamp": "2026-11-16T10:34:23+00:00",
+    "benchmark_timestamp": "2026-11-16T11:00:44+00:00",
     "scenario_id": "BILL-001",
     "provider": "nvidia",
     "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
     "execution_mode": "live_model_dispatch",
+    "budget_cap_usd": 5,
+    "cost_usd": 0.0024075,
+    "cost_inr": 0.2,
+    "credits_debited": 21,
+    "cumulative_usd_spent": 0.002408,
+    "budget_cap_respected": true,
     "media_sha256": "c9aa2c942ab666c1fa543214b3d28de1b82f845787cda4bae49af128438e7ba6",
     "input_tokens": 1600,
     "output_tokens": 475,
-    "latency_seconds": 5.193,
+    "latency_seconds": 7.02,
     "status": "completed",
     "error": null,
     "field_accuracy_percentage": 91.67,
@@ -127,7 +133,7 @@
         "tax_amount": "765.00",
         "discount_amount": null,
         "total_amount": "5015.00",
-        "confidence": 0.95,
+        "confidence": 0.99,
         "arithmetic_check": {
             "is_consistent": true,
             "line_sum": "5015.00",
@@ -175,5 +181,5 @@
         ],
         "source_evidence": []
     },
-    "raw_model_response": "{\n  \"document_type\": \"purchase_bill\",\n  \"supplier_name\": \"Apex Industrial Supplies 1 Pvt Ltd\",\n  \"supplier_gstin\": \"33AABC1001A1ZI\",\n  \"supplier_phone\": null,\n  \"buyer_name\": null,\n  \"buyer_gstin\": \"33AABCL9876C1ZF\",\n  \"invoice_number\": \"INV-202601\",\n  \"invoice_date\": \"2026-11-02\",\n  \"currency\": \"INR\",\n  \"place_of_supply\": \"33\",\n  \"subtotal\": 4250.0,\n  \"tax_amount\": 765.0,\n  \"discount_amount\": null,\n  \"total_amount\": 5015.0,\n  \"confidence\": 0.95,\n  \"warnings\": [\n    \"Supplier GSTIN format appears invalid (33AABC1001A1ZI)\"\n  ],\n  \"lines\": [\n    {\n      \"page\": 1,\n      \"description\": \"Material Grade Item 1-1\",\n      \"sku_or_hsn\": \"8471\",\n      \"quantity\": 10,\n      \"uom\": null,\n      \"unit_price\": 125.0,\n      \"discount_amount\": null,\n      \"tax_rate\": 18.0,\n      \"tax_amount\": 1475.0,\n      \"line_total\": 1475.0,\n      \"confidence\": 0.98\n    },\n    {\n      \"page\": 1,\n      \"description\": \"Material Grade Item 2-1\",\n      \"sku_or_hsn\": \"8471\",\n      \"quantity\": 20,\n      \"uom\": null,\n      \"unit_price\": 150.0,\n      \"discount_amount\": null,\n      \"tax_rate\": 18.0,\n      \"tax_amount\": 3540.0,\n      \"line_total\": 3540.0,\n      \"confidence\": 0.98\n    }\n  ]\n}"
+    "raw_model_response": "{\n  \"document_type\": \"purchase_bill\",\n  \"supplier_name\": \"Apex Industrial Supplies 1 Pvt Ltd\",\n  \"supplier_gstin\": \"33AABC1001A1ZI\",\n  \"supplier_phone\": null,\n  \"buyer_name\": null,\n  \"buyer_gstin\": \"33AABCL9876C1ZF\",\n  \"invoice_number\": \"INV-202601\",\n  \"invoice_date\": \"2026-11-02\",\n  \"currency\": \"INR\",\n  \"place_of_supply\": \"33\",\n  \"subtotal\": 4250.0,\n  \"tax_amount\": 765.0,\n  \"discount_amount\": null,\n  \"total_amount\": 5015.0,\n  \"confidence\": 0.99,\n  \"warnings\": [\n    \"Supplier GSTIN format appears invalid (33AABC1001A1ZI)\"\n  ],\n  \"lines\": [\n    {\n      \"page\": 1,\n      \"description\": \"Material Grade Item 1-1\",\n      \"sku_or_hsn\": \"8471\",\n      \"quantity\": 10,\n      \"uom\": null,\n      \"unit_price\": 125.0,\n      \"discount_amount\": null,\n      \"tax_rate\": 18.0,\n      \"tax_amount\": 1475.0,\n      \"line_total\": 1475.0,\n      \"confidence\": 0.98\n    },\n    {\n      \"page\": 1,\n      \"description\": \"Material Grade Item 2-1\",\n      \"sku_or_hsn\": \"8471\",\n      \"quantity\": 20,\n      \"uom\": null,\n      \"unit_price\": 150.0,\n      \"discount_amount\": null,\n      \"tax_rate\": 18.0,\n      \"tax_amount\": 3540.0,\n      \"line_total\": 3540.0,\n      \"confidence\": 0.98\n    }\n  ]\n}"
 }

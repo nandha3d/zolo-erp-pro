@@ -68,4 +68,24 @@ class AiCreditException extends RuntimeException implements HttpExceptionInterfa
             409
         );
     }
+
+    public static function rateCardMissing(string $provider, string $model, string $unit): self
+    {
+        return new self(
+            'RATE_CARD_MISSING',
+            "No billable rate card configured for model [{$model}] under provider [{$provider}] (unit: {$unit}). Unmetered model calls are strictly forbidden (SEC-17).",
+            422,
+            ['provider' => $provider, 'model' => $model, 'unit' => $unit]
+        );
+    }
+
+    public static function requestExceedsCreditLimit(int $estimated, int $limit): self
+    {
+        return new self(
+            'REQUEST_EXCEEDS_CREDIT_LIMIT',
+            "Estimated operation cost [{$estimated}] credits exceeds the maximum configured per-request threshold [{$limit}] credits.",
+            422,
+            ['estimated_credits' => $estimated, 'max_limit' => $limit]
+        );
+    }
 }
