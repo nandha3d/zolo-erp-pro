@@ -67,6 +67,7 @@ final class CommercialDocumentAdapter implements ActionPreviewAdapterInterface, 
                 'discount' => (string) ($line['discount'] ?? 0), 'tax_rate' => (string) $line['tax_rate'],
                 ...array_intersect_key($slots['items'][$index], array_flip(['order_item_id', 'batch_no', 'note', 'tax_rate_override'])),
             ];
+            if (isset($items[$index]['tax_rate_override'])) $items[$index]['tax_rate_override'] = (string) $items[$index]['tax_rate_override'];
         }
         $payload = array_intersect_key($slots, array_flip(['note', 'order_discount', 'shipping_cost', 'valid_until', 'due_date', 'sales_order_id', 'delivery_challan_id', 'purpose']));
         $payload += ['customer_id' => (int) $customer->id, 'warehouse_id' => (int) $warehouse->id, 'date' => $date, 'items' => $items];
@@ -74,6 +75,9 @@ final class CommercialDocumentAdapter implements ActionPreviewAdapterInterface, 
             if (isset($payload[$field])) $payload[$field] = (string) $payload[$field];
         }
         if ($definition->key === 'quotation.create.v1') {
+            if (!empty($payload['sales_order_id']) || !empty($payload['delivery_challan_id'])) {
+                throw ValidationException::withMessages(['quotation' => 'A quotation cannot consume an order or delivery challan.']);
+            }
             $billers = Biller::where('company_id', $context->companyId)->where('is_active', true)
                 ->when(!empty($slots['biller_id']), fn ($q) => $q->whereKey($slots['biller_id']))->limit(2)->get();
             if ($billers->count() !== 1) throw ValidationException::withMessages(['biller_id' => 'Select an active quotation biller.']);
@@ -83,21 +87,32 @@ final class CommercialDocumentAdapter implements ActionPreviewAdapterInterface, 
         if ($definition->key === 'delivery_challan.create.v1' && empty($payload['purpose'])) {
             throw ValidationException::withMessages(['purpose' => 'Select the statutory purpose of this delivery challan.']);
         }
+        if ($definition->key === 'delivery_challan.create.v1' && !empty($payload['delivery_challan_id'])) {
+            throw ValidationException::withMessages(['delivery_challan_id' => 'A dispatch cannot settle another delivery challan.']);
+        }
         if (!empty($payload['delivery_challan_id'])) {
             app(MaterialDocumentService::class)->sources('sale', $payload + ['sale_status' => 1], $context, (int) auth()->id(), $date);
         }
         if (!empty($payload['sales_order_id'])) {
-            app(OrderLifecycleService::class)->prepareConsumer($definition->key === 'delivery_challan.create.v1' ? 'dc' : 'sale',
-                $payload + ['business_date' => $date], $context, (int) auth()->id());
+            DB::transaction(fn () => app(OrderLifecycleService::class)->prepareConsumer($definition->key === 'delivery_challan.create.v1' ? 'dc' : 'sale',
+                $payload + ['business_date' => $date], $context, (int) auth()->id()));
         }
         $payload['expected_totals'] = ['grand_total' => (string) $priced['grand_total'], 'tax_total' => (string) $priced['total_tax']];
+        if ($definition->key === 'delivery_challan.create.v1') {
+            // A challan does not invoice the customer. MaterialDocumentService values its inventory accrual at posting.
+            $payload['expected_totals'] = ['grand_total' => '0', 'tax_total' => '0'];
+        }
         $preview = ['document_type' => match ($definition->key) {
             'quotation.create.v1' => 'Customer Quotation', 'sales_invoice.create.v1' => 'Sales Tax Invoice',
             'delivery_challan.create.v1' => 'Delivery Challan', default => throw new \InvalidArgumentException('Unsupported sales action.'),
         }, 'customer_name' => $customer->name, 'date' => $date, 'items' => $items, 'totals' => $payload['expected_totals'],
             'policy' => ['requires_approval' => true, 'external_sending' => 'none', 'inventory_impact' => match ($definition->key) {
                 'quotation.create.v1' => 'none', 'delivery_challan.create.v1' => 'physical_dispatch', default => empty($payload['delivery_challan_id']) ? 'invoice_stock_issue' : 'settle_existing_dispatch',
-            }, 'ledger_impact' => $definition->key === 'quotation.create.v1' ? 'none' : 'authoritative_domain_posting']];
+            }, 'ledger_impact' => match ($definition->key) {
+                'quotation.create.v1' => 'none',
+                'delivery_challan.create.v1' => 'Dr Goods Delivered Not Invoiced / Cr Inventory at authoritative ERP valuation. No accounts receivable or sales tax is posted.',
+                default => 'authoritative_domain_posting',
+            }]];
         return new ActionPreviewResult($payload, $preview, $this->sourceHash($payload, $context));
     }
 
@@ -203,13 +218,47 @@ final class CommercialDocumentAdapter implements ActionPreviewAdapterInterface, 
             if ($lock) $q->lockForUpdate();
             $state[$table] = $q->get()->map(fn ($row) => (array) $row)->all();
         }
-        if (!empty($payload['biller_id'])) $state['biller'] = (array) DB::table('billers')->where('company_id', $context->companyId)->find($payload['biller_id']);
+        if (!empty($payload['biller_id'])) {
+            $query = DB::table('billers')->where('company_id', $context->companyId)->where('id', $payload['biller_id']);
+            if ($lock) $query->lockForUpdate();
+            $state['biller'] = (array) $query->first();
+        }
         foreach (['sales_order_id' => 'sales_orders', 'delivery_challan_id' => 'delivery_challans'] as $field => $table) {
             if (!empty($payload[$field])) {
                 $q = DB::table($table)->where('company_id', $context->companyId)->where('id', $payload[$field]);
                 if ($lock) $q->lockForUpdate();
                 $state[$field] = (array) $q->first();
             }
+        }
+        if (!empty($payload['sales_order_id'])) {
+            $query = DB::table('commercial_order_items')->where('company_id', $context->companyId)
+                ->where('order_kind', 'sale')->where('order_id', $payload['sales_order_id'])->orderBy('id');
+            if ($lock) $query->lockForUpdate();
+            $items = $query->get();
+            $allocations = DB::table('commercial_order_allocations')->where('company_id', $context->companyId)
+                ->whereIn('order_item_id', $items->pluck('id'))->orderBy('id');
+            if ($lock) $allocations->lockForUpdate();
+            $state['sales_order_items'] = $items->all();
+            $state['sales_order_allocations'] = $allocations->get()->all();
+        }
+        if (!empty($payload['delivery_challan_id'])) {
+            $query = DB::table('delivery_challan_items')->where('company_id', $context->companyId)
+                ->where('delivery_challan_id', $payload['delivery_challan_id'])->orderBy('id');
+            if ($lock) $query->lockForUpdate();
+            $state['delivery_items'] = $query->get()->all();
+            $settlements = DB::table('material_settlements')->where('company_id', $context->companyId)
+                ->where('document_type', 'dc')->where('document_id', $payload['delivery_challan_id'])->orderBy('id');
+            if ($lock) $settlements->lockForUpdate();
+            $state['delivery_settlements'] = $settlements->get()->all();
+        }
+        if (empty($payload['biller_id'])) {
+            // Products are locked above before these aggregates, using the inventory owner's lock order.
+            $state['stock_ledger'] = DB::table('stock_movement_lines')->where('company_id', $context->companyId)
+                ->whereIn('product_id', array_column($payload['items'], 'product_id'))->groupBy('product_id')->orderBy('product_id')
+                ->selectRaw('product_id, SUM(qty_base) AS qty, SUM(value) AS value, MAX(id) AS last_line_id')->get()->all();
+            $state['warehouse_stock'] = DB::table('product_warehouse')->where('company_id', $context->companyId)
+                ->where('warehouse_id', $payload['warehouse_id'])->whereIn('product_id', array_column($payload['items'], 'product_id'))
+                ->orderBy('id')->get()->all();
         }
         return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
     }

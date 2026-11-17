@@ -18,6 +18,12 @@ php artisan ai:mcp-token ACTOR_ID COMPANY_ID BRANCH_ID FY_ID --tool=receivables.
 
 The command displays the secret once. Store it in the client's secret manager. Revoke the Sanctum token or deactivate its binding to revoke access. Bindings and tokens expire independently; both must remain valid. There is no unrestricted outbound MCP URL fetcher or client-driven tool registration.
 
+## Reviewed outbound MCP reads
+
+`AI_MCP_OUTBOUND_ENABLED` defaults to false. Configure `ai_infrastructure.mcp.outbound.servers` in reviewed server configuration. Each fixed server requires an HTTPS `url`, exact `allowed_hosts`, and branch credentials under `bindings[company_id][branch_id]` with a secret `bearer_token` and nonempty server-owned `scope_arguments`. Each fixed tool requires its remote `name`, local `provider_alias`, `read_only=true`, `required_permissions` including `ai.use` and a separate ERP permission, and a bounded object `input_schema` with `additionalProperties=false`. Never commit bearer tokens or populate this registry from model output.
+
+The client negotiates MCP initialization and calls only the configured remote tool; it does not import remote tool discovery. Public DNS resolution is pinned for the connection. Private, loopback, metadata and reserved addresses, redirects, URL credentials, scope overrides, unexpected arguments, excessive responses and unsupported protocols fail closed. Calls revalidate the actor, company switch, branch credentials and permissions. External text remains untrusted reference material and is never reconciled ERP financial evidence. HTTP mocks verify these boundaries without contacting an external service.
+
 ## Isolated workers
 
 Set `AI_QUEUE_CONNECTION` to a configured asynchronous queue connection. The Redis connection's `retry_after` is 90 seconds; execution timeout is 60 seconds. Mutation jobs have one attempt and rely on the existing atomic execution claim and domain idempotency receipt. They never retry an uncertain posting automatically.
@@ -28,6 +34,10 @@ php artisan queue:work redis --queue=ai-telemetry --tries=3 --timeout=10 --sleep
 ```
 
 Run these under the production process supervisor, with ERP transaction queues retaining independent capacity. `config/horizon.php` defines separate `ai-execution` and `ai-telemetry` pools for deployments that install a compatible, reviewed Laravel Horizon package. This repository does not currently install Horizon; plain Laravel workers support the implemented jobs without it. Enabling a Horizon dashboard also requires its normal administrative authorization gate.
+
+The optional Horizon configuration also isolates `ai-scheduled`, `ai-documents` and `ai-communications`. Because Horizon can show jobs from every company, its dashboard denies access by default. Set `AI_OPERATIONS_ADMIN_ACTOR_IDS` to a reviewed comma-separated list of installation operators only; an allowed operator must also retain active administrative membership in the selected company. Company administration alone does not authorize global worker visibility. Each execution and schedule worker installs a freshly authorized actor and request context only for that operation, then restores the prior guard, user resolver and context and clears branch-access caches. Jobs carry references, never serialized permission grants.
+
+Document and approved reminder workers have separate configuration and activation requirements in [document operations](ai-documents-operations.md) and [payment reminder operations](ai-payment-reminders.md). These integrations remain disabled until operators configure their required services.
 
 Enable `AI_ASYNC_EXECUTION_ENABLED` together with existing action and company switches after worker readiness is verified. The async dispatch service accepts only the current signed approved proposal. API and session endpoints support explicit dispatch and execution polling. A worker reloads proposal scope and actor permissions; stale versions, revoked membership, kill switches, and invalid approvals cannot post. Completed jobs return the existing ERP receipt on redelivery.
 
@@ -41,15 +51,9 @@ The adapter exports OTLP JSON to `/api/public/otel/v1/traces` with the v4 ingest
 
 ## Opt-in scheduled stock reads and purchase preparation
 
-Load `routes/ai-schedules.php` once outside other route groups. Apply additive migration `2026_11_12_010002_create_ai_scheduled_rules.php`. Add the following guarded schedule to the application's existing scheduler:
+`RouteServiceProvider` loads `routes/ai-schedules.php` outside other route groups. Apply additive migration `2026_11_12_010002_create_ai_scheduled_rules.php`. The existing `routes/console.php` registers `ai:run-schedules` every five minutes without overlapping. The command exits before querying ERP data unless scheduling is enabled. Do not add a duplicate schedule. The deployment must run Laravel's normal scheduler; per-company database claims also prevent duplicate preparation across dispatchers.
 
-```php
-if (config('ai_infrastructure.scheduling.enabled', false)) {
-    $schedule->command('ai:run-schedules')->everyMinute()->withoutOverlapping()->onOneServer();
-}
-```
-
-The shared scheduler lock requires the deployment's normal shared cache. Start a separate bounded worker:
+The scheduler overlap lock requires the deployment's normal cache. Start a separate bounded worker:
 
 ```text
 php artisan queue:work redis --queue=ai-scheduled --tries=1 --timeout=60 --sleep=3

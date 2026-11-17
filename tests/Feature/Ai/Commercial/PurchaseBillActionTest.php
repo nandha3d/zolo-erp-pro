@@ -519,4 +519,51 @@ final class PurchaseBillActionTest extends TestCase
         $approveRes->assertStatus(422);
         $approveRes->assertJsonValidationErrors(['source_state']);
     }
+
+    public function test_duplicate_supplier_invoice_is_rejected_before_a_second_bill_or_stock_movement(): void
+    {
+        $this->actingAs($this->adminUser, 'sanctum');
+        $input = ['action_key' => 'purchase_bill.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+            'supplier_invoice_no' => 'DUPLICATE-APPROVED-BILL',
+            'items' => [['product_id' => $this->productA->id, 'qty' => '2.00', 'net_unit_cost' => '200.00']],
+        ]];
+        $first = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', $input);
+        $first->assertCreated();
+        $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals/'.$first->json('proposal.id').'/approve',
+            ['expected_version' => 1])->assertOk();
+        $counts = [Purchase::where('company_id', $this->company->id)->count(), DB::table('stock_movements')->where('company_id', $this->company->id)->count()];
+        $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', $input)
+            ->assertUnprocessable()->assertJsonValidationErrors('supplier_invoice_no');
+        $this->assertSame($counts, [Purchase::where('company_id', $this->company->id)->count(), DB::table('stock_movements')->where('company_id', $this->company->id)->count()]);
+    }
+
+    public function test_bill_preview_cannot_create_a_missing_supplier_tax_profile(): void
+    {
+        DB::table('party_tax_profiles')->where('company_id', $this->company->id)->where('party_type', 'supplier')->where('party_id', $this->supplier->id)->delete();
+        $this->actingAs($this->adminUser, 'sanctum');
+        $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', ['action_key' => 'purchase_bill.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+            'items' => [['product_id' => $this->productA->id, 'qty' => '2.00', 'net_unit_cost' => '200.00']],
+        ]])->assertUnprocessable()->assertJsonValidationErrors('supplier_id');
+        $this->assertFalse(DB::table('party_tax_profiles')->where('company_id', $this->company->id)
+            ->where('party_type', 'supplier')->where('party_id', $this->supplier->id)->exists());
+    }
+
+    public function test_purchase_bill_preserves_four_decimal_unit_cost_and_posted_total(): void
+    {
+        $this->actingAs($this->adminUser, 'sanctum');
+        $proposal = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', ['action_key' => 'purchase_bill.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+            'supplier_invoice_no' => 'PRECISE-BILL',
+            'items' => [['product_id' => $this->productA->id, 'qty' => '2.00', 'net_unit_cost' => '1.2345']],
+        ]]);
+        $proposal->assertCreated();
+        $this->assertSame('1.2345', $proposal->json('proposal.preview.items.0.net_unit_cost'));
+        $result = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals/'.$proposal->json('proposal.id').'/approve', ['expected_version' => 1]);
+        $result->assertOk();
+        $bill = Purchase::where('company_id', $this->company->id)->findOrFail($result->json('execution.receipt.resource_id'));
+        $this->assertSame(\App\Support\LedgerAmount::units($proposal->json('proposal.preview.totals.grand_total')),
+            \App\Support\LedgerAmount::units($bill->grand_total));
+    }
 }

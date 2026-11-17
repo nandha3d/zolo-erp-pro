@@ -28,6 +28,7 @@
         $('#document-process, #document-refresh, #document-revoke').prop('disabled', false);
         $('#document-extraction').text(data.extraction ? JSON.stringify(data.extraction, null, 2) : 'Document remains quarantined until scanning completes.');
         $('#document-import-preview').toggleClass('d-none', !(data.classification === 'product_import' && data.status === 'scanned'));
+        $('#document-opening-panel').toggleClass('d-none', !(data.classification === 'opening_import' && data.status === 'scanned'));
         $('#document-approve-knowledge').toggleClass('d-none', !(data.classification === 'sop' && data.status === 'extracted'));
     }
     function refresh() {
@@ -74,7 +75,7 @@
             clearTimeout(poll); document = null; batch = null;
             $('#document-status').text('Document access revoked.');
             $('#document-process, #document-refresh, #document-revoke').prop('disabled', true);
-            $('#document-import-panel, #document-import-preview, #document-approve-knowledge').addClass('d-none');
+            $('#document-import-panel, #document-import-preview, #document-approve-knowledge, #document-opening-panel').addClass('d-none');
             $('#document-extraction').text('Access revoked.');
         }).fail(failure).always(function () { busy = false; });
     });
@@ -114,6 +115,45 @@
             slots: {batch_id: batch.id, accepted_rows: rows, review_hash: batch.review_hash}}), {contentType: 'application/json'})
             .done(function (result) { $('#document-import-result').text('Proposal ' + result.proposal.id + ' prepared. Open action review to approve.'); })
             .fail(failure).always(function () { busy = false; });
+    });
+    function addOpeningMapping() {
+        const row = $('<tr>');
+        const type = $('<select>', {class: 'form-control form-control-sm opening-mapping-type', required: true, 'aria-label': 'Mapping record type'});
+        type.append($('<option>').val('').text('Select record type'));
+        ['product', 'warehouse', 'customer', 'supplier', 'account'].forEach(function (value) { type.append($('<option>').val(value).text(value)); });
+        row.append($('<td>').append(type));
+        row.append($('<td>').append($('<input>', {class: 'form-control form-control-sm opening-mapping-key', maxlength: 100, required: true, 'aria-label': 'Mapping source key'})));
+        row.append($('<td>').append($('<input>', {class: 'form-control form-control-sm opening-mapping-id', type: 'number', min: 1, required: true, 'aria-label': 'Company record ID'})));
+        row.append($('<td>').append($('<button>', {type: 'button', class: 'btn btn-sm btn-outline-danger'}).text('Remove').on('click', function () { row.remove(); })));
+        $('#opening-mappings').append(row);
+    }
+    $('#opening-add-mapping').on('click', addOpeningMapping);
+    addOpeningMapping();
+    $('#document-opening-form').on('submit', function (event) {
+        event.preventDefault();
+        if (!document || busy) return;
+        const mappings = $('#opening-mappings tr').map(function () {
+            return {entity: $(this).find('select.opening-mapping-type').val(), source_key: $(this).find('input.opening-mapping-key').val(),
+                target_id: Number($(this).find('.opening-mapping-id').val())};
+        }).get();
+        if (!mappings.length) { error('Add explicit company mappings before the opening dry-run.'); return; }
+        busy = true;
+        $('#document-error').addClass('d-none');
+        $('#opening-result').text('Validating source and running the opening dry-run…');
+        const source = {batch_key: $('#opening-source-key').val(), source_name: $('#opening-source-name').val(),
+            business_date: $('#opening-date').val(), mappings: mappings,
+            expected: {stock_qty: $('#opening-stock-qty').val(), stock_value: $('#opening-stock-value').val(),
+                ar: $('#opening-ar').val(), ap: $('#opening-ap').val()}};
+        request('/opening-imports/preview', 'POST', JSON.stringify({document_id: document.id,
+            action_key: $('#opening-action').val(), source: source}), {contentType: 'application/json'})
+            .done(function (result) {
+                $('#opening-result').text('Proposal ' + result.data.data.proposal_id + ' prepared. Review the exact rows, mappings and totals before approval.');
+            }).fail(function (xhr) {
+                $('#opening-result').text('Opening dry-run requires correction. No stock or financial entries were posted.');
+                const details = xhr.responseJSON?.data;
+                if (details?.errors) error(Object.values(details.errors).flat().join(' '));
+                else failure(xhr);
+            }).always(function () { busy = false; });
     });
     $('#document-knowledge-form').on('submit', function (event) {
         event.preventDefault();

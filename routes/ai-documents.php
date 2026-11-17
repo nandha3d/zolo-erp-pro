@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // Include inside an authenticated, company-context AI route group.
 Route::controller(AiDocumentController::class)->middleware('throttle:30,1')->group(function (): void {
-    Route::get('documents-workspace', 'workspace');
+    Route::get('documents-workspace', 'workspace')->middleware('common');
     Route::post('documents', 'upload');
     Route::get('documents/{id}', 'show')->whereUuid('id');
     Route::post('documents/{id}/process', 'process')->whereUuid('id');
@@ -17,3 +17,4 @@ Route::controller(AiDocumentController::class)->middleware('throttle:30,1')->gro
     Route::post('product-imports/{id}/commit', 'commitImport')->whereUuid('id');
     Route::get('product-imports/{id}/errors', 'importErrors')->whereUuid('id');
 });
+Route::post('opening-imports/preview', [\App\Ai\Imports\OpeningImportController::class, 'preview'])->middleware('throttle:10,1');

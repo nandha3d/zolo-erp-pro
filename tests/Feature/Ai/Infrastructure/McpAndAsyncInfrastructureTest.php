@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Ai\Infrastructure;
 
 use App\Ai\Infrastructure\AsyncActionDispatch;
+use App\Ai\Infrastructure\WorkerActorContext;
 use App\Ai\Jobs\ExecuteApprovedAction;
 use App\Ai\Services\ActionApprovalService;
 use App\Ai\Services\ActionProposalService;
@@ -15,6 +16,8 @@ use App\Ai\Services\ErpToolExecutor;
 use App\Models\Company;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\Platform\CompanyContext;
+use App\Services\Platform\CompanyContextResolver;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -37,9 +40,6 @@ final class McpAndAsyncInfrastructureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (!Route::has('ai.mcp')) {
-            require base_path('routes/ai-infrastructure.php');
-        }
         config(['erp_ai.enabled' => true, 'erp_ai.read_only' => false,
             'ai_actions.foundation_enabled' => true, 'ai_actions.execution_enabled' => true,
             'ai_infrastructure.mcp.enabled' => true, 'ai_infrastructure.async_execution_enabled' => true,
@@ -68,6 +68,39 @@ final class McpAndAsyncInfrastructureTest extends TestCase
         $result = $this->withToken($this->token)->postJson('/mcp/erp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list']);
         $result->assertOk()->assertJsonCount(1, 'result.tools')->assertJsonPath('result.tools.0.name', 'CustomerOutstanding');
         $result->assertDontSee('prepare_purchase_order');
+    }
+
+    public function test_infrastructure_and_schedule_routes_are_mounted_by_the_application_provider(): void
+    {
+        foreach (['ai.mcp', 'ai.actions.execute-async', 'api.v1.ai.actions.execution', 'ai.schedules.index', 'api.v1.ai.schedules.store'] as $name) {
+            $this->assertTrue(Route::has($name), 'Application route is missing: '.$name);
+        }
+    }
+
+    public function test_horizon_requires_installation_operator_allowlist_and_current_company_role(): void
+    {
+        $this->assertContains(\App\Ai\Infrastructure\RequireAiOperationsAdministrator::class, config('horizon.middleware'));
+        $this->actingAs($this->actor);
+        $request = \Illuminate\Http\Request::create('/horizon');
+        $request->setUserResolver(fn () => $this->actor);
+        $request->attributes->set(CompanyContext::class, new CompanyContext($this->company->id, $this->branch, $this->year));
+        $middleware = app(\App\Ai\Infrastructure\RequireAiOperationsAdministrator::class);
+        config(['ai_infrastructure.operations_admin_actor_ids' => []]);
+        try {
+            $middleware->handle($request, fn () => response('ok'));
+            $this->fail('Company administration alone must not expose installation-wide worker payloads.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        config(['ai_infrastructure.operations_admin_actor_ids' => [$this->actor->id]]);
+        $this->assertSame(200, $middleware->handle($request, fn () => response('ok'))->getStatusCode());
+        DB::table('company_user')->where('company_id', $this->company->id)->where('user_id', $this->actor->id)->update(['role_id_override' => 4]);
+        try {
+            $middleware->handle($request, fn () => response('ok'));
+            $this->fail('Company viewer override must not access worker payloads.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
     }
 
     public function test_mcp_rejects_session_authentication_and_wildcard_tokens(): void
@@ -134,10 +167,33 @@ final class McpAndAsyncInfrastructureTest extends TestCase
         $this->assertSame(0, Supplier::where('company_id', $this->company->id)->where('name', 'Async Supplier')->count());
         Bus::assertDispatched(ExecuteApprovedAction::class, fn ($job) => $job->actorId === $this->actor->id && $job->queue === 'ai-execution' && $job->tries === 1);
         $job = new ExecuteApprovedAction($proposal['id'], 1, $this->actor->id);
+        auth()->forgetGuards();
+        request()->attributes->remove(CompanyContext::class);
         $job->handle(app(AiPrincipalFactory::class), app(ApprovedActionExecutor::class));
         $job->handle(app(AiPrincipalFactory::class), app(ApprovedActionExecutor::class));
         $this->assertSame(1, Supplier::where('company_id', $this->company->id)->where('name', 'Async Supplier')->count());
         $this->assertSame(1, DB::table('ai_action_executions')->where('company_id', $this->company->id)->where('proposal_id', $proposal['id'])->where('status', 'completed')->count());
+        $this->assertNull(auth()->id());
+        $this->assertFalse(request()->attributes->has(CompanyContext::class));
+    }
+
+    public function test_worker_actor_context_restores_daemon_state_even_after_domain_failure(): void
+    {
+        $principal = $this->principal();
+        auth()->forgetGuards();
+        request()->attributes->remove(CompanyContext::class);
+        try {
+            app(WorkerActorContext::class)->run($principal, function ($fresh): void {
+                $this->assertSame($this->actor->id, auth()->id());
+                $this->assertSame($this->actor->id, request()->user()->id);
+                $this->assertSame($this->company->id, request()->attributes->get(CompanyContext::class)->companyId);
+                $this->assertSame($fresh->branchId, app(CompanyContextResolver::class)->forActor()->branchId);
+                throw new \RuntimeException('Fixture domain failure.');
+            });
+            $this->fail('Fixture failure must escape the worker context.');
+        } catch (\RuntimeException $error) { $this->assertSame('Fixture domain failure.', $error->getMessage()); }
+        $this->assertNull(auth()->id());
+        $this->assertFalse(request()->attributes->has(CompanyContext::class));
     }
 
     public function test_async_worker_revalidates_membership_and_skips_stale_version(): void

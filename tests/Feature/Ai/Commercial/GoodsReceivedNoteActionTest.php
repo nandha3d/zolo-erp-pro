@@ -380,4 +380,48 @@ final class GoodsReceivedNoteActionTest extends TestCase
         $this->assertSame(40.0, (float) $remainingAfter['items'][0]['remaining_delivery_qty']);
         $this->assertSame(100.0, (float) $remainingAfter['items'][0]['remaining_qty']);
     }
+
+    public function test_grn_preview_rejects_foreign_branch_and_combined_over_receipt(): void
+    {
+        $other = CompanyBranch::forceCreate(['company_id' => $this->company->id, 'code' => uniqid('OTHER'),
+            'name' => 'Other Branch', 'branch_type' => 'branch']);
+        $warehouse = Warehouse::forceCreate(['company_id' => $this->company->id, 'branch_id' => $other->id,
+            'name' => 'Other Warehouse', 'address' => 'Test', 'is_active' => true]);
+        $this->actingAs($this->adminUser, 'sanctum');
+        $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', ['action_key' => 'grn.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $warehouse->id,
+            'items' => [['product_id' => $this->productA->id, 'qty' => '1.00', 'cost' => '200.00']],
+        ]])->assertUnprocessable()->assertJsonValidationErrors('warehouse_id');
+        $po = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', ['action_key' => 'purchase_order.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+            'items' => [['product_id' => $this->productA->id, 'qty' => '100.00', 'net_unit_cost' => '200.00']],
+        ]]);
+        $po->assertCreated();
+        $placed = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals/'.$po->json('proposal.id').'/approve', ['expected_version' => 1]);
+        $placed->assertOk();
+        $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', ['action_key' => 'grn.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+            'purchase_order_id' => $placed->json('execution.receipt.resource_id'),
+            'items' => [
+                ['product_id' => $this->productA->id, 'qty' => '60.00', 'cost' => '200.00'],
+                ['product_id' => $this->productA->id, 'qty' => '60.00', 'cost' => '200.00'],
+            ],
+        ]])->assertUnprocessable()->assertJsonValidationErrors('purchase_order_id');
+    }
+
+    public function test_grn_keeps_fractional_quantities_and_four_decimal_costs(): void
+    {
+        $this->actingAs($this->adminUser, 'sanctum');
+        $proposal = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals', ['action_key' => 'grn.create.v1', 'slots' => [
+            'supplier_id' => $this->supplier->id, 'warehouse_id' => $this->warehouse->id,
+            'items' => [['product_id' => $this->productA->id, 'qty' => '1.001', 'cost' => '1.2345']],
+        ]]);
+        $proposal->assertCreated();
+        $this->assertSame('1.001', $proposal->json('proposal.preview.items.0.qty'));
+        $this->assertSame('1.2345', $proposal->json('proposal.preview.items.0.cost'));
+        $result = $this->withHeaders($this->contextHeaders())->postJson('/api/v1/ai/proposals/'.$proposal->json('proposal.id').'/approve', ['expected_version' => 1]);
+        $result->assertOk();
+        $this->assertSame('1.2357', $result->json('execution.receipt.details.grand_total'));
+        $this->assertDatabaseHas('goods_received_note_items', ['goods_received_note_id' => $result->json('execution.receipt.resource_id'), 'qty' => '1.001', 'cost' => '1.2345']);
+    }
 }

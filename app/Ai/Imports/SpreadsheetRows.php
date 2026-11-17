@@ -13,6 +13,35 @@ use ZipArchive;
 
 final class SpreadsheetRows
 {
+    /** Opening spreadsheets use explicit source keys; target mappings remain a separate reviewed input. */
+    public function readOpening(string $bytes, string $extension): array
+    {
+        $rows = $extension === 'xlsx' ? $this->xlsx($bytes) : $this->csv($bytes);
+        $header = array_map(static fn ($cell): string => mb_strtolower(trim((string) $cell)), array_shift($rows) ?: []);
+        if (isset($header[0])) $header[0] = ltrim($header[0], "\xEF\xBB\xBF");
+        if (count($header) !== 3 || count(array_unique($header)) !== 3 || array_diff(['source_key', 'kind', 'payload'], $header)) {
+            $this->fail('Opening spreadsheet columns must be source_key, kind and payload.');
+        }
+        $result = [];
+        foreach ($rows as $index => $cells) {
+            if (count($cells) === 1 && trim((string) $cells[0]) === '') continue;
+            if (count($cells) !== 3) $this->fail('Opening row '.($index + 2).' does not match the header.');
+            foreach ($cells as $cell) {
+                if (!mb_check_encoding((string) $cell, 'UTF-8') || preg_match('/^[=+@]/u', ltrim((string) $cell))) {
+                    $this->fail('Opening row '.($index + 2).' contains invalid Unicode or a spreadsheet formula.');
+                }
+            }
+            $row = array_combine($header, $cells);
+            if (strlen((string) $row['payload']) > 30000) $this->fail('Opening row payload exceeds the supported size.');
+            try { $payload = json_decode((string) $row['payload'], true, 32, JSON_THROW_ON_ERROR); }
+            catch (\JsonException) { $this->fail('Opening row '.($index + 2).' requires a JSON payload object.'); }
+            if (!is_array($payload) || array_is_list($payload)) $this->fail('Opening row '.($index + 2).' requires a JSON payload object.');
+            $result[] = ['source_key' => trim((string) $row['source_key']), 'kind' => trim((string) $row['kind']), 'payload' => $payload];
+        }
+        if ($result === []) $this->fail('Opening spreadsheet has no rows.');
+        return $result;
+    }
+
     public function read(string $bytes, string $extension): array
     {
         $rows = $extension === 'xlsx' ? $this->xlsx($bytes) : $this->csv($bytes);

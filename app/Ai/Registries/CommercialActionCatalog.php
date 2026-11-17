@@ -6,9 +6,11 @@ namespace App\Ai\Registries;
 
 use App\Ai\Adapters\CommercialDocumentAdapter;
 use App\Ai\Adapters\CustomerCollectionAdapter;
+use App\Ai\Adapters\PaymentReminderSendAdapter;
 use App\Ai\DTOs\ActionDefinition;
 use App\Ai\Schemas\CommercialDocumentInputSchema;
 use App\Ai\Schemas\CustomerCollectionInputSchema;
+use App\Ai\Schemas\SendPaymentReminderInputSchema;
 
 final class CommercialActionCatalog
 {
@@ -33,6 +35,13 @@ final class CommercialActionCatalog
                 commandAdapterClass: $collection ? CustomerCollectionAdapter::class : CommercialDocumentAdapter::class,
             );
         }
+        $definitions[] = new ActionDefinition(
+            key: 'payment_reminder.send.v1', businessModule: 'collections', riskTier: 'r3_financial',
+            requiredPermissions: ['ai.use', 'accounting.voucher.post', 'documents-dispatch'],
+            inputSchemaClass: SendPaymentReminderInputSchema::class,
+            previewAdapterClass: PaymentReminderSendAdapter::class,
+            commandAdapterClass: PaymentReminderSendAdapter::class,
+        );
         return $definitions;
     }
 }

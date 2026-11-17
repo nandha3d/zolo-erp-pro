@@ -149,7 +149,7 @@ class ErpCopilot implements Agent, Conversational, HasMiddleware, HasTools
 
         $governanceGuidance = '';
         if (config('ai_actions.foundation_enabled', false)) {
-            $actionsGuidance .= ' Use prepare_reviewed_action for quotations (quotation.create.v1), sales tax invoices (sales_invoice.create.v1), statutory delivery challans (delivery_challan.create.v1), receipts, reminder drafts, inventory, journals, manufacturing and setup capabilities listed in that tool. A quote is never a sales order. A reminder draft never sends a message. The tool description lists the accepted input fields. Never claim execution before a human approves and an authoritative ERP receipt exists.';
+            $actionsGuidance .= ' Use prepare_reviewed_action for quotations (quotation.create.v1), sales tax invoices (sales_invoice.create.v1), statutory delivery challans (delivery_challan.create.v1), receipts, reminder drafts, inventory, journals, manufacturing and setup capabilities listed in that tool. A quote is never a sales order. A reminder draft never sends a message. Only an explicit request to send may prepare payment_reminder.send.v1 for separate human review of the exact recipient and message. A queued reminder is not a delivery confirmation. The tool description lists the accepted input fields. Never claim execution before a human approves and an authoritative ERP receipt exists.';
             $governanceGuidance = ' Draft proposals are uncommitted and have no official voucher numbers. Never invent fake reference numbers (like PO-2026-001) or format text markdown as a print receipt. When a user asks for a print receipt or formal voucher for an unapproved draft, direct them to click "Approve & Execute" on the proposal card to generate the official ERP voucher and receipt PDF. When a document exists or has been booked, invoke document_preview to fetch its receipt details and PDF URL. Never redirect users to other website URLs; all receipts and PDFs are received and viewed directly in chat.';
         }
 
@@ -268,6 +268,11 @@ class ErpCopilot implements Agent, Conversational, HasMiddleware, HasTools
         if (config('ai_actions.foundation_enabled', false) && $this->principal->hasTool('setup.products.import.v1')) {
             $tools[] = app(\App\Ai\Tools\SimulateProductImport::class, ['principal' => $this->principal]);
             $tools[] = app(\App\Ai\Tools\PrepareProductImport::class, ['principal' => $this->principal]);
+        }
+
+        if (config('ai_actions.foundation_enabled', false) && ($this->principal->hasTool('setup.opening_stock.create.v1')
+            || $this->principal->hasTool('setup.opening_balance.create.v1'))) {
+            $tools[] = new \App\Ai\Imports\PrepareOpeningImport($this->principal);
         }
 
         return $tools;

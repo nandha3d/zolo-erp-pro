@@ -88,4 +88,35 @@ final class DocumentParsingTest extends TestCase
             unlink($path);
         }
     }
+
+    public function test_opening_xlsx_preserves_exact_decimal_payloads_and_explicit_source_keys(): void
+    {
+        $payload = ['items' => [['account_key' => 'ASSET', 'debit' => '100.1234'], ['account_key' => 'EQUITY', 'credit' => '100.1234']]];
+        $sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet->getActiveSheet()->fromArray([['source_key', 'kind', 'payload'],
+            ['JOURNAL1', 'journal', json_encode($payload, JSON_THROW_ON_ERROR)]]);
+        $path = tempnam(storage_path('app'), 'ai-opening-xlsx-');
+        try {
+            (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($sheet))->save($path);
+            $rows = app(SpreadsheetRows::class)->readOpening(file_get_contents($path), 'xlsx');
+            $this->assertSame([['source_key' => 'JOURNAL1', 'kind' => 'journal', 'payload' => $payload]], $rows);
+            $this->assertSame('100.1234', $rows[0]['payload']['items'][0]['debit']);
+        } finally {
+            $sheet->disconnectWorksheets();
+            unlink($path);
+        }
+    }
+
+    public function test_opening_spreadsheet_rejects_formulas_and_non_object_payloads(): void
+    {
+        $reader = app(SpreadsheetRows::class);
+        foreach (["source_key,kind,payload\n=1+1,journal,{}\n", "source_key,kind,payload\nJ1,journal,[]\n"] as $csv) {
+            try {
+                $reader->readOpening($csv, 'csv');
+                $this->fail('Invalid opening spreadsheet accepted.');
+            } catch (ValidationException $error) {
+                $this->assertArrayHasKey('file', $error->errors());
+            }
+        }
+    }
 }

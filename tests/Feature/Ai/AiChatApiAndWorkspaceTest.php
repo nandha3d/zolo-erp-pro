@@ -882,6 +882,92 @@ class AiChatApiAndWorkspaceTest extends TestCase
         ];
     }
 
+    public function test_stream_delivers_deltas_then_persists_the_complete_answer_and_meters_deferred_dispatch(): void
+    {
+        $this->configureProvider();
+        RateLimiter::clear('ai:rpm:openai');
+        $this->actingAs($this->adminUser)->withSession($this->workspaceContext());
+        $gateway = app(ApprovedModelGateway::class);
+        \App\Ai\Agents\ErpCopilot::fake([function () use ($gateway) {
+            $gateway->admitProviderDispatch('https://provider.example/v1/responses');
+            return new \Laravel\Ai\Responses\TextResponse('Review this streamed answer.',
+                new \Laravel\Ai\Responses\Data\TextUsage(120, 18), new \Laravel\Ai\Responses\Data\Meta('openai', 'gpt-4o'));
+        }])->preventStrayPrompts();
+        $response = $this->postJson(route('ai.chat.stream'), ['message' => 'Explain available reports']);
+        $response->assertOk()->assertHeader('Content-Type', 'text/event-stream; charset=UTF-8');
+        $body = $response->streamedContent();
+        $this->assertStringContainsString('event: delta', $body);
+        $this->assertStringContainsString('event: complete', $body);
+        $this->assertLessThan(strpos($body, 'event: complete'), strpos($body, 'event: delta'));
+        preg_match('/event: complete\ndata: ([^\n]+)/', $body, $match);
+        $result = json_decode($match[1], true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame('Review this streamed answer.', $result['message']);
+        $this->assertDatabaseHas('ai_runs', ['id' => $result['run_id'], 'status' => 'completed', 'input_tokens' => 120, 'output_tokens' => 18]);
+        $this->assertDatabaseHas('ai_model_invocations', ['run_id' => $result['run_id'], 'status' => 'completed', 'http_attempts' => 1]);
+        $this->assertDatabaseHas('ai_usage_counters', ['company_id' => $this->company->id, 'reserved_tokens' => 0, 'input_tokens' => 120]);
+        $this->assertDatabaseHas('agent_conversation_messages', ['conversation_id' => $result['thread_id'], 'role' => 'assistant', 'content' => $result['message']]);
+        $this->assertSame(1, $gateway->getProviderRpmUsage('openai')['current']);
+        Http::assertNothingSent();
+    }
+
+    public function test_stream_reads_compatible_provider_frames_and_counts_the_real_http_dispatch(): void
+    {
+        config(['erp_ai.provider' => 'nvidia', 'erp_ai.model' => 'deepseek-ai/deepseek-v4.1-flash',
+            'ai.providers.nvidia.key' => 'fixture-key', 'ai.providers.nvidia.url' => 'https://provider.example/v1']);
+        RateLimiter::clear('ai:rpm:nvidia');
+        Http::preventStrayRequests();
+        $this->actingAs($this->adminUser)->withSession($this->workspaceContext());
+        $frames = [
+            ['model' => 'deepseek-ai/deepseek-v4.1-flash', 'choices' => [['index' => 0, 'delta' => ['content' => 'Streamed '], 'finish_reason' => null]]],
+            ['choices' => [['index' => 0, 'delta' => ['content' => 'ERP response.'], 'finish_reason' => null]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
+            ['choices' => [], 'usage' => ['prompt_tokens' => 123, 'completion_tokens' => 17]],
+        ];
+        $source = implode('', array_map(static fn (array $frame) => 'data: '.json_encode($frame, JSON_THROW_ON_ERROR)."\n\n", $frames))."data: [DONE]\n\n";
+        Http::fake(['https://provider.example/v1/chat/completions' => Http::response($source, 200, ['Content-Type' => 'text/event-stream'])]);
+        $body = $this->postJson(route('ai.chat.stream'), ['message' => 'Stream a response'])->assertOk()->streamedContent();
+        $this->assertStringContainsString('event: delta', $body);
+        $this->assertStringContainsString('event: complete', $body);
+        preg_match('/event: complete\ndata: ([^\n]+)/', $body, $match);
+        $result = json_decode($match[1], true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame('Streamed ERP response.', $result['message']);
+        $this->assertSame(123, $result['usage']['input_tokens']);
+        $this->assertSame(17, $result['usage']['output_tokens']);
+        $this->assertDatabaseHas('ai_model_invocations', ['run_id' => $result['run_id'], 'http_attempts' => 1, 'input_tokens' => 123]);
+        $this->assertSame(1, app(ApprovedModelGateway::class)->getProviderRpmUsage('nvidia')['current']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_stream_provider_failure_emits_error_and_retains_unknown_usage_for_reconciliation(): void
+    {
+        $this->configureProvider();
+        RateLimiter::clear('ai:rpm:openai');
+        $this->actingAs($this->adminUser)->withSession($this->workspaceContext());
+        $gateway = app(ApprovedModelGateway::class);
+        \App\Ai\Agents\ErpCopilot::fake([function () use ($gateway) {
+            $gateway->admitProviderDispatch('https://provider.example/v1/responses');
+            throw new \RuntimeException('fixture interrupted stream');
+        }])->preventStrayPrompts();
+        $body = $this->postJson(route('ai.chat.stream'), ['message' => 'Interrupted stream'])->assertOk()->streamedContent();
+        $this->assertStringContainsString('event: error', $body);
+        $this->assertStringNotContainsString('event: complete', $body);
+        $this->assertDatabaseHas('ai_runs', ['company_id' => $this->company->id, 'status' => 'failed']);
+        $this->assertDatabaseHas('ai_model_invocations', ['company_id' => $this->company->id, 'status' => 'failed', 'http_attempts' => 1]);
+        $this->assertGreaterThan(0, (int) DB::table('ai_usage_counters')->where('company_id', $this->company->id)->sum('reserved_tokens'));
+    }
+
+    public function test_stream_rejects_disabled_company_unauthorized_actor_and_invalid_media_before_dispatch(): void
+    {
+        $this->configureProvider();
+        $this->actingAs($this->unpermittedUser)->withSession($this->workspaceContext());
+        $this->postJson(route('ai.chat.stream'), ['message' => 'Forbidden'])->assertForbidden();
+        $this->actingAs($this->adminUser);
+        $this->postJson(route('ai.chat.stream'), ['message' => 'Invalid media', 'media_ids' => ['not-a-uuid']])->assertUnprocessable();
+        app(AiFeatureGate::class)->setCompanySetting($this->company->id, false, true);
+        $this->postJson(route('ai.chat.stream'), ['message' => 'Disabled'])->assertStatus(503);
+        Http::assertNothingSent();
+    }
+
     private function configureProvider(): void
     {
         config([

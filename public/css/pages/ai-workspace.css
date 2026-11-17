@@ -604,3 +604,7 @@ body.dark-mode .ai-workspace-container .text-muted { color: var(--ai-muted) !imp
 
 
 
+.ai-stream-preview {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

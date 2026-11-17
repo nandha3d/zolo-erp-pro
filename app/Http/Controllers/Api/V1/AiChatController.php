@@ -688,21 +688,25 @@ class AiChatController extends Controller
     {
         $request->validate([
             'message' => 'required|string|max:' . (int) config('erp_ai.max_input_chars', 4000),
-            'thread_id' => 'nullable|uuid'
+            'thread_id' => 'nullable|uuid',
+            'image' => 'nullable|string',
+            'media_ids' => 'nullable|array|max:3',
+            'media_ids.*' => 'uuid',
         ]);
         if ($denial = $this->accessDenial($this->principal($request)))
             return $denial;
         return response()->stream(function () use ($request): void {
             $emit = static function (string $event, array $data): void {
                 echo 'event: ' . $event . "\n" . 'data: ' . json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) . "\n\n";
-                if (ob_get_level() > 0)
-                    @ob_flush();
-                flush();
+                if (!app()->runningUnitTests()) {
+                    if (ob_get_level() > 0) @ob_flush();
+                    flush();
+                }
             };
             $emit('start', ['status' => 'running']);
             try {
                 $result = $this->runChat($request, static fn(string $delta) => $emit('delta', ['text' => $delta]));
-                $emit($result->isSuccessful() ? 'complete' : 'error', $result->getData(true));
+                $emit($result->isSuccessful() ? 'complete' : 'error', $result->getData(true) + ['http_status' => $result->getStatusCode()]);
             } catch (\Throwable) {
                 $emit('error', ['error_code' => 'AI_STREAM_FAILED', 'error_message' => 'The response stream ended. Reload the conversation before retrying.']);
             }

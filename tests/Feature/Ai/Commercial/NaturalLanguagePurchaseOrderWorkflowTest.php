@@ -373,7 +373,7 @@ final class NaturalLanguagePurchaseOrderWorkflowTest extends TestCase
         $viewResponse->assertSee('AI Action Review Center');
         $viewResponse->assertSee('ABC Traders Coimbatore');
         $viewResponse->assertSee('Combed Organic Cotton Yarn 30s');
-        $viewResponse->assertSee('Approve & Place Order', false);
+        $viewResponse->assertSee('Approve & Execute', false);
 
         // 2. Approve via API
         $approveResponse = $this->withHeaders($this->contextHeaders())
@@ -397,7 +397,7 @@ final class NaturalLanguagePurchaseOrderWorkflowTest extends TestCase
         $afterView = $this->withHeaders($this->contextHeaders())->get('/ai/action-review?status=completed');
         $afterView->assertStatus(200);
         $afterView->assertSee('Completed');
-        $afterView->assertSee('PO #' . $purchase->reference_no);
+        $afterView->assertSee('Completed: ' . $purchase->reference_no);
 
         // 5. Non-approver user accessing Review Center is restricted to scope=mine and cannot approve
         DB::table('roles')->updateOrInsert(['id' => 4], ['name' => 'Viewer', 'is_active' => true, 'guard_name' => 'web']);

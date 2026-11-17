@@ -335,7 +335,7 @@ final class NormalizedInputWorkflowTest extends TestCase
         @unlink($jpg);
     }
 
-    public function test_duplicate_invoice_number_detection_and_warning(): void
+    public function test_duplicate_invoice_number_blocks_media_proposal_without_business_writes(): void
     {
         // Pre-seed an existing purchase with the same invoice number
         Purchase::forceCreate([
@@ -380,20 +380,20 @@ final class NormalizedInputWorkflowTest extends TestCase
         $jpg = $this->makeTempJpeg();
         $sess = ['company_id' => $this->company->id, 'branch_id' => $this->branchId, 'financial_year_id' => $this->fyId];
 
-        $res = $this->actingAs($this->admin)->withSession($sess)
+        $tables = ['ai_action_proposals', 'purchases', 'stock_movements', 'journal_entries'];
+        $before = collect($tables)->mapWithKeys(fn (string $table): array => [$table => DB::table($table)
+            ->where('company_id', $this->company->id)->count()])->all();
+        $this->actingAs($this->admin)->withSession($sess)
             ->postJson('/api/v1/ai/media/prepare', [
                 'file' => new UploadedFile($jpg, 'dup_bill.jpg', 'image/jpeg', null, true),
             ])
-            ->assertStatus(200);
-
-        // Verification checks flag the duplicate purchase record
-        $erpChecks = $res->json('extraction.extracted.erp_checks');
-        $this->assertNotNull($erpChecks['duplicate_purchase']);
-        $this->assertSame('PB-DUP-888', $erpChecks['duplicate_purchase']['supplier_invoice_no']);
-        $this->assertSame('PR-PRE-EXIST-1', $erpChecks['duplicate_purchase']['reference_no']);
-
-        $warnings = $res->json('extraction.extracted.warnings');
-        $this->assertTrue(collect($warnings)->contains(fn ($w) => str_contains((string) $w, 'Potential duplicate invoice number')));
+            ->assertStatus(422)
+            ->assertJsonPath('error_code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.supplier_invoice_no.0', 'This supplier invoice number is already booked in the company.');
+        foreach ($before as $table => $count) {
+            $this->assertSame($count, DB::table($table)->where('company_id', $this->company->id)->count(),
+                "Duplicate invoice rejection must not write to {$table}.");
+        }
 
         @unlink($jpg);
     }

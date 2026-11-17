@@ -446,87 +446,66 @@ class ApprovedModelGateway
 
         $this->dispatchProvider = $provider;
         $this->dispatchAttempts = 0;
+        $usageSettled = false;
+        $complete = function (StepResponse $response) use ($principal, $date, $reserved, $provider, $model, $stepNumber, $start, $creditReservation, $attemptId, &$usageSettled): void {
+            $durationMs = (int) round((microtime(true) - $start) * 1000);
+            $this->settleStep($principal, $date, $reserved, $response->usage);
+            $usageSettled = true;
+            $settlement = $this->creditMeter->settle($creditReservation->id, $attemptId, $provider, $model,
+                $response->usage->inputTokens, $response->usage->outputTokens, isChargeable: true);
+            $this->recordModelInvocation($principal, $stepNumber, $provider, $model, 'completed',
+                $response->usage->inputTokens, $response->usage->outputTokens, $durationMs,
+                httpAttempts: $this->dispatchAttempts, providerAttemptId: $attemptId, reservationId: $creditReservation->id,
+                billingAccountId: $settlement->accountId, chargeStatus: $settlement->status,
+                rateCardVersion: $settlement->rateCardVersion, fxRateVersion: $settlement->fxRateVersion,
+                chargeMinorInr: $settlement->costMinorInr, creditsDebited: $settlement->creditsDebited);
+        };
+        $fail = function (Throwable $error) use ($principal, $date, $reserved, $provider, $model, $stepNumber, $start, $creditReservation, $attemptId, &$usageSettled): void {
+            if ($usageSettled) return;
+            $usageSettled = true;
+            if ($this->dispatchAttempts === 0) {
+                $this->settleStep($principal, $date, $reserved, new TextUsage());
+                $this->creditMeter->releaseUnsent($creditReservation->id, 'dispatch_aborted');
+                return;
+            }
+            $settlement = $this->creditMeter->settle($creditReservation->id, $attemptId, $provider, $model, 0, 0,
+                isChargeable: true, reconcileReason: class_basename($error));
+            $this->recordModelInvocation($principal, $stepNumber, $provider, $model, 'failed', 0, 0,
+                (int) round((microtime(true) - $start) * 1000), class_basename($error), $this->dispatchAttempts,
+                providerAttemptId: $attemptId, reservationId: $creditReservation->id,
+                billingAccountId: $settlement->accountId, chargeStatus: $settlement->status, creditsDebited: $settlement->creditsDebited);
+        };
         try {
             // Keep the reservation until the quota day ends if the provider fails without reporting usage.
             $result = $next($step->withMaxTokens($outputLimit));
-            $attempts = $this->dispatchAttempts;
-            if ($result->stopped() && $attempts === 0) {
+            if ($result->stopped() && $this->dispatchAttempts === 0) {
                 $this->settleStep($principal, $date, $reserved, new TextUsage());
                 $this->creditMeter->releaseUnsent($creditReservation->id, 'step_stopped');
                 return $result;
             }
-            return $result->then(
-                function (StepResponse $response) use ($principal, $date, $reserved, $provider, $model, $stepNumber, $start, $attempts, $creditReservation, $attemptId): void {
-                    $durationMs = (int) round((microtime(true) - $start) * 1000);
-                    $this->settleStep($principal, $date, $reserved, $response->usage);
-
-                    $settlement = $this->creditMeter->settle(
-                        $creditReservation->id,
-                        $attemptId,
-                        $provider,
-                        $model,
-                        $response->usage->inputTokens,
-                        $response->usage->outputTokens,
-                        isChargeable: true
-                    );
-
-                    $this->recordModelInvocation(
-                        $principal,
-                        $stepNumber,
-                        $provider,
-                        $model,
-                        'completed',
-                        $response->usage->inputTokens,
-                        $response->usage->outputTokens,
-                        $durationMs,
-                        httpAttempts: $attempts,
-                        providerAttemptId: $attemptId,
-                        reservationId: $creditReservation->id,
-                        billingAccountId: $settlement->accountId,
-                        chargeStatus: $settlement->status,
-                        rateCardVersion: $settlement->rateCardVersion,
-                        fxRateVersion: $settlement->fxRateVersion,
-                        chargeMinorInr: $settlement->costMinorInr,
-                        creditsDebited: $settlement->creditsDebited,
-                    );
-                }
-            );
-        } catch (Throwable $e) {
-            if ($this->dispatchAttempts === 0) {
-                $this->settleStep($principal, $date, $reserved, new TextUsage());
-                $this->creditMeter->releaseUnsent($creditReservation->id, 'dispatch_aborted');
-                throw $e;
+            if ($result->streamed()) {
+                $attemptsBeforeIteration = $this->dispatchAttempts;
+                $source = (function () use ($result, $provider, $attemptsBeforeIteration, $complete, $fail): \Generator {
+                    $this->dispatchProvider = $provider;
+                    $this->dispatchAttempts = $attemptsBeforeIteration;
+                    try {
+                        yield from $result;
+                        $response = $result->response();
+                        if (!$response) throw new \RuntimeException('Provider stream ended without usage metadata.');
+                        $complete($response);
+                        return $response;
+                    } catch (Throwable $error) {
+                        $fail($error);
+                        throw $error;
+                    } finally {
+                        $this->dispatchProvider = null;
+                    }
+                })();
+                return new StepResult($source, $result->step, $result->context, $result->startedAt);
             }
-
-            $settlement = $this->creditMeter->settle(
-                $creditReservation->id,
-                $attemptId,
-                $provider,
-                $model,
-                0,
-                0,
-                isChargeable: true,
-                reconcileReason: class_basename($e)
-            );
-
-            $durationMs = (int) round((microtime(true) - $start) * 1000);
-            $this->recordModelInvocation(
-                $principal,
-                $stepNumber,
-                $provider,
-                $model,
-                'failed',
-                0,
-                0,
-                $durationMs,
-                class_basename($e),
-                $this->dispatchAttempts,
-                providerAttemptId: $attemptId,
-                reservationId: $creditReservation->id,
-                billingAccountId: $settlement->accountId,
-                chargeStatus: $settlement->status,
-                creditsDebited: $settlement->creditsDebited,
-            );
+            return $result->then($complete);
+        } catch (Throwable $e) {
+            $fail($e);
             throw $e;
         } finally {
             $this->dispatchProvider = null;

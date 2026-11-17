@@ -36,6 +36,7 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
         $supplierId = (int) ($slots['supplier_id'] ?? 0);
         $warehouseId = (int) ($slots['warehouse_id'] ?? 0);
         $grnDate = !empty($slots['grn_date']) ? (string) $slots['grn_date'] : now()->toDateString();
+        app(\App\Services\Platform\CompanyContextResolver::class)->assertPostingDate($context, $grnDate);
         $poId = (int) ($slots['purchase_order_id'] ?? 0);
 
         // 1. Supplier validation
@@ -52,6 +53,7 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
 
         // 2. Warehouse validation
         $warehouse = Warehouse::where('company_id', $context->companyId)
+            ->where('branch_id', $context->branchId)
             ->whereKey($warehouseId)
             ->first();
 
@@ -63,15 +65,13 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
         }
 
         $warnings = [];
-        if ($warehouse->branch_id && (int) $warehouse->branch_id !== (int) $context->branchId) {
-            $warnings[] = "Warehouse '{$warehouse->name}' belongs to a different branch than the active session branch.";
-        }
 
         // 3. Purchase Order verification (if linked)
         $po = null;
         $openQuantities = [];
         if ($poId > 0) {
-            $po = Purchase::where('company_id', $context->companyId)->whereKey($poId)->first();
+            $po = Purchase::where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                ->where('financial_year_id', $context->financialYearId)->whereNull('reversed_at')->whereKey($poId)->first();
             if (!$po) {
                 throw ValidationException::withMessages(['purchase_order_id' => "Purchase Order ID {$poId} not found."]);
             }
@@ -85,12 +85,10 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
                 throw ValidationException::withMessages(['purchase_order_id' => 'Purchase Order destination warehouse differs from GRN receiving warehouse.']);
             }
 
-            try {
-                $openData = app(OrderLifecycleService::class)->remaining('purchase', $po->id, $context);
-                foreach ($openData['items'] as $item) {
-                    $openQuantities[(int) $item['product_id']] = (float) ($item['remaining_delivery_qty'] ?? 0);
-                }
-            } catch (\Throwable) {
+            $openData = app(OrderLifecycleService::class)->remaining('purchase', $po->id, $context);
+            foreach ($openData['items'] as $item) {
+                $productId = (int) $item['product_id'];
+                $openQuantities[$productId] = ($openQuantities[$productId] ?? 0) + (float) ($item['remaining_delivery_qty'] ?? 0);
             }
         }
 
@@ -134,7 +132,7 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
             }
 
             $unitCost = isset($item['cost']) ? (float) $item['cost'] : (float) ($product->cost ?? 0);
-            $lineTotal = round($qty * $unitCost, 2);
+            $lineTotal = round($qty * $unitCost, 4);
             $unitId = (int) ($item['unit_id'] ?? $product->purchase_unit_id ?? $product->unit_id ?? 1);
 
             $totalQty += $qty;
@@ -142,8 +140,8 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
 
             $normalizedLines[] = [
                 'product_id' => $productId,
-                'qty' => sprintf('%.2f', $qty),
-                'cost' => sprintf('%.2f', $unitCost),
+                'qty' => CommercialDecimal::format($qty, 6),
+                'cost' => CommercialDecimal::format($unitCost),
                 'unit_id' => $unitId,
                 'order_item_id' => isset($item['order_item_id']) ? (int) $item['order_item_id'] : null,
                 'batch_no' => $item['batch_no'] ?? null,
@@ -155,22 +153,22 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
                 'product_id' => $productId,
                 'product_name' => $product->name,
                 'product_code' => $product->code,
-                'qty' => sprintf('%.2f', $qty),
-                'cost' => sprintf('%.2f', $unitCost),
-                'line_total' => sprintf('%.2f', $lineTotal),
+                'qty' => CommercialDecimal::format($qty, 6),
+                'cost' => CommercialDecimal::format($unitCost),
+                'line_total' => CommercialDecimal::format($lineTotal),
                 'unit_id' => $unitId,
                 'batch_no' => $item['batch_no'] ?? null,
             ];
 
             $lineTotals[] = [
                 'product_id' => $productId,
-                'qty' => sprintf('%.2f', $qty),
-                'cost' => sprintf('%.2f', $unitCost),
-                'line_total' => sprintf('%.2f', $lineTotal),
+                'qty' => CommercialDecimal::format($qty, 6),
+                'cost' => CommercialDecimal::format($unitCost),
+                'line_total' => CommercialDecimal::format($lineTotal),
             ];
         }
 
-        $grandTotal = round($totalCost, 2);
+        $grandTotal = round($totalCost, 4);
 
         $normalizedPayload = [
             'supplier_id' => $supplierId,
@@ -183,12 +181,18 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
             'remarks' => $slots['remarks'] ?? null,
             'items' => $normalizedLines,
             'expected_totals' => [
-                'total_qty' => sprintf('%.2f', $totalQty),
-                'total_cost' => sprintf('%.2f', $totalCost),
-                'grand_total' => sprintf('%.2f', $grandTotal),
+                'total_qty' => CommercialDecimal::format($totalQty, 6),
+                'total_cost' => CommercialDecimal::format($totalCost),
+                'grand_total' => CommercialDecimal::format($grandTotal),
                 'line_totals' => $lineTotals,
             ],
         ];
+        if ($poId > 0) DB::transaction(function () use ($normalizedPayload, $context, $grnDate): void {
+            $data = $normalizedPayload + ['business_date' => $grnDate];
+            foreach ($data['items'] as &$line) $line['purchase_unit_id'] = $line['unit_id'];
+            unset($line);
+            app(OrderLifecycleService::class)->prepareConsumer('grn', $data, $context, (int) auth()->id());
+        });
 
         $previewData = [
             'document_type' => 'Goods Received Note (GRN)',
@@ -209,14 +213,14 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
             ] : null,
             'items' => $detailedPreviewLines,
             'totals' => [
-                'total_qty' => sprintf('%.2f', $totalQty),
-                'total_cost' => sprintf('%.2f', $totalCost),
-                'grand_total' => sprintf('%.2f', $grandTotal),
+                'total_qty' => CommercialDecimal::format($totalQty, 6),
+                'total_cost' => CommercialDecimal::format($totalCost),
+                'grand_total' => CommercialDecimal::format($grandTotal),
             ],
             'policy' => [
                 'status' => 'pending',
                 'inventory_impact' => "Stock will be received into warehouse '{$warehouse->name}'.",
-                'ledger_impact' => "Dr Inventory (Asset) ₹".sprintf('%.2f', $grandTotal).", Cr Goods Received Not Invoiced (Accrual) ₹".sprintf('%.2f', $grandTotal).".",
+                'ledger_impact' => "Dr Inventory (Asset) ₹".CommercialDecimal::format($grandTotal).", Cr Goods Received Not Invoiced (Accrual) ₹".CommercialDecimal::format($grandTotal).".",
                 'ap_impact' => 'Zero accounts payable or tax liability will be recorded until the supplier bill is posted.',
             ],
         ];
@@ -274,6 +278,10 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
             ->where('id', $poId)
             ->select(['id', 'status', 'reversed_at', 'updated_at'])
             ->first() : null;
+        $orderItems = $poId !== null ? DB::table('commercial_order_items')->where('company_id', $context->companyId)
+            ->where('order_kind', 'purchase')->where('order_id', $poId)->orderBy('id')->get() : collect();
+        $allocations = DB::table('commercial_order_allocations')->where('company_id', $context->companyId)
+            ->whereIn('order_item_id', $orderItems->pluck('id'))->orderBy('id')->get();
 
         $state = [
             'company_id' => $context->companyId,
@@ -284,6 +292,9 @@ final class GoodsReceivedNotePreviewAdapter implements ActionPreviewAdapterInter
             'fiscal_year' => $fiscalYear,
             'products' => $products->toArray(),
             'purchase_order' => $po,
+            'order_items' => $orderItems->toArray(),
+            'order_allocations' => $allocations->toArray(),
+            'units' => DB::table('units')->where('company_id', $context->companyId)->orderBy('id')->get()->toArray(),
         ];
 
         return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));

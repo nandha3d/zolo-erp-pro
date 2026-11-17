@@ -44,6 +44,9 @@ final class AiDocumentController extends Controller
     {
         $principal = $this->principal($request);
         $access->find($principal, $id);
+        $connection = (string) config('ai_infrastructure.queue_connection', 'redis');
+        abort_unless(in_array(config("queue.connections.{$connection}.driver"), ['database', 'redis', 'sqs', 'beanstalkd'], true),
+            503, 'Configure an asynchronous document worker connection before processing uploads.');
         ProcessDocument::dispatch($id, $principal->actorId, $principal->companyId, $principal->branchId, $principal->financialYearId);
         return response()->json(['data' => ['id' => $id, 'status' => 'queued']], 202);
     }

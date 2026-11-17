@@ -361,6 +361,36 @@ final class UnifiedInputClarificationTest extends TestCase
     /**
      * IC-13: Patching inputs with expected revision advances state and detects concurrency conflict.
      */
+    public function test_line_deletion_preserves_stable_ids_and_rejects_stale_or_implicit_removals(): void
+    {
+        $this->actingAs($this->adminUser);
+        $created = $this->postJson('/api/v1/ai/workflow-tasks', [
+            'action_key' => 'purchase_order.create.v1',
+            'slots' => ['supplier_query' => 'ABC', 'items' => [
+                ['product_query' => 'YARN-COMB-40S', 'qty' => 50],
+                ['client_line_id' => 'keep-me', 'product_query' => 'Missing deletion test product', 'qty' => 20],
+            ]],
+        ], $this->contextHeaders())->assertCreated();
+        $id = $created->json('task.id');
+        $this->assertSame(['line-0', 'keep-me'], array_column($created->json('clarification.line_items'), 'client_line_id'));
+        $revision = $created->json('task.revision');
+        $this->patchJson("/api/v1/ai/workflow-tasks/{$id}/inputs", ['expected_revision' => $revision,
+            'corrections' => [['field' => 'items[line-0]._destroy', 'value' => 'true']]], $this->contextHeaders())->assertUnprocessable();
+        $deleted = $this->patchJson("/api/v1/ai/workflow-tasks/{$id}/inputs", ['expected_revision' => $revision,
+            'corrections' => [['field' => 'items[line-0]._destroy', 'value' => true]]], $this->contextHeaders())->assertOk();
+        $this->assertCount(1, $deleted->json('task.slots.items'));
+        $this->assertSame('keep-me', $deleted->json('task.slots.items.0.client_line_id'));
+        $this->assertSame(['keep-me'], array_column($deleted->json('clarification.line_items'), 'client_line_id'));
+        $this->patchJson("/api/v1/ai/workflow-tasks/{$id}/inputs", ['expected_revision' => $revision,
+            'corrections' => [['field' => 'items[keep-me]._destroy', 'value' => true]]], $this->contextHeaders())->assertConflict();
+        $latest = $this->getJson("/api/v1/ai/workflow-tasks/{$id}", $this->contextHeaders())->assertOk();
+        $this->assertCount(1, $latest->json('task.slots.items'));
+        $empty = $this->patchJson("/api/v1/ai/workflow-tasks/{$id}/inputs", ['expected_revision' => $deleted->json('task.revision'),
+            'corrections' => [['field' => 'items[keep-me]._destroy', 'value' => true]]], $this->contextHeaders())->assertOk();
+        $this->assertFalse($empty->json('evaluation.is_ready'));
+        $this->postJson("/api/v1/ai/workflow-tasks/{$id}/prepare-proposal", [], $this->contextHeaders())->assertUnprocessable();
+    }
+
     public function test_patching_inputs_with_expected_revision_updates_state_and_detects_conflict(): void
     {
         $this->actingAs($this->adminUser);

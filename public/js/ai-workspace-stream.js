@@ -27,7 +27,7 @@
                         if (!content) continue;
                         const data = JSON.parse(content);
                         if (event === 'delta') onDelta(data.text || '');
-                        if (event === 'error') throw { status: 502, responseJSON: data };
+                        if (event === 'error') throw { status: Number(data.http_status) || 502, responseJSON: data };
                         if (event === 'complete') result = data;
                     }
                     if (chunk.done) break;

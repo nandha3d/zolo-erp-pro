@@ -81,6 +81,14 @@ class AiServiceProvider extends ServiceProvider
                 $manifest->register($registration);
             }
 
+            if (config('ai_documents.enabled') && config('ai_documents.qdrant.enabled')) {
+                $manifest->register(new AiToolRegistration(
+                    $app->make(\App\Ai\Documents\DocumentKnowledgeHandler::class), 'read_document_knowledge', [],
+                ));
+            }
+            foreach (\App\Ai\Infrastructure\OutboundMcpReadCatalog::registrations() as $registration) {
+                $manifest->register($registration);
+            }
             return $manifest;
         });
 
@@ -126,6 +134,8 @@ class AiServiceProvider extends ServiceProvider
             $registry = new \App\Ai\Registries\ActionCapabilityRegistry();
             $registry->registerSetupCapabilities();
             $registry->registerCommercialCapabilities();
+            \App\Ai\Registries\ExtendedActionCatalog::register($registry);
+            foreach (\App\Ai\Imports\DocumentActionCatalog::definitions() as $definition) $registry->register($definition);
             return $registry;
         });
         $this->app->singleton(\App\Ai\Registries\SetupCapabilityRegistry::class);

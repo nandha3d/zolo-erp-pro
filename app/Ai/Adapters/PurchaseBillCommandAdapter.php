@@ -67,6 +67,10 @@ final class PurchaseBillCommandAdapter implements ActionCommandAdapterInterface
         ): Purchase {
             // 0. Acquire explicit domain row locks on dependencies before evaluating source state
             DB::table('companies')->where('id', $context->companyId)->lockForUpdate()->first();
+            if ($receipt = $this->recover($idempotencyKey, $context)) {
+                return Purchase::visibleIn($context)->findOrFail($receipt->resourceId);
+            }
+            PurchaseBillPreviewAdapter::assertInvoiceUnique($context, $supplierId, $payload['supplier_invoice_no'] ?? null);
             DB::table('fiscal_years')->where('company_id', $context->companyId)->where('id', $context->financialYearId)->lockForUpdate()->first();
             DB::table('suppliers')->where('company_id', $context->companyId)->where('id', $supplierId)->lockForUpdate()->first();
             DB::table('party_tax_profiles')->where('company_id', $context->companyId)->where('party_type', 'supplier')->where('party_id', $supplierId)->lockForUpdate()->first();
@@ -140,7 +144,7 @@ final class PurchaseBillCommandAdapter implements ActionCommandAdapterInterface
                 $actualGrandTotal = (float) $createdPurchase->grand_total;
                 $expectedGrandTotal = (float) ($expected['grand_total'] ?? 0);
 
-                if (abs($actualGrandTotal - $expectedGrandTotal) > 0.02) {
+                if (\App\Support\LedgerAmount::units($createdPurchase->grand_total) !== \App\Support\LedgerAmount::units($expected['grand_total'])) {
                     throw new LogicException("Financial total discrepancy: expected {$expectedGrandTotal}, got {$actualGrandTotal}.");
                 }
 
@@ -148,7 +152,7 @@ final class PurchaseBillCommandAdapter implements ActionCommandAdapterInterface
                     $actualTaxTotal = (float) $createdPurchase->total_tax;
                     $expectedTaxTotal = (float) $expected['tax_total'];
 
-                    if (abs($actualTaxTotal - $expectedTaxTotal) > 0.02) {
+                    if (\App\Support\LedgerAmount::units($createdPurchase->total_tax) !== \App\Support\LedgerAmount::units($expected['tax_total'])) {
                         throw new LogicException("Tax total discrepancy: expected {$expectedTaxTotal}, got {$actualTaxTotal}.");
                     }
                 }
@@ -167,8 +171,8 @@ final class PurchaseBillCommandAdapter implements ActionCommandAdapterInterface
                 'warehouse_id' => (int) $purchase->warehouse_id,
                 'business_date' => $purchase->created_at?->toDateString(),
                 'item_count' => $purchase->productPurchases->count(),
-                'grand_total' => sprintf('%.2f', (float) $purchase->grand_total),
-                'total_tax' => sprintf('%.2f', (float) $purchase->total_tax),
+                'grand_total' => CommercialDecimal::format((float) $purchase->grand_total),
+                'total_tax' => CommercialDecimal::format((float) $purchase->total_tax),
                 'status' => 'completed',
                 'purchase_order_id' => $poId > 0 ? $poId : null,
                 'grn_id' => $grnId > 0 ? $grnId : null,
@@ -203,8 +207,8 @@ final class PurchaseBillCommandAdapter implements ActionCommandAdapterInterface
                         'supplier_id' => (int) $purchase->supplier_id,
                         'warehouse_id' => (int) $purchase->warehouse_id,
                         'business_date' => $purchase->created_at?->toDateString(),
-                        'grand_total' => (float) $purchase->grand_total,
-                        'total_tax' => (float) $purchase->total_tax,
+                        'grand_total' => CommercialDecimal::format($purchase->grand_total),
+                        'total_tax' => CommercialDecimal::format($purchase->total_tax),
                         'status' => 'completed',
                         'reconciled_from_idempotency' => true,
                     ],

@@ -61,6 +61,23 @@ final class DocumentIntakeTest extends TestCase
         return app(DocumentIntakeService::class)->upload($this->principal, UploadedFile::fake()->createWithContent($name, $text), $classification);
     }
 
+    public function test_document_workspace_renders_authenticated_scoped_import_and_knowledge_controls(): void
+    {
+        config(['ai_documents.qdrant.enabled' => true]);
+        DB::table('general_settings')->insert(['site_title' => 'Document fixture',
+            'currency' => DB::table('currencies')->value('id'), 'staff_access' => 'all', 'date_format' => 'd/m/Y',
+            'theme' => 'default.css', 'currency_position' => 'prefix']);
+        $response = $this->actingAs(User::findOrFail($this->principal->actorId))->withSession([
+            'company_id' => $this->principal->companyId, 'branch_id' => $this->principal->branchId,
+            'financial_year_id' => $this->principal->financialYearId,
+        ])->get('/ai/documents-workspace');
+        $response->assertOk()->assertSee('Documents and reviewed imports')->assertSee('Opening stock and balances review')
+            ->assertSee('Review and approve SOP indexing')->assertSee('id="document-opening-form"', false);
+        if (getenv('ERP_EXPORT_AI_WORKSPACE_BROWSER') === '1') {
+            file_put_contents(base_path('scratch/ai-documents-finish.html'), $response->getContent());
+        }
+    }
+
     public function test_quarantine_encrypts_bytes_and_rejects_parsing_without_scan(): void
     {
         $document = $this->upload('Private supplier data');
@@ -84,6 +101,25 @@ final class DocumentIntakeTest extends TestCase
         }
         $this->assertSame('quarantined', app(DocumentIntakeService::class)->show($this->principal, $document['id'])['status']);
         $this->assertSame(0, DB::table('ai_document_chunks')->where('company_id', $this->principal->companyId)->count());
+    }
+
+    public function test_document_processing_refuses_sync_dispatch_and_uses_the_dedicated_async_queue(): void
+    {
+        $document = $this->upload('Document processing must not run in the HTTP request.');
+        \Illuminate\Support\Facades\Bus::fake([\App\Ai\Documents\ProcessDocument::class]);
+        $this->actingAs(User::findOrFail($this->principal->actorId))->withSession([
+            'company_id' => $this->principal->companyId, 'branch_id' => $this->principal->branchId,
+            'financial_year_id' => $this->principal->financialYearId,
+        ]);
+        config(['ai_infrastructure.queue_connection' => 'sync']);
+        $this->postJson('/ai/documents/'.$document['id'].'/process')->assertStatus(503);
+        \Illuminate\Support\Facades\Bus::assertNothingDispatched();
+        $this->assertSame('quarantined', app(DocumentIntakeService::class)->show($this->principal, $document['id'])['status']);
+        config(['ai_infrastructure.queue_connection' => 'database']);
+        $this->postJson('/ai/documents/'.$document['id'].'/process')->assertStatus(202)->assertJsonPath('data.status', 'queued');
+        \Illuminate\Support\Facades\Bus::assertDispatched(\App\Ai\Documents\ProcessDocument::class,
+            static fn ($job): bool => $job->connection === 'database' && $job->queue === 'ai-documents');
+        $this->assertSame('quarantined', app(DocumentIntakeService::class)->show($this->principal, $document['id'])['status']);
     }
 
     public function test_upload_rejects_mismatched_extension_and_tenant_cannot_read_document(): void
@@ -133,6 +169,12 @@ final class DocumentIntakeTest extends TestCase
         $this->assertCount(1, $results['citations']);
         $this->assertSame(1, $results['citations'][0]['page']);
         $this->assertSame('untrusted_document', $results['citations'][0]['trust']);
+        $chunk = DB::table('ai_document_chunks')->where('company_id', $this->principal->companyId)->first();
+        DB::table('ai_document_chunks')->where('company_id', $this->principal->companyId)->where('id', $chunk->id)
+            ->update(['content_encrypted' => Crypt::encryptString('Text does not match the approved source checksum.')]);
+        $this->assertSame([], $knowledge->search($this->principal, 'Return policy')['citations']);
+        DB::table('ai_document_chunks')->where('company_id', $this->principal->companyId)->where('id', $chunk->id)
+            ->update(['content_encrypted' => $chunk->content_encrypted]);
         app(DocumentIntakeService::class)->revoke($this->principal, $document['id']);
         $this->assertSame([], $knowledge->search($this->principal, 'Return policy')['citations']);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/points/query')

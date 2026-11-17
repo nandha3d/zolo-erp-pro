@@ -70,6 +70,10 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
         ): GoodsReceivedNote {
             // 0. Acquire explicit domain row locks on dependencies before evaluating source state
             DB::table('companies')->where('id', $context->companyId)->lockForUpdate()->first();
+            if ($receipt = $this->recover($idempotencyKey, $context)) {
+                return GoodsReceivedNote::where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                    ->where('financial_year_id', $context->financialYearId)->findOrFail($receipt->resourceId);
+            }
             DB::table('fiscal_years')->where('company_id', $context->companyId)->where('id', $context->financialYearId)->lockForUpdate()->first();
             DB::table('suppliers')->where('company_id', $context->companyId)->where('id', $supplierId)->lockForUpdate()->first();
             DB::table('warehouses')->where('company_id', $context->companyId)->where('id', $warehouseId)->lockForUpdate()->first();
@@ -96,16 +100,8 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
 
             // 2. Reserve document number
             $date = !empty($payload['grn_date']) ? (string) $payload['grn_date'] : now()->toDateString();
-            $reservation = null;
-            $grnNo = null;
-
-            try {
-                $docService = app(DocumentNumberService::class);
-                $reservation = $docService->reserve('grn', $context, $date, $actorId);
-                $grnNo = $reservation->formatted_number;
-            } catch (\Throwable) {
-                $grnNo = 'GRN-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
-            }
+            $reservation = app(DocumentNumberService::class)->reserve('grn', $context, $date, $actorId);
+            $grnNo = $reservation->formatted_number;
 
             // Calculate totals
             $totalQty = 0.0;
@@ -114,7 +110,7 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
                 $qty = (float) ($item['qty'] ?? 0);
                 $cost = (float) ($item['cost'] ?? 0);
                 $totalQty += $qty;
-                $totalCost += ($qty * $cost);
+                $totalCost += round($qty * $cost, 4);
             }
 
             // 3. Create GoodsReceivedNote record
@@ -147,7 +143,7 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
             foreach ($items as $line) {
                 $qty = (float) ($line['qty'] ?? 1);
                 $cost = (float) ($line['cost'] ?? 0);
-                $amount = round($qty * $cost, 2);
+                $amount = round($qty * $cost, 4);
 
                 GoodsReceivedNoteItem::create([
                     'company_id' => $context->companyId,
@@ -222,8 +218,8 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
                 'supplier_id' => (int) $grn->supplier_id,
                 'warehouse_id' => (int) $grn->warehouse_id,
                 'grn_date' => $grn->grn_date?->toDateString(),
-                'total_qty' => sprintf('%.2f', (float) $grn->total_qty),
-                'grand_total' => sprintf('%.2f', (float) $grn->grand_total),
+                'total_qty' => CommercialDecimal::format((float) $grn->total_qty),
+                'grand_total' => CommercialDecimal::format((float) $grn->grand_total),
                 'purchase_order_id' => $poId > 0 ? $poId : null,
                 'stock_movement_id' => (int) $grn->stock_movement_id,
                 'journal_entry_id' => (int) $grn->journal_entry_id,
@@ -245,6 +241,7 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
 
         if ($existing && $existing->response_type === 'grn') {
             $grn = GoodsReceivedNote::where('company_id', $context->companyId)
+                ->where('branch_id', $context->branchId)->where('financial_year_id', $context->financialYearId)
                 ->find((int) $existing->response_ref);
 
             if ($grn) {
@@ -257,8 +254,8 @@ final class GoodsReceivedNoteCommandAdapter implements ActionCommandAdapterInter
                         'supplier_id' => (int) $grn->supplier_id,
                         'warehouse_id' => (int) $grn->warehouse_id,
                         'grn_date' => $grn->grn_date?->toDateString(),
-                        'total_qty' => (float) $grn->total_qty,
-                        'grand_total' => (float) $grn->grand_total,
+                        'total_qty' => CommercialDecimal::format($grn->total_qty, 6),
+                        'grand_total' => CommercialDecimal::format($grn->grand_total),
                         'reconciled_from_idempotency' => true,
                     ],
                 );

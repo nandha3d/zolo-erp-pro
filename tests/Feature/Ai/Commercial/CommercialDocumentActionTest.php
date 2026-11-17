@@ -126,4 +126,37 @@ final class CommercialDocumentActionTest extends TestCase
         $this->assertGreaterThanOrEqual(2, count($result['required_inputs']));
         $this->assertDatabaseHas('ai_workflow_tasks', ['id' => $result['task_id'], 'action_key' => 'quotation.create.v1']);
     }
+
+    public function test_delivery_challan_then_invoice_settles_dispatched_stock_without_a_second_issue(): void
+    {
+        app(InventoryMovementService::class)->receive(new StockMovementCommand(date: now()->toDateString(),
+            lines: [new StockLine($this->product->id, 20, unitCost: 5)], warehouseId: $this->warehouse->id,
+            sourceType: 'test', sourceId: 2, idempotencyKey: uniqid('dc-stock-'), userId: $this->principal->actorId, context: $this->context));
+        $proposal = app(ActionProposalService::class)->create($this->principal, 'delivery_challan.create.v1', $this->inputs() + ['purpose' => 'approval']);
+        $preview = json_decode($proposal['preview_json'], true);
+        $this->assertSame('0', $preview['totals']['grand_total']);
+        $result = $this->execute($proposal);
+        $this->assertSame('delivery_challan', $result['receipt']['resource_type']);
+        $this->assertNotNull($result['receipt']['details']['stock_movement_id']);
+        $movements = DB::table('stock_movements')->where('company_id', $this->context->companyId)->count();
+        $invoice = app(ActionProposalService::class)->create($this->principal, 'sales_invoice.create.v1',
+            $this->inputs() + ['delivery_challan_id' => $result['receipt']['resource_id']]);
+        $sale = $this->execute($invoice);
+        $this->assertSame('sale', $sale['receipt']['resource_type']);
+        $this->assertSame($movements, DB::table('stock_movements')->where('company_id', $this->context->companyId)->count());
+        $this->assertDatabaseHas('material_settlements', ['company_id' => $this->context->companyId,
+            'document_type' => 'dc', 'document_id' => $result['receipt']['resource_id'], 'settled_by_type' => 'sale',
+            'settled_by_id' => $sale['receipt']['resource_id']]);
+    }
+
+    public function test_foreign_branch_warehouse_is_rejected_during_sales_preview(): void
+    {
+        $branch = \App\Models\CompanyBranch::forceCreate(['company_id' => $this->context->companyId,
+            'code' => uniqid('OTHER'), 'name' => 'Other Branch', 'branch_type' => 'branch']);
+        $warehouse = Warehouse::forceCreate(['company_id' => $this->context->companyId, 'branch_id' => $branch->id,
+            'name' => 'Other Warehouse', 'address' => 'Test', 'is_active' => true]);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        app(ActionProposalService::class)->create($this->principal, 'quotation.create.v1',
+            array_replace($this->inputs(), ['warehouse_id' => $warehouse->id, 'biller_id' => $this->billerId]));
+    }
 }

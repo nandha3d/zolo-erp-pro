@@ -88,6 +88,8 @@ final class ExtendedActionAdapter implements ActionPreviewAdapterInterface, Acti
                 return $this->decodeReceipt($existing->receipt_json);
             }
             $this->assertAdministrativeAction($definition->key, $context, $actorId);
+            if (isset($payload['batch_id'])) app(\App\Ai\Imports\OpeningImportSourceAccess::class)
+                ->assertCurrent((int) $payload['batch_id'], $context, $actorId, true);
             $this->lockDependencies($payload, $context);
             if (!hash_equals($expectedSourceStateHash, $this->sourceHash($definition->key, $payload, $context))) {
                 $this->fail('source_state', 'ERP source state changed. Rebuild the proposal and obtain fresh approval.');
@@ -422,6 +424,7 @@ final class ExtendedActionAdapter implements ActionPreviewAdapterInterface, Acti
             $this->fail('batch_id', 'Select an already validated, uncommitted opening import batch for this branch and year.');
         }
         $this->assertDate($batch->business_date, $context);
+        app(\App\Ai\Imports\OpeningImportSourceAccess::class)->assertCurrent((int) $batch->id, $context, (int) auth()->id());
         $kinds = DB::table('import_rows')->where('batch_id', $batch->id)->distinct()->pluck('kind')->all();
         if ($key === 'setup.opening_stock.create.v1' && !in_array('stock', $kinds, true)) {
             $this->fail('batch_id', 'This opening batch does not contain stock.');
@@ -439,6 +442,11 @@ final class ExtendedActionAdapter implements ActionPreviewAdapterInterface, Acti
         return ['document_type' => 'Reviewed Opening Import', 'batch_id' => $batch->id,
             'source_name' => $batch->source_name, 'business_date' => $batch->business_date,
             'expected' => $batch->expected_json, 'summary' => $batch->summary_json, 'kinds' => $kinds,
+            'rows' => DB::table('import_rows')->where('batch_id', $batch->id)->orderBy('id')->get()
+                ->map(static fn ($row): array => ['source_key' => $row->source_key, 'kind' => $row->kind,
+                    'payload' => json_decode($row->payload_json, true, flags: JSON_THROW_ON_ERROR)])->all(),
+            'mappings' => DB::table('import_mappings')->where('batch_id', $batch->id)->orderBy('id')
+                ->get(['entity', 'source_key', 'target_id'])->map(static fn ($row): array => (array) $row)->all(),
             'policy' => ['inventory_impact' => 'only_reviewed_batch_rows', 'ledger_impact' => 'reconciled_opening_entries',
                 'whole_batch_commit' => true]];
     }
@@ -542,6 +550,8 @@ final class ExtendedActionAdapter implements ActionPreviewAdapterInterface, Acti
             $state['receipt_lines'] = DB::table('job_work_receipt_lines')->where('company_id', $context->companyId)->whereIn('receipt_id', $receiptIds)->orderBy('id')->get()->map(fn ($row) => (array) $row)->all();
         }
         if (isset($payload['batch_id'])) {
+            $state['document_source'] = (array) DB::table('ai_opening_import_sources')->where('company_id', $context->companyId)
+                ->where('batch_id', $payload['batch_id'])->first();
             foreach (['import_rows', 'import_mappings'] as $table) {
                 // The parent import batch has already been explicitly scoped above.
                 $state[$table] = $state['import_batches'] ? DB::table($table)->where('batch_id', $payload['batch_id'])->orderBy('id')->get()->map(fn ($row) => (array) $row)->all() : [];

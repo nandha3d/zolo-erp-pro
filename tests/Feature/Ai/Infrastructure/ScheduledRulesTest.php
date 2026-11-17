@@ -72,6 +72,19 @@ final class ScheduledRulesTest extends TestCase
         }
     }
 
+    public function test_registered_schedule_api_creates_lists_and_cancels_owned_rule(): void
+    {
+        $headers = ['X-Company-ID' => (string) $this->company->id, 'X-Branch-ID' => (string) $this->branch,
+            'X-Financial-Year-ID' => (string) $this->year];
+        $created = $this->actingAs($this->actor, 'sanctum')->withHeaders($headers)
+            ->postJson('/api/v1/ai/schedules', $this->input())->assertCreated();
+        $id = $created->json('rule.id');
+        $this->withHeaders($headers)->getJson('/api/v1/ai/schedules')->assertOk()->assertJsonCount(1, 'rules');
+        $this->withHeaders($headers)->postJson('/api/v1/ai/schedules/'.$id.'/cancel', ['revision' => 1])
+            ->assertOk()->assertJsonPath('status', 'cancelled');
+        $this->assertFalse((bool) DB::table('ai_scheduled_rules')->where('company_id', $this->company->id)->where('id', $id)->value('is_active'));
+    }
+
     public function test_stock_alert_run_is_durable_deduplicated_and_has_no_business_writes(): void
     {
         Bus::fake([RunScheduledRule::class]);

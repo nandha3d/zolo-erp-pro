@@ -1,10 +1,14 @@
 @extends('backend.layout.main')
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/pages/ai-documents.css') }}?v={{ filemtime(public_path('css/pages/ai-documents.css')) }}">
+@endpush
+
 @section('content')
 <div class="container-fluid py-3" id="ai-documents" data-base-url="{{ url('ai') }}" data-csrf="{{ csrf_token() }}" data-max-kilobytes="{{ $maxKilobytes }}">
     <div class="d-flex flex-wrap align-items-start justify-content-between mb-3">
         <div>
-            <h4 class="mb-1">Documents and product imports</h4>
+            <h4 class="mb-1">Documents and reviewed imports</h4>
             <p class="text-muted small mb-0">Company {{ $companyId }} · Branch {{ $branchId }} · Financial year {{ $financialYearId }}</p>
         </div>
         <a class="btn btn-outline-primary btn-sm mt-2" href="{{ url('ai') }}">Back to chat</a>
@@ -24,12 +28,13 @@
                             <option value="sales_order">Customer order</option>
                             <option value="sop">SOP or company guide</option>
                             <option value="product_import">Product spreadsheet</option>
+                            <option value="opening_import">Opening stock or balances spreadsheet</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="document-file">File</label>
                         <input id="document-file" name="file" type="file" class="form-control-file" accept=".pdf,.png,.jpg,.jpeg,.txt,.csv,.xlsx" required aria-describedby="document-file-help">
-                        <small id="document-file-help" class="form-text text-muted">PDF, PNG, JPEG or UTF-8 text. Product imports use CSV or XLSX. Maximum {{ number_format($maxKilobytes / 1024, 1) }} MB.</small>
+                        <small id="document-file-help" class="form-text text-muted">PDF, PNG, JPEG or UTF-8 text. Product and opening imports use CSV or XLSX. Maximum {{ number_format($maxKilobytes / 1024, 1) }} MB.</small>
                     </div>
                     <button class="btn btn-primary" type="submit">Upload to quarantine</button>
                 </form>
@@ -55,6 +60,29 @@
             </div></div>
         </div>
     </div>
+    <div class="card mb-3 d-none" id="document-opening-panel"><div class="card-body">
+        <h5>Opening stock and balances review</h5>
+        <p class="small text-muted">Use a clean company with no posted stock or accounting activity. Spreadsheet columns: source_key, kind, payload. Each payload is a JSON object from the reviewed opening template. Map every source key to an existing company record and confirm source totals. The dry-run does not post entries.</p>
+        <form id="document-opening-form">
+            <div class="form-row">
+                <div class="form-group col-md-4"><label for="opening-action">Opening type</label><select id="opening-action" class="form-control"><option value="setup.opening_stock.create.v1">Opening stock</option><option value="setup.opening_balance.create.v1">Opening financial balances</option></select></div>
+                <div class="form-group col-md-4"><label for="opening-source-name">Source description</label><input id="opening-source-name" class="form-control" maxlength="100" required></div>
+                <div class="form-group col-md-2"><label for="opening-source-key">Source reference</label><input id="opening-source-key" class="form-control" maxlength="100" required></div>
+                <div class="form-group col-md-2"><label for="opening-date">Opening date</label><input id="opening-date" type="date" class="form-control" value="{{ now()->toDateString() }}" required></div>
+            </div>
+            <div class="table-responsive"><table class="table table-sm"><thead><tr><th scope="col">Record type</th><th scope="col">Source key</th><th scope="col">Company record ID</th><th scope="col">Remove</th></tr></thead><tbody id="opening-mappings"></tbody></table></div>
+            <button type="button" id="opening-add-mapping" class="btn btn-outline-secondary btn-sm mb-3">Add mapping</button>
+            <div class="form-row">
+                <div class="form-group col-md-3"><label for="opening-stock-qty">Expected stock quantity</label><input id="opening-stock-qty" type="number" step="0.0001" min="0" value="0" class="form-control" required></div>
+                <div class="form-group col-md-3"><label for="opening-stock-value">Expected stock value</label><input id="opening-stock-value" type="number" step="0.0001" min="0" value="0" class="form-control" required></div>
+                <div class="form-group col-md-3"><label for="opening-ar">Expected customer balance</label><input id="opening-ar" type="number" step="0.0001" value="0" class="form-control" required></div>
+                <div class="form-group col-md-3"><label for="opening-ap">Expected supplier balance</label><input id="opening-ap" type="number" step="0.0001" value="0" class="form-control" required></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Dry-run and prepare for approval</button>
+            <a class="btn btn-outline-primary btn-sm" href="{{ url('ai/action-review') }}">Open action review</a>
+            <p class="small mt-2 mb-0" id="opening-result" role="status" aria-live="polite">No stock or financial entries are posted before approval.</p>
+        </form>
+    </div></div>
     <div class="card mb-3 d-none" id="document-import-panel"><div class="card-body">
         <h5>Product import review</h5>
         <p class="small text-muted" id="document-import-summary"></p>

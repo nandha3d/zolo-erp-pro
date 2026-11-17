@@ -13,7 +13,7 @@ final class ProcessDocument implements ShouldQueue
     use Queueable;
 
     public int $tries = 1;
-    public int $timeout = 120;
+    public int $timeout = 60;
 
     public function __construct(
         public readonly string $documentId,
@@ -22,6 +22,7 @@ final class ProcessDocument implements ShouldQueue
         public readonly int $branchId,
         public readonly int $financialYearId,
     ) {
+        $this->onConnection((string) config('ai_infrastructure.queue_connection', 'redis'));
         $this->onQueue('ai-documents');
     }
 

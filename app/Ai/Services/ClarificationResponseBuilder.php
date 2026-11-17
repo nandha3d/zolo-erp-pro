@@ -31,6 +31,15 @@ final class ClarificationResponseBuilder
             $candidates = $firstIssue->candidates;
         }
 
+        $slots = json_decode((string) ($task['slots_json'] ?? '{}'), true, flags: JSON_THROW_ON_ERROR);
+        $lineItems = [];
+        foreach ($slots['items'] ?? [] as $index => $line) {
+            $lineId = (string) ($line['client_line_id'] ?? "line-{$index}");
+            $product = collect($evaluation->confirmedFields)->firstWhere('field', "items[{$lineId}].product_id");
+            $lineItems[] = ['client_line_id' => $lineId,
+                'label' => $product['display'] ?? $line['product_query'] ?? ('Line '.($index + 1))];
+        }
+
         return [
             'status' => 'needs_input',
             'task_id' => (string) $task['id'],
@@ -40,6 +49,7 @@ final class ClarificationResponseBuilder
             'message' => $message,
             'candidates' => $candidates,
             'confirmed_fields' => $evaluation->confirmedFields,
+            'line_items' => $lineItems,
             'required_inputs' => $evaluation->issuesArray(),
             'pending_checks' => $evaluation->pendingChecks,
             'next_action' => 'submit_all_corrections',

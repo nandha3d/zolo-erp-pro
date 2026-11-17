@@ -32,6 +32,9 @@
                             <span class="ai-policy"><i class="dripicons-lock" aria-hidden="true"></i>
                                 {{ $isReadOnly ? 'Read-only access' : 'Approval required for actions' }}</span>
                             <span>Scoped to your company and permissions.</span>
+                            @if(config('ai_documents.enabled'))
+                                <a href="{{ url('ai/documents-workspace') }}">Documents and reviewed imports</a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -264,6 +267,9 @@
 @push('scripts')
     <script src="{{ asset('vendor/marked.min.js') }}"></script>
     <script src="{{ asset('vendor/purify.min.js') }}"></script>
+    <script src="{{ versioned_asset('js/ai-workspace-stream.js') }}"></script>
+    <script src="{{ versioned_asset('js/ai-action-details.js') }}"></script>
+    <script src="{{ versioned_asset('js/ai-workspace-dictation.js') }}"></script>
     <script>
               (function ($) {
                 'use strict';
@@ -1098,7 +1104,7 @@
                                 '<div class="col-6 text-right"><small class="text-muted d-block">Warehouse</small><strong class="text-dark">' + $('<div>').text(data.warehouse?.name || '—').html() + '</strong></div>' +
                                 '</div>');
 
-                            if (data.items && data.items.length > 0) {
+                            if (data.items?.length > 0 && data.items.some(item => item.product_id || item.product_name)) {
                                 const tableWrapper = $('<div class="table-responsive my-2"></div>');
                                 const table = $('<table class="table table-sm table-hover mb-0 ai-fact-table"></table>');
                                 table.append('<thead class="thead-light"><tr>' +
@@ -1122,6 +1128,11 @@
                                 cardBody.append(tableWrapper);
                             }
 
+                            const details = $('<details class="my-2 ai-action-details"></details>');
+                            details.append($('<summary class="small font-weight-bold"></summary>').text('Review all action details'));
+                            details.append(window.ZoloAiActionDetails(data));
+                            if (!data.items?.some(item => item.product_id || item.product_name)) details.prop('open', true);
+                            cardBody.append(details);
                             const totals = data.totals || {};
                             const footer = $('<div class="border-top pt-2"></div>');
                             const totalsRow = $('<div class="row no-gutters small text-muted mb-2">' +
@@ -1156,17 +1167,17 @@
                                                 const resType = receipt.resource_type;
                                                 const resId = receipt.resource_id || receipt.details?.purchase_id || receipt.details?.sale_id;
                                                 let pdfUrl = null;
-                                                if (resId && (resType === 'purchase_order' || resType === 'purchase')) {
+                                                if (resId && ['purchase_order', 'purchase', 'purchase_bill'].includes(resType)) {
                                                     pdfUrl = aiBaseUrl + '/documents/purchase/' + resId + '/pdf';
-                                                } else if (resId && (resType === 'sales_order' || resType === 'sale')) {
-                                                    pdfUrl = aiBaseUrl + '/documents/sale/' + resId + '/pdf';
-                                                } else if (data.proposal_id) {
-                                                    pdfUrl = aiBaseUrl + '/proposals/' + data.proposal_id + '/pdf';
+                                                } else if (resId && ['sales_order', 'sale', 'quotation'].includes(resType)) {
+                                                    pdfUrl = aiBaseUrl + '/documents/' + resType + '/' + resId + '/pdf';
                                                 }
-                                                cardHeader.find('.ai-proposal-status-badge').replaceWith($('<span class="badge badge-success px-2 py-1"><i class="dripicons-checkmark mr-1"></i>Booked</span>'));
+                                                cardHeader.find('.ai-proposal-status-badge').replaceWith($('<span class="badge badge-success px-2 py-1"></span>').text('Completed'));
                                                 const successBox = $('<div class="alert alert-success mt-2 mb-0 p-3 border-success w-100"></div>');
-                                                successBox.append('<h6 class="font-weight-bold text-success mb-1"><i class="dripicons-checkmark mr-1"></i>ERP ' + (isPb ? 'Purchase Bill' : 'Voucher') + ' Created</h6>');
-                                                successBox.append('<div class="small mb-2">Voucher Number: <strong>' + $('<div>').text(refNo).html() + '</strong> · Status: Successfully posted to ledger and inventory updated.</div>');
+                                                successBox.append($('<h6 class="font-weight-bold text-success mb-1"></h6>').text((data.document_type || 'ERP action') + ' completed'));
+                                                successBox.append($('<div class="small mb-2"></div>').text('Reference: ' + refNo + ' · Status: ' + (receipt.status || 'completed')));
+                                                if (receipt.details?.journal_entry_id) successBox.append($('<div class="small"></div>').text('Journal entry: ' + receipt.details.journal_entry_id));
+                                                if (receipt.details?.stock_movement_id) successBox.append($('<div class="small"></div>').text('Stock movement: ' + receipt.details.stock_movement_id));
                                                 const successBtns = $('<div class="d-flex align-items-center flex-wrap mt-2"></div>');
                                                 if (pdfUrl) {
                                                     successBtns.append($('<button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 mr-2 mb-1 btn-preview-pdf"><i class="dripicons-preview mr-1"></i>View PDF in Chat</button>').attr('data-pdf-url', pdfUrl).attr('data-title', refNo));
@@ -1238,6 +1249,31 @@
                             const cardBody = $('<div class="card-body p-3 bg-white"></div>');
 
                             // Confirmed Fields
+                            const deletedLines = new Set();
+                            if (data.task_id && data.line_items?.length) {
+                                const lineControls = $('<div class="ai-line-controls mb-2"></div>');
+                                lineControls.append($('<p class="small font-weight-bold mb-1"></p>').text('Line items'));
+                                data.line_items.forEach(function (line) {
+                                    const row = $('<div class="d-flex align-items-center justify-content-between mb-1"></div>');
+                                    const label = $('<span class="small mr-2"></span>').text(line.label);
+                                    const button = $('<button type="button" class="btn btn-sm btn-outline-danger ai-remove-line"></button>')
+                                        .text('Remove line').attr('aria-label', 'Remove line: ' + line.label);
+                                    button.on('click', function () {
+                                        const remove = !deletedLines.has(line.client_line_id);
+                                        if (remove) deletedLines.add(line.client_line_id); else deletedLines.delete(line.client_line_id);
+                                        button.text(remove ? 'Undo removal' : 'Remove line').attr('aria-label', (remove ? 'Undo removal: ' : 'Remove line: ') + line.label);
+                                        label.toggleClass('text-muted', remove);
+                                        inputsContainer.find('.ai-clarification-issue').each(function () {
+                                            if (String($(this).attr('data-field')).startsWith('items[' + line.client_line_id + '].')) {
+                                                $(this).toggle(!remove);
+                                            }
+                                        });
+                                    });
+                                    lineControls.append(row.append(label, button));
+                                });
+                                lineControls.append($('<p class="small text-muted mb-0"></p>').text('Removals apply when you submit details.'));
+                                cardBody.append(lineControls);
+                            }
                             if (data.confirmed_fields && data.confirmed_fields.length > 0) {
                                 const confBox = $('<div class="mb-2"></div>');
                                 confBox.append('<div class="small font-weight-bold text-success mb-1"><i class="dripicons-checkmark mr-1"></i>Confirmed Details:</div>');
@@ -1261,7 +1297,7 @@
                             if (data.required_inputs && data.required_inputs.length > 0) {
                                 inputsContainer.append('<div class="small font-weight-bold text-dark mb-2">Please complete or clarify the missing information:</div>');
                                 data.required_inputs.forEach(function (issue) {
-                                    const issueBox = $('<div class="form-group mb-3 ai-clarification-issue" data-field="' + issue.field + '"></div>');
+                                    const issueBox = $('<div class="form-group mb-3 ai-clarification-issue"></div>').attr('data-field', issue.field);
                                     const statusBadgeClass = issue.status === 'ambiguous' ? 'badge-info' : (issue.status === 'invalid' ? 'badge-danger' : 'badge-warning');
 
                                     issueBox.append('<div class="d-flex justify-content-between align-items-center mb-1">' +
@@ -1633,12 +1669,16 @@
                             // Actions Footer
                             if (data.task_id) {
                                 const footer = $('<div class="d-flex justify-content-end align-items-center mt-3 pt-2 border-top"></div>');
-                                const btnSubmit = $('<button type="button" class="btn btn-sm btn-primary mr-2 py-1 px-3 ai-btn-submit-clarification"><i class="dripicons-direction mr-1"></i>Submit Details</button>');
+                                const btnSubmit = $('<button type="button" aria-label="Submit Details" class="btn btn-sm btn-primary mr-2 py-1 px-3 ai-btn-submit-clarification"><i class="dripicons-direction mr-1"></i>Submit Details</button>');
                                 const btnCancel = $('<button type="button" class="btn btn-sm btn-outline-secondary py-1 px-3 ai-btn-cancel-clarification"><i class="dripicons-cross mr-1"></i>Cancel</button>');
 
                                 btnSubmit.on('click', function () {
-                                    const corrections = [];
+                                    const corrections = Array.from(deletedLines, function (id) {
+                                        return { field: 'items[' + id + ']._destroy', value: true };
+                                    });
                                     inputsContainer.find('.ai-clarification-issue').each(function () {
+                                        const lineMatch = String($(this).attr('data-field')).match(/^items\[([^\]]+)\]\./);
+                                        if (lineMatch && deletedLines.has(lineMatch[1])) return;
                                         if ($(this).attr('data-resolved') === 'true') {
                                             return; // Already resolved and persisted via Gate 1
                                         }
@@ -1696,9 +1736,8 @@
                                                         method: 'POST',
                                                         headers: headers,
                                                         success: function (prepRes) {
-                                                            const isBill = (data.action_key === 'purchase_bill.create.v1' || data.action_key === 'action.purchase_bill.v1');
-                                                            const docLabel = isBill ? 'Purchase Bill' : 'Purchase Order';
-                                                            footer.html('<span class="badge badge-success p-2"><i class="dripicons-checkmark mr-1"></i>All details confirmed! ' + docLabel + ' proposal ready.</span>');
+                                                            const docLabel = prepRes.proposal?.preview?.document_type || 'ERP action';
+                                                            footer.empty().append($('<span class="badge badge-success p-2"></span>').text('All details confirmed. ' + docLabel + ' proposal ready.'));
                                                             if (prepRes && prepRes.proposal) {
                                                                 const factData = Object.assign({}, prepRes.proposal.preview || {}, {
                                                                     proposal_id: prepRes.proposal.id,
@@ -1719,7 +1758,12 @@
                                                         }
                                                     });
                                                 } else {
-                                                    footer.html('<span class="badge badge-info p-2"><i class="dripicons-checkmark mr-1"></i>Updated! Additional details required. Refreshing...</span>');
+                                                    if (res.clarification) {
+                                                        card.remove();
+                                                        appendMessage('assistant', 'Review the remaining details.', [], [], [{tool: 'workflow.clarification.v1', data: res.clarification}]);
+                                                    } else {
+                                                        footer.text('Details updated. Reload the task to review remaining inputs.');
+                                                    }
                                                 }
                                             },
                                             error: function (xhr) {
@@ -1730,9 +1774,9 @@
                                                         method: 'GET',
                                                         headers: headers,
                                                         success: function (latestTaskRes) {
-                                                            if (latestTaskRes.task && latestTaskRes.task.revision) {
-                                                                updateTaskRevision(latestTaskRes.task.revision);
-                                                                submitPatch(true);
+                                                            if (latestTaskRes.clarification) {
+                                                                card.remove();
+                                                                appendMessage('assistant', 'Task changed. Review the latest details and submit again.', [], [], [{tool: 'workflow.clarification.v1', data: latestTaskRes.clarification}]);
                                                                 return;
                                                             }
                                                             btnSubmit.prop('disabled', false).text('Submit Details');
@@ -1860,7 +1904,7 @@
                     $('#chat-messages').scrollTop($('#chat-messages')[0].scrollHeight);
                     $('#btn-send').prop('disabled', true);
 
-                    $.ajax({
+                    const chatRequest = {
                         url: '{{ route("ai.chat") }}',
                         method: 'POST',
                         headers: headers,
@@ -1921,7 +1965,18 @@
                             if (!$('#ai-telemetry-panel').prop('hidden')) loadTelemetry();
                             $('#btn-send').prop('disabled', false);
                         }
-                    });
+                    };
+                    if (window.ZoloAiStream && window.ReadableStream && window.TextDecoder) {
+                        let draftText = '';
+                        window.ZoloAiStream.request('{{ route("ai.chat.stream") }}', headers, chatBody, function (delta) {
+                            draftText += delta;
+                            $('#ai-response-status').text('Receiving response…');
+                            $('#ai-thinking').addClass('ai-stream-preview').text('Draft response (verification pending):\n' + draftText);
+                            $('#chat-messages').scrollTop($('#chat-messages')[0].scrollHeight);
+                        }).then(chatRequest.success).catch(chatRequest.error).finally(chatRequest.complete);
+                    } else {
+                        $.ajax(chatRequest);
+                    }
                 });
 
                 // Provider limits describe a shared HTTP dispatch bucket, not chat messages.

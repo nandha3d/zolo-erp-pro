@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Ai\Scheduling;
 
+use App\Ai\DTOs\AiPrincipal;
+use App\Ai\Infrastructure\WorkerActorContext;
 use App\Ai\Services\ActionPreparationService;
 use App\Ai\Services\AiFeatureGate;
-use App\Ai\Services\AiPrincipalFactory;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\Warehouse;
@@ -81,61 +82,64 @@ final class ScheduledRuleRunner
                 }
                 DB::table('ai_schedule_runs')->where('company_id', $companyId)->where('id', $runId)
                     ->update(['started_at' => now('UTC'), 'updated_at' => now('UTC')]);
-                $principal = app(AiPrincipalFactory::class)->createForUser((int) $rule->actor_id, $companyId, (int) $rule->branch_id, (int) $rule->financial_year_id, $runId);
-                if (!$principal->isActive || !$principal->hasTool('inventory.stock_summary.v1')
-                    || !app(AiFeatureGate::class)->isEnabledForCompany($companyId)
-                    || $rule->prepare_purchase_order && !$principal->hasTool('purchase_order.create.v1')) {
-                    throw new AuthorizationException('Scheduled rule permission was revoked.');
-                }
-                $company = DB::table('companies')->where('id', $companyId)->first();
-                $date = now($company->timezone)->toDateString();
-                $context = app(CompanyContextResolver::class)->resolve($principal->actorId, $companyId, $principal->branchId, $principal->financialYearId, $date);
-                $input = json_decode($rule->inputs_json, true, flags: JSON_THROW_ON_ERROR);
-                $warehouse = Warehouse::where('company_id', $companyId)->where('branch_id', $principal->branchId)->where('is_active', true)->find($input['warehouse_id']);
-                if (!$warehouse) throw new AuthorizationException('Scheduled warehouse is no longer accessible.');
-                $products = Product::where('company_id', $companyId)->where('is_active', true)->whereNotIn('type', ['service', 'digital'])
-                    ->whereIn('id', array_column($input['items'], 'product_id'))->get()->keyBy('id');
-                if ($products->count() !== count($input['items'])) throw new AuthorizationException('Scheduled products are no longer accessible.');
-                $stock = app(InventoryAvailabilityService::class)->forCatalogBatch($context, $products, [(int) $warehouse->id]);
-                $alerts = $items = [];
-                foreach ($input['items'] as $line) {
-                    $product = $products[$line['product_id']];
-                    $balance = $stock[$product->id] ?? [];
-                    $available = ($balance['on_hand'] ?? 0) - ($balance['reserved'] ?? 0);
-                    $minimum = LedgerAmount::units((string) $line['minimum_qty']);
-                    if ($available <= $minimum) {
-                        $alerts[] = ['product_id' => $product->id, 'product_name' => $product->name, 'product_code' => $product->code,
-                            'unit_id' => $product->unit_id, 'available' => LedgerAmount::decimal($available),
-                            'minimum_qty' => LedgerAmount::decimal($minimum), 'reconciled' => !($balance['unreconciled'] ?? false)];
-                        // Reorder quantities are explicitly configured in the product's purchase UOM.
-                        $items[] = ['product_id' => $product->id, 'qty' => (string) $line['order_qty'],
-                            'purchase_unit_id' => $product->purchase_unit_id ?? $product->unit_id,
-                            'net_unit_cost' => (string) $product->cost];
+                $reference = new AiPrincipal(actorId: (int) $rule->actor_id, companyId: $companyId,
+                    branchId: (int) $rule->branch_id, financialYearId: (int) $rule->financial_year_id, requestId: $runId);
+                app(WorkerActorContext::class)->run($reference, function (AiPrincipal $principal) use ($companyId, $runId, $rule): void {
+                    if (!$principal->isActive || !$principal->hasTool('inventory.stock_summary.v1')
+                        || !app(AiFeatureGate::class)->isEnabledForCompany($companyId)
+                        || $rule->prepare_purchase_order && !$principal->hasTool('purchase_order.create.v1')) {
+                        throw new AuthorizationException('Scheduled rule permission was revoked.');
                     }
-                }
-                $result = ['kind' => 'low_stock', 'as_of' => $date, 'warehouse_id' => $warehouse->id, 'alerts' => $alerts,
-                    'policy' => 'Read alerts and unapproved proposals only. No posting or outbound sending.'];
-                $proposalId = $taskId = null;
-                if ($alerts && $rule->prepare_purchase_order) {
-                    if (collect($alerts)->contains(fn ($alert) => !$alert['reconciled'])) {
-                        $result['preparation_status'] = 'requires_stock_reconciliation';
-                    } elseif ($this->hasPendingReview($companyId, $rule->id)) {
-                        $result['preparation_status'] = 'awaiting_existing_review';
-                    } else {
-                        if (!Supplier::where('company_id', $companyId)->where('is_active', true)->whereKey($input['supplier_id'])->exists()) {
-                            throw new AuthorizationException('Scheduled supplier is no longer accessible.');
+                    $company = DB::table('companies')->where('id', $companyId)->first();
+                    $date = now($company->timezone)->toDateString();
+                    $context = app(CompanyContextResolver::class)->resolve($principal->actorId, $companyId, $principal->branchId, $principal->financialYearId, $date);
+                    $input = json_decode($rule->inputs_json, true, flags: JSON_THROW_ON_ERROR);
+                    $warehouse = Warehouse::where('company_id', $companyId)->where('branch_id', $principal->branchId)->where('is_active', true)->find($input['warehouse_id']);
+                    if (!$warehouse) throw new AuthorizationException('Scheduled warehouse is no longer accessible.');
+                    $products = Product::where('company_id', $companyId)->where('is_active', true)->whereNotIn('type', ['service', 'digital'])
+                        ->whereIn('id', array_column($input['items'], 'product_id'))->get()->keyBy('id');
+                    if ($products->count() !== count($input['items'])) throw new AuthorizationException('Scheduled products are no longer accessible.');
+                    $stock = app(InventoryAvailabilityService::class)->forCatalogBatch($context, $products, [(int) $warehouse->id]);
+                    $alerts = $items = [];
+                    foreach ($input['items'] as $line) {
+                        $product = $products[$line['product_id']];
+                        $balance = $stock[$product->id] ?? [];
+                        $available = ($balance['on_hand'] ?? 0) - ($balance['reserved'] ?? 0);
+                        $minimum = LedgerAmount::units((string) $line['minimum_qty']);
+                        if ($available <= $minimum) {
+                            $alerts[] = ['product_id' => $product->id, 'product_name' => $product->name, 'product_code' => $product->code,
+                                'unit_id' => $product->unit_id, 'available' => LedgerAmount::decimal($available),
+                                'minimum_qty' => LedgerAmount::decimal($minimum), 'reconciled' => !($balance['unreconciled'] ?? false)];
+                            // Reorder quantities are explicitly configured in the product's purchase UOM.
+                            $items[] = ['product_id' => $product->id, 'qty' => (string) $line['order_qty'],
+                                'purchase_unit_id' => $product->purchase_unit_id ?? $product->unit_id,
+                                'net_unit_cost' => (string) $product->cost];
                         }
-                        $prepared = app(ActionPreparationService::class)->prepare($principal, 'purchase_order.create.v1', [
-                            'supplier_id' => (int) $input['supplier_id'], 'warehouse_id' => (int) $warehouse->id,
-                            'date' => $date, 'items' => $items, 'note' => 'Prepared by opt-in low-stock schedule '.$rule->id.'. Human approval is required.',
-                        ]);
-                        $proposalId = $prepared['data']['proposal_id'] ?? null;
-                        $taskId = $prepared['data']['task_id'] ?? $prepared['task_id'] ?? null;
-                        $result['preparation_status'] = $prepared['status'];
-                        $result['preparation'] = $prepared;
                     }
-                }
-                $this->finish($companyId, $runId, 'completed', $result, $proposalId, $taskId);
+                    $result = ['kind' => 'low_stock', 'as_of' => $date, 'warehouse_id' => $warehouse->id, 'alerts' => $alerts,
+                        'policy' => 'Read alerts and unapproved proposals only. No posting or outbound sending.'];
+                    $proposalId = $taskId = null;
+                    if ($alerts && $rule->prepare_purchase_order) {
+                        if (collect($alerts)->contains(fn ($alert) => !$alert['reconciled'])) {
+                            $result['preparation_status'] = 'requires_stock_reconciliation';
+                        } elseif ($this->hasPendingReview($companyId, $rule->id)) {
+                            $result['preparation_status'] = 'awaiting_existing_review';
+                        } else {
+                            if (!Supplier::where('company_id', $companyId)->where('is_active', true)->whereKey($input['supplier_id'])->exists()) {
+                                throw new AuthorizationException('Scheduled supplier is no longer accessible.');
+                            }
+                            $prepared = app(ActionPreparationService::class)->prepare($principal, 'purchase_order.create.v1', [
+                                'supplier_id' => (int) $input['supplier_id'], 'warehouse_id' => (int) $warehouse->id,
+                                'date' => $date, 'items' => $items, 'note' => 'Prepared by opt-in low-stock schedule '.$rule->id.'. Human approval is required.',
+                            ]);
+                            $proposalId = $prepared['data']['proposal_id'] ?? null;
+                            $taskId = $prepared['data']['task_id'] ?? $prepared['task_id'] ?? null;
+                            $result['preparation_status'] = $prepared['status'];
+                            $result['preparation'] = $prepared;
+                        }
+                    }
+                    $this->finish($companyId, $runId, 'completed', $result, $proposalId, $taskId);
+                });
             });
         } catch (Throwable $error) {
             $code = $error instanceof AuthorizationException ? 'AI_SCHEDULE_PERMISSION_REVOKED'

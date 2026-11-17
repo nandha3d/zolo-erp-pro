@@ -184,7 +184,7 @@
 
                     {{-- Collapsible Details: Lines, Taxes, and Provenance --}}
                     <div class="collapse mt-3 pt-3 border-top" id="collapse-details-{{ $proposal->id }}">
-                        @if (!empty($proposal->items))
+                        @if (!empty($proposal->items) && isset($proposal->items[0]['product_id']))
                             <div class="table-responsive mb-2">
                                 <table class="table table-sm table-hover mb-0 ai-proposal-items-table border">
                                     <thead class="thead-light">
@@ -204,7 +204,7 @@
                                                 <td class="font-weight-bold">{{ $item['product_name'] ?? 'Product #' . $item['product_id'] }}</td>
                                                 <td><span class="badge badge-light">{{ $item['product_code'] ?? 'SKU' }}</span></td>
                                                 <td class="text-right">{{ $item['qty'] }}</td>
-                                                <td class="text-right">{{ $currencySymbol }}{{ $item['net_unit_cost'] }}</td>
+                                                <td class="text-right">{{ $currencySymbol }}{{ $item['net_unit_cost'] ?? $item['net_unit_price'] ?? $item['cost'] ?? '—' }}</td>
                                                 <td class="text-right">{{ $currencySymbol }}{{ $item['discount'] ?? '0.00' }}</td>
                                                 <td class="text-right">{{ $currencySymbol }}{{ $item['tax_amount'] ?? '0.00' }}</td>
                                                 <td class="text-right font-weight-bold">{{ $currencySymbol }}{{ $item['line_total'] ?? '0.00' }}</td>
@@ -215,14 +215,14 @@
                             </div>
                         @endif
 
-                        {{-- Accounting & Ledger Effects Guarantee --}}
+                        <details class="my-2" @if(empty($proposal->items) || !isset($proposal->items[0]['product_id'])) open @endif>
+                            <summary class="small font-weight-bold">Review all action details</summary>
+                            @include('backend.ai.partials.action-details', ['details' => $proposal->preview, 'depth' => 0])
+                        </details>
+
+                        {{-- The authoritative preview describes the effects of this particular action. --}}
                         <div class="alert alert-light border small text-muted p-2 mb-2">
-                            <strong><i class="dripicons-information mr-1"></i>Operational Integrity Guarantees:</strong>
-                            <ul class="mb-0 pl-3">
-                                <li><strong>General Ledger:</strong> Zero financial entries created upon order placement. Debits and credits remain untouched until purchase billing.</li>
-                                <li><strong>Inventory:</strong> Zero physical stock additions until formal goods receipt. Quantities are tracked as open order commitments.</li>
-                                <li><strong>Order Register:</strong> Creates Purchase record with status 4 (Ordered) and registers line allocations in <code>commercial_order_items</code>.</li>
-                            </ul>
+                            Approval authorizes only this version and its reviewed effects. Changed ERP source data requires a new preview.
                         </div>
 
                         {{-- Cryptographic Hashes --}}
@@ -246,7 +246,7 @@
                         @if ($proposal->status === 'pending')
                             @if ($canApprove)
                                 <button type="button" class="btn btn-sm btn-success mr-2 py-1 px-3 btn-approve-proposal" data-id="{{ $proposal->id }}" data-version="{{ $proposal->version }}">
-                                    <i class="dripicons-checkmark mr-1"></i>Approve & Place Order
+                                    <i class="dripicons-checkmark mr-1"></i>Approve & Execute
                                 </button>
                             @endif
                             <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 btn-reject-proposal" data-id="{{ $proposal->id }}" data-version="{{ $proposal->version }}">
@@ -255,11 +255,11 @@
                         @elseif ($proposal->status === 'completed')
                             <div class="d-flex align-items-center">
                                 <span class="badge badge-success p-2 mr-2">
-                                    <i class="dripicons-checkmark mr-1"></i>Order Placed: PO #{{ $proposal->reference_no ?? $proposal->id }}
+                                    <i class="dripicons-checkmark mr-1"></i>Completed: {{ $proposal->reference_no ?? $proposal->id }}
                                 </span>
-                                <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-outline-primary py-1 px-2">
-                                    <i class="dripicons-document mr-1"></i>View in Purchase Register
-                                </a>
+                                @if(str_starts_with($proposal->action_key, 'purchase'))
+                                    <a href="{{ route('purchases.index') }}" class="btn btn-sm btn-outline-primary py-1 px-2">View purchase register</a>
+                                @endif
                             </div>
                         @else
                             <span class="badge badge-secondary p-2">
@@ -325,8 +325,9 @@ $(document).ready(function () {
             headers: headers,
             data: JSON.stringify({ expected_version: expectedVersion }),
             success: function (res) {
-                const poRef = res.execution?.receipt?.details?.reference_no || proposalId;
-                footer.html('<div class="small text-muted">Executed by you just now</div><div class="d-flex align-items-center"><span class="badge badge-success p-2 mr-2"><i class="dripicons-checkmark mr-1"></i>Order Placed: PO #' + poRef + '</span><a href="/purchases" class="btn btn-sm btn-outline-primary py-1 px-2"><i class="dripicons-document mr-1"></i>View in Purchase Register</a></div>');
+                const reference = res.execution?.receipt?.details?.reference_no || proposalId;
+                footer.empty().append($('<div>').addClass('small text-muted').text('Executed by you just now'))
+                    .append($('<span>').addClass('badge badge-success p-2').text('Completed: ' + reference));
                 $('#badge-status-' + proposalId).removeClass('ai-review-badge-pending').addClass('ai-review-badge-completed').html('<i class="dripicons-checkmark mr-1"></i>Completed');
             },
             error: function (xhr) {

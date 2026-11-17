@@ -16,7 +16,6 @@ use App\Models\Warehouse;
 use App\Services\Commercial\CommercialPricing;
 use App\Services\Commercial\OrderLifecycleService;
 use App\Services\Platform\CompanyContext;
-use App\Services\Tax\TaxDeterminationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -29,7 +28,6 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
 {
     public function __construct(
         private readonly CommercialPricing $pricing,
-        private readonly TaxDeterminationService $taxService,
     ) {
     }
 
@@ -45,6 +43,11 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
         $supplierId = (int) ($slots['supplier_id'] ?? 0);
         $warehouseId = (int) ($slots['warehouse_id'] ?? 0);
         $billDate = !empty($slots['date']) ? (string) $slots['date'] : now()->toDateString();
+        $slots['supplier_invoice_no'] = trim((string) ($slots['supplier_invoice_no'] ?? '')) ?: null;
+        app(\App\Services\Platform\CompanyContextResolver::class)->assertPostingDate($context, $billDate);
+        if (!empty($slots['due_date']) && $slots['due_date'] < $billDate) {
+            throw ValidationException::withMessages(['due_date' => 'Due date must be on or after the bill date.']);
+        }
         $poId = (int) ($slots['purchase_order_id'] ?? 0);
         $grnId = (int) ($slots['grn_id'] ?? 0);
 
@@ -62,6 +65,7 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
 
         // 2. Resolve Warehouse
         $warehouse = Warehouse::where('company_id', $context->companyId)
+            ->where('branch_id', $context->branchId)
             ->whereKey($warehouseId)
             ->first();
 
@@ -73,15 +77,14 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
         }
 
         $warnings = [];
-        if ($warehouse->branch_id && (int) $warehouse->branch_id !== (int) $context->branchId) {
-            $warnings[] = "Warehouse '{$warehouse->name}' belongs to a different branch than the active session branch.";
-        }
+        self::assertInvoiceUnique($context, $supplierId, $slots['supplier_invoice_no'] ?? null);
 
         // 3. Purchase Order verification (if linked)
         $po = null;
         $openQuantities = [];
         if ($poId > 0) {
-            $po = Purchase::where('company_id', $context->companyId)->whereKey($poId)->first();
+            $po = Purchase::where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                ->where('financial_year_id', $context->financialYearId)->whereNull('reversed_at')->whereKey($poId)->first();
             if (!$po) {
                 throw ValidationException::withMessages(['purchase_order_id' => "Purchase Order ID {$poId} not found."]);
             }
@@ -92,19 +95,18 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
                 throw ValidationException::withMessages(['purchase_order_id' => 'Purchase Order supplier differs from bill supplier.']);
             }
 
-            try {
-                $openData = app(OrderLifecycleService::class)->remaining('purchase', $po->id, $context);
-                foreach ($openData['items'] as $item) {
-                    $openQuantities[(int) $item['product_id']] = (float) ($item['remaining_qty'] ?? 0);
-                }
-            } catch (\Throwable) {
+            $openData = app(OrderLifecycleService::class)->remaining('purchase', $po->id, $context);
+            foreach ($openData['items'] as $item) {
+                $productId = (int) $item['product_id'];
+                $openQuantities[$productId] = ($openQuantities[$productId] ?? 0) + (float) ($item['remaining_qty'] ?? 0);
             }
         }
 
         // 4. GRN verification (if linked)
         $grn = null;
         if ($grnId > 0) {
-            $grn = GoodsReceivedNote::where('company_id', $context->companyId)->whereKey($grnId)->first();
+            $grn = GoodsReceivedNote::where('company_id', $context->companyId)->where('branch_id', $context->branchId)
+                ->where('financial_year_id', $context->financialYearId)->whereKey($grnId)->first();
             if (!$grn) {
                 throw ValidationException::withMessages(['grn_id' => "Goods Received Note ID {$grnId} not found."]);
             }
@@ -113,6 +115,9 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             }
             if ((int) $grn->supplier_id !== $supplierId) {
                 throw ValidationException::withMessages(['grn_id' => 'GRN supplier differs from bill supplier.']);
+            }
+            if ((int) $grn->warehouse_id !== $warehouseId || !in_array($grn->status, ['pending', 'partially_billed'], true)) {
+                throw ValidationException::withMessages(['grn_id' => 'Select an open GRN for the receiving warehouse.']);
             }
         }
 
@@ -190,16 +195,11 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
         }
 
         // Authoritative GST determination and pricing calculation
-        $preparedData = $this->taxService->prepare(
-            $pricingInput,
-            'purchase',
-            $productsById,
-            $supplier,
-            $context,
-            $billDate,
-        );
-
-        $calculated = $this->pricing->calculate($preparedData, purchase: true);
+        if (config('compliance.enabled') && !DB::table('party_tax_profiles')->where('company_id', $context->companyId)
+            ->where('party_type', 'supplier')->where('party_id', $supplierId)->exists()) {
+            throw ValidationException::withMessages(['supplier_id' => 'Complete the supplier GST profile before preparing this bill.']);
+        }
+        $calculated = $this->pricing->preview($pricingInput + ['business_date' => $billDate], purchase: true, context: $context);
 
         $totalQty = 0.0;
         $subtotal = 0.0;
@@ -221,7 +221,7 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             $discount = (float) ($calcLine['discount'] ?? 0);
             $taxRate = (float) ($calcLine['tax_rate'] ?? 0);
             $taxAmount = (float) ($calcLine['tax'] ?? $calcLine['tax_amount'] ?? 0);
-            $lineSubtotal = (float) ($calcLine['subtotal'] ?? round($qty * $netCost - $discount, 2));
+            $lineSubtotal = round($qty * $netCost, 4);
             $lineTotal = (float) ($calcLine['total'] ?? round($lineSubtotal + $taxAmount, 2));
 
             $totalQty += $qty;
@@ -236,17 +236,17 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
 
             $normalizedLine = [
                 'product_id' => $productId,
-                'qty' => sprintf('%.2f', $qty),
-                'net_unit_cost' => sprintf('%.2f', $netCost),
+                'qty' => CommercialDecimal::format($qty, 6),
+                'net_unit_cost' => CommercialDecimal::format($netCost),
                 'purchase_unit_id' => (int) $calcLine['purchase_unit_id'],
-                'discount' => sprintf('%.2f', $discount),
-                'tax_rate' => sprintf('%.2f', $taxRate),
+                'discount' => CommercialDecimal::format($discount),
+                'tax_rate' => CommercialDecimal::format($taxRate),
                 'order_item_id' => isset($calcLine['order_item_id']) ? (int) $calcLine['order_item_id'] : null,
                 'note' => $calcLine['note'] ?? null,
             ];
 
             if (isset($calcLine['tax_rate_override'])) {
-                $normalizedLine['tax_rate_override'] = sprintf('%.2f', (float) $calcLine['tax_rate_override']);
+                $normalizedLine['tax_rate_override'] = CommercialDecimal::format((float) $calcLine['tax_rate_override']);
             }
 
             $normalizedLines[] = $normalizedLine;
@@ -256,21 +256,21 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
                 'product_id' => $productId,
                 'product_name' => $product->name,
                 'product_code' => $product->code,
-                'qty' => sprintf('%.2f', $qty),
-                'net_unit_cost' => sprintf('%.2f', $netCost),
-                'discount' => sprintf('%.2f', $discount),
+                'qty' => CommercialDecimal::format($qty, 6),
+                'net_unit_cost' => CommercialDecimal::format($netCost),
+                'discount' => CommercialDecimal::format($discount),
                 'tax_rate' => sprintf('%.2f%%', $taxRate),
-                'tax_amount' => sprintf('%.2f', $taxAmount),
-                'line_total' => sprintf('%.2f', $lineTotal),
+                'tax_amount' => CommercialDecimal::format($taxAmount),
+                'line_total' => CommercialDecimal::format($lineTotal),
                 'purchase_unit_id' => (int) $calcLine['purchase_unit_id'],
             ];
 
             $lineTotals[] = [
                 'product_id' => $productId,
-                'qty' => sprintf('%.2f', $qty),
-                'net_unit_cost' => sprintf('%.2f', $netCost),
-                'tax_amount' => sprintf('%.2f', $taxAmount),
-                'line_total' => sprintf('%.2f', $lineTotal),
+                'qty' => CommercialDecimal::format($qty, 6),
+                'net_unit_cost' => CommercialDecimal::format($netCost),
+                'tax_amount' => CommercialDecimal::format($taxAmount),
+                'line_total' => CommercialDecimal::format($lineTotal),
             ];
         }
 
@@ -288,26 +288,32 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             'note' => $slots['note'] ?? null,
             'items' => $normalizedLines,
             'expected_totals' => [
-                'grand_total' => sprintf('%.2f', $grandTotal),
-                'tax_total' => sprintf('%.2f', $totalTax),
-                'total_price' => sprintf('%.2f', $subtotal + $orderDiscount),
-                'subtotal' => sprintf('%.2f', $subtotal),
+                'grand_total' => CommercialDecimal::format($grandTotal),
+                'tax_total' => CommercialDecimal::format($totalTax),
+                'total_price' => CommercialDecimal::format($calculated['total_price']),
+                'subtotal' => CommercialDecimal::format($subtotal),
                 'tax_breakdown' => [
-                    'cgst' => sprintf('%.2f', $cgstTotal),
-                    'sgst' => sprintf('%.2f', $sgstTotal),
-                    'igst' => sprintf('%.2f', $igstTotal),
-                    'cess' => sprintf('%.2f', $cessTotal),
+                    'cgst' => CommercialDecimal::format($cgstTotal),
+                    'sgst' => CommercialDecimal::format($sgstTotal),
+                    'igst' => CommercialDecimal::format($igstTotal),
+                    'cess' => CommercialDecimal::format($cessTotal),
                 ],
                 'line_totals' => $lineTotals,
             ],
         ];
 
         if ($orderDiscount > 0) {
-            $normalizedPayload['order_discount'] = sprintf('%.2f', $orderDiscount);
+            $normalizedPayload['order_discount'] = CommercialDecimal::format($orderDiscount);
         }
         if ($shippingCost > 0) {
-            $normalizedPayload['shipping_cost'] = sprintf('%.2f', $shippingCost);
+            $normalizedPayload['shipping_cost'] = CommercialDecimal::format($shippingCost);
         }
+        DB::transaction(function () use ($normalizedPayload, $context, $billDate, $grnId): void {
+            $data = $normalizedPayload + ['business_date' => $billDate, 'status' => 1];
+            if ($grnId > 0) $data['goods_received_note_id'] = $grnId;
+            app(\App\Services\Commercial\MaterialDocumentService::class)->sources('purchase', $data, $context, (int) auth()->id(), $billDate);
+            app(OrderLifecycleService::class)->prepareConsumer('purchase', $data, $context, (int) auth()->id());
+        });
 
         $inventoryPolicy = $grn
             ? "Material was already received under GRN #{$grn->grn_no}. This bill settles the GRN accrual (clears Goods Received Not Invoiced) with zero secondary stock movement."
@@ -338,23 +344,23 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             ] : null,
             'items' => $detailedPreviewLines,
             'totals' => [
-                'total_qty' => sprintf('%.2f', $totalQty),
-                'subtotal' => sprintf('%.2f', $subtotal),
-                'tax_total' => sprintf('%.2f', $totalTax),
-                'discount_total' => sprintf('%.2f', $orderDiscount),
-                'shipping_cost' => sprintf('%.2f', $shippingCost),
-                'round_off' => sprintf('%.2f', $roundOff),
-                'grand_total' => sprintf('%.2f', $grandTotal),
+                'total_qty' => CommercialDecimal::format($totalQty, 6),
+                'subtotal' => CommercialDecimal::format($subtotal),
+                'tax_total' => CommercialDecimal::format($totalTax),
+                'discount_total' => CommercialDecimal::format($orderDiscount),
+                'shipping_cost' => CommercialDecimal::format($shippingCost),
+                'round_off' => CommercialDecimal::format($roundOff),
+                'grand_total' => CommercialDecimal::format($grandTotal),
                 'tax_breakdown' => [
-                    'cgst' => sprintf('%.2f', $cgstTotal),
-                    'sgst' => sprintf('%.2f', $sgstTotal),
-                    'igst' => sprintf('%.2f', $igstTotal),
-                    'cess' => sprintf('%.2f', $cessTotal),
+                    'cgst' => CommercialDecimal::format($cgstTotal),
+                    'sgst' => CommercialDecimal::format($sgstTotal),
+                    'igst' => CommercialDecimal::format($igstTotal),
+                    'cess' => CommercialDecimal::format($cessTotal),
                 ],
             ],
             'policy' => [
                 'status' => 'completed',
-                'ledger_impact' => "Dr Expense/Inventory ₹".sprintf('%.2f', $subtotal).", Dr Input Tax Credit ₹".sprintf('%.2f', $totalTax).", Cr Accounts Payable ₹".sprintf('%.2f', $grandTotal).".",
+                'ledger_impact' => "Dr Expense/Inventory ₹".CommercialDecimal::format($subtotal).", Dr Input Tax Credit ₹".CommercialDecimal::format($totalTax).", Cr Accounts Payable ₹".CommercialDecimal::format($grandTotal).".",
                 'inventory_impact' => $inventoryPolicy,
             ],
         ];
@@ -374,6 +380,15 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             sourceStateHash: $sourceStateHash,
             warnings: $warnings,
         );
+    }
+
+    public static function assertInvoiceUnique(CompanyContext $context, int $supplierId, ?string $invoice): void
+    {
+        $invoice = trim((string) $invoice);
+        if ($invoice !== '' && Purchase::where('company_id', $context->companyId)->where('supplier_id', $supplierId)
+            ->where('supplier_invoice_no', $invoice)->where('status', '!=', 4)->whereNull('reversed_at')->exists()) {
+            throw ValidationException::withMessages(['supplier_invoice_no' => 'This supplier invoice number is already booked in the company.']);
+        }
     }
 
     public static function computeSourceStateHash(
@@ -451,6 +466,10 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             ->where('id', $grnId)
             ->select(['id', 'status', 'posted_at', 'updated_at'])
             ->first() : null;
+        $orderItems = $poId !== null ? DB::table('commercial_order_items')->where('company_id', $context->companyId)
+            ->where('order_kind', 'purchase')->where('order_id', $poId)->orderBy('id')->get() : collect();
+        $allocations = DB::table('commercial_order_allocations')->where('company_id', $context->companyId)
+            ->whereIn('order_item_id', $orderItems->pluck('id'))->orderBy('id')->get();
 
         $state = [
             'company_id' => $context->companyId,
@@ -466,6 +485,15 @@ final class PurchaseBillPreviewAdapter implements ActionPreviewAdapterInterface
             'tax_registrations' => $taxRegistrations->toArray(),
             'purchase_order' => $po,
             'grn' => $grn,
+            'order_items' => $orderItems->toArray(),
+            'order_allocations' => $allocations->toArray(),
+            'grn_items' => $grnId !== null ? DB::table('goods_received_note_items')->where('company_id', $context->companyId)
+                ->where('goods_received_note_id', $grnId)->orderBy('id')->get()->toArray() : [],
+            'material_settlements' => $grnId !== null ? DB::table('material_settlements')->where('company_id', $context->companyId)
+                ->where('document_type', 'grn')->where('document_id', $grnId)->orderBy('id')->get()->toArray() : [],
+            'units' => DB::table('units')->where('company_id', $context->companyId)->orderBy('id')->get()->toArray(),
+            'legacy_taxes' => DB::table('taxes')->where('company_id', $context->companyId)
+                ->whereIn('id', $products->pluck('tax_id')->filter()->unique())->orderBy('id')->get()->toArray(),
         ];
 
         return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));

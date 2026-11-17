@@ -15,7 +15,7 @@ final class CreatePurchaseBillInputSchema implements ActionInputSchemaInterface
             'supplier_id' => ['required', 'integer', 'min:1'],
             'warehouse_id' => ['required', 'integer', 'min:1'],
             'date' => ['nullable', 'date_format:Y-m-d'],
-            'supplier_invoice_no' => ['nullable', 'string', 'max:150'],
+            'supplier_invoice_no' => ['nullable', 'string', 'max:100'],
             'purchase_order_id' => ['nullable', 'integer', 'min:1'],
             'grn_id' => ['nullable', 'integer', 'min:1'],
             'due_date' => ['nullable', 'date_format:Y-m-d'],

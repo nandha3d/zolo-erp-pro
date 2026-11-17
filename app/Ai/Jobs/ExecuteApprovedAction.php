@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Ai\Jobs;
 
+use App\Ai\DTOs\AiPrincipal;
+use App\Ai\Infrastructure\WorkerActorContext;
 use App\Ai\Services\AiPrincipalFactory;
 use App\Ai\Services\ApprovedActionExecutor;
 use Illuminate\Bus\Queueable;
@@ -37,8 +39,10 @@ final class ExecuteApprovedAction implements ShouldQueue
             || !in_array($proposal->status, ['approved', 'executing', 'completed', 'requires_reconciliation'], true)) {
             return;
         }
-        $principal = $principals->createForUser($this->actorId, (int) $proposal->company_id, (int) $proposal->branch_id, (int) $proposal->financial_year_id);
-        $executor->execute($principal, $this->proposalId, $this->version);
+        $reference = new AiPrincipal(actorId: $this->actorId, companyId: (int) $proposal->company_id,
+            branchId: (int) $proposal->branch_id, financialYearId: (int) $proposal->financial_year_id);
+        app(WorkerActorContext::class)->run($reference,
+            fn (AiPrincipal $principal) => $executor->execute($principal, $this->proposalId, $this->version));
     }
 
     public function failed(?Throwable $exception): void

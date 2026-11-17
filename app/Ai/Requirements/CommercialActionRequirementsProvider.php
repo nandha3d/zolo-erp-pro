@@ -9,6 +9,7 @@ use App\Ai\DTOs\ActionFieldRequirement;
 use App\Ai\DTOs\WorkflowTaskContext;
 use App\Ai\Schemas\CommercialDocumentInputSchema;
 use App\Ai\Schemas\CustomerCollectionInputSchema;
+use App\Ai\Schemas\SendPaymentReminderInputSchema;
 use Illuminate\Support\Facades\Validator;
 
 final class CommercialActionRequirementsProvider implements ActionRequirementsProviderInterface
@@ -41,7 +42,8 @@ final class CommercialActionRequirementsProvider implements ActionRequirementsPr
 
     public function validate(WorkflowTaskContext $context, array $resolvedInputs): array
     {
-        $rules = str_starts_with($this->key, 'payment_') ? (new CustomerCollectionInputSchema())->rules() : (new CommercialDocumentInputSchema())->rules();
+        $rules = $this->key === 'payment_reminder.send.v1' ? (new SendPaymentReminderInputSchema())->rules()
+            : (str_starts_with($this->key, 'payment_') ? (new CustomerCollectionInputSchema())->rules() : (new CommercialDocumentInputSchema())->rules());
         return array_map(fn ($messages) => $messages[0], Validator::make($resolvedInputs, $rules)->errors()->toArray());
     }
 }

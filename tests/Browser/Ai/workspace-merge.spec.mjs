@@ -27,9 +27,14 @@ await context.route('**/*', async route => {
     if (url.pathname.startsWith('/ai/')) {
         requests.push({method: request.method(), path: url.pathname, body: request.postDataJSON()});
         if (url.pathname === '/ai/threads') return route.fulfill({json: {threads: []}});
-        if (url.pathname === '/ai/chat') return route.fulfill(rejectChat
-            ? {status: 422, json: {message: 'Review attachment before sending.'}}
-            : {json: {thread_id: threadId, message: 'Verified fixture response.', facts: [], sources: []}});
+        if (url.pathname === '/ai/chat' || url.pathname === '/ai/chat/stream') {
+            if (rejectChat) return route.fulfill({status: 422, json: {message: 'Review attachment before sending.'}});
+            const result = {thread_id: threadId, message: 'Verified fixture response.', facts: [], sources: []};
+            return route.fulfill(url.pathname.endsWith('/stream') ? {contentType: 'text/event-stream', body:
+                'event: delta\ndata: {"text":"Verified fixture response."}\n\nevent: complete\ndata: ' + JSON.stringify(result) + '\n\n'} : {json: result});
+        }
+        if (url.pathname === '/ai/credits/balance') return route.fulfill({json: {available_credits: 10000, total_credits: 10000, reserved_credits: 0, spent_credits: 0}});
+        if (url.pathname === '/ai/credits/packs') return route.fulfill({json: {packs: []}});
         if (url.pathname.endsWith('/handoff')) return route.fulfill({json: {
             status: 'proposal_created', action_key: 'purchase_order.create.v1',
             proposal: {proposal_id: proposal.proposal_id, version: 1, preview: proposal},
@@ -78,7 +83,7 @@ try {
         await page.locator('#btn-send').click();
         await page.getByText('Verified fixture response.', {exact: true}).waitFor();
         assert.equal(await page.evaluate(() => sessionStorage.getItem('ai_active_thread')), threadId);
-        const plainChat = requests.filter(r => r.path === '/ai/chat').at(-1);
+        const plainChat = requests.filter(r => r.path.startsWith('/ai/chat')).at(-1);
         assert.equal(plainChat.body.message, 'Show customer outstanding');
         assert.equal('media_ids' in plainChat.body, false);
         assert.equal(await page.locator('#btn-send').isEnabled(), true);
@@ -98,7 +103,7 @@ try {
         await page.locator('#chat-input').fill('Use this invoice again');
         await page.locator('#btn-send').click();
         await page.waitForFunction(() => window.zoloAiMedia.getAttachedMediaIds().length === 0);
-        const mediaChat = requests.filter(r => r.path === '/ai/chat').at(-1);
+        const mediaChat = requests.filter(r => r.path.startsWith('/ai/chat')).at(-1);
         assert.deepEqual(mediaChat.body.media_ids, [mediaId]);
         assert.equal(mediaChat.body.thread_id, threadId);
         assert.equal(await page.locator('#btn-send-spinner').isHidden(), true);
@@ -106,10 +111,10 @@ try {
         await mediaCard.locator('.ai-btn-media-handoff').click();
         const proposalCard = page.locator('.erp-fact-card', {hasText: 'Purchase Order Proposal'});
         await proposalCard.waitFor();
-        await proposalCard.getByRole('button', {name: 'Approve & Execute'}).click();
-        const receipt = page.locator('.ai-message-assistant', {hasText: 'Official Receipt'});
+        await proposalCard.getByRole('button', {name: 'Approve & Create'}).click();
+        const receipt = proposalCard.locator('.alert-success', {hasText: 'PO-FIXTURE'});
         await receipt.waitFor();
-        await receipt.locator('.btn-preview-pdf').click();
+        await receipt.getByRole('button', {name: 'View PDF in Chat'}).click();
         await page.locator('#ai-pdf-preview-modal.show').waitFor();
         assert.ok((await page.locator('#ai-pdf-iframe').getAttribute('src')).endsWith(pdfUrl));
         assert.equal(page.url(), origin + '/ai');

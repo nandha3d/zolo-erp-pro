@@ -79,10 +79,14 @@ final class KnowledgeRetrievalService
             if (!$document) {
                 continue;
             }
+            $content = Crypt::decryptString($chunk->content_encrypted);
+            if (!hash_equals($chunk->checksum, hash('sha256', $content))) {
+                continue;
+            }
             $citations[] = [
                 'document_id' => $document->id, 'source_version' => $chunk->source_version, 'chunk_id' => $chunk->id,
                 'page' => $chunk->page, 'checksum' => $chunk->checksum,
-                'excerpt' => mb_substr(Crypt::decryptString($chunk->content_encrypted), 0, 1200),
+                'excerpt' => mb_substr($content, 0, 1200),
                 'trust' => 'untrusted_document',
             ];
         }

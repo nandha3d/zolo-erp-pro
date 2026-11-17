@@ -138,6 +138,11 @@ final class ExtendedActionsTest extends TestCase
         $this->rejectPreview('journal_entry.create.v1', $data, 'balance exactly');
         $data['items'][1]['credit'] = '12.3456';
         $proposal = app(ActionProposalService::class)->create($this->principal, 'journal_entry.create.v1', $data);
+        $this->withHeaders(['X-Company-Id' => $this->context->companyId, 'X-Branch-Id' => $this->context->branchId,
+            'X-Financial-Year-Id' => $this->context->financialYearId])->get('/ai/action-review')
+            ->assertOk()->assertSee('Approved accrual journal')->assertSee('12.3456')
+            ->assertSee('Approve & Execute', false)->assertSee('Review all action details')
+            ->assertDontSee('Order placement is non-posting');
         app(ActionApprovalService::class)->approve($this->principal, $proposal['id'], 1);
         $result = app(ApprovedActionExecutor::class)->execute($this->principal, $proposal['id'], 1);
         $entry = DB::table('journal_entries')->where('company_id', $this->context->companyId)->where('id', $result['receipt']['resource_id'])->first();
@@ -311,6 +316,80 @@ final class ExtendedActionsTest extends TestCase
         $this->assertSame('0.0000', $debit->fresh()->opening_balance);
         $this->assertTrue(DB::table('journal_entries')->where('company_id', $context->companyId)
             ->where('reference_type', 'migration_opening')->where('reference_id', $batch->id)->where('status', 'posted')->exists());
+    }
+
+    public function test_opening_spreadsheet_dry_run_prepares_exact_rows_and_rechecks_revoked_document_before_posting(): void
+    {
+        [$context, $basePrincipal, $warehouse, $product, $offset] = $this->cleanOpeningTarget();
+        config(['ai_documents.enabled' => true]);
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $this->mock(\App\Ai\Documents\VirusScanner::class)->shouldReceive('assertClean')->andReturnNull();
+        $principal = new AiPrincipal(actorId: $basePrincipal->actorId, companyId: $context->companyId,
+            branchId: $context->branchId, financialYearId: $context->financialYearId,
+            permittedToolNames: ['setup.opening_stock.create.v1']);
+        $payload = ['product_key' => 'P1', 'warehouse_key' => 'W1', 'qty' => '10', 'unit_cost' => '5', 'offset_account_key' => 'OFFSET'];
+        $stream = fopen('php://temp', 'w+');
+        fputcsv($stream, ['source_key', 'kind', 'payload'], escape: '');
+        fputcsv($stream, ['STOCK1', 'stock', json_encode($payload, JSON_THROW_ON_ERROR)], escape: '');
+        rewind($stream);
+        $csv = stream_get_contents($stream);
+        fclose($stream);
+        $documents = app(\App\Ai\Documents\DocumentIntakeService::class);
+        $document = $documents->upload($principal, \Illuminate\Http\UploadedFile::fake()->createWithContent('opening.csv', $csv), 'opening_import');
+        $documents->process($principal, $document['id']);
+        $source = ['batch_key' => 'spreadsheet-opening-source', 'source_name' => 'Reviewed stock opening', 'business_date' => '2026-11-12',
+            'mappings' => [
+                ['entity' => 'product', 'source_key' => 'P1', 'target_id' => $product->id],
+                ['entity' => 'warehouse', 'source_key' => 'W1', 'target_id' => $warehouse->id],
+                ['entity' => 'account', 'source_key' => 'OFFSET', 'target_id' => $offset->id],
+            ], 'expected' => ['stock_qty' => '10', 'stock_value' => '50', 'ar' => '0', 'ap' => '0']];
+        $result = app(\App\Ai\Imports\OpeningImportPlanner::class)->prepareDocument($principal, 'setup.opening_stock.create.v1', $document['id'], $source);
+        $this->assertSame('ok', $result['status']);
+        $this->assertEquals(array_replace($payload, ['qty' => '10.0000', 'unit_cost' => '5.0000']), $result['data']['rows'][0]['payload']);
+        $this->assertSame('10.0000', $result['data']['rows'][0]['payload']['qty']);
+        $this->assertSame('5.0000', $result['data']['rows'][0]['payload']['unit_cost']);
+        $this->assertCount(3, $result['data']['mappings']);
+        $this->assertEquals(0, $product->fresh()->qty);
+        $this->assertFalse(DB::table('journal_entries')->where('company_id', $context->companyId)->where('status', 'posted')->exists());
+        $this->assertDatabaseHas('ai_opening_import_sources', ['company_id' => $context->companyId,
+            'batch_id' => $result['batch_id'], 'document_id' => $document['id'], 'checksum' => $document['checksum']]);
+        app(ActionApprovalService::class)->approve($principal, $result['data']['proposal_id'], 1);
+        $documents->revoke($principal, $document['id']);
+        try {
+            app(ApprovedActionExecutor::class)->execute($principal, $result['data']['proposal_id'], 1);
+            $this->fail('Revoked opening document was posted.');
+        } catch (\Illuminate\Auth\Access\AuthorizationException) {
+            $this->assertEquals(0, $product->fresh()->qty);
+            $this->assertFalse(DB::table('stock_movements')->where('company_id', $context->companyId)->exists());
+        }
+    }
+
+    public function test_opening_source_tool_stages_and_previews_without_financial_or_stock_mutations(): void
+    {
+        [$context, $basePrincipal, $warehouse, $product, $offset] = $this->cleanOpeningTarget();
+        $principal = new AiPrincipal(actorId: $basePrincipal->actorId, companyId: $context->companyId,
+            branchId: $context->branchId, financialYearId: $context->financialYearId,
+            permittedToolNames: ['setup.opening_stock.create.v1']);
+        $source = ['batch_key' => 'typed-opening-source', 'source_name' => 'Reviewed opening source',
+            'business_date' => '2026-11-12', 'mappings' => [
+                ['entity' => 'product', 'source_key' => 'P1', 'target_id' => $product->id],
+                ['entity' => 'warehouse', 'source_key' => 'W1', 'target_id' => $warehouse->id],
+                ['entity' => 'account', 'source_key' => 'OFFSET', 'target_id' => $offset->id],
+            ], 'rows' => [['source_key' => 'STOCK1', 'kind' => 'stock', 'payload' => [
+                'product_key' => 'P1', 'warehouse_key' => 'W1', 'qty' => '10', 'unit_cost' => '5', 'offset_account_key' => 'OFFSET',
+            ]]], 'expected' => ['stock_qty' => '10', 'stock_value' => '50', 'ar' => '0', 'ap' => '0']];
+        $tool = new \App\Ai\Imports\PrepareOpeningImport($principal);
+        $result = json_decode($tool->handle(new \Laravel\Ai\Tools\Request([
+            'action_key' => 'setup.opening_stock.create.v1', 'source_json' => json_encode($source, JSON_THROW_ON_ERROR),
+        ])), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame('ok', $result['status'], json_encode($result));
+        $this->assertEquals(0, $product->fresh()->qty);
+        $this->assertFalse(DB::table('stock_movements')->where('company_id', $context->companyId)->exists());
+        $this->assertDatabaseHas('ai_action_proposals', ['id' => $result['data']['proposal_id'], 'status' => 'pending']);
+        app(ActionApprovalService::class)->approve($principal, $result['data']['proposal_id'], 1);
+        $receipt = app(ApprovedActionExecutor::class)->execute($principal, $result['data']['proposal_id'], 1);
+        $this->assertSame('opening_import', $receipt['receipt']['resource_type']);
+        $this->assertEquals(10, $product->fresh()->qty);
     }
 
     private function cleanOpeningTarget(): array
