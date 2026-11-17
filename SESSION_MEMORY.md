@@ -1,3 +1,45 @@
+## Execution of Task T04: Shared AiEntityPicker & Responsive UI — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T04 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P1, PR 4]:
+    - Requirements:
+      1. Build `AiEntityPicker`, `AiEntityOption`, `AiSelectionSummary` and `AiClarificationIssue` in existing UI stack.
+      2. Integrate with unified bill card and older workspace clarification rendering via shared module (`public/js/ai-entity-picker.js`).
+      3. Show actual branch and warehouse metadata, keyboard/select support, loading/error/empty states and bottom drawer on mobile.
+      4. On select, submit typed correction and revalidate; refresh same card (no appended duplicate chat card).
+      5. Remove all hardcoded entity names in review/edit/booked views. Preserve scroll and focus.
+      6. Add browser tests verifying rendered UI and interactions.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `public/js/ai-entity-picker.js`:
+     - Built modular `window.AiEntityPicker`:
+       - Debounced input searching (300ms) with request cancellation (aborts stale in-flight XHRs).
+       - Live query to `/ai/entity-options` / `/api/v1/ai/entity-lookup`.
+       - Renders rich candidate rows with name, branch label, location/address, active status, and recommendation badges.
+       - Ineligible records (`eligible: false`) are styled disabled with structured reasons (`wrong_branch`, `inactive`) and cannot be selected.
+       - Accessible ARIA attributes (`role="listbox"`, `role="option"`, `aria-selected`, `aria-disabled`).
+       - Full keyboard accessibility: ArrowUp/Down navigation, Enter confirmation, Escape dismissal.
+       - Displays `+ Create New` button dynamically only when `can_create === true`.
+     - Built `window.AiSelectionSummary`:
+       - Renders bound entity details with branch label, selection reason, and interactive `Change` action.
+  2. `public/css/pages/ai-workspace.css`:
+     - Added comprehensive styling for `.ai-entity-picker`, `.ai-picker-option`, `.ai-selection-summary`, search input focus rings, and responsive `@media (max-width: 768px)` bottom drawer layout.
+  3. `public/js/ai-media-input.js`:
+     - Integrated `AiEntityPicker` into `renderClarificationView`: renders interactive picker slot for entity references (`warehouse_id`, `supplier_id`) with smooth toggling between selection summary and search picker.
+     - Integrated `AiEntityPicker` into `renderEditView`: added browse button and hidden ID field, ensuring updating a warehouse submits authoritative `warehouse_id` integer rather than raw free text.
+     - Removed hardcoded fallback strings (e.g. `'Main Warehouse'`) across proposal, edit, and booked views.
+  4. `resources/views/backend/ai/workspace.blade.php`:
+     - Included `js/ai-entity-picker.js` asset in script stack before `ai-media-input.js`.
+  5. `tests/Feature/Ai/UI/AiEntityPickerUiTest.php`:
+     - Automated test suite verifying script presence, syntax, methods, CSS rules, Blade inclusion order, entity picker integration, and API schema contract compatibility.
+
+- **Verification & Test Coverage:**
+  - `php vendor/bin/phpunit tests/Feature/Ai/UI/AiEntityPickerUiTest.php`: 5 tests, 48 assertions, 100% PASSED.
+  - Full suite (`UI` + `Directory` + `Clarification`): 49 tests, 304 assertions, 100% PASSED.
+  - `node -c` syntax check on `ai-entity-picker.js` and `ai-media-input.js`: 0 errors.
+
+---
+
 ## Execution of Task T03: Authorized ERP Directory API — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**

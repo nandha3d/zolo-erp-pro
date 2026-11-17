@@ -2163,6 +2163,7 @@
             ]) !!};
         </script>
         @if (!empty($isMultimodalEnabled) && $canUseCopilot)
+            <script src="{{ asset('js/ai-entity-picker.js') }}"></script>
             <script src="{{ asset('js/ai-media-input.js') }}"></script>
         @endif
 @endpush

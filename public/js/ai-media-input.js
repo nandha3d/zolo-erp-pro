@@ -695,7 +695,58 @@
                     if (inp.help_text) {
                         grp.append($('<small class="text-muted d-block mb-2"></small>').text(inp.help_text));
                     }
-                    if (Array.isArray(inp.candidates) && inp.candidates.length > 0) {
+
+                    if (window.AiEntityPicker && (inp.field === 'warehouse_id' || inp.field === 'supplier_id')) {
+                        const entityType = inp.field === 'warehouse_id' ? 'warehouse' : 'supplier';
+                        const hiddenInput = $('<input type="hidden" class="ai-clarify-select" />')
+                            .attr('data-field', inp.field)
+                            .val(inp.current_value || '');
+                        grp.append(hiddenInput);
+
+                        const pickerSlot = $('<div class="ai-entity-picker-slot mt-2"></div>');
+                        grp.append(pickerSlot);
+
+                        const renderPickerView = function () {
+                            pickerSlot.empty();
+                            window.AiEntityPicker.renderPicker(pickerSlot, {
+                                entityType: entityType,
+                                taskId: currentTaskId,
+                                taskRevision: (taskObj && taskObj.revision) || 1,
+                                fieldPath: inp.field,
+                                selectedId: hiddenInput.val() || null,
+                                initialQuery: inp.current_value || '',
+                                aiBaseUrl: aiBaseUrl,
+                                onSelect: function (entity) {
+                                    hiddenInput.val(entity.id);
+                                    renderSummaryView(entity);
+                                },
+                                onCancel: function () {
+                                    if (hiddenInput.val()) {
+                                        renderSummaryView({ id: hiddenInput.val(), name: inp.current_label || ('Selected ' + entityType) });
+                                    }
+                                }
+                            });
+                        };
+
+                        const renderSummaryView = function (ent) {
+                            pickerSlot.empty();
+                            window.AiEntityPicker.renderSelectionSummary(pickerSlot, {
+                                label: inp.label || inp.field,
+                                entityName: ent.name || ent.display,
+                                metadata: ent.branch_label || ent.location || (ent.branch_name ? 'Branch: ' + ent.branch_name : ''),
+                                reason: 'User selected',
+                                onChangeRequested: function () {
+                                    renderPickerView();
+                                }
+                            });
+                        };
+
+                        if (inp.current_value && inp.current_label) {
+                            renderSummaryView({ id: inp.current_value, name: inp.current_label });
+                        } else {
+                            renderPickerView();
+                        }
+                    } else if (Array.isArray(inp.candidates) && inp.candidates.length > 0) {
                         const sel = $('<select class="form-control form-control-sm ai-clarify-select"></select>').attr('data-field', inp.field);
                         sel.append('<option value="">-- Choose ' + escapeText(inp.label || 'Candidate') + ' --</option>');
                         inp.candidates.forEach(function (c) {
@@ -834,8 +885,34 @@
             formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Supplier</label><input type="text" class="form-control form-control-sm ai-edit-supplier" value="' + escapeText((preview.supplier && preview.supplier.name) || ext.supplier_name || '') + '"></div>');
             formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Invoice Number</label><input type="text" class="form-control form-control-sm ai-edit-invoice-no" value="' + escapeText(preview.supplier_invoice_no || ext.invoice_number || '') + '"></div>');
             formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Invoice Date</label><input type="date" class="form-control form-control-sm ai-edit-date" value="' + escapeText(preview.date || ext.invoice_date || '') + '"></div>');
-            formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Warehouse</label><input type="text" class="form-control form-control-sm ai-edit-warehouse" value="' + escapeText((preview.warehouse && preview.warehouse.name) || '') + '" placeholder="Enter warehouse name or ID"></div>');
+            formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Warehouse</label><div class="input-group input-group-sm"><input type="hidden" class="ai-edit-warehouse-id" value="' + escapeText((preview.warehouse && preview.warehouse.id) || '') + '"><input type="text" class="form-control form-control-sm ai-edit-warehouse" value="' + escapeText((preview.warehouse && preview.warehouse.name) || '') + '" placeholder="Enter warehouse name or ID"><div class="input-group-append"><button type="button" class="btn btn-outline-secondary ai-btn-browse-warehouse" title="Browse warehouses"><i class="dripicons-search"></i></button></div></div><div class="ai-edit-picker-container mt-2" style="display: none;"></div></div>');
             body.append(formGrid);
+
+            const editPickerBox = body.find('.ai-edit-picker-container');
+            body.find('.ai-btn-browse-warehouse').on('click', function () {
+                if (editPickerBox.is(':visible')) {
+                    editPickerBox.slideUp('fast').empty();
+                } else if (window.AiEntityPicker) {
+                    editPickerBox.slideDown('fast');
+                    window.AiEntityPicker.renderPicker(editPickerBox, {
+                        entityType: 'warehouse',
+                        taskId: currentTaskId,
+                        taskRevision: (currentRes.task && currentRes.task.revision) || 1,
+                        fieldPath: 'warehouse_id',
+                        selectedId: body.find('.ai-edit-warehouse-id').val() || null,
+                        initialQuery: body.find('.ai-edit-warehouse').val() || '',
+                        aiBaseUrl: aiBaseUrl,
+                        onSelect: function (entity) {
+                            body.find('.ai-edit-warehouse-id').val(entity.id);
+                            body.find('.ai-edit-warehouse').val(entity.name || entity.display);
+                            editPickerBox.slideUp('fast').empty();
+                        },
+                        onCancel: function () {
+                            editPickerBox.slideUp('fast').empty();
+                        }
+                    });
+                }
+            });
 
             const tableWrap = $('<div class="table-responsive my-2"></div>');
             const table = $('<table class="table table-sm table-bordered mb-0"></table>');
@@ -899,8 +976,15 @@
                     });
                 }
 
+                const whIdVal = body.find('.ai-edit-warehouse-id').val();
                 const warehouseVal = body.find('.ai-edit-warehouse').val();
-                if (warehouseVal !== undefined && warehouseVal.trim() !== '') {
+                if (whIdVal && !isNaN(whIdVal) && Number(whIdVal) > 0) {
+                    corrections.push({
+                        field: 'warehouse_id',
+                        value: Number(whIdVal),
+                        confirmation: 'user_selected'
+                    });
+                } else if (warehouseVal !== undefined && warehouseVal.trim() !== '') {
                     corrections.push({
                         field: 'warehouse_id',
                         value: warehouseVal.trim(),
