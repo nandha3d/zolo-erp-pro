@@ -63,7 +63,7 @@ final class NormalizedInputBuilder
         $isActionable = false;
 
         if ($intentKey !== null && $intentKey !== 'query_readonly') {
-            $allowDirectPurchaseBill = (bool) config('ai_multimodal.allow_direct_purchase_bill', true);
+            $allowDirectPurchaseBill = (bool) config('ai_multimodal.allow_direct_purchase_bill', false);
             $disallowed = ['sales_invoice.create.v1'];
             if (! $allowDirectPurchaseBill) {
                 $disallowed[] = 'purchase_bill.create.v1';

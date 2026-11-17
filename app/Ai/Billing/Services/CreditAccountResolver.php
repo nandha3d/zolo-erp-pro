@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ai\Billing\Services;
 
+use App\Ai\Billing\Contracts\SubscriptionEntitlementResolverInterface;
 use App\Ai\DTOs\AiPrincipal;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -12,6 +13,12 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class CreditAccountResolver
 {
+    public function __construct(
+        protected ?SubscriptionEntitlementResolverInterface $entitlementResolver = null
+    ) {
+        $this->entitlementResolver ??= app(SubscriptionEntitlementResolverInterface::class);
+    }
+
     /**
      * Resolve the authoritative credit account for the given principal or company ID.
      */
@@ -46,14 +53,24 @@ class CreditAccountResolver
 
             $accountId = (string) Str::uuid();
             $policy = config('ai_credits.credit_policy_version', 'cost_v1');
+            $entitlement = $this->entitlementResolver->resolveForCompany($companyId);
+            $requireSub = (bool) config('ai_credits.require_subscription', true);
+
+            if ($requireSub && ! $entitlement->allowsAiUsage()) {
+                $status = $entitlement->renewalStatus === 'expired' ? 'expired' : 'unsubscribed';
+                $subId = $entitlement->subscriptionId;
+            } else {
+                $status = 'active';
+                $subId = $entitlement->subscriptionId ?: 'sub_comp_' . $companyId;
+            }
 
             DB::table('ai_credit_accounts')->insert([
                 'id' => $accountId,
-                'subscription_id' => 'sub_comp_' . $companyId,
+                'subscription_id' => $subId,
                 'billing_entity_id' => 'entity_comp_' . $companyId,
                 'currency' => 'INR',
                 'credit_policy_version' => $policy,
-                'status' => 'active',
+                'status' => $status,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

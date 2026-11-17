@@ -45,8 +45,44 @@ return [
     'default_fx_rate_usd_inr' => 84.5000,
     'default_fx_version' => 'fx_2026_11',
 
+    // When true, require a verified active or prepaid subscription before creating active accounts or granting monthly credits
+    'require_subscription' => (bool) env('AI_CREDITS_REQUIRE_SUBSCRIPTION', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscription Plan Tiers & Entitlements
+    |--------------------------------------------------------------------------
+    */
+    'plans' => [
+        'starter' => [
+            'name' => 'Starter Plan',
+            'included_monthly_credits' => 5000,
+            'monthly_media_pages' => 25,
+            'max_concurrent_runs' => 2,
+        ],
+        'pro' => [
+            'name' => 'Pro Plan',
+            'included_monthly_credits' => 20000,
+            'monthly_media_pages' => 100,
+            'max_concurrent_runs' => 5,
+        ],
+        'enterprise' => [
+            'name' => 'Enterprise Plan',
+            'included_monthly_credits' => 100000,
+            'monthly_media_pages' => 500,
+            'max_concurrent_runs' => 20,
+        ],
+        'free_trial' => [
+            'name' => 'Free Trial',
+            'included_monthly_credits' => 2000,
+            'monthly_media_pages' => 10,
+            'max_concurrent_runs' => 1,
+        ],
+    ],
+
     // Webhook signing secret for payment provider callbacks (Razorpay, etc.)
-    'webhook_secret' => env('AI_CREDITS_WEBHOOK_SECRET', 'whsec_zolo_credits_secret_key_2026'),
+    // Mandatory in secure environments; empty secret fails closed (no fallback)
+    'webhook_secret' => env('AI_CREDITS_WEBHOOK_SECRET', ''),
 
     /*
     |--------------------------------------------------------------------------

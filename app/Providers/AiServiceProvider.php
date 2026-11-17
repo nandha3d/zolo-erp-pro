@@ -115,6 +115,8 @@ class AiServiceProvider extends ServiceProvider
             max(0, (int) config('erp_ai.max_tools_per_run', 3)),
         ));
         // AI Credit Metering & Billing Engine
+        $this->app->singleton(\App\Ai\Billing\Services\SubscriptionEntitlementResolver::class);
+        $this->app->bind(\App\Ai\Billing\Contracts\SubscriptionEntitlementResolverInterface::class, \App\Ai\Billing\Services\SubscriptionEntitlementResolver::class);
         $this->app->singleton(CreditAccountResolver::class);
         $this->app->singleton(MonthlyCreditGrantService::class);
         $this->app->singleton(ModelCostCalculator::class);

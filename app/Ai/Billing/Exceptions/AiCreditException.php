@@ -60,6 +60,15 @@ class AiCreditException extends RuntimeException implements HttpExceptionInterfa
         );
     }
 
+    public static function subscriptionRequired(string $reason = 'A verified active subscription is required to access AI services.'): self
+    {
+        return new self(
+            'SUBSCRIPTION_REQUIRED',
+            $reason,
+            402
+        );
+    }
+
     public static function idempotencyConflict(string $key): self
     {
         return new self(

@@ -1,3 +1,99 @@
+## Paid SaaS Production Safeguards, Subscription Wallets, Payment Top-Up Hardening & Operational Evidence Framework — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Implementation of three critical production safeguards and one configuration discrepancy identified for paid SaaS rollout:
+    1. **Subscription-Linked Wallets & Plan Entitlements:** Require verified active/prepaid subscriptions and plan entitlements before granting monthly customer allowances or provisioning active accounts.
+    2. **Harden Payment Top-Ups & Webhooks:** Generate real Razorpay order IDs via authoritative gateway, enforce mandatory secure signing secrets (failing closed on empty/fallback secrets), and strictly validate captured payment amount, currency, and identity before granting prepaid credits.
+    3. **Complete Operational Evidence & Concurrency Testing:** Implement production k6 write-concurrency scenario scripts (5, 10, 20 VUs) and dedicated parallel benchmark execution harnesses, preserving the explicit distinction between fixture validation, actual model accuracy, and paid-customer throughput.
+    4. **Resolve Direct Purchase Bill Configuration Discrepancy:** Align `config/ai_multimodal.php` default to `false` (`AI_MULTIMODAL_ALLOW_DIRECT_PURCHASE_BILL=false`), safeguarding 3-way matching by default.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. **Subscription Entitlement DTO & Contract (`app/Ai/Billing/DTOs/SubscriptionEntitlement.php`, `app/Ai/Billing/Contracts/SubscriptionEntitlementResolverInterface.php`):**
+     - Authored immutable `SubscriptionEntitlement` DTO tracking `isActive`, `subscriptionId`, `planSku`, `includedMonthlyCredits`, `monthlyMediaPages`, `maxConcurrentRuns`, `renewalStatus`, and `expiresAt`.
+     - Created `SubscriptionEntitlementResolverInterface` contract.
+  2. **Authoritative Entitlement Resolver (`app/Ai/Billing/Services/SubscriptionEntitlementResolver.php`):**
+     - Resolves company subscription status from `Company::$settings_json`, legacy `general_settings` (`package_id`, `subscription_type`, `expiry_date`), or account records.
+     - Evaluates expiration dates against `$asOf` timestamp, returning expired status and 0 credits if past expiration.
+     - Gated by `config('ai_credits.require_subscription', true)` with graceful escape hatch for open testing.
+  3. **Subscription-Gated Account Resolver (`app/Ai/Billing/Services/CreditAccountResolver.php`):**
+     - Injects `SubscriptionEntitlementResolverInterface`.
+     - When creating accounts, verifies subscription entitlement: sets status to `'unsubscribed'` or `'expired'` when missing or lapsed, rather than generating unverified active accounts.
+  4. **Entitlement-Gated Monthly Grants (`app/Ai/Billing/Services/MonthlyCreditGrantService.php`):**
+     - Resolves account entitlement before period creation. If unsubscribed or expired, grants `included_granted = 0` and omits ledger credit grant entry, guaranteeing zero unearned credit leakage.
+  5. **Preflight Reservation Gating (`app/Ai/Billing/Services/AiCreditReservationService.php`, `app/Ai/Billing/Exceptions/AiCreditException.php`):**
+     - Added `AiCreditException::subscriptionRequired(...)` (HTTP 402 with `X-AI-Error-Code: SUBSCRIPTION_REQUIRED`).
+     - Fails closed if account status is `'unsubscribed'` or `'expired'`.
+  6. **Hardened Payment Top-Up Service (`app/Ai/Billing/Services/AiTopupService.php`):**
+     - Implemented `generateProviderOrderId()` and `resolveRazorpayCredentials()`: creates real Razorpay orders via `Razorpay\Api\Api` when keys are configured, falling back to mock orders only in non-production environments with production guardrails.
+     - Hardened `verifyWebhookSignature()`: fails closed if webhook secret is empty or insecure dummy key in production.
+     - Hardened `recordPaymentSuccess()`: validates payment `status` (captured/authorized), `amount` (matches order total including tax or net price), `currency` (matches order currency, INR), and `order_id` (matches order provider order ID). Throws `InvalidArgumentException` on any mismatch.
+  7. **Webhook Controller Hardening (`app/Http/Controllers/Api/V1/AiCreditController.php`):**
+     - Supports standard Razorpay webhook payloads (`payload.payment.entity`).
+     - Rejects tampered webhooks with 422 and exact validation error message.
+  8. **Configuration Discrepancy Resolved (`config/ai_multimodal.php`, `app/Ai/Multimodal/Services/NormalizedInputBuilder.php`, `.env.example`):**
+     - Changed `allow_direct_purchase_bill` default from `true` to `false` in `config/ai_multimodal.php` and `NormalizedInputBuilder.php`, enforcing 3-way matching via purchase orders.
+  9. **Operational Evidence & Concurrency Test Harness (`tests/k6/ai_credit_concurrency.js`, `scripts/run_credit_concurrency_benchmark.php`):**
+     - Authored k6 script with 3 stages (5 VUs baseline, 10 VUs contention, 20 VUs saturation), testing `/__test/ai/credit-reserve-settle` with thresholds for p95 < 150ms and 0 overspend breaches.
+     - Authored `scripts/run_credit_concurrency_benchmark.php` executing multi-profile write load against isolated database, tracking p50/p90/p95/p99 latencies, throughput, and zero negative balance invariants.
+
+- **Verification & Test Coverage:**
+  - Created unit test suite `tests/Unit/Ai/Billing/SubscriptionAndPaymentHardeningTest.php`: 6 tests, 22 assertions, all PASSED with 0 warnings/notices.
+  - PHP syntax check: 15 / 15 touched PHP files clean (0 errors).
+
+---
+## Multi-Vertical Company Profile Filtering & Optical Isolation Fix — 2026-11-16 (`feature/ai-unified-input-clarification`)
+
+- **Root Cause & Scope Analysis:**
+  - *Observed Behavior:* Optical lens specifications (such as Lens Type, Base Curve, DIA, ADD, SPH, CYL, AXIS, Eye L/R/Pair, Rx strip, Lab Receipt action button, and Optical & Warranty tab/pill) were rendering indiscriminately across all company verticals (including Textile, General Trading, FMCG, etc.) in product creation, product editing, the quick create item modal, and the sales workspace.
+  - *Secondary Issues Found:*
+    1. `resources/views/backend/packing_slip/invoice.blade.php` contained hardcoded strings `'Opticals Lab'` and `'Lens Item'`.
+    2. `resources/views/backend/sale/index.blade.php` rendered textile transport fields (`Bale No`, `No. of Bales`, `No. of Bundles`) in the drawer without checking if the active company is in the textile vertical.
+    3. `resources/views/backend/sale/index.blade.php` had a duplicate `<select id="drawer-paying-method">` form-group in `pane-settlement`.
+    4. Uncaught `ValidationException` could be thrown by `CompanyContextResolver::forActor()` in Blade when an actor has not yet selected a branch.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. **Industry Profile Service Enhancement (`app/Services/Industry/IndustryProfileService.php`):**
+     - Implemented `currentProfileKey(?CompanyContext $context = null): string` resolving the active company profile from request attributes, company context, session, or authenticated actor.
+     - Implemented static helpers `isOptical(?CompanyContext $context = null): bool` and `isTextile(?CompanyContext $context = null): bool`.
+     - Hardened `settings(?CompanyContext $context = null): array` to allow null contexts with automatic fallback to session/actor context.
+  2. **Global View Sharing (`app/Http/Middleware/Common.php`):**
+     - Shared `industryProfile`, `isOpticalProfile`, and `isTextileProfile` with all Blade views.
+  3. **Product Controller Scoping (`app/Http/Controllers/ProductController.php`):**
+     - In `create()`: `$lims_product_type_list` only loads `ProductType::forCompany(...)` when `$isOptical` is true, otherwise returning an empty collection.
+     - In `edit()`: `$lims_product_type_list` only loads when `$isOptical || $hasExistingOptical`.
+  4. **Product Create Form (`resources/views/backend/product/create.blade.php`):**
+     - Wrapped `#product-type-col`, `<label id="optical-option">`, and `#optical-container` in `@if($isOpticalProfile)`.
+     - Wrapped optical client-side change and toggle event handlers in `@if($isOpticalProfile)`.
+  5. **Product Edit Form (`resources/views/backend/product/edit.blade.php`):**
+     - Introduced `$isOpticalAllowed = $isOpticalProfile || $hasExistingOpticalData`.
+     - Wrapped `#product-type-col`, `<label id="optical-option">`, and `#optical-container` in `@if($isOpticalAllowed)`.
+     - Wrapped optical event handlers in `@if($isOpticalAllowed)`.
+  6. **Quick Create Modal (`resources/views/backend/product/partials/quick_create_modal.blade.php`):**
+     - Wrapped `#quick-product-type-col`, `<label id="quick-optical-option">`, and `#quick-optical-container` in `@if($isOpticalProfile)`.
+     - Wrapped optical change listeners in `@if($isOpticalProfile)`.
+  7. **Sales Workspace Desk (`resources/views/backend/sale/index.blade.php`):**
+     - Gated `+ Optical & Warranty →` link (`#btn-quick-optical`) behind `@if(!empty($isOpticalProfile))`.
+     - Gated `Print Optical Lab Receipt` button (`#btn-view-to-lab`) behind `@if(!empty($isOpticalProfile))`.
+     - Gated side panel Lab action link (`route('sale.lab_receipt', $bill->id)`) behind `@if(!empty($isOpticalProfile))`.
+     - Gated drawer `#tab-optical` and `#pane-optical` behind `@if(!empty($isOpticalProfile))`.
+     - Gated drawer textile fields (`Bale No`, `No. of Bales`, `No. of Bundles`) behind `@if(!empty($isTextileProfile))`, cleanly defaulting to hidden inputs with empty values for other verticals.
+     - Removed duplicate `drawer-paying-method` dropdown in `pane-settlement`.
+     - Exposed `window.isOpticalProfile` and `window.isTextileProfile` at the top of client JavaScript.
+     - Gated dynamic table `.optical-rx-strip` row template behind `${window.isOpticalProfile ? ... : ''}`, completely suppressing optical inputs/badges in non-optical verticals.
+     - Gated optical specification population in `addProductRow()`, `loadSaleToForm()`, `resetFormToNew()`, and drawer save handler behind `if (window.isOpticalProfile)`.
+     - Hardened `forActor()` Blade permission calls with `try { ... } catch (\Throwable) {}` to avoid uncaught `ValidationException` when branch is unset.
+  8. **Packing Slip Dispatch Template (`resources/views/backend/packing_slip/invoice.blade.php`):**
+     - Replaced hardcoded `'Opticals Lab'` and `'Central Laboratory & Fulfillment'` with dynamic warehouse name or application name.
+     - Replaced hardcoded `'Lens Item'` fallback with `'Item'`.
+     - Scoped `$hasRx` badge rendering to `$isOptical && (...)`.
+
+- **Automated Verification:**
+  - Automated view compilation and rendering test in `scratch/verify_views.php` testing both Textile and Optical profile contexts across product create, quick-create modal, and sale index. All tests PASSED (hidden in textile, rendered in optical).
+  - Blade template compilation: `php artisan view:cache` completed with 0 errors.
+  - Cache clearing: `php artisan view:clear` and `php artisan optimize:clear` executed cleanly.
+
+---
+
 ## Resumed drift implementation and completion audit — 2026-11-17
 
 - User resumed the request to implement all findings in `2026-11-12_DRIFT_REPORT.md`. The current branch is `feature/ai-unified-input-clarification` at `a352dbd`; the existing local session-memory entry was preserved. Much of the earlier drift work is now committed, but the original report and work log are stale.

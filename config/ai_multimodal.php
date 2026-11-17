@@ -53,7 +53,7 @@ return [
     |
     */
 
-    'allow_direct_purchase_bill' => (bool) env('AI_MULTIMODAL_ALLOW_DIRECT_PURCHASE_BILL', true),
+    'allow_direct_purchase_bill' => (bool) env('AI_MULTIMODAL_ALLOW_DIRECT_PURCHASE_BILL', false),
 
     /*
     |--------------------------------------------------------------------------

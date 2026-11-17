@@ -58,6 +58,12 @@ class AiCreditReservationService
         if ($account->status === 'frozen') {
             throw AiCreditException::accountFrozen('This subscription AI credit account has been suspended or frozen.');
         }
+        if ($account->status === 'unsubscribed') {
+            throw AiCreditException::subscriptionRequired('A verified active or prepaid subscription is required to access AI services.');
+        }
+        if ($account->status === 'expired') {
+            throw AiCreditException::subscriptionRequired('Your AI subscription has expired. Please renew your plan to continue using AI services.');
+        }
 
         $period = $this->periodGrantService->resolveCurrentPeriod($account->id);
 

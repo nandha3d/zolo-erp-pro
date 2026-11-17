@@ -204,21 +204,29 @@ class AiCreditController extends Controller
         }
 
         $payload = $request->json()->all();
-        $orderId = (string) ($payload['order_id'] ?? '');
-        $paymentId = (string) ($payload['payment_id'] ?? 'pay_' . Str::random(12));
-        $eventId = (string) ($payload['event_id'] ?? $paymentId);
+        $paymentEntity = $payload['payload']['payment']['entity'] ?? $payload;
+        $orderId = (string) ($paymentEntity['order_id'] ?? $payload['order_id'] ?? '');
+        $paymentId = (string) ($paymentEntity['id'] ?? $payload['payment_id'] ?? 'pay_' . Str::random(12));
+        $eventId = (string) ($payload['event_id'] ?? $payload['id'] ?? $paymentId);
 
         if (empty($orderId)) {
-            return response()->json(['success' => false, 'error' => 'Missing order_id'], 422);
+            return response()->json(['success' => false, 'error' => 'Missing order_id in webhook payload.'], 422);
         }
 
-        $order = $this->topupService->recordPaymentSuccess(
-            $orderId,
-            $paymentId,
-            $eventId,
-            $provider,
-            $payload
-        );
+        try {
+            $order = $this->topupService->recordPaymentSuccess(
+                $orderId,
+                $paymentId,
+                $eventId,
+                $provider,
+                $payload
+            );
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,

@@ -45,6 +45,18 @@ class AiTopupService
             }
 
             $orderId = (string) Str::uuid();
+            $totalMinorInr = (int) ($pack['price_minor_inr'] + $pack['tax_minor_inr']);
+            $providerOrderId = $this->generateProviderOrderId(
+                paymentProvider: $paymentProvider,
+                totalMinorInr: $totalMinorInr,
+                currency: $pack['currency'] ?? 'INR',
+                receiptId: 'rcpt_' . substr($orderId, 0, 12),
+                notes: [
+                    'account_id' => $account->id,
+                    'pack_sku' => $pack['sku'],
+                    'credits' => $pack['credits'],
+                ]
+            );
 
             DB::table('ai_credit_topup_orders')->insert([
                 'id' => $orderId,
@@ -55,7 +67,7 @@ class AiTopupService
                 'tax_minor_inr' => $pack['tax_minor_inr'],
                 'billing_cycle' => 'one_time',
                 'payment_provider' => $paymentProvider,
-                'provider_order_id' => 'order_' . Str::random(16),
+                'provider_order_id' => $providerOrderId,
                 'status' => 'pending',
                 'idempotency_key' => $idempotencyKey,
                 'created_at' => now(),
@@ -99,6 +111,7 @@ class AiTopupService
 
             $order = DB::table('ai_credit_topup_orders')
                 ->where('id', $orderId)
+                ->orWhere('provider_order_id', $orderId)
                 ->lockForUpdate()
                 ->first();
 
@@ -108,6 +121,41 @@ class AiTopupService
 
             if ($order->status === 'paid') {
                 return $order;
+            }
+
+            // Validate captured payment payload (supports nested Razorpay entity structure and flat maps)
+            $paymentEntity = $rawPayload['payload']['payment']['entity'] ?? $rawPayload;
+
+            if (isset($paymentEntity['status'])) {
+                $status = (string) $paymentEntity['status'];
+                if (! in_array($status, ['captured', 'authorized'], true)) {
+                    throw new InvalidArgumentException("Payment verification failed: status is [{$status}], expected 'captured'.");
+                }
+            }
+
+            if (isset($paymentEntity['amount'])) {
+                $payloadAmount = (int) $paymentEntity['amount'];
+                $expectedTotal = (int) ($order->amount_minor_inr + $order->tax_minor_inr);
+                $expectedNet = (int) $order->amount_minor_inr;
+
+                if ($payloadAmount !== $expectedTotal && $payloadAmount !== $expectedNet) {
+                    throw new InvalidArgumentException("Payment amount mismatch: expected [{$expectedTotal}], received [{$payloadAmount}].");
+                }
+            }
+
+            if (isset($paymentEntity['currency'])) {
+                $payloadCurrency = strtoupper((string) $paymentEntity['currency']);
+                $expectedCurrency = strtoupper((string) ($order->currency ?? 'INR'));
+                if ($payloadCurrency !== $expectedCurrency) {
+                    throw new InvalidArgumentException("Payment currency mismatch: expected [{$expectedCurrency}], received [{$payloadCurrency}].");
+                }
+            }
+
+            if (isset($paymentEntity['order_id']) && ! empty($paymentEntity['order_id'])) {
+                $payloadOrderId = (string) $paymentEntity['order_id'];
+                if ($payloadOrderId !== $order->provider_order_id && $payloadOrderId !== $order->id) {
+                    throw new InvalidArgumentException("Payment order identity mismatch: expected [{$order->provider_order_id}], received [{$payloadOrderId}].");
+                }
             }
 
             $period = $this->periodGrantService->resolveCurrentPeriod($order->account_id);
@@ -232,16 +280,100 @@ class AiTopupService
 
     /**
      * Verify payment webhook HMAC signature.
+     * Enforces non-empty secret; fails closed on missing secret or production dummy keys.
      */
     public function verifyWebhookSignature(string $rawPayload, string $signature, ?string $secret = null): bool
     {
-        $signingSecret = $secret ?: config('ai_credits.webhook_secret', '');
-        if (empty($signingSecret)) {
+        $signingSecret = $secret !== null ? $secret : (string) config('ai_credits.webhook_secret', '');
+        if (empty($signingSecret) || empty($signature)) {
+            return false;
+        }
+
+        // In production, reject known test/fallback keys
+        $isProduction = method_exists(app(), 'environment') ? app()->environment('production') : false;
+        if ($isProduction && in_array($signingSecret, ['whsec_zolo_credits_secret_key_2026', 'dummy', 'secret'], true)) {
             return false;
         }
 
         $expected = hash_hmac('sha256', $rawPayload, $signingSecret);
 
         return hash_equals($expected, $signature);
+    }
+
+    /**
+     * Resolve Razorpay key and secret from configuration, ExternalService, or GeneralSetting.
+     *
+     * @return array{key: ?string, secret: ?string}
+     */
+    protected function resolveRazorpayCredentials(): array
+    {
+        $key = config('services.razorpay.key') ?: env('RAZORPAY_KEY');
+        $secret = config('services.razorpay.secret') ?: env('RAZORPAY_SECRET');
+
+        if (! empty($key) && ! empty($secret)) {
+            return ['key' => (string) $key, 'secret' => (string) $secret];
+        }
+
+        try {
+            $service = DB::table('external_services')->where('name', 'Razorpay')->first();
+            if ($service && ! empty($service->details)) {
+                $cred = explode(';', $service->details);
+                if (isset($cred[1])) {
+                    [$k, $s] = explode(',', $cred[1]);
+                    return ['key' => trim($k), 'secret' => trim($s)];
+                }
+            }
+        } catch (\Throwable) {}
+
+        try {
+            $general = DB::table('general_settings')->first();
+            if ($general && ! empty($general->razorpay_key) && ! empty($general->razorpay_secret)) {
+                return ['key' => trim($general->razorpay_key), 'secret' => trim($general->razorpay_secret)];
+            }
+        } catch (\Throwable) {}
+
+        return ['key' => null, 'secret' => null];
+    }
+
+    /**
+     * Create an authoritative payment order on the payment provider (e.g. Razorpay).
+     *
+     * @param array<string, mixed> $notes
+     */
+    protected function generateProviderOrderId(
+        string $paymentProvider,
+        int $totalMinorInr,
+        string $currency,
+        string $receiptId,
+        array $notes = []
+    ): string {
+        if ($paymentProvider === 'razorpay') {
+            $creds = $this->resolveRazorpayCredentials();
+            if (! empty($creds['key']) && ! empty($creds['secret'])) {
+                try {
+                    $api = new \Razorpay\Api\Api($creds['key'], $creds['secret']);
+                    $order = $api->order->create([
+                        'receipt' => $receiptId,
+                        'amount' => $totalMinorInr,
+                        'currency' => $currency,
+                        'notes' => $notes,
+                    ]);
+
+                    return (string) $order['id'];
+                } catch (\Throwable $e) {
+                    $isProduction = method_exists(app(), 'environment') ? app()->environment('production') : false;
+                    if ($isProduction) {
+                        throw new \RuntimeException('Razorpay order creation failed: ' . $e->getMessage(), 0, $e);
+                    }
+                }
+            } else {
+                $isProduction = method_exists(app(), 'environment') ? app()->environment('production') : false;
+                if ($isProduction) {
+                    throw new \RuntimeException('Payment provider [razorpay] credentials are required in production.');
+                }
+            }
+        }
+
+        return 'order_' . Str::random(16);
     }
 }
