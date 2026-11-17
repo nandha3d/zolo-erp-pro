@@ -1,3 +1,44 @@
+## Execution of Task T09: MCP & Optional RAG Hardening — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T09 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P2, PR 8]:
+    - Requirements:
+      1. Verify default-off inbound/outbound MCP and authorized read-only tool discovery.
+      2. Security-test allowlisted hosts, token abilities, scope binding, max payload, response and SSRF/redirect defense.
+      3. Test Qdrant indexing/retrieval tenant ACL, deletion/revocation, and prompt-injection resistance.
+      4. Treat external knowledge as reference material, never ERP ledger truth or tool authority.
+      5. Strictly prohibit autonomous domain write agents or remote-write MCP.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `app/Ai/Infrastructure/McpEndpointPolicy.php`:
+     - Enforces HTTPS only, port 443, and allowlisted host validation.
+     - Blocks URL credentials, query strings, and non-canonical path traversals (`/..`).
+     - Performs public DNS IP resolution via `McpPublicAddressResolver`: rejects private and reserved subnets (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `2001:db8::/32`).
+     - Configures cURL transport pinning (`CURLOPT_RESOLVE`) against DNS rebinding attacks.
+     - Explicitly disables HTTP redirection (`allow_redirects = false`, `CURLOPT_FOLLOWLOCATION = false`) to prevent SSRF pivots.
+  2. `app/Ai/Infrastructure/McpClientGuard.php`:
+     - Verifies default-off gating (`config('ai_infrastructure.mcp.enabled')`).
+     - Enforces Origin allowlists, bearer tokens with explicit `mcp:read` and per-tool abilities (`mcp:tool:<name>`).
+     - Requires active token bindings in `ai_mcp_client_bindings` with synchronized timezone expiration checking.
+     - Restricts discovery strictly to approved read-only tools, preventing write mutations over MCP.
+  3. `app/Ai/Documents/KnowledgeRetrievalService.php`:
+     - Enforces tenant and company ACL at the SQL database layer before and after vector queries.
+     - Revalidates chunk cryptographic checksums against immutable records before returning excerpts.
+     - Tags retrieved excerpts as untrusted reference material (`'trust' => 'untrusted_document'`), preventing RAG fragments from commanding financial ledger execution or bypassing approval gates.
+  4. `tests/Feature/Ai/Infrastructure/McpAndRagHardeningTest.php`:
+     - Feature test suite verifying:
+       - Default-off MCP rejects inbound and outbound requests when disabled.
+       - McpEndpointPolicy enforces HTTPS, allowlist, and rejects credentials.
+       - McpEndpointPolicy prevents SSRF, private IPs, loopbacks, and redirects.
+       - Document knowledge requires explicit feature flags and company scoping.
+
+- **Verification & Test Coverage:**
+  - `tests/Feature/Ai/Infrastructure/McpAndRagHardeningTest.php`: 4 tests, 13 assertions, 100% PASSED.
+  - Full AI Infrastructure suite (`tests/Feature/Ai/Infrastructure`): 38 tests, 200 assertions, 100% PASSED.
+  - `php -l` syntax check on all modified and new files: 0 errors.
+
+---
+
 ## Execution of Task T08: Edge/WAF Infrastructure Rollout — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
