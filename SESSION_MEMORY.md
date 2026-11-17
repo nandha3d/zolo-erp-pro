@@ -1,3 +1,45 @@
+## Execution of Task T06: Data Privacy & Request-Boundary Safeguards — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T06 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P1, PR 6]:
+    - Requirements:
+      1. Inventory outbound model inputs, document storage, and sensitive tax/PII fields.
+      2. Add contextual data minimization and leak protection before model, MCP, and telemetry boundaries.
+      3. Strictly strip credentials (API keys, Bearer tokens, passwords, database URLs, private keys) and mask personal financial identifiers (Credit cards, Aadhaar).
+      4. Faithfully preserve authoritative business tax fields (GSTIN, HSN/SAC codes, invoice numbers, amounts, tax rates) required for Indian statutory reconciliation.
+      5. Add prompt injection defense: untrusted text inside invoice scans or companion user inputs cannot hijack instructions, elevate privileges, or trigger unauthorized mutations.
+      6. Audit trails in `AiAuditRecorder` must recursively redact secrets before persisting execution telemetry.
+      7. Prevent stack traces, internal paths, or SQL queries from leaking in user-facing error envelopes.
+      8. Document storage, retention, purging, and incident handling in `docs/ai/privacy/DATA_PRIVACY_AND_RETENTION.md`.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `app/Ai/Security/AiDataClassificationPolicy.php`:
+     - Established 5 explicit data classification tiers: `Credentials`, `FinancialIdentifiers`, `BusinessTaxFields`, `PersonalDetails`, `TechnicalTelemetry`.
+     - `sanitizeOutboundPrompt()`: Strips Bearer tokens, API keys, client secrets, passwords, database connection strings, credit cards, and Aadhaar numbers.
+     - `sanitizeMessages()`: Inspects and cleans `Laravel\Ai\Messages\Message` collections at the last trusted boundary before network transmission.
+     - `inspectUntrustedInput()`: Neutralizes unsafe markup, detects prompt injection signatures (`ignore previous instructions`, `switch to developer mode`, `system override`), and wraps untrusted data in literal delimiters `[UNTRUSTED_CONTENT_LITERAL_DATA: ... :END_UNTRUSTED_CONTENT]`.
+     - `sanitizePayload()`: Recursively masks sensitive keys while preserving business tax keys (`gstin`, `hsn_code`, `invoice_number`, `total_amount`).
+     - `toSafeErrorResponse()`: Converts exceptions into uniform privacy-safe envelopes with correlation IDs without leaking SQL strings or stack traces.
+  2. `app/Ai/Gateway/ApprovedModelGateway.php`:
+     - Hooked `AiDataClassificationPolicy` into `budgetStep()`: outbound `$step->messages` and `$step->instructions` are automatically sanitized before invoking `$next()`.
+  3. `app/Ai/Services/AiAuditRecorder.php`:
+     - Upgraded `redact()` to utilize `AiDataClassificationPolicy::sanitizePayload()` for recursive, multi-level credential masking.
+  4. `app/Ai/Multimodal/Services/MediaExtractionService.php`:
+     - Applied `inspectUntrustedInput()` to companion text in both `extractVisualDocument()` and `extractAudio()` before submitting to the perception client.
+  5. `app/Providers/AiServiceProvider.php`:
+     - Registered `AiDataClassificationPolicy` as an application singleton.
+  6. `docs/ai/privacy/DATA_PRIVACY_AND_RETENTION.md`:
+     - Authored comprehensive governance specification detailing data classification, boundary rules, retention/purging schedules, and incident response.
+  7. `tests/Feature/Ai/Privacy/AiDataPrivacyAndBoundaryTest.php`:
+     - 6 feature tests verifying outbound credential stripping, business tax preservation, prompt injection neutralization, recursive audit redaction, gateway preflight sanitization, and privacy-safe error envelopes.
+
+- **Verification & Test Coverage:**
+  - `tests/Feature/Ai/Privacy/AiDataPrivacyAndBoundaryTest.php`: 6 tests, 48 assertions, 100% PASSED.
+  - Full AI test suite (`Privacy` + `UI` + `Directory` + `Clarification`): 60 tests, 382 assertions, 100% PASSED.
+  - `php -l` syntax check on all modified and new files: 0 errors.
+
+---
+
 ## Execution of Task T05: Governed Missing-Master UI & Task Resumption — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
