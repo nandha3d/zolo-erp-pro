@@ -724,52 +724,86 @@
                 btnSubmit.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Submitting...');
                 feedback.empty();
 
-                const slotPatch = {};
+                const corrections = [];
                 inputsForm.find('.ai-clarify-select, .ai-clarify-input').each(function () {
                     const f = $(this).attr('data-field');
                     const v = $(this).val();
                     if (f && v !== '') {
-                        slotPatch[f] = v;
+                        corrections.push({
+                            field: f,
+                            value: v,
+                            confirmation: 'user_selected'
+                        });
                     }
                 });
+
+                const expectedRevision = (taskObj && taskObj.revision) || (currentRes.task && currentRes.task.revision) || 1;
 
                 $.ajax({
                     url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/inputs',
                     method: 'PATCH',
                     headers: baseHeaders(true),
                     data: JSON.stringify({
-                        expected_revision: (taskObj && taskObj.revision) || 1,
-                        slots_patch: slotPatch
+                        expected_revision: expectedRevision,
+                        corrections: corrections
                     }),
                     success: function (resPatch) {
-                        $.ajax({
-                            url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/prepare-proposal',
-                            method: 'POST',
-                            headers: baseHeaders(true),
-                            data: JSON.stringify({}),
-                            success: function (resPrep) {
-                                if (resPrep && resPrep.proposal) {
-                                    refreshView('proposal', {
-                                        status: 'proposal_created',
-                                        proposal: resPrep.proposal,
-                                        task: resPrep.task,
-                                        media: media,
-                                        extraction: extraction
-                                    });
-                                } else if (resPrep && resPrep.status === 'needs_input') {
-                                    refreshView('clarification', resPrep);
-                                }
-                            },
-                            error: function (xhrPrep) {
-                                btnSubmit.prop('disabled', false).html('<i class="dripicons-direction mr-1"></i>Submit Details & Generate Preview');
-                                const err = xhrPrep.responseJSON || {};
-                                feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Failed to prepare proposal.') + '</div>');
+                        if (resPatch && resPatch.task) {
+                            currentRes.task = resPatch.task;
+                            if (taskObj) {
+                                taskObj.revision = resPatch.task.revision;
                             }
-                        });
+                        }
+                        const isReady = !!(resPatch && resPatch.evaluation && resPatch.evaluation.is_ready);
+                        if (isReady) {
+                            $.ajax({
+                                url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/prepare-proposal',
+                                method: 'POST',
+                                headers: baseHeaders(true),
+                                data: JSON.stringify({}),
+                                success: function (resPrep) {
+                                    if (resPrep && resPrep.proposal) {
+                                        refreshView('proposal', {
+                                            status: 'proposal_created',
+                                            proposal: resPrep.proposal,
+                                            task: resPrep.task,
+                                            media: media,
+                                            extraction: extraction
+                                        });
+                                    } else if (resPrep && resPrep.status === 'needs_input') {
+                                        refreshView('clarification', resPrep);
+                                    }
+                                },
+                                error: function (xhrPrep) {
+                                    btnSubmit.prop('disabled', false).html('<i class="dripicons-direction mr-1"></i>Submit Details & Generate Preview');
+                                    const err = xhrPrep.responseJSON || {};
+                                    feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Failed to prepare proposal.') + '</div>');
+                                }
+                            });
+                        } else {
+                            btnSubmit.prop('disabled', false).html('<i class="dripicons-direction mr-1"></i>Submit Details & Generate Preview');
+                            refreshView('clarification', resPatch);
+                        }
                     },
                     error: function (xhrPatch) {
                         btnSubmit.prop('disabled', false).html('<i class="dripicons-direction mr-1"></i>Submit Details & Generate Preview');
                         const err = xhrPatch.responseJSON || {};
+                        if (xhrPatch.status === 409) {
+                            feedback.html('<div class="alert alert-warning py-1 px-2 mb-2"><i class="dripicons-warning mr-1"></i>Task was modified in another session (revision conflict). Refreshing latest task details...</div>');
+                            $.ajax({
+                                url: aiBaseUrl + '/workflow-tasks/' + currentTaskId,
+                                method: 'GET',
+                                headers: baseHeaders(false),
+                                success: function (latestTaskRes) {
+                                    refreshView('clarification', latestTaskRes);
+                                    $('.ai-clarify-feedback').html('<div class="alert alert-warning py-1 px-2 mb-2"><i class="dripicons-warning mr-1"></i>Task revision updated to latest version (' + (latestTaskRes.task && latestTaskRes.task.revision) + '). Please review and re-submit your details.</div>');
+                                },
+                                error: function () {
+                                    feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Task conflict occurred. Please reload the page.') + '</div>');
+                                }
+                            });
+                            return;
+                        }
                         feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Failed to update inputs.') + '</div>');
                     }
                 });
@@ -835,6 +869,44 @@
                 btnSave.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Revalidating...');
                 feedback.empty();
 
+                const corrections = [];
+
+                const supplierVal = body.find('.ai-edit-supplier').val();
+                if (supplierVal !== undefined && supplierVal.trim() !== '') {
+                    corrections.push({
+                        field: 'supplier_id',
+                        value: supplierVal.trim(),
+                        confirmation: 'user_edited'
+                    });
+                }
+
+                const invoiceNoVal = body.find('.ai-edit-invoice-no').val();
+                if (invoiceNoVal !== undefined && invoiceNoVal.trim() !== '') {
+                    corrections.push({
+                        field: 'supplier_invoice_no',
+                        value: invoiceNoVal.trim(),
+                        confirmation: 'user_edited'
+                    });
+                }
+
+                const dateVal = body.find('.ai-edit-date').val();
+                if (dateVal !== undefined && dateVal.trim() !== '') {
+                    corrections.push({
+                        field: 'date',
+                        value: dateVal.trim(),
+                        confirmation: 'user_edited'
+                    });
+                }
+
+                const warehouseVal = body.find('.ai-edit-warehouse').val();
+                if (warehouseVal !== undefined && warehouseVal.trim() !== '') {
+                    corrections.push({
+                        field: 'warehouse_id',
+                        value: warehouseVal.trim(),
+                        confirmation: 'user_edited'
+                    });
+                }
+
                 const updatedItems = [];
                 tbody.find('tr').each(function (idx) {
                     const desc = $(this).find('.ai-edit-item-desc').val().trim();
@@ -848,45 +920,77 @@
                     });
                 });
 
-                const patchData = {
-                    supplier_invoice_no: body.find('.ai-edit-invoice-no').val().trim(),
-                    date: body.find('.ai-edit-date').val(),
-                    items: updatedItems
-                };
+                if (updatedItems.length > 0) {
+                    corrections.push({
+                        field: 'items',
+                        value: updatedItems,
+                        confirmation: 'user_edited'
+                    });
+                }
+
+                const expectedRevision = (currentRes.task && currentRes.task.revision) || (currentRes.task_revision) || (taskObj && taskObj.revision) || 1;
 
                 $.ajax({
                     url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/inputs',
                     method: 'PATCH',
                     headers: baseHeaders(true),
                     data: JSON.stringify({
-                        expected_revision: (currentRes.task && currentRes.task.revision) || 1,
-                        slots_patch: patchData
+                        expected_revision: expectedRevision,
+                        corrections: corrections
                     }),
                     success: function (resPatch) {
-                        $.ajax({
-                            url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/prepare-proposal',
-                            method: 'POST',
-                            headers: baseHeaders(true),
-                            data: JSON.stringify({}),
-                            success: function (resPrep) {
-                                refreshView('proposal', {
-                                    status: 'proposal_created',
-                                    proposal: resPrep.proposal,
-                                    task: resPrep.task,
-                                    media: media,
-                                    extraction: extraction
-                                });
-                            },
-                            error: function (xhrPrep) {
-                                btnSave.prop('disabled', false).html('<i class="dripicons-checkmark mr-1"></i>Update & Revalidate');
-                                const err = xhrPrep.responseJSON || {};
-                                feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Validation failed.') + '</div>');
+                        if (resPatch && resPatch.task) {
+                            currentRes.task = resPatch.task;
+                            if (taskObj) {
+                                taskObj.revision = resPatch.task.revision;
                             }
-                        });
+                        }
+                        const isReady = !!(resPatch && resPatch.evaluation && resPatch.evaluation.is_ready);
+                        if (isReady) {
+                            $.ajax({
+                                url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/prepare-proposal',
+                                method: 'POST',
+                                headers: baseHeaders(true),
+                                data: JSON.stringify({}),
+                                success: function (resPrep) {
+                                    refreshView('proposal', {
+                                        status: 'proposal_created',
+                                        proposal: resPrep.proposal,
+                                        task: resPrep.task,
+                                        media: media,
+                                        extraction: extraction
+                                    });
+                                },
+                                error: function (xhrPrep) {
+                                    btnSave.prop('disabled', false).html('<i class="dripicons-checkmark mr-1"></i>Update & Revalidate');
+                                    const err = xhrPrep.responseJSON || {};
+                                    feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Validation failed.') + '</div>');
+                                }
+                            });
+                        } else {
+                            btnSave.prop('disabled', false).html('<i class="dripicons-checkmark mr-1"></i>Update & Revalidate');
+                            refreshView('clarification', resPatch);
+                        }
                     },
                     error: function (xhrPatch) {
                         btnSave.prop('disabled', false).html('<i class="dripicons-checkmark mr-1"></i>Update & Revalidate');
                         const err = xhrPatch.responseJSON || {};
+                        if (xhrPatch.status === 409) {
+                            feedback.html('<div class="alert alert-warning py-1 px-2 mb-2"><i class="dripicons-warning mr-1"></i>Task was modified in another session (revision conflict). Refreshing latest task details...</div>');
+                            $.ajax({
+                                url: aiBaseUrl + '/workflow-tasks/' + currentTaskId,
+                                method: 'GET',
+                                headers: baseHeaders(false),
+                                success: function (latestTaskRes) {
+                                    refreshView('clarification', latestTaskRes);
+                                    $('.ai-clarify-feedback').html('<div class="alert alert-warning py-1 px-2 mb-2"><i class="dripicons-warning mr-1"></i>Task revision updated to latest version (' + (latestTaskRes.task && latestTaskRes.task.revision) + '). Please review and re-submit your details.</div>');
+                                },
+                                error: function () {
+                                    feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Task conflict occurred. Please reload the page.') + '</div>');
+                                }
+                            });
+                            return;
+                        }
                         feedback.html('<div class="alert alert-danger py-1 px-2 mb-0">' + escapeText(err.message || 'Failed to update details.') + '</div>');
                     }
                 });

@@ -1,3 +1,39 @@
+## Execution of Tasks T00 & T01: Baseline Architecture Inventory & Correction API Mismatch Fix — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Sequential execution of tasks from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md`:
+    - **Task T00 — Baseline and architecture inventory [P0, PR 0]:**
+      - Audited active branch, commit HEAD `132cf772bcc5b499c376f73c8f346b53b17f60ba`, PHP 8.5.12, Laravel 13.40.0.
+      - Mapped 118 AI routes across `/ai` and `/api/v1/ai`.
+      - Authored comprehensive architectural specification `docs/ai/architecture/AS_IS.md` documenting model gateway, credit reservation & settlement sequence, authoritative read tools, action proposals, input clarification, workers, MCP, and component status matrix.
+      - Baseline lint: 329 / 329 PHP files passed `php -l` with 0 errors.
+      - Committed: `8c1c2a9` (`docs(ai): complete T00 baseline and architecture inventory in AS_IS.md`).
+    - **Task T01 — Fix correction API mismatch [P0, PR 1]:**
+      - Resolved contract mismatch: `public/js/ai-media-input.js` previously submitted `slots_patch` and omitted `expected_revision`, whereas `AiWorkflowTaskController::updateInputs` strictly required `expected_revision` and `corrections: [{ field, value, confirmation }]`.
+      - Refactored both frontend buttons (`Submit Details & Generate Preview` and `Update & Revalidate`) in `public/js/ai-media-input.js` to send typed `corrections` and current `expected_revision`.
+      - Gated `prepare-proposal` invocation: called strictly when `evaluation.is_ready === true`; otherwise re-renders remaining clarification issues without failing 422.
+      - Implemented clean HTTP 409 Conflict handling: reloads latest task revision via `GET /api/v1/ai/workflow-tasks/{id}` and displays an informative banner rather than silently replaying stale payloads.
+      - Added regression test suite `tests/Feature/Ai/Clarification/WorkflowTaskCorrectionMismatchRegressionTest.php` with 4 tests (25 assertions) proving legacy payload fails with 422, new payload succeeds with revision increment, 409 conflict detection functions, and unready tasks block proposal creation preventing unapproved purchase writes.
+      - All 21 tests in `tests/Feature/Ai/Clarification` PASSED 100% (168 assertions).
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `docs/ai/architecture/AS_IS.md`: Authoritative baseline documentation and subsystem evidence matrix.
+  2. `public/js/ai-media-input.js`:
+     - Updated `.ai-btn-submit-clarify` click handler: builds `corrections` array, attaches `expected_revision`, calls `prepare-proposal` only on `evaluation.is_ready`, and handles 409 by loading latest task.
+     - Updated `btnSave` (`Update & Revalidate`) click handler: formats `supplier_id`, `supplier_invoice_no`, `date`, `warehouse_id`, and `items` into `corrections` array with `expected_revision`, gates proposal preparation on `evaluation.is_ready`, and recovers from 409 conflicts.
+  3. `app/Ai/Billing/Services/AiTopupService.php`:
+     - Guarded webhook environment check using `app()->bound('config')` and `getenv('APP_ENV')` fallback so standalone Unit tests execute cleanly.
+  4. `tests/Feature/Ai/Clarification/WorkflowTaskCorrectionMismatchRegressionTest.php`:
+     - Added 4 regression tests verifying old and new contracts, optimistic revision locking, and zero-write safety.
+
+- **Verification & Test Coverage:**
+  - `php vendor/bin/phpunit tests/Feature/Ai/Clarification/WorkflowTaskCorrectionMismatchRegressionTest.php`: 4 tests, 25 assertions, 100% PASSED.
+  - `tests/Feature/Ai/Clarification` suite: 21 tests, 168 assertions, 100% PASSED.
+  - `tests/Unit/Ai/Billing/SubscriptionAndPaymentHardeningTest.php`: 6 tests, 22 assertions, 100% PASSED.
+  - JavaScript syntax check: `node -c public/js/ai-media-input.js` clean (0 errors).
+
+---
+
 ## Paid SaaS Production Safeguards, Subscription Wallets, Payment Top-Up Hardening & Operational Evidence Framework — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
