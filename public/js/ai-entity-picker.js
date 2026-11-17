@@ -350,4 +350,7 @@
     };
 
     window.AiEntityPicker = AiEntityPicker;
+    window.AiSelectionSummary = {
+        render: AiEntityPicker.renderSelectionSummary
+    };
 })(jQuery);

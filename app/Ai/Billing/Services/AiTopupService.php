@@ -96,7 +96,8 @@ class AiTopupService
             $providerPaymentId,
             $eventId,
             $paymentProvider,
-            $payloadHash
+            $payloadHash,
+            $rawPayload
         ): stdClass {
             // Deduplicate incoming payment event
             $existingEvent = DB::table('ai_credit_payment_events')
