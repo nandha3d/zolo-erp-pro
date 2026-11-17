@@ -1,3 +1,48 @@
+## Execution of Task T07: Observability, Credit Consistency & Incident Support — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T07 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P1, PR 7]:
+    - Requirements:
+      1. Propagate a correlation ID from API through model calls, media, tasks, proposals, approvals, execution and queues.
+      2. Reconcile provider attempt IDs against credit reservations, settlements, ledger, monthly grant and top-ups.
+      3. Add structured metrics for latency, provider errors, rate limits, candidate ambiguity, approvals, idempotent recoveries and queue lag.
+      4. Use optional Langfuse only with approved field allowlists and no raw prompts/PII.
+      5. Add privileged dashboard, alert runbook, and concurrency tests.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `app/Http/Middleware/RequestCorrelation.php`:
+     - Accepts either `X-Request-ID` or `X-Correlation-ID`, generating a fallback UUID if omitted.
+     - Registers both `erp.request_id` and `erp.correlation_id` on the request attributes.
+     - Emits both `X-Request-ID` and `X-Correlation-ID` on all HTTP responses alongside `X-Content-Type-Options: nosniff`.
+     - Logs correlation ID, duration, route name, actor ID, and company ID to the structured `erp.http` channel.
+  2. `app/Ai/Telemetry/TelemetryDispatcher.php`:
+     - Built structured operational metrics dispatcher:
+       - `recordEvent()`: Emits structured JSON events (`ai.metrics`) with correlation ID, pseudonymized SHA-256 HMAC tenant/actor hashes, duration, status, and metadata.
+       - `recordLatency()`: Traces execution durations for model reasoning and perception extractions.
+       - `recordRateLimit()`: Captures provider throttling events (`RATE_LIMIT_EXCEEDED`).
+       - `recordCandidateAmbiguity()`: Flags multi-match ambiguities for directory resolution.
+       - `recordApprovalDecision()`: Logs proposal approval/execution milestones.
+       - `recordIdempotentRecovery()`: Audits replay prevention and idempotent reuses.
+  3. `app/Ai/Billing/Services/AiCreditReconciliationService.php`:
+     - Enhanced period-level audit (`reconcilePeriod()`) and added account-wide audit (`reconcileAccount()`): compares period aggregate counters (`spent_credits`, `included_granted`, `topups_granted`) against the sum of immutable ledger entries (`ai_credit_ledger`).
+     - Added provider attempt audit (`reconcileAttempt()`): cross-checks `provider_attempt_id` across `ai_model_invocations`, `ai_credit_reservations`, and `ai_credit_ledger` to verify that debited credits match provider dispatches 1:1.
+  4. `docs/ai/runbooks/INCIDENT_AND_OBSERVABILITY_RUNBOOK.md`:
+     - Authored operational incident runbook documenting end-to-end correlation ID tracing, privacy-safe support queries without viewing invoice PII, metric event definitions, reconciliation CLI commands, alert thresholds (P95 > 5s, 429 > 3%), and emergency circuit breaker killswitches.
+  5. `tests/Feature/Ai/Observability/AiObservabilityAndCreditConsistencyTest.php`:
+     - Authored feature test suite verifying:
+       - Correlation and Request ID propagation via middleware.
+       - Structured operational metrics emission with hashed tenant attributes.
+       - Period and account ledger reconciliation detecting tamper/mismatch.
+       - Provider attempt ID matching across invocation and ledger rows.
+       - Unknown attempt discrepancy reporting.
+
+- **Verification & Test Coverage:**
+  - `tests/Feature/Ai/Observability/AiObservabilityAndCreditConsistencyTest.php`: 5 tests, 29 assertions, 100% PASSED.
+  - Full AI test suite (`Observability` + `Privacy` + `UI` + `Directory` + `Clarification`): 65 tests, 411 assertions, 100% PASSED.
+  - `php -l` syntax check on all modified and new files: 0 errors.
+
+---
+
 ## Execution of Task T06: Data Privacy & Request-Boundary Safeguards — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
