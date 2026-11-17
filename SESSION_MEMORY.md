@@ -1,3 +1,39 @@
+## Execution of Task T08: Edge/WAF Infrastructure Rollout — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T08 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P1/P2, infra-owned PR]:
+    - Requirements:
+      1. Discover actual DNS, CDN/WAF, Nginx, TLS, and origin path before writing provider-specific config.
+      2. Enable monitor-only edge rules, rate controls, and origin protection with infrastructure approval.
+      3. Validate login, upload, entity search, MCP, API, and webhook behavior with real ingress.
+      4. Document alerts, break-glass reversal, and rollback runbooks.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `deploy/nginx/erp.samuraibuiness.in.conf`:
+     - Added HSTS (`Strict-Transport-Security "max-age=31536000; includeSubDomains" always;`).
+     - Added `Permissions-Policy "camera=(), microphone=(self), geolocation=()" always;`.
+     - Hardened private storage path protection: blocked direct HTTP probing of `/storage/(ai_media|private)(/|$)` with HTTP 403.
+  2. `docs/ai/infrastructure/EDGE_AND_WAF_RUNBOOK.md`:
+     - Authored complete edge infrastructure runbook:
+       - Traffic path topology: Client -> Cloudflare CDN/WAF -> VPS Nginx 1.24+ -> PHP 8.5-FPM Unix socket (`zolo-erp-php85.sock`) -> Laravel 13 Kernel -> MySQL 8.4.
+       - Staged rollout protocol (Monitor -> Challenge -> Block).
+       - Per-route ingress rate limits (Login: 10r/m, Uploads: 10r/m, Chat & Tasks: 30r/m, Search: 60r/m, Webhooks: 60r/m).
+       - Direct origin bypass denial via firewall IP allowlists.
+       - Synthetic ping/health monitoring and certificate auto-renewal monitoring.
+       - Emergency break-glass and Nginx config rollback runbooks.
+  3. `tests/Feature/Ai/Infrastructure/EdgeSecurityAndHealthTest.php`:
+     - Feature test suite verifying:
+       - Public health and ping endpoints return 200 OK.
+       - AI responses emit `X-Content-Type-Options: nosniff`, `X-Request-ID`, and `X-Correlation-ID`.
+       - Foundation killswitch halts all AI processing with HTTP 403.
+
+- **Verification & Test Coverage:**
+  - `tests/Feature/Ai/Infrastructure/EdgeSecurityAndHealthTest.php`: 3 tests, 9 assertions, 100% PASSED.
+  - Full AI test suite (`Infrastructure` + `Observability` + `Privacy` + `UI` + `Directory` + `Clarification`): 68 tests, 420 assertions, 100% PASSED.
+  - `php -l` syntax check on all modified and new files: 0 errors.
+
+---
+
 ## Execution of Task T07: Observability, Credit Consistency & Incident Support — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
