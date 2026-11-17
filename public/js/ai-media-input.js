@@ -720,6 +720,51 @@
                                     hiddenInput.val(entity.id);
                                     renderSummaryView(entity);
                                 },
+                                onCreateRequested: function () {
+                                    if (window.AiMasterCreatePanel) {
+                                        window.AiMasterCreatePanel.render(pickerSlot, {
+                                            taskId: currentTaskId,
+                                            field: inp.field,
+                                            entityType: entityType,
+                                            initialName: inp.current_value || '',
+                                            aiBaseUrl: aiBaseUrl,
+                                            baseHeaders: baseHeaders,
+                                            onCompleted: function (res) {
+                                                if (res && res.proposal) {
+                                                    renderProposalView(res);
+                                                } else if (res && res.task) {
+                                                    renderClarificationView(res);
+                                                } else {
+                                                    $.ajax({
+                                                        url: aiBaseUrl + '/workflow-tasks/' + currentTaskId,
+                                                        method: 'GET',
+                                                        headers: baseHeaders(true),
+                                                        dataType: 'json'
+                                                    }).done(function (latestTaskRes) {
+                                                        if (latestTaskRes && latestTaskRes.task) {
+                                                            currentRes = latestTaskRes;
+                                                            if (latestTaskRes.evaluation && latestTaskRes.evaluation.is_ready) {
+                                                                $.ajax({
+                                                                    url: aiBaseUrl + '/workflow-tasks/' + currentTaskId + '/prepare-proposal',
+                                                                    method: 'POST',
+                                                                    headers: baseHeaders(true),
+                                                                    dataType: 'json'
+                                                                }).done(function (pRes) {
+                                                                    renderProposalView(pRes);
+                                                                });
+                                                            } else {
+                                                                renderClarificationView(latestTaskRes);
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            },
+                                            onCancel: function () {
+                                                renderPickerView();
+                                            }
+                                        });
+                                    }
+                                },
                                 onCancel: function () {
                                     if (hiddenInput.val()) {
                                         renderSummaryView({ id: hiddenInput.val(), name: inp.current_label || ('Selected ' + entityType) });

@@ -1,3 +1,44 @@
+## Execution of Task T05: Governed Missing-Master UI & Task Resumption — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T05 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P1, PR 5]:
+    - Requirements:
+      1. When user clicks `+ Create New` from `AiEntityPicker`, open governed creation panel (`AiMasterCreatePanel`).
+      2. Provide fields appropriate to entity type (warehouse, supplier, product, customer, unit), prefilled from search query.
+      3. Live duplicate prevention via directory search as user types name.
+      4. Submit creates draft setup proposal, preview proposal diff & validation warnings, require explicit human confirmation.
+      5. On execution, bind created entity ID to parent workflow task (`expected_revision`), revalidate, and resume workflow.
+      6. If newly created master satisfies all pending issues, offer one-click proposal generation.
+      7. Enforce strict permissions (`warehouse`, `suppliers-add`, `products-add`, etc.) and prevent replaying executed proposals.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `public/js/ai-master-create.js`:
+     - Implemented `window.AiMasterCreatePanel`:
+       - `render()`: Spawns requirements schema and smart defaults from `/api/v1/ai/workflow-tasks/{taskId}/dependent-masters/spawn`.
+       - Renders typed form tailored to entity type (`warehouse`, `supplier`, `product`, `customer`, `unit`).
+       - Live duplicate warning indicator: queries `/api/v1/ai/entity-lookup` as user types name to warn if identical or similar record exists.
+       - Governed preview: submits form data to `/api/v1/ai/workflow-tasks/{taskId}/dependent-masters/preview` to create signed draft proposal with change diff and validation status.
+       - Approval & Execution: presents modal preview requiring explicit human confirmation before calling `/api/v1/ai/workflow-tasks/{taskId}/dependent-masters/approve-and-execute`.
+       - Automatic task resumption: receives resumed parent task state, updates local card state with newly bound resource ID, re-evaluates completeness, and triggers proposal preparation if ready.
+  2. `public/js/ai-media-input.js`:
+     - Hooked `onCreateRequested` callback in `AiEntityPicker` to launch `AiMasterCreatePanel.render(taskId, fieldName, initialQuery, onCreated)`.
+  3. `resources/views/backend/ai/workspace.blade.php`:
+     - Included `<script src="{{ asset('js/ai-master-create.js') }}"></script>` in script stack directly after `ai-entity-picker.js`.
+  4. `tests/Feature/Ai/UI/AiMasterCreateAndResumptionTest.php`:
+     - Authored comprehensive feature test suite:
+       - Asset presence and script inclusion order in Blade workspace.
+       - JS syntax, method signatures, and DOM container contract verification.
+       - End-to-end missing warehouse creation flow: spawn requirements, preview governed proposal, approve and execute, and automatic task resumption with newly bound warehouse ID.
+       - Optimistic concurrency & replay prevention: replaying approve-and-execute on executed proposal is rejected with 409/422.
+       - Permission enforcement: user without warehouse create permission is strictly forbidden (403/404).
+
+- **Verification & Test Coverage:**
+  - `tests/Feature/Ai/UI/AiMasterCreateAndResumptionTest.php`: 5 tests, 30 assertions, 100% PASSED.
+  - Full AI test suite (`UI` + `Directory` + `Clarification`): 54 tests, 334 assertions, 100% PASSED.
+  - `node -c` syntax check on `ai-master-create.js` and `ai-media-input.js`: 0 errors.
+
+---
+
 ## Execution of Task T04: Shared AiEntityPicker & Responsive UI — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
