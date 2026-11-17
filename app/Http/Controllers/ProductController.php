@@ -426,7 +426,8 @@ class ProductController extends Controller
             $numberOfProduct = Product::where('is_active', true)->count();
             $custom_fields = CustomField::where('belongs_to', 'product')->get();
             $companyId = app(\App\Services\Platform\CompanyContextResolver::class)->forActor()?->companyId ?? session('company_id');
-            $lims_product_type_list = ProductType::forCompany($companyId)->where('is_active', true)->orderBy('name')->get();
+            $isOptical = \App\Services\Industry\IndustryProfileService::isOptical();
+            $lims_product_type_list = $isOptical ? ProductType::forCompany($companyId)->where('is_active', true)->orderBy('name')->get() : collect();
 
             $general_setting = DB::table('general_settings')->select('modules')->first();
             if(in_array('restaurant',explode(',',$general_setting->modules))){
@@ -1323,7 +1324,9 @@ class ProductController extends Controller
             $noOfVariantValue = 0;
             $custom_fields = CustomField::where('belongs_to', 'product')->get();
             $companyId = app(\App\Services\Platform\CompanyContextResolver::class)->forActor()?->companyId ?? session('company_id');
-            $lims_product_type_list = ProductType::forCompany($companyId)->where('is_active', true)->orderBy('name')->get();
+            $isOptical = \App\Services\Industry\IndustryProfileService::isOptical();
+            $hasExistingOptical = !empty($lims_product_data->product_type_id) || !empty($lims_product_data->base) || !empty($lims_product_data->dia) || !empty($lims_product_data->lr) || !empty($lims_product_data->addition);
+            $lims_product_type_list = ($isOptical || $hasExistingOptical) ? ProductType::forCompany($companyId)->where('is_active', true)->orderBy('name')->get() : collect();
 
             $general_setting = DB::table('general_settings')->first();
             $modules = explode(',', $general_setting->modules ?? '');

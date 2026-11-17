@@ -18,7 +18,7 @@
         }
         $companyId = $companyId ?: session('company_id');
         $profileRow = $companyId ? \Illuminate\Support\Facades\DB::table('company_industry_settings')->where('company_id', $companyId)->first() : null;
-        $isOpticalProfile = ($profileRow && $profileRow->profile_key === 'opticals');
+        $isOpticalProfile = !empty($isOpticalProfile) || ($profileRow && $profileRow->profile_key === 'opticals') || \App\Services\Industry\IndustryProfileService::isOptical();
     @endphp
     <x-product-command-bar active="products"></x-product-command-bar>
     <section class="forms">
@@ -164,6 +164,7 @@
                                                     <span class="validation-msg text-danger small"></span>
                                                 </div>
                                             </div>
+                                            @if($isOpticalProfile)
                                             <div class="col-md-4 col-12" id="product-type-col"
                                                 style="{{ $isOpticalProfile ? '' : 'display:none;' }}">
                                                 <div class="form-group">
@@ -187,6 +188,7 @@
                                                     <span class="validation-msg text-danger small"></span>
                                                 </div>
                                             </div>
+                                            @endif
                                             <div id="unit" class="col-12">
                                                 <div class="row">
                                                     <div class="col-12 form-group">
@@ -577,6 +579,7 @@
                                             </label>
                                         @endif
 
+                                        @if($isOpticalProfile)
                                         <label id="optical-option"
                                             class="zolo-toggle-pill {{ $isOpticalProfile ? 'is-active' : '' }}"
                                             data-role="purple" for="is-optical" title="Optical Lens Specifications">
@@ -584,6 +587,7 @@
                                             <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                             <span>Optical / Lens Rx</span>
                                         </label>
+                                        @endif
 
                                         @if(in_array('ecommerce', explode(',', $general_setting->modules)) || in_array('restaurant', explode(',', $general_setting->modules)))
                                             <label class="zolo-toggle-pill is-active" data-role="purple" for="is_online"
@@ -623,6 +627,7 @@
                                     </div>
                                 </div>
 
+                                @if($isOpticalProfile)
                                 <!-- Optical Lens Specifications (matches exact 3-column top grid width of Box 1) -->
                                 <div class="zolo-product-grid mt-2" id="optical-container"
                                     style="{{ $isOpticalProfile ? '' : 'display:none;' }}">
@@ -683,6 +688,7 @@
                                         </x-ui.section-box>
                                     </div>
                                 </div>
+                                @endif
 
                                 <!-- Extended Conditional Details Container (4-column grid mirroring top primary boxes) -->
                                 <div class="product-extended-details-container mt-2">
@@ -2054,6 +2060,7 @@
             applyDynamicGridSpans();
         });
 
+        @if($isOpticalProfile)
         $("input[name='is_optical']").on("change", function () {
             var isOpt = $(this).is(':checked');
             if (isOpt) {
@@ -2078,6 +2085,7 @@
         if ($('select[name="product_type_id"]').val()) {
             $('#optical-type-label').text($('select[name="product_type_id"] option:selected').text());
         }
+        @endif
 
         // Synchronize toggle pill visual active state
         $('.zolo-toggle-pill input[type="checkbox"]').on("change", function () {

@@ -26,9 +26,10 @@
     }
     $companyId = $companyId ?: session('company_id');
     $profileRow = $companyId ? \Illuminate\Support\Facades\DB::table('company_industry_settings')->where('company_id', $companyId)->first() : null;
-    $isOpticalProfile = ($profileRow && $profileRow->profile_key === 'opticals');
+    $isOpticalProfile = !empty($isOpticalProfile) || ($profileRow && $profileRow->profile_key === 'opticals') || \App\Services\Industry\IndustryProfileService::isOptical();
     $hasExistingOpticalData = !empty($lims_product_data->base) || !empty($lims_product_data->addition) || !empty($lims_product_data->lr) || !empty($lims_product_data->dia) || !empty($lims_product_data->product_type_id);
-    $isOpticalActive = (bool) (old('is_optical') !== null ? old('is_optical') : $hasExistingOpticalData);
+    $isOpticalAllowed = $isOpticalProfile || $hasExistingOpticalData;
+    $isOpticalActive = $isOpticalAllowed && (bool) (old('is_optical') !== null ? old('is_optical') : $hasExistingOpticalData);
 
     $hasInitialStock = \App\Models\Product_Warehouse::where('product_id', $lims_product_data->id)->where('qty', '>', 0)->exists();
     $isInitialStockActive = (bool) (old('is_initial_stock') !== null ? old('is_initial_stock') : $hasInitialStock);
@@ -147,6 +148,7 @@
                                                 <span class="validation-msg text-danger small" id="category_id-error"></span>
                                             </div>
                                         </div>
+                                        @if($isOpticalAllowed)
                                         <div class="col-md-4 col-12" id="product-type-col" style="{{ $isOpticalActive ? '' : 'display:none;' }}">
                                             <div class="form-group">
                                                 <label>Lens Type</label>
@@ -164,6 +166,7 @@
                                                 <span class="validation-msg text-danger small" id="product_type_id-error"></span>
                                             </div>
                                         </div>
+                                        @endif
 
 
                                         <div id="unit" class="col-12">
@@ -546,11 +549,13 @@
                                         <span>{{__('db.Embedded Barcode')}}</span>
                                     </label>
 
+                                    @if($isOpticalAllowed)
                                     <label id="optical-option" class="zolo-toggle-pill @if($isOpticalActive) is-active @endif" data-role="purple" for="is-optical" title="Optical Lens Specifications">
                                         <input name="is_optical" type="checkbox" id="is-optical" value="1" @checked($isOpticalActive)>
                                         <span class="zolo-switch-track"><span class="zolo-switch-thumb"></span></span>
                                         <span>Optical / Lens Rx</span>
                                     </label>
+                                    @endif
 
                                     @if($ecommerce || $restaurant)
                                     <label class="zolo-toggle-pill @if($lims_product_data->is_online == 1) is-active @endif" data-role="purple" for="is_online" title="{{ __('db.Sell Online') }}">
@@ -586,6 +591,7 @@
                                 </div>
                             </div>
 
+                            @if($isOpticalAllowed)
                             <!-- Optical Lens Specifications (matches exact 3-column top grid width of Box 1) -->
                             <div class="zolo-product-grid mt-2" id="optical-container" style="{{ $isOpticalActive ? '' : 'display:none;' }}">
                                 <div id="optical-section">
@@ -628,6 +634,7 @@
                                     </x-ui.section-box>
                                 </div>
                             </div>
+                            @endif
 
                             <!-- Extended Conditional Details Container (4-column grid mirroring top primary boxes) -->
                             <div class="product-extended-details-container mt-2">
@@ -1154,7 +1161,11 @@
     }
 
     $("#promo-container").toggle($("#promotion").is(':checked'));
+    @if($isOpticalAllowed)
     $("#optical-container").toggle($("input[name='is_optical']").is(':checked'));
+    @else
+    $("#optical-container").hide();
+    @endif
     applyDynamicGridSpans();
 
     $('#genbutton').on("click", function(){
@@ -2062,6 +2073,7 @@
         applyDynamicGridSpans();
     });
 
+    @if($isOpticalAllowed)
     $("input[name='is_optical']").on("change", function () {
         var isOpt = $(this).is(':checked');
         $("#optical-container").toggle(isOpt);
@@ -2081,6 +2093,7 @@
         var txt = $(this).find('option:selected').text();
         $('#optical-type-label').text(txt && $(this).val() ? txt : 'None selected');
     });
+    @endif
 
     $('.zolo-toggle-pill input[type="checkbox"]').on("change", function () {
         $(this).closest('.zolo-toggle-pill').toggleClass('is-active', $(this).is(':checked'));

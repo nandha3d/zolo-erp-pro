@@ -125,6 +125,45 @@ class IndustryProfileService
         }
     }
 
+    /** The active company's resolved profile key (e.g. 'textile', 'opticals', 'general_trading'). */
+    public static function currentProfileKey(?CompanyContext $context = null): string
+    {
+        try {
+            $request = request();
+            if ($request && $request->attributes->has('industry_profile_key')) {
+                return (string) $request->attributes->get('industry_profile_key');
+            }
+            $context ??= $request?->attributes->get(CompanyContext::class);
+            $companyId = $context?->companyId;
+            if (!$companyId && function_exists('session')) {
+                $companyId = session('company_id');
+            }
+            if (!$companyId && auth()->check()) {
+                try {
+                    $companyId = app(CompanyContextResolver::class)->forActor()?->companyId;
+                } catch (\Throwable) {}
+            }
+            if ($companyId && Schema::hasTable('company_industry_settings')) {
+                $profile = DB::table('company_industry_settings')->where('company_id', $companyId)->value('profile_key') ?: 'general_trading';
+                $request?->attributes->set('industry_profile_key', $profile);
+                return $profile;
+            }
+            return 'general_trading';
+        } catch (\Throwable) {
+            return 'general_trading';
+        }
+    }
+
+    public static function isOptical(?CompanyContext $context = null): bool
+    {
+        return static::currentProfileKey($context) === 'opticals';
+    }
+
+    public static function isTextile(?CompanyContext $context = null): bool
+    {
+        return static::currentProfileKey($context) === 'textile';
+    }
+
     public function settings(CompanyContext $context): array
     {
         $row = DB::table('company_industry_settings')->where('company_id', $context->companyId)->first();

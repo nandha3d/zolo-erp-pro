@@ -65,12 +65,14 @@
             try {
                 return app(\App\Services\Commercial\CommercialPermission::class)->allows('returns-add',
                     app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
-            } catch (\Illuminate\Auth\Access\AuthorizationException) { return false; }
+            } catch (\Throwable) { return false; }
         })();
         // Under GST a malformed GSTIN makes the party unregistered (no tax), so the party card flags it.
         $usesGst = \App\Services\Tax\GstSetupService::usesGst();
         $gstinInvalid = fn ($value) => $usesGst && trim((string) $value) !== ''
             && !\App\Services\Tax\Gstin::parse($value)['is_valid'];
+        $isOpticalProfile = $isOpticalProfile ?? \App\Services\Industry\IndustryProfileService::isOptical();
+        $isTextileProfile = $isTextileProfile ?? \App\Services\Industry\IndustryProfileService::isTextile();
     @endphp
     <div class="comm-split-grid{{ $returnsTab && request('returns') == 1 ? ' is-returns' : '' }}" id="comm-split-grid">
         <!-- Main: Sales Entry Workspace (Matching Screenshot 3) -->
@@ -215,9 +217,11 @@
                             <a href="javascript:void(0)" id="btn-quick-logistics" class="u-c-primary u-fw-600 u-ml-auto u-tdec-none u-ws-nowrap">
                                 + Transport &amp; Remarks &rarr;
                             </a>
+                            @if(!empty($isOpticalProfile))
                             <a href="javascript:void(0)" id="btn-quick-optical" class="text-info font-weight-bold ml-2 text-decoration-none text-nowrap">
                                 + Optical &amp; Warranty &rarr;
                             </a>
+                            @endif
                         </div>
                         </div>
                     </div>
@@ -330,9 +334,11 @@
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-print" title="Print invoice">
                             <i class="dripicons-print"></i> Print
                         </button>
+                        @if(!empty($isOpticalProfile))
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-lab" title="Print Optical Lab Receipt">
                             <i class="dripicons-article"></i> Lab Receipt
                         </button>
+                        @endif
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-packing" title="Print Packing Slip">
                             <i class="dripicons-box"></i> Packing Slip
                         </button>
@@ -489,7 +495,7 @@
                             try {
                                 $canReverseBills = app(\App\Services\Commercial\CommercialPermission::class)->allows('sales-delete',
                                     app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
-                            } catch (\Illuminate\Auth\Access\AuthorizationException) {}
+                            } catch (\Throwable) {}
                         }
                     @endphp
                     @forelse($recent_bills as $bill)
@@ -531,9 +537,11 @@
                                 <a href="javascript:void(0)" class="side-action-btn print btn-side-print" data-id="{{ $bill->id }}" title="Print invoice">
                                     <i class="dripicons-print"></i> Print
                                 </a>
+                                @if(!empty($isOpticalProfile))
                                 <a href="{{ route('sale.lab_receipt', $bill->id) }}" target="_blank" class="side-action-btn print" title="Print Optical Lab Receipt">
                                     <i class="dripicons-article"></i> Lab
                                 </a>
+                                @endif
                                 <a href="{{ route('sale.packing_slip', $bill->id) }}" target="_blank" class="side-action-btn print" title="Print Dispatch Packing Slip">
                                     <i class="dripicons-box"></i> Pack
                                 </a>
@@ -850,14 +858,17 @@
                     <li class="nav-item">
                         <a class="nav-link font-weight-bold u-fs-11_5px u-p-6px-12px" id="tab-settlement" data-toggle="tab" href="#pane-settlement" role="tab">Payment</a>
                     </li>
+                    @if(!empty($isOpticalProfile))
                     <li class="nav-item">
                         <a class="nav-link font-weight-bold u-fs-11_5px u-p-6px-12px" id="tab-optical" data-toggle="tab" href="#pane-optical" role="tab"><i class="dripicons-preview mr-1"></i> Optical &amp; Warranty</a>
                     </li>
+                    @endif
                 </ul>
 
                 <div class="tab-content" id="drawerTabContent">
                     <!-- Transport Tab -->
                     <div class="tab-pane fade show active" id="pane-transport" role="tabpanel">
+                        @if(!empty($isTextileProfile))
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-2">
                                 <label class="text-muted font-weight-bold">Bale No</label>
@@ -878,6 +889,17 @@
                                 <input type="text" id="drawer-vehicle-number" class="form-control form-control-sm" maxlength="30" placeholder="e.g. TN39 AB 1234">
                             </div>
                         </div>
+                        @else
+                        <input type="hidden" id="drawer-bale-no" value="">
+                        <input type="hidden" id="drawer-no-of-bales" value="">
+                        <input type="hidden" id="drawer-bundle-count" value="">
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-2">
+                                <label class="text-muted font-weight-bold" for="drawer-vehicle-number">Vehicle No.</label>
+                                <input type="text" id="drawer-vehicle-number" class="form-control form-control-sm" maxlength="30" placeholder="e.g. TN39 AB 1234">
+                            </div>
+                        </div>
+                        @endif
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-2">
                                 <label class="text-muted font-weight-bold">LR No.</label>
@@ -958,16 +980,6 @@
                             </select>
                         </div>
                         <div class="form-group mb-2">
-                            <label for="drawer-paying-method" class="text-muted font-weight-bold">Payment Method</label>
-                            <select id="drawer-paying-method" class="form-control form-control-sm">
-                                <option value="Credit">Credit / Unpaid</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Bank">Bank</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="Credit Card">Credit Card</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-2">
                             <label class="text-muted font-weight-bold">Paying Account</label>
                             <select id="drawer-account-id" class="form-control form-control-sm">
                                 @foreach($lims_account_list as $acc)
@@ -981,6 +993,7 @@
                         </div>
                     </div>
 
+                    @if(!empty($isOpticalProfile))
                     <!-- Optical & Warranty Tab -->
                     <div class="tab-pane fade" id="pane-optical" role="tabpanel">
                         <h6 class="text-primary font-weight-bold mb-2"><i class="dripicons-user mr-1"></i> End User Details (Captured for Warranty)</h6>
@@ -1021,6 +1034,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
             <div class="modal-footer u-bg-surface-2 u-bt-1px-solid-border u-p-10px-18px">
@@ -1941,6 +1955,9 @@
 (function() {
     'use strict';
 
+    window.isOpticalProfile = {{ !empty($isOpticalProfile) ? 'true' : 'false' }};
+    window.isTextileProfile = {{ !empty($isTextileProfile) ? 'true' : 'false' }};
+
     // --- Product List Autocomplete & Item Master Data ---
     @php
         $gstRates = app(\App\Services\Tax\GstSetupService::class)->currentRates();
@@ -1966,10 +1983,12 @@
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
                 'label' => (string)$prod->code . ' - ' . (string)$prod->name,
-                'base' => (string)($prod->base ?? ''),
-                'addition' => (string)($prod->addition ?? ''),
-                'lr' => (string)($prod->lr ?? ''),
-                'dia' => (string)($prod->dia ?? ''),
+                ...(!empty($isOpticalProfile) ? [
+                    'base' => (string)($prod->base ?? ''),
+                    'addition' => (string)($prod->addition ?? ''),
+                    'lr' => (string)($prod->lr ?? ''),
+                    'dia' => (string)($prod->dia ?? ''),
+                ] : []),
             ];
         }
         foreach($lims_product_list_with_variant as $prod) {
@@ -1991,10 +2010,12 @@
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
                 'label' => (string)($prod->item_code ?? $prod->code) . ' - ' . (string)$prod->name,
-                'base' => (string)($prod->base ?? ''),
-                'addition' => (string)($prod->addition ?? ''),
-                'lr' => (string)($prod->lr ?? ''),
-                'dia' => (string)($prod->dia ?? ''),
+                ...(!empty($isOpticalProfile) ? [
+                    'base' => (string)($prod->base ?? ''),
+                    'addition' => (string)($prod->addition ?? ''),
+                    'lr' => (string)($prod->lr ?? ''),
+                    'dia' => (string)($prod->dia ?? ''),
+                ] : []),
             ];
         }
     @endphp
@@ -2032,7 +2053,14 @@
     var rowCounter = 0;
     var taxList = @json($lims_tax_list);
     var unitList = @json($lims_unit_list ?? \App\Models\Unit::where('is_active', true)->get());
-    var productTypeMap = @json(\App\Models\ProductType::where('is_active', true)->pluck('name', 'id'));
+    @php
+        $activeCompanyId = null;
+        try {
+            $activeCompanyId = app(\App\Services\Platform\CompanyContextResolver::class)->forActor()?->companyId;
+        } catch (\Throwable) {}
+        $activeCompanyId = $activeCompanyId ?: session('company_id');
+    @endphp
+    var productTypeMap = @json(!empty($isOpticalProfile) && $activeCompanyId ? \App\Models\ProductType::forCompany($activeCompanyId)->where('is_active', true)->pluck('name', 'id') : []);
     window.productTypeMap = productTypeMap;
     function escapeHtml(value) { return $('<span>').text(value ?? '').html().replaceAll('"', '&quot;').replaceAll("'", '&#39;'); }
     var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
@@ -2346,38 +2374,40 @@
         tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
 
         // Populate Optical Lens Specifications if present
-        if (p.base !== undefined && p.base !== null && p.base !== '') {
-            tr.find('.row-base').val(p.base);
-            tr.find('.optical-base-text').text(p.base);
-            tr.find('.optical-base-badge').show();
-        } else {
-            tr.find('.row-base').val('');
-            tr.find('.optical-base-badge').hide();
-        }
+        if (window.isOpticalProfile) {
+            if (p.base !== undefined && p.base !== null && p.base !== '') {
+                tr.find('.row-base').val(p.base);
+                tr.find('.optical-base-text').text(p.base);
+                tr.find('.optical-base-badge').show();
+            } else {
+                tr.find('.row-base').val('');
+                tr.find('.optical-base-badge').hide();
+            }
 
-        if (p.dia !== undefined && p.dia !== null && p.dia !== '') {
-            tr.find('.row-dia').val(p.dia);
-            tr.find('.optical-dia-text').text(p.dia);
-            tr.find('.optical-dia-badge').show();
-        } else {
-            tr.find('.row-dia').val('');
-            tr.find('.optical-dia-badge').hide();
-        }
+            if (p.dia !== undefined && p.dia !== null && p.dia !== '') {
+                tr.find('.row-dia').val(p.dia);
+                tr.find('.optical-dia-text').text(p.dia);
+                tr.find('.optical-dia-badge').show();
+            } else {
+                tr.find('.row-dia').val('');
+                tr.find('.optical-dia-badge').hide();
+            }
 
-        if (p.addition !== undefined && p.addition !== null && p.addition !== '') {
-            tr.find('.row-addition').val(p.addition);
-        }
+            if (p.addition !== undefined && p.addition !== null && p.addition !== '') {
+                tr.find('.row-addition').val(p.addition);
+            }
 
-        if (p.lr !== undefined && p.lr !== null && p.lr !== '') {
-            tr.find('.row-lr').val(p.lr);
-        }
+            if (p.lr !== undefined && p.lr !== null && p.lr !== '') {
+                tr.find('.row-lr').val(p.lr);
+            }
 
-        var typeName = p.type_name || p.product_type_name || p.product_type || (p.product_type_id && window.productTypeMap && window.productTypeMap[p.product_type_id]);
-        if (typeName) {
-            tr.find('.optical-type-text').text(typeName);
-            tr.find('.optical-type-badge').show();
-        } else {
-            tr.find('.optical-type-badge').hide();
+            var typeName = p.type_name || p.product_type_name || p.product_type || (p.product_type_id && window.productTypeMap && window.productTypeMap[p.product_type_id]);
+            if (typeName) {
+                tr.find('.optical-type-text').text(typeName);
+                tr.find('.optical-type-badge').show();
+            } else {
+                tr.find('.optical-type-badge').hide();
+            }
         }
 
         recalcTableSummary();
@@ -2684,6 +2714,7 @@
                             <i class="dripicons-tag mr-1 text-primary"></i>Lot: <span class="row-lot-text">${escapeHtml(initialBatch)}</span>
                         </span>
                     </div>
+                    ${window.isOpticalProfile ? `
                     <div class="optical-rx-strip d-flex align-items-center mt-1 pt-1 border-top" style="gap: 4px; font-size: 11px;">
                         <span class="badge badge-info text-white px-1 optical-type-badge" style="display: ${(item.type_name || item.product_type_name) ? 'inline-block' : 'none'};"><strong class="optical-type-text">${escapeHtml(item.type_name || item.product_type_name || '')}</strong></span>
                         <span class="badge badge-light border text-muted px-1 optical-base-badge" style="display: ${item.base ? 'inline-block' : 'none'};">Base: <strong class="optical-base-text">${escapeHtml(item.base || '')}</strong></span>
@@ -2701,7 +2732,7 @@
                         </select>
                         <input type="hidden" name="base[]" class="row-base" value="${escapeHtml(item.base || '')}">
                         <input type="hidden" name="dia[]" class="row-dia" value="${escapeHtml(item.dia || '')}">
-                    </div>
+                    </div>` : ''}
                 </td>
                 <td>
                     <select name="sale_type_line[]" class="form-control form-control-sm custom-select-native row-type-select">
@@ -3893,7 +3924,7 @@
         columns.push({"data": "returned_amount"});
         columns.push({"data": "paid_amount"});
         columns.push({"data": "due"});
-        var textileColumns = @json(($documentContextProfile ?? app(\App\Services\Industry\IndustryProfileService::class)->settings(request()->attributes->get(\App\Services\Platform\CompanyContext::class)))['profile'] === 'textile');
+        var textileColumns = @json(!empty($isTextileProfile) || (($documentContextProfile['profile'] ?? '') === 'textile'));
         columns.push({"data": "bale_no", "visible": textileColumns, "orderable": false, "defaultContent": ""});
         columns.push({"data": "transport_name", "visible": textileColumns, "orderable": false, "defaultContent": ""});
 
@@ -4347,13 +4378,15 @@
                 if (s.order_discount) {
                     $('#drawer-order-discount, #hidden-order-discount').val(s.order_discount);
                 }
-                $('#drawer-end-user-name, #hidden-end-user-name').val(s.end_user_name || '');
-                $('#drawer-end-user-phone, #hidden-end-user-phone').val(s.end_user_phone || '');
-                $('#drawer-end-user-email, #hidden-end-user-email').val(s.end_user_email || '');
-                $('#drawer-end-user-address, #hidden-end-user-address').val(s.end_user_address || '');
-                $('#drawer-fitting-charge, #hidden-fitting-charge').val(s.fitting_charge || '');
-                $('#drawer-tinting-cost, #hidden-tinting-cost').val(s.tinting_cost || '');
-                $('#drawer-customer-order-no, #hidden-customer-order-no').val(s.customer_order_no || '');
+                if (window.isOpticalProfile) {
+                    $('#drawer-end-user-name, #hidden-end-user-name').val(s.end_user_name || '');
+                    $('#drawer-end-user-phone, #hidden-end-user-phone').val(s.end_user_phone || '');
+                    $('#drawer-end-user-email, #hidden-end-user-email').val(s.end_user_email || '');
+                    $('#drawer-end-user-address, #hidden-end-user-address').val(s.end_user_address || '');
+                    $('#drawer-fitting-charge, #hidden-fitting-charge').val(s.fitting_charge || '');
+                    $('#drawer-tinting-cost, #hidden-tinting-cost').val(s.tinting_cost || '');
+                    $('#drawer-customer-order-no, #hidden-customer-order-no').val(s.customer_order_no || '');
+                }
                 var attr = s.attributes_json;
                 if (typeof attr === 'string') { try { attr = JSON.parse(attr); } catch(e){ attr = {}; } }
                 if (attr) {
@@ -4413,13 +4446,15 @@
         $('#sale_type_id').val('0');
 
         $('.side-bill-card').removeClass('active-editing active-viewing');
-        $('#drawer-end-user-name, #hidden-end-user-name').val('');
-        $('#drawer-end-user-phone, #hidden-end-user-phone').val('');
-        $('#drawer-end-user-email, #hidden-end-user-email').val('');
-        $('#drawer-end-user-address, #hidden-end-user-address').val('');
-        $('#drawer-fitting-charge, #hidden-fitting-charge').val('');
-        $('#drawer-tinting-cost, #hidden-tinting-cost').val('');
-        $('#drawer-customer-order-no, #hidden-customer-order-no').val('');
+        if (window.isOpticalProfile) {
+            $('#drawer-end-user-name, #hidden-end-user-name').val('');
+            $('#drawer-end-user-phone, #hidden-end-user-phone').val('');
+            $('#drawer-end-user-email, #hidden-end-user-email').val('');
+            $('#drawer-end-user-address, #hidden-end-user-address').val('');
+            $('#drawer-fitting-charge, #hidden-fitting-charge').val('');
+            $('#drawer-tinting-cost, #hidden-tinting-cost').val('');
+            $('#drawer-customer-order-no, #hidden-customer-order-no').val('');
+        }
         $('#order-table-body .order-item-row, #order-table-body .empty-placeholder-row').remove();
         $productSearch.val('');
         rowCounter = 0;
@@ -4522,36 +4557,41 @@
         $('#charges-drawer').modal('show');
     });
 
-    $('#btn-quick-optical').on('click', function() {
-        $('#charges-drawer').modal('show');
-        $('#tab-optical').tab('show');
-    });
+    if (window.isOpticalProfile) {
+        $('#btn-quick-optical').on('click', function() {
+            $('#charges-drawer').modal('show');
+            $('#tab-optical').tab('show');
+        });
+    }
 
     $('#btn-save-drawer-details').on('click', function() {
-        $('#hidden-bale-no').val($('#drawer-bale-no').val());
-        $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val());
-        $('#hidden-bundle-count').val($('#drawer-bundle-count').val());
-        $('#hidden-vehicle-number').val($('#drawer-vehicle-number').val());
-        $('#hidden-lr-no').val($('#drawer-lr-no').val());
-        $('#hidden-lr-date').val($('#drawer-lr-date').val());
-        $('#hidden-transporter-name').val($('#drawer-transporter-name').val());
-        $('#hidden-station-to').val($('#drawer-station-to').val());
-        $('#hidden-order-no').val($('#drawer-order-no').val());
-        $('#hidden-credit-days').val($('#drawer-credit-days').val());
-        $('#hidden-cd-percent').val($('#drawer-cd-percent').val());
-        $('#hidden-cd-days').val($('#drawer-cd-days').val());
-        $('#hidden-supply-type').val($('#drawer-supply-type').val());
-        $('#hidden-note').val($('#drawer-note').val());
-        $('#hidden-account-id').val($('#drawer-account-id').val());
-        $('#input-paying-method').val($('#drawer-paying-method').val());
-        $('#hidden-paid-amount').val($('#drawer-paid-amount').val());
-        $('#hidden-end-user-name').val($('#drawer-end-user-name').val());
-        $('#hidden-end-user-phone').val($('#drawer-end-user-phone').val());
-        $('#hidden-end-user-email').val($('#drawer-end-user-email').val());
-        $('#hidden-end-user-address').val($('#drawer-end-user-address').val());
-        $('#hidden-fitting-charge').val($('#drawer-fitting-charge').val());
-        $('#hidden-tinting-cost').val($('#drawer-tinting-cost').val());
-        $('#hidden-customer-order-no').val($('#drawer-customer-order-no').val());
+        $('#hidden-bale-no').val($('#drawer-bale-no').val() || '');
+        $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val() || '');
+        $('#hidden-bundle-count').val($('#drawer-bundle-count').val() || '');
+        $('#hidden-vehicle-number').val($('#drawer-vehicle-number').val() || '');
+        $('#hidden-lr-no').val($('#drawer-lr-no').val() || '');
+        $('#hidden-lr-date').val($('#drawer-lr-date').val() || '');
+        $('#hidden-transporter-name').val($('#drawer-transporter-name').val() || '');
+        $('#hidden-station-to').val($('#drawer-station-to').val() || '');
+        $('#hidden-order-no').val($('#drawer-order-no').val() || '');
+        $('#hidden-credit-days').val($('#drawer-credit-days').val() || '');
+        $('#hidden-cd-percent').val($('#drawer-cd-percent').val() || '');
+        $('#hidden-cd-days').val($('#drawer-cd-days').val() || '');
+        $('#hidden-supply-type').val($('#drawer-supply-type').val() || '');
+        $('#hidden-note').val($('#drawer-note').val() || '');
+        $('#hidden-account-id').val($('#drawer-account-id').val() || '');
+        $('#input-paying-method').val($('#drawer-paying-method').val() || 'Credit');
+        $('#hidden-paid-amount').val($('#drawer-paid-amount').val() || 0);
+
+        if (window.isOpticalProfile) {
+            $('#hidden-end-user-name').val($('#drawer-end-user-name').val() || '');
+            $('#hidden-end-user-phone').val($('#drawer-end-user-phone').val() || '');
+            $('#hidden-end-user-email').val($('#drawer-end-user-email').val() || '');
+            $('#hidden-end-user-address').val($('#drawer-end-user-address').val() || '');
+            $('#hidden-fitting-charge').val($('#drawer-fitting-charge').val() || 0);
+            $('#hidden-tinting-cost').val($('#drawer-tinting-cost').val() || 0);
+            $('#hidden-customer-order-no').val($('#drawer-customer-order-no').val() || '');
+        }
 
         var count = 0;
         if ($('#drawer-bale-no').val()) count++;

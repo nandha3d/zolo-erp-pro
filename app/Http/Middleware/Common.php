@@ -143,10 +143,17 @@ class Common
             ->count();
 
         // View share (exact same style)
+        $industryProfile = \App\Services\Industry\IndustryProfileService::currentProfileKey($context);
+        $isOpticalProfile = ($industryProfile === 'opticals');
+        $isTextileProfile = ($industryProfile === 'textile');
+
         View::share([
             'alert_product'          => $alert_product,
             'dso_alert_product_no'   => $dso_alert_product_no,
             'expire_alert_products'  => $expire_alert_products,
+            'industryProfile'        => $industryProfile,
+            'isOpticalProfile'       => $isOpticalProfile,
+            'isTextileProfile'       => $isTextileProfile,
         ]);
 
 
