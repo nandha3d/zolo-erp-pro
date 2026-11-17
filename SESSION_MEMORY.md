@@ -1,3 +1,39 @@
+## Execution of Task T03: Authorized ERP Directory API — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T03 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P1, PR 3]:
+    - Requirements:
+      1. Add read-only, scoped entity search for warehouses, suppliers, products, customers, and units (phased warehouse first).
+      2. Authenticate task owner + actor, tenant, branch/FY, and action-specific eligibility server-side via `CompanyContextResolver::forActor()`.
+      3. Return ID, display name, code, branch, and eligibility with pagination and deterministic `recommended_id`/reason; zero secrets.
+      4. Bound query length (max 100 chars), response size (per_page capped at 50), and prevent wildcard DOS/injection (`addcslashes($query, '%_')`).
+      5. Test all tenant, branch, role boundaries, and search injection defense.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `app/Ai/Services/EntityDirectorySearchService.php`:
+     - Multi-tenant scoped search service for `warehouse`, `supplier`, `product`, `customer`, and `unit`.
+     - Uses `withoutCompanyScope()` to inspect company-wide warehouses while strictly scoping by `company_id = $context->companyId`.
+     - Computes candidate eligibility: evaluates active status and branch match against the effective branch context (`eligible: true/false`, `disabled_reason: 'wrong_branch' | 'inactive'`).
+     - Emits deterministic recommendation (`recommended_id`, `recommendation_reason`) leveraging `RecordResolutionService` matching rules (unique branch defaults, exact name/id, unique partial match, candidate ambiguity).
+     - Gated `can_create` boolean based on actor's Spatie permissions (`warehouse`, `suppliers-add`, `products-add`, `customers-add`, `unit`).
+  2. `app/Http/Controllers/Api/V1/AiEntityLookupController.php`:
+     - Exposes `GET /api/v1/ai/entity-lookup` and `GET /ai/entity-options`.
+     - Validates bounded query length (`max:100`), entity type allowlist, page, and limit.
+     - Resolves principal and context server-side; checks `ai.use` permission and validates cross-tenant `task_id` ownership (aborts 404 on cross-tenant tasks).
+  3. `app/Models/Warehouse.php`:
+     - Added `branch()` belongsTo relationship (`CompanyBranch::class, 'branch_id'`).
+  4. Routes (`routes/api.php` and `routes/web.php`):
+     - Registered `entity-lookup` and `entity-options` under authenticated, company-scoped middleware groups.
+  5. `tests/Feature/Ai/Directory/AiEntityLookupTest.php`:
+     - 12 comprehensive feature tests: unauthenticated 401 rejection, invalid type 422, query length bound 422, strict company tenant isolation, branch eligibility rules, unique branch default recommendation, multiple warehouse candidate status, wildcard sanitization, cross-tenant task rejection, permission-driven `can_create` flag, pagination capping, and supplier/product/unit searches.
+
+- **Verification & Test Coverage:**
+  - `php vendor/bin/phpunit tests/Feature/Ai/Directory/AiEntityLookupTest.php`: 12 tests, 45 assertions, 100% PASSED.
+  - `tests/Feature/Ai/Directory` + `tests/Feature/Ai/Clarification` suites: 44 tests, 256 assertions, 100% PASSED.
+  - `php -l` static syntax check: 0 errors across all modified and new files.
+
+---
+
 ## Execution of Task T02: Safe Warehouse Resolution & Elimination of Silent Fallbacks — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**

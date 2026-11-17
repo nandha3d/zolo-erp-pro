@@ -24,6 +24,11 @@ class Warehouse extends Model
         return $this->belongsToMany(Product::class)->withPivot('qty');
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(CompanyBranch::class, 'branch_id');
+    }
+
     public function printers()
     {
         return $this->hasMany(Printer::class, 'warehouse_id');

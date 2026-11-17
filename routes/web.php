@@ -213,6 +213,10 @@ Route::middleware(['auth', 'company.context'])->prefix('ai')->name('ai.')->group
         Route::get('estimate', 'estimate')->name('credits.estimate');
     });
 
+    // Task T03: Scoped ERP Entity Directory Lookup (Session-authenticated workspace routes)
+    Route::get('entity-lookup', [\App\Http\Controllers\Api\V1\AiEntityLookupController::class, 'index'])->name('entity-lookup');
+    Route::get('entity-options', [\App\Http\Controllers\Api\V1\AiEntityLookupController::class, 'index'])->name('entity-options');
+
     // Phase 2.1 & 2.2: Workflow Tasks & Dependent Masters (Session-authenticated workspace routes)
     Route::prefix('workflow-tasks')->controller(\App\Http\Controllers\Api\V1\AiWorkflowTaskController::class)->group(function () {
         Route::post('/', 'store')->name('workflow-tasks.store');
