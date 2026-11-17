@@ -1,3 +1,46 @@
+## Execution of Task T02: Safe Warehouse Resolution & Elimination of Silent Fallbacks — 2026-11-17 (`feature/ai-unified-input-clarification`)
+
+- **Context & Objectives:**
+  - Task T02 from `docs/ZOLOERP_AI_ARCHITECTURE_NEXT_STEPS/09_CODEX_EXECUTION_TASKS.md` [P0, PR 2]:
+    - Previously, warehouse resolution silently grabbed `Warehouse::where(...)->first()` when matching or defaulted to a hardcoded string (`'Main Warehouse'`), creating risk of directing stock movements or purchase receipts to an arbitrary warehouse.
+    - Requirements:
+      1. Auto-select only on exact unique ID, exact unique name, unique partial match, or unique active branch warehouse when query is null/unspecified.
+      2. If multiple candidates match (ambiguous), return `status: 'candidates'`, `warehouse: null`, and candidate collection with structured reason (`ambiguous_candidates` or `multiple_branch_warehouses`).
+      3. Inactive warehouses return `status: 'none'`, `reason: 'inactive'`.
+      4. Warehouses in another branch return `status: 'none'`, `reason: 'wrong_branch'`.
+      5. Strict multi-tenant company isolation (`company_id` mandatory).
+      6. Remove hardcoded `'Main Warehouse'` fallbacks across frontend (`public/js/ai-media-input.js`).
+      7. Requirements providers (`PurchaseBillRequirementsProvider`, `PurchaseOrderRequirementsProvider`, `GoodsReceivedNoteRequirementsProvider`, `SalesOrderRequirementsProvider`) must enforce branch compatibility and only auto-default warehouse when exactly 1 active warehouse exists for the branch.
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `app/Ai/Services/RecordResolutionService.php`:
+     - Overhauled `resolveWarehouse()` to enforce deterministic matching rules:
+       - Exact numeric ID lookup scoped to company and validated against branch and active status.
+       - Exact name lookup scoped to company and validated against branch and active status.
+       - Case-insensitive substring match scoped to company. If count === 1, resolves `unique_partial_match`. If count > 1, returns `status: 'candidates'` with candidate list (`ambiguous_candidates`).
+       - If query is omitted/null and branch is set, checks count of active warehouses for that branch. If count === 1, auto-selects `unique_branch_default`. If count > 1, returns `status: 'candidates'` with candidate list (`multiple_branch_warehouses`).
+  2. `app/Ai/Services/BatchRecordResolutionService.php`:
+     - Updated warehouse resolution pass to handle candidates and branch mismatches deterministically.
+  3. Requirements Providers:
+     - `PurchaseBillRequirementsProvider.php`
+     - `PurchaseOrderRequirementsProvider.php`
+     - `GoodsReceivedNoteRequirementsProvider.php`
+     - `SalesOrderRequirementsProvider.php`
+     - Updated `defaultPolicy`: warehouse is only auto-defaulted if the branch has exactly 1 active warehouse (`$whs->count() === 1`), otherwise `null`.
+     - Validates that warehouse belongs to current branch in `validate()`.
+  4. `public/js/ai-media-input.js`:
+     - Removed all hardcoded `'Main Warehouse'` fallbacks.
+  5. `tests/Feature/Ai/Clarification/SafeWarehouseResolutionTest.php`:
+     - 11 comprehensive feature tests covering exact ID, exact name, unique partial match, ambiguous candidates, inactive rejection, wrong-branch rejection, not found, cross-tenant isolation, unique branch default, multiple branch candidates, and requirements provider validation.
+
+- **Verification & Test Coverage:**
+  - `php vendor/bin/phpunit tests/Feature/Ai/Clarification/SafeWarehouseResolutionTest.php`: 11 tests, 43 assertions, 100% PASSED.
+  - `tests/Feature/Ai/Clarification` suite: 32 tests, 211 assertions, 100% PASSED.
+  - Static analysis: `php -l` on all modified files passed with 0 errors.
+  - JS syntax check: `node -c public/js/ai-media-input.js` clean (0 errors).
+
+---
+
 ## Execution of Tasks T00 & T01: Baseline Architecture Inventory & Correction API Mismatch Fix — 2026-11-17 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
@@ -7,6 +50,30 @@
       - Mapped 118 AI routes across `/ai` and `/api/v1/ai`.
       - Authored comprehensive architectural specification `docs/ai/architecture/AS_IS.md` documenting model gateway, credit reservation & settlement sequence, authoritative read tools, action proposals, input clarification, workers, MCP, and component status matrix.
       - Baseline lint: 329 / 329 PHP files passed `php -l` with 0 errors.
+      - Committed: `8c1c2a9` (`docs(ai): complete T00 baseline and architecture inventory in AS_IS.md`).
+    - **Task T01 — Fix correction API mismatch [P0, PR 1]:**
+      - Resolved contract mismatch: `public/js/ai-media-input.js` previously submitted `slots_patch` and omitted `expected_revision`, whereas `AiWorkflowTaskController::updateInputs` strictly required `expected_revision` and `corrections: [{ field, value, confirmation }]`.
+      - Refactored both frontend buttons (`Submit Details & Generate Preview` and `Update & Revalidate`) in `public/js/ai-media-input.js` to send typed `corrections` and current `expected_revision`.
+      - Gated `prepare-proposal` invocation: called strictly when `evaluation.is_ready === true`; otherwise re-renders remaining clarification issues without failing 422.
+      - Implemented clean HTTP 409 Conflict handling: reloads latest task revision via `GET /api/v1/ai/workflow-tasks/{id}` and displays an informative banner rather than silently replaying stale payloads.
+      - Added regression test suite `tests/Feature/Ai/Clarification/WorkflowTaskCorrectionMismatchRegressionTest.php` with 4 tests (25 assertions) proving legacy payload fails with 422, new payload succeeds with revision increment, 409 conflict detection functions, and unready tasks block proposal creation preventing unapproved purchase writes.
+      - All 21 tests in `tests/Feature/Ai/Clarification` PASSED 100% (168 assertions).
+
+- **Architectural Solutions & Changes Implemented:**
+  1. `docs/ai/architecture/AS_IS.md`: Authoritative baseline documentation and subsystem evidence matrix.
+  2. `public/js/ai-media-input.js`:
+     - Updated `.ai-btn-submit-clarify` click handler: builds `corrections` array, attaches `expected_revision`, calls `prepare-proposal` only on `evaluation.is_ready`, and handles 409 by loading latest task.
+     - Updated `btnSave` (`Update & Revalidate`) click handler: formats `supplier_id`, `supplier_invoice_no`, `date`, `warehouse_id`, and `items` into `corrections` array with `expected_revision`, gates proposal preparation on `evaluation.is_ready`, and recovers from 409 conflicts.
+  3. `app/Ai/Billing/Services/AiTopupService.php`:
+     - Guarded webhook environment check using `app()->bound('config')` and `getenv('APP_ENV')` fallback so standalone Unit tests execute cleanly.
+  4. `tests/Feature/Ai/Clarification/WorkflowTaskCorrectionMismatchRegressionTest.php`:
+     - Added 4 regression tests verifying old and new contracts, optimistic revision locking, and zero-write safety.
+
+- **Verification & Test Coverage:**
+  - `php vendor/bin/phpunit tests/Feature/Ai/Clarification/WorkflowTaskCorrectionMismatchRegressionTest.php`: 4 tests, 25 assertions, 100% PASSED.
+  - `tests/Feature/Ai/Clarification` suite: 21 tests, 168 assertions, 100% PASSED.
+  - `tests/Unit/Ai/Billing/SubscriptionAndPaymentHardeningTest.php`: 6 tests, 22 assertions, 100% PASSED.
+  - JavaScript syntax check: `node -c public/js/ai-media-input.js` clean (0 errors).
       - Committed: `8c1c2a9` (`docs(ai): complete T00 baseline and architecture inventory in AS_IS.md`).
     - **Task T01 — Fix correction API mismatch [P0, PR 1]:**
       - Resolved contract mismatch: `public/js/ai-media-input.js` previously submitted `slots_patch` and omitted `expected_revision`, whereas `AiWorkflowTaskController::updateInputs` strictly required `expected_revision` and `corrections: [{ field, value, confirmation }]`.

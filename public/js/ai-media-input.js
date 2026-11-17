@@ -537,7 +537,7 @@
             const supplierName = (preview.supplier && preview.supplier.name) || ext.supplier_name || '—';
             const invoiceNo = preview.supplier_invoice_no || ext.invoice_number || '—';
             const invoiceDate = preview.date || ext.invoice_date || '—';
-            const warehouseName = (preview.warehouse && preview.warehouse.name) || 'Main Warehouse';
+            const warehouseName = (preview.warehouse && preview.warehouse.name) || (res.task && res.task.slots && (res.task.slots.warehouse_name || res.task.slots.warehouse_query)) || '—';
 
             metaBox.append('<div class="col-6 mb-2"><small class="text-muted d-block">' + (isPb ? 'Supplier' : 'Customer') + '</small><strong class="text-dark">' + escapeText(supplierName) + '</strong></div>');
             metaBox.append('<div class="col-6 mb-2 text-right"><small class="text-muted d-block">Invoice number</small><strong class="text-dark">' + escapeText(invoiceNo) + '</strong></div>');
@@ -657,7 +657,8 @@
             const body = $('<div class="card-body p-3 bg-white"></div>');
             const successBox = $('<div class="alert alert-success p-3 border-success mb-2"></div>');
             successBox.append('<h6 class="font-weight-bold text-success mb-1">Voucher Booked: ' + escapeText(refNo) + '</h6>');
-            successBox.append('<div class="small text-muted mb-3">Status: Successfully posted to Accounts Payable, inventory updated in Main Warehouse.</div>');
+            const whDisplay = (preview.warehouse && preview.warehouse.name) || 'warehouse';
+            successBox.append('<div class="small text-muted mb-3">Status: Successfully posted to Accounts Payable, inventory updated in ' + escapeText(whDisplay) + '.</div>');
 
             const btnRow = $('<div class="d-flex align-items-center flex-wrap"></div>');
             if (pdfUrl) {
@@ -833,7 +834,7 @@
             formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Supplier</label><input type="text" class="form-control form-control-sm ai-edit-supplier" value="' + escapeText((preview.supplier && preview.supplier.name) || ext.supplier_name || '') + '"></div>');
             formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Invoice Number</label><input type="text" class="form-control form-control-sm ai-edit-invoice-no" value="' + escapeText(preview.supplier_invoice_no || ext.invoice_number || '') + '"></div>');
             formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Invoice Date</label><input type="date" class="form-control form-control-sm ai-edit-date" value="' + escapeText(preview.date || ext.invoice_date || '') + '"></div>');
-            formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Warehouse</label><input type="text" class="form-control form-control-sm ai-edit-warehouse" value="' + escapeText((preview.warehouse && preview.warehouse.name) || 'Main Warehouse') + '"></div>');
+            formGrid.append('<div class="form-group col-sm-6 mb-2"><label class="small text-muted mb-1 font-weight-bold">Warehouse</label><input type="text" class="form-control form-control-sm ai-edit-warehouse" value="' + escapeText((preview.warehouse && preview.warehouse.name) || '') + '" placeholder="Enter warehouse name or ID"></div>');
             body.append(formGrid);
 
             const tableWrap = $('<div class="table-responsive my-2"></div>');
