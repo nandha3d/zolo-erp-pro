@@ -1,3 +1,38 @@
+## Prominent Company Logo & Legal/Trade Name in Dashboard Header, Persistent Topbar Company Identity & Switch Company Trigger — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directive:
+    *"here also there is no company names showing in the dashboard, we must show the company name always present, let the remove the test> test, and replace with switch company, in the left side, show the Company Name with logo, some more larger."*
+    (Reference screenshots: `media_1794997377920_0f9bb73e.jpg`, `media_1794997441405_5c508058.png`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dashboard Executive Command Header (`index.blade.php`, `index.css`):**
+     - Replaced the generic small 36px/46px meter icon with a prominent **Company Logo & Enterprise Crest Emblem** (`.dash-company-logo-emblem`, 62x62px) featuring:
+       - Real uploaded company logo if present (`file_exists(public_path('logo/...'))`), or high-contrast 2-letter monogram.
+       - Gold enterprise status star badge (`★`, `.dash-company-star`).
+     - Displayed the **Company Legal / Trade Name** as the primary `<h1>` headline in large bold typography (`.dash-company-name`, 25px, font-weight: 800).
+     - Short code badge `<code>{{ $company->code }}</code>` alongside a dedicated `<span class="dash-pill-badge is-dashboard">Dashboard</span>` badge and live operational pulse badge (`Live Sync • Operational`).
+     - Parent group breadcrumb (`<i class="fa fa-sitemap"></i> {{ $company->group->name }} › Enterprise Workspace`).
+     - Enhanced submeta line with distinct legal name (when different from trade name), user greeting, fiscal year window, and system status.
+     - In `HomeController.php`, eager-loaded `Company::with('group')` and passed `company` in `compact()` to `backend.index`.
+  2. **Top Navbar Left-Side Persistent Company Identity (`main.blade.php`, `layout-main.css`):**
+     - Positioned `.top-navbar-company` on the left of the topbar next to `#toggle-btn` so company identity is persistently visible across every screen in the ERP.
+     - Features 34x34px high-contrast emblem/logo (`.top-navbar-company-logo`, `.top-navbar-company-mark`), bold company name (14px, font-weight: 800), and parent group subtitle.
+  3. **Topbar Switch Button Refinement (`main.blade.php`):**
+     - Removed the ambiguous `Test › test` text from the topbar pill.
+     - Explicitly labeled the action trigger: `<span class="company-switch-name font-weight-bold">Switch Company</span>` with company monogram mark, active fiscal year badge, and dropdown caret.
+     - Clicking it smoothly opens the searchable company directory dropdown with 1-click company switching and a direct link to the dedicated Company Portal.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views, CSS, and controller files pass with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Animated Switch Company Flyout, Topbar Company Dropdown & Modern Company Onboarding Portal — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -259,6 +294,41 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Prominent Company Logo & Legal/Trade Name in Dashboard Header, Persistent Topbar Company Identity & Switch Company Trigger — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directive:
+    *"here also there is no company names showing in the dashboard, we must show the company name always present, let the remove the test> test, and replace with switch company, in the left side, show the Company Name with logo, some more larger."*
+    (Reference screenshots: `media_1794997377920_0f9bb73e.jpg`, `media_1794997441405_5c508058.png`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dashboard Executive Command Header (`index.blade.php`, `index.css`):**
+     - Replaced the generic small 36px/46px meter icon with a prominent **Company Logo & Enterprise Crest Emblem** (`.dash-company-logo-emblem`, 62x62px) featuring:
+       - Real uploaded company logo if present (`file_exists(public_path('logo/...'))`), or high-contrast 2-letter monogram.
+       - Gold enterprise status star badge (`★`, `.dash-company-star`).
+     - Displayed the **Company Legal / Trade Name** as the primary `<h1>` headline in large bold typography (`.dash-company-name`, 25px, font-weight: 800).
+     - Short code badge `<code>{{ $company->code }}</code>` alongside a dedicated `<span class="dash-pill-badge is-dashboard">Dashboard</span>` badge and live operational pulse badge (`Live Sync • Operational`).
+     - Parent group breadcrumb (`<i class="fa fa-sitemap"></i> {{ $company->group->name }} › Enterprise Workspace`).
+     - Enhanced submeta line with distinct legal name (when different from trade name), user greeting, fiscal year window, and system status.
+     - In `HomeController.php`, eager-loaded `Company::with('group')` and passed `company` in `compact()` to `backend.index`.
+  2. **Top Navbar Left-Side Persistent Company Identity (`main.blade.php`, `layout-main.css`):**
+     - Positioned `.top-navbar-company` on the left of the topbar next to `#toggle-btn` so company identity is persistently visible across every screen in the ERP.
+     - Features 34x34px high-contrast emblem/logo (`.top-navbar-company-logo`, `.top-navbar-company-mark`), bold company name (14px, font-weight: 800), and parent group subtitle.
+  3. **Topbar Switch Button Refinement (`main.blade.php`):**
+     - Removed the ambiguous `Test › test` text from the topbar pill.
+     - Explicitly labeled the action trigger: `<span class="company-switch-name font-weight-bold">Switch Company</span>` with company monogram mark, active fiscal year badge, and dropdown caret.
+     - Clicking it smoothly opens the searchable company directory dropdown with 1-click company switching and a direct link to the dedicated Company Portal.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views, CSS, and controller files pass with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - View cache cleared: `php artisan view:clear`.
 
 ---
 

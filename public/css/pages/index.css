@@ -61,8 +61,113 @@
 .dash-heading {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
+}
+
+.dash-company-logo-emblem {
+  width: 62px;
+  height: 62px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 100%);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 6px 18px rgb(var(--z-primary-rgb) / 0.25);
+  border: 1.5px solid rgba(var(--z-primary-rgb) / 0.35);
+}
+
+.dash-company-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 4px;
+}
+
+.dash-company-star {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #0f172a;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  border: 2px solid var(--neo-surface, #ffffff);
+}
+
+body.dark-mode .dash-company-star {
+  border-color: var(--neo-surface, #1e293b);
+}
+
+.dash-company-breadcrumb {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--z-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.dash-company-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dash-company-name {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--z-text);
+  line-height: 1.2;
+}
+
+.dash-company-code {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--z-primary-soft);
+  color: var(--z-primary);
+  border: 1px solid rgba(var(--z-primary-rgb) / 0.2);
+}
+
+.dash-pill-badge.is-dashboard {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--z-surface-2);
+  color: var(--z-text-muted);
+  border: 1px solid var(--z-border);
+}
+
+.dash-company-submeta {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--z-text-muted);
+  font-weight: 500;
+}
+
+.dash-legal-name {
+  font-weight: 600;
+  color: var(--z-text);
 }
 
 .dash-command .dash-icon {

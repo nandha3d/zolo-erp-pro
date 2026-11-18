@@ -280,6 +280,20 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
           </div>
         </a>
 
+        @if($activeCompany)
+        <div class="top-navbar-company d-none d-sm-flex align-items-center ml-2" title="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
+          @if($activeCompany->logo && file_exists(public_path('logo/' . $activeCompany->logo)))
+            <img src="{{ url('logo', $activeCompany->logo) }}" alt="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}" class="top-navbar-company-logo">
+          @else
+            <span class="top-navbar-company-mark">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+          @endif
+          <div class="top-navbar-company-info d-flex flex-column ml-2">
+            <span class="top-navbar-company-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>
+            @if($activeCompany->group)<span class="top-navbar-company-group">{{ $activeCompany->group->name }}</span>@endif
+          </div>
+        </div>
+        @endif
+
         @hasSection('navbar-center')
           <div class="navbar-center-area flex-grow-1 mx-2 d-flex align-items-center justify-content-between overflow-hidden u-minw-0">
             @yield('navbar-center')
@@ -303,10 +317,9 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
             }
           @endphp
           <li class="nav-item company-switch dropdown" id="topCompanySwitchItem">
-            <a class="company-switch-link dropdown-toggle" href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" id="topCompanySwitchDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Switch company" aria-label="Switch company: {{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
+            <a class="company-switch-link dropdown-toggle" href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" id="topCompanySwitchDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Switch company" aria-label="Switch company">
               <span class="company-switch-mark" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
-              @if($activeCompany->group)<span class="company-switch-group">{{ $activeCompany->group->name }}</span>@endif
-              <span class="company-switch-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>
+              <span class="company-switch-name font-weight-bold">Switch Company</span>
               @if($activeYear)<span class="company-switch-year">{{ $activeYear }}</span>@endif
               <span class="company-switch-caret" aria-hidden="true">&#9662;</span>
             </a>
