@@ -156,4 +156,180 @@ jQuery(function ($) {
             error: 'Could not load best sellers.',
         });
     });
+
+    // --------------------------------------------------------------------------
+    // Dynamic Expandable Quick Navigation Modules Ribbon & Hover-Pan Physics
+    // --------------------------------------------------------------------------
+    const expandBtn = document.getElementById('dashHeroExpandBtn');
+    const tray = document.getElementById('dashHeroModulesTray');
+    const viewport = document.getElementById('dashModulesViewport');
+    const prevBtn = document.getElementById('dashModulesPrev');
+    const nextBtn = document.getElementById('dashModulesNext');
+
+    if (expandBtn && tray && viewport) {
+        const STORAGE_KEY = 'zolo_dash_modules_tray_expanded';
+
+        function setExpanded(expanded, save = true) {
+            if (expanded) {
+                tray.classList.add('is-expanded');
+                expandBtn.classList.add('is-active');
+                expandBtn.setAttribute('aria-expanded', 'true');
+                tray.setAttribute('aria-hidden', 'false');
+                const label = expandBtn.querySelector('.dash-hero-expand-label');
+                if (label) label.textContent = 'Collapse Modules';
+            } else {
+                tray.classList.remove('is-expanded');
+                expandBtn.classList.remove('is-active');
+                expandBtn.setAttribute('aria-expanded', 'false');
+                tray.setAttribute('aria-hidden', 'true');
+                const label = expandBtn.querySelector('.dash-hero-expand-label');
+                if (label) label.textContent = 'Explore Modules';
+            }
+            if (save) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, expanded ? '1' : '0');
+                } catch (e) {}
+            }
+        }
+
+        expandBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const isExp = tray.classList.contains('is-expanded');
+            setExpanded(!isExp);
+        });
+
+        // Restore user preference
+        try {
+            if (localStorage.getItem(STORAGE_KEY) === '1') {
+                setExpanded(true, false);
+            }
+        } catch (e) {}
+
+        // Interactive Fluid Hover-Pan Animation
+        let currentScroll = 0;
+        let targetScroll = 0;
+        let isHovering = false;
+        let isDragging = false;
+        let startX = 0;
+        let scrollStart = 0;
+        let rafId = null;
+
+        function lerp(start, end, factor) {
+            return start + (end - start) * factor;
+        }
+
+        function step() {
+            if (!viewport) return;
+            const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+            if (maxScroll <= 0) {
+                rafId = null;
+                return;
+            }
+
+            targetScroll = Math.max(0, Math.min(maxScroll, targetScroll));
+            currentScroll = lerp(currentScroll, targetScroll, 0.08);
+
+            if (Math.abs(targetScroll - currentScroll) < 0.5) {
+                currentScroll = targetScroll;
+                viewport.scrollLeft = currentScroll;
+                if (!isHovering && !isDragging) {
+                    rafId = null;
+                    return;
+                }
+            } else {
+                viewport.scrollLeft = currentScroll;
+            }
+
+            rafId = requestAnimationFrame(step);
+        }
+
+        function requestStep() {
+            if (!rafId) {
+                rafId = requestAnimationFrame(step);
+            }
+        }
+
+        // Mousemove calculates relative horizontal position across viewport width
+        // Moving mouse right scrolls track left (revealing items on right)
+        // Moving mouse left scrolls track right (returning smoothly to start)
+        viewport.addEventListener('mousemove', function(e) {
+            if (isDragging) return;
+            const rect = viewport.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const ratio = Math.max(0, Math.min(1, x / rect.width));
+            const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+            if (maxScroll > 0) {
+                targetScroll = ratio * maxScroll;
+                isHovering = true;
+                requestStep();
+            }
+        });
+
+        viewport.addEventListener('mouseenter', function() {
+            isHovering = true;
+            currentScroll = viewport.scrollLeft;
+            requestStep();
+        });
+
+        viewport.addEventListener('mouseleave', function() {
+            isHovering = false;
+        });
+
+        // Horizontal and vertical mousewheel smooth passthrough
+        viewport.addEventListener('wheel', function(e) {
+            const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+            if (delta !== 0) {
+                e.preventDefault();
+                const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+                targetScroll = Math.max(0, Math.min(maxScroll, targetScroll + delta * 1.5));
+                requestStep();
+            }
+        }, { passive: false });
+
+        // Touch & mouse drag panning support
+        viewport.addEventListener('mousedown', function(e) {
+            if (e.button !== 0) return;
+            isDragging = true;
+            startX = e.pageX - viewport.offsetLeft;
+            scrollStart = viewport.scrollLeft;
+            viewport.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                viewport.style.cursor = 'grab';
+            }
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - viewport.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+            targetScroll = Math.max(0, Math.min(maxScroll, scrollStart - walk));
+            currentScroll = targetScroll;
+            viewport.scrollLeft = currentScroll;
+        });
+
+        // Arrow step buttons
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+                targetScroll = Math.max(0, targetScroll - 300);
+                requestStep();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+                targetScroll = Math.min(maxScroll, targetScroll + 300);
+                requestStep();
+            });
+        }
+    }
 });
