@@ -317,14 +317,21 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
         <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
           @if($activeCompany)
           @php
-            $topDirectory = auth()->check() ? app(\App\Services\Platform\CompanyDirectoryService::class)->directory(auth()->id()) : null;
+            $topDirectory = null;
+            try {
+                $topDirectory = auth()->check() ? app(\App\Services\Platform\CompanyDirectoryService::class)->directory(auth()->id()) : null;
+            } catch (\Throwable $e) {
+                $topDirectory = null;
+            }
             $topCompanies = [];
-            if ($topDirectory) {
+            if ($topDirectory && !empty($topDirectory['groups'])) {
                 foreach ($topDirectory['groups'] as $grp) {
-                    foreach ($grp['companies'] as $comp) {
-                        $topCompanies[] = $comp + ['group_name' => $grp['name']];
+                    foreach ($grp['companies'] ?? [] as $comp) {
+                        $topCompanies[] = $comp + ['group_name' => $grp['name'] ?? null];
                     }
                 }
+            }
+            if ($topDirectory && !empty($topDirectory['ungrouped'])) {
                 foreach ($topDirectory['ungrouped'] as $comp) {
                     $topCompanies[] = $comp + ['group_name' => null];
                 }
