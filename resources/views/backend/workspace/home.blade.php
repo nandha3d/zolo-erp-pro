@@ -343,11 +343,87 @@
                 <span>Operational</span>
             </div>
 
-            {{-- Switch Company Button --}}
-            <a class="zw-hero-switch-btn" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}" title="Switch company workspace">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
-                <span>Switch Company</span>
-            </a>
+            {{-- Switch Company Expanding Popover Dock --}}
+            <div class="zw-hero-switch-wrapper" id="zwSwitchCompanyWrapper">
+                <a class="zw-hero-switch-btn" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}" id="zwHeroSwitchBtn" title="Switch company workspace" aria-haspopup="true" aria-expanded="false">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
+                    <span>Switch Company</span>
+                    <svg class="zw-switch-caret-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                </a>
+
+                <div class="zw-hero-switch-popover" id="zwSwitchPopover" role="dialog" aria-modal="false" aria-label="Switch Active Company">
+                    <div class="zw-popover-header">
+                        <div class="zw-popover-title-row">
+                            <div class="zw-popover-title">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--z-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                                <span>Switch Active Workspace</span>
+                            </div>
+                            <button type="button" class="zw-popover-close" id="zwSwitchCloseBtn" aria-label="Close switcher">&times;</button>
+                        </div>
+                        <p class="zw-popover-sub">Select an enterprise entity to switch your ledger and operational context instantly.</p>
+                        <div class="zw-popover-search">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" id="zwSwitchSearchInput" placeholder="Filter company, code or group..." autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="zw-popover-body" id="zwPopoverList">
+                        @php
+                            $popoverCompanies = [];
+                            foreach($directory['groups'] as $grp) {
+                                foreach($grp['companies'] as $c) {
+                                    $popoverCompanies[] = $c + ['group_name' => $grp['name']];
+                                }
+                            }
+                            foreach($directory['ungrouped'] as $c) {
+                                $popoverCompanies[] = $c + ['group_name' => null];
+                            }
+                        @endphp
+
+                        @foreach($popoverCompanies as $comp)
+                            @php $isCurrent = ($comp['id'] === $company->id); @endphp
+                            <div class="zw-popover-item {{ $isCurrent ? 'is-current' : '' }}" data-search="{{ strtolower($comp['name'].' '.$comp['legal_name'].' '.$comp['code'].' '.($comp['group_name'] ?? '')) }}">
+                                <div class="zw-popover-item-left">
+                                    <span class="zw-popover-emblem">{{ collect(preg_split('/\s+/', trim($comp['name'])))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+                                    <div class="zw-popover-item-meta">
+                                        <div class="zw-popover-item-name-row">
+                                            <span class="zw-popover-item-name">{{ $comp['name'] }}</span>
+                                            <code>{{ $comp['code'] }}</code>
+                                        </div>
+                                        <div class="zw-popover-item-sub">
+                                            @if($comp['group_name'])<span>{{ $comp['group_name'] }}</span> · @endif
+                                            <span>{{ $comp['industry'] ?? 'Trading' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="zw-popover-item-right">
+                                    @if($isCurrent)
+                                        <span class="zw-popover-current-badge"><i class="fa fa-check-circle" aria-hidden="true"></i> Current company</span>
+                                    @else
+                                        <form method="post" action="{{ route('company.choose') }}" class="zw-popover-switch-form">
+                                            @csrf
+                                            <input type="hidden" name="company_id" value="{{ $comp['id'] }}">
+                                            <input type="hidden" name="return" value="workspace">
+                                            <button type="submit" class="zw-popover-select-btn">Switch &rarr;</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                        <div class="zw-popover-empty" style="{{ 'display: none;' }}" id="zwPopoverEmpty">No matching companies found.</div>
+                    </div>
+
+                    <div class="zw-popover-footer">
+                        <a href="{{ route('company.create') }}" class="zw-popover-portal-btn">
+                            <i class="fa fa-plus-circle" aria-hidden="true"></i>
+                            <span>Company Portal ›</span>
+                        </a>
+                        <a href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}" class="zw-popover-manage-link">
+                            Manage Directory &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1156,6 +1232,65 @@
             activeCharts = [];
             initWorkspaceCharts();
         }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+        // Switch Company Animated Popover Handler
+        var switchBtn = document.getElementById('zwHeroSwitchBtn');
+        var popover = document.getElementById('zwSwitchPopover');
+        var closeBtn = document.getElementById('zwSwitchCloseBtn');
+        var searchInput = document.getElementById('zwSwitchSearchInput');
+
+        if (switchBtn && popover) {
+            switchBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var isOpen = popover.classList.toggle('is-open');
+                switchBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                if (isOpen && searchInput) {
+                    setTimeout(function () { searchInput.focus(); }, 60);
+                }
+            });
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    popover.classList.remove('is-open');
+                    switchBtn.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            document.addEventListener('click', function (e) {
+                if (!popover.contains(e.target) && !switchBtn.contains(e.target)) {
+                    popover.classList.remove('is-open');
+                    switchBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && popover.classList.contains('is-open')) {
+                    popover.classList.remove('is-open');
+                    switchBtn.setAttribute('aria-expanded', 'false');
+                    switchBtn.focus();
+                }
+            });
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    var q = searchInput.value.trim().toLowerCase();
+                    var items = popover.querySelectorAll('.zw-popover-item');
+                    var visibleCount = 0;
+                    items.forEach(function (item) {
+                        var text = (item.dataset.search || '').toLowerCase();
+                        var match = !q || text.indexOf(q) !== -1;
+                        item.style.display = match ? 'flex' : 'none';
+                        if (match) visibleCount++;
+                    });
+                    var emptyEl = document.getElementById('zwPopoverEmpty');
+                    if (emptyEl) {
+                        emptyEl.style.display = (visibleCount === 0 && q) ? 'block' : 'none';
+                    }
+                });
+            }
+        }
     })();
 </script>
 @endpush

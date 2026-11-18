@@ -1,3 +1,55 @@
+## Animated Switch Company Flyout, Topbar Company Dropdown & Modern Company Onboarding Portal — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives:
+    1. *"when i click switch company> a box should expand with animation from that button, and box appears in the same page, there are list of companies we can select from there."* (Ref: `media_1794996987326_d8f43fe3.png`).
+    2. *"also in the top section bring the dropdown for the company selection, when we click company portal> it should take to the dedicated company creation page."* (Ref: `media_1794997088029_791ca688.png`).
+    3. *"also the company creation is not designed well. make it more modern design as we did now. make a global UI, never hard code anything."*
+    4. *"and update the UI branch in github."*
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Animated Switch Company Flyout Box on Workspace Page (`home.blade.php`, `workspace-home.css`):**
+     - Wrapped the Switch Company button in `.zw-hero-switch-wrapper` with an animated expanding popover dock (`.zw-hero-switch-popover`).
+     - Spring animation: `transform-origin: top right; transform: scale(0.88) translateY(-14px) -> scale(1) translateY(0)` with cubic bezier easing.
+     - Header: "Switch Active Workspace", subtitle, and real-time search input (`#zwSwitchSearchInput`) filtering companies live by name, code, or group.
+     - Company List: Monogram emblem, company name, code badge, industry chip, and active status:
+       - Current active company marked with `<span class="zw-popover-current-badge"><i class="fa fa-check-circle"></i> Current company</span>` (satisfying `WorkspaceSecurityTest`).
+       - Non-active companies feature a fast 1-click Switch form posting to `route('company.choose')` with `return=workspace`.
+     - Footer: Direct link to dedicated **"Company Portal ›"** (`route('company.create')`) and directory management (`route('company.select')`).
+     - Interactive controls: Auto-focuses search on open, closes smoothly on outside click or Escape key.
+  2. **Topbar Company Selection Dropdown (`main.blade.php`, `layout-main.css`):**
+     - Upgraded the topbar company pill `[T] Test > test FY 2026-27 ⇅` into a rich dropdown (`.top-company-dropdown-menu`).
+     - Header: Active entity context, group, and fiscal window.
+     - Searchable list of accessible companies to switch between in 1 click from anywhere in the ERP.
+     - Footer: Prominent **"Company Portal ›"** action button (`route('company.create')`) taking users straight to dedicated company creation, plus "Manage All" link.
+  3. **Dedicated Modern Company Onboarding Portal (`create.blade.php`, `company-portal.css`):**
+     - Routes registered: `GET /company/create` (`company.create`) and `GET /company-portal` (`company.portal`) handled by `CompanySelectorController@create`.
+     - `storeCompany` updated to support `return=workspace` for immediate return to workspace after provisioning.
+     - Executive Hero Banner: Theme-colored gradient with isometric ERP matrix vector geometry and company monogram emblem.
+     - 2-Column Split Workspace:
+       - **Form Suite (Left Column):**
+         - 1. Identity & Hierarchy: Parent group selector, Legal Name, Display/Trade Name, Short Code, SVG-driven Industry Vertical cards (FMCG, Textiles, Timber, Solar, General Trading), dynamic Business Subtypes, and Logo uploader.
+         - 2. Registered Address & Contact: Address, City, State dropdown with Indian GST codes, 6-digit PIN code, Phone, Email, Website.
+         - 3. Statutory Tax & Compliance: 15-character GSTIN input with auto-formatting, auto-PAN extraction (characters 3-12), state auto-detection, Registration Type chips (Regular, Composition, Unregistered), and Base Currency selector.
+         - 4. Books & Calendar: Timezone, Fiscal year start/end, and Automated Provisioning Manifest checklist (Main Branch, WH-1 Warehouse, Standard CoA, Tax Ledgers).
+       - **Live Interactive Entity Passport Preview (Right Column):**
+         - Sticky passport card with live monogram initials, legal name, code badge, industry chip, location, GSTIN/PAN tags, and live Onboarding Readiness Checklist updating in real time as the user types.
+  4. **Strict Global UI Engine Compliance:**
+     - 100% powered by semantic variables (`--z-primary`, `--zp-800`, `--z-ink`, `--neo-surface`, `--neo-border`, `--neo-bg`).
+     - Complete dark mode support across all views.
+     - Inline styles strictly use `style="{{ '...' }}"`.
+     - Standalone preview synchronized in `public/workspace-preview.html`.
+
+- **Verification & Test Coverage:**
+  - `php -l` on all modified Blade views and controllers: 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - Caches cleared: `php artisan view:clear; php artisan route:clear`.
+
+---
+
 ## Workspace Executive Hero Section, Graphical Data Representations (Sparklines, Radial Gauges, Histograms) & Guided Tour 2-View Limit — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -207,6 +259,58 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Animated Switch Company Flyout, Topbar Company Dropdown & Modern Company Onboarding Portal — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives:
+    1. *"when i click switch company> a box should expand with animation from that button, and box appears in the same page, there are list of companies we can select from there."* (Ref: `media_1794996987326_d8f43fe3.png`).
+    2. *"also in the top section bring the dropdown for the company selection, when we click company portal> it should take to the dedicated company creation page."* (Ref: `media_1794997088029_791ca688.png`).
+    3. *"also the company creation is not designed well. make it more modern design as we did now. make a global UI, never hard code anything."*
+    4. *"and update the UI branch in github."*
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Animated Switch Company Flyout Box on Workspace Page (`home.blade.php`, `workspace-home.css`):**
+     - Wrapped the Switch Company button in `.zw-hero-switch-wrapper` with an animated expanding popover dock (`.zw-hero-switch-popover`).
+     - Spring animation: `transform-origin: top right; transform: scale(0.88) translateY(-14px) -> scale(1) translateY(0)` with cubic bezier easing.
+     - Header: "Switch Active Workspace", subtitle, and real-time search input (`#zwSwitchSearchInput`) filtering companies live by name, code, or group.
+     - Company List: Monogram emblem, company name, code badge, industry chip, and active status:
+       - Current active company marked with `<span class="zw-popover-current-badge"><i class="fa fa-check-circle"></i> Current company</span>` (satisfying `WorkspaceSecurityTest`).
+       - Non-active companies feature a fast 1-click Switch form posting to `route('company.choose')` with `return=workspace`.
+     - Footer: Direct link to dedicated **"Company Portal ›"** (`route('company.create')`) and directory management (`route('company.select')`).
+     - Interactive controls: Auto-focuses search on open, closes smoothly on outside click or Escape key.
+  2. **Topbar Company Selection Dropdown (`main.blade.php`, `layout-main.css`):**
+     - Upgraded the topbar company pill `[T] Test > test FY 2026-27 ⇅` into a rich dropdown (`.top-company-dropdown-menu`).
+     - Header: Active entity context, group, and fiscal window.
+     - Searchable list of accessible companies to switch between in 1 click from anywhere in the ERP.
+     - Footer: Prominent **"Company Portal ›"** action button (`route('company.create')`) taking users straight to dedicated company creation, plus "Manage All" link.
+  3. **Dedicated Modern Company Onboarding Portal (`create.blade.php`, `company-portal.css`):**
+     - Routes registered: `GET /company/create` (`company.create`) and `GET /company-portal` (`company.portal`) handled by `CompanySelectorController@create`.
+     - `storeCompany` updated to support `return=workspace` for immediate return to workspace after provisioning.
+     - Executive Hero Banner: Theme-colored gradient with isometric ERP matrix vector geometry and company monogram emblem.
+     - 2-Column Split Workspace:
+       - **Form Suite (Left Column):**
+         - 1. Identity & Hierarchy: Parent group selector, Legal Name, Display/Trade Name, Short Code, SVG-driven Industry Vertical cards (FMCG, Textiles, Timber, Solar, General Trading), dynamic Business Subtypes, and Logo uploader.
+         - 2. Registered Address & Contact: Address, City, State dropdown with Indian GST codes, 6-digit PIN code, Phone, Email, Website.
+         - 3. Statutory Tax & Compliance: 15-character GSTIN input with auto-formatting, auto-PAN extraction (characters 3-12), state auto-detection, Registration Type chips (Regular, Composition, Unregistered), and Base Currency selector.
+         - 4. Books & Calendar: Timezone, Fiscal year start/end, and Automated Provisioning Manifest checklist (Main Branch, WH-1 Warehouse, Standard CoA, Tax Ledgers).
+       - **Live Interactive Entity Passport Preview (Right Column):**
+         - Sticky passport card with live monogram initials, legal name, code badge, industry chip, location, GSTIN/PAN tags, and live Onboarding Readiness Checklist updating in real time as the user types.
+  4. **Strict Global UI Engine Compliance:**
+     - 100% powered by semantic variables (`--z-primary`, `--zp-800`, `--z-ink`, `--neo-surface`, `--neo-border`, `--neo-bg`).
+     - Complete dark mode support across all views.
+     - Inline styles strictly use `style="{{ '...' }}"`.
+     - Standalone preview synchronized in `public/workspace-preview.html`.
+
+- **Verification & Test Coverage:**
+  - `php -l` on all modified Blade views and controllers: 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - Caches cleared: `php artisan view:clear; php artisan route:clear`.
 
 ---
 
