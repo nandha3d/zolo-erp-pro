@@ -4829,6 +4829,7 @@ class SaleController extends Controller
 
         return DB::transaction(function () use ($id) {
             $sale = Sale::withTrashed()->findOrFail($id);
+            $this->reverseSaleStock($sale);
             Product_Sale::where('sale_id', $id)->delete();
             Payment::where('sale_id', $id)->delete();
             $this->fileDelete(public_path('documents/sale/'), $sale->document);

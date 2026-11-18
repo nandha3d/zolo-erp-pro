@@ -555,6 +555,20 @@ class CommercialController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages(['tax_category_id' => 'Select a GST rate of this company.']);
         }
 
+        if (!empty($validated['product_type_id'])) {
+            $validType = DB::table('product_types')
+                ->where('id', $validated['product_type_id'])
+                ->where(function ($query) use ($context) {
+                    $query->where('company_id', $context->companyId)
+                        ->orWhereNull('company_id');
+                })
+                ->where('is_active', true)
+                ->exists();
+            if (!$validType) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['product_type_id' => 'Select a valid product type of this company.']);
+            }
+        }
+
         return $validated;
     }
 
@@ -757,6 +771,12 @@ class CommercialController extends Controller
             'unit_id' => $product->unit_id,
             'unit' => $unit ? ($unit->unit_code ?? $unit->unit_name) : 'Unit',
             'unit_name' => $unit ? $unit->unit_name : 'Unit',
+            'product_type_id' => $product->product_type_id,
+            'base' => $product->base,
+            'addition' => $product->addition,
+            'lr' => $product->lr,
+            'dia' => $product->dia,
+            'is_optical' => (bool) ($product->product_type_id || $product->base || $product->addition || $product->lr || $product->dia),
             'value' => $product->code . '|' . $decodedName,
             'label' => $product->code . ' - ' . $decodedName,
         ];
@@ -856,6 +876,12 @@ class CommercialController extends Controller
                 'imeis' => $imeis,
                 'variant_option' => is_array($variantOption) ? $variantOption : [],
                 'variant_value' => is_array($variantValue) ? $variantValue : [],
+                'product_type_id' => $product->product_type_id,
+                'base' => $product->base,
+                'addition' => $product->addition,
+                'lr' => $product->lr,
+                'dia' => $product->dia,
+                'is_optical' => (bool) ($product->product_type_id || $product->base || $product->addition || $product->lr || $product->dia),
                 'unit' => $unit ? ($unit->unit_code ?? $unit->unit_name) : 'Unit',
             ],
         ]);
