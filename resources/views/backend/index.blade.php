@@ -319,8 +319,8 @@
             <div class="dash-cockpit-kpis" aria-hidden="true">
                 <div class="dash-mini-kpi">
                     <span class="dash-mini-kpi-label">Gross Flow</span>
-                    <span class="dash-mini-kpi-val text-primary">{{ $money($revenue + $purchase) }}</span>
-                    <div class="dash-mini-kpi-bar"><div class="dash-mini-kpi-fill" style="{{ 'width: 78%; background: var(--z-primary);' }}"></div></div>
+                    <span class="dash-mini-kpi-val text-white">{{ $money($revenue + $purchase) }}</span>
+                    <div class="dash-mini-kpi-bar"><div class="dash-mini-kpi-fill" style="{{ 'width: 78%; background: #ffffff;' }}"></div></div>
                 </div>
                 <div class="dash-mini-kpi">
                     <span class="dash-mini-kpi-label">Operating Margin</span>
@@ -337,7 +337,7 @@
             </div>
 
             <div class="dash-command-controls">
-                <form action="{{ route('dashboard') }}" method="GET" class="d-flex align-items-center flex-wrap gap-2 mb-0" id="dash-filter-form">
+                <form action="{{ route('dashboard') }}" method="GET" class="dash-filter-controls-form d-flex align-items-center flex-wrap mb-0" id="dash-filter-form">
                     @if (Auth::user()->role_id <= 2)
                         <div class="dash-filter-group" title="Filter by Warehouse">
                             <i class="dripicons-store" aria-hidden="true"></i>

@@ -274,14 +274,14 @@ body.dark-mode .zw {
   z-index: 25;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .zw-hero-controls-form {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
   margin: 0;
   transition: opacity .15s;

@@ -1,3 +1,104 @@
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -117,6 +218,107 @@
 - **Verification & Test Coverage:**
   - `php artisan test tests/Feature/OfflineSyncAndPosParityTest.php tests/Feature/LotNumberCommercialTest.php tests/Feature/QuickEditProductModalTest.php tests/Feature/ProductTypeAndOpticalSpecsTest.php`: **15 passed, 0 failed, 117 assertions (11.66s)**.
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php tests/Feature/WorkspaceSecurityTest.php`: **16 passed, 0 failed, 77 assertions (12.19s)**.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
 
 ---
 
@@ -541,6 +743,107 @@
 
 ---
 
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -660,6 +963,107 @@
 - **Verification & Test Coverage:**
   - `php artisan test tests/Feature/OfflineSyncAndPosParityTest.php tests/Feature/LotNumberCommercialTest.php tests/Feature/QuickEditProductModalTest.php tests/Feature/ProductTypeAndOpticalSpecsTest.php`: **15 passed, 0 failed, 117 assertions (11.66s)**.
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php tests/Feature/WorkspaceSecurityTest.php`: **16 passed, 0 failed, 77 assertions (12.19s)**.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
 
 ---
 

@@ -74,6 +74,72 @@
       display: block !important;
     }
 
+/* --------------------------------------------------------------------------
+   Top Navbar Right Items: Switch Theme, Fullscreen, Admin Profile Dropdown
+   Constrains height to 32px to ensure hover pills stay 100% inside the 40px navbar frame.
+   -------------------------------------------------------------------------- */
+html.app-shell .page > header nav.navbar .nav-menu .nav-item > a:not(.btn-pos),
+html.app-shell .page > header nav.navbar .nav-menu .nav-item a.nav-link:not(.btn-pos),
+nav.navbar #switch-theme,
+nav.navbar #btnFullscreen,
+nav.navbar .nav-menu .nav-item > a.dropdown-item {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  line-height: 30px !important;
+  padding: 0 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  margin: 0 2px !important;
+  font-size: 13px !important;
+  box-sizing: border-box !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  transition: all 0.18s ease !important;
+  vertical-align: middle !important;
+}
+
+nav.navbar #switch-theme,
+nav.navbar #btnFullscreen {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  padding: 0 !important;
+}
+
+nav.navbar #switch-theme i,
+nav.navbar #btnFullscreen i {
+  font-size: 16px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Hover state staying strictly within navbar frame */
+html.app-shell .page > header nav.navbar .nav-menu .nav-item > a:not(.btn-pos):hover,
+html.app-shell .page > header nav.navbar .nav-menu .nav-item a.nav-link:not(.btn-pos):hover,
+nav.navbar #switch-theme:hover,
+nav.navbar #btnFullscreen:hover,
+nav.navbar .nav-menu .nav-item > a.dropdown-item:hover {
+  height: 32px !important;
+  max-height: 32px !important;
+  background: var(--z-primary-soft, rgba(var(--z-primary-rgb) / 0.08)) !important;
+  border-color: rgba(var(--z-primary-rgb) / 0.22) !important;
+  color: var(--z-primary, #7d287e) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+nav.navbar #switch-theme:hover i,
+nav.navbar #btnFullscreen:hover i,
+nav.navbar .nav-menu .nav-item > a.dropdown-item:hover i {
+  color: var(--z-primary, #7d287e) !important;
+}
+
 /* Navbar Left Group (keeps toggle button and company brand together on the left) */
 .navbar-left-group {
   display: flex !important;
