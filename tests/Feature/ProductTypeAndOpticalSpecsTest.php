@@ -109,8 +109,8 @@ class ProductTypeAndOpticalSpecsTest extends TestCase
         $company = Company::find(6) ?? Company::first();
         $this->session(['company_id' => $company->id]);
 
-        $pt = ProductType::firstOrCreate(['name' => 'Progressive HD Short'], ['is_active' => true]);
-        $unit = Unit::firstOrCreate(['unit_code' => 'PRS'], ['unit_name' => 'Pairs', 'is_active' => true]);
+        $pt = ProductType::firstOrCreate(['name' => 'Progressive HD Short', 'company_id' => $company->id], ['is_active' => true]);
+        $unit = Unit::firstOrCreate(['unit_code' => 'PRS', 'company_id' => $company->id], ['unit_name' => 'Pairs', 'is_active' => true]);
         $category = Category::where('company_id', $company->id)->first()
             ?? Category::forceCreate(['name' => 'Progressive Lenses', 'company_id' => $company->id, 'is_active' => true]);
 

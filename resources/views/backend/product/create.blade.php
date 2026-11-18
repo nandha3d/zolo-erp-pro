@@ -2459,7 +2459,7 @@
                                 $.each(data, function (key, el) {
                                     formData.append(el.name, el.value);
                                 });
-                                var fileEl = $('#file')[0];
+                                var fileEl = document.getElementById('file');
                                 if (fileEl && fileEl.files && fileEl.files.length > 0) {
                                     formData.append('file', fileEl.files[0]);
                                 }
@@ -2503,7 +2503,7 @@
                     $.each(data, function (key, el) {
                         formData.append(el.name, el.value);
                     });
-                    var fileEl = $('#file')[0];
+                    var fileEl = document.getElementById('file');
                     if (fileEl && fileEl.files && fileEl.files.length > 0) {
                         formData.append('file', fileEl.files[0]);
                     }
