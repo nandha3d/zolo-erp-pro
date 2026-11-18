@@ -539,6 +539,20 @@
 
 ---
 
+## PR #21 Merged into Main — Module Ribbon, Hover-Pan Scrolling & Sidebar Stability Landed — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#21: feat(dashboard): module ribbon, hover-pan scrolling and sidebar stability](https://github.com/vigneshsinna/zolo-erp-pro/pull/21) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`a1985d9eabb279976ad3fdfeb6318a51ccc4b62c`](https://github.com/vigneshsinna/zolo-erp-pro/commit/a1985d9eabb279976ad3fdfeb6318a51ccc4b62c).
+  - Fast-forward merged `origin/main` back into `ui`.
+  - GitHub Comparison: `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All New Deliverables Landed in `main`:**
+  1. **Dynamic Animated Expandable Module Ribbon:** Interactive horizontal module ribbon with automatic hover-pan acceleration and smooth navigation (`index.blade.php`, `index.css`, `dashboard.js`).
+  2. **Sidebar Menu Stability:** Removed unpredictable dynamic hover expansion; restored stable, clean click-only accordion menus (`layout-main.css`, `main.blade.php`).
+
+---
+
 ## PR #20 Successfully Merged into Main — `main` and `ui` Are 100% Synchronized — 2026-11-18
 
 - **Merge Event Summary:**
@@ -1101,6 +1115,20 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
   - Compiled view cache cleared: `php artisan view:clear`.
   - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## PR #21 Merged into Main — Module Ribbon, Hover-Pan Scrolling & Sidebar Stability Landed — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#21: feat(dashboard): module ribbon, hover-pan scrolling and sidebar stability](https://github.com/vigneshsinna/zolo-erp-pro/pull/21) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`a1985d9eabb279976ad3fdfeb6318a51ccc4b62c`](https://github.com/vigneshsinna/zolo-erp-pro/commit/a1985d9eabb279976ad3fdfeb6318a51ccc4b62c).
+  - Fast-forward merged `origin/main` back into `ui`.
+  - GitHub Comparison: `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All New Deliverables Landed in `main`:**
+  1. **Dynamic Animated Expandable Module Ribbon:** Interactive horizontal module ribbon with automatic hover-pan acceleration and smooth navigation (`index.blade.php`, `index.css`, `dashboard.js`).
+  2. **Sidebar Menu Stability:** Removed unpredictable dynamic hover expansion; restored stable, clean click-only accordion menus (`layout-main.css`, `main.blade.php`).
 
 ---
 
@@ -1968,6 +1996,20 @@
 
 ---
 
+## PR #21 Merged into Main — Module Ribbon, Hover-Pan Scrolling & Sidebar Stability Landed — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#21: feat(dashboard): module ribbon, hover-pan scrolling and sidebar stability](https://github.com/vigneshsinna/zolo-erp-pro/pull/21) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`a1985d9eabb279976ad3fdfeb6318a51ccc4b62c`](https://github.com/vigneshsinna/zolo-erp-pro/commit/a1985d9eabb279976ad3fdfeb6318a51ccc4b62c).
+  - Fast-forward merged `origin/main` back into `ui`.
+  - GitHub Comparison: `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All New Deliverables Landed in `main`:**
+  1. **Dynamic Animated Expandable Module Ribbon:** Interactive horizontal module ribbon with automatic hover-pan acceleration and smooth navigation (`index.blade.php`, `index.css`, `dashboard.js`).
+  2. **Sidebar Menu Stability:** Removed unpredictable dynamic hover expansion; restored stable, clean click-only accordion menus (`layout-main.css`, `main.blade.php`).
+
+---
+
 ## PR #20 Successfully Merged into Main — `main` and `ui` Are 100% Synchronized — 2026-11-18
 
 - **Merge Event Summary:**
@@ -2530,6 +2572,20 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
   - Compiled view cache cleared: `php artisan view:clear`.
   - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## PR #21 Merged into Main — Module Ribbon, Hover-Pan Scrolling & Sidebar Stability Landed — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#21: feat(dashboard): module ribbon, hover-pan scrolling and sidebar stability](https://github.com/vigneshsinna/zolo-erp-pro/pull/21) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`a1985d9eabb279976ad3fdfeb6318a51ccc4b62c`](https://github.com/vigneshsinna/zolo-erp-pro/commit/a1985d9eabb279976ad3fdfeb6318a51ccc4b62c).
+  - Fast-forward merged `origin/main` back into `ui`.
+  - GitHub Comparison: `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All New Deliverables Landed in `main`:**
+  1. **Dynamic Animated Expandable Module Ribbon:** Interactive horizontal module ribbon with automatic hover-pan acceleration and smooth navigation (`index.blade.php`, `index.css`, `dashboard.js`).
+  2. **Sidebar Menu Stability:** Removed unpredictable dynamic hover expansion; restored stable, clean click-only accordion menus (`layout-main.css`, `main.blade.php`).
 
 ---
 
