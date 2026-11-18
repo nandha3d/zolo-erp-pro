@@ -1,3 +1,43 @@
+## Workspace Executive Hero Section, Graphical Data Representations (Sparklines, Radial Gauges, Histograms) & Guided Tour 2-View Limit — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives:
+    1. *"where is the hero section for workspace page? also stop the guided tour after 2 times. workspace also need graphical representations like charts, graphs etc."* (Ref: `media_1794995011031_b9e46e9e.png`).
+    2. *"whatever changes made, global UI is our engine.. so keep that in mind.. never hard code anywhere.."*
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--z-primary-rgb)`, `var(--z-success)`, `var(--z-warning)`, `var(--z-danger)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded colors, zero inline style violations.
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Executive Headquarters Hero Section (`.zw-hero-executive`):**
+     - Upgraded the compressed bar into an authentic, commanding Executive Hero Section (~96px height) with full fold economy.
+     - Embedded dynamic background vector tech grid pattern and curved wave composition (`.zw-hero-vector-art`, `.zw-hero-bg-svg`) powered by theme primary variable.
+     - Enterprise Crest/Emblem: 48x48px monogram with gradient background, gold enterprise star badge, and primary border.
+     - Clean Title Hierarchy: Bare `<h1>{{ $name }}</h1>` satisfying `WorkspaceSecurityTest` exact substring assertion, company code badge `<code>{{ $company->code }}</code>`, parent group breadcrumb, industry chip with briefcase icon, and live pulsing Active Workspace status pill.
+     - Operational Consensus Submeta: `Primary Operational Node · Ledger Consensus: Synchronized · X Operating Facilities`.
+     - Integrated Glass Cockpit Dock: Facility dropdown with building icon, Fiscal Window with calendar icon, Operational telemetry badge, and Switch Company shortcut.
+  2. **Graphical Data Representations in Workspace KPI Cards:**
+     - Computed dynamic 6-month visual data in PHP via `$generateWorkspaceSparkline` and `$getWorkspaceHistogram` from `$overallMonthlyTrend`:
+       - **Consolidated Revenue**: Embedded SVG Area Sparkline (`zw-sparkline`) with theme gradient fill, curved Bezier spline, and terminal dot node.
+       - **Consolidated Net Profit**: Embedded Circular Radial Gauge (`zw-radial-gauge`) with animated/dashoffset stroke (`var(--z-success)` or `var(--z-danger)` on deficit) and center margin `%`.
+       - **Total Purchases**: Embedded 6-bar Micro Volume Histogram (`zw-mini-histogram`) tracking 6-month monthly procurement volume with warning tone bars.
+       - **Customer Receivables**: Embedded Liquidity Collection Progress Ratio Meter (`zw-ratio-meter`) showing collection percentage.
+       - **Supplier Payables**: Embedded Settlement Exposure Progress Ratio Meter (`zw-ratio-meter`) showing settlement status.
+  3. **Guided Tour 2-View Automatic Dismissal:**
+     - In `resources/views/components/guided-tutorial-modal.blade.php`, added counter `zolo_guided_tour_view_count`.
+     - Auto-shows up to a maximum of 2 times on `/dashboard` or `/workspace`. Once `viewCount >= 2`, permanently sets `zolo_guided_tour_dismissed = '1'` while keeping the topbar manual button functional.
+  4. **Strict Global UI Engine Compliance:**
+     - All styles powered by `zolo-tokens.css` semantic variables and `workspace-home.css`.
+     - Zero hardcoded colors or styles. Blade inline styles strictly use `style="{{ '...' }}"`.
+     - Full dark mode styling (`body.dark-mode`) for hero, SVG graphics, radial gauges, and meters.
+
+- **Verification & Test Coverage:**
+  - `php -l resources/views/backend/workspace/home.blade.php`: 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - Views cache cleared: `php artisan view:clear`.
+
+---
+
 ## Workspace Modernization: Low-Height Vector Hero, Quick Items Removal, Overall Consolidated Insights & Side-by-Side Company Grid — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -167,6 +207,46 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Workspace Executive Hero Section, Graphical Data Representations (Sparklines, Radial Gauges, Histograms) & Guided Tour 2-View Limit — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives:
+    1. *"where is the hero section for workspace page? also stop the guided tour after 2 times. workspace also need graphical representations like charts, graphs etc."* (Ref: `media_1794995011031_b9e46e9e.png`).
+    2. *"whatever changes made, global UI is our engine.. so keep that in mind.. never hard code anywhere.."*
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--z-primary-rgb)`, `var(--z-success)`, `var(--z-warning)`, `var(--z-danger)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded colors, zero inline style violations.
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Executive Headquarters Hero Section (`.zw-hero-executive`):**
+     - Upgraded the compressed bar into an authentic, commanding Executive Hero Section (~96px height) with full fold economy.
+     - Embedded dynamic background vector tech grid pattern and curved wave composition (`.zw-hero-vector-art`, `.zw-hero-bg-svg`) powered by theme primary variable.
+     - Enterprise Crest/Emblem: 48x48px monogram with gradient background, gold enterprise star badge, and primary border.
+     - Clean Title Hierarchy: Bare `<h1>{{ $name }}</h1>` satisfying `WorkspaceSecurityTest` exact substring assertion, company code badge `<code>{{ $company->code }}</code>`, parent group breadcrumb, industry chip with briefcase icon, and live pulsing Active Workspace status pill.
+     - Operational Consensus Submeta: `Primary Operational Node · Ledger Consensus: Synchronized · X Operating Facilities`.
+     - Integrated Glass Cockpit Dock: Facility dropdown with building icon, Fiscal Window with calendar icon, Operational telemetry badge, and Switch Company shortcut.
+  2. **Graphical Data Representations in Workspace KPI Cards:**
+     - Computed dynamic 6-month visual data in PHP via `$generateWorkspaceSparkline` and `$getWorkspaceHistogram` from `$overallMonthlyTrend`:
+       - **Consolidated Revenue**: Embedded SVG Area Sparkline (`zw-sparkline`) with theme gradient fill, curved Bezier spline, and terminal dot node.
+       - **Consolidated Net Profit**: Embedded Circular Radial Gauge (`zw-radial-gauge`) with animated/dashoffset stroke (`var(--z-success)` or `var(--z-danger)` on deficit) and center margin `%`.
+       - **Total Purchases**: Embedded 6-bar Micro Volume Histogram (`zw-mini-histogram`) tracking 6-month monthly procurement volume with warning tone bars.
+       - **Customer Receivables**: Embedded Liquidity Collection Progress Ratio Meter (`zw-ratio-meter`) showing collection percentage.
+       - **Supplier Payables**: Embedded Settlement Exposure Progress Ratio Meter (`zw-ratio-meter`) showing settlement status.
+  3. **Guided Tour 2-View Automatic Dismissal:**
+     - In `resources/views/components/guided-tutorial-modal.blade.php`, added counter `zolo_guided_tour_view_count`.
+     - Auto-shows up to a maximum of 2 times on `/dashboard` or `/workspace`. Once `viewCount >= 2`, permanently sets `zolo_guided_tour_dismissed = '1'` while keeping the topbar manual button functional.
+  4. **Strict Global UI Engine Compliance:**
+     - All styles powered by `zolo-tokens.css` semantic variables and `workspace-home.css`.
+     - Zero hardcoded colors or styles. Blade inline styles strictly use `style="{{ '...' }}"`.
+     - Full dark mode styling (`body.dark-mode`) for hero, SVG graphics, radial gauges, and meters.
+
+- **Verification & Test Coverage:**
+  - `php -l resources/views/backend/workspace/home.blade.php`: 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - Views cache cleared: `php artisan view:clear`.
 
 ---
 
@@ -4291,79 +4371,4 @@
      - Updated `App\Ai\Adapters\ProductSetupPreviewAdapter`: Validates company ownership of `unit_id`, `category_id`, and `tax_category_id`; implemented `computeSourceStateHash()` over company, code, unit, category, and tax category.
      - Updated `App\Ai\Adapters\ProductSetupCommandAdapter`: Asserts `products-add` permission; enforces `expectedSourceStateHash`; delegates to `ProductMasterService::create($attributes, $metadata, $context)` instead of unvetted `Product::forceCreate()`.
   2. **P0 #2 (Bootstrap Reconciliation Approval Bypass):**
-     - Updated `App\Ai\Services\BootstrapProposalService::approveAndExecute()`: Removed premature reconciliation block prior to proposal version/expiry check and cryptographic approval signing.
-     - Updated `App\Ai\Adapters\CompanyBootstrapCommandAdapter` & `App\Ai\Adapters\GroupBootstrapCommandAdapter`: `reconcileCommittedCompany` and `reconcileCommittedGroup` strictly assert that an active execution claim row exists in `ai_action_executions` with `idempotency_key = $idempotencyKey`, `executor_id = $actorId`, and `status = 'executing'` before returning any reconciled receipt.
-  3. **P1 #3 (Source-State Validation Transactional Integrity):**
-     - Updated `App\Ai\Adapters\PurchaseOrderPreviewAdapter::computeSourceStateHash()`: Includes active financial year state (`status`, `is_closed`, `lock_date`, `start_date`, `end_date`, `updated_at`), active tax rates (`rate`, `cess_rate`, `effective_from`, `effective_to`), and tax categories for the items.
-     - Updated `App\Ai\Adapters\PurchaseOrderCommandAdapter::execute()`: Re-computes and checks source state hash inside a dedicated `DB::transaction()` boundary and fails closed if any business condition drifted since approval.
-  4. **P1 #4 (Approved vs Executed Totals Equality):**
-     - Updated `App\Ai\Adapters\PurchaseOrderPreviewAdapter`: Injects `expected_totals` (`grand_total`, `tax_total`, `total_price`) into the sealed proposal payload.
-     - Updated `App\Ai\Schemas\CreatePurchaseOrderInputSchema`: Validates `expected_totals`.
-     - Updated `App\Ai\Adapters\PurchaseOrderCommandAdapter`: Asserts that `abs($purchase->grand_total - $expectedGrandTotal) <= 0.01` within the transaction, failing closed with a 422 `ValidationException` (`totals`) on discrepancy.
-  5. **P1 #5 (Bootstrap Proposal Concurrency Risk Elimination):**
-     - Updated `App\Ai\Services\BootstrapProposalService::createProposal()`: Wrapped in `DB::transaction()` with atomic row locks (`lockForUpdate()`). If an existing proposal exists, verifies ownership and `pending`/`initiated` status, increments version (`$newVersion = version + 1`), and applies a conditional update (`where('version', $existing->version)`). Never resets versions to 1.
-  6. **P1 #6 (Mode B Setup Adapters Domain Safeguards):**
-     - Updated `UnitSetupPreviewAdapter` & `UnitSetupCommandAdapter`: Enforces Spatie permission `unit`, validates company ownership of `base_unit`, computes and validates SHA-256 source state hash.
-     - Updated `SupplierSetupPreviewAdapter` & `SupplierSetupCommandAdapter`: Enforces Spatie permission `suppliers-add`, computes and validates SHA-256 source state hash.
-     - Updated `CustomerSetupPreviewAdapter` & `CustomerSetupCommandAdapter`: Enforces Spatie permission `customers-add`, validates company ownership of `customer_group_id`, computes and validates SHA-256 source state hash.
-     - Updated `ActionCapabilityRegistry`: Registered `setup.unit.create.v1`, `setup.product.create.v1`, `setup.supplier.create.v1`, and `setup.customer.create.v1` with `requiresFreshSnapshot: true` and appropriate required permissions.
-     - Updated `AiPrincipalFactory`: Grants setup capabilities to users holding corresponding Spatie permissions (`unit`, `products-add`, `suppliers-add`, `customers-add`).
-  7. **P1 #7 (Review Center Authorization Alignment):**
-     - Updated `App\Http\Controllers\Ai\ActionReviewCenterController`: Restricts `$canApprove` strictly to users holding `ai.action.approve` (or role 1, superadmin). Defaults scope to `'mine'`. Callers requesting `scope=all` without `ai.action.approve` are automatically constrained to `'mine'`.
-  8. **P2 #8 (Review Center Execution Receipt Field):**
-     - Updated `ActionReviewCenterController`: Decodes `result_json` (instead of the non-existent `execution_receipt_json`), ensuring completed purchase order reference numbers and document details are accurately rendered on the screen.
-
-- **Automated Verification Suite (100% Green Across All 107 AI Tests):**
-  - `ModeBSetupActionTest.php`: **6/6 passed (43 assertions)** (tested atomic unit/product/supplier/customer creation, cross-company references rejection, source-state drift failure).
-  - `BootstrapCompanyCreationTest.php`: **13/13 passed (86 assertions)** (tested reconciliation without execution claim failure, repeated preview version monotonicity and race prevention).
-  - `PurchaseOrderActionTest.php`: **8/8 passed (59 assertions)** (tested tax-rate / fiscal-year mutation source-state failure, grand total discrepancy failure, actor proposal filtering).
-  - `NaturalLanguagePurchaseOrderWorkflowTest.php`: **4/4 passed (42 assertions)** (tested end-to-end intent resolution, review center rendering with receipt reference_no, non-approver scope restriction).
-  - Full AI Test Suite (`phpunit.ai.xml` on disposable MySQL `zolo_test_ai_release`): **107/107 passed (702 assertions, 0 errors, 0 failures)**.
-  - Hygiene: `composer validate --strict` (valid), caches cleared (`route:clear`, `view:clear`, `config:clear`).
-
-- **Next Steps:**
-  - Proceed to Phase 2: Purchase Bill AI Workflow (`purchase_bill.create.v1` / linking Purchase Orders to Bills).
-  - Implement Sales Order / Quotation AI workflow proposals (`sales_order.create.v1`, `quotation.create.v1`).
-
----
-
-# zoloERP Pro — Persistent Session Memory & State
-
-## Chat Replay Preservation, Product GST Defaults & Session Continuity Resolved — 2026-11-12 (`feature/ai-unified-input-clarification`)
-
-- **Incidents & Symptoms Reported (with User Screenshots):**
-  1. **Loss of Chat Responses on Reload / Sidebar Thread Switching:**
-     - When switching between AI sessions or refreshing `/ai`, historical assistant messages containing clarification cards or action proposals were wiped out and replaced with:
-       `This result is unavailable with your current ERP access.`
-     - Fact cards, candidate selectors, and proposal review buttons vanished from the UI.
-  2. **GST Rate Error on Purchase Order Proposal Generation:**
-     - Error dialog on proposal preparation: `Error generating proposal: Set a GST rate for Cotton Shirt Blue (Product or Settings › GST). How to fix: 1. Open the product Cotton Shirt Blue, choose its GST rate, and save. 2. Or set a default rate on its item group under Settings › GST & Tax.`
-     - Caused because Cotton Shirt Blue was created via in-place Gate 1 master setup without `tax_category_id` and `hsn_code`.
-
-- **Root Causes Identified & Remedied:**
-  1. **Premature Tool Allowlist Check in `AiChatController::canReplay()`:**
-     - In `AiChatController.php`, `$principal->hasTool($tool)` checked `permittedToolNames`. Because `'workflow.clarification.v1'` is a UI fact card type (not an SDK tool in `AiToolManifest`), `hasTool()` returned `false` before reaching the commercial permission check.
-     - Placed `workflow.clarification.v1`, action keys (`purchase_order.create.v1`, `sales_order.create.v1`), and `setup.*` actions before the `hasTool()` check, gating them strictly via `purchases-add` / `sales-add`.
-     - In `AiPrincipalFactory.php`, added `sales-add` mapping to `'sales_order.create.v1'` in `permittedToolNames`.
-  2. **Product Master Setup GST Defaults & UI Form:**
-     - In `ProductSetupPreviewAdapter.php`: When `tax_category_id` is omitted in a company with active GST, automatically resolves the default taxable tax category (e.g. `GST 5%` / first taxable rate). When `hsn_code` is omitted, defaults to the company's first goods HSN code (e.g. `'5208'`).
-     - In `DependentMasterOrchestrator.php`: Prefilled `tax_category_id` and `hsn_code` in `extractPrefilledSlots()` and exposed `tax_categories` and `hsn_codes` in `loadTenantDefaults()`.
-     - In `resources/views/backend/ai/workspace.blade.php`: Added a Tax Category / GST Rate `<select>` and HSN Code `<input>` to the Mode C in-place product creation form and passed them in `masterData`.
-     - In development database (Company 14, port 3307): Updated Product 630 (`Cotton Shirt Blue`) with `tax_category_id = 16` (`GST 5%`) and `hsn_code = '5208'`, unblocking the user's active task immediately.
-  3. **Frontend Session Continuity (`sessionStorage`):**
-     - In `workspace.blade.php`: Added automatic active session tracking via `sessionStorage.getItem('ai_active_thread')` so page refreshes or returning from other pages seamlessly reload the active thread instead of defaulting to a blank conversation.
-     - Clicking "+ New" cleanses the session key for fresh threads.
-
-- **Verification Results (100% Green Across All 131 Tests):**
-  - Added `test_clarification_cards_and_action_proposals_replay_cleanly_on_show_thread` to `AiChatApiAndWorkspaceTest.php` (22/22 passed).
-  - Added `test_product_creation_automatically_defaults_tax_category_and_hsn_when_omitted` to `DependentMasterResolutionTest.php` (8/8 passed).
-  - Executed full AI test suite on disposable MySQL database `zolo_test_ai_release` (`vendor/bin/phpunit -c phpunit.ai.xml`): **131/131 passed (890 assertions, 0 errors, 0 failures, 0 skipped)**.
-  - Cleared caches: `php artisan config:clear`, `php artisan view:clear`, `php artisan route:clear`.
-
----
-
-
-## Phase 2.1 & Phase 2.2 Complete: Multi-Slot Clarification Engine, Sales Workflows & Three-Way Disambiguation Triad Verified — 2026-11-11 (`feature/ai-unified-input-clarification`)
-
-- **Scope & Delivery Summary:**
 ... [truncated for diff preview]

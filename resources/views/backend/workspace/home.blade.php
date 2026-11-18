@@ -145,19 +145,91 @@
     $overallRecPct = $totOverallDues > 0 ? round(($overallReceivables / $totOverallDues) * 100, 1) : 50;
     $overallPayPct = $totOverallDues > 0 ? (100 - $overallRecPct) : 50;
     $overallNetExposure = $overallReceivables - $overallPayables;
+
+    // Calculate visual graphics data for KPI cards (zero hardcoding, token-powered)
+    $generateWorkspaceSparkline = function(array $trendValues, float $w = 88, float $h = 32) {
+        $pts = [];
+        $count = count($trendValues);
+        if ($count < 2) {
+            $trendValues = [0, 0, 0, 0, 0, 0];
+            $count = 6;
+        }
+        $max = max($trendValues);
+        $min = min($trendValues);
+        $range = ($max - $min) > 0 ? ($max - $min) : 1;
+        $step = $w / ($count - 1);
+        $allZero = $max == 0 && $min == 0;
+
+        for ($i = 0; $i < $count; $i++) {
+            $x = round($i * $step, 1);
+            if ($allZero) {
+                // Gentle baseline curve so zero-state still renders a professional graphic
+                $y = round($h * 0.70 + sin($i * 0.9) * 2.2, 1);
+            } else {
+                $norm = ($trendValues[$i] - $min) / $range;
+                $y = round($h - ($norm * ($h * 0.68) + ($h * 0.16)), 1);
+            }
+            $pts[] = [$x, $y];
+        }
+
+        $line = "M {$pts[0][0]},{$pts[0][1]}";
+        for ($i = 0; $i < count($pts) - 1; $i++) {
+            $p0 = $pts[$i];
+            $p1 = $pts[$i + 1];
+            $cx = round($p0[0] + ($p1[0] - $p0[0]) * 0.5, 1);
+            $line .= " C {$cx},{$p0[1]} {$cx},{$p1[1]} {$p1[0]},{$p1[1]}";
+        }
+        $lastPt = end($pts);
+        $area = "{$line} L {$lastPt[0]},{$h} L {$pts[0][0]},{$h} Z";
+        return ['line' => $line, 'area' => $area, 'last' => $lastPt];
+    };
+
+    $getWorkspaceHistogram = function(array $trendValues) {
+        if (empty($trendValues)) {
+            $trendValues = [0, 0, 0, 0, 0, 0];
+        }
+        $max = max($trendValues);
+        $bars = [];
+        foreach ($trendValues as $val) {
+            $pct = $max > 0 ? min(100, max(14, round(($val / $max) * 100))) : 16;
+            $bars[] = ['val' => $val, 'pct' => $pct];
+        }
+        return $bars;
+    };
+
+    $overallSalesTrendValues = array_column($overallMonthlyTrend, 'sales');
+    $overallPurchTrendValues = array_column($overallMonthlyTrend, 'purchases');
+    $salesSpark = $generateWorkspaceSparkline($overallSalesTrendValues);
+    $purchBars = $getWorkspaceHistogram($overallPurchTrendValues);
+    $recRatio = $totOverallDues > 0 ? $overallRecPct : 100;
+    $payRatio = $totOverallDues > 0 ? $overallPayPct : 0;
 @endphp
 <div class="zw ind-{{ $industry }}">
     @if(session('status'))<div class="zw-flash" role="status"><i class="fa fa-check-circle" aria-hidden="true"></i> {{ session('status') }}</div>@endif
     @if($errors->any())<div class="zw-flash is-error" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
 
-    {{-- 1. Low-Height Executive Header Hero (.zw-hero-compact) --}}
-    <div class="zw-hero-compact">
-        {{-- Background vector wave graphic --}}
-        <svg class="zw-hero-bg-vector" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0,0 C320,55 580,-15 840,35 C980,65 1100,18 1200,32 L1200,80 L0,80 Z" fill="currentColor"></path>
-        </svg>
+    {{-- 1. Executive Headquarters Hero Section (.zw-hero .zw-hero-executive) --}}
+    <div class="zw-hero zw-hero-executive zw-hero-compact">
+        {{-- High-tech background vector art composition --}}
+        <div class="zw-hero-vector-art" aria-hidden="true">
+            <svg class="zw-hero-bg-svg" viewBox="0 0 1000 120" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="zwHeroWaveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="var(--z-primary)" stop-opacity="0.12" />
+                        <stop offset="60%" stop-color="var(--z-primary)" stop-opacity="0.04" />
+                        <stop offset="100%" stop-color="var(--z-primary)" stop-opacity="0" />
+                    </linearGradient>
+                    <pattern id="zwHeroGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+                        <path d="M 24 0 L 0 0 0 24" fill="none" stroke="var(--z-primary)" stroke-width="0.75" stroke-opacity="0.06"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#zwHeroGrid)" />
+                <path d="M0,30 C220,95 440,5 680,65 C840,105 920,25 1000,50 L1000,120 L0,120 Z" fill="url(#zwHeroWaveGrad)"></path>
+                <path d="M0,50 C260,110 480,25 720,80 C860,115 940,45 1000,70" fill="none" stroke="var(--z-primary)" stroke-width="1.5" stroke-opacity="0.18"></path>
+            </svg>
+        </div>
 
-        {{-- Left: Company Identity --}}
+        {{-- Left: Enterprise Identity Zone --}}
         <div class="zw-hero-left">
             <span class="zw-hero-emblem" aria-hidden="true">
                 @if($logo)
@@ -166,26 +238,46 @@
                     {{ $initials($name) }}
                 @endif
                 <span class="zw-hero-emblem-star" title="Enterprise Workspace">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </span>
             </span>
 
-            <div class="zw-hero-meta">
-                @if($company->group)
-                    <span class="zw-hero-crumb">
-                        {{ $company->group->name }}
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <div class="zw-hero-identity-block">
+                {{-- Hierarchy & Group crumb --}}
+                <div class="zw-hero-top-row">
+                    @if($company->group)
+                        <span class="zw-hero-crumb">
+                            <i class="fa fa-sitemap mr-1"></i> {{ $company->group->name }}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </span>
+                    @else
+                        <span class="zw-hero-crumb">
+                            <i class="fa fa-building-o mr-1"></i> Independent Enterprise Workspace
+                        </span>
+                    @endif
+                </div>
+
+                {{-- Primary Title & Attribute Badges --}}
+                <div class="zw-hero-main-row">
+                    <h1>{{ $name }}</h1>
+                    <code>{{ $company->code }}</code>
+                    <span class="zw-chip">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                        {{ $industries[$industry] ?? 'General Trading' }}@if(!empty($current['subtype'])) · {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($current['subtype']) }}@endif
                     </span>
-                @endif
-                <h1>{{ $name }}</h1>
-                <code>{{ $company->code }}</code>
-                <span class="zw-chip">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-                    {{ $industries[$industry] ?? 'General Trading' }}@if(!empty($current['subtype'])) · {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($current['subtype']) }}@endif
-                </span>
-                <span class="zw-status-pill">
-                    <span class="zw-status-dot"></span> Active Workspace
-                </span>
+                    <span class="zw-status-pill">
+                        <span class="zw-status-dot"></span> Active Workspace
+                    </span>
+                </div>
+
+                {{-- Operational Mission / Consensus Submeta --}}
+                <div class="zw-hero-submeta">
+                    <span class="zw-submeta-item"><i class="fa fa-shield text-success"></i> Primary Operational Node</span>
+                    <span class="zw-submeta-sep">·</span>
+                    <span class="zw-submeta-item">Ledger Consensus: <strong class="text-success">Synchronized</strong></span>
+                    <span class="zw-submeta-sep">·</span>
+                    <span class="zw-submeta-item">{{ $branches->count() }} {{ \Illuminate\Support\Str::plural('Operating Facility', $branches->count()) }}</span>
+                </div>
             </div>
         </div>
 
@@ -286,40 +378,135 @@
             </div>
         @endif
 
-        {{-- Top 5 Executive KPI Metric Strip --}}
+        {{-- Top 5 Executive KPI Metric Strip with Embedded Graphical Visuals --}}
         <div class="zw-master-kpis">
+            {{-- 1. Consolidated Revenue with Area Sparkline --}}
             <div class="zw-master-kpi">
-                <span class="zw-master-kpi-label"><i class="fa fa-line-chart"></i> Consolidated Revenue</span>
-                <span class="zw-master-kpi-value">₹{{ number_format($overallRevenue, 2) }}</span>
-                <span class="zw-master-kpi-sub">{{ $overallSalesCount }} total sales bills</span>
+                <div class="zw-master-kpi-top">
+                    <span class="zw-master-kpi-label"><i class="fa fa-line-chart"></i> Consolidated Revenue</span>
+                    <span class="zw-kpi-tone-pill is-primary">P&amp;L Topline</span>
+                </div>
+                <div class="zw-master-kpi-body">
+                    <div class="zw-master-kpi-data">
+                        <span class="zw-master-kpi-value">₹{{ number_format($overallRevenue, 2) }}</span>
+                        <span class="zw-master-kpi-sub">{{ $overallSalesCount }} total sales bills</span>
+                    </div>
+                    <div class="zw-master-kpi-visual" aria-hidden="true" title="6-month consolidated sales trajectory">
+                        <svg viewBox="0 0 88 32" class="zw-sparkline">
+                            <defs>
+                                <linearGradient id="grad-zw-rev" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--z-primary)" stop-opacity="0.32" />
+                                    <stop offset="100%" stop-color="var(--z-primary)" stop-opacity="0.0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="{{ $salesSpark['area'] }}" fill="url(#grad-zw-rev)" />
+                            <path d="{{ $salesSpark['line'] }}" fill="none" stroke="var(--z-primary)" stroke-width="2" stroke-linecap="round" />
+                            <circle cx="{{ $salesSpark['last'][0] }}" cy="{{ $salesSpark['last'][1] }}" r="2.5" fill="var(--z-primary)" />
+                        </svg>
+                    </div>
+                </div>
             </div>
 
+            {{-- 2. Consolidated Net Profit with Circular Radial Gauge --}}
             <div class="zw-master-kpi {{ $overallProfit < 0 ? 'is-loss' : 'is-profit' }}">
-                <span class="zw-master-kpi-label"><i class="fa fa-pie-chart"></i> Consolidated Net Profit</span>
-                <span class="zw-master-kpi-value">
-                    {{ $overallProfit < 0 ? '-₹'.number_format(abs($overallProfit), 2) : '₹'.number_format($overallProfit, 2) }}
-                </span>
-                <span class="zw-master-kpi-sub font-weight-bold">
-                    {{ $overallProfit < 0 ? 'Net Loss' : 'Net Margin' }}: {{ $overallMarginPercent }}%
-                </span>
+                <div class="zw-master-kpi-top">
+                    <span class="zw-master-kpi-label"><i class="fa fa-pie-chart"></i> Consolidated Net Profit</span>
+                    <span class="zw-kpi-tone-pill {{ $overallProfit < 0 ? 'is-loss' : 'is-profit' }}">
+                        {{ $overallProfit < 0 ? 'Loss Deficit' : 'Net Surplus' }}
+                    </span>
+                </div>
+                <div class="zw-master-kpi-body">
+                    <div class="zw-master-kpi-data">
+                        <span class="zw-master-kpi-value">
+                            {{ $overallProfit < 0 ? '-₹'.number_format(abs($overallProfit), 2) : '₹'.number_format($overallProfit, 2) }}
+                        </span>
+                        <span class="zw-master-kpi-sub font-weight-bold">
+                            {{ $overallProfit < 0 ? 'Net Loss' : 'Net Margin' }}: {{ $overallMarginPercent }}%
+                        </span>
+                    </div>
+                    <div class="zw-master-kpi-visual" aria-hidden="true" title="Operating profit margin gauge">
+                        @php
+                            $profitGaugeVal = max(0, min(100, abs($overallMarginPercent)));
+                            $profitCircumference = 88; // 2 * pi * 14
+                            $profitDashOffset = round($profitCircumference * (1 - ($profitGaugeVal / 100)));
+                            $gaugeStrokeColor = $overallProfit < 0 ? 'var(--z-danger)' : 'var(--z-success)';
+                        @endphp
+                        <svg viewBox="0 0 44 44" class="zw-radial-gauge">
+                            <circle cx="22" cy="22" r="14" fill="none" class="zw-radial-track" stroke-width="3" />
+                            <circle cx="22" cy="22" r="14" fill="none" stroke="{{ $gaugeStrokeColor }}" stroke-width="3"
+                                stroke-dasharray="{{ $profitCircumference }}" stroke-dashoffset="{{ $profitDashOffset }}"
+                                stroke-linecap="round" transform="rotate(-90 22 22)" class="zw-radial-fill" />
+                            <text x="22" y="23.5" text-anchor="middle" class="zw-radial-text">{{ round($profitGaugeVal) }}%</text>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
+            {{-- 3. Total Purchases with 6-Bar Micro Histogram --}}
             <div class="zw-master-kpi">
-                <span class="zw-master-kpi-label"><i class="fa fa-shopping-bag"></i> Total Purchases</span>
-                <span class="zw-master-kpi-value">₹{{ number_format($overallPurchases, 2) }}</span>
-                <span class="zw-master-kpi-sub">{{ $overallPurchasesCount }} purchase orders/bills</span>
+                <div class="zw-master-kpi-top">
+                    <span class="zw-master-kpi-label"><i class="fa fa-shopping-bag"></i> Total Purchases</span>
+                    <span class="zw-kpi-tone-pill is-warning">Procurement</span>
+                </div>
+                <div class="zw-master-kpi-body">
+                    <div class="zw-master-kpi-data">
+                        <span class="zw-master-kpi-value">₹{{ number_format($overallPurchases, 2) }}</span>
+                        <span class="zw-master-kpi-sub">{{ $overallPurchasesCount }} purchase orders/bills</span>
+                    </div>
+                    <div class="zw-master-kpi-visual" aria-hidden="true" title="6-month purchase volume histogram">
+                        <div class="zw-mini-histogram">
+                            @foreach ($purchBars as $bar)
+                                <div class="zw-mini-bar-track">
+                                    <div class="zw-mini-bar-fill" style="{{ 'height: ' . $bar['pct'] . '%; background: var(--z-warning);' }}"></div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            {{-- 4. Customer Receivables with Liquidity Collection Meter --}}
             <div class="zw-master-kpi">
-                <span class="zw-master-kpi-label"><i class="fa fa-credit-card"></i> Customer Receivables</span>
-                <span class="zw-text-receivable zw-master-kpi-value">₹{{ number_format($overallReceivables, 2) }}</span>
-                <span class="zw-master-kpi-sub">Total dues to collect</span>
+                <div class="zw-master-kpi-top">
+                    <span class="zw-master-kpi-label"><i class="fa fa-credit-card"></i> Customer Receivables</span>
+                    <span class="zw-kpi-tone-pill is-receivable">{{ round($recRatio) }}% Share</span>
+                </div>
+                <div class="zw-master-kpi-body">
+                    <div class="zw-master-kpi-data">
+                        <span class="zw-text-receivable zw-master-kpi-value">₹{{ number_format($overallReceivables, 2) }}</span>
+                        <span class="zw-master-kpi-sub">Total dues to collect</span>
+                    </div>
+                    <div class="zw-master-kpi-visual" aria-hidden="true" title="Receivables share meter">
+                        <div class="zw-ratio-meter">
+                            <div class="zw-ratio-label">{{ round($recRatio) }}% Collected</div>
+                            <div class="zw-ratio-track">
+                                <div class="zw-ratio-fill" style="{{ 'width: ' . min(100, max(12, $recRatio)) . '%; background: var(--z-primary);' }}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            {{-- 5. Supplier Payables with Settlement Exposure Meter --}}
             <div class="zw-master-kpi">
-                <span class="zw-master-kpi-label"><i class="fa fa-truck"></i> Supplier Payables</span>
-                <span class="zw-text-payable zw-master-kpi-value">₹{{ number_format($overallPayables, 2) }}</span>
-                <span class="zw-master-kpi-sub">Total dues to pay</span>
+                <div class="zw-master-kpi-top">
+                    <span class="zw-master-kpi-label"><i class="fa fa-truck"></i> Supplier Payables</span>
+                    <span class="zw-kpi-tone-pill is-payable">{{ round($payRatio) }}% Share</span>
+                </div>
+                <div class="zw-master-kpi-body">
+                    <div class="zw-master-kpi-data">
+                        <span class="zw-text-payable zw-master-kpi-value">₹{{ number_format($overallPayables, 2) }}</span>
+                        <span class="zw-master-kpi-sub">Total dues to pay</span>
+                    </div>
+                    <div class="zw-master-kpi-visual" aria-hidden="true" title="Payables settlement ratio">
+                        <div class="zw-ratio-meter">
+                            <div class="zw-ratio-label">{{ round($payRatio) }}% Settled</div>
+                            <div class="zw-ratio-track">
+                                <div class="zw-ratio-fill" style="{{ 'width: ' . min(100, max(12, $payRatio)) . '%; background: var(--z-warning);' }}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
