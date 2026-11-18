@@ -11,7 +11,7 @@ jQuery(function ($) {
 
     function setMetric(element, value) {
         element.title = money(value);
-        element.textContent = Math.abs(value) >= 100000 ? currency + compact.format(value) : element.title;
+        element.textContent = Math.abs(value) >= 10000000 ? currency + compact.format(value) : element.title;
     }
 
     dashboard.querySelectorAll('[data-metric]').forEach(element => setMetric(element, element.dataset.amount));
@@ -43,9 +43,9 @@ jQuery(function ($) {
                 return;
             }
             const rows = document.createDocumentFragment();
-            items.forEach(item => {
+            items.forEach((item, index) => {
                 const row = document.createElement('tr');
-                renderRow(row, item);
+                renderRow(row, item, index);
                 rows.append(row);
             });
             body.replaceChildren(rows);
@@ -100,7 +100,14 @@ jQuery(function ($) {
             pill.textContent = status;
             row.insertCell().append(pill);
             const amount = (payment ? item.amount : item.grand_total) / (Number(item.exchange_rate) || 1);
-            addCell(row, money(amount), 'dash-number');
+            const amountCell = addCell(row, '', 'dash-number font-weight-bold');
+            const flowBadge = document.createElement('span');
+            const isInflow = kind === 'sale' || (kind === 'payment' && (Number(item.sale_id) > 0 || !item.purchase_id));
+            flowBadge.className = 'dash-flow-badge ' + (isInflow ? 'dash-flow-inflow' : 'dash-flow-outflow') + ' mr-2';
+            flowBadge.innerHTML = isInflow ? '<i class="dripicons-arrow-thin-down" aria-hidden="true"></i> In' : '<i class="dripicons-arrow-thin-up" aria-hidden="true"></i> Out';
+            const amtText = document.createElement('span');
+            amtText.textContent = money(amount);
+            amountCell.append(flowBadge, amtText);
         }, {
             loading: 'Loading transactions…',
             empty: 'No recent transactions of this type.',
@@ -113,12 +120,36 @@ jQuery(function ($) {
 
     dashboard.querySelectorAll('[data-ranking-url]').forEach(table => {
         const byValue = table.hasAttribute('data-ranking-value');
-        loadTable(table, table.dataset.rankingUrl, (row, item) => {
-            const product = addCell(row, item.product_name);
+        loadTable(table, table.dataset.rankingUrl, (row, item, index) => {
+            if (index === 0) {
+                table.__maxVal = Number(byValue ? item.total_price : item.sold_qty) || 1;
+            }
+            const product = addCell(row, '');
+            const badge = document.createElement('span');
+            badge.className = 'dash-rank-badge' + (index < 3 ? ' dash-rank-badge-' + (index + 1) : '');
+            badge.textContent = index + 1;
+            const textWrap = document.createElement('div');
+            textWrap.className = 'd-inline-flex flex-column flex-grow-1';
+            const name = document.createElement('span');
+            name.textContent = item.product_name;
             const code = document.createElement('small');
             code.textContent = item.product_code;
-            product.append(code);
-            addCell(row, byValue ? money(item.total_price) : item.sold_qty, 'dash-number');
+
+            const barWrap = document.createElement('div');
+            barWrap.className = 'dash-leaderboard-bar-wrap';
+            const barFill = document.createElement('div');
+            barFill.className = 'dash-leaderboard-bar-fill';
+            const curVal = Number(byValue ? item.total_price : item.sold_qty) || 0;
+            const pct = Math.min(100, Math.max(6, Math.round((curVal / (table.__maxVal || 1)) * 100)));
+            barFill.style.width = pct + '%';
+            barWrap.append(barFill);
+
+            textWrap.append(name, code, barWrap);
+            const content = document.createElement('div');
+            content.className = 'd-flex align-items-center w-100';
+            content.append(badge, textWrap);
+            product.append(content);
+            addCell(row, byValue ? money(item.total_price) : item.sold_qty, 'dash-number font-weight-bold');
         }, {
             loading: 'Loading best sellers…',
             empty: 'No sales in this period.',

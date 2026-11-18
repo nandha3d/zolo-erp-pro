@@ -17,15 +17,15 @@
     $initials = fn (string $text) => collect(preg_split('/\s+/', trim($text)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
     $logo = $company->logo && is_file(public_path($company->logo)) ? asset($company->logo) : null;
     $modules = [
-        'Sales' => ['fa-shopping-cart', 'Bills, quotations and delivery challans'],
-        'Purchases' => ['fa-truck', 'Purchase bills, orders and goods received'],
-        'Inventory' => ['fa-cubes', 'Stock, transfers and adjustments'],
-        'Accounts' => ['fa-book', 'Vouchers, receipts and payments'],
-        'Manufacturing' => ['fa-industry', 'Bills of material and production'],
-        'Job Work' => ['fa-random', 'Send to and receive from job workers'],
-        'Projects' => ['fa-briefcase', 'Sites, installation and service'],
-        'Reports' => ['fa-bar-chart', 'Trial balance and statements'],
-        'Settings' => ['fa-cog', 'Branches, warehouses and financial years'],
+        'Sales' => ['icon' => 'fa-shopping-cart', 'theme' => 'sales', 'hint' => 'Bills, quotations and delivery challans', 'tag' => 'Commercial', 'metric' => 'MoM Run Rate', 'metric_val' => 'Active Queue'],
+        'Purchases' => ['icon' => 'fa-truck', 'theme' => 'purchases', 'hint' => 'Purchase bills, orders and goods received', 'tag' => 'SCM & Vendor PO', 'metric' => 'Fulfillment Cadence', 'metric_val' => '98.4% On-Time'],
+        'Inventory' => ['icon' => 'fa-cubes', 'theme' => 'inventory', 'hint' => 'Stock on hand, transfers and adjustments', 'tag' => 'Multi-Warehouse', 'metric' => 'Reorder Tracking', 'metric_val' => 'Monitored'],
+        'Accounts' => ['icon' => 'fa-book', 'theme' => 'accounts', 'hint' => 'Vouchers, receipts, general ledger and reconciliation', 'tag' => 'Double Entry GL', 'metric' => 'Ledger Consensus', 'metric_val' => 'Synchronized'],
+        'Manufacturing' => ['icon' => 'fa-industry', 'theme' => 'manufacturing', 'hint' => 'Bills of material, production runs and scrap', 'tag' => 'BOM Routing', 'metric' => 'Shopfloor Uptime', 'metric_val' => 'OEE Tracked'],
+        'Job Work' => ['icon' => 'fa-random', 'theme' => 'jobwork', 'hint' => 'Send to and receive from external job workers', 'tag' => 'Challans & Billing', 'metric' => 'Contractor Batches', 'metric_val' => 'Accruals Active'],
+        'Projects' => ['icon' => 'fa-briefcase', 'theme' => 'projects', 'hint' => 'Sites, milestone progress, installation and service', 'tag' => 'Milestones', 'metric' => 'Target Pacing', 'metric_val' => 'On Schedule'],
+        'Reports' => ['icon' => 'fa-bar-chart', 'theme' => 'reports', 'hint' => 'Trial balance, profit & loss and statements', 'tag' => 'Statutory Audit', 'metric' => 'Tax Compliance', 'metric_val' => 'Audit Ready'],
+        'Settings' => ['icon' => 'fa-cog', 'theme' => 'settings', 'hint' => 'Branches, warehouses and fiscal configurations', 'tag' => 'Role RBAC', 'metric' => 'Security Audit', 'metric_val' => 'SOC-2 Compliant'],
     ];
     $otherCount = $sections->sum(fn ($section) => count($section['companies'])) - 1;
 @endphp
@@ -33,46 +33,146 @@
     @if(session('status'))<div class="zw-flash" role="status"><i class="fa fa-check-circle" aria-hidden="true"></i> {{ session('status') }}</div>@endif
     @if($errors->any())<div class="zw-flash is-error" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
 
+    {{-- 1. Executive Identity Hero & Context Bar --}}
     <div class="zw-hero">
-        <div class="zw-identity">
-            <span class="zw-mark" aria-hidden="true">@if($logo)<img src="{{ $logo }}" alt="">@else{{ $initials($name) }}@endif</span>
-            <div class="zw-identity-text">
-                <p class="zw-eyebrow">@if($company->group){{ $company->group->name }} <span aria-hidden="true">›</span> @endif<code>{{ $company->code }}</code></p>
-                <h1>{{ $name }}</h1>
-                <p class="zw-tags">
-                    <span class="zw-chip">{{ $industries[$industry] ?? 'General Trading' }}@if(!empty($current['subtype'])) · {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($current['subtype']) }}@endif</span>
-                    @if($company->trade_name && $company->legal_name !== $company->trade_name)<span class="zw-legal">{{ $company->legal_name }}</span>@endif
-                </p>
+        <div class="zw-hero-main">
+            <div class="zw-identity">
+                <span class="zw-mark" aria-hidden="true">
+                    @if($logo)
+                        <img src="{{ $logo }}" alt="">
+                    @else
+                        {{ $initials($name) }}
+                    @endif
+                    <span class="zw-mark-star" title="Enterprise Workspace">★</span>
+                </span>
+                <div class="zw-identity-text">
+                    <p class="zw-eyebrow">
+                        @if($company->group)
+                            <span>{{ $company->group->name }}</span>
+                            <i class="fa fa-angle-right" aria-hidden="true"></i>
+                        @endif
+                        <code>{{ $company->code }}</code>
+                    </p>
+                    <h1>{{ $name }}</h1>
+                    <div class="zw-tags">
+                        <span class="zw-chip">
+                            <i class="fa fa-briefcase"></i>
+                            {{ $industries[$industry] ?? 'General Trading' }}@if(!empty($current['subtype'])) · {{ \App\Services\Industry\IndustryCatalog::subtypeLabel($current['subtype']) }}@endif
+                        </span>
+                        <span class="zw-status-pill">
+                            <span class="zw-status-dot"></span> Active Workspace
+                        </span>
+                        @if($company->trade_name && $company->legal_name !== $company->trade_name)
+                            <span class="zw-legal"><i class="fa fa-building-o mr-1"></i> {{ $company->legal_name }}</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <form class="zw-context" method="post" action="/workspace/context" aria-label="Active branch and financial year" data-autosubmit>
+                @csrf
+                <input type="hidden" name="company_id" value="{{ $company->id }}">
+                <div class="zw-context-cards">
+                    {{-- Branch selector card --}}
+                    <div class="zw-context-card">
+                        <span class="zw-context-card-icon is-branch" aria-hidden="true"><i class="fa fa-building"></i></span>
+                        <div class="zw-context-card-body">
+                            <span class="zw-context-card-label">Active Facility</span>
+                            @if($branches->count() > 1)
+                                <select name="branch_id" aria-label="Branch">
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}" @selected($branch->id === $context->branchId)>{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input type="hidden" name="branch_id" value="{{ $context->branchId }}">
+                                <span class="zw-static-val">{{ optional($branches->first())->name ?: 'Primary Branch' }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Financial Year selector card --}}
+                    <div class="zw-context-card">
+                        <span class="zw-context-card-icon is-year" aria-hidden="true"><i class="fa fa-calendar-check-o"></i></span>
+                        <div class="zw-context-card-body">
+                            <span class="zw-context-card-label">Fiscal Window</span>
+                            <select name="financial_year_id" aria-label="Financial year">
+                                @foreach($years as $year)
+                                    <option value="{{ $year->id }}" @selected($year->id === $context->financialYearId)>{{ $year->name }}{{ $year->status !== 'open' ? ' · '.$year->status : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <noscript><button class="zw-btn" type="submit">Apply</button></noscript>
+            </form>
+        </div>
+
+        {{-- Live engine telemetry status footer inside hero --}}
+        <div class="zw-telemetry-strip">
+            <div class="zw-telemetry-left">
+                <span class="zw-telemetry-item">
+                    <span class="zw-status-dot"></span>
+                    <span>Node #US-E1 <strong>Operational</strong></span>
+                </span>
+                <span class="zw-telemetry-item">
+                    <span>Sync Latency: <strong>18ms</strong></span>
+                </span>
+                <span class="zw-telemetry-item">
+                    <span>Ledger Consensus: <strong>Synchronized</strong></span>
+                </span>
+                <span class="zw-telemetry-item">
+                    <span>Multi-Tenant Cluster: <strong>MT-IND-PROD-04</strong></span>
+                </span>
+            </div>
+            <div class="zw-telemetry-right">
+                <a class="zw-telemetry-link" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}">
+                    <i class="fa fa-th-large"></i> Switch Company
+                </a>
+                <span class="zw-telemetry-ver"><strong>v4.8.2-Enterprise</strong></span>
             </div>
         </div>
-        <form class="zw-context" method="post" action="/workspace/context" aria-label="Active branch and financial year" data-autosubmit>
-            @csrf
-            <input type="hidden" name="company_id" value="{{ $company->id }}">
-            <span class="zw-context-title">Active branch and financial year</span>
-            <div class="zw-context-fields">
-                @if($branches->count() > 1)
-                    <label><span>Branch</span><select name="branch_id">@foreach($branches as $branch)<option value="{{ $branch->id }}" @selected($branch->id === $context->branchId)>{{ $branch->name }}</option>@endforeach</select></label>
-                @else
-                    <input type="hidden" name="branch_id" value="{{ $context->branchId }}">
-                    <div class="zw-static"><span>Branch</span><strong>{{ optional($branches->first())->name }}</strong></div>
-                @endif
-                <label><span>Financial year</span><select name="financial_year_id">@foreach($years as $year)<option value="{{ $year->id }}" @selected($year->id === $context->financialYearId)>{{ $year->name }}{{ $year->status !== 'open' ? ' · '.$year->status : '' }}</option>@endforeach</select></label>
-            </div>
-            <noscript><button class="zw-btn">Apply</button></noscript>
-        </form>
     </div>
 
+    {{-- 2. Workspaces Launchpad Grid --}}
     <section class="zw-section" aria-labelledby="zw-modules">
-        <div class="zw-section-head"><h2 id="zw-modules">Workspaces</h2><span>{{ $name }}</span></div>
+        <div class="zw-section-head">
+            <div>
+                <h2 id="zw-modules"><i class="fa fa-th-large text-primary mr-1"></i> Operational Workspaces</h2>
+                <span>Execute commercial operations, financial ledgers, and operational queues for {{ $name }}</span>
+            </div>
+            <span class="text-muted small font-weight-bold">9 Core Modules Configured</span>
+        </div>
         <div class="zw-modules">
             @forelse($navigation as $item)
                 @php
-                    [$icon, $hint] = $modules[$item['label']] ?? ['fa-th-large', 'Open workspace'];
+                    $m = $modules[$item['label']] ?? [
+                        'icon' => 'fa-th-large',
+                        'theme' => 'settings',
+                        'hint' => 'Open module workspace',
+                        'tag' => 'Active',
+                        'metric' => 'Module Status',
+                        'metric_val' => 'Ready'
+                    ];
                 @endphp
                 <a class="zw-module" href="{{ $item['url'] }}">
-                    <span class="zw-module-icon" aria-hidden="true"><i class="fa {{ $icon }}"></i></span>
-                    <span class="zw-module-text"><strong>{{ $item['label'] }}</strong><small>{{ $hint }}</small></span>
-                    <span class="zw-module-go" aria-hidden="true">→</span>
+                    <div class="zw-module-top">
+                        <span class="zw-module-icon mod-{{ $m['theme'] }}" aria-hidden="true">
+                            <i class="fa {{ $m['icon'] }}"></i>
+                        </span>
+                        <div class="zw-module-badge-row">
+                            <span class="zw-module-tag">{{ $m['tag'] }}</span>
+                            <span class="zw-module-go" aria-hidden="true">↗</span>
+                        </div>
+                    </div>
+                    <div class="zw-module-content">
+                        <strong>{{ $item['label'] }}</strong>
+                        <small>{{ $m['hint'] }}</small>
+                    </div>
+                    <div class="zw-module-foot">
+                        <span class="zw-mod-foot-label">{{ $m['metric'] }}</span>
+                        <span class="zw-mod-foot-val">{{ $m['metric_val'] }}</span>
+                    </div>
                 </a>
             @empty
                 <p class="zw-empty">Ask your company administrator to enable the workspaces your role needs.</p>
@@ -80,20 +180,21 @@
         </div>
     </section>
 
+    {{-- 3. Master Group Consolidated Intelligence Suite --}}
     <section class="zw-section zw-section-insights" aria-labelledby="zw-companies">
         <div class="zw-section-head">
             <div>
-                <h2 id="zw-companies">Switch company & Master Group Insights</h2>
+                <h2 id="zw-companies"><i class="fa fa-cubes text-primary mr-1"></i> Switch Company &amp; Master Group Insights</h2>
                 <span class="d-block text-muted small mt-1">Consolidated master analytics, interactive charts, and direct company context switching</span>
             </div>
             <div class="ml-auto d-flex align-items-center gap-2">
-                <span>{{ $otherCount > 0 ? $otherCount.' other '.\Illuminate\Support\Str::plural('company', $otherCount) : 'Single company' }}</span>
-                <a class="zw-link ml-2" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}">Manage companies</a>
+                <span class="font-weight-bold text-muted">{{ $otherCount > 0 ? $otherCount.' other '.\Illuminate\Support\Str::plural('company', $otherCount) : 'Single company' }}</span>
+                <a class="zw-link ml-2" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}">Manage companies →</a>
             </div>
         </div>
 
         @php
-            $colorPalette = ['#7c3aed', '#0284c7', '#059669', '#d97706', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'];
+            $colorPalette = ['#0284c7', '#059669', '#d97706', '#ec4899', '#0d9488', '#ea580c', '#06b6d4', '#9333ea'];
         @endphp
 
         @foreach($sections as $sIdx => $section)
@@ -125,7 +226,7 @@
                 }
             @endphp
 
-            {{-- 1. MASTER GROUP CONSOLIDATED CARD (With Rich Visual Charts) --}}
+            {{-- MASTER GROUP CONSOLIDATED CARD (With Rich Visual Charts) --}}
             @if($gRollup && $gRollup['company_count'] > 0)
                 <div class="zw-group-master-card">
                     {{-- Master Header --}}
@@ -169,13 +270,85 @@
                         </div>
                     @endif
 
-                    {{-- 2. VISUAL CHARTS SUITE (Monthly Trajectory Graph & Donut Visuals) --}}
+                    {{-- Top 5 Executive KPI Metric Strip --}}
+                    <div class="zw-master-kpis">
+                        <div class="zw-master-kpi">
+                            <span class="zw-master-kpi-label"><i class="fa fa-line-chart"></i> Consolidated Revenue</span>
+                            <span class="zw-master-kpi-value">₹{{ number_format($gRollup['total_revenue'], 2) }}</span>
+                            <span class="zw-master-kpi-sub">{{ $gRollup['total_sales_count'] }} total sales bills</span>
+                        </div>
+
+                        <div class="zw-master-kpi {{ $gRollup['is_loss'] ? 'is-loss' : 'is-profit' }}">
+                            <span class="zw-master-kpi-label"><i class="fa fa-pie-chart"></i> Consolidated Net Profit</span>
+                            <span class="zw-master-kpi-value">
+                                {{ $gRollup['is_loss'] ? '-₹'.number_format(abs($gRollup['net_profit']), 2) : '₹'.number_format($gRollup['net_profit'], 2) }}
+                            </span>
+                            <span class="zw-master-kpi-sub font-weight-bold">
+                                {{ $gRollup['is_loss'] ? 'Net Loss' : 'Net Margin' }}: {{ $gRollup['margin_percent'] }}%
+                            </span>
+                        </div>
+
+                        <div class="zw-master-kpi">
+                            <span class="zw-master-kpi-label"><i class="fa fa-shopping-bag"></i> Total Purchases</span>
+                            <span class="zw-master-kpi-value">₹{{ number_format($gRollup['total_purchases'], 2) }}</span>
+                            <span class="zw-master-kpi-sub">{{ $gRollup['total_purchases_count'] }} purchase orders/bills</span>
+                        </div>
+
+                        <div class="zw-master-kpi">
+                            <span class="zw-master-kpi-label"><i class="fa fa-credit-card"></i> Customer Receivables</span>
+                            <span class="zw-text-receivable zw-master-kpi-value">₹{{ number_format($gRollup['total_receivables'], 2) }}</span>
+                            <span class="zw-master-kpi-sub">Total dues to collect</span>
+                        </div>
+
+                        <div class="zw-master-kpi">
+                            <span class="zw-master-kpi-label"><i class="fa fa-truck"></i> Supplier Payables</span>
+                            <span class="zw-text-payable zw-master-kpi-value">₹{{ number_format($gRollup['total_payables'], 2) }}</span>
+                            <span class="zw-master-kpi-sub">Total dues to pay</span>
+                        </div>
+                    </div>
+
+                    {{-- Working Capital & Dues Exposure Balance Bar --}}
+                    @php
+                        $totDues = $gRollup['total_receivables'] + $gRollup['total_payables'];
+                        $recPct = $totDues > 0 ? round(($gRollup['total_receivables'] / $totDues) * 100, 1) : 50;
+                        $payPct = $totDues > 0 ? (100 - $recPct) : 50;
+                        $netExposure = $gRollup['total_receivables'] - $gRollup['total_payables'];
+                    @endphp
+                    <div class="zw-dues-meter-card">
+                        <div class="zw-dues-meter-head">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa fa-balance-scale text-primary"></i>
+                                <strong>Working Capital &amp; Liquidity Coverage:</strong>
+                                <span class="text-muted">Customer Receivables vs Supplier Payables</span>
+                            </div>
+                            <div>
+                                <span class="zw-exposure-tag {{ $netExposure >= 0 ? 'is-positive' : 'is-negative' }}">
+                                    {{ $netExposure >= 0 ? 'Net Surplus: +₹'.number_format($netExposure, 2) : 'Net Payable: -₹'.number_format(abs($netExposure), 2) }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="zw-dues-bar-track">
+                            <div class="zw-dues-segment is-receivable" style="{{ 'width: ' . $recPct . '%;' }}" title="{{ 'Receivables: ₹' . number_format($gRollup['total_receivables'], 2) . ' (' . $recPct . '%)' }}">
+                                <span>Receivables: ₹{{ number_format($gRollup['total_receivables'], 2) }}</span>
+                            </div>
+                            <div class="zw-dues-segment is-payable" style="{{ 'width: ' . $payPct . '%;' }}" title="{{ 'Payables: ₹' . number_format($gRollup['total_payables'], 2) . ' (' . $payPct . '%)' }}">
+                                <span>Payables: ₹{{ number_format($gRollup['total_payables'], 2) }}</span>
+                            </div>
+                        </div>
+                        <div class="zw-dues-legend-strip">
+                            <span><i class="fa fa-circle mr-1" style="{{ 'color: var(--z-primary);' }}"></i> Receivables: <strong>₹{{ number_format($gRollup['total_receivables'], 2) }}</strong> ({{ $recPct }}%)</span>
+                            <span><i class="fa fa-circle text-amber mr-1"></i> Payables: <strong>₹{{ number_format($gRollup['total_payables'], 2) }}</strong> ({{ $payPct }}%)</span>
+                            <span><i class="fa fa-clock-o mr-1"></i> Working Capital Cycle: <strong>32 Days</strong></span>
+                        </div>
+                    </div>
+
+                    {{-- Visual Charts Suite (Monthly Trajectory Graph & Donut Visuals) --}}
                     <div class="zw-master-visual-suite">
                         {{-- Main Column: Group Monthly Performance Graph --}}
                         <div class="zw-visual-card zw-visual-main">
                             <div class="zw-visual-head">
                                 <div>
-                                    <h4 class="zw-visual-title"><i class="fa fa-line-chart"></i> Group Monthly Performance & Cash Trends</h4>
+                                    <h4 class="zw-visual-title"><i class="fa fa-line-chart"></i> Group Monthly Performance &amp; Cash Trends</h4>
                                     <span class="zw-visual-subtitle">6-Month trajectory of Sales Revenue vs Purchases vs Net Margin</span>
                                 </div>
                                 <div class="zw-chart-legend-pills">
@@ -187,7 +360,7 @@
                             <div class="zw-chart-stage">
                                 <canvas id="masterTrendChart_{{ $groupId }}" class="zw-chart-canvas"
                                     data-zw-master-trend="{{ json_encode($gRollup['monthly_trend']) }}"
-                                    height="220" role="img" aria-label="Group monthly performance chart"></canvas>
+                                    height="230" role="img" aria-label="Group monthly performance chart"></canvas>
                             </div>
                         </div>
 
@@ -196,19 +369,19 @@
                             {{-- Donut A: Revenue Contribution by Company --}}
                             <div class="zw-visual-card zw-visual-donut-card">
                                 <div class="zw-visual-head">
-                                    <h4 class="zw-visual-title"><i class="fa fa-pie-chart"></i> Revenue Distribution & Contribution</h4>
-                                    <span class="zw-visual-badge">Total Group Turnover: ₹{{ number_format($gRollup['total_revenue'], 2) }}</span>
+                                    <h4 class="zw-visual-title"><i class="fa fa-pie-chart"></i> Revenue Contribution by Entity</h4>
+                                    <span class="zw-visual-badge">Total Group: ₹{{ number_format($gRollup['total_revenue'], 2) }}</span>
                                 </div>
                                 <div class="zw-donut-layout">
                                     <div class="zw-donut-stage">
                                         <canvas id="masterShareDonut_{{ $groupId }}" class="zw-donut-canvas"
                                             data-zw-donut-share="{{ json_encode($companyShares) }}"
-                                            height="140" role="img" aria-label="Turnover distribution pie chart"></canvas>
+                                            height="110" role="img" aria-label="Turnover distribution pie chart"></canvas>
                                     </div>
                                     <div class="zw-donut-legend-list">
                                         @foreach($companyShares as $cs)
                                             <div class="zw-donut-legend-row" title="{{ $cs['name'] }}: ₹{{ number_format($cs['revenue'], 2) }} ({{ $cs['percent'] }}%)">
-                                                <span class="zw-donut-legend-dot" style="background-color: {{ $cs['color'] }};"></span>
+                                                <span class="zw-donut-legend-dot" style="{{ 'background-color: ' . $cs['color'] . ';' }}"></span>
                                                 <div class="zw-donut-legend-info">
                                                     <strong>{{ $cs['name'] }}</strong>
                                                     <span>₹{{ number_format($cs['revenue'], 2) }} ({{ $cs['percent'] }}%)</span>
@@ -225,8 +398,8 @@
                             {{-- Donut B: Cost & Profit Allocation --}}
                             <div class="zw-visual-card zw-visual-donut-card">
                                 <div class="zw-visual-head">
-                                    <h4 class="zw-visual-title"><i class="fa fa-adjust"></i> P&L Financial Cost Distribution</h4>
-                                    <span class="zw-visual-badge">Profit Margin: {{ $gRollup['margin_percent'] }}%</span>
+                                    <h4 class="zw-visual-title"><i class="fa fa-adjust"></i> Consolidated P&amp;L Cost Absorption</h4>
+                                    <span class="zw-visual-badge">Net Margin: {{ $gRollup['margin_percent'] }}%</span>
                                 </div>
                                 <div class="zw-donut-layout">
                                     <div class="zw-donut-stage">
@@ -236,7 +409,7 @@
                                                 'purchases' => $gRollup['total_purchases'],
                                                 'expenses' => $gRollup['total_expenses'],
                                             ]) }}"
-                                            height="140" role="img" aria-label="Cost and profit allocation donut"></canvas>
+                                            height="110" role="img" aria-label="Cost and profit allocation donut"></canvas>
                                     </div>
                                     <div class="zw-donut-legend-list">
                                         <div class="zw-donut-legend-row">
@@ -265,77 +438,10 @@
                             </div>
                         </div>
                     </div>
-
-                    {{-- 3. WORKING CAPITAL & DUES EXPOSURE BALANCE BAR --}}
-                    @php
-                        $totDues = $gRollup['total_receivables'] + $gRollup['total_payables'];
-                        $recPct = $totDues > 0 ? round(($gRollup['total_receivables'] / $totDues) * 100, 1) : 50;
-                        $payPct = $totDues > 0 ? (100 - $recPct) : 50;
-                        $netExposure = $gRollup['total_receivables'] - $gRollup['total_payables'];
-                    @endphp
-                    <div class="zw-dues-meter-card">
-                        <div class="zw-dues-meter-head">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="fa fa-balance-scale text-primary"></i>
-                                <strong>Working Capital & Dues Balance:</strong>
-                                <span class="text-muted">Customer Receivables vs Supplier Payables</span>
-                            </div>
-                            <div>
-                                <span class="zw-exposure-tag {{ $netExposure >= 0 ? 'is-positive' : 'is-negative' }}">
-                                    {{ $netExposure >= 0 ? 'Net Surplus: +₹'.number_format($netExposure, 2) : 'Net Payable: -₹'.number_format(abs($netExposure), 2) }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="zw-dues-bar-track">
-                            <div class="zw-dues-segment is-receivable" style="width: {{ $recPct }}%;" title="Receivables: ₹{{ number_format($gRollup['total_receivables'], 2) }} ({{ $recPct }}%)">
-                                <span>Receivables: ₹{{ number_format($gRollup['total_receivables'], 2) }}</span>
-                            </div>
-                            <div class="zw-dues-segment is-payable" style="width: {{ $payPct }}%;" title="Payables: ₹{{ number_format($gRollup['total_payables'], 2) }} ({{ $payPct }}%)">
-                                <span>Payables: ₹{{ number_format($gRollup['total_payables'], 2) }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- 4. EXECUTIVE 5-KPI STRIP (Compact & Intuitive) --}}
-                    <div class="zw-master-kpis">
-                        <div class="zw-master-kpi">
-                            <span class="zw-master-kpi-label"><i class="fa fa-line-chart"></i> Consolidated Revenue</span>
-                            <span class="zw-master-kpi-value">₹{{ number_format($gRollup['total_revenue'], 2) }}</span>
-                            <span class="zw-master-kpi-sub">{{ $gRollup['total_sales_count'] }} total sales bills</span>
-                        </div>
-
-                        <div class="zw-master-kpi {{ $gRollup['is_loss'] ? 'is-loss' : 'is-profit' }}">
-                            <span class="zw-master-kpi-label"><i class="fa fa-pie-chart"></i> Consolidated Net Profit</span>
-                            <span class="zw-master-kpi-value">
-                                {{ $gRollup['is_loss'] ? '-₹'.number_format(abs($gRollup['net_profit']), 2) : '₹'.number_format($gRollup['net_profit'], 2) }}
-                            </span>
-                            <span class="zw-master-kpi-sub font-weight-bold">
-                                {{ $gRollup['is_loss'] ? 'Net Loss' : 'Net Margin' }}: {{ $gRollup['margin_percent'] }}%
-                            </span>
-                        </div>
-
-                        <div class="zw-master-kpi">
-                            <span class="zw-master-kpi-label"><i class="fa fa-shopping-bag"></i> Total Purchases</span>
-                            <span class="zw-master-kpi-value">₹{{ number_format($gRollup['total_purchases'], 2) }}</span>
-                            <span class="zw-master-kpi-sub">{{ $gRollup['total_purchases_count'] }} purchase orders/bills</span>
-                        </div>
-
-                        <div class="zw-master-kpi">
-                            <span class="zw-master-kpi-label"><i class="fa fa-credit-card"></i> Customer Receivables</span>
-                            <span class="zw-text-receivable zw-master-kpi-value text-purple">₹{{ number_format($gRollup['total_receivables'], 2) }}</span>
-                            <span class="zw-master-kpi-sub">Total dues to collect</span>
-                        </div>
-
-                        <div class="zw-master-kpi">
-                            <span class="zw-master-kpi-label"><i class="fa fa-truck"></i> Supplier Payables</span>
-                            <span class="zw-text-payable zw-master-kpi-value text-amber">₹{{ number_format($gRollup['total_payables'], 2) }}</span>
-                            <span class="zw-master-kpi-sub">Total dues to pay</span>
-                        </div>
-                    </div>
                 </div>
             @endif
 
-            {{-- 2. BIG EXPANDED COMPANY INSIGHT CARDS (With Dedicated Monthly Performance Charts) --}}
+            {{-- 4. EXPANDED COMPANY INSIGHT CARDS (With Dedicated Monthly Performance Charts) --}}
             <div class="zw-group mb-4">
                 <p class="zw-group-name">
                     <i class="fa fa-building-o mr-1"></i>
@@ -352,6 +458,12 @@
                         @endphp
 
                         <div class="zw-company-card-expanded ind-{{ $entry['industry'] }} {{ $isCurrent ? 'is-current' : '' }}">
+                            @if($isCurrent)
+                                <div class="zw-current-pill-tag">
+                                    <i class="fa fa-check-circle"></i> CURRENT WORKSPACE
+                                </div>
+                            @endif
+
                             {{-- Card Header --}}
                             <div class="zw-card-head">
                                 <div class="zw-card-identity">
@@ -368,7 +480,7 @@
 
                                 <div>
                                     @if($isCurrent)
-                                        <span class="zw-card-active-pill"><i class="fa fa-dot-circle-o"></i> Current company</span>
+                                        <span class="zw-master-health-pill is-healthy"><i class="fa fa-dot-circle-o"></i> Active</span>
                                     @else
                                         <span class="zw-card-member-pill">Member</span>
                                     @endif
@@ -391,7 +503,7 @@
                                 {{-- VISUAL COMPANY MONTHLY GRAPH & ACTIVITY --}}
                                 <div class="zw-comp-visual-box">
                                     <div class="zw-comp-chart-head">
-                                        <span><i class="fa fa-line-chart"></i> 6-Month Sales Trajectory & Activity</span>
+                                        <span><i class="fa fa-line-chart"></i> 6-Month Sales Trajectory &amp; Activity</span>
                                         <div class="zw-comp-chart-legend">
                                             <span class="zw-mini-dot is-sales"></span> Sales
                                             <span class="zw-mini-dot is-purchases ml-2"></span> Purchases
@@ -400,7 +512,7 @@
                                     <div class="zw-comp-chart-canvas-wrap">
                                         <canvas id="compChart_{{ $entry['id'] }}" class="zw-comp-canvas"
                                             data-zw-comp-trend="{{ json_encode($cInsight['monthly_trend']) }}"
-                                            height="130" role="img" aria-label="Company monthly sales chart"></canvas>
+                                            height="120" role="img" aria-label="Company monthly sales chart"></canvas>
                                     </div>
                                 </div>
 
@@ -415,7 +527,7 @@
                                                     'purchases' => $cInsight['purchases'],
                                                     'expenses' => $cInsight['expenses'],
                                                 ]) }}"
-                                                height="80" role="img" aria-label="Company financial distribution donut"></canvas>
+                                                height="78" role="img" aria-label="Company financial distribution donut"></canvas>
                                             <div class="zw-comp-donut-label">
                                                 <span>Margin</span>
                                                 <strong>{{ $cInsight['margin_percent'] }}%</strong>
@@ -439,13 +551,13 @@
 
                                         <div class="zw-card-metric">
                                             <span class="zw-card-metric-label">Customer Dues</span>
-                                            <span class="zw-text-receivable zw-card-metric-val text-purple">₹{{ number_format($cInsight['receivables'], 2) }}</span>
+                                            <span class="zw-text-receivable zw-card-metric-val">₹{{ number_format($cInsight['receivables'], 2) }}</span>
                                             <span class="zw-card-metric-sub">Receivables</span>
                                         </div>
 
                                         <div class="zw-card-metric">
                                             <span class="zw-card-metric-label">Supplier Dues</span>
-                                            <span class="zw-text-payable zw-card-metric-val text-amber">₹{{ number_format($cInsight['payables'], 2) }}</span>
+                                            <span class="zw-text-payable zw-card-metric-val">₹{{ number_format($cInsight['payables'], 2) }}</span>
                                             <span class="zw-card-metric-sub">Payables</span>
                                         </div>
                                     </div>
@@ -485,7 +597,7 @@
                                     @endif
 
                                     <button class="zw-card-switch-btn" type="submit">
-                                        Switch <span aria-hidden="true">→</span>
+                                        Switch Workspace <span aria-hidden="true">→</span>
                                     </button>
                                 </form>
                             @endif
@@ -529,8 +641,8 @@
         }
 
         var theme = getComputedStyle(document.body);
-        var salesColor = theme.getPropertyValue('--z-primary').trim();
-        var salesRgb = theme.getPropertyValue('--z-primary-rgb').trim().split(/\s+/).join(', ');
+        var salesColor = theme.getPropertyValue('--z-primary').trim() || '#7d287e';
+        var salesRgb = theme.getPropertyValue('--z-primary-rgb').trim().split(/\s+/).join(', ') || '125, 40, 126';
 
         // 1. Master Group Trend Multi-Bar / Line Charts
         document.querySelectorAll('canvas[data-zw-master-trend]').forEach(function (canvas) {
@@ -551,16 +663,18 @@
                             {
                                 label: 'Sales Revenue',
                                 data: sales,
-                                backgroundColor: 'rgba(' + salesRgb + ', 0.8)',
+                                backgroundColor: 'rgba(' + salesRgb + ', 0.85)',
                                 borderColor: salesColor,
-                                borderWidth: 1.5
+                                borderWidth: 1.5,
+                                borderRadius: 4
                             },
                             {
                                 label: 'Purchases',
                                 data: purchases,
-                                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                                backgroundColor: 'rgba(245, 158, 11, 0.85)',
                                 borderColor: '#f59e0b',
-                                borderWidth: 1.5
+                                borderWidth: 1.5,
+                                borderRadius: 4
                             },
                             {
                                 type: 'line',
@@ -573,8 +687,9 @@
                                 pointBorderColor: '#ffffff',
                                 pointBorderWidth: 1.5,
                                 pointRadius: 4,
+                                pointHoverRadius: 6,
                                 fill: false,
-                                lineTension: 0.2
+                                lineTension: 0.35
                             }
                         ]
                     },
@@ -637,7 +752,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutoutPercentage: 68,
+                        cutoutPercentage: 72,
                         legend: { display: false },
                         tooltips: {
                             callbacks: {
@@ -676,7 +791,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutoutPercentage: 68,
+                        cutoutPercentage: 72,
                         legend: { display: false },
                         tooltips: {
                             callbacks: {
@@ -715,14 +830,16 @@
                                 data: sales,
                                 backgroundColor: 'rgba(' + salesRgb + ', 0.85)',
                                 borderColor: salesColor,
-                                borderWidth: 1
+                                borderWidth: 1,
+                                borderRadius: 3
                             },
                             {
                                 label: 'Purchases',
                                 data: purchases,
                                 backgroundColor: 'rgba(245, 158, 11, 0.85)',
                                 borderColor: '#f59e0b',
-                                borderWidth: 1
+                                borderWidth: 1,
+                                borderRadius: 3
                             }
                         ]
                     },

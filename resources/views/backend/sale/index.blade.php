@@ -71,8 +71,9 @@
         $usesGst = \App\Services\Tax\GstSetupService::usesGst();
         $gstinInvalid = fn ($value) => $usesGst && trim((string) $value) !== ''
             && !\App\Services\Tax\Gstin::parse($value)['is_valid'];
-        $isOpticalProfile = $isOpticalProfile ?? \App\Services\Industry\IndustryProfileService::isOptical();
-        $isTextileProfile = $isTextileProfile ?? \App\Services\Industry\IndustryProfileService::isTextile();
+        $reqContext = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $isOpticalProfile = $isOpticalProfile ?? \App\Services\Industry\IndustryProfileService::isOptical($reqContext);
+        $isTextileProfile = $isTextileProfile ?? \App\Services\Industry\IndustryProfileService::isTextile($reqContext);
     @endphp
     <div class="comm-split-grid{{ $returnsTab && request('returns') == 1 ? ' is-returns' : '' }}" id="comm-split-grid">
         <!-- Main: Sales Entry Workspace (Matching Screenshot 3) -->
@@ -1067,6 +1068,9 @@
                     </div>
                 </div>
                 <div class="voucher-actions-toolbar">
+                    <a href="#" id="sale-details-lab-receipt-btn" class="voucher-edit-btn btn-info text-white" title="Print Optical Lab Receipt" style="display: none;" target="_blank">
+                        <i class="fa fa-flask"></i> Lab Receipt
+                    </a>
                     <a href="#" id="sale-details-edit-btn" class="voucher-edit-btn" title="Open Full Bill in Edit Mode">
                         <i class="dripicons-document-edit"></i> Edit Bill
                     </a>
@@ -1092,6 +1096,8 @@
                         <div id="sale-details-customer-gstin" class="voucher-info-line text-primary font-weight-bold" style="display: none;"></div>
                         <div id="sale-details-customer-phone" class="voucher-info-line"></div>
                         <div id="sale-details-customer-address" class="voucher-info-line"></div>
+                        <div id="sale-details-end-user-name" class="voucher-info-line text-dark font-weight-bold" style="display: none;"></div>
+                        <div id="sale-details-order-no" class="voucher-info-line text-muted" style="display: none;"></div>
                     </div>
 
                     <div class="voucher-info-card">
@@ -1161,6 +1167,14 @@
                         <div class="voucher-totals-row">
                             <span>Shipping / Freight:</span>
                             <span id="sale-details-shipping-cost">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row" id="sale-details-fitting-row" style="display: none;">
+                            <span>Fitting Charge:</span>
+                            <span id="sale-details-fitting-cost">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row" id="sale-details-tinting-row" style="display: none;">
+                            <span>Tinting Cost:</span>
+                            <span id="sale-details-tinting-cost">₹0.00</span>
                         </div>
                         <div class="voucher-totals-row grand-total-row">
                             <span>Grand Total:</span>
@@ -2715,16 +2729,16 @@
                         </span>
                     </div>
                     ${window.isOpticalProfile ? `
-                    <div class="optical-rx-strip d-flex align-items-center mt-1 pt-1 border-top" style="gap: 4px; font-size: 11px;">
-                        <span class="badge badge-info text-white px-1 optical-type-badge" style="display: ${(item.type_name || item.product_type_name) ? 'inline-block' : 'none'};"><strong class="optical-type-text">${escapeHtml(item.type_name || item.product_type_name || '')}</strong></span>
-                        <span class="badge badge-light border text-muted px-1 optical-base-badge" style="display: ${item.base ? 'inline-block' : 'none'};">Base: <strong class="optical-base-text">${escapeHtml(item.base || '')}</strong></span>
-                        <span class="badge badge-light border text-muted px-1 optical-dia-badge" style="display: ${item.dia ? 'inline-block' : 'none'};">DIA: <strong class="optical-dia-text">${escapeHtml(item.dia || '')}</strong></span>
-                        <span class="text-muted ml-1" style="font-weight: 600;">Rx:</span>
-                        <input type="text" name="sph[]" class="form-control form-control-sm row-sph px-1 text-center" style="width: 55px; height: 24px; font-size: 11px;" placeholder="SPH" value="${escapeHtml(item.sph || '')}" title="Sphere (SPH)">
-                        <input type="text" name="cyl[]" class="form-control form-control-sm row-cyl px-1 text-center" style="width: 55px; height: 24px; font-size: 11px;" placeholder="CYL" value="${escapeHtml(item.cyl || '')}" title="Cylinder (CYL)">
-                        <input type="text" name="axis[]" class="form-control form-control-sm row-axis px-1 text-center" style="width: 50px; height: 24px; font-size: 11px;" placeholder="AXIS" value="${escapeHtml(item.axis || '')}" title="Axis (1-180)">
-                        <input type="text" name="addition[]" class="form-control form-control-sm row-addition px-1 text-center" style="width: 55px; height: 24px; font-size: 11px;" placeholder="ADD" value="${escapeHtml(item.addition || '')}" title="Addition (ADD)">
-                        <select name="lr[]" class="form-control form-control-sm custom-select-native row-lr px-1 text-center" style="width: 48px; height: 24px; font-size: 11px;" title="Eye (L/R/Pair)">
+                    <div class="optical-rx-strip d-flex align-items-center mt-1 pt-1 border-top" style="{{ 'gap: 4px; font-size: 11px;' }}">
+                        <span class="badge badge-info text-white px-1 optical-type-badge" style="{{ 'display:' }} ${(item.type_name || item.product_type_name) ? 'inline-block' : 'none'};"><strong class="optical-type-text">${escapeHtml(item.type_name || item.product_type_name || '')}</strong></span>
+                        <span class="badge badge-light border text-muted px-1 optical-base-badge" style="{{ 'display:' }} ${item.base ? 'inline-block' : 'none'};">Base: <strong class="optical-base-text">${escapeHtml(item.base || '')}</strong></span>
+                        <span class="badge badge-light border text-muted px-1 optical-dia-badge" style="{{ 'display:' }} ${item.dia ? 'inline-block' : 'none'};">DIA: <strong class="optical-dia-text">${escapeHtml(item.dia || '')}</strong></span>
+                        <span class="text-muted ml-1" style="{{ 'font-weight: 600;' }}">Rx:</span>
+                        <input type="text" name="sph[]" class="form-control form-control-sm row-sph px-1 text-center" style="{{ 'width: 55px; height: 24px; font-size: 11px;' }}" placeholder="SPH" value="${escapeHtml(item.sph || '')}" title="Sphere (SPH)">
+                        <input type="text" name="cyl[]" class="form-control form-control-sm row-cyl px-1 text-center" style="{{ 'width: 55px; height: 24px; font-size: 11px;' }}" placeholder="CYL" value="${escapeHtml(item.cyl || '')}" title="Cylinder (CYL)">
+                        <input type="text" name="axis[]" class="form-control form-control-sm row-axis px-1 text-center" style="{{ 'width: 50px; height: 24px; font-size: 11px;' }}" placeholder="AXIS" value="${escapeHtml(item.axis || '')}" title="Axis (1-180)">
+                        <input type="text" name="addition[]" class="form-control form-control-sm row-addition px-1 text-center" style="{{ 'width: 55px; height: 24px; font-size: 11px;' }}" placeholder="ADD" value="${escapeHtml(item.addition || '')}" title="Addition (ADD)">
+                        <select name="lr[]" class="form-control form-control-sm custom-select-native row-lr px-1 text-center" style="{{ 'width: 48px; height: 24px; font-size: 11px;' }}" title="Eye (L/R/Pair)">
                             <option value="" ${!item.lr ? 'selected' : ''}>-</option>
                             <option value="L" ${item.lr === 'L' ? 'selected' : ''}>L</option>
                             <option value="R" ${item.lr === 'R' ? 'selected' : ''}>R</option>
@@ -4987,6 +5001,17 @@
                     $('#sale-details-customer-address').hide();
                 }
 
+                if (s.end_user_name) {
+                    $('#sale-details-end-user-name').html('<i class="dripicons-user text-primary mr-1"></i> Patient: ' + s.end_user_name + (s.end_user_phone ? ' (' + s.end_user_phone + ')' : '')).show();
+                } else {
+                    $('#sale-details-end-user-name').hide();
+                }
+                if (s.customer_order_no) {
+                    $('#sale-details-order-no').html('<i class="dripicons-tag text-muted mr-1"></i> Order Ref: ' + s.customer_order_no).show();
+                } else {
+                    $('#sale-details-order-no').hide();
+                }
+
                 // Voucher Meta Card
                 var w = s.warehouse || {};
                 var warehouseName = w.name || 'Main Warehouse';
@@ -5019,11 +5044,24 @@
                         var subtotal = Number(item.total || 0);
                         itemsPriceTotal += subtotal;
 
+                        var rxBadges = '';
+                        if (item.sph || item.cyl || item.axis || item.addition || item.dia || item.lr) {
+                            rxBadges = '<div class="mt-1 d-flex flex-wrap" style="{{ 'font-size: 11px; gap: 4px;' }}">' +
+                                (item.lr ? '<span class="badge badge-info px-1">Eye: ' + item.lr + '</span>' : '') +
+                                (item.sph !== null && item.sph !== '' ? '<span class="badge badge-light border px-1">SPH: ' + item.sph + '</span>' : '') +
+                                (item.cyl !== null && item.cyl !== '' ? '<span class="badge badge-light border px-1">CYL: ' + item.cyl + '</span>' : '') +
+                                (item.axis !== null && item.axis !== '' ? '<span class="badge badge-light border px-1">AXIS: ' + item.axis + '&deg;</span>' : '') +
+                                (item.addition !== null && item.addition !== '' ? '<span class="badge badge-light border px-1">ADD: ' + item.addition + '</span>' : '') +
+                                (item.dia ? '<span class="badge badge-light border px-1">DIA: ' + item.dia + 'mm</span>' : '') +
+                            '</div>';
+                        }
+
                         var rowHtml = '<tr>' +
                             '<td class="text-center align-middle">' + (idx + 1) + '</td>' +
                             '<td class="align-middle">' +
                                 '<div class="font-weight-bold text-dark">' + name + '</div>' +
-                                (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                                (code ? '<span class="badge badge-light border text-muted mt-1 mr-1">' + code + '</span>' : '') +
+                                rxBadges +
                             '</td>' +
                             '<td class="align-middle">' +
                                 (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
@@ -5057,6 +5095,28 @@
                 $('#sale-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 $('#sale-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 $('#sale-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+                var fitCharge = Number(s.fitting_charge || 0);
+                if (fitCharge > 0) {
+                    $('#sale-details-fitting-cost').text('₹' + fitCharge.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#sale-details-fitting-row').show();
+                } else {
+                    $('#sale-details-fitting-row').hide();
+                }
+
+                var tintCost = Number(s.tinting_cost || 0);
+                if (tintCost > 0) {
+                    $('#sale-details-tinting-cost').text('₹' + tintCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#sale-details-tinting-row').show();
+                } else {
+                    $('#sale-details-tinting-row').hide();
+                }
+
+                if (window.isOpticalProfile || fitCharge > 0 || tintCost > 0 || items.some(function(it) { return it.sph || it.cyl; })) {
+                    $('#sale-details-lab-receipt-btn').attr('href', "{{ url('sales/lab_receipt') }}/" + (s.id || saleId)).show();
+                } else {
+                    $('#sale-details-lab-receipt-btn').hide();
+                }
 
                 if (dueAmount > 0.01) {
                     $('#sale-details-due-row').removeClass('settled').addClass('has-due');

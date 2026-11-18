@@ -71,6 +71,9 @@
         $usesGst = \App\Services\Tax\GstSetupService::usesGst();
         $gstinInvalid = fn ($value) => $usesGst && trim((string) $value) !== ''
             && !\App\Services\Tax\Gstin::parse($value)['is_valid'];
+        $reqContext = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $isOpticalProfile = $isOpticalProfile ?? \App\Services\Industry\IndustryProfileService::isOptical($reqContext);
+        $isTextileProfile = $isTextileProfile ?? \App\Services\Industry\IndustryProfileService::isTextile($reqContext);
     @endphp
     <div class="comm-split-grid{{ $returnsTab && request('returns') == 1 ? ' is-returns' : '' }}" id="comm-split-grid">
         <!-- Main: Purchase Entry Workspace (Matching Screenshot 3) -->
@@ -92,6 +95,15 @@
                 <input type="hidden" name="payment_status" id="hidden-payment-status" value="1">
                 <input type="hidden" name="paid_amount" id="hidden-paid-amount" value="0">
                 @if(config('commercial.enabled'))<input type="hidden" name="idempotency_key" value="{{ (string) Illuminate\Support\Str::uuid() }}">@endif
+                @if(!empty($isOpticalProfile))
+                <input type="hidden" name="end_user_name" id="hidden-end-user-name">
+                <input type="hidden" name="end_user_phone" id="hidden-end-user-phone">
+                <input type="hidden" name="end_user_email" id="hidden-end-user-email">
+                <input type="hidden" name="end_user_address" id="hidden-end-user-address">
+                <input type="hidden" name="fitting_charge" id="hidden-fitting-charge" step="any">
+                <input type="hidden" name="tinting_cost" id="hidden-tinting-cost" step="any">
+                <input type="hidden" name="customer_order_no" id="hidden-customer-order-no">
+                @endif
 
                 <!-- 2. Primary Document Fields (Ultra-Compact 2-Row Layout, ~52px height, >60% reduced) -->
                 <div class="desk-card doc-primary-fields compact-fields mb-1">
@@ -207,6 +219,11 @@
                             <a href="javascript:void(0)" id="btn-quick-logistics" class="u-c-primary u-fw-600 u-ml-auto u-tdec-none u-ws-nowrap">
                                 + Transport &amp; Remarks &rarr;
                             </a>
+                            @if(!empty($isOpticalProfile))
+                            <a href="javascript:void(0)" id="btn-quick-optical" class="text-info font-weight-bold ml-2 text-decoration-none text-nowrap">
+                                + Optical &amp; Warranty &rarr;
+                            </a>
+                            @endif
                         </div>
                         </div>
                     </div>
@@ -815,6 +832,11 @@
                     <li class="nav-item">
                         <a class="nav-link" id="tab-settlement" data-toggle="tab" href="#content-settlement" role="tab">Settlement</a>
                     </li>
+                    @if(!empty($isOpticalProfile))
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold text-info" id="tab-optical" data-toggle="tab" href="#content-optical" role="tab"><i class="dripicons-preview mr-1"></i> Optical &amp; Warranty</a>
+                    </li>
+                    @endif
                 </ul>
                 <div class="tab-content" id="chargesTabContent">
                     <!-- Transport & Bales -->
@@ -941,6 +963,49 @@
                             </div>
                         </div>
                     </div>
+
+                    @if(!empty($isOpticalProfile))
+                    <!-- Optical & Warranty Tab -->
+                    <div class="tab-pane fade" id="content-optical" role="tabpanel">
+                        <h6 class="text-primary font-weight-bold mb-2"><i class="dripicons-user mr-1"></i> End User Details (Captured for Warranty)</h6>
+                        <div class="form-row">
+                            <div class="col-md-6 form-group">
+                                <label class="text-muted font-weight-bold">End User Name</label>
+                                <input type="text" id="drawer-end-user-name" class="form-control" placeholder="Full name of buyer">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="text-muted font-weight-bold">End User Phone</label>
+                                <input type="text" id="drawer-end-user-phone" class="form-control" placeholder="Phone number">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 form-group">
+                                <label class="text-muted font-weight-bold">End User Email</label>
+                                <input type="email" id="drawer-end-user-email" class="form-control" placeholder="Email (optional)">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="text-muted font-weight-bold">End User Address</label>
+                                <input type="text" id="drawer-end-user-address" class="form-control" placeholder="City or Address">
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <h6 class="text-primary font-weight-bold mb-2"><i class="dripicons-wallet mr-1"></i> Optical Charges &amp; Reference</h6>
+                        <div class="form-row">
+                            <div class="col-md-4 form-group">
+                                <label class="text-muted font-weight-bold">Fitting Charge (₹)</label>
+                                <input type="number" id="drawer-fitting-charge" class="form-control" step="any" placeholder="0.00">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label class="text-muted font-weight-bold">Tinting Cost (₹)</label>
+                                <input type="number" id="drawer-tinting-cost" class="form-control" step="any" placeholder="0.00">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label class="text-muted font-weight-bold">Customer Order No</label>
+                                <input type="text" id="drawer-customer-order-no" class="form-control" placeholder="Customer Order No.">
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
             <div class="modal-footer">
@@ -1649,6 +1714,9 @@
 (function() {
     'use strict';
 
+    window.isOpticalProfile = {{ !empty($isOpticalProfile) ? 'true' : 'false' }};
+    window.isTextileProfile = {{ !empty($isTextileProfile) ? 'true' : 'false' }};
+
     // --- Product List Autocomplete & Item Master Data ---
     @php
         $gstRates = app(\App\Services\Tax\GstSetupService::class)->currentRates();
@@ -1674,6 +1742,12 @@
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
                 'label' => (string)$prod->code . ' - ' . (string)$prod->name,
+                ...(!empty($isOpticalProfile) ? [
+                    'base' => (string)($prod->base ?? ''),
+                    'addition' => (string)($prod->addition ?? ''),
+                    'lr' => (string)($prod->lr ?? ''),
+                    'dia' => (string)($prod->dia ?? ''),
+                ] : []),
             ];
         }
         foreach($lims_product_list_with_variant as $prod) {
@@ -1695,6 +1769,12 @@
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
                 'label' => (string)($prod->item_code ?? $prod->code) . ' - ' . (string)$prod->name,
+                ...(!empty($isOpticalProfile) ? [
+                    'base' => (string)($prod->base ?? ''),
+                    'addition' => (string)($prod->addition ?? ''),
+                    'lr' => (string)($prod->lr ?? ''),
+                    'dia' => (string)($prod->dia ?? ''),
+                ] : []),
             ];
         }
     @endphp
@@ -2046,6 +2126,43 @@
         tr.find('.row-tax-amount-input').val(taxAmount.toFixed(decimalPlaces));
         tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
 
+        // Populate Optical Lens Specifications if present
+        if (window.isOpticalProfile) {
+            if (p.base !== undefined && p.base !== null && p.base !== '') {
+                tr.find('.row-base').val(p.base);
+                tr.find('.optical-base-text').text(p.base);
+                tr.find('.optical-base-badge').show();
+            } else {
+                tr.find('.row-base').val('');
+                tr.find('.optical-base-badge').hide();
+            }
+
+            if (p.dia !== undefined && p.dia !== null && p.dia !== '') {
+                tr.find('.row-dia').val(p.dia);
+                tr.find('.optical-dia-text').text(p.dia);
+                tr.find('.optical-dia-badge').show();
+            } else {
+                tr.find('.row-dia').val('');
+                tr.find('.optical-dia-badge').hide();
+            }
+
+            if (p.addition !== undefined && p.addition !== null && p.addition !== '') {
+                tr.find('.row-addition').val(p.addition);
+            }
+
+            if (p.lr !== undefined && p.lr !== null && p.lr !== '') {
+                tr.find('.row-lr').val(p.lr);
+            }
+
+            var typeName = p.type_name || p.product_type_name || p.product_type;
+            if (typeName) {
+                tr.find('.optical-type-text').text(typeName);
+                tr.find('.optical-type-badge').show();
+            } else {
+                tr.find('.optical-type-badge').hide();
+            }
+        }
+
         recalcTableSummary();
         $(document).trigger('command-center-row-product', [tr]);
     }
@@ -2349,6 +2466,25 @@
                             <i class="dripicons-tag mr-1 text-primary"></i>Lot: <span class="row-lot-text">${escapeHtml(initialBatch)}</span>
                         </span>
                     </div>
+                    ${window.isOpticalProfile ? `
+                    <div class="optical-rx-strip d-flex align-items-center mt-1 pt-1 border-top" style="{{ 'gap: 4px; font-size: 11px;' }}">
+                        <span class="badge badge-info text-white px-1 optical-type-badge" style="{{ 'display:' }} ${(item.type_name || item.product_type_name) ? 'inline-block' : 'none'};"><strong class="optical-type-text">${escapeHtml(item.type_name || item.product_type_name || '')}</strong></span>
+                        <span class="badge badge-light border text-muted px-1 optical-base-badge" style="{{ 'display:' }} ${item.base ? 'inline-block' : 'none'};">Base: <strong class="optical-base-text">${escapeHtml(item.base || '')}</strong></span>
+                        <span class="badge badge-light border text-muted px-1 optical-dia-badge" style="{{ 'display:' }} ${item.dia ? 'inline-block' : 'none'};">DIA: <strong class="optical-dia-text">${escapeHtml(item.dia || '')}</strong></span>
+                        <span class="text-muted ml-1" style="{{ 'font-weight: 600;' }}">Rx:</span>
+                        <input type="text" name="sph[]" class="form-control form-control-sm row-sph px-1 text-center" style="{{ 'width: 55px; height: 24px; font-size: 11px;' }}" placeholder="SPH" value="${escapeHtml(item.sph || '')}" title="Sphere (SPH)">
+                        <input type="text" name="cyl[]" class="form-control form-control-sm row-cyl px-1 text-center" style="{{ 'width: 55px; height: 24px; font-size: 11px;' }}" placeholder="CYL" value="${escapeHtml(item.cyl || '')}" title="Cylinder (CYL)">
+                        <input type="text" name="axis[]" class="form-control form-control-sm row-axis px-1 text-center" style="{{ 'width: 50px; height: 24px; font-size: 11px;' }}" placeholder="AXIS" value="${escapeHtml(item.axis || '')}" title="Axis (1-180)">
+                        <input type="text" name="addition[]" class="form-control form-control-sm row-addition px-1 text-center" style="{{ 'width: 55px; height: 24px; font-size: 11px;' }}" placeholder="ADD" value="${escapeHtml(item.addition || '')}" title="Addition (ADD)">
+                        <select name="lr[]" class="form-control form-control-sm custom-select-native row-lr px-1 text-center" style="{{ 'width: 48px; height: 24px; font-size: 11px;' }}" title="Eye (L/R/Pair)">
+                            <option value="" ${!item.lr ? 'selected' : ''}>-</option>
+                            <option value="L" ${item.lr === 'L' ? 'selected' : ''}>L</option>
+                            <option value="R" ${item.lr === 'R' ? 'selected' : ''}>R</option>
+                            <option value="Pair" ${item.lr === 'Pair' ? 'selected' : ''}>Pair</option>
+                        </select>
+                        <input type="hidden" name="base[]" class="row-base" value="${escapeHtml(item.base || '')}">
+                        <input type="hidden" name="dia[]" class="row-dia" value="${escapeHtml(item.dia || '')}">
+                    </div>` : ''}
                 </td>
                 <td>
                     <select name="purchase_type_line[]" class="form-control form-control-sm custom-select-native row-type-select">
@@ -4020,6 +4156,13 @@
                     if (attr.station_to) $('#drawer-station-to, #hidden-station-to').val(attr.station_to);
                     if (attr.order_no) $('#drawer-order-no, #hidden-order-no').val(attr.order_no);
                     if (attr.credit_days) setCreditDays(attr.credit_days);
+                    if (attr.end_user_name || p.end_user_name) $('#drawer-end-user-name, #hidden-end-user-name').val(attr.end_user_name || p.end_user_name);
+                    if (attr.end_user_phone || p.end_user_phone) $('#drawer-end-user-phone, #hidden-end-user-phone').val(attr.end_user_phone || p.end_user_phone);
+                    if (attr.end_user_email || p.end_user_email) $('#drawer-end-user-email, #hidden-end-user-email').val(attr.end_user_email || p.end_user_email);
+                    if (attr.end_user_address || p.end_user_address) $('#drawer-end-user-address, #hidden-end-user-address').val(attr.end_user_address || p.end_user_address);
+                    if (attr.fitting_charge || p.fitting_charge) $('#drawer-fitting-charge, #hidden-fitting-charge').val(attr.fitting_charge || p.fitting_charge);
+                    if (attr.tinting_cost || p.tinting_cost) $('#drawer-tinting-cost, #hidden-tinting-cost').val(attr.tinting_cost || p.tinting_cost);
+                    if (attr.customer_order_no || p.customer_order_no) $('#drawer-customer-order-no, #hidden-customer-order-no').val(attr.customer_order_no || p.customer_order_no);
                 }
 
                 recalcTableSummary();
@@ -4176,15 +4319,34 @@
         $('#input-paying-method').val($('#drawer-paying-method').val());
         $('#hidden-paid-amount').val($('#drawer-paid-amount').val());
 
+        if (window.isOpticalProfile) {
+            $('#hidden-end-user-name').val($('#drawer-end-user-name').val() || '');
+            $('#hidden-end-user-phone').val($('#drawer-end-user-phone').val() || '');
+            $('#hidden-end-user-email').val($('#drawer-end-user-email').val() || '');
+            $('#hidden-end-user-address').val($('#drawer-end-user-address').val() || '');
+            $('#hidden-fitting-charge').val($('#drawer-fitting-charge').val() || '');
+            $('#hidden-tinting-cost').val($('#drawer-tinting-cost').val() || '');
+            $('#hidden-customer-order-no').val($('#drawer-customer-order-no').val() || '');
+        }
+
         var count = 0;
         if ($('#drawer-bale-no').val()) count++;
         if ($('#drawer-lr-no').val()) count++;
         if ($('#drawer-note').val()) count++;
         if (parseFloat($('#drawer-paid-amount').val()) > 0) count++;
+        if (window.isOpticalProfile) {
+            if ($('#drawer-end-user-name').val()) count++;
+            if (parseFloat($('#drawer-fitting-charge').val()) > 0) count++;
+        }
         $('#charges-badge-count').text(count);
         if ($('#drawer-note').val()) {
             $('#remarks-summary-preview').text('Remarks: ' + $('#drawer-note').val().slice(0, 40) + '...');
         }
+    });
+
+    $('#btn-quick-optical').on('click', function() {
+        $('#tab-optical').tab('show');
+        $('#charges-drawer').modal('show');
     });
 
     // Pill Segmented Mode Toggle (Cash/Credit)
@@ -4602,6 +4764,17 @@
                             '<td class="align-middle">' +
                                 '<div class="font-weight-bold text-dark">' + name + '</div>' +
                                 (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                                (function() {
+                                    if (!item.sph && !item.cyl && !item.axis && !item.addition && !item.dia && !item.lr) return '';
+                                    var badges = '';
+                                    if (item.lr) badges += '<span class="badge badge-primary px-1">Eye: ' + escapeHtml(item.lr) + '</span> ';
+                                    if (item.sph) badges += '<span class="badge badge-light border px-1">SPH: ' + escapeHtml(item.sph) + '</span> ';
+                                    if (item.cyl) badges += '<span class="badge badge-light border px-1">CYL: ' + escapeHtml(item.cyl) + '</span> ';
+                                    if (item.axis) badges += '<span class="badge badge-light border px-1">AXIS: ' + escapeHtml(item.axis) + '</span> ';
+                                    if (item.addition) badges += '<span class="badge badge-light border px-1">ADD: ' + escapeHtml(item.addition) + '</span> ';
+                                    if (item.dia) badges += '<span class="badge badge-light border px-1">DIA: ' + escapeHtml(item.dia) + '</span> ';
+                                    return '<div class="mt-1 d-flex flex-wrap align-items-center" style="{{ 'gap: 4px; font-size: 11px;' }}">' + badges + '</div>';
+                                })() +
                             '</td>' +
                             '<td class="align-middle">' +
                                 (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
