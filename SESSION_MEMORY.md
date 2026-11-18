@@ -1,3 +1,52 @@
+## Resolution of All 31 PR #18 Review Comments, origin/main Sync & Ready-to-Merge Status — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - Complete verification and remediation of all 31 review comments posted by Copilot and ChatGPT Codex on PR #18 ([#18](https://github.com/vigneshsinna/zolo-erp-pro/pull/18)).
+  - Clean synchronization between `origin/main` and `ui` branch.
+  - Active branch `ui` (`v:\pers\Freelance\zolo-erp-pro`).
+
+- **Key Architectural Fixes & Audit Remediation:**
+  1. **Financial & Expense Multi-Tenancy:**
+     - Propagated `CompanyContextResolver` exceptions in `ExpenseApiController.php`.
+     - Validated that `account_id` strictly belongs to the active company and is active.
+     - Resolved credit ledger from account's `chart_of_account_id` instead of hardcoding cash.
+     - Wrapped expense creation and double-entry GL journal posting in atomic `DB::transaction()`.
+  2. **Inventory Stock Count Persistence:**
+     - Added `company_id` to `StockCount::$fillable`.
+     - Validated submitted count items array and persisted authentic `StockCount` records before returning 201.
+     - Fixed missing `Auth` and `DB` facade imports in `InventoryApiController.php`.
+  3. **Offline Mobile Sales & POS Parity:**
+     - Enforced `sales-add` permission via `CommercialPermission` and `\Spatie\Permission\Models\Role`.
+     - Validated `grand_total > 0` and `0 <= paid_amount <= grand_total`.
+     - Honored company-scoped `Idempotency-Key` and `client_timestamp`.
+     - Resolved submitted catalog items strictly against the active company catalog.
+     - Created explicit "Counter Retail" walk-in customer when customer is unassigned.
+     - Initialized `product_warehouse` stock for on-the-fly created counter items to prevent stock-out rejections.
+     - Normalized mobile payment modes (`UPI`, `QR`, `ONLINE`, `TRANSFER` -> `Bank`; `CARD` -> `Credit Card`; `CHEQUE` -> `Cheque`).
+     - Routed mobile sales through `SaleService::createSale()`, issuing stock decrements via `InventoryMovementService::issue()`, updating COGS, and posting double-entry journals atomically in `DB::transaction()`.
+  4. **Water Logistics DB Column Guards:**
+     - Guarded `total_km`, `motor_pumping_charge`, and `waiting_charge` updates with `Schema::hasColumn('water_tanker_trips', ...)` checks.
+  5. **Product Type Company Ownership & Authorization:**
+     - Enforced `products-add`, `products-edit`, and `products-delete` permissions on `ProductTypeController.php`.
+     - Scoped `edit()`, `update()`, and `destroy()` strictly to `ProductType::where('company_id', $companyId)->findOrFail($id)`.
+  6. **Quick Product Modal & Optical Specifications:**
+     - Guarded `#file` input access with `var fileEl = document.getElementById('file'); if (fileEl && fileEl.files && fileEl.files.length > 0)` to support Optical profiles that do not render `#file`.
+     - In `PackingSlipController::genInvoice()`, loaded `PackingSlipProduct` to enrich only selected lines with Rx optical fields.
+     - Added optical/warranty header fields (`end_user_name`, `end_user_phone`, `end_user_email`, `end_user_address`, `fitting_charge`, `tinting_cost`, `customer_order_no`) to `attributes()` and `$saleFill`.
+     - Enforced batch expiry date validation and metadata persistence (`mfg_date`, `mrp`) in `PurchaseService.php`.
+     - Added `->middleware('hasPermanentDeletePermission')` and stock reversal before force deleting sales and purchases.
+
+- **Branch Synchronization & Clean Status:**
+  - Merged `origin/main` into `ui` with zero merge conflicts via the `ort` strategy.
+  - Pushed to `origin/ui` (commit `871b1aa`).
+  - GitHub comparison confirms: `ui` is **94 commits directly ahead of `main` and 0 commits behind** (`ahead_by: 94, behind_by: 0`).
+
+- **Verification & Test Coverage:**
+  - `php artisan test tests/Feature/OfflineSyncAndPosParityTest.php tests/Feature/LotNumberCommercialTest.php tests/Feature/QuickEditProductModalTest.php tests/Feature/ProductTypeAndOpticalSpecsTest.php`: **15 passed, 0 failed, 117 assertions (11.66s)**.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php tests/Feature/WorkspaceSecurityTest.php`: **16 passed, 0 failed, 77 assertions (12.19s)**.
+
+---
+
 ## Prominent Company Logo & Legal/Trade Name in Dashboard Header, Persistent Topbar Company Identity & Switch Company Trigger — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -294,6 +343,55 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Resolution of All 31 PR #18 Review Comments, origin/main Sync & Ready-to-Merge Status — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - Complete verification and remediation of all 31 review comments posted by Copilot and ChatGPT Codex on PR #18 ([#18](https://github.com/vigneshsinna/zolo-erp-pro/pull/18)).
+  - Clean synchronization between `origin/main` and `ui` branch.
+  - Active branch `ui` (`v:\pers\Freelance\zolo-erp-pro`).
+
+- **Key Architectural Fixes & Audit Remediation:**
+  1. **Financial & Expense Multi-Tenancy:**
+     - Propagated `CompanyContextResolver` exceptions in `ExpenseApiController.php`.
+     - Validated that `account_id` strictly belongs to the active company and is active.
+     - Resolved credit ledger from account's `chart_of_account_id` instead of hardcoding cash.
+     - Wrapped expense creation and double-entry GL journal posting in atomic `DB::transaction()`.
+  2. **Inventory Stock Count Persistence:**
+     - Added `company_id` to `StockCount::$fillable`.
+     - Validated submitted count items array and persisted authentic `StockCount` records before returning 201.
+     - Fixed missing `Auth` and `DB` facade imports in `InventoryApiController.php`.
+  3. **Offline Mobile Sales & POS Parity:**
+     - Enforced `sales-add` permission via `CommercialPermission` and `\Spatie\Permission\Models\Role`.
+     - Validated `grand_total > 0` and `0 <= paid_amount <= grand_total`.
+     - Honored company-scoped `Idempotency-Key` and `client_timestamp`.
+     - Resolved submitted catalog items strictly against the active company catalog.
+     - Created explicit "Counter Retail" walk-in customer when customer is unassigned.
+     - Initialized `product_warehouse` stock for on-the-fly created counter items to prevent stock-out rejections.
+     - Normalized mobile payment modes (`UPI`, `QR`, `ONLINE`, `TRANSFER` -> `Bank`; `CARD` -> `Credit Card`; `CHEQUE` -> `Cheque`).
+     - Routed mobile sales through `SaleService::createSale()`, issuing stock decrements via `InventoryMovementService::issue()`, updating COGS, and posting double-entry journals atomically in `DB::transaction()`.
+  4. **Water Logistics DB Column Guards:**
+     - Guarded `total_km`, `motor_pumping_charge`, and `waiting_charge` updates with `Schema::hasColumn('water_tanker_trips', ...)` checks.
+  5. **Product Type Company Ownership & Authorization:**
+     - Enforced `products-add`, `products-edit`, and `products-delete` permissions on `ProductTypeController.php`.
+     - Scoped `edit()`, `update()`, and `destroy()` strictly to `ProductType::where('company_id', $companyId)->findOrFail($id)`.
+  6. **Quick Product Modal & Optical Specifications:**
+     - Guarded `#file` input access with `var fileEl = document.getElementById('file'); if (fileEl && fileEl.files && fileEl.files.length > 0)` to support Optical profiles that do not render `#file`.
+     - In `PackingSlipController::genInvoice()`, loaded `PackingSlipProduct` to enrich only selected lines with Rx optical fields.
+     - Added optical/warranty header fields (`end_user_name`, `end_user_phone`, `end_user_email`, `end_user_address`, `fitting_charge`, `tinting_cost`, `customer_order_no`) to `attributes()` and `$saleFill`.
+     - Enforced batch expiry date validation and metadata persistence (`mfg_date`, `mrp`) in `PurchaseService.php`.
+     - Added `->middleware('hasPermanentDeletePermission')` and stock reversal before force deleting sales and purchases.
+
+- **Branch Synchronization & Clean Status:**
+  - Merged `origin/main` into `ui` with zero merge conflicts via the `ort` strategy.
+  - Pushed to `origin/ui` (commit `871b1aa`).
+  - GitHub comparison confirms: `ui` is **94 commits directly ahead of `main` and 0 commits behind** (`ahead_by: 94, behind_by: 0`).
+
+- **Verification & Test Coverage:**
+  - `php artisan test tests/Feature/OfflineSyncAndPosParityTest.php tests/Feature/LotNumberCommercialTest.php tests/Feature/QuickEditProductModalTest.php tests/Feature/ProductTypeAndOpticalSpecsTest.php`: **15 passed, 0 failed, 117 assertions (11.66s)**.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php tests/Feature/WorkspaceSecurityTest.php`: **16 passed, 0 failed, 77 assertions (12.19s)**.
 
 ---
 
