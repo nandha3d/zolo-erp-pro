@@ -344,6 +344,22 @@
 
 ---
 
+## PR #20 Successfully Merged into Main — `main` and `ui` Are 100% Synchronized — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#20: Merge UI enhancements and PR #18 review fixes into main](https://github.com/vigneshsinna/zolo-erp-pro/pull/20) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`56f88835b13175fe69433e9ddc1f765d27d21d04`](https://github.com/vigneshsinna/zolo-erp-pro/commit/56f88835b13175fe69433e9ddc1f765d27d21d04).
+  - Merged `origin/main` back into `ui` (fast-forward to `56f8883`).
+  - Branch Comparison: GitHub API confirms `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All Completed Deliverables Landed in `main`:**
+  1. **All 31 Review Comments from PR #18:** Fully remediated with strict multi-tenancy scoping, expense GL atomicity, stock count persistence, offline mobile sales permissions, inventory issuance, and product type ownership.
+  2. **Opticals & Lens Catalog:** Complete optical Rx specifications, lens product type seeder, and safe DOM guards.
+  3. **Executive Dashboard & Topbar Redesign:** Theme-colored executive command header, prominent company crest/logo, 1-click animated switch company popover, separated FY status pill, and dynamic hover-expanding sidebar navigation.
+  4. **CI & Acceptance Robustness:** Dedicated `zolo_test_ai_release` database container in CI, test assertion compatibility in testing env, and schema existence guards across `CompanyDirectoryService` and `main.blade.php`.
+
+---
+
 ## PR #20 Opened, Schema Guards Added & CI Acceptance Pipeline Active — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -754,6 +770,22 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
   - Compiled view cache cleared: `php artisan view:clear`.
   - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## PR #20 Successfully Merged into Main — `main` and `ui` Are 100% Synchronized — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#20: Merge UI enhancements and PR #18 review fixes into main](https://github.com/vigneshsinna/zolo-erp-pro/pull/20) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`56f88835b13175fe69433e9ddc1f765d27d21d04`](https://github.com/vigneshsinna/zolo-erp-pro/commit/56f88835b13175fe69433e9ddc1f765d27d21d04).
+  - Merged `origin/main` back into `ui` (fast-forward to `56f8883`).
+  - Branch Comparison: GitHub API confirms `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All Completed Deliverables Landed in `main`:**
+  1. **All 31 Review Comments from PR #18:** Fully remediated with strict multi-tenancy scoping, expense GL atomicity, stock count persistence, offline mobile sales permissions, inventory issuance, and product type ownership.
+  2. **Opticals & Lens Catalog:** Complete optical Rx specifications, lens product type seeder, and safe DOM guards.
+  3. **Executive Dashboard & Topbar Redesign:** Theme-colored executive command header, prominent company crest/logo, 1-click animated switch company popover, separated FY status pill, and dynamic hover-expanding sidebar navigation.
+  4. **CI & Acceptance Robustness:** Dedicated `zolo_test_ai_release` database container in CI, test assertion compatibility in testing env, and schema existence guards across `CompanyDirectoryService` and `main.blade.php`.
 
 ---
 
@@ -1469,6 +1501,22 @@
 
 ---
 
+## PR #20 Successfully Merged into Main — `main` and `ui` Are 100% Synchronized — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#20: Merge UI enhancements and PR #18 review fixes into main](https://github.com/vigneshsinna/zolo-erp-pro/pull/20) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`56f88835b13175fe69433e9ddc1f765d27d21d04`](https://github.com/vigneshsinna/zolo-erp-pro/commit/56f88835b13175fe69433e9ddc1f765d27d21d04).
+  - Merged `origin/main` back into `ui` (fast-forward to `56f8883`).
+  - Branch Comparison: GitHub API confirms `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All Completed Deliverables Landed in `main`:**
+  1. **All 31 Review Comments from PR #18:** Fully remediated with strict multi-tenancy scoping, expense GL atomicity, stock count persistence, offline mobile sales permissions, inventory issuance, and product type ownership.
+  2. **Opticals & Lens Catalog:** Complete optical Rx specifications, lens product type seeder, and safe DOM guards.
+  3. **Executive Dashboard & Topbar Redesign:** Theme-colored executive command header, prominent company crest/logo, 1-click animated switch company popover, separated FY status pill, and dynamic hover-expanding sidebar navigation.
+  4. **CI & Acceptance Robustness:** Dedicated `zolo_test_ai_release` database container in CI, test assertion compatibility in testing env, and schema existence guards across `CompanyDirectoryService` and `main.blade.php`.
+
+---
+
 ## PR #20 Opened, Schema Guards Added & CI Acceptance Pipeline Active — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -1879,6 +1927,22 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
   - Compiled view cache cleared: `php artisan view:clear`.
   - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## PR #20 Successfully Merged into Main — `main` and `ui` Are 100% Synchronized — 2026-11-18
+
+- **Merge Event Summary:**
+  - Pull Request [#20: Merge UI enhancements and PR #18 review fixes into main](https://github.com/vigneshsinna/zolo-erp-pro/pull/20) passed all 11 CI acceptance matrix jobs (**100% green**).
+  - Merge Commit SHA on `main`: [`56f88835b13175fe69433e9ddc1f765d27d21d04`](https://github.com/vigneshsinna/zolo-erp-pro/commit/56f88835b13175fe69433e9ddc1f765d27d21d04).
+  - Merged `origin/main` back into `ui` (fast-forward to `56f8883`).
+  - Branch Comparison: GitHub API confirms `status: identical`, `ahead_by: 0`, `behind_by: 0`.
+
+- **All Completed Deliverables Landed in `main`:**
+  1. **All 31 Review Comments from PR #18:** Fully remediated with strict multi-tenancy scoping, expense GL atomicity, stock count persistence, offline mobile sales permissions, inventory issuance, and product type ownership.
+  2. **Opticals & Lens Catalog:** Complete optical Rx specifications, lens product type seeder, and safe DOM guards.
+  3. **Executive Dashboard & Topbar Redesign:** Theme-colored executive command header, prominent company crest/logo, 1-click animated switch company popover, separated FY status pill, and dynamic hover-expanding sidebar navigation.
+  4. **CI & Acceptance Robustness:** Dedicated `zolo_test_ai_release` database container in CI, test assertion compatibility in testing env, and schema existence guards across `CompanyDirectoryService` and `main.blade.php`.
 
 ---
 
