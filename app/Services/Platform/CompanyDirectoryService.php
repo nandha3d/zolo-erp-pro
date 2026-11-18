@@ -41,16 +41,25 @@ class CompanyDirectoryService
         }
 
         return $this->isInstallationAdmin($userId)
+            && Schema::hasTable('company_group_admins')
             && DB::table('company_group_admins')->where('company_group_id', $groupId)->where('user_id', $userId)->exists();
     }
 
     /** Member companies grouped for the picker; groups the user administers are listed even while empty. */
     public function directory(int $userId): array
     {
-        $companies = Company::with('group')->where('status', 'active')
-            ->whereIn('id', DB::table('company_user')->where('user_id', $userId)->select('company_id'))
-            ->orderBy('legal_name')->get();
-        $managed = DB::table('company_group_admins')->where('user_id', $userId)->pluck('company_group_id')->all();
+        if (!Schema::hasTable('companies')) {
+            return ['groups' => [], 'ungrouped' => []];
+        }
+
+        $companiesQuery = Company::with('group')->where('status', 'active');
+        if (Schema::hasTable('company_user')) {
+            $companiesQuery->whereIn('id', DB::table('company_user')->where('user_id', $userId)->select('company_id'));
+        }
+        $companies = $companiesQuery->orderBy('legal_name')->get();
+        $managed = Schema::hasTable('company_group_admins')
+            ? DB::table('company_group_admins')->where('user_id', $userId)->pluck('company_group_id')->all()
+            : [];
         $profiles = Schema::hasTable('company_industry_settings')
             ? DB::table('company_industry_settings')->whereIn('company_id', $companies->pluck('id'))->get()->keyBy('company_id')
             : collect();
@@ -59,16 +68,22 @@ class CompanyDirectoryService
             ->where('status', 'active')->whereNull('effective_to')->orderByDesc('effective_from')->get()->unique('company_id')->keyBy('company_id') : collect();
         $resolver = app(CompanyContextResolver::class);
 
-        $groups = CompanyGroup::where('status', 'active')
-            ->where(fn ($q) => $q->whereIn('id', $companies->pluck('company_group_id')->filter())->orWhereIn('id', $managed))
-            ->orderBy('name')->get()
-            ->map(fn (CompanyGroup $group) => ['id' => $group->id, 'code' => $group->code, 'name' => $group->name,
-                'manageable' => in_array($group->id, $managed, true), 'companies' => []])
-            ->keyBy('id')->all();
+        $groups = Schema::hasTable('company_groups')
+            ? CompanyGroup::where('status', 'active')
+                ->where(fn ($q) => $q->whereIn('id', $companies->pluck('company_group_id')->filter())->orWhereIn('id', $managed))
+                ->orderBy('name')->get()
+                ->map(fn (CompanyGroup $group) => ['id' => $group->id, 'code' => $group->code, 'name' => $group->name,
+                    'manageable' => in_array($group->id, $managed, true), 'companies' => []])
+                ->keyBy('id')->all()
+            : [];
         $ungrouped = [];
         foreach ($companies as $company) {
-            $branches = $company->branches()->where('is_active', true)->whereIn('id', DB::table('company_user_branches')
-                ->where('company_id', $company->id)->where('user_id', $userId)->select('branch_id'))->orderBy('name')->get(['id', 'name']);
+            $branchesQuery = $company->branches()->where('is_active', true);
+            if (Schema::hasTable('company_user_branches')) {
+                $branchesQuery->whereIn('id', DB::table('company_user_branches')
+                    ->where('company_id', $company->id)->where('user_id', $userId)->select('branch_id'));
+            }
+            $branches = $branchesQuery->orderBy('name')->get(['id', 'name']);
             $years = $company->fiscalYears()->orderByDesc('start_date')->get(['id', 'name', 'status', 'start_date', 'end_date']);
             $current = $years->first(fn ($year) => $year->start_date->toDateString() <= $today($company)
                 && $year->end_date->toDateString() >= $today($company));
