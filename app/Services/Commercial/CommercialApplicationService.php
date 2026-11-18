@@ -208,9 +208,17 @@ class CommercialApplicationService
                 || !checkdate((int) substr($dueDate, 5, 2), (int) substr($dueDate, 8, 2), (int) substr($dueDate, 0, 4)) || $dueDate < $date) {
                 throw ValidationException::withMessages(['due_date' => 'Due date must be on or after document date.']);
             }
+            $opticalFields = [];
+            if ($kind === 'sale') {
+                foreach (['end_user_name', 'end_user_phone', 'end_user_email', 'end_user_address', 'fitting_charge', 'tinting_cost', 'customer_order_no'] as $optCol) {
+                    if (isset($data[$optCol]) && \Illuminate\Support\Facades\Schema::hasColumn('sales', $optCol)) {
+                        $opticalFields[$optCol] = $data[$optCol];
+                    }
+                }
+            }
             $document->forceFill(['branch_id' => $context->branchId, 'financial_year_id' => $context->financialYearId,
                 'lot_number' => $data['lot_number'] ?? $document->lot_number,
-                'attributes_json' => $attributes, 'replaces_id' => $replacesId] + (isset($data['_tax_snapshot'])
+                'attributes_json' => $attributes, 'replaces_id' => $replacesId] + $opticalFields + (isset($data['_tax_snapshot'])
                     ? ['tax_snapshot_json' => $data['_tax_snapshot']] : []))->save();
             if (!empty($data['project_id'])) {
                 app(\App\Services\Industry\ProjectService::class)->link((int) $data['project_id'], $kind, $document->id, $context, $actor);
@@ -295,16 +303,30 @@ class CommercialApplicationService
     {
         $attributes = array_intersect_key($data, array_flip(['transport_name', 'lr_number', 'lr_date', 'vehicle_number', 'bale_count', 'bundle_count', 'landed_cost_method', 'capitalise_services', 'sales_order_id', 'purchase_order_id', 'goods_receipt_no',
             'bale_no', 'no_of_bales', 'lr_no', 'station_to', 'order_no', 'credit_days', 'agent_id', 'area_id', 'job_work_receipt_id',
-            'cash_discount_percent', 'cash_discount_days', 'job_work_charge_mode', 'job_work_remarks', 'supply_type', 'lut_number']));
+            'cash_discount_percent', 'cash_discount_days', 'job_work_charge_mode', 'job_work_remarks', 'supply_type', 'lut_number',
+            'end_user_name', 'end_user_phone', 'end_user_email', 'end_user_address', 'fitting_charge', 'tinting_cost', 'customer_order_no']));
         if (isset($attributes['job_work_receipt_id'])) validator($attributes, ['job_work_receipt_id' => 'integer|min:1'])->validate();
         if (($attributes['cash_discount_percent'] ?? '') === '') unset($attributes['cash_discount_percent'], $attributes['cash_discount_days']);
         validator($attributes, ['cash_discount_percent' => 'sometimes|numeric|gt:0|max:100', 'cash_discount_days' => 'sometimes|nullable|integer|min:0|max:365',
-            'job_work_charge_mode' => 'sometimes|in:capitalise,expense'])->validate();
+            'job_work_charge_mode' => 'sometimes|in:capitalise,expense',
+            'end_user_name' => 'sometimes|nullable|string|max:191',
+            'end_user_phone' => 'sometimes|nullable|string|max:50',
+            'end_user_email' => 'sometimes|nullable|string|max:191',
+            'end_user_address' => 'sometimes|nullable|string|max:1000',
+            'fitting_charge' => 'sometimes|nullable|numeric|min:0',
+            'tinting_cost' => 'sometimes|nullable|numeric|min:0',
+            'customer_order_no' => 'sometimes|nullable|string|max:191'])->validate();
         foreach (['bale_count', 'bundle_count', 'no_of_bales'] as $count) if (isset($attributes[$count])) validator($attributes, [$count => 'integer|min:0|max:1000000'])->validate();
         if (isset($attributes['credit_days']) && $attributes['credit_days'] !== '') validator($attributes, ['credit_days' => 'integer|min:0|max:3650'])->validate();
         foreach ($attributes as $key => $value) {
             if ($value === null) {
                 unset($attributes[$key]);
+                continue;
+            }
+            if ($key === 'end_user_address') {
+                if (!is_scalar($value) || strlen((string) $value) > 1000) {
+                    throw ValidationException::withMessages([$key => 'Use a value of at most 1000 characters.']);
+                }
                 continue;
             }
             if (!is_scalar($value) || strlen((string) $value) > 255) {

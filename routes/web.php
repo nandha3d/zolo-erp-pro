@@ -411,7 +411,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::delete('sales/force-delete-selected', 'forceDeleteSelected')
             ->name('sales.forceDeleteSelected')
             ->middleware('hasPermanentDeletePermission');
-        Route::delete('sales/{id}/force-delete', 'forceDelete')->name('sales.forceDelete');
+        Route::delete('sales/{id}/force-delete', 'forceDelete')
+            ->name('sales.forceDelete')
+            ->middleware('hasPermanentDeletePermission');
         Route::get('sales/product_sale/{id}', 'productSaleData');
         Route::get('sales/get-sale/{id}', 'getSale');
         Route::get('sales/{id}/json', 'getSaleJson');
@@ -531,7 +533,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::delete('force-delete-selected', 'forceDeleteSelected')
                 ->name('purchases.forceDeleteSelected')
                 ->middleware('hasPermanentDeletePermission');
-            Route::delete('{id}/force-delete', 'forceDelete')->name('purchases.forceDelete');
+            Route::delete('{id}/force-delete', 'forceDelete')
+                ->name('purchases.forceDelete')
+                ->middleware('hasPermanentDeletePermission');
             Route::get('supplier/{supplier_id}', 'supplierPurchase')->name('purchase.supplier');
         });
         Route::post('importpurchase', 'importPurchase')->name('purchase.import');

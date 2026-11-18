@@ -150,11 +150,34 @@ class ProductTypeAndOpticalSpecsTest extends TestCase
         $branch = $company->branches()->first();
         $fy = $company->fiscalYears()->first();
 
+        $brand = \App\Models\Brand::firstOrCreate(['company_id' => $company->id, 'title' => 'LenzBreeze'], ['is_active' => true]);
+        $cat1 = \App\Models\Category::firstOrCreate(['company_id' => $company->id, 'name' => 'Progressive Lenses (PAL)'], ['is_active' => true]);
+        $cat2 = \App\Models\Category::firstOrCreate(['company_id' => $company->id, 'name' => 'Bifocal & Kryptok'], ['is_active' => true]);
+
         $product = Product::withoutGlobalScope('request_company')
             ->where('company_id', $company->id)
             ->whereNotNull('brand_id')
             ->whereNotNull('category_id')
             ->first();
+
+        if (!$product) {
+            $unit = \App\Models\Unit::firstOrCreate(['company_id' => $company->id, 'unit_code' => 'PRS'], ['unit_name' => 'Pairs', 'operator' => '*', 'operation_value' => 1, 'is_active' => 1]);
+            $product = Product::forceCreate([
+                'name' => 'LB Progressive Test Lens',
+                'code' => 'LB-TEST-PROG-' . mt_rand(1000, 9999),
+                'type' => 'standard',
+                'barcode_symbology' => 'C128',
+                'brand_id' => $brand->id,
+                'category_id' => $cat1->id,
+                'unit_id' => $unit->id,
+                'purchase_unit_id' => $unit->id,
+                'sale_unit_id' => $unit->id,
+                'cost' => 100,
+                'price' => 200,
+                'company_id' => $company->id,
+                'is_active' => true,
+            ]);
+        }
 
         $this->assertNotNull($product, 'Expected at least one product with brand and category.');
 

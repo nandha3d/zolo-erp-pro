@@ -626,7 +626,8 @@
 </div>
 
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof $ === 'undefined') return;
     $('#quick-is-optical').on('change', function () {
         var isChecked = $(this).is(':checked');
         if (isChecked) {
