@@ -208,24 +208,42 @@
     @if(session('status'))<div class="zw-flash" role="status"><i class="fa fa-check-circle" aria-hidden="true"></i> {{ session('status') }}</div>@endif
     @if($errors->any())<div class="zw-flash is-error" role="alert">@foreach($errors->all() as $error)<div>{{ $error }}</div>@endforeach</div>@endif
 
-    {{-- 1. Executive Headquarters Hero Section (.zw-hero .zw-hero-executive) --}}
-    <div class="zw-hero zw-hero-executive zw-hero-compact">
-        {{-- High-tech background vector art composition --}}
-        <div class="zw-hero-vector-art" aria-hidden="true">
-            <svg class="zw-hero-bg-svg" viewBox="0 0 1000 120" preserveAspectRatio="none">
+    {{-- 1. Theme-Colored Executive Headquarters Hero Banner (.zw-hero-executive) --}}
+    <div class="zw-hero-executive">
+        {{-- High-tech background vector enterprise art composition --}}
+        <div class="zw-hero-vector-illustration" aria-hidden="true">
+            <svg class="zw-hero-vector-svg" viewBox="0 0 600 130" fill="none" preserveAspectRatio="xMidYMid slice">
                 <defs>
-                    <linearGradient id="zwHeroWaveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="var(--z-primary)" stop-opacity="0.12" />
-                        <stop offset="60%" stop-color="var(--z-primary)" stop-opacity="0.04" />
-                        <stop offset="100%" stop-color="var(--z-primary)" stop-opacity="0" />
+                    <linearGradient id="themeHeroGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
                     </linearGradient>
-                    <pattern id="zwHeroGrid" width="24" height="24" patternUnits="userSpaceOnUse">
-                        <path d="M 24 0 L 0 0 0 24" fill="none" stroke="var(--z-primary)" stroke-width="0.75" stroke-opacity="0.06"/>
-                    </pattern>
+                    <linearGradient id="themeHeroGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                    </linearGradient>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#zwHeroGrid)" />
-                <path d="M0,30 C220,95 440,5 680,65 C840,105 920,25 1000,50 L1000,120 L0,120 Z" fill="url(#zwHeroWaveGrad)"></path>
-                <path d="M0,50 C260,110 480,25 720,80 C860,115 940,45 1000,70" fill="none" stroke="var(--z-primary)" stroke-width="1.5" stroke-opacity="0.18"></path>
+                {{-- Isometric ERP Matrix Geometry --}}
+                <g opacity="0.65" transform="translate(180, -20)">
+                    {{-- Isometric Cube 1 --}}
+                    <polygon points="260,30 310,55 310,115 260,90" fill="url(#themeHeroGrad1)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" />
+                    <polygon points="260,30 310,55 260,80 210,55" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
+                    <polygon points="210,55 260,80 260,140 210,115" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" />
+                    {{-- Isometric Cube 2 (Shifted layer) --}}
+                    <polygon points="340,60 380,80 380,130 340,110" fill="url(#themeHeroGrad1)" stroke="rgba(255,255,255,0.22)" stroke-width="1" />
+                    <polygon points="340,60 380,80 340,100 300,80" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.25)" stroke-width="1" />
+                    <polygon points="300,80 340,100 340,150 300,130" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.18)" stroke-width="1" />
+                    {{-- Dynamic data connector lines & glowing nodes --}}
+                    <path d="M 260,30 L 340,60 M 310,115 L 340,110 M 210,115 L 140,80" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-dasharray="4,4" />
+                    <circle cx="260" cy="30" r="3.5" fill="#ffffff" />
+                    <circle cx="340" cy="60" r="3" fill="#a7f3d0" />
+                    <circle cx="310" cy="115" r="3" fill="#ffffff" />
+                    <circle cx="380" cy="80" r="2.5" fill="#fde047" />
+                    <circle cx="210" cy="55" r="3" fill="#ffffff" />
+                </g>
+                {{-- Dynamic Wave Ribbon in Theme Contrast --}}
+                <path d="M0,85 C140,120 280,30 420,75 C500,100 560,60 600,70 L600,130 L0,130 Z" fill="url(#themeHeroGrad2)" opacity="0.45" />
+                <path d="M0,105 C150,135 290,50 430,90 C510,115 570,75 600,85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" fill="none" />
             </svg>
         </div>
 
@@ -272,11 +290,11 @@
 
                 {{-- Operational Mission / Consensus Submeta --}}
                 <div class="zw-hero-submeta">
-                    <span class="zw-submeta-item"><i class="fa fa-shield text-success"></i> Primary Operational Node</span>
+                    <span class="zw-submeta-item"><i class="fa fa-shield"></i> Primary Operational Node</span>
                     <span class="zw-submeta-sep">·</span>
-                    <span class="zw-submeta-item">Ledger Consensus: <strong class="text-success">Synchronized</strong></span>
+                    <span class="zw-submeta-item">Ledger Consensus: <strong>Synchronized</strong></span>
                     <span class="zw-submeta-sep">·</span>
-                    <span class="zw-submeta-item">{{ $branches->count() }} {{ \Illuminate\Support\Str::plural('Operating Facility', $branches->count()) }}</span>
+                    <span class="zw-submeta-item"><i class="fa fa-cubes"></i> {{ $branches->count() }} {{ \Illuminate\Support\Str::plural('Operating Facility', $branches->count()) }}</span>
                 </div>
             </div>
         </div>
@@ -326,7 +344,7 @@
             </div>
 
             {{-- Switch Company Button --}}
-            <a class="zw-hero-switch-btn" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}" title="Switch to another company workspace">
+            <a class="zw-hero-switch-btn" href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}" title="Switch company workspace">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect></svg>
                 <span>Switch Company</span>
             </a>
