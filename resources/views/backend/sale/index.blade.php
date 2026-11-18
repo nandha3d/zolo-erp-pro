@@ -65,12 +65,15 @@
             try {
                 return app(\App\Services\Commercial\CommercialPermission::class)->allows('returns-add',
                     app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
-            } catch (\Illuminate\Auth\Access\AuthorizationException) { return false; }
+            } catch (\Throwable) { return false; }
         })();
         // Under GST a malformed GSTIN makes the party unregistered (no tax), so the party card flags it.
         $usesGst = \App\Services\Tax\GstSetupService::usesGst();
         $gstinInvalid = fn ($value) => $usesGst && trim((string) $value) !== ''
             && !\App\Services\Tax\Gstin::parse($value)['is_valid'];
+        $reqContext = request()->attributes->get(\App\Services\Platform\CompanyContext::class);
+        $isOpticalProfile = $isOpticalProfile ?? \App\Services\Industry\IndustryProfileService::isOptical($reqContext);
+        $isTextileProfile = $isTextileProfile ?? \App\Services\Industry\IndustryProfileService::isTextile($reqContext);
     @endphp
     <div class="comm-split-grid{{ $returnsTab && request('returns') == 1 ? ' is-returns' : '' }}" id="comm-split-grid">
         <!-- Main: Sales Entry Workspace (Matching Screenshot 3) -->
@@ -168,6 +171,15 @@
                                 <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
                             </div>
                         </div>
+                        <div class="field-compact-item doc-seg-item">
+                            <label data-help="GST Bill = full GST tax invoice with HSN and CGST/SGST/IGST. Non-GST Bill = zero tax, completely bypasses GST checks, and can be converted to GST any time.|GST Bill for tax invoice, Non-GST for cash slip or non-tax sale">Bill Mode</label>
+                            <div class="pill-segmented-compact doc-segment" id="seg-bill-mode" role="group" aria-label="Bill Mode">
+                                <button type="button" class="segment-btn active" id="pill-bill-gst" data-bill-mode="gst">GST Bill</button>
+                                <button type="button" class="segment-btn" id="pill-bill-non-gst" data-bill-mode="non_gst">Non-GST</button>
+                            </div>
+                            <input type="hidden" name="is_non_gst" id="hidden-is-non-gst" value="0">
+                            <input type="hidden" name="bill_type" id="hidden-bill-type" value="gst">
+                        </div>
                         <div class="field-compact-item u-w-205px u-shrink-0">
                             <label for="sale_type_id">Tax Classification *</label>
                             <select id="sale_type_id" name="sale_type_id" class="form-control">
@@ -215,9 +227,11 @@
                             <a href="javascript:void(0)" id="btn-quick-logistics" class="u-c-primary u-fw-600 u-ml-auto u-tdec-none u-ws-nowrap">
                                 + Transport &amp; Remarks &rarr;
                             </a>
+                            @if(!empty($isOpticalProfile))
                             <a href="javascript:void(0)" id="btn-quick-optical" class="text-info font-weight-bold ml-2 text-decoration-none text-nowrap">
                                 + Optical &amp; Warranty &rarr;
                             </a>
+                            @endif
                         </div>
                         </div>
                     </div>
@@ -330,9 +344,11 @@
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-print" title="Print invoice">
                             <i class="dripicons-print"></i> Print
                         </button>
+                        @if(!empty($isOpticalProfile))
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-lab" title="Print Optical Lab Receipt">
                             <i class="dripicons-article"></i> Lab Receipt
                         </button>
+                        @endif
                         <button type="button" class="btn btn-outline-secondary comm-bottom-btn" id="btn-view-to-packing" title="Print Packing Slip">
                             <i class="dripicons-box"></i> Packing Slip
                         </button>
@@ -489,7 +505,7 @@
                             try {
                                 $canReverseBills = app(\App\Services\Commercial\CommercialPermission::class)->allows('sales-delete',
                                     app(\App\Services\Platform\CompanyContextResolver::class)->forActor(), (int) auth()->id());
-                            } catch (\Illuminate\Auth\Access\AuthorizationException) {}
+                            } catch (\Throwable) {}
                         }
                     @endphp
                     @forelse($recent_bills as $bill)
@@ -531,9 +547,11 @@
                                 <a href="javascript:void(0)" class="side-action-btn print btn-side-print" data-id="{{ $bill->id }}" title="Print invoice">
                                     <i class="dripicons-print"></i> Print
                                 </a>
+                                @if(!empty($isOpticalProfile))
                                 <a href="{{ route('sale.lab_receipt', $bill->id) }}" target="_blank" class="side-action-btn print" title="Print Optical Lab Receipt">
                                     <i class="dripicons-article"></i> Lab
                                 </a>
+                                @endif
                                 <a href="{{ route('sale.packing_slip', $bill->id) }}" target="_blank" class="side-action-btn print" title="Print Dispatch Packing Slip">
                                     <i class="dripicons-box"></i> Pack
                                 </a>
@@ -850,14 +868,17 @@
                     <li class="nav-item">
                         <a class="nav-link font-weight-bold u-fs-11_5px u-p-6px-12px" id="tab-settlement" data-toggle="tab" href="#pane-settlement" role="tab">Payment</a>
                     </li>
+                    @if(!empty($isOpticalProfile))
                     <li class="nav-item">
                         <a class="nav-link font-weight-bold u-fs-11_5px u-p-6px-12px" id="tab-optical" data-toggle="tab" href="#pane-optical" role="tab"><i class="dripicons-preview mr-1"></i> Optical &amp; Warranty</a>
                     </li>
+                    @endif
                 </ul>
 
                 <div class="tab-content" id="drawerTabContent">
                     <!-- Transport Tab -->
                     <div class="tab-pane fade show active" id="pane-transport" role="tabpanel">
+                        @if(!empty($isTextileProfile))
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-2">
                                 <label class="text-muted font-weight-bold">Bale No</label>
@@ -878,6 +899,17 @@
                                 <input type="text" id="drawer-vehicle-number" class="form-control form-control-sm" maxlength="30" placeholder="e.g. TN39 AB 1234">
                             </div>
                         </div>
+                        @else
+                        <input type="hidden" id="drawer-bale-no" value="">
+                        <input type="hidden" id="drawer-no-of-bales" value="">
+                        <input type="hidden" id="drawer-bundle-count" value="">
+                        <div class="form-row">
+                            <div class="form-group col-md-12 mb-2">
+                                <label class="text-muted font-weight-bold" for="drawer-vehicle-number">Vehicle No.</label>
+                                <input type="text" id="drawer-vehicle-number" class="form-control form-control-sm" maxlength="30" placeholder="e.g. TN39 AB 1234">
+                            </div>
+                        </div>
+                        @endif
                         <div class="form-row">
                             <div class="form-group col-md-6 mb-2">
                                 <label class="text-muted font-weight-bold">LR No.</label>
@@ -958,16 +990,6 @@
                             </select>
                         </div>
                         <div class="form-group mb-2">
-                            <label for="drawer-paying-method" class="text-muted font-weight-bold">Payment Method</label>
-                            <select id="drawer-paying-method" class="form-control form-control-sm">
-                                <option value="Credit">Credit / Unpaid</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Bank">Bank</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="Credit Card">Credit Card</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-2">
                             <label class="text-muted font-weight-bold">Paying Account</label>
                             <select id="drawer-account-id" class="form-control form-control-sm">
                                 @foreach($lims_account_list as $acc)
@@ -981,6 +1003,7 @@
                         </div>
                     </div>
 
+                    @if(!empty($isOpticalProfile))
                     <!-- Optical & Warranty Tab -->
                     <div class="tab-pane fade" id="pane-optical" role="tabpanel">
                         <h6 class="text-primary font-weight-bold mb-2"><i class="dripicons-user mr-1"></i> End User Details (Captured for Warranty)</h6>
@@ -1021,6 +1044,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
             <div class="modal-footer u-bg-surface-2 u-bt-1px-solid-border u-p-10px-18px">
@@ -1048,11 +1072,18 @@
                         </h4>
                         <div class="voucher-badges-strip">
                             <span id="sale-details-status-badge" class="badge badge-success">Completed</span>
+                            <span id="sale-details-nongst-badge" class="badge badge-info" style="{{ 'display:none; background:#0284c7; color:#fff;' }}">Non-GST</span>
                             <span id="sale-details-date-text" class="text-muted small"></span>
                         </div>
                     </div>
                 </div>
                 <div class="voucher-actions-toolbar">
+                    <button type="button" id="sale-details-convert-gst-btn" class="btn btn-sm btn-outline-success mr-2 btn-convert-to-gst" style="{{ 'display:none;' }}" title="Convert Non-GST Bill to standard GST Bill">
+                        <i class="fa fa-refresh mr-1"></i> Convert to GST Bill
+                    </button>
+                    <a href="#" id="sale-details-lab-receipt-btn" class="voucher-edit-btn btn-info text-white" title="Print Optical Lab Receipt" style="{{ 'display: none;' }}" target="_blank">
+                        <i class="fa fa-flask"></i> Lab Receipt
+                    </a>
                     <a href="#" id="sale-details-edit-btn" class="voucher-edit-btn" title="Open Full Bill in Edit Mode">
                         <i class="dripicons-document-edit"></i> Edit Bill
                     </a>
@@ -1078,6 +1109,8 @@
                         <div id="sale-details-customer-gstin" class="voucher-info-line text-primary font-weight-bold" style="display: none;"></div>
                         <div id="sale-details-customer-phone" class="voucher-info-line"></div>
                         <div id="sale-details-customer-address" class="voucher-info-line"></div>
+                        <div id="sale-details-end-user-name" class="voucher-info-line text-dark font-weight-bold" style="display: none;"></div>
+                        <div id="sale-details-order-no" class="voucher-info-line text-muted" style="display: none;"></div>
                     </div>
 
                     <div class="voucher-info-card">
@@ -1147,6 +1180,14 @@
                         <div class="voucher-totals-row">
                             <span>Shipping / Freight:</span>
                             <span id="sale-details-shipping-cost">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row" id="sale-details-fitting-row" style="display: none;">
+                            <span>Fitting Charge:</span>
+                            <span id="sale-details-fitting-cost">₹0.00</span>
+                        </div>
+                        <div class="voucher-totals-row" id="sale-details-tinting-row" style="display: none;">
+                            <span>Tinting Cost:</span>
+                            <span id="sale-details-tinting-cost">₹0.00</span>
                         </div>
                         <div class="voucher-totals-row grand-total-row">
                             <span>Grand Total:</span>
@@ -1941,6 +1982,9 @@
 (function() {
     'use strict';
 
+    window.isOpticalProfile = {{ !empty($isOpticalProfile) ? 'true' : 'false' }};
+    window.isTextileProfile = {{ !empty($isTextileProfile) ? 'true' : 'false' }};
+
     // --- Product List Autocomplete & Item Master Data ---
     @php
         $gstRates = app(\App\Services\Tax\GstSetupService::class)->currentRates();
@@ -1966,10 +2010,12 @@
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)$prod->code . '|' . (string)$prod->name,
                 'label' => (string)$prod->code . ' - ' . (string)$prod->name,
-                'base' => (string)($prod->base ?? ''),
-                'addition' => (string)($prod->addition ?? ''),
-                'lr' => (string)($prod->lr ?? ''),
-                'dia' => (string)($prod->dia ?? ''),
+                ...(!empty($isOpticalProfile) ? [
+                    'base' => (string)($prod->base ?? ''),
+                    'addition' => (string)($prod->addition ?? ''),
+                    'lr' => (string)($prod->lr ?? ''),
+                    'dia' => (string)($prod->dia ?? ''),
+                ] : []),
             ];
         }
         foreach($lims_product_list_with_variant as $prod) {
@@ -1991,10 +2037,12 @@
                 'unit' => (string)($prod->unit_code ?? ($prod->unit_name ?? 'Unit')),
                 'value' => (string)($prod->item_code ?? $prod->code) . '|' . (string)$prod->name,
                 'label' => (string)($prod->item_code ?? $prod->code) . ' - ' . (string)$prod->name,
-                'base' => (string)($prod->base ?? ''),
-                'addition' => (string)($prod->addition ?? ''),
-                'lr' => (string)($prod->lr ?? ''),
-                'dia' => (string)($prod->dia ?? ''),
+                ...(!empty($isOpticalProfile) ? [
+                    'base' => (string)($prod->base ?? ''),
+                    'addition' => (string)($prod->addition ?? ''),
+                    'lr' => (string)($prod->lr ?? ''),
+                    'dia' => (string)($prod->dia ?? ''),
+                ] : []),
             ];
         }
     @endphp
@@ -2032,7 +2080,14 @@
     var rowCounter = 0;
     var taxList = @json($lims_tax_list);
     var unitList = @json($lims_unit_list ?? \App\Models\Unit::where('is_active', true)->get());
-    var productTypeMap = @json(\App\Models\ProductType::where('is_active', true)->pluck('name', 'id'));
+    @php
+        $activeCompanyId = null;
+        try {
+            $activeCompanyId = app(\App\Services\Platform\CompanyContextResolver::class)->forActor()?->companyId;
+        } catch (\Throwable) {}
+        $activeCompanyId = $activeCompanyId ?: session('company_id');
+    @endphp
+    var productTypeMap = @json(!empty($isOpticalProfile) && $activeCompanyId ? \App\Models\ProductType::forCompany($activeCompanyId)->where('is_active', true)->pluck('name', 'id') : []);
     window.productTypeMap = productTypeMap;
     function escapeHtml(value) { return $('<span>').text(value ?? '').html().replaceAll('"', '&quot;').replaceAll("'", '&#39;'); }
     var decimalPlaces = {{ $general_setting->decimal ?? 2 }};
@@ -2346,38 +2401,40 @@
         tr.find('.row-total').val(lineTotal.toFixed(decimalPlaces));
 
         // Populate Optical Lens Specifications if present
-        if (p.base !== undefined && p.base !== null && p.base !== '') {
-            tr.find('.row-base').val(p.base);
-            tr.find('.optical-base-text').text(p.base);
-            tr.find('.optical-base-badge').show();
-        } else {
-            tr.find('.row-base').val('');
-            tr.find('.optical-base-badge').hide();
-        }
+        if (window.isOpticalProfile) {
+            if (p.base !== undefined && p.base !== null && p.base !== '') {
+                tr.find('.row-base').val(p.base);
+                tr.find('.optical-base-text').text(p.base);
+                tr.find('.optical-base-badge').show();
+            } else {
+                tr.find('.row-base').val('');
+                tr.find('.optical-base-badge').hide();
+            }
 
-        if (p.dia !== undefined && p.dia !== null && p.dia !== '') {
-            tr.find('.row-dia').val(p.dia);
-            tr.find('.optical-dia-text').text(p.dia);
-            tr.find('.optical-dia-badge').show();
-        } else {
-            tr.find('.row-dia').val('');
-            tr.find('.optical-dia-badge').hide();
-        }
+            if (p.dia !== undefined && p.dia !== null && p.dia !== '') {
+                tr.find('.row-dia').val(p.dia);
+                tr.find('.optical-dia-text').text(p.dia);
+                tr.find('.optical-dia-badge').show();
+            } else {
+                tr.find('.row-dia').val('');
+                tr.find('.optical-dia-badge').hide();
+            }
 
-        if (p.addition !== undefined && p.addition !== null && p.addition !== '') {
-            tr.find('.row-addition').val(p.addition);
-        }
+            if (p.addition !== undefined && p.addition !== null && p.addition !== '') {
+                tr.find('.row-addition').val(p.addition);
+            }
 
-        if (p.lr !== undefined && p.lr !== null && p.lr !== '') {
-            tr.find('.row-lr').val(p.lr);
-        }
+            if (p.lr !== undefined && p.lr !== null && p.lr !== '') {
+                tr.find('.row-lr').val(p.lr);
+            }
 
-        var typeName = p.type_name || p.product_type_name || p.product_type || (p.product_type_id && window.productTypeMap && window.productTypeMap[p.product_type_id]);
-        if (typeName) {
-            tr.find('.optical-type-text').text(typeName);
-            tr.find('.optical-type-badge').show();
-        } else {
-            tr.find('.optical-type-badge').hide();
+            var typeName = p.type_name || p.product_type_name || p.product_type || (p.product_type_id && window.productTypeMap && window.productTypeMap[p.product_type_id]);
+            if (typeName) {
+                tr.find('.optical-type-text').text(typeName);
+                tr.find('.optical-type-badge').show();
+            } else {
+                tr.find('.optical-type-badge').hide();
+            }
         }
 
         recalcTableSummary();
@@ -2538,10 +2595,16 @@
             ));
 
             if (!exact) {
+                var partyId = document.querySelector('[name="customer_id"]')?.value || '';
                 try {
                     var matches = await CommercialProductLookup.search(val, allProducts, 'sale', matchesProductMode);
+                    if (CommercialProductLookup.normalize(this.value) !== normVal ||
+                        (document.querySelector('[name="customer_id"]')?.value || '') !== partyId) return;
                     exact = CommercialProductLookup.exact(matches, val);
-                } catch(e) { console.warn(e); }
+                } catch (error) {
+                    alert(error.message);
+                    return;
+                }
             }
 
             if (exact) {
@@ -2678,6 +2741,7 @@
                             <i class="dripicons-tag mr-1 text-primary"></i>Lot: <span class="row-lot-text">${escapeHtml(initialBatch)}</span>
                         </span>
                     </div>
+                    ${window.isOpticalProfile ? `
                     <div class="optical-rx-strip d-flex align-items-center mt-1 pt-1 border-top">
                         <span class="badge badge-info text-white px-1 optical-type-badge ${!(item.type_name || item.product_type_name) ? 'd-none' : ''}"><strong class="optical-type-text">${escapeHtml(item.type_name || item.product_type_name || '')}</strong></span>
                         <span class="badge badge-light border text-muted px-1 optical-base-badge ${!item.base ? 'd-none' : ''}">Base: <strong class="optical-base-text">${escapeHtml(item.base || '')}</strong></span>
@@ -2695,7 +2759,7 @@
                         </select>
                         <input type="hidden" name="base[]" class="row-base" value="${escapeHtml(item.base || '')}">
                         <input type="hidden" name="dia[]" class="row-dia" value="${escapeHtml(item.dia || '')}">
-                    </div>
+                    </div>` : ''}
                 </td>
                 <td>
                     <select name="sale_type_line[]" class="form-control form-control-sm custom-select-native row-type-select">
@@ -3685,6 +3749,7 @@
 
     // --- Recalculate Table Summary Totals ---
     function recalcTableSummary() {
+        var isNonGst = $('#hidden-is-non-gst').val() === '1';
         var net = 0;
         var tax = 0;
         var grand = 0;
@@ -3695,9 +3760,9 @@
             count++;
             var rate = parseFloat($(this).find('.row-rate').val()) || 0;
             var qty = parseFloat($(this).find('.row-qty').val()) || 0;
-            var taxRate = parseFloat($(this).find('.row-tax-rate').val()) || 0;
+            var taxRate = isNonGst ? 0 : (parseFloat($(this).find('.row-tax-rate').val()) || 0);
             var amount = rate * qty;
-            var taxAmount = amount * (taxRate / 100);
+            var taxAmount = isNonGst ? 0 : (amount * (taxRate / 100));
 
             net += amount;
             tax += taxAmount;
@@ -3718,6 +3783,60 @@
         $('#hidden-total-tax').val(tax.toFixed(decimalPlaces));
         $('#hidden-grand-total').val(grand.toFixed(decimalPlaces));
     }
+
+    $(document).on('click', '#seg-bill-mode button', function () {
+        var mode = $(this).data('bill-mode');
+        $('#seg-bill-mode button').removeClass('active');
+        $(this).addClass('active');
+        var isNon = mode === 'non_gst';
+        $('#hidden-is-non-gst').val(isNon ? '1' : '0');
+        $('#hidden-bill-type').val(isNon ? 'non_gst' : 'gst');
+
+        $('#order-table-body tr.order-item-row').each(function () {
+            var $row = $(this);
+            if (isNon) {
+                $row.find('.row-tax-rate').val('0');
+                $row.find('.row-tax-amount-input').val('0.0000');
+            } else {
+                var id = $row.find('.row-product-id').val();
+                var prod = (allProducts || []).find(p => String(p.id) === String(id));
+                if (prod && prod.tax_rate !== undefined) {
+                    $row.find('.row-tax-rate').val(String(prod.tax_rate));
+                }
+            }
+        });
+        recalcTableSummary();
+    });
+
+    $(document).on('click', '.btn-convert-to-gst', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        var ref = $(this).data('ref') || ('#' + id);
+        if (!confirm('Are you sure you want to convert Non-GST Bill ' + ref + ' to a GST Bill? Full GST tax determination and compliance checks will be applied.')) {
+            return;
+        }
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Converting...');
+        $.ajax({
+            url: '{{ url("commercial/sale") }}/' + id + '/convert-to-gst',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            dataType: 'json',
+            success: function (res) {
+                alert(res.message || 'Bill converted to GST successfully.');
+                if ($.fn.DataTable.isDataTable('#sale-table')) {
+                    $('#sale-table').DataTable().ajax.reload(null, false);
+                } else {
+                    location.reload();
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="fa fa-refresh text-success"></i> Convert to GST Bill');
+                alert(xhr.responseJSON?.message || 'Failed to convert to GST bill. Check party GST details and product tax rates.');
+            }
+        });
+    });
 
     // --- Customer Selection / Party Card Updates ---
     function updatePartyCard() {
@@ -3887,7 +4006,7 @@
         columns.push({"data": "returned_amount"});
         columns.push({"data": "paid_amount"});
         columns.push({"data": "due"});
-        var textileColumns = @json(($documentContextProfile ?? app(\App\Services\Industry\IndustryProfileService::class)->settings(request()->attributes->get(\App\Services\Platform\CompanyContext::class)))['profile'] === 'textile');
+        var textileColumns = @json(!empty($isTextileProfile) || (($documentContextProfile['profile'] ?? '') === 'textile'));
         columns.push({"data": "bale_no", "visible": textileColumns, "orderable": false, "defaultContent": ""});
         columns.push({"data": "transport_name", "visible": textileColumns, "orderable": false, "defaultContent": ""});
 
@@ -4341,13 +4460,15 @@
                 if (s.order_discount) {
                     $('#drawer-order-discount, #hidden-order-discount').val(s.order_discount);
                 }
-                $('#drawer-end-user-name, #hidden-end-user-name').val(s.end_user_name || '');
-                $('#drawer-end-user-phone, #hidden-end-user-phone').val(s.end_user_phone || '');
-                $('#drawer-end-user-email, #hidden-end-user-email').val(s.end_user_email || '');
-                $('#drawer-end-user-address, #hidden-end-user-address').val(s.end_user_address || '');
-                $('#drawer-fitting-charge, #hidden-fitting-charge').val(s.fitting_charge || '');
-                $('#drawer-tinting-cost, #hidden-tinting-cost').val(s.tinting_cost || '');
-                $('#drawer-customer-order-no, #hidden-customer-order-no').val(s.customer_order_no || '');
+                if (window.isOpticalProfile) {
+                    $('#drawer-end-user-name, #hidden-end-user-name').val(s.end_user_name || '');
+                    $('#drawer-end-user-phone, #hidden-end-user-phone').val(s.end_user_phone || '');
+                    $('#drawer-end-user-email, #hidden-end-user-email').val(s.end_user_email || '');
+                    $('#drawer-end-user-address, #hidden-end-user-address').val(s.end_user_address || '');
+                    $('#drawer-fitting-charge, #hidden-fitting-charge').val(s.fitting_charge || '');
+                    $('#drawer-tinting-cost, #hidden-tinting-cost').val(s.tinting_cost || '');
+                    $('#drawer-customer-order-no, #hidden-customer-order-no').val(s.customer_order_no || '');
+                }
                 var attr = s.attributes_json;
                 if (typeof attr === 'string') { try { attr = JSON.parse(attr); } catch(e){ attr = {}; } }
                 if (attr) {
@@ -4407,13 +4528,15 @@
         $('#sale_type_id').val('0');
 
         $('.side-bill-card').removeClass('active-editing active-viewing');
-        $('#drawer-end-user-name, #hidden-end-user-name').val('');
-        $('#drawer-end-user-phone, #hidden-end-user-phone').val('');
-        $('#drawer-end-user-email, #hidden-end-user-email').val('');
-        $('#drawer-end-user-address, #hidden-end-user-address').val('');
-        $('#drawer-fitting-charge, #hidden-fitting-charge').val('');
-        $('#drawer-tinting-cost, #hidden-tinting-cost').val('');
-        $('#drawer-customer-order-no, #hidden-customer-order-no').val('');
+        if (window.isOpticalProfile) {
+            $('#drawer-end-user-name, #hidden-end-user-name').val('');
+            $('#drawer-end-user-phone, #hidden-end-user-phone').val('');
+            $('#drawer-end-user-email, #hidden-end-user-email').val('');
+            $('#drawer-end-user-address, #hidden-end-user-address').val('');
+            $('#drawer-fitting-charge, #hidden-fitting-charge').val('');
+            $('#drawer-tinting-cost, #hidden-tinting-cost').val('');
+            $('#drawer-customer-order-no, #hidden-customer-order-no').val('');
+        }
         $('#order-table-body .order-item-row, #order-table-body .empty-placeholder-row').remove();
         $productSearch.val('');
         rowCounter = 0;
@@ -4516,36 +4639,41 @@
         $('#charges-drawer').modal('show');
     });
 
-    $('#btn-quick-optical').on('click', function() {
-        $('#charges-drawer').modal('show');
-        $('#tab-optical').tab('show');
-    });
+    if (window.isOpticalProfile) {
+        $('#btn-quick-optical').on('click', function() {
+            $('#charges-drawer').modal('show');
+            $('#tab-optical').tab('show');
+        });
+    }
 
     $('#btn-save-drawer-details').on('click', function() {
-        $('#hidden-bale-no').val($('#drawer-bale-no').val());
-        $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val());
-        $('#hidden-bundle-count').val($('#drawer-bundle-count').val());
-        $('#hidden-vehicle-number').val($('#drawer-vehicle-number').val());
-        $('#hidden-lr-no').val($('#drawer-lr-no').val());
-        $('#hidden-lr-date').val($('#drawer-lr-date').val());
-        $('#hidden-transporter-name').val($('#drawer-transporter-name').val());
-        $('#hidden-station-to').val($('#drawer-station-to').val());
-        $('#hidden-order-no').val($('#drawer-order-no').val());
-        $('#hidden-credit-days').val($('#drawer-credit-days').val());
-        $('#hidden-cd-percent').val($('#drawer-cd-percent').val());
-        $('#hidden-cd-days').val($('#drawer-cd-days').val());
-        $('#hidden-supply-type').val($('#drawer-supply-type').val());
-        $('#hidden-note').val($('#drawer-note').val());
-        $('#hidden-account-id').val($('#drawer-account-id').val());
-        $('#input-paying-method').val($('#drawer-paying-method').val());
-        $('#hidden-paid-amount').val($('#drawer-paid-amount').val());
-        $('#hidden-end-user-name').val($('#drawer-end-user-name').val());
-        $('#hidden-end-user-phone').val($('#drawer-end-user-phone').val());
-        $('#hidden-end-user-email').val($('#drawer-end-user-email').val());
-        $('#hidden-end-user-address').val($('#drawer-end-user-address').val());
-        $('#hidden-fitting-charge').val($('#drawer-fitting-charge').val());
-        $('#hidden-tinting-cost').val($('#drawer-tinting-cost').val());
-        $('#hidden-customer-order-no').val($('#drawer-customer-order-no').val());
+        $('#hidden-bale-no').val($('#drawer-bale-no').val() || '');
+        $('#hidden-no-of-bales').val($('#drawer-no-of-bales').val() || '');
+        $('#hidden-bundle-count').val($('#drawer-bundle-count').val() || '');
+        $('#hidden-vehicle-number').val($('#drawer-vehicle-number').val() || '');
+        $('#hidden-lr-no').val($('#drawer-lr-no').val() || '');
+        $('#hidden-lr-date').val($('#drawer-lr-date').val() || '');
+        $('#hidden-transporter-name').val($('#drawer-transporter-name').val() || '');
+        $('#hidden-station-to').val($('#drawer-station-to').val() || '');
+        $('#hidden-order-no').val($('#drawer-order-no').val() || '');
+        $('#hidden-credit-days').val($('#drawer-credit-days').val() || '');
+        $('#hidden-cd-percent').val($('#drawer-cd-percent').val() || '');
+        $('#hidden-cd-days').val($('#drawer-cd-days').val() || '');
+        $('#hidden-supply-type').val($('#drawer-supply-type').val() || '');
+        $('#hidden-note').val($('#drawer-note').val() || '');
+        $('#hidden-account-id').val($('#drawer-account-id').val() || '');
+        $('#input-paying-method').val($('#drawer-paying-method').val() || 'Credit');
+        $('#hidden-paid-amount').val($('#drawer-paid-amount').val() || 0);
+
+        if (window.isOpticalProfile) {
+            $('#hidden-end-user-name').val($('#drawer-end-user-name').val() || '');
+            $('#hidden-end-user-phone').val($('#drawer-end-user-phone').val() || '');
+            $('#hidden-end-user-email').val($('#drawer-end-user-email').val() || '');
+            $('#hidden-end-user-address').val($('#drawer-end-user-address').val() || '');
+            $('#hidden-fitting-charge').val($('#drawer-fitting-charge').val() || 0);
+            $('#hidden-tinting-cost').val($('#drawer-tinting-cost').val() || 0);
+            $('#hidden-customer-order-no').val($('#drawer-customer-order-no').val() || '');
+        }
 
         var count = 0;
         if ($('#drawer-bale-no').val()) count++;
@@ -4910,6 +5038,15 @@
                 var editUrl = "{{ url('sales') }}/" + s.id + "/edit";
                 $('#sale-details-edit-btn').attr('href', editUrl);
 
+                var isNon = s.is_non_gst || (s.attributes_json && s.attributes_json.is_non_gst) || (s.tax_snapshot_json && s.tax_snapshot_json.is_non_gst) || (s.attributes_json && s.attributes_json.bill_type === 'non_gst');
+                if (isNon && !s.reversed_at) {
+                    $('#sale-details-nongst-badge').show();
+                    $('#sale-details-convert-gst-btn').data('id', s.id).data('ref', s.reference_no).show();
+                } else {
+                    $('#sale-details-nongst-badge').hide();
+                    $('#sale-details-convert-gst-btn').hide();
+                }
+
                 // Customer Card
                 var c = s.customer || {};
                 var custName = c.name || 'Walk-in Customer';
@@ -4939,6 +5076,17 @@
                     $('#sale-details-customer-address').text(custAddress).show();
                 } else {
                     $('#sale-details-customer-address').hide();
+                }
+
+                if (s.end_user_name) {
+                    $('#sale-details-end-user-name').html('<i class="dripicons-user text-primary mr-1"></i> Patient: ' + s.end_user_name + (s.end_user_phone ? ' (' + s.end_user_phone + ')' : '')).show();
+                } else {
+                    $('#sale-details-end-user-name').hide();
+                }
+                if (s.customer_order_no) {
+                    $('#sale-details-order-no').html('<i class="dripicons-tag text-muted mr-1"></i> Order Ref: ' + s.customer_order_no).show();
+                } else {
+                    $('#sale-details-order-no').hide();
                 }
 
                 // Voucher Meta Card
@@ -4973,11 +5121,24 @@
                         var subtotal = Number(item.total || 0);
                         itemsPriceTotal += subtotal;
 
+                        var rxBadges = '';
+                        if (item.sph || item.cyl || item.axis || item.addition || item.dia || item.lr) {
+                            rxBadges = '<div class="mt-1 d-flex flex-wrap" style="{{ 'font-size: 11px; gap: 4px;' }}">' +
+                                (item.lr ? '<span class="badge badge-info px-1">Eye: ' + item.lr + '</span>' : '') +
+                                (item.sph !== null && item.sph !== '' ? '<span class="badge badge-light border px-1">SPH: ' + item.sph + '</span>' : '') +
+                                (item.cyl !== null && item.cyl !== '' ? '<span class="badge badge-light border px-1">CYL: ' + item.cyl + '</span>' : '') +
+                                (item.axis !== null && item.axis !== '' ? '<span class="badge badge-light border px-1">AXIS: ' + item.axis + '&deg;</span>' : '') +
+                                (item.addition !== null && item.addition !== '' ? '<span class="badge badge-light border px-1">ADD: ' + item.addition + '</span>' : '') +
+                                (item.dia ? '<span class="badge badge-light border px-1">DIA: ' + item.dia + 'mm</span>' : '') +
+                            '</div>';
+                        }
+
                         var rowHtml = '<tr>' +
                             '<td class="text-center align-middle">' + (idx + 1) + '</td>' +
                             '<td class="align-middle">' +
                                 '<div class="font-weight-bold text-dark">' + name + '</div>' +
-                                (code ? '<span class="badge badge-light border text-muted mt-1">' + code + '</span>' : '') +
+                                (code ? '<span class="badge badge-light border text-muted mt-1 mr-1">' + code + '</span>' : '') +
+                                rxBadges +
                             '</td>' +
                             '<td class="align-middle">' +
                                 (batch !== '—' ? '<span class="badge badge-secondary px-2 py-1">' + batch + '</span>' : '<span class="text-muted">—</span>') +
@@ -5011,6 +5172,28 @@
                 $('#sale-details-grand-total').text('₹' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 $('#sale-details-paid-amount').text('₹' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 $('#sale-details-due-amount').text('₹' + dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+
+                var fitCharge = Number(s.fitting_charge || 0);
+                if (fitCharge > 0) {
+                    $('#sale-details-fitting-cost').text('₹' + fitCharge.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#sale-details-fitting-row').show();
+                } else {
+                    $('#sale-details-fitting-row').hide();
+                }
+
+                var tintCost = Number(s.tinting_cost || 0);
+                if (tintCost > 0) {
+                    $('#sale-details-tinting-cost').text('₹' + tintCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#sale-details-tinting-row').show();
+                } else {
+                    $('#sale-details-tinting-row').hide();
+                }
+
+                if (window.isOpticalProfile || fitCharge > 0 || tintCost > 0 || items.some(function(it) { return it.sph || it.cyl; })) {
+                    $('#sale-details-lab-receipt-btn').attr('href', "{{ url('sales/lab_receipt') }}/" + (s.id || saleId)).show();
+                } else {
+                    $('#sale-details-lab-receipt-btn').hide();
+                }
 
                 if (dueAmount > 0.01) {
                     $('#sale-details-due-row').removeClass('settled').addClass('has-due');
