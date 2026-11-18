@@ -4,9 +4,14 @@
       background-color: var(--z-sidebar-bg) !important;
       background: var(--z-sidebar-bg) !important;
       color: var(--z-sidebar-text) !important;
-      width: 256px !important;
+      width: 256px;
       opacity: 1 !important;
-      transition: none !important;
+    }
+    nav.side-navbar.icon-only:not(.hover-expanded) {
+      width: 72px !important;
+    }
+    nav.side-navbar.shrink:not(.hover-expanded) {
+      width: 72px !important;
     }
     .side-navbar ul,
     .side-navbar li,
@@ -33,12 +38,116 @@
     .side-navbar .sidebar-heading {
       color: #64748b !important;
     }
-    @media (min-width: 1200px) {
-      .side-navbar.shrink {
-        width: 256px !important;
-        opacity: 1 !important;
-      }
+    
+    /* Dynamic Hover Expansion for Sidebar Navigation Menus */
+    .side-navbar li:has(> a[data-toggle="collapse"]) > a {
+      transition: background-color 0.18s ease, color 0.18s ease;
     }
+    .side-navbar li:has(> a[data-toggle="collapse"]):hover > a {
+      color: #ffffff !important;
+      background-color: rgba(255, 255, 255, 0.06);
+    }
+    .side-navbar li:has(> a[data-toggle="collapse"]):hover > a[data-toggle="collapse"]::after {
+      opacity: 1 !important;
+    }
+
+    /* Dynamic Hover Expansion for Collapsed Sidebar (icon-only / shrink) */
+    nav.side-navbar.icon-only.hover-expanded,
+    nav.side-navbar.shrink.hover-expanded {
+      width: 256px !important;
+      transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease !important;
+      box-shadow: 6px 0 24px rgba(0, 0, 0, 0.35);
+      z-index: 1040;
+    }
+    nav.side-navbar.icon-only.hover-expanded span,
+    nav.side-navbar.shrink.hover-expanded span {
+      display: inline-block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    nav.side-navbar.icon-only.hover-expanded .brand-big,
+    nav.side-navbar.shrink.hover-expanded .brand-big {
+      display: block !important;
+    }
+    nav.side-navbar.icon-only.hover-expanded .side-search,
+    nav.side-navbar.shrink.hover-expanded .side-search {
+      display: block !important;
+    }
+
+/* --------------------------------------------------------------------------
+   Top Navbar Right Items: Switch Theme, Fullscreen, Admin Profile Dropdown
+   Constrains height to 32px to ensure hover pills stay 100% inside the 40px navbar frame.
+   -------------------------------------------------------------------------- */
+html.app-shell .page > header nav.navbar .nav-menu .nav-item > a:not(.btn-pos),
+html.app-shell .page > header nav.navbar .nav-menu .nav-item a.nav-link:not(.btn-pos),
+nav.navbar #switch-theme,
+nav.navbar #btnFullscreen,
+nav.navbar .nav-menu .nav-item > a.dropdown-item {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  line-height: 30px !important;
+  padding: 0 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  margin: 0 2px !important;
+  font-size: 13px !important;
+  box-sizing: border-box !important;
+  color: var(--neo-text-secondary, #64748b) !important;
+  transition: all 0.18s ease !important;
+  vertical-align: middle !important;
+}
+
+nav.navbar #switch-theme,
+nav.navbar #btnFullscreen {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  padding: 0 !important;
+}
+
+nav.navbar #switch-theme i,
+nav.navbar #btnFullscreen i {
+  font-size: 16px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Hover state staying strictly within navbar frame */
+html.app-shell .page > header nav.navbar .nav-menu .nav-item > a:not(.btn-pos):hover,
+html.app-shell .page > header nav.navbar .nav-menu .nav-item a.nav-link:not(.btn-pos):hover,
+nav.navbar #switch-theme:hover,
+nav.navbar #btnFullscreen:hover,
+nav.navbar .nav-menu .nav-item > a.dropdown-item:hover {
+  height: 32px !important;
+  max-height: 32px !important;
+  background: var(--z-primary-soft, rgba(var(--z-primary-rgb) / 0.08)) !important;
+  border-color: rgba(var(--z-primary-rgb) / 0.22) !important;
+  color: var(--z-primary, #7d287e) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+nav.navbar #switch-theme:hover i,
+nav.navbar #btnFullscreen:hover i,
+nav.navbar .nav-menu .nav-item > a.dropdown-item:hover i {
+  color: var(--z-primary, #7d287e) !important;
+}
+
+/* Navbar Left Group (keeps toggle button and company brand together on the left) */
+.navbar-left-group {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-right: auto;
+}
 
 /* Top Navbar Company Identifier (Left side) */
 .top-navbar-company {
@@ -363,22 +472,49 @@ body.dark-mode .top-company-dropdown-footer {
   border-color: #334155;
 }
 
+.top-company-portal-btn,
+.top-company-portal-btn *,
+.top-company-portal-btn span,
+.top-company-portal-btn i,
+nav.navbar .nav-item a.top-company-portal-btn,
+nav.navbar .nav-item a.top-company-portal-btn *,
+nav.navbar .nav-item a.top-company-portal-btn span,
+nav.navbar .nav-item a.top-company-portal-btn i,
+nav.navbar .dropdown-menu a.top-company-portal-btn,
+nav.navbar .dropdown-menu a.top-company-portal-btn *,
+nav.navbar .dropdown-menu a.top-company-portal-btn span,
+nav.navbar .dropdown-menu a.top-company-portal-btn i {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
 .top-company-portal-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 11.5px;
   font-weight: 800;
-  color: #ffffff !important;
   background: linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 100%);
-  padding: 5px 12px;
-  border-radius: 7px;
-  text-decoration: none !important;
+  padding: 6px 14px;
+  border-radius: 8px;
   box-shadow: 0 2px 6px rgb(var(--z-primary-rgb) / 0.35);
   transition: all 0.15s ease;
 }
 
-.top-company-portal-btn:hover {
+.top-company-portal-btn:hover,
+.top-company-portal-btn:hover *,
+.top-company-portal-btn:hover span,
+.top-company-portal-btn:hover i,
+nav.navbar .nav-item a.top-company-portal-btn:hover,
+nav.navbar .nav-item a.top-company-portal-btn:hover *,
+nav.navbar .nav-item a.top-company-portal-btn:hover span,
+nav.navbar .nav-item a.top-company-portal-btn:hover i,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover *,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover span,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover i {
+  color: #ffffff !important;
+  text-decoration: none !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgb(var(--z-primary-rgb) / 0.45);
 }
