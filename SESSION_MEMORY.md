@@ -1,3 +1,38 @@
+## Job Work Policy Service Product Auto-Creation & Non-GST/GST Billing Bypass and Conversion — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives:
+    1. *"while creating a policy in jobwork, ask to create the policy service as a product for later use."*
+    2. *"give an option to the bill, for non gst bill, gst bill, if it is a non gst bill, then ignore or bypass all the process of gst checking. also if possible we can convert that to gst bill any time."*
+    3. *"update in UI branch."*
+  - Completely integrated both capabilities natively on branch `ui`, fully tested and verified against database laws, company scoping, and accounting ledger posting integrity.
+
+- **Key Implementations & Architectural Deliverables:**
+  1. **Job Work Policy Service Product Auto-Creation:**
+     - **Authoritative Service (`JobWorkService::configureProcess`)**: Added support for `create_service_product`, `service_product_name`, and `service_product_code`. When selected, automatically checks for existing service product or creates a new `type = 'service'` product (with code `SRV-[CODE]`, SAC `9988`, unit, category), links it via `service_product_id` to the process policy, and guards against transient payload leakage into `process_types` table.
+     - **UI Enhancement (`resources/views/backend/operations/hub.blade.php`)**: Added dedicated process policy card under Job Work Process Hub with an interactive `[✓] Also create this process policy as a Service Product for later use` checkbox, auto-synchronizing service name/code fields, and smart toggle visibility.
+  2. **Non-GST / GST Billing Architecture & Validation Bypass Engine:**
+     - **Additive Schema Migration (`2026_11_18_150000_add_is_non_gst_to_sales_and_purchases_tables.php`)**: Added `is_non_gst` boolean column (default false) to both `sales` and `purchases` tables.
+     - **Authoritative Bypass Engine (`TaxDeterminationService::prepare`)**: When `is_non_gst` is present (or `bill_type === 'non_gst'`), completely bypasses branch GST registration, party state/GSTIN, LUT, tax category, and HSN/SAC validations. Emits ₹0.00 taxes with `non-gst-v1` tax snapshot.
+     - **Commercial Pricing Engine (`CommercialPricing::preview` & `CommercialApplicationService`)**: Calculates zero taxes and ₹0.00 order tax, preserves `is_non_gst` in `attributes_json`, `tax_snapshot_json`, and document columns.
+     - **GST Transaction Projections Guard (`GstProjectionService::record`)**: Excludes non-GST transactions from `gst_transaction_projections`.
+  3. **Authoritative GST Conversion Engine (`CommercialApplicationService::convertToGst`):**
+     - Supports converting any existing Non-GST Sale or Purchase bill to a GST bill on-demand.
+     - Re-evaluates document under full GST compliance rules (`TaxDeterminationService::prepare`), recalculates line item taxes (CGST/SGST/IGST), updates line items with `withoutEvents` guard, reverses old non-GST double-entry journal entries, posts GST-inclusive double-entry ledger journals, and records entries into `gst_transaction_projections`.
+     - Route & Controller exposed: `POST /commercial/{kind}/{id}/convert-to-gst`, `POST /sales/{id}/convert-to-gst`, `POST /purchases/{id}/convert-to-gst`.
+  4. **Frontend Command Center & DataTable Integration:**
+     - **Voucher Command Center (`resources/views/backend/sale/index.blade.php`, `purchase/index.blade.php`, `public/js/command-center-form.js`)**: Added modern Segmented Control `[ GST Bill ]` | `[ Non-GST ]` in primary document controls. Selecting Non-GST recalculates live invoice summary to zero taxes.
+     - **DataTables & Action Modals**: Displays `Non-GST` status badges in voucher reference column and details modal header; provides interactive `Convert to GST Bill` button in action menus with AJAX confirmation and table reload.
+
+- **Verification & Test Coverage:**
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/JobWorkServiceProductCreationTest.php`: 3/3 tests PASSED (20 assertions).
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/NonGstBillBypassAndConversionTest.php`: 4/4 tests PASSED (26 assertions).
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions, 0 regressions).
+  - Committed on branch `ui`: commit `cc673d2`.
+
+---
+
 ## Stitch UI Modern Enterprise Workspace Hub Redesign — 2026-11-18 (`feature/ai-unified-input-clarification`)
 
 - **Context & Objectives:**
@@ -84,6 +119,41 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Job Work Policy Service Product Auto-Creation & Non-GST/GST Billing Bypass and Conversion — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives:
+    1. *"while creating a policy in jobwork, ask to create the policy service as a product for later use."*
+    2. *"give an option to the bill, for non gst bill, gst bill, if it is a non gst bill, then ignore or bypass all the process of gst checking. also if possible we can convert that to gst bill any time."*
+    3. *"update in UI branch."*
+  - Completely integrated both capabilities natively on branch `ui`, fully tested and verified against database laws, company scoping, and accounting ledger posting integrity.
+
+- **Key Implementations & Architectural Deliverables:**
+  1. **Job Work Policy Service Product Auto-Creation:**
+     - **Authoritative Service (`JobWorkService::configureProcess`)**: Added support for `create_service_product`, `service_product_name`, and `service_product_code`. When selected, automatically checks for existing service product or creates a new `type = 'service'` product (with code `SRV-[CODE]`, SAC `9988`, unit, category), links it via `service_product_id` to the process policy, and guards against transient payload leakage into `process_types` table.
+     - **UI Enhancement (`resources/views/backend/operations/hub.blade.php`)**: Added dedicated process policy card under Job Work Process Hub with an interactive `[✓] Also create this process policy as a Service Product for later use` checkbox, auto-synchronizing service name/code fields, and smart toggle visibility.
+  2. **Non-GST / GST Billing Architecture & Validation Bypass Engine:**
+     - **Additive Schema Migration (`2026_11_18_150000_add_is_non_gst_to_sales_and_purchases_tables.php`)**: Added `is_non_gst` boolean column (default false) to both `sales` and `purchases` tables.
+     - **Authoritative Bypass Engine (`TaxDeterminationService::prepare`)**: When `is_non_gst` is present (or `bill_type === 'non_gst'`), completely bypasses branch GST registration, party state/GSTIN, LUT, tax category, and HSN/SAC validations. Emits ₹0.00 taxes with `non-gst-v1` tax snapshot.
+     - **Commercial Pricing Engine (`CommercialPricing::preview` & `CommercialApplicationService`)**: Calculates zero taxes and ₹0.00 order tax, preserves `is_non_gst` in `attributes_json`, `tax_snapshot_json`, and document columns.
+     - **GST Transaction Projections Guard (`GstProjectionService::record`)**: Excludes non-GST transactions from `gst_transaction_projections`.
+  3. **Authoritative GST Conversion Engine (`CommercialApplicationService::convertToGst`):**
+     - Supports converting any existing Non-GST Sale or Purchase bill to a GST bill on-demand.
+     - Re-evaluates document under full GST compliance rules (`TaxDeterminationService::prepare`), recalculates line item taxes (CGST/SGST/IGST), updates line items with `withoutEvents` guard, reverses old non-GST double-entry journal entries, posts GST-inclusive double-entry ledger journals, and records entries into `gst_transaction_projections`.
+     - Route & Controller exposed: `POST /commercial/{kind}/{id}/convert-to-gst`, `POST /sales/{id}/convert-to-gst`, `POST /purchases/{id}/convert-to-gst`.
+  4. **Frontend Command Center & DataTable Integration:**
+     - **Voucher Command Center (`resources/views/backend/sale/index.blade.php`, `purchase/index.blade.php`, `public/js/command-center-form.js`)**: Added modern Segmented Control `[ GST Bill ]` | `[ Non-GST ]` in primary document controls. Selecting Non-GST recalculates live invoice summary to zero taxes.
+     - **DataTables & Action Modals**: Displays `Non-GST` status badges in voucher reference column and details modal header; provides interactive `Convert to GST Bill` button in action menus with AJAX confirmation and table reload.
+
+- **Verification & Test Coverage:**
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/JobWorkServiceProductCreationTest.php`: 3/3 tests PASSED (20 assertions).
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/NonGstBillBypassAndConversionTest.php`: 4/4 tests PASSED (26 assertions).
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions, 0 regressions).
+  - Committed on branch `ui`: commit `cc673d2`.
 
 ---
 
