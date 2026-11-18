@@ -332,10 +332,15 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
           @endphp
           <li class="nav-item company-switch dropdown" id="topCompanySwitchItem">
             <a class="company-switch-link dropdown-toggle" href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" id="topCompanySwitchDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Switch company" aria-label="Switch company">
-              <span class="company-switch-mark" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+              @if($activeCompanyLogoUrl)
+                <span class="company-switch-logo-wrap" aria-hidden="true">
+                  <img src="{{ $activeCompanyLogoUrl }}" alt="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}" class="company-switch-logo-img">
+                </span>
+              @else
+                <span class="company-switch-mark" aria-hidden="true">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+              @endif
               <span class="company-switch-name font-weight-bold">Switch Company</span>
-              @if($activeYear)<span class="company-switch-year">{{ $activeYear }}</span>@endif
-              <span class="company-switch-caret" aria-hidden="true">&#9662;</span>
+              <span class="company-switch-caret" aria-hidden="true"><i class="fa fa-angle-down"></i></span>
             </a>
             <div class="dropdown-menu dropdown-menu-right top-company-dropdown-menu" aria-labelledby="topCompanySwitchDropdown">
               <div class="top-company-dropdown-header">
@@ -390,6 +395,15 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
               </div>
             </div>
           </li>
+
+          @if($activeYear)
+          <li class="nav-item topbar-fiscal-item" id="topbarFiscalItem">
+            <div class="topbar-fiscal-pill" title="Active Fiscal Window">
+              <i class="dripicons-calendar" aria-hidden="true"></i>
+              <span>{{ str_starts_with($activeYear, 'FY') ? $activeYear : 'FY ' . $activeYear }}</span>
+            </div>
+          </li>
+          @endif
           @endif
           <?php
           $empty_database_permission_active = $role_has_permissions_list->where('name', 'empty_database')->first();

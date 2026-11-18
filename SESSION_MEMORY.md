@@ -1,3 +1,89 @@
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -58,6 +144,92 @@
      - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
      - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
      - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified PHP files passed with 0 syntax errors.
@@ -221,6 +393,92 @@
 
 ---
 
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -281,6 +539,92 @@
      - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
      - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
      - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified PHP files passed with 0 syntax errors.
@@ -743,6 +1087,92 @@
 
 ---
 
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -803,6 +1233,92 @@
      - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
      - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
      - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified PHP files passed with 0 syntax errors.
@@ -966,6 +1482,92 @@
 
 ---
 
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -1026,6 +1628,92 @@
      - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
      - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
      - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Hover Frame Bounds, Hero Controls Spacing & High-Contrast Mini Cockpit Ticker — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"these 3 items are out of the frame while hovering over them.."* (Ref: `media_1795003020309_2bbf4250.png` showing Switch Theme, Fullscreen, and Admin dropdown links overflowing the top navbar).
+    2. *"give a space between those hero section buttons"* (Ref: `media_1795003866996_11b40cc1.png` showing warehouse, period, and switch company buttons jammed together).
+    3. *"also purple colored line and text is not visible.."* (Ref: `media_1795003887806_e3b2aa4c.png` showing Gross Flow ₹0.00 text and progress bar rendered in invisible dark purple on purple hero gradient).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Top Navbar Right Items Frame Overflow Fix (`layout-main.css`):**
+     - Constrained `#switch-theme`, `#btnFullscreen`, and the Admin dropdown anchor to `height: 32px !important; max-height: 32px !important; line-height: 30px !important;`.
+     - Set `#switch-theme` and `#btnFullscreen` to fixed `32px` square action buttons with centered icons.
+     - On hover, pills render with smooth `8px` border radius and `var(--z-primary-soft)` background, strictly contained inside the 40px top navbar frame with 4px margin top and bottom.
+  2. **Hero Controls & Filter Buttons Spacing (`index.blade.php`, `index.css`, `workspace-home.css`):**
+     - Added `.dash-filter-controls-form` class and explicit CSS rule for `#dash-filter-form` and `.dash-command-controls` with `gap: 12px !important;`.
+     - Eliminates the previous zero-gap collision between `[ All warehouses ]`, `[ This Month ]`, and `[ Master Group Insight ]`.
+     - Enhanced `.zw-hero-right` in `workspace-home.css` to `gap: 12px` and `gap: 10px` for consistent button separation across both heroes.
+  3. **High-Contrast Mini Cockpit Ticker (`index.blade.php`, `index.css`):**
+     - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
+     - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
+     - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"separate the FY section. "AI" must be a logo, remove the 2 arrows pointing down and keep only one."* (Ref: `media_1795004498967_3258b679.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Authentic Company Brand Logo in Switcher (`main.blade.php`, `layout-main.css`):**
+     - Replaced the hardcoded initials text badge (`AI`) with the authentic company brand logo image (`$activeCompanyLogoUrl`, `.company-switch-logo-img`) inside `.company-switch-logo-wrap`.
+     - Automatically falls back to the clean two-letter monogram emblem when no logo is uploaded.
+  2. **Single Clean Down-Arrow Caret (`main.blade.php`, `layout-main.css`):**
+     - Suppressed Bootstrap 4's duplicate `.dropdown-toggle::after` caret pseudo-element via `.company-switch-link.dropdown-toggle::after { display: none !important; }`.
+     - Rendered only one clean, crisp FontAwesome chevron `<i class="fa fa-angle-down"></i>` with smooth 180° rotation on dropdown open.
+  3. **Separated Fiscal Year Section (`main.blade.php`, `layout-main.css`):**
+     - Extracted the Fiscal Year (`FY 2026-27`) out of the `Switch Company` dropdown button.
+     - Created a dedicated, self-contained topbar pill `<li class="nav-item topbar-fiscal-item"><div class="topbar-fiscal-pill">` styled with calendar icon and monospace font, providing clear separation between company identity and accounting periods.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified PHP files passed with 0 syntax errors.
