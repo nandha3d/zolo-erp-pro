@@ -31,6 +31,17 @@
     $money = fn ($value) => $currency_symbol . number_format((float) $value, $decimals);
     $currentCompany = $company ?? $activeCompany ?? (\App\Models\Company::with('group')->find(session('company_id')));
 
+    // Sidebar navigation parity for quick modules ribbon
+    $nav = $navigation;
+    $navigationContext = $nav->context;
+    $complianceOn = config('commercial.enabled') && config('compliance.enabled');
+    $canMasters = $nav->allows('sidebar_product');
+    $canSelling = $nav->allows('sidebar_sale', 'packing_slip_challan', 'delivery', 'delivery-challans-index', 'quotes-index', 'sale-payment-add');
+    $canJobWork = config('operations.enabled') && $nav->has('operations.job_work');
+    $canDistribution = (config('commercial.enabled') && $nav->has('sales.route_distribution') && $nav->allows('sales-index')) || $nav->has('operations.water_logistics');
+    $canHrm = $nav->has('hrm.enabled') && $nav->allows('sidebar_hrm');
+    $settingsSections = \App\Services\Platform\SettingsCatalog::sections($nav);
+
     // Dynamic SVG Sparkline generator
     $generateSparkline = function(array $values, int $w = 88, int $h = 34) {
         $data = array_values(array_filter($values, fn($v) => is_numeric($v)));
@@ -365,6 +376,284 @@
                     </a>
                     <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Apply</button></noscript>
                 </form>
+            </div>
+        </div>
+
+        {{-- Dynamic Expandable Quick Navigation Modules Dock --}}
+        <div class="dash-hero-expand-dock">
+            <button type="button" class="dash-hero-expand-btn" id="dashHeroExpandBtn" aria-expanded="false" aria-controls="dashHeroModulesTray" title="Expand Quick Access Modules">
+                <span class="dash-hero-expand-label">Explore Modules</span>
+                <i class="fa fa-chevron-down dash-hero-expand-chevron" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        {{-- Expanded Dynamic Hover-Pan Modules Ribbon --}}
+        <div class="dash-hero-modules-tray" id="dashHeroModulesTray" aria-hidden="true">
+            <div class="dash-modules-tray-inner">
+                <button type="button" class="dash-modules-nav-arrow is-left" id="dashModulesPrev" aria-label="Scroll left" title="Scroll left">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                </button>
+
+                <div class="dash-modules-viewport" id="dashModulesViewport" tabindex="0" role="region" aria-label="Quick Modules Navigation">
+                    <div class="dash-modules-track" id="dashModulesTrack">
+                        @if($navigationContext)
+                            <a href="/workspace" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-home" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Workspace</span>
+                                    <span class="dash-module-desc">Company Overview</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if(config('erp_ai.enabled'))
+                            <a href="{{ url('/ai') }}" class="dash-module-card is-ai">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-sparkles" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="dash-module-title">AI Workspace</span>
+                                        <span class="badge badge-primary u-fs-9px">PRO</span>
+                                    </div>
+                                    <span class="dash-module-desc">Copilot &amp; Intelligence</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canMasters || $nav->allows('products-index'))
+                            <a href="{{ route('products.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-list" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Products</span>
+                                    <span class="dash-module-desc">Catalog &amp; Units</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canMasters || $nav->allows('customers-index', 'suppliers-index'))
+                            <a href="{{ route('customer.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-user" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Parties</span>
+                                    <span class="dash-module-desc">Customers &amp; Suppliers</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canMasters)
+                            <a href="{{ route('sale-type.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-view-thumb" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Commercial Masters</span>
+                                    <span class="dash-module-desc">Vouchers &amp; Types</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canMasters || $nav->allows('sidebar_transfer'))
+                            <a href="{{ $stockUrl ?? url('/operations/stock') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-box" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Inventory</span>
+                                    <span class="dash-module-desc">Stock Balances &amp; Godown</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->allows('sidebar_purchase', 'purchases-index'))
+                            <a href="{{ route('purchases.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-card" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Buying</span>
+                                    <span class="dash-module-desc">PO &amp; Purchase Bills</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canSelling)
+                            <a href="{{ route('sales.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-cart" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Selling</span>
+                                    <span class="dash-module-desc">Invoices &amp; Orders</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        <a href="{{ route('dues.index') }}" class="dash-module-card">
+                            <div class="dash-module-icon-wrap">
+                                <i class="dripicons-wallet" aria-hidden="true"></i>
+                            </div>
+                            <div class="dash-module-info">
+                                <span class="dash-module-title">Payments &amp; Dues</span>
+                                <span class="dash-module-desc">Collections &amp; Payables</span>
+                            </div>
+                        </a>
+
+                        @if($canJobWork)
+                            <a href="{{ url('/operations/job-work') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-swap" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Job Work</span>
+                                    <span class="dash-module-desc">Subcontracting &amp; DC</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->has('manufacturing.production'))
+                            <a href="{{ url('/operations/manufacturing') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="fa fa-industry" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Manufacturing</span>
+                                    <span class="dash-module-desc">BOM &amp; Production Orders</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->has('operations.projects'))
+                            <a href="{{ url('/operations/projects') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-briefcase" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Projects</span>
+                                    <span class="dash-module-desc">Sites &amp; Task Board</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canDistribution)
+                            <a href="{{ route('water-logistics.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-map" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Distribution</span>
+                                    <span class="dash-module-desc">Fleet &amp; Beat Routes</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->allows('sidebar_accounting'))
+                            <a href="{{ route('accounting.voucher.entry') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-document-edit" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Accounting</span>
+                                    <span class="dash-module-desc">Voucher Entry · F9</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->allows('sidebar_expense'))
+                            <a href="{{ route('expenses.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-wallet" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Expenses</span>
+                                    <span class="dash-module-desc">Operating Overhead</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->allows('sidebar_income'))
+                            <a href="{{ route('incomes.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-rocket" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Income</span>
+                                    <span class="dash-module-desc">Direct &amp; Other Inflows</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($complianceOn && $nav->allows('gst-index'))
+                            <a href="{{ url('/compliance/gst/report') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-document" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">GST Compliance</span>
+                                    <span class="dash-module-desc">GST Review &amp; GSTR-3B</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->allows('sidebar_reports'))
+                            <a href="{{ route('report.stock') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-document-remove" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Reports</span>
+                                    <span class="dash-module-desc">Registers &amp; Statements</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($nav->allows('sidebar_people'))
+                            <a href="{{ route('user.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-user-group" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">People</span>
+                                    <span class="dash-module-desc">Users &amp; Billers</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($canHrm && \Route::has('employees.index'))
+                            <a href="{{ route('employees.index') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-user-id" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">HRM</span>
+                                    <span class="dash-module-desc">Staff &amp; Payroll</span>
+                                </div>
+                            </a>
+                        @endif
+
+                        @if($settingsSections)
+                            <a href="{{ route('settings.workspace') }}" class="dash-module-card">
+                                <div class="dash-module-icon-wrap">
+                                    <i class="dripicons-gear" aria-hidden="true"></i>
+                                </div>
+                                <div class="dash-module-info">
+                                    <span class="dash-module-title">Settings</span>
+                                    <span class="dash-module-desc">Preferences &amp; System</span>
+                                </div>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                <button type="button" class="dash-modules-nav-arrow is-right" id="dashModulesNext" aria-label="Scroll right" title="Scroll right">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     </header>
