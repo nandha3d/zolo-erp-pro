@@ -140,6 +140,88 @@ nav.navbar .nav-menu .nav-item > a.dropdown-item:hover i {
   color: var(--z-primary, #7d287e) !important;
 }
 
+/* --------------------------------------------------------------------------
+   Company Switch Logo & Mark (Right Navbar Switch Company Button)
+   -------------------------------------------------------------------------- */
+.company-switch-logo-wrap {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--neo-border, rgba(0, 0, 0, 0.08));
+  flex-shrink: 0;
+}
+
+.company-switch-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+}
+
+/* Remove duplicate bootstrap dropdown-toggle caret so only ONE clean arrow down is displayed */
+.company-switch-link.dropdown-toggle::after {
+  display: none !important;
+  content: none !important;
+}
+
+.company-switch-caret {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--neo-text-secondary, #64748b);
+  transition: transform 0.18s ease;
+}
+
+.company-switch.show .company-switch-caret {
+  transform: rotate(180deg);
+}
+
+/* --------------------------------------------------------------------------
+   Separate FY (Fiscal Year) Pill in Top Navbar
+   -------------------------------------------------------------------------- */
+.topbar-fiscal-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 4px !important;
+}
+
+.topbar-fiscal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--z-primary-soft, rgba(var(--z-primary-rgb) / 0.08));
+  border: 1px solid rgba(var(--z-primary-rgb) / 0.2);
+  color: var(--z-primary, #7d287e);
+  font-family: var(--neo-mono, monospace);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.topbar-fiscal-pill i {
+  font-size: 13px;
+  color: var(--z-primary, #7d287e);
+}
+
+body.dark-mode .topbar-fiscal-pill {
+  background: rgba(var(--z-primary-rgb) / 0.16);
+  border-color: rgba(var(--z-primary-rgb) / 0.3);
+  color: #ffffff;
+}
+body.dark-mode .topbar-fiscal-pill i {
+  color: #ffffff;
+}
+
 /* Navbar Left Group (keeps toggle button and company brand together on the left) */
 .navbar-left-group {
   display: flex !important;
