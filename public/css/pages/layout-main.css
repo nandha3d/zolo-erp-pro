@@ -4,9 +4,14 @@
       background-color: var(--z-sidebar-bg) !important;
       background: var(--z-sidebar-bg) !important;
       color: var(--z-sidebar-text) !important;
-      width: 256px !important;
+      width: 256px;
       opacity: 1 !important;
-      transition: none !important;
+    }
+    nav.side-navbar.icon-only:not(.hover-expanded) {
+      width: 72px !important;
+    }
+    nav.side-navbar.shrink:not(.hover-expanded) {
+      width: 72px !important;
     }
     .side-navbar ul,
     .side-navbar li,
@@ -33,11 +38,40 @@
     .side-navbar .sidebar-heading {
       color: #64748b !important;
     }
-    @media (min-width: 1200px) {
-      .side-navbar.shrink {
-        width: 256px !important;
-        opacity: 1 !important;
-      }
+    
+    /* Dynamic Hover Expansion for Sidebar Navigation Menus */
+    .side-navbar li:has(> a[data-toggle="collapse"]) > a {
+      transition: background-color 0.18s ease, color 0.18s ease;
+    }
+    .side-navbar li:has(> a[data-toggle="collapse"]):hover > a {
+      color: #ffffff !important;
+      background-color: rgba(255, 255, 255, 0.06);
+    }
+    .side-navbar li:has(> a[data-toggle="collapse"]):hover > a[data-toggle="collapse"]::after {
+      opacity: 1 !important;
+    }
+
+    /* Dynamic Hover Expansion for Collapsed Sidebar (icon-only / shrink) */
+    nav.side-navbar.icon-only.hover-expanded,
+    nav.side-navbar.shrink.hover-expanded {
+      width: 256px !important;
+      transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease !important;
+      box-shadow: 6px 0 24px rgba(0, 0, 0, 0.35);
+      z-index: 1040;
+    }
+    nav.side-navbar.icon-only.hover-expanded span,
+    nav.side-navbar.shrink.hover-expanded span {
+      display: inline-block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    nav.side-navbar.icon-only.hover-expanded .brand-big,
+    nav.side-navbar.shrink.hover-expanded .brand-big {
+      display: block !important;
+    }
+    nav.side-navbar.icon-only.hover-expanded .side-search,
+    nav.side-navbar.shrink.hover-expanded .side-search {
+      display: block !important;
     }
 
 /* Navbar Left Group (keeps toggle button and company brand together on the left) */

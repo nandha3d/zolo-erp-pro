@@ -1,3 +1,162 @@
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Navbar Left-Group Alignment, Multi-Path Logo Resolution, Unmasked Hero Switch Popover & High-Contrast Company Portal Button — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"text is not visible for the company portal. also the header section switch company dropdown box is masked inside the hero section itself."* (Ref: `media_1795002189179_119443f2.jpg`, `media_1795002211682_3f4d8215.png`).
+    2. *"bring this at the left side. and the logo is not working i have updated the logo, its not showing.."* (Ref: `media_1795002394475_511f7e75.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Navbar Left-Group Alignment (`main.blade.php`, `layout-main.css`):**
+     - Grouped `#toggle-btn` and `.top-navbar-company` inside `.navbar-left-group` (`display: flex; align-items: center; margin-right: auto; gap: 6px;`).
+     - Eliminates the previous flex `justify-content: space-between` issue where the company identity pill was centered into dead space; both now sit snugly on the far left edge of the top navbar.
+  2. **Multi-Path Robust Company Logo Resolution (`main.blade.php`, `index.blade.php`, `home.blade.php`):**
+     - Fixed logo non-appearance where `logo` column stored `images/company/company-2-....png` (or bare filenames), but previous code expected `logo/...`.
+     - Implemented multi-path resolution in Blade: checks `public_path($logo)`, `public_path('images/company/' . $logo)`, and `public_path('logo/' . $logo)`.
+     - Resolved Company 2's updated logo (`company-2-20261118174549-9362185e.png`) immediately across Top Navbar, Dashboard Command Center header, and Workspace Executive Hero.
+  3. **High-Contrast "Company Portal" Button Styling (`layout-main.css`, `workspace-home.css`, `main.blade.php`, `home.blade.php`):**
+     - Overcame generic navbar link and span color overrides that were enforcing dark `#0f172a` / `#777` text on purple buttons.
+     - Enforced `color: #ffffff !important;` across `.top-company-portal-btn`, `.zw-popover-portal-btn`, and their child `span`, `i`, and `*` tags, plus `.text-white` classes in HTML.
+     - Text "Company Portal ›" is now 100% white, legible, and high-contrast against the theme gradient.
+  4. **Unmasked Hero Switch Popover (`workspace-home.css`, `home.blade.php`):**
+     - Resolved the clipping bug where `.zw-hero-executive` had `overflow: hidden;`, truncating the expanding `.zw-hero-switch-popover` at the bottom edge of the purple hero banner.
+     - Set `.zw-hero-executive { overflow: visible !important; z-index: 40; }`.
+     - Maintained `overflow: hidden; border-radius: 0 18px 18px 0;` on `.zw-hero-vector-illustration` to clip background vector SVG cleanly.
+     - Set `.zw-hero-right { z-index: 25; }` and `.zw-hero-switch-wrapper { z-index: 30; }`.
+     - The Switch Company popover now expands smoothly over the page and below the banner without being cut off.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and controllers passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Resolution of All 31 PR #18 Review Comments, origin/main Sync & Ready-to-Merge Status — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - Complete verification and remediation of all 31 review comments posted by Copilot and ChatGPT Codex on PR #18 ([#18](https://github.com/vigneshsinna/zolo-erp-pro/pull/18)).
+  - Clean synchronization between `origin/main` and `ui` branch.
+  - Active branch `ui` (`v:\pers\Freelance\zolo-erp-pro`).
+
+- **Key Architectural Fixes & Audit Remediation:**
+  1. **Financial & Expense Multi-Tenancy:**
+     - Propagated `CompanyContextResolver` exceptions in `ExpenseApiController.php`.
+     - Validated that `account_id` strictly belongs to the active company and is active.
+     - Resolved credit ledger from account's `chart_of_account_id` instead of hardcoding cash.
+     - Wrapped expense creation and double-entry GL journal posting in atomic `DB::transaction()`.
+  2. **Inventory Stock Count Persistence:**
+     - Added `company_id` to `StockCount::$fillable`.
+     - Validated submitted count items array and persisted authentic `StockCount` records before returning 201.
+     - Fixed missing `Auth` and `DB` facade imports in `InventoryApiController.php`.
+  3. **Offline Mobile Sales & POS Parity:**
+     - Enforced `sales-add` permission via `CommercialPermission` and `\Spatie\Permission\Models\Role`.
+     - Validated `grand_total > 0` and `0 <= paid_amount <= grand_total`.
+     - Honored company-scoped `Idempotency-Key` and `client_timestamp`.
+     - Resolved submitted catalog items strictly against the active company catalog.
+     - Created explicit "Counter Retail" walk-in customer when customer is unassigned.
+     - Initialized `product_warehouse` stock for on-the-fly created counter items to prevent stock-out rejections.
+     - Normalized mobile payment modes (`UPI`, `QR`, `ONLINE`, `TRANSFER` -> `Bank`; `CARD` -> `Credit Card`; `CHEQUE` -> `Cheque`).
+     - Routed mobile sales through `SaleService::createSale()`, issuing stock decrements via `InventoryMovementService::issue()`, updating COGS, and posting double-entry journals atomically in `DB::transaction()`.
+  4. **Water Logistics DB Column Guards:**
+     - Guarded `total_km`, `motor_pumping_charge`, and `waiting_charge` updates with `Schema::hasColumn('water_tanker_trips', ...)` checks.
+  5. **Product Type Company Ownership & Authorization:**
+     - Enforced `products-add`, `products-edit`, and `products-delete` permissions on `ProductTypeController.php`.
+     - Scoped `edit()`, `update()`, and `destroy()` strictly to `ProductType::where('company_id', $companyId)->findOrFail($id)`.
+  6. **Quick Product Modal & Optical Specifications:**
+     - Guarded `#file` input access with `var fileEl = document.getElementById('file'); if (fileEl && fileEl.files && fileEl.files.length > 0)` to support Optical profiles that do not render `#file`.
+     - In `PackingSlipController::genInvoice()`, loaded `PackingSlipProduct` to enrich only selected lines with Rx optical fields.
+     - Added optical/warranty header fields (`end_user_name`, `end_user_phone`, `end_user_email`, `end_user_address`, `fitting_charge`, `tinting_cost`, `customer_order_no`) to `attributes()` and `$saleFill`.
+     - Enforced batch expiry date validation and metadata persistence (`mfg_date`, `mrp`) in `PurchaseService.php`.
+     - Added `->middleware('hasPermanentDeletePermission')` and stock reversal before force deleting sales and purchases.
+
+- **Branch Synchronization & Clean Status:**
+  - Merged `origin/main` into `ui` with zero merge conflicts via the `ort` strategy.
+  - Pushed to `origin/ui` (commit `871b1aa`).
+  - GitHub comparison confirms: `ui` is **94 commits directly ahead of `main` and 0 commits behind** (`ahead_by: 94, behind_by: 0`).
+
+- **Verification & Test Coverage:**
+  - `php artisan test tests/Feature/OfflineSyncAndPosParityTest.php tests/Feature/LotNumberCommercialTest.php tests/Feature/QuickEditProductModalTest.php tests/Feature/ProductTypeAndOpticalSpecsTest.php`: **15 passed, 0 failed, 117 assertions (11.66s)**.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php tests/Feature/WorkspaceSecurityTest.php`: **16 passed, 0 failed, 77 assertions (12.19s)**.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Navbar Left-Group Alignment, Multi-Path Logo Resolution, Unmasked Hero Switch Popover & High-Contrast Company Portal Button — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -379,6 +538,165 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Navbar Left-Group Alignment, Multi-Path Logo Resolution, Unmasked Hero Switch Popover & High-Contrast Company Portal Button — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"text is not visible for the company portal. also the header section switch company dropdown box is masked inside the hero section itself."* (Ref: `media_1795002189179_119443f2.jpg`, `media_1795002211682_3f4d8215.png`).
+    2. *"bring this at the left side. and the logo is not working i have updated the logo, its not showing.."* (Ref: `media_1795002394475_511f7e75.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Navbar Left-Group Alignment (`main.blade.php`, `layout-main.css`):**
+     - Grouped `#toggle-btn` and `.top-navbar-company` inside `.navbar-left-group` (`display: flex; align-items: center; margin-right: auto; gap: 6px;`).
+     - Eliminates the previous flex `justify-content: space-between` issue where the company identity pill was centered into dead space; both now sit snugly on the far left edge of the top navbar.
+  2. **Multi-Path Robust Company Logo Resolution (`main.blade.php`, `index.blade.php`, `home.blade.php`):**
+     - Fixed logo non-appearance where `logo` column stored `images/company/company-2-....png` (or bare filenames), but previous code expected `logo/...`.
+     - Implemented multi-path resolution in Blade: checks `public_path($logo)`, `public_path('images/company/' . $logo)`, and `public_path('logo/' . $logo)`.
+     - Resolved Company 2's updated logo (`company-2-20261118174549-9362185e.png`) immediately across Top Navbar, Dashboard Command Center header, and Workspace Executive Hero.
+  3. **High-Contrast "Company Portal" Button Styling (`layout-main.css`, `workspace-home.css`, `main.blade.php`, `home.blade.php`):**
+     - Overcame generic navbar link and span color overrides that were enforcing dark `#0f172a` / `#777` text on purple buttons.
+     - Enforced `color: #ffffff !important;` across `.top-company-portal-btn`, `.zw-popover-portal-btn`, and their child `span`, `i`, and `*` tags, plus `.text-white` classes in HTML.
+     - Text "Company Portal ›" is now 100% white, legible, and high-contrast against the theme gradient.
+  4. **Unmasked Hero Switch Popover (`workspace-home.css`, `home.blade.php`):**
+     - Resolved the clipping bug where `.zw-hero-executive` had `overflow: hidden;`, truncating the expanding `.zw-hero-switch-popover` at the bottom edge of the purple hero banner.
+     - Set `.zw-hero-executive { overflow: visible !important; z-index: 40; }`.
+     - Maintained `overflow: hidden; border-radius: 0 18px 18px 0;` on `.zw-hero-vector-illustration` to clip background vector SVG cleanly.
+     - Set `.zw-hero-right { z-index: 25; }` and `.zw-hero-switch-wrapper { z-index: 30; }`.
+     - The Switch Company popover now expands smoothly over the page and below the banner without being cut off.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and controllers passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Resolution of All 31 PR #18 Review Comments, origin/main Sync & Ready-to-Merge Status — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - Complete verification and remediation of all 31 review comments posted by Copilot and ChatGPT Codex on PR #18 ([#18](https://github.com/vigneshsinna/zolo-erp-pro/pull/18)).
+  - Clean synchronization between `origin/main` and `ui` branch.
+  - Active branch `ui` (`v:\pers\Freelance\zolo-erp-pro`).
+
+- **Key Architectural Fixes & Audit Remediation:**
+  1. **Financial & Expense Multi-Tenancy:**
+     - Propagated `CompanyContextResolver` exceptions in `ExpenseApiController.php`.
+     - Validated that `account_id` strictly belongs to the active company and is active.
+     - Resolved credit ledger from account's `chart_of_account_id` instead of hardcoding cash.
+     - Wrapped expense creation and double-entry GL journal posting in atomic `DB::transaction()`.
+  2. **Inventory Stock Count Persistence:**
+     - Added `company_id` to `StockCount::$fillable`.
+     - Validated submitted count items array and persisted authentic `StockCount` records before returning 201.
+     - Fixed missing `Auth` and `DB` facade imports in `InventoryApiController.php`.
+  3. **Offline Mobile Sales & POS Parity:**
+     - Enforced `sales-add` permission via `CommercialPermission` and `\Spatie\Permission\Models\Role`.
+     - Validated `grand_total > 0` and `0 <= paid_amount <= grand_total`.
+     - Honored company-scoped `Idempotency-Key` and `client_timestamp`.
+     - Resolved submitted catalog items strictly against the active company catalog.
+     - Created explicit "Counter Retail" walk-in customer when customer is unassigned.
+     - Initialized `product_warehouse` stock for on-the-fly created counter items to prevent stock-out rejections.
+     - Normalized mobile payment modes (`UPI`, `QR`, `ONLINE`, `TRANSFER` -> `Bank`; `CARD` -> `Credit Card`; `CHEQUE` -> `Cheque`).
+     - Routed mobile sales through `SaleService::createSale()`, issuing stock decrements via `InventoryMovementService::issue()`, updating COGS, and posting double-entry journals atomically in `DB::transaction()`.
+  4. **Water Logistics DB Column Guards:**
+     - Guarded `total_km`, `motor_pumping_charge`, and `waiting_charge` updates with `Schema::hasColumn('water_tanker_trips', ...)` checks.
+  5. **Product Type Company Ownership & Authorization:**
+     - Enforced `products-add`, `products-edit`, and `products-delete` permissions on `ProductTypeController.php`.
+     - Scoped `edit()`, `update()`, and `destroy()` strictly to `ProductType::where('company_id', $companyId)->findOrFail($id)`.
+  6. **Quick Product Modal & Optical Specifications:**
+     - Guarded `#file` input access with `var fileEl = document.getElementById('file'); if (fileEl && fileEl.files && fileEl.files.length > 0)` to support Optical profiles that do not render `#file`.
+     - In `PackingSlipController::genInvoice()`, loaded `PackingSlipProduct` to enrich only selected lines with Rx optical fields.
+     - Added optical/warranty header fields (`end_user_name`, `end_user_phone`, `end_user_email`, `end_user_address`, `fitting_charge`, `tinting_cost`, `customer_order_no`) to `attributes()` and `$saleFill`.
+     - Enforced batch expiry date validation and metadata persistence (`mfg_date`, `mrp`) in `PurchaseService.php`.
+     - Added `->middleware('hasPermanentDeletePermission')` and stock reversal before force deleting sales and purchases.
+
+- **Branch Synchronization & Clean Status:**
+  - Merged `origin/main` into `ui` with zero merge conflicts via the `ort` strategy.
+  - Pushed to `origin/ui` (commit `871b1aa`).
+  - GitHub comparison confirms: `ui` is **94 commits directly ahead of `main` and 0 commits behind** (`ahead_by: 94, behind_by: 0`).
+
+- **Verification & Test Coverage:**
+  - `php artisan test tests/Feature/OfflineSyncAndPosParityTest.php tests/Feature/LotNumberCommercialTest.php tests/Feature/QuickEditProductModalTest.php tests/Feature/ProductTypeAndOpticalSpecsTest.php`: **15 passed, 0 failed, 117 assertions (11.66s)**.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php tests/Feature/WorkspaceSecurityTest.php`: **16 passed, 0 failed, 77 assertions (12.19s)**.
+
+---
+
+## Theme-Colored Executive Dashboard Header, Action Buttons Removal, Dynamic Hover-Expanding Sidebar Menus & Workspace Route Name — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"here also we can change the header section color to theme color as like the workspace.. remove all the buttons"* (Ref: `media_1795002748582_50c2529f.jpg`, `media_1795002838510_13089c95.png`).
+    2. *"and keep the menus dynamically expand while hovering."* (Ref: `media_1795003000539_baa8ff09.png`).
+    3. Route fix: `Route [workspace] not defined` error when navigating back from `/company/create` (Ref: `media_1795002748582_50c2529f.jpg`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Workspace Route Name (`routes/workspace.php`):**
+     - Explicitly registered `->name('workspace')` on `Route::get('/', [WorkspaceController::class, 'index'])`.
+     - Completely resolves `RouteNotFoundException` for `route('workspace')` in `resources/views/backend/company/create.blade.php`.
+  2. **Theme-Colored Executive Dashboard Command Header (`index.blade.php`, `index.css`):**
+     - Converted `.dash-command` from a flat white card to the executive theme gradient matching the workspace hero:
+       `linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 48%, var(--z-ink, #022051) 100%)`.
+     - Embedded subtle background vector tech grid and curve art (`.dash-hero-vector-art`) with gradient curves and tech paths.
+     - Upgraded typography: high-contrast `#ffffff` company title (`.dash-company-name`) with text shadow, translucent breadcrumbs, code badge, legal name, and submeta.
+     - Restyled mini cockpit tickers (`.dash-cockpit-kpis`), warehouse/period filters (`.dash-filter-group`), and `.dashboard-switch-company` button into polished glass cockpit controls.
+  3. **Removed Action Buttons (`index.blade.php`):**
+     - Completely removed `<nav class="dash-command-dock">` containing all 7 action buttons (`+ New Sale`, `POS Terminal`, `New Purchase`, `Add Expense`, `Chart of Accounts`, `General Ledger`, `Stock`) per user request.
+  4. **Dynamic Hover-Expanding Sidebar Menus (`main.blade.php`, `layout-main.css`):**
+     - Implemented dynamic hover expansion for all sidebar category menus with collapsible submenus (`li:has(> a[data-toggle="collapse"])`).
+     - On hover (`mouseenter`), submenus automatically slide down and expand smoothly, rotating the CSS chevron to down-arrow.
+     - On mouse leave (`mouseleave`), unpinned/inactive submenus slide up after a 150ms debounce.
+     - Clicking any category toggles a `.menu-pinned` state, allowing users to keep menus open if preferred.
+     - Added smooth hover expansion for collapsed sidebar states (`.side-navbar.icon-only.hover-expanded`, `.side-navbar.shrink.hover-expanded`) expanding to 256px with shadows on hover.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
 
 ---
 

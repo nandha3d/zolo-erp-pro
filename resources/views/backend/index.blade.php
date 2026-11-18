@@ -244,6 +244,25 @@
 
     {{-- 1. Executive Command Center Header (Modern Glass Cockpit) --}}
     <header class="dash-card dash-command">
+        {{-- Subtle vector tech grid & curve art in background --}}
+        <div class="dash-hero-vector-art" aria-hidden="true">
+            <svg viewBox="0 0 600 130" preserveAspectRatio="none" class="dash-hero-vector-svg">
+                <defs>
+                    <linearGradient id="dashHeroGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
+                    </linearGradient>
+                    <linearGradient id="dashHeroGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.1" />
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.01" />
+                    </linearGradient>
+                </defs>
+                <path d="M0,45 C160,80 320,10 460,55 C520,75 570,40 600,50 L600,130 L0,130 Z" fill="url(#dashHeroGrad1)" opacity="0.6" />
+                <path d="M0,85 C140,120 280,30 420,75 C500,100 560,60 600,70 L600,130 L0,130 Z" fill="url(#dashHeroGrad2)" opacity="0.45" />
+                <path d="M0,105 C150,135 290,50 430,90 C510,115 570,75 600,85" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" fill="none" />
+            </svg>
+        </div>
+
         <div class="dash-command-top">
             <div class="dash-heading">
                 @php
@@ -348,30 +367,6 @@
                 </form>
             </div>
         </div>
-
-        <nav class="dash-command-dock" aria-label="Quick actions dock">
-            @if ($navigation->allows('sales-add') && $menu->allowsUrl($newSale))
-                <a href="{{ $newSale }}" class="btn btn-primary"><i class="dripicons-plus" aria-hidden="true"></i> New Sale</a>
-            @endif
-            @if ($navigation->has('sales.pos') && $menu->routeAllowed('sale.pos'))
-                <a href="{{ route('sale.pos') }}" class="btn btn-outline-secondary"><i class="dripicons-shopping-bag" aria-hidden="true"></i> POS Terminal</a>
-            @endif
-            @if ($navigation->allows('purchases-add') && $menu->allowsUrl($newPurchase))
-                <a href="{{ $newPurchase }}" class="btn btn-outline-secondary"><i class="dripicons-cart" aria-hidden="true"></i> New Purchase</a>
-            @endif
-            @if ($navigation->allows('expenses-add') && $menu->allowsUrl($newExpense))
-                <a href="{{ $newExpense }}" class="btn btn-outline-secondary"><i class="dripicons-wallet" aria-hidden="true"></i> Add Expense</a>
-            @endif
-            @if (Route::has('accounting.coa') && $navigation->allows('accounting.reports.view') && $menu->routeAllowed('accounting.coa'))
-                <a href="{{ route('accounting.coa') }}" class="btn btn-outline-secondary"><i class="dripicons-network" aria-hidden="true"></i> Chart of Accounts</a>
-            @endif
-            @if (Route::has('accounting.general-ledger') && $navigation->allows('accounting.reports.view') && $menu->routeAllowed('accounting.general-ledger'))
-                <a href="{{ route('accounting.general-ledger') }}" class="btn btn-outline-secondary"><i class="dripicons-document" aria-hidden="true"></i> General Ledger</a>
-            @endif
-            @if ($stockUrl)
-                <a href="{{ $stockUrl }}" class="btn btn-outline-secondary"><i class="dripicons-stack" aria-hidden="true"></i> Stock</a>
-            @endif
-        </nav>
     </header>
 
     @if (in_array('restaurant', explode(',', cache()->get('general_setting')->modules)))
