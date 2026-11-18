@@ -26,12 +26,28 @@ class CommercialOrderController extends Controller
     public function index(Request $request, string $kind)
     {
         $context = $this->context($request, $kind);
-        $request->validate(['party_id' => 'nullable|integer|min:1', 'status' => 'nullable|in:pending,all']);
+        $request->validate(['party_id' => 'nullable|integer|min:1', 'status' => 'nullable|in:pending,all,partial,open,fulfilled,cancelled']);
         $query = $kind === 'sale' ? SalesOrder::visibleIn($context)->with('customer') : Purchase::visibleIn($context)->where('status', 4)->with('supplier');
         if ($request->filled('party_id')) $query->where($kind === 'sale' ? 'customer_id' : 'supplier_id', $request->integer('party_id'));
         if ($request->input('status', 'pending') !== 'all') {
-            if ($kind === 'sale') $query->whereIn('status', ['open', 'partial']);
-            else $query->whereNull('reversed_at')->whereNull('attributes_json->fulfilled_at');
+            $statusFilter = $request->input('status', 'pending');
+            if ($statusFilter === 'partial') {
+                if ($kind === 'sale') $query->where('status', 'partial');
+                else $query->where('attributes_json->order_status', 'partial');
+            } elseif ($statusFilter === 'open') {
+                if ($kind === 'sale') $query->where('status', 'open');
+                else $query->whereNull('reversed_at')->whereNull('attributes_json->fulfilled_at')
+                           ->where(fn($q) => $q->whereNull('attributes_json->order_status')->orWhere('attributes_json->order_status', 'open'));
+            } elseif ($statusFilter === 'fulfilled') {
+                if ($kind === 'sale') $query->where('status', 'fulfilled');
+                else $query->whereNotNull('attributes_json->fulfilled_at');
+            } elseif ($statusFilter === 'cancelled') {
+                if ($kind === 'sale') $query->where('status', 'cancelled');
+                else $query->whereNotNull('reversed_at');
+            } else {
+                if ($kind === 'sale') $query->whereIn('status', ['open', 'partial']);
+                else $query->whereNull('reversed_at')->whereNull('attributes_json->fulfilled_at');
+            }
         }
         $rows = $query->orderByDesc('id')->paginate(25);
         // Compute remaining quantities from authoritative allocations, not status labels or product totals.

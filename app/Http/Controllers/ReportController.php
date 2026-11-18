@@ -216,6 +216,7 @@ class ReportController extends Controller
             ->join('warehouses', 'product_warehouse.warehouse_id', '=', 'warehouses.id')
             ->whereIn('product_warehouse.product_id', $productIds)
             ->where('warehouses.is_active', true)
+            ->where(fn($q) => $q->where('warehouses.company_id', $companyId)->orWhereNull('warehouses.company_id'))
             ->where(fn($q) => $q->where('product_warehouse.company_id', $companyId)->orWhereNull('product_warehouse.company_id'));
 
         if ($warehouse_id > 0) {
@@ -445,6 +446,7 @@ class ReportController extends Controller
             ->join('warehouses', 'product_warehouse.warehouse_id', '=', 'warehouses.id')
             ->whereIn('product_warehouse.product_id', $productIds)
             ->where('warehouses.is_active', true)
+            ->where(fn($q) => $q->where('warehouses.company_id', $companyId)->orWhereNull('warehouses.company_id'))
             ->where(fn($q) => $q->where('product_warehouse.company_id', $companyId)->orWhereNull('product_warehouse.company_id'));
 
         if ($warehouse_id > 0) {

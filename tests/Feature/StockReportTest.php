@@ -28,7 +28,11 @@ class StockReportTest extends TestCase
 
         $this->company = Company::first();
         if ($this->company) {
-            $this->withSession(['company_id' => $this->company->id]);
+            $branch = $this->company->branches()->first();
+            $this->withSession([
+                'company_id' => $this->company->id,
+                'branch_id' => $branch?->id,
+            ]);
         }
     }
 

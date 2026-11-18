@@ -26,14 +26,17 @@ class GoodsReceivedNoteWebTest extends TestCase
         $_ENV['ERP_OPTIONAL_ACTIVATION_READY'] = 'true';
         \Illuminate\Support\Facades\Cache::flush();
         $this->adminUser = User::first();
-        if (!Product::first()) {
+        if (!Product::where('company_id', 1)->first()) {
             Product::forceCreate(['company_id' => 1, 'name' => 'Document fixture', 'code' => 'DOC-FIXTURE',
                 'type' => 'standard', 'barcode_symbology' => 'C128', 'category_id' => 1, 'unit_id' => 1,
                 'sale_unit_id' => 1, 'purchase_unit_id' => 1, 'price' => 10, 'cost' => 5, 'qty' => 0, 'is_active' => true]);
         }
-        if (!Supplier::first()) {
+        if (!Supplier::where('company_id', 1)->first()) {
             Supplier::forceCreate(['company_id' => 1, 'name' => 'Supplier fixture', 'company_name' => 'Fixture',
                 'phone_number' => '123', 'email' => 'fixture@example.test', 'address' => 'Fixture', 'city' => 'Fixture', 'is_active' => true]);
+        }
+        if (!Warehouse::where('company_id', 1)->first()) {
+            Warehouse::forceCreate(['company_id' => 1, 'name' => 'Warehouse fixture', 'phone' => '123', 'email' => 'wh@fixture.test', 'address' => 'Fixture', 'is_active' => true]);
         }
 
     }
@@ -57,10 +60,11 @@ class GoodsReceivedNoteWebTest extends TestCase
 
     public function test_goods_received_note_store_creates_record_and_items(): void
     {
-        $supplier = Supplier::first();
-        $warehouse = Warehouse::first();
-        $product = Product::first();
+        $supplier = Supplier::where('company_id', 1)->first();
+        $warehouse = Warehouse::where('company_id', 1)->first();
+        $product = Product::where('company_id', 1)->first();
 
+        $unitId = $product ? ($product->unit_id ?: 1) : 1;
         $postData = [
             'grn_date' => now()->toDateString(),
             'supplier_id' => $supplier ? $supplier->id : 1,
@@ -70,7 +74,7 @@ class GoodsReceivedNoteWebTest extends TestCase
             'order_no' => 'PO-5544',
             'remarks' => 'Received all bales in good condition',
             'product_id' => [$product ? $product->id : 1],
-            'unit_id' => [1],
+            'unit_id' => [$unitId],
             'qty' => [15],
             'cost' => [120],
             'amount' => [1800],
@@ -107,9 +111,9 @@ class GoodsReceivedNoteWebTest extends TestCase
 
     public function test_goods_received_note_json_endpoint_returns_data(): void
     {
-        $supplier = Supplier::first();
-        $warehouse = Warehouse::first();
-        $product = Product::first();
+        $supplier = Supplier::where('company_id', 1)->first();
+        $warehouse = Warehouse::where('company_id', 1)->first();
+        $product = Product::where('company_id', 1)->first();
 
         $grn = GoodsReceivedNote::create([
             'company_id' => 1,
@@ -128,7 +132,7 @@ class GoodsReceivedNoteWebTest extends TestCase
             'company_id' => 1,
             'goods_received_note_id' => $grn->id,
             'product_id' => $product ? $product->id : 1,
-            'unit_id' => 1,
+            'unit_id' => $product ? ($product->unit_id ?: 1) : 1,
             'qty' => 8,
             'cost' => 100,
             'amount' => 800,
@@ -146,8 +150,8 @@ class GoodsReceivedNoteWebTest extends TestCase
 
     public function test_goods_received_note_convert_to_purchase_route(): void
     {
-        $supplier = Supplier::first();
-        $warehouse = Warehouse::first();
+        $supplier = Supplier::where('company_id', 1)->first();
+        $warehouse = Warehouse::where('company_id', 1)->first();
 
         $grn = GoodsReceivedNote::create([
             'company_id' => 1,

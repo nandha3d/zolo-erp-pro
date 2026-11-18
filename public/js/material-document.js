@@ -20,7 +20,7 @@
             const variant = product?.variants?.find(variant => String(variant.id) === String(item.variant_id));
             const identity = [item.product_name, item.variant_id ? (variant?.name || 'Variant #' + item.variant_id) : '', item.batch_no ? 'Lot ' + item.batch_no : ''].filter(Boolean).join(' · ');
             const open = Number(item.open_qty ?? item.qty), label = $('<label class="commercial-source-line">').text(identity + ' · open ' + open + ' ' + (item.unit || ''));
-            $('<input type="number" min="0" step="0.0001" required class="form-control">').attr({max: open, 'data-item': item.id}).val(open).appendTo(label); $rows.append(label);
+            $('<input type="number" min="0" step="0.0001" required class="form-control">').attr({ max: open, 'data-item': item.id }).val(open).appendTo(label); $rows.append(label);
         });
         const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
         $returnForm.append($('<label>').text('Return date').append($('<input type="date" name="business_date" required class="form-control">').val(today)));
@@ -33,8 +33,11 @@
             const quantities = {}; $rows.find('[data-item]').each(function () { quantities[this.dataset.item] = Number(this.value); });
             if (!Object.values(quantities).some(qty => qty > 0)) { $status.text('Enter at least one positive quantity.'); return; }
             $save.prop('disabled', true);
-            $.ajax({url: config.storeUrl + '/' + doc.id + '/return', method: 'POST', dataType: 'json', data: {
-                _token: config.token, business_date: this.business_date.value, reason: this.reason.value, items: quantities, idempotency_key: key}})
+            $.ajax({
+                url: config.storeUrl + '/' + doc.id + '/return', method: 'POST', dataType: 'json', data: {
+                    _token: config.token, business_date: this.business_date.value, reason: this.reason.value, items: quantities, idempotency_key: key
+                }
+            })
                 .done(() => window.location.reload()).fail(xhr => $status.text(xhr.responseJSON?.message || 'Return failed. Try again.')).always(() => $save.prop('disabled', false));
         });
         document.body.append(node); node.showModal();
@@ -71,6 +74,8 @@
 
     function applyProduct($row, product) {
         if (String($row.find('.row-product-id').val()) !== String(product.id)) $row.find('.row-batch').val('');
+        $row.attr('data-product-id', product.id || '');
+        $row.find('.row-item-input-wrap').toggleClass('has-product', Number(product.id) > 0);
         $row.find('.row-product-id').val(product.id);
         $row.find('.row-unit-id').val(product.unit_id);
         $row.find('.row-item-name').val(product.name);
@@ -94,13 +99,56 @@
 
     function search($input, select) {
         $input.autocomplete({
-            minLength: 1, autoFocus: true,
+            minLength: 1, autoFocus: false,
             source: (request, response) => {
-                const term = request.term.toLowerCase().trim();
-                response(products.filter(p => (p.name + ' ' + p.code).toLowerCase().includes(term)).slice(0, 20));
+                const term = (request.term || '').trim().toLowerCase();
+                const matches = products.filter(p => (p.name + ' ' + (p.code || '')).toLowerCase().includes(term)).slice(0, 20);
+                if (term) {
+                    matches.push({
+                        is_create_action: true,
+                        term: request.term.trim(),
+                        id: 0,
+                        code: '+',
+                        name: 'Create "' + request.term.trim() + '" as new product'
+                    });
+                }
+                response(matches);
             },
-            select: (event, ui) => { event.preventDefault(); select(ui.item); }
-        }).autocomplete('instance')._renderItem = (ul, item) => $('<li>').append($('<div>').text(item.code + ' — ' + item.name)).appendTo(ul);
+            focus: (event, ui) => {
+                if (ui && ui.item && ui.item.is_create_action) {
+                    event.preventDefault();
+                    return false;
+                }
+            },
+            select: (event, ui) => {
+                event.preventDefault();
+                if (ui.item && ui.item.is_create_action) {
+                    const $row = $input.closest('tr.item-row');
+                    if (window.zoloOpenQuickCreateProduct) {
+                        window.zoloOpenQuickCreateProduct(ui.item.term, $row.length ? $row : null);
+                    } else if (window.zoloUnknownProduct) {
+                        window.zoloUnknownProduct(ui.item.term, $row.length ? $row : null, true);
+                    }
+                    return;
+                }
+                select(ui.item);
+            }
+        }).autocomplete('instance')._renderItem = (ul, item) => {
+            if (item.is_create_action) {
+                return $('<li>').addClass('ui-autocomplete-action-item').append(`
+                    <div class="custom-ac-item ac-quick-create-card">
+                        <div class="d-flex align-items-center">
+                            <span class="ac-quick-create-icon">+</span>
+                            <div>
+                                <div class="ac-quick-create-title">Create "<strong>${$('<span>').text(item.term).html()}</strong>" as new product</div>
+                            </div>
+                        </div>
+                        <span class="ac-quick-create-pill">+ Quick Create</span>
+                    </div>
+                `).appendTo(ul);
+            }
+            return $('<li>').append($('<div>').text(item.code + ' — ' + item.name)).appendTo(ul);
+        };
     }
 
     function addRow(item = {}, merge = true) {
@@ -120,12 +168,18 @@
         }
         const product = products.find(p => String(p.id) === String(item.product_id));
         const rate = item[config.rateField] ?? product?.[config.purchase ? 'cost' : 'price'] ?? 0;
-        const $row = $(`<tr class="item-row">
+        const boundPid = item.product_id ?? product?.id ?? '';
+        const $row = $(`<tr class="item-row" data-product-id="${boundPid}">
             <td><span class="row-num"></span><input type="hidden" name="product_id[]" class="row-product-id">
                 <input type="hidden" name="unit_id[]" class="row-unit-id">
                 <input type="hidden" name="order_item_id[]" class="row-order-item-id">
                 <input type="hidden" name="tax_amount[]" class="row-tax-amount"><input type="hidden" name="total[]" class="row-total"></td>
-            <td><input class="form-control form-control-sm row-item-name" placeholder="Search item or scan..." autocomplete="off" required>
+            <td><div class="row-item-input-wrap ${Number(boundPid) > 0 ? 'has-product' : ''}">
+                    <input class="form-control form-control-sm row-item-name" placeholder="Search item or scan..." autocomplete="off" required>
+                    <button type="button" class="btn-quick-edit-product" title="Edit product master" aria-label="Edit Product">
+                        <i class="dripicons-document-edit"></i><span>Edit</span>
+                    </button>
+                </div>
                 <small class="row-product-code"></small><input type="hidden" name="item_remarks[]" class="row-remarks">
                 <select name="variant_id[]" class="form-control form-control-sm row-variant mt-1" aria-label="Item variant" hidden></select>
                 <input name="batch_no[]" class="form-control form-control-sm row-batch mt-1" maxlength="100" placeholder="Lot / batch (if tracked)" autocomplete="off"></td>
@@ -150,18 +204,66 @@
         $row.find('.row-qty').val(item.qty ?? 1);
         $row.find('.row-tax-rate').val(item.tax_rate ?? product?.tax_rate ?? 0);
         search($row.find('.row-item-name'), p => { applyProduct($row, p); $row.find('.row-qty').focus().select(); });
-        $row.find('.row-item-name').on('input', function () { $row.find('.row-product-id, .row-unit-id, .row-order-item-id, .row-batch').val(''); variants($row, null); });
+        $row.find('.row-item-name').on('input', function () {
+            var curVal = this.value.trim().toLowerCase();
+            var curProd = products.find(p => String(p.id) === String($row.find('.row-product-id').val()));
+            if (!curProd || (curProd.name.toLowerCase() !== curVal && (curProd.code || '').toLowerCase() !== curVal)) {
+                $row.removeAttr('data-product-id').find('.row-item-input-wrap').removeClass('has-product');
+                $row.find('.row-product-id, .row-unit-id, .row-order-item-id, .row-batch').val('');
+                $row.find('.row-product-code').text('');
+                variants($row, null);
+            }
+        });
         $row.find('.row-item-name').on('change', function () {
+            const val = this.value.trim();
+            if (!val) {
+                $row.removeAttr('data-product-id').find('.row-item-input-wrap').removeClass('has-product');
+                $row.find('.row-product-id, .row-unit-id, .row-order-item-id, .row-batch').val('');
+                $row.find('.row-product-code').text('');
+                variants($row, null);
+                totals();
+                return;
+            }
             if ($row.find('.row-product-id').val()) return;
-            const matches = products.filter(p => p.name.toLowerCase() === this.value.trim().toLowerCase());
-            if (matches.length === 1) applyProduct($row, matches[0]);
+            const matches = products.filter(p => p.name.toLowerCase() === val.toLowerCase() || (p.code && p.code.toLowerCase() === val.toLowerCase()));
+            if (matches.length === 1) {
+                applyProduct($row, matches[0]);
+                $row.find('.row-qty').focus().select();
+            } else if (matches.length === 0) {
+                if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, $row)) {
+                    return;
+                } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, $row, true)) {
+                    return;
+                }
+            }
+        });
+        $row.find('.row-item-name').on('keydown', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                const val = this.value.trim();
+                if (!val) return;
+                const matches = products.filter(p => p.name.toLowerCase() === val.toLowerCase() || (p.code && p.code.toLowerCase() === val.toLowerCase()));
+                if (matches.length === 1) {
+                    applyProduct($row, matches[0]);
+                    $row.find('.row-qty').focus().select();
+                } else if (matches.length === 0) {
+                    if (window.zoloOpenQuickCreateProduct && window.zoloOpenQuickCreateProduct(val, $row)) {
+                        return;
+                    } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(val, $row, true)) {
+                        return;
+                    }
+                    $row.find('.row-qty').focus().select();
+                } else {
+                    $row.find('.row-item-name').autocomplete('search', val);
+                }
+            }
         });
         $body.append($row); totals();
         return $row;
     }
 
     search($('#lims_productcodeSearch'), p => {
-        addRow({product_id: p.id}); $('#lims_productcodeSearch').val('').focus();
+        addRow({ product_id: p.id }); $('#lims_productcodeSearch').val('').focus();
     });
     $('#btn-add-row').on('click', () => addRow().find('.row-item-name').focus());
     $body.on('input', '.row-rate, .row-qty, .row-tax-rate', totals);
@@ -186,11 +288,44 @@
     });
     $('#select-all-multi').on('change', function () { $('#multi-item-tbody tr:visible .multi-item-cb').prop('checked', this.checked); });
     $('#btn-add-selected-items').on('click', () => {
-        $('#multi-item-tbody .multi-item-cb:checked').each(function () { addRow({product_id: this.value}); });
+        $('#multi-item-tbody .multi-item-cb:checked').each(function () { addRow({ product_id: this.value }); });
         $('#multi-item-modal').modal('hide').find('input[type="checkbox"]').prop('checked', false);
     });
+    $(document).on('zolo:product-updated', function (e, p, prevMaster) {
+        if (!p || !p.id) return;
+        const idx = products.findIndex(item => String(item.id) === String(p.id));
+        if (idx !== -1) products[idx] = $.extend({}, products[idx], p);
+        else products.unshift(p);
+
+        const rateKey = config.purchase ? 'cost' : 'price';
+        const prevRate = prevMaster ? Number(prevMaster[rateKey] || 0) : null;
+        const nextRate = Number(p[rateKey] ?? 0);
+
+        $body.find('.item-row').filter(function () {
+            return String($(this).find('.row-product-id').val()) === String(p.id);
+        }).each(function () {
+            const $row = $(this);
+            $row.find('.row-item-name').val(p.name);
+            $row.find('.row-product-code').text(p.code);
+            $row.find('.row-unit').text(p.unit);
+            if (p.unit_id) $row.find('.row-unit-id').val(p.unit_id);
+            const curRate = parseFloat($row.find('.row-rate').val());
+            if (isNaN(curRate) || curRate === 0 || (prevRate !== null && Math.abs(curRate - prevRate) < 0.0001)) {
+                $row.find('.row-rate').val(nextRate);
+            }
+            if (p.tax_rate !== undefined && p.tax_rate !== null) {
+                $row.find('.row-tax-rate').val(p.tax_rate);
+            }
+        });
+        totals();
+    });
+
     $('#quick-create-item-form').on('submit', function (event) {
         event.preventDefault();
+        if ($('#quick-edit-product-id').val()) {
+            if (window.zoloSubmitQuickEditProduct) window.zoloSubmitQuickEditProduct(this);
+            return;
+        }
         const $button = $(this).find('[type="submit"]').prop('disabled', true);
         const formArray = $(this).serializeArray();
         const postData = { _token: config.token };
@@ -200,9 +335,15 @@
         if (!postData.price) postData.price = $('#quick-item-price').val() || '0';
         if (!postData.cost) postData.cost = $('#quick-item-cost').val() || '0';
 
-        $.ajax({url: config.productUrl, method: 'POST', dataType: 'json', data: postData}).done(result => {
+        $.ajax({ url: config.productUrl, method: 'POST', dataType: 'json', data: postData }).done(result => {
             products.unshift(result.product);
-            addRow({product_id: result.product.id});
+            const $targetRow = window.zoloUnknownProductRow ? window.zoloUnknownProductRow() : null;
+            if ($targetRow && $targetRow.length && $targetRow.closest('body').length) {
+                applyProduct($targetRow, result.product);
+                $targetRow.find('.row-qty').focus().select();
+            } else {
+                addRow({ product_id: result.product.id });
+            }
             $('#multi-item-tbody').prepend($('<tr class="multi-item-row">').append(
                 $('<td>').append($('<input type="checkbox" class="multi-item-cb">').val(result.product.id)),
                 ...[result.product.code, result.product.name, result.product.unit, money(result.product[config.purchase ? 'cost' : 'price'])].map(value => $('<td>').text(value))
@@ -214,7 +355,7 @@
     $('#material-party-form').on('submit', function (event) {
         event.preventDefault();
         const $button = $(this).find('[type="submit"]').prop('disabled', true);
-        $.ajax({url: config.partyUrl, method: 'POST', dataType: 'json', data: $(this).serialize()})
+        $.ajax({ url: config.partyUrl, method: 'POST', dataType: 'json', data: $(this).serialize() })
             .done(result => {
                 const party = result[config.partyType];
                 $(config.partySelect).append($('<option>').val(party.id).text(party.name)).val(party.id).trigger('change');
@@ -302,6 +443,23 @@
     });
     $(form).on('submit', function (event) {
         $('#material-document-error').hide();
+
+        // Check if any row has an item-name typed but not resolved
+        const unresolvedRow = $body.find('.item-row').filter(function () {
+            return !$(this).find('.row-product-id').val() && $(this).find('.row-item-name').val().trim();
+        }).first();
+        if (unresolvedRow.length) {
+            const typedName = unresolvedRow.find('.row-item-name').val().trim();
+            const matches = products.filter(p => p.name.toLowerCase() === typedName.toLowerCase() || (p.code && p.code.toLowerCase() === typedName.toLowerCase()));
+            if (matches.length === 1) {
+                applyProduct(unresolvedRow, matches[0]);
+                totals();
+            } else if (window.zoloUnknownProduct && window.zoloUnknownProduct(typedName, unresolvedRow)) {
+                event.preventDefault();
+                return;
+            }
+        }
+
         if (loading || !$body.find('.item-row').length || $body.find('.row-product-id').toArray().some(input => !input.value)) {
             event.preventDefault(); $('#material-document-error').text('Select a catalog product for every row. Use Create item for a new product.').show();
         } else { totals(); }
@@ -316,13 +474,15 @@
         fieldControls().forEach(element => { fields[element.name] = element.value; });
         const lines = $body.find('.item-row').toArray().map(row => {
             const $row = $(row);
-            return {product_id: $row.find('.row-product-id').val(), unit_id: $row.find('.row-unit-id').val(), product_name: $row.find('.row-item-name').val(),
+            return {
+                product_id: $row.find('.row-product-id').val(), unit_id: $row.find('.row-unit-id').val(), product_name: $row.find('.row-item-name').val(),
                 variant_id: $row.find('.row-variant').val(), order_item_id: $row.find('.row-order-item-id').val(),
                 product_code: $row.find('.row-product-code').text(), unit: $row.find('.row-unit').text(), remarks: $row.find('.row-remarks').val(), batch_no: $row.find('.row-batch').val(),
-                [config.rateField]: $row.find('.row-rate').val(), qty: $row.find('.row-qty').val(), tax_rate: $row.find('.row-tax-rate').val()};
+                [config.rateField]: $row.find('.row-rate').val(), qty: $row.find('.row-qty').val(), tax_rate: $row.find('.row-tax-rate').val()
+            };
         });
-        const ui = {action: form.getAttribute('action') || '', title: $('#entry-title-text').text(), status: $('#status-pill').text()};
-        return {schema_version: 1, document_kind: config.draftKind, form: {fields, lines, ui, context: {}}};
+        const ui = { action: form.getAttribute('action') || '', title: $('#entry-title-text').text(), status: $('#status-pill').text() };
+        return { schema_version: 1, document_kind: config.draftKind, form: { fields, lines, ui, context: {} } };
     }
     function restore(payload) {
         const state = payload.form || {};
@@ -343,14 +503,14 @@
     function party() {
         const select = document.querySelector(config.partySelect);
         const option = select && select.selectedOptions[0];
-        return select && select.value && option ? {party_id: Number(select.value), party_name: option.textContent.replace(/\s*\(.*\)\s*$/, '').trim()} : {};
+        return select && select.value && option ? { party_id: Number(select.value), party_name: option.textContent.replace(/\s*\(.*\)\s*$/, '').trim() } : {};
     }
     const drafts = config.draftUrl && window.ZoloDocumentDrafts ? window.ZoloDocumentDrafts.attach({
         kind: config.draftKind, label: config.label, baseUrl: config.draftUrl, form, snapshot, restore, reset, party,
         focus: () => $('#lims_productcodeSearch').trigger('focus'),
         inDocument: target => !!target.closest && !!target.closest('#' + config.form) && target.id !== 'lims_productcodeSearch',
         rows: $body[0], handles: entry => entry.id === config.shortcut,
-        localShortcuts: [{key: 'Alt+I', label: 'Focus item search'}],
+        localShortcuts: [{ key: 'Alt+I', label: 'Focus item search' }],
     }) : null;
     $('#btn-top-new').on('click', () => (drafts ? drafts.newDocument() : reset()));
     $('#btn-discard').on('click', () => (drafts ? drafts.discardActive() : reset()));

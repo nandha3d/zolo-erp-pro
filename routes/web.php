@@ -51,6 +51,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AccountsController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeliveryController;
@@ -261,6 +262,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     });
 
     Route::post('products/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreProduct'])->name('products.quick-store');
+    Route::get('products/{id}/quick-edit', [App\Http\Controllers\CommercialController::class, 'quickEditProduct'])->whereNumber('id')->name('products.quick-edit');
+    Route::post('products/{id}/quick-update', [App\Http\Controllers\CommercialController::class, 'quickUpdateProduct'])->whereNumber('id')->name('products.quick-update');
     Route::post('categories/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreCategory'])->name('categories.quick-store');
     Route::post('brands/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreBrand'])->name('brands.quick-store');
     Route::post('parties/quick-store', [App\Http\Controllers\CommercialController::class, 'quickStoreParty'])->name('parties.quick-store');
@@ -292,6 +295,9 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::post('category/category-data', 'categoryData');
     });
     Route::resource('category', CategoryController::class);
+
+    Route::resource('product_types', ProductTypeController::class);
+    Route::resource('product_type', ProductTypeController::class);
 
 
     Route::controller(BrandController::class)->group(function () {
@@ -405,10 +411,11 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::delete('sales/force-delete-selected', 'forceDeleteSelected')
             ->name('sales.forceDeleteSelected')
             ->middleware('hasPermanentDeletePermission');
+        Route::delete('sales/{id}/force-delete', 'forceDelete')->name('sales.forceDelete');
         Route::get('sales/product_sale/{id}', 'productSaleData');
         Route::get('sales/get-sale/{id}', 'getSale');
         Route::get('sales/{id}/json', 'getSaleJson');
-        Route::get('sales/{id}', 'show')->name('sales.show');
+        Route::get('sales/{id}', 'show')->whereNumber('id')->name('sales.show');
         Route::post('importsale', 'importSale')->name('sale.import');
         Route::get('pos/{id?}', 'posSale')->name('sale.pos');
         Route::get('sales/recent-sale', 'recentSale');
@@ -427,6 +434,8 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('sales/paypalSuccess', 'paypalSuccess');
         Route::get('sales/paypalPaymentSuccess/{id}', 'paypalPaymentSuccess');
         Route::get('sales/gen_invoice/{id}', 'genInvoice')->name('sale.invoice');
+        Route::get('sales/lab_receipt/{id}', 'genLabReceipt')->name('sale.lab_receipt');
+        Route::get('sales/packing_slip/{id}', 'packingSlip')->name('sale.packing_slip');
         Route::post('sales/add_payment', 'addPayment')->name('sale.add-payment');
         Route::get('sales/getpayment/{id}', 'getPayment')->name('sale.get-payment');
         Route::post('sales/updatepayment', 'updatePayment')->name('sale.update-payment');
@@ -522,6 +531,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
             Route::delete('force-delete-selected', 'forceDeleteSelected')
                 ->name('purchases.forceDeleteSelected')
                 ->middleware('hasPermanentDeletePermission');
+            Route::delete('{id}/force-delete', 'forceDelete')->name('purchases.forceDelete');
             Route::get('supplier/{supplier_id}', 'supplierPurchase')->name('purchase.supplier');
         });
         Route::post('importpurchase', 'importPurchase')->name('purchase.import');

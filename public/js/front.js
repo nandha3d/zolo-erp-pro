@@ -56,10 +56,10 @@ $(document).ready(function () {
         });
     }
 
-    //Custom select - Universal anti-clipping container (exclude DataTables, native selects and debugbars)
+    //Custom select - Universal anti-clipping container (exclude DataTables, native selects, table grid selects, and debugbars)
     if ($.fn.selectpicker) {
         $.fn.selectpicker.Constructor.DEFAULTS.container = 'body';
-        $('select:not(.dataTables_length select):not([name$="_length"]):not(.custom-select-native):not(.phpdebugbar select):not([class*="phpdebugbar"])').selectpicker({
+        $('select:not(.dataTables_length select):not([name$="_length"]):not(.custom-select-native):not(.desk-grid-table select):not(.order-item-row select):not(.phpdebugbar select):not([class*="phpdebugbar"])').selectpicker({
             container: 'body'
         });
     }

@@ -3,7 +3,20 @@
     const config = JSON.parse(document.getElementById('command-center-form-data').textContent);
     const $ = window.jQuery;
     const form = document.getElementById(config.kind + '-entry-form');
-    const grid = window.commandCenterGrid;
+    const grid = new Proxy({}, {
+        get(_target, prop) {
+            const instance = window.commandCenterGrid;
+            if (!instance) {
+                if (prop === 'products') return [];
+                if (['recalcTableSummary', 'applyProductToRow', 'addProductRow', 'resetFormToNew', 'switchWorkspaceMode'].includes(prop)) {
+                    return (...args) => window.commandCenterGrid?.[prop]?.(...args);
+                }
+                return undefined;
+            }
+            const val = instance[prop];
+            return typeof val === 'function' ? val.bind(instance) : val;
+        }
+    });
     const purchase = config.kind === 'purchase';
     let busy = false, paymentError = '';
     const $message = $('<div class="alert" role="status" style="display:none">').insertBefore(form);
@@ -29,8 +42,20 @@
         const items = $('#order-table-body tr.order-item-row').toArray().map(row => {
             const $row = $(row);
             let id = $row.find('.row-product-id').val();
-            if (!Number(id)) {
-                const matches = grid.products.filter(p => p.name.toLowerCase() === $row.find('.row-item-name').val().trim().toLowerCase());
+            const typedName = ($row.find('.row-item-name').val() || '').trim();
+
+            // When a product was loaded (e.g. from GRN or existing row), but the user changed the name:
+            if (id && typedName) {
+                const bound = grid.products.find(p => String(p.id) === String(id));
+                if (bound && bound.name.toLowerCase() !== typedName.toLowerCase() && (bound.code || '').toLowerCase() !== typedName.toLowerCase()) {
+                    id = null;
+                    $row.find('.row-product-id').val('');
+                    $row.removeAttr('data-product-id data-material-document-id data-material-item-id data-material-unit-id data-material-base-factor');
+                }
+            }
+
+            if (!Number(id) && typedName) {
+                const matches = grid.products.filter(p => p.name.toLowerCase() === typedName.toLowerCase() || (p.code && p.code.toLowerCase() === typedName.toLowerCase()));
                 if (matches.length > 1) throw new Error('Several products have this name. Select the correct product code from the list.');
                 if (matches.length === 1) {
                     grid.applyProductToRow($row, matches[0]);
@@ -38,8 +63,7 @@
                 }
             }
             if (!Number(id)) {
-                const name = $row.find('.row-item-name').val().trim();
-                if (window.zoloUnknownProduct?.(name, $row)) throw new Error('Save the new product "' + name + '", then save the bill again.');
+                if (typedName && (window.zoloOpenQuickCreateProduct?.(typedName, $row) || window.zoloUnknownProduct?.(typedName, $row, true))) throw new Error('Save the new product "' + typedName + '", then save the bill again.');
                 throw new Error('Select a catalog product for every row. Use Create item for a new product.');
             }
             const unit = config.units.find(u => u.unit_name === $row.find('.row-unit-select').val());
@@ -68,6 +92,23 @@
             // Extended tracking (variant, piece, HSN, freight, dimensions, batch MRP/mfg date) is added by document-aids.js.
             const extras = window.zoloDocumentAids ? window.zoloDocumentAids.lineExtras(row) : {};
             if (extras.batch) { if (line.batch) line.batch = { ...line.batch, ...extras.batch }; delete extras.batch; }
+            
+            // Optical Rx fields from direct inline inputs or extras
+            const sphVal = $row.find('.row-sph').val() || extras.sph || null;
+            const cylVal = $row.find('.row-cyl').val() || extras.cyl || null;
+            const axisVal = $row.find('.row-axis').val() || extras.axis || null;
+            const additionVal = $row.find('.row-addition').val() || extras.addition || null;
+            const lrVal = $row.find('.row-lr').val() || extras.lr || null;
+            const baseVal = $row.find('.row-base').val() || extras.base || null;
+            const diaVal = $row.find('.row-dia').val() || extras.dia || null;
+            if (sphVal) extras.sph = sphVal;
+            if (cylVal) extras.cyl = cylVal;
+            if (axisVal) extras.axis = axisVal;
+            if (additionVal) extras.addition = additionVal;
+            if (lrVal) extras.lr = lrVal;
+            if (baseVal) extras.base = baseVal;
+            if (diaVal) extras.dia = diaVal;
+
             return { ...line, ...extras };
         });
         if (!items.length) throw new Error('Add at least one item.');
@@ -81,8 +122,40 @@
             values[purchase ? 'goods_received_note_ids' : 'delivery_challan_ids'] = sourceIds;
             items.forEach(item => { item.material_sources ??= []; });
         }
+        const product_id = items.map(i => i.product_id);
+        const product_code = items.map(i => i.product_code);
+        const qty = items.map(i => i.qty);
+        const net_unit_cost = items.map(i => i.net_unit_cost || 0);
+        const net_unit_price = items.map(i => i.net_unit_price || 0);
+        const subtotal = items.map(i => i.total || (Number(i.qty) * Number(i.net_unit_cost || i.net_unit_price || 0)));
+        const tax = items.map(i => i.tax || 0);
+        const tax_rate = items.map(i => i.tax_rate || 0);
+        const purchase_unit = items.map(i => i.purchase_unit || 'Unit');
+        const sale_unit = items.map(i => i.sale_unit || 'Unit');
+
+        const end_user_name = $('#hidden-end-user-name').val() || $('#drawer-end-user-name').val() || values.end_user_name || null;
+        const end_user_phone = $('#hidden-end-user-phone').val() || $('#drawer-end-user-phone').val() || values.end_user_phone || null;
+        const end_user_email = $('#hidden-end-user-email').val() || $('#drawer-end-user-email').val() || values.end_user_email || null;
+        const end_user_address = $('#hidden-end-user-address').val() || $('#drawer-end-user-address').val() || values.end_user_address || null;
+        const fitting_charge = $('#hidden-fitting-charge').val() || $('#drawer-fitting-charge').val() || values.fitting_charge || 0;
+        const tinting_cost = $('#hidden-tinting-cost').val() || $('#drawer-tinting-cost').val() || values.tinting_cost || 0;
+        const customer_order_no = $('#hidden-customer-order-no').val() || $('#drawer-customer-order-no').val() || values.customer_order_no || null;
+
         return {
-            ...values, ...context, items, business_date: values.created_at,
+            ...values, ...context, items,
+            product_id, product_code, qty,
+            net_unit_cost, net_unit_price, subtotal, tax, tax_rate,
+            purchase_unit, sale_unit,
+            sph: items.map(i => i.sph || null),
+            cyl: items.map(i => i.cyl || null),
+            axis: items.map(i => i.axis || null),
+            base: items.map(i => i.base || null),
+            addition: items.map(i => i.addition || null),
+            lr: items.map(i => i.lr || null),
+            dia: items.map(i => i.dia || null),
+            end_user_name, end_user_phone, end_user_email, end_user_address,
+            fitting_charge, tinting_cost, customer_order_no,
+            business_date: values.created_at,
             transport_name: values.transporter_name || '', series_code: series?.code,
         };
     }
@@ -99,7 +172,7 @@
                 $row.find('.row-tax-amount-input').val(line.tax.toFixed(4));
                 $row.find('.row-subtotal-input, .row-total').val(line.total.toFixed(4));
             });
-            grid.recalcTableSummary();
+            grid.recalcTableSummary?.();
             const net = totals.items.reduce((sum, line) => sum + Number(line.total) - Number(line.tax), 0);
             $('#display-net-amount').text('₹ ' + net.toFixed(2));
             $('#display-tax-amount').text('₹ ' + Number(totals.total_tax).toFixed(2));
@@ -204,7 +277,7 @@
         for (const name of ['shipping-cost', 'order-discount']) {
             if ($('#drawer-' + name).length) $('#hidden-' + name).val($('#drawer-' + name).val() || 0);
         }
-        grid.recalcTableSummary();
+        grid.recalcTableSummary?.();
     });
     $('#drawer-standard-remark').on('change', function () { $('#drawer-note').val(this.value); });
     $('#drawer-paying-method').on('change', function () {
@@ -260,12 +333,12 @@
         $('#input-paying-method, #drawer-paying-method').val('Credit'); $('[data-mode]').removeClass('active').filter('[data-mode="Credit"]').addClass('active');
         $('#drawer-account-id').val($('#hidden-account-id').val());
         $('#drawer-paying-method, #drawer-account-id').selectpicker('refresh');
-        grid.recalcTableSummary();
+        grid.recalcTableSummary?.();
     });
     $(document).on('command-center-loaded', (event, doc) => {
         $(document).trigger('command-center-reset');
         if (config.shared) $reason.prop('hidden', false).find('input').prop('required', true);
-        for (const field of ['bale_no', 'no_of_bales', 'bundle_count', 'vehicle_number', 'lr_no', 'lr_date', 'station_to', 'order_no', 'credit_days']) {
+        for (const field of ['bale_no', 'no_of_bales', 'bundle_count', 'vehicle_number', 'lr_no', 'lr_date', 'station_to', 'order_no', 'credit_days', 'end_user_name', 'end_user_phone', 'end_user_email', 'end_user_address', 'fitting_charge', 'tinting_cost', 'customer_order_no']) {
             const value = doc[field] || doc.attributes_json?.[field] || '';
             $('#hidden-' + field.replaceAll('_', '-') + ', #drawer-' + field.replaceAll('_', '-')).val(field.endsWith('date') ? String(value).slice(0, 10) : value);
         }
@@ -285,7 +358,7 @@
             }
         }
         $('#drawer-paying-method, #drawer-account-id').selectpicker('refresh');
-        grid.recalcTableSummary();
+        grid.recalcTableSummary?.();
     });
 
     // Draft tabs (create, autosave, switch, discard) live in document-workspace.js; this file only posts.

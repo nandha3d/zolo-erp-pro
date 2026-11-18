@@ -14,6 +14,44 @@ class UpdatePurchaseRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('items') && is_array($this->items)) {
+            $productCodes = $this->product_code ?? [];
+            $qtys = $this->qty ?? [];
+            $productIds = $this->product_id ?? [];
+            $costs = $this->net_unit_cost ?? [];
+            $subtotals = $this->subtotal ?? [];
+            $taxes = $this->tax ?? [];
+            $taxRates = $this->tax_rate ?? [];
+            $units = $this->purchase_unit ?? [];
+
+            if (empty($productCodes)) {
+                foreach ($this->items as $item) {
+                    $productCodes[] = $item['product_code'] ?? ($item['code'] ?? '');
+                    $qtys[] = $item['qty'] ?? 1;
+                    $productIds[] = $item['product_id'] ?? ($item['id'] ?? 0);
+                    $costs[] = $item['net_unit_cost'] ?? ($item['cost'] ?? 0);
+                    $subtotals[] = $item['total'] ?? ($item['subtotal'] ?? 0);
+                    $taxes[] = $item['tax'] ?? 0;
+                    $taxRates[] = $item['tax_rate'] ?? 0;
+                    $units[] = $item['purchase_unit'] ?? ($item['unit'] ?? 'Unit');
+                }
+
+                $this->merge([
+                    'product_code' => $productCodes,
+                    'qty' => $qtys,
+                    'product_id' => $productIds,
+                    'net_unit_cost' => $costs,
+                    'subtotal' => $subtotals,
+                    'tax' => $taxes,
+                    'tax_rate' => $taxRates,
+                    'purchase_unit' => $units,
+                ]);
+            }
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

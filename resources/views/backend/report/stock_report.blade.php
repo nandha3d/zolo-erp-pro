@@ -6,6 +6,11 @@
 
 @section('content')
 
+@php
+    $start_date = $start_date ?? request('start_date') ?? date('Y-m-01');
+    $end_date = $end_date ?? request('end_date') ?? date('Y-m-d');
+@endphp
+
 <x-error-message key="not_permitted" />
 
 <section class="report-workspace-view">
