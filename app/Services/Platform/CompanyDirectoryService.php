@@ -207,8 +207,17 @@ class CompanyDirectoryService
             DB::table('company_setup_audits')->insert(['company_id' => $company->id, 'actor_id' => $actor,
                 'action' => 'company_created', 'before_json' => '[]',
                 'after_json' => json_encode(['group_id' => $groupId, 'code' => $company->code, 'industry' => $data['industry'],
-                    'subtype' => $data['subtype'], 'branch_id' => $branch->id, 'financial_year_id' => $year->id], JSON_THROW_ON_ERROR),
+                    'subtype' => $data['subtype'], 'branch_id' => $branch->id, 'financial_year_id' => $year->id,
+                    'idempotency_key' => $input['idempotency_key'] ?? null], JSON_THROW_ON_ERROR),
                 'created_at' => now()]);
+
+            if (Schema::hasTable('ai_feature_settings')) {
+                app(\App\Ai\Services\AiFeatureGate::class)->provisionCompanyDefaults($company->id, $actor);
+            }
+
+            if (Schema::hasTable('ai_feature_settings')) {
+                app(\App\Ai\Services\AiFeatureGate::class)->provisionCompanyDefaults($company->id, $actor);
+            }
 
             return $company;
         });

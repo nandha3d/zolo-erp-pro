@@ -177,6 +177,74 @@ Route::middleware(['auth', 'company.context', 'common'])->group(function () {
     Route::get('settings', [\App\Http\Controllers\SettingsWorkspaceController::class, 'index'])->name('settings.workspace');
     Route::get('settings/company', [\App\Http\Controllers\CompanyProfileController::class, 'edit'])->name('settings.company');
     Route::post('settings/company', [\App\Http\Controllers\CompanyProfileController::class, 'update'])->name('settings.company.update');
+
+    // AI Operating Layer Workspace
+    Route::get('ai', [\App\Http\Controllers\Ai\AiWorkspaceController::class, 'index'])->name('ai.workspace');
+    // PH1 review desk is read-only until an explicitly reviewed action capability is enabled.
+    Route::get('ai/action-review', [\App\Http\Controllers\Ai\ActionReviewCenterController::class, 'index'])->name('ai.actions.review');
+});
+
+// Session-authenticated endpoints used by the workspace.
+Route::middleware(['auth', 'company.context'])->prefix('ai')->name('ai.')->group(function () {
+    require __DIR__ . '/ai-documents.php';
+    Route::controller(\App\Http\Controllers\Api\V1\AiChatController::class)->group(function () {
+        Route::post('chat/stream', 'stream')->name('chat.stream');
+        Route::get('settings', 'settings')->name('settings');
+        Route::get('monitoring', 'monitoring')->name('monitoring');
+        Route::get('threads', 'threads')->name('threads.index');
+        Route::post('threads', 'createThread')->name('threads.store');
+        Route::get('threads/{id}', 'showThread')->whereUuid('id')->name('threads.show');
+        Route::post('chat', 'chat')->name('chat');
+        Route::get('proposals', 'proposals')->name('proposals.index');
+        Route::post('proposals', 'propose')->name('proposals.store');
+        Route::post('proposals/{id}/change-request', 'changeRequest')->whereUuid('id')->name('proposals.change-request');
+        Route::post('proposals/{id}/approve', 'approveProposal')->whereUuid('id')->name('proposals.approve');
+        Route::post('proposals/{id}/reject', 'rejectProposal')->whereUuid('id')->name('proposals.reject');
+        Route::get('documents/{type}/{id}/pdf', 'downloadDocumentPdf')->name('documents.pdf');
+        Route::get('proposals/{id}/pdf', 'downloadProposalPdf')->whereUuid('id')->name('proposals.pdf');
+    });
+
+    // AI Credit Metering & Top-Ups (Session-authenticated workspace routes)
+    Route::prefix('credits')->controller(\App\Http\Controllers\Api\V1\AiCreditController::class)->group(function () {
+        Route::get('balance', 'balance')->name('credits.balance');
+        Route::get('usage', 'usage')->name('credits.usage');
+        Route::get('packs', 'packs')->name('credits.packs');
+        Route::post('topup-orders', 'createTopupOrder')->name('credits.topup-orders');
+        Route::get('estimate', 'estimate')->name('credits.estimate');
+    });
+
+    // Task T03: Scoped ERP Entity Directory Lookup (Session-authenticated workspace routes)
+    Route::get('entity-lookup', [\App\Http\Controllers\Api\V1\AiEntityLookupController::class, 'index'])->name('entity-lookup');
+    Route::get('entity-options', [\App\Http\Controllers\Api\V1\AiEntityLookupController::class, 'index'])->name('entity-options');
+
+    // Phase 2.1 & 2.2: Workflow Tasks & Dependent Masters (Session-authenticated workspace routes)
+    Route::prefix('workflow-tasks')->controller(\App\Http\Controllers\Api\V1\AiWorkflowTaskController::class)->group(function () {
+        Route::post('/', 'store')->name('workflow-tasks.store');
+        Route::get('{id}', 'show')->whereUuid('id')->name('workflow-tasks.show');
+        Route::patch('{id}/inputs', 'updateInputs')->whereUuid('id')->name('workflow-tasks.update-inputs');
+        Route::post('{id}/prepare-proposal', 'prepareProposal')->whereUuid('id')->name('workflow-tasks.prepare-proposal');
+        Route::post('{id}/cancel', 'cancel')->whereUuid('id')->name('workflow-tasks.cancel');
+
+        // Phase 2.2: Dependent Master Data Creation & Workflow Resumption
+        Route::post('{id}/dependent-masters/spawn', 'spawnDependentMaster')->whereUuid('id')->name('workflow-tasks.dependent-masters.spawn');
+        Route::post('{id}/dependent-masters/preview', 'previewDependentMaster')->whereUuid('id')->name('workflow-tasks.dependent-masters.preview');
+        Route::post('{id}/dependent-masters/approve-and-execute', 'approveAndExecuteDependentMaster')->whereUuid('id')->name('workflow-tasks.dependent-masters.approve-and-execute');
+    });
+
+    // Phase 2.3: Multimodal Uploads, Preview & Extractions (Session-authenticated workspace routes)
+    Route::prefix('media')->controller(\App\Http\Controllers\Api\V1\AiMediaController::class)->group(function () {
+        Route::post('/', 'store')->name('media.store');
+        Route::post('prepare', 'prepare')->name('media.prepare');
+        Route::get('{id}', 'show')->whereUuid('id')->name('media.show');
+        Route::get('{id}/preview', 'preview')->whereUuid('id')->name('media.preview');
+        Route::post('{id}/extract', 'extract')->whereUuid('id')->name('media.extract');
+        Route::get('{id}/extraction', 'extraction')->whereUuid('id')->name('media.extraction');
+        Route::patch('{id}/extraction', 'updateExtraction')->whereUuid('id')->name('media.extraction.update');
+        Route::post('{id}/confirm', 'confirm')->whereUuid('id')->name('media.confirm');
+        Route::post('{id}/prepare', 'prepareExisting')->whereUuid('id')->name('media.prepare-existing');
+        Route::post('{id}/handoff', 'handoff')->whereUuid('id')->name('media.handoff');
+        Route::delete('{id}', 'destroy')->whereUuid('id')->name('media.destroy');
+    });
 });
 
 // Developer console: admin logins and the sections switched off for the active company (developer accounts only).
@@ -1027,5 +1095,10 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
     }
 
 });
+
+if (app()->environment('testing')) {
+    Route::post('/__test/ai/credit-reserve-settle', [\App\Http\Controllers\Api\V1\AiCreditController::class, 'testReserveSettle'])
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+}
 
 require __DIR__ . '/product-imports.php';

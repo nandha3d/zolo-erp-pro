@@ -271,6 +271,12 @@ class SaleController extends Controller
                 'expired_date' => $ps->product_batch_id ? ProductBatch::where('id', $ps->product_batch_id)->value('expired_date') : null,
                 'batch_no' => $ps->product_batch_id ? (ProductBatch::where('id', $ps->product_batch_id)->value('batch_no') ?? '') : '',
                 'imei_number' => $ps->imei_number ?? '',
+                'sph' => $ps->sph ?? null,
+                'cyl' => $ps->cyl ?? null,
+                'axis' => $ps->axis ?? null,
+                'addition' => $ps->addition ?? null,
+                'dia' => $ps->dia ?? null,
+                'lr' => $ps->lr ?? null,
             ];
         }
 
