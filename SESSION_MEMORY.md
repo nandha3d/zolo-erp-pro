@@ -1,3 +1,62 @@
+## Revert Dynamic Hover-Expansion on Left Sidebar — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directive:
+    - *"dont make the side menu more dynamic.. it is going up and down clicking is very difficult."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Removed Sidebar Hover Auto-Expansion (`main.blade.php`):**
+     - Eliminated `mouseenter` and `mouseleave` event listeners that automatically toggled `.slideDown()` and `.slideUp()` on sidebar collapse menus (`#product`, `#parties`, `#purchase`, `#sale`, etc.).
+     - Restored standard, stable click-to-expand behavior. Menus now stay in place predictably without shifting up and down when moving the mouse over the sidebar.
+  2. **Clean Static Sidebar CSS (`layout-main.css`):**
+     - Reverted `width: 256px !important; transition: none !important;` on `.side-navbar`.
+     - Removed `.hover-expanded` classes and transitions that caused sidebar width jitter and vertical content reflows.
+     - Preserved clean styling and high-contrast typography for menu headings and sub-items.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -82,6 +141,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -187,6 +280,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -237,6 +364,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -461,6 +622,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -511,6 +706,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -616,6 +845,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -666,6 +929,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -1189,6 +1486,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -1239,6 +1570,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -1344,6 +1709,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -1394,6 +1793,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -1618,6 +2051,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -1668,6 +2135,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
@@ -1773,6 +2274,40 @@
 
 ---
 
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Top Navbar Company Switch Logo, Single Arrow Caret & Separated Fiscal Year Pill — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -1823,6 +2358,40 @@
      - Replaced invisible dark purple text (`text-primary`) on `Gross Flow` with crisp high-contrast white: `<span class="dash-mini-kpi-val text-white">{{ $money(...) }}</span>`.
      - Replaced invisible dark purple progress bar fill with bright white: `<div class="dash-mini-kpi-fill" style="width: 78%; background: #ffffff;"></div>`.
      - Added CSS overrides ensuring all cockpit KPI values and progress bars on the theme-colored hero remain high-contrast, crystal clear, and readable.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
+## Dynamic Animated Expandable Quick Modules Ribbon & Hover-Pan Physics — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"below this, give one arrow for expand, expanded space has all the menu items from the left, while hovering the mouse left and right, the menu should be moving right to left etc. make it dynamic and beautifully animated menu."* (Ref: `media_1795006850890_0bbf7766.png`).
+    2. *"why todays orders are not showing in the warranty?"* (Ref: `media_1795004350681_2dbd8941.jpg`).
+    3. *"push to the UI branch once finished."*
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Dynamic Expandable Quick Navigation Modules Dock (`index.blade.php`, `index.css`):**
+     - Directly beneath the executive cockpit header (`.dash-command`), introduced a centered glass pill expand button (`#dashHeroExpandBtn`) featuring a clean down-arrow chevron (`.dash-hero-expand-chevron`).
+     - Smoothly rotates 180° upon click to signal open/close state, toggling an expandable tray (`#dashHeroModulesTray`) with smooth height, opacity, and transform animations.
+     - Preserves user preference via `localStorage.getItem('zolo_dash_modules_tray_expanded')`.
+  2. **Comprehensive Sidebar Navigation Parity (`index.blade.php`):**
+     - Populated the expanded ribbon track (`#dashModulesTrack`) with module cards matching all business domains from the left sidebar: Workspace, AI Workspace, Products, Parties, Commercial Masters, Inventory, Buying, Selling, Dues Management, Job Work, Manufacturing, Projects, Distribution, Accounting, Expenses, Income, GST Compliance, Reports, People, HRM, and Settings.
+     - Fully gated by user role capabilities via `$nav` (`NavigationAccess`) ensuring 100% tenant authorization and zero security privilege leakage.
+  3. **Interactive Fluid Hover-Pan Physics Animation (`dashboard.js`, `index.css`):**
+     - Implemented dynamic horizontal hover-pan mechanics: as the user glides their mouse horizontally across the ribbon viewport (`#dashModulesViewport`), target scroll position is calculated from the cursor ratio (`X / width`), and the track smoothly translates left/right with buttery smooth `requestAnimationFrame` lerp interpolation (`current += (target - current) * 0.08`).
+     - Added support for mousewheel/trackpad horizontal passthrough, touch/mouse drag-to-scroll, and left/right stepping arrow buttons (`#dashModulesPrev`, `#dashModulesNext`).
+     - Implemented edge mask gradient fades (`mask-image: linear-gradient(...)`) and glowing hover elevations for cards.
+  4. **Warranty Order Sync Diagnostic (`lenzbreeze` subsystem):**
+     - Traced the Warranty Management screenshot to the `lenzbreeze` platform (`F:\PROJECTS\WEBSITES\lenzbreeze`), where orders auto-generate warranties in `SalePro\SaleController.php` only when `sale_status != 3` (non-draft) and line items are warranty-eligible.
+     - Formulated actionable diagnostic guidance on draft order status, category warranty flags, and the `php artisan warranties:backfill` sync command.
 
 - **Verification & Test Coverage:**
   - `php -l`: All modified Blade views and PHP files passed with 0 syntax errors.
