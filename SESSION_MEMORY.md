@@ -1,3 +1,39 @@
+## Navbar Left-Group Alignment, Multi-Path Logo Resolution, Unmasked Hero Switch Popover & High-Contrast Company Portal Button — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"text is not visible for the company portal. also the header section switch company dropdown box is masked inside the hero section itself."* (Ref: `media_1795002189179_119443f2.jpg`, `media_1795002211682_3f4d8215.png`).
+    2. *"bring this at the left side. and the logo is not working i have updated the logo, its not showing.."* (Ref: `media_1795002394475_511f7e75.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Navbar Left-Group Alignment (`main.blade.php`, `layout-main.css`):**
+     - Grouped `#toggle-btn` and `.top-navbar-company` inside `.navbar-left-group` (`display: flex; align-items: center; margin-right: auto; gap: 6px;`).
+     - Eliminates the previous flex `justify-content: space-between` issue where the company identity pill was centered into dead space; both now sit snugly on the far left edge of the top navbar.
+  2. **Multi-Path Robust Company Logo Resolution (`main.blade.php`, `index.blade.php`, `home.blade.php`):**
+     - Fixed logo non-appearance where `logo` column stored `images/company/company-2-....png` (or bare filenames), but previous code expected `logo/...`.
+     - Implemented multi-path resolution in Blade: checks `public_path($logo)`, `public_path('images/company/' . $logo)`, and `public_path('logo/' . $logo)`.
+     - Resolved Company 2's updated logo (`company-2-20261118174549-9362185e.png`) immediately across Top Navbar, Dashboard Command Center header, and Workspace Executive Hero.
+  3. **High-Contrast "Company Portal" Button Styling (`layout-main.css`, `workspace-home.css`, `main.blade.php`, `home.blade.php`):**
+     - Overcame generic navbar link and span color overrides that were enforcing dark `#0f172a` / `#777` text on purple buttons.
+     - Enforced `color: #ffffff !important;` across `.top-company-portal-btn`, `.zw-popover-portal-btn`, and their child `span`, `i`, and `*` tags, plus `.text-white` classes in HTML.
+     - Text "Company Portal ›" is now 100% white, legible, and high-contrast against the theme gradient.
+  4. **Unmasked Hero Switch Popover (`workspace-home.css`, `home.blade.php`):**
+     - Resolved the clipping bug where `.zw-hero-executive` had `overflow: hidden;`, truncating the expanding `.zw-hero-switch-popover` at the bottom edge of the purple hero banner.
+     - Set `.zw-hero-executive { overflow: visible !important; z-index: 40; }`.
+     - Maintained `overflow: hidden; border-radius: 0 18px 18px 0;` on `.zw-hero-vector-illustration` to clip background vector SVG cleanly.
+     - Set `.zw-hero-right { z-index: 25; }` and `.zw-hero-switch-wrapper { z-index: 30; }`.
+     - The Switch Company popover now expands smoothly over the page and below the banner without being cut off.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and controllers passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
+
+---
+
 ## Prominent Company Logo & Legal/Trade Name in Dashboard Header, Persistent Topbar Company Identity & Switch Company Trigger — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -294,6 +330,42 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Navbar Left-Group Alignment, Multi-Path Logo Resolution, Unmasked Hero Switch Popover & High-Contrast Company Portal Button — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directives and screenshot reports:
+    1. *"text is not visible for the company portal. also the header section switch company dropdown box is masked inside the hero section itself."* (Ref: `media_1795002189179_119443f2.jpg`, `media_1795002211682_3f4d8215.png`).
+    2. *"bring this at the left side. and the logo is not working i have updated the logo, its not showing.."* (Ref: `media_1795002394475_511f7e75.png`).
+  - Active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+  - Strict compliance with Global UI Engine tokens (`var(--z-primary)`, `var(--zp-800)`, `var(--z-ink)`, `var(--neo-surface)`, `var(--neo-bg)`, `var(--neo-border)`). Zero hardcoded accents, zero forbidden colors.
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Navbar Left-Group Alignment (`main.blade.php`, `layout-main.css`):**
+     - Grouped `#toggle-btn` and `.top-navbar-company` inside `.navbar-left-group` (`display: flex; align-items: center; margin-right: auto; gap: 6px;`).
+     - Eliminates the previous flex `justify-content: space-between` issue where the company identity pill was centered into dead space; both now sit snugly on the far left edge of the top navbar.
+  2. **Multi-Path Robust Company Logo Resolution (`main.blade.php`, `index.blade.php`, `home.blade.php`):**
+     - Fixed logo non-appearance where `logo` column stored `images/company/company-2-....png` (or bare filenames), but previous code expected `logo/...`.
+     - Implemented multi-path resolution in Blade: checks `public_path($logo)`, `public_path('images/company/' . $logo)`, and `public_path('logo/' . $logo)`.
+     - Resolved Company 2's updated logo (`company-2-20261118174549-9362185e.png`) immediately across Top Navbar, Dashboard Command Center header, and Workspace Executive Hero.
+  3. **High-Contrast "Company Portal" Button Styling (`layout-main.css`, `workspace-home.css`, `main.blade.php`, `home.blade.php`):**
+     - Overcame generic navbar link and span color overrides that were enforcing dark `#0f172a` / `#777` text on purple buttons.
+     - Enforced `color: #ffffff !important;` across `.top-company-portal-btn`, `.zw-popover-portal-btn`, and their child `span`, `i`, and `*` tags, plus `.text-white` classes in HTML.
+     - Text "Company Portal ›" is now 100% white, legible, and high-contrast against the theme gradient.
+  4. **Unmasked Hero Switch Popover (`workspace-home.css`, `home.blade.php`):**
+     - Resolved the clipping bug where `.zw-hero-executive` had `overflow: hidden;`, truncating the expanding `.zw-hero-switch-popover` at the bottom edge of the purple hero banner.
+     - Set `.zw-hero-executive { overflow: visible !important; z-index: 40; }`.
+     - Maintained `overflow: hidden; border-radius: 0 18px 18px 0;` on `.zw-hero-vector-illustration` to clip background vector SVG cleanly.
+     - Set `.zw-hero-right { z-index: 25; }` and `.zw-hero-switch-wrapper { z-index: 30; }`.
+     - The Switch Company popover now expands smoothly over the page and below the banner without being cut off.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and controllers passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed** (0 token or style violations).
+  - Compiled view cache cleared: `php artisan view:clear`.
+  - Pushed to `origin ui` and `nandha-origin ui`.
 
 ---
 

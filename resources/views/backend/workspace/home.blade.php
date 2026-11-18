@@ -15,7 +15,16 @@
     $industry = $current['industry'] ?? 'general_trading';
     $name = $company->trade_name ?: $company->legal_name;
     $initials = fn (string $text) => collect(preg_split('/\s+/', trim($text)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
-    $logo = $company->logo && is_file(public_path($company->logo)) ? asset($company->logo) : null;
+    $logo = null;
+    if ($company && $company->logo) {
+        if (is_file(public_path($company->logo))) {
+            $logo = asset($company->logo);
+        } elseif (is_file(public_path('images/company/' . $company->logo))) {
+            $logo = asset('images/company/' . $company->logo);
+        } elseif (is_file(public_path('logo/' . $company->logo))) {
+            $logo = asset('logo/' . $company->logo);
+        }
+    }
     $otherCount = $sections->sum(fn ($section) => count($section['companies'])) - 1;
 
     // Flatten all accessible companies across all sections
@@ -414,9 +423,9 @@
                     </div>
 
                     <div class="zw-popover-footer">
-                        <a href="{{ route('company.create') }}" class="zw-popover-portal-btn">
-                            <i class="fa fa-plus-circle" aria-hidden="true"></i>
-                            <span>Company Portal ›</span>
+                        <a href="{{ route('company.create') }}" class="zw-popover-portal-btn text-white">
+                            <i class="fa fa-plus-circle text-white" aria-hidden="true"></i>
+                            <span class="text-white">Company Portal &rsaquo;</span>
                         </a>
                         <a href="{{ route('company.select', ['manage' => 1, 'return' => 'workspace']) }}" class="zw-popover-manage-link">
                             Manage Directory &rarr;

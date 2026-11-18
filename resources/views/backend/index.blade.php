@@ -246,9 +246,21 @@
     <header class="dash-card dash-command">
         <div class="dash-command-top">
             <div class="dash-heading">
+                @php
+                    $dashCompanyLogoUrl = null;
+                    if ($currentCompany && $currentCompany->logo) {
+                        if (file_exists(public_path($currentCompany->logo))) {
+                            $dashCompanyLogoUrl = asset($currentCompany->logo);
+                        } elseif (file_exists(public_path('images/company/' . $currentCompany->logo))) {
+                            $dashCompanyLogoUrl = asset('images/company/' . $currentCompany->logo);
+                        } elseif (file_exists(public_path('logo/' . $currentCompany->logo))) {
+                            $dashCompanyLogoUrl = asset('logo/' . $currentCompany->logo);
+                        }
+                    }
+                @endphp
                 <div class="dash-company-logo-emblem" aria-hidden="true">
-                    @if($currentCompany && $currentCompany->logo && file_exists(public_path('logo/' . $currentCompany->logo)))
-                        <img src="{{ url('logo', $currentCompany->logo) }}" alt="{{ $currentCompany->trade_name ?: $currentCompany->legal_name }}" class="dash-company-logo-img">
+                    @if($dashCompanyLogoUrl)
+                        <img src="{{ $dashCompanyLogoUrl }}" alt="{{ $currentCompany->trade_name ?: $currentCompany->legal_name }}" class="dash-company-logo-img">
                     @else
                         <span class="dash-company-monogram">{{ collect(preg_split('/\s+/', trim($currentCompany->trade_name ?? $currentCompany->legal_name ?? 'ZOLO')))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
                     @endif

@@ -40,6 +40,15 @@
       }
     }
 
+/* Navbar Left Group (keeps toggle button and company brand together on the left) */
+.navbar-left-group {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-right: auto;
+}
+
 /* Top Navbar Company Identifier (Left side) */
 .top-navbar-company {
   gap: 10px;
@@ -363,22 +372,49 @@ body.dark-mode .top-company-dropdown-footer {
   border-color: #334155;
 }
 
+.top-company-portal-btn,
+.top-company-portal-btn *,
+.top-company-portal-btn span,
+.top-company-portal-btn i,
+nav.navbar .nav-item a.top-company-portal-btn,
+nav.navbar .nav-item a.top-company-portal-btn *,
+nav.navbar .nav-item a.top-company-portal-btn span,
+nav.navbar .nav-item a.top-company-portal-btn i,
+nav.navbar .dropdown-menu a.top-company-portal-btn,
+nav.navbar .dropdown-menu a.top-company-portal-btn *,
+nav.navbar .dropdown-menu a.top-company-portal-btn span,
+nav.navbar .dropdown-menu a.top-company-portal-btn i {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
 .top-company-portal-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 11.5px;
   font-weight: 800;
-  color: #ffffff !important;
   background: linear-gradient(135deg, var(--zp-800, #631f64) 0%, var(--z-primary, #7d287e) 100%);
-  padding: 5px 12px;
-  border-radius: 7px;
-  text-decoration: none !important;
+  padding: 6px 14px;
+  border-radius: 8px;
   box-shadow: 0 2px 6px rgb(var(--z-primary-rgb) / 0.35);
   transition: all 0.15s ease;
 }
 
-.top-company-portal-btn:hover {
+.top-company-portal-btn:hover,
+.top-company-portal-btn:hover *,
+.top-company-portal-btn:hover span,
+.top-company-portal-btn:hover i,
+nav.navbar .nav-item a.top-company-portal-btn:hover,
+nav.navbar .nav-item a.top-company-portal-btn:hover *,
+nav.navbar .nav-item a.top-company-portal-btn:hover span,
+nav.navbar .nav-item a.top-company-portal-btn:hover i,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover *,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover span,
+nav.navbar .dropdown-menu a.top-company-portal-btn:hover i {
+  color: #ffffff !important;
+  text-decoration: none !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgb(var(--z-primary-rgb) / 0.45);
 }

@@ -267,32 +267,46 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
     </div>
     <header class="container-fluid">
       <nav class="navbar">
-        <a id="toggle-btn" href="#" class="menu-btn zolo-sidebar-toggle" title="Collapse to icons (1st tap)" data-state="expanded" aria-label="Toggle sidebar navigation" role="button">
-          <div class="toggle-icon-bars">
-            <span class="bar bar-1"></span>
-            <span class="bar bar-2"></span>
-            <span class="bar bar-3"></span>
-          </div>
-          <div class="toggle-state-indicator">
-            <span class="dot dot-1"></span>
-            <span class="dot dot-2"></span>
-            <span class="dot dot-3"></span>
-          </div>
-        </a>
+        <div class="navbar-left-group d-flex align-items-center">
+          <a id="toggle-btn" href="#" class="menu-btn zolo-sidebar-toggle" title="Collapse to icons (1st tap)" data-state="expanded" aria-label="Toggle sidebar navigation" role="button">
+            <div class="toggle-icon-bars">
+              <span class="bar bar-1"></span>
+              <span class="bar bar-2"></span>
+              <span class="bar bar-3"></span>
+            </div>
+            <div class="toggle-state-indicator">
+              <span class="dot dot-1"></span>
+              <span class="dot dot-2"></span>
+              <span class="dot dot-3"></span>
+            </div>
+          </a>
 
-        @if($activeCompany)
-        <div class="top-navbar-company d-none d-sm-flex align-items-center ml-2" title="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
-          @if($activeCompany->logo && file_exists(public_path('logo/' . $activeCompany->logo)))
-            <img src="{{ url('logo', $activeCompany->logo) }}" alt="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}" class="top-navbar-company-logo">
-          @else
-            <span class="top-navbar-company-mark">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
-          @endif
-          <div class="top-navbar-company-info d-flex flex-column ml-2">
-            <span class="top-navbar-company-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>
-            @if($activeCompany->group)<span class="top-navbar-company-group">{{ $activeCompany->group->name }}</span>@endif
+          @if($activeCompany)
+          @php
+            $activeCompanyLogoUrl = null;
+            if ($activeCompany->logo) {
+                if (file_exists(public_path($activeCompany->logo))) {
+                    $activeCompanyLogoUrl = asset($activeCompany->logo);
+                } elseif (file_exists(public_path('images/company/' . $activeCompany->logo))) {
+                    $activeCompanyLogoUrl = asset('images/company/' . $activeCompany->logo);
+                } elseif (file_exists(public_path('logo/' . $activeCompany->logo))) {
+                    $activeCompanyLogoUrl = asset('logo/' . $activeCompany->logo);
+                }
+            }
+          @endphp
+          <div class="top-navbar-company d-none d-sm-flex align-items-center ml-2" title="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}">
+            @if($activeCompanyLogoUrl)
+              <img src="{{ $activeCompanyLogoUrl }}" alt="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}" class="top-navbar-company-logo">
+            @else
+              <span class="top-navbar-company-mark">{{ collect(preg_split('/\s+/', trim($activeCompany->trade_name ?: $activeCompany->legal_name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+            @endif
+            <div class="top-navbar-company-info d-flex flex-column ml-2">
+              <span class="top-navbar-company-name">{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}</span>
+              @if($activeCompany->group)<span class="top-navbar-company-group">{{ $activeCompany->group->name }}</span>@endif
+            </div>
           </div>
+          @endif
         </div>
-        @endif
 
         @hasSection('navbar-center')
           <div class="navbar-center-area flex-grow-1 mx-2 d-flex align-items-center justify-content-between overflow-hidden u-minw-0">
@@ -366,9 +380,9 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
               @endif
 
               <div class="top-company-dropdown-footer">
-                <a href="{{ route('company.create') }}" class="top-company-portal-btn" title="Open Dedicated Company Creation Portal">
-                  <i class="fa fa-plus-circle mr-1" aria-hidden="true"></i>
-                  <span>Company Portal ›</span>
+                <a href="{{ route('company.create') }}" class="top-company-portal-btn text-white" title="Open Dedicated Company Creation Portal">
+                  <i class="fa fa-plus-circle mr-1 text-white" aria-hidden="true"></i>
+                  <span class="text-white">Company Portal &rsaquo;</span>
                 </a>
                 <a href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" class="top-company-manage-link" title="Manage all companies">
                   <i class="fa fa-th-list mr-1" aria-hidden="true"></i> Manage All
