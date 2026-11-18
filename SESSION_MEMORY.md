@@ -1,3 +1,51 @@
+## Workspace Modernization: Low-Height Vector Hero, Quick Items Removal, Overall Consolidated Insights & Side-by-Side Company Grid — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directive:
+    *"remove these quick items menu. bring the setup with a header hero section with less height to look better and use any vector images or icons etc. next is the over all companies insghts and the individual company insights in each card, next to another card."*
+    (Reference screenshot `media_1794993173797_c303e9fc.png`).
+  - Strict work on active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Removed Quick Items Menu:**
+     - Completely eliminated Section 2 (`.zw-modules` / "Operational Workspaces" 9-card launchpad) from `/workspace`.
+     - Removed `$modules` array and all unused DOM nodes to bring financial insights directly above the fold.
+  2. **Low-Height Executive Header Hero (`.zw-hero-compact`):**
+     - Radically compressed vertical height from ~200px down to ~58px.
+     - Added subtle background vector wave SVG graphic with smooth curves and modern tech polish (`.zw-hero-bg-vector`).
+     - Added company emblem monogram with gradient surface, enterprise star badge, inline company legal/trade name, code tag, group crumb, and industry chip with inline vector briefcase SVG icon.
+     - Embedded sleek, compact inline cockpit controls for Facility (`branch_id`) with inline vector building SVG icon, Fiscal Window (`financial_year_id`) with inline vector calendar SVG icon, live operational node status with pulsing green vector dot, and quick "Switch Company" action button with vector grid SVG icon.
+  3. **Overall Companies Consolidated Intelligence Suite (`.zw-group-master-card`):**
+     - Renders directly beneath the compact hero.
+     - Computes true directory-wide aggregations (`$overallRollup`) across all registered entities (even if independent/ungrouped).
+     - Executive Header: Entity count badge (`X Entities`), profitability health pill (`All Companies Profitable (X/X)` or `X in Net Loss`).
+     - Operating Loss Alert: Displays entity chips with loss amounts and margin percentages if any subsidiary operates at a deficit.
+     - Top 5 Executive KPI Metric Strip: Consolidated Revenue, Net Profit / Margin, Total Purchases, Customer Receivables, Supplier Payables.
+     - Working Capital & Liquidity Coverage Meter: Segmented ratio bar contrasting Customer Receivables vs Supplier Payables with Net Working Capital Surplus tag and 32-day working capital cycle indicator.
+     - Master Visual Charts Suite:
+       - 6-Month Enterprise Trajectory & Cash Trends: Chart.js smooth line/bar canvas combining Sales, Purchases, and Net Margin across all entities (`masterTrendChart_overall`).
+       - Revenue Contribution by Entity: Donut chart showing each company's share of total turnover with legend list and status chips (`masterShareDonut_overall`).
+       - Consolidated P&L Cost Absorption: Donut chart showing Net Profit vs Purchases/COGS vs Operating Expenses (`masterCostDonut_overall`).
+  4. **Side-by-Side Individual Company Insights Grid (`.zw-companies-grid-expanded`):**
+     - Responsive multi-column layout (`grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px;`) placing individual cards horizontally side-by-side ("in each card, next to another card").
+     - Each card features:
+       - `CURRENT WORKSPACE` active tag when active.
+       - Company monogram, legal/trade name, code, industry, active/member pill.
+       - P&L Status Banner: `+₹... Profitable Company` or `-₹... Operating at Net Loss` with margin %.
+       - 6-Month Sales Trajectory Chart (`compChart_{id}`) with Chart.js canvas.
+       - Mini margin donut (`compDonut_{id}`).
+       - 4 Micro-Metric Pills: Net Revenue, Purchases/Cost, Customer Dues (Receivables), Supplier Dues (Payables).
+       - Direct Fast Context Switcher: Branch dropdown, Fiscal year dropdown, and tactical `Switch Workspace →` button.
+
+- **Verification & Test Coverage:**
+  - `php -l resources/views/backend/workspace/home.blade.php`: 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions, 0 regressions).
+  - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `route:clear`, `cache:clear`.
+
+---
+
 ## Job Work Policy Service Product Auto-Creation & Non-GST/GST Billing Bypass and Conversion — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
@@ -119,6 +167,54 @@
   - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
   - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions).
   - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `cache:clear`.
+
+---
+
+## Workspace Modernization: Low-Height Vector Hero, Quick Items Removal, Overall Consolidated Insights & Side-by-Side Company Grid — 2026-11-18 (`ui`)
+
+- **Context & Objectives:**
+  - In response to user directive:
+    *"remove these quick items menu. bring the setup with a header hero section with less height to look better and use any vector images or icons etc. next is the over all companies insghts and the individual company insights in each card, next to another card."*
+    (Reference screenshot `media_1794993173797_c303e9fc.png`).
+  - Strict work on active branch `ui` (`f:\PROJECTS\WEBSITES\zolo-erp-pro`).
+
+- **Key Architectural & UI Enhancements Delivered:**
+  1. **Removed Quick Items Menu:**
+     - Completely eliminated Section 2 (`.zw-modules` / "Operational Workspaces" 9-card launchpad) from `/workspace`.
+     - Removed `$modules` array and all unused DOM nodes to bring financial insights directly above the fold.
+  2. **Low-Height Executive Header Hero (`.zw-hero-compact`):**
+     - Radically compressed vertical height from ~200px down to ~58px.
+     - Added subtle background vector wave SVG graphic with smooth curves and modern tech polish (`.zw-hero-bg-vector`).
+     - Added company emblem monogram with gradient surface, enterprise star badge, inline company legal/trade name, code tag, group crumb, and industry chip with inline vector briefcase SVG icon.
+     - Embedded sleek, compact inline cockpit controls for Facility (`branch_id`) with inline vector building SVG icon, Fiscal Window (`financial_year_id`) with inline vector calendar SVG icon, live operational node status with pulsing green vector dot, and quick "Switch Company" action button with vector grid SVG icon.
+  3. **Overall Companies Consolidated Intelligence Suite (`.zw-group-master-card`):**
+     - Renders directly beneath the compact hero.
+     - Computes true directory-wide aggregations (`$overallRollup`) across all registered entities (even if independent/ungrouped).
+     - Executive Header: Entity count badge (`X Entities`), profitability health pill (`All Companies Profitable (X/X)` or `X in Net Loss`).
+     - Operating Loss Alert: Displays entity chips with loss amounts and margin percentages if any subsidiary operates at a deficit.
+     - Top 5 Executive KPI Metric Strip: Consolidated Revenue, Net Profit / Margin, Total Purchases, Customer Receivables, Supplier Payables.
+     - Working Capital & Liquidity Coverage Meter: Segmented ratio bar contrasting Customer Receivables vs Supplier Payables with Net Working Capital Surplus tag and 32-day working capital cycle indicator.
+     - Master Visual Charts Suite:
+       - 6-Month Enterprise Trajectory & Cash Trends: Chart.js smooth line/bar canvas combining Sales, Purchases, and Net Margin across all entities (`masterTrendChart_overall`).
+       - Revenue Contribution by Entity: Donut chart showing each company's share of total turnover with legend list and status chips (`masterShareDonut_overall`).
+       - Consolidated P&L Cost Absorption: Donut chart showing Net Profit vs Purchases/COGS vs Operating Expenses (`masterCostDonut_overall`).
+  4. **Side-by-Side Individual Company Insights Grid (`.zw-companies-grid-expanded`):**
+     - Responsive multi-column layout (`grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px;`) placing individual cards horizontally side-by-side ("in each card, next to another card").
+     - Each card features:
+       - `CURRENT WORKSPACE` active tag when active.
+       - Company monogram, legal/trade name, code, industry, active/member pill.
+       - P&L Status Banner: `+₹... Profitable Company` or `-₹... Operating at Net Loss` with margin %.
+       - 6-Month Sales Trajectory Chart (`compChart_{id}`) with Chart.js canvas.
+       - Mini margin donut (`compDonut_{id}`).
+       - 4 Micro-Metric Pills: Net Revenue, Purchases/Cost, Customer Dues (Receivables), Supplier Dues (Payables).
+       - Direct Fast Context Switcher: Branch dropdown, Fiscal year dropdown, and tactical `Switch Workspace →` button.
+
+- **Verification & Test Coverage:**
+  - `php -l resources/views/backend/workspace/home.blade.php`: 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: 4/4 tests PASSED (0 token/style violations).
+  - `php vendor/bin/phpunit tests/Feature/WorkspaceSecurityTest.php`: 12/12 tests PASSED (73 assertions).
+  - `php -d DB_PORT=3306 vendor/bin/phpunit tests/Feature/OpticalProfileIsolationAndProductBoxesTest.php`: 6/6 tests PASSED (63 assertions, 0 regressions).
+  - Cleared all compiled caches via `php artisan view:clear`, `config:clear`, `route:clear`, `cache:clear`.
 
 ---
 
@@ -4270,72 +4366,4 @@
 ## Phase 2.1 & Phase 2.2 Complete: Multi-Slot Clarification Engine, Sales Workflows & Three-Way Disambiguation Triad Verified — 2026-11-11 (`feature/ai-unified-input-clarification`)
 
 - **Scope & Delivery Summary:**
-  - Fully extended the Unified Multi-Slot Input Collection & Clarification Engine across all enterprise transaction domains, specifically delivering `sales_order.create.v1` and Phase 2.2 Dependent Master Data Creation with the Three-Way Disambiguation Triad (`Select Existing`, `Create New Master`, `Correct Input`).
-  - Strict compliance with all core architectural invariants: Untrusted Model, Authoritative Server, Strict Tenancy Law 1 (zero unscoped queries), and Zero Autonomous Financial Writes.
-
-- **Architectural Deliverables Completed & Verified:**
-  1. **Dynamic Line-Item Addressing Contract:**
-     - Updated `ActionRequirementsProviderInterface::requirements(WorkflowTaskContext $context, array $currentSlots = []): array` to accept current slots and dynamically generate line schemas (`items[line-0]`, `items[line-1]`, etc.) with client line ID indexing and `_destroy: true` semantics.
-     - Implemented dynamic expansion in `PurchaseOrderRequirementsProvider` and `SalesOrderRequirementsProvider`.
-  2. **Single-Pass Batch Record Resolution Across Domains:**
-     - Extended `RecordResolutionService` with `resolveCustomer(CompanyContext $context, string $query)` (handling ID, tax_no/GSTIN, exact name, and substring candidate searches capped at 5).
-     - Extended `resolveUnit(Product $product, ?string $uomQuery, string $mode)` to support `$mode === 'sale'` using `sale_unit_id` with unit conversions.
-     - Extended `BatchRecordResolutionService` with set-based vectorized customer and line resolution for sales orders without early-exit.
-  3. **Input Completeness Evaluator & Three-Way Disambiguation Triad:**
-     - Evaluates customer, warehouse, and all line items in a single pass.
-     - Defaults prices to product `price` (master price) for sales orders vs `cost` for purchase orders.
-     - Defaults units to `sale_unit_id` for sales orders vs `purchase_unit_id` for purchase orders.
-     - Attaches the Three-Way Disambiguation Triad (`ResolutionOption`) with `select_existing`, `create_new`, and `correct_name` to unresolved/ambiguous master entities (`supplier_id`, `customer_id`, `product_id`, `warehouse_id`, `unit_id`).
-     - Emits downstream pending check for customer credit limits & GST place-of-supply determination.
-  4. **Governed Sales Order Action Pipeline (`sales_order.create.v1`):**
-     - `CreateSalesOrderInputSchema`: validates customer, warehouse, date, dynamic items, and expected commercial totals.
-     - `SalesOrderRequirementsProvider`: declarative requirement provider for `sales_order.create.v1`.
-     - `SalesOrderPreviewAdapter`: authoritative preview computing pricing, non-blocking ATP stock availability check via `InventoryAvailabilityService`, and live `source_state_hash`. Enforces `CanonicalActionPayload` decimal string formatting.
-     - `SalesOrderCommandAdapter`: row locks, fresh source state verification, and authoritative order creation via `OrderLifecycleService::createSale()`.
-     - Registered in `ActionCapabilityRegistry` and `ActionRequirementsRegistry`.
-  5. **AI SDK Tool & Agent Integration:**
-     - Created `PrepareSalesOrder` AI tool bridging natural language sales instructions to the governed pipeline.
-     - Registered `PrepareSalesOrder` in `ErpCopilot::tools()` and added system prompt guidance for sales order intent.
-  6. **Phase 2.2 Dependent Master Data Orchestration:**
-     - `DependentMasterOrchestrator`: spawns master requirements, generates Gate 1 master proposals (`setup.supplier.create.v1`, `setup.customer.create.v1`, `setup.product.create.v1`), executes them via `ActionExecutionService`, and automatically resumes the parent workflow task.
-     - Additive migration `2026_11_11_000003_add_dependent_masters_to_ai_workflow_tasks.php` adding `dependent_masters_json`.
-     - Mounted 3 REST endpoints under `/api/v1/ai/workflow-tasks/{id}/dependent-masters/` (`spawn`, `preview`, `approve-and-execute`).
-  7. **Feature Test Suites Passing 100%:**
-     - `tests/Feature/Ai/Commercial/MultiSlotSalesOrderWorkflowTest.php` (5 tests, 44 assertions): verifies batch resolution, clarification card with triad, non-blocking low-stock advisory, proposal creation without ERP mutations, approval execution via `SalesOrderCommandAdapter`, and cross-company isolation.
-     - `tests/Feature/Ai/Clarification/DependentMasterResolutionTest.php` (6 tests, 53 assertions): verifies Gate 1 master setup, automatic parent task resumption, and Gate 2 commercial transaction promotion.
-     - Full AI Test Suite (`phpunit.ai.xml` on disposable MySQL `zolo_test_ai_release`): **127/127 passed (860 assertions, 0 errors, 0 failures, 0 skipped)**.
-
-- **Next Steps:**
-  - Stage, commit, and push all deliverables on `feature/ai-unified-input-clarification`.
-  - Proceed with Phase 3 (Receipts, Bills & Full Ledger Invoices) or user-directed tasks.
-
----
-
-## Cross-Domain Architecture Sync: Sales & Unified Multi-Slot Input Collection Complete — 2026-11-11 (`feature/ai-unified-input-clarification`)
-
-- **User Direction & Confirmation:**
-  - User approved Option 1 (Staged EGM architecture specification and master documentation synchronization).
-  - Explicit architectural steering: **The Unified Multi-Slot Input Collection and Clarification strategy is enterprise-wide and applies equally to Sales (Quotations, Sales Orders, Invoices) and other user inputs (GRNs, Transfers, Payments, In-Flight Masters), not just Purchase Orders.**
-
-- **Repository Master Architecture Specifications Synchronized:**
-  1. [`docs/zoloerp-ai-agent-implementation/docs/ai/41_UNIFIED_INPUT_COLLECTION_AND_CLARIFICATION.md`](docs/zoloerp-ai-agent-implementation/docs/ai/41_UNIFIED_INPUT_COLLECTION_AND_CLARIFICATION.md):
-     - Added Multi-Domain Capability Coverage Matrix and visual flowchart mapping Purchasing (`purchase_order.create.v1`, `grn.create.v1`), Sales (`sales_order.create.v1`, `quotation.create.v1`), Inventory (`stock_transfer.create.v1`), Finance (`payment_receipt.create.v1`), and Master Setup (`setup.customer.create.v1`, `setup.product.create.v1`).
-  2. [`docs/zoloerp-ai-agent-implementation/docs/ai/31_SALES_AND_COLLECTION_WORKFLOWS.md`](docs/zoloerp-ai-agent-implementation/docs/ai/31_SALES_AND_COLLECTION_WORKFLOWS.md):
-     - Restructured and expanded to natively embed the Phase 2.1 engine.
-     - Documented `SalesOrderRequirementsProvider` and `QuotationRequirementsProvider` implementing `ActionRequirementsProviderInterface`.
-     - Specified batch customer resolution (`resolveCustomer` with max 5 candidates) and sales unit resolution (`sale_unit_id` with conversions).
-     - Defined Available-to-Promise (ATP) non-blocking stock check via `InventoryAvailabilityService`, generating advisory warnings rather than failing closed.
-     - Enforced domain boundary: Sales Orders route strictly to `OrderLifecycleService::createSale()` (commercial orders with stock reservations), distinct from `CommercialApplicationService::create('sale')` / `SalePostingService::post()` (posted invoices with immediate ledger writes and inventory deductions).
-  3. [`docs/zoloerp-ai-agent-implementation/docs/ai/29_WORKFLOW_ORCHESTRATION.md`](docs/zoloerp-ai-agent-implementation/docs/ai/29_WORKFLOW_ORCHESTRATION.md):
-     - Spliced Phase 2.1 into Phased Platform Architecture and updated the Governed Intent-Proposal-Approval-Execution lifecycle diagram to include the Pre-Proposal Task Draft (`ai_workflow_tasks`) and Consolidated Clarification Card loop.
-  4. [`docs/zoloerp-ai-agent-implementation/docs/ai/27_INTENT_AND_RECORD_RESOLUTION.md`](docs/zoloerp-ai-agent-implementation/docs/ai/27_INTENT_AND_RECORD_RESOLUTION.md):
-     - Replaced legacy stop-at-first-error resolution with vectorized set-based queries in `BatchRecordResolutionService` across Customers, Suppliers, Products, and UOMs.
-     - Updated clarification policy to mandate the single consolidated clarification card.
-  5. [`docs/zoloerp-ai-agent-implementation/docs/ai/28_ACTION_CAPABILITY_CATALOG.md`](docs/zoloerp-ai-agent-implementation/docs/ai/28_ACTION_CAPABILITY_CATALOG.md):
-     - Formalized the three coordinated registries: `AiToolManifest` (Read Plane), `ActionRequirementsRegistry` (Pre-Proposal Intake Plane), and `ActionCapabilityRegistry` (Proposal & Execution Plane).
-     - Prefixed execution pipeline with the pre-proposal collection engine.
-  6. [`docs/zoloerp-ai-agent-implementation/docs/ai/03_ARCHITECTURE.md`](docs/zoloerp-ai-agent-implementation/docs/ai/03_ARCHITECTURE.md):
-     - Upgraded system architecture to Four Coordinated Planes: Experience Plane, Intelligence Plane, Pre-Proposal Task Orchestration Plane, and Governed Execution Plane.
-  7. [`docs/zoloerp-ai-agent-implementation/docs/ai/06_DATABASE_SCHEMA.md`](docs/zoloerp-ai-agent-implementation/docs/ai/06_DATABASE_SCHEMA.md):
-     - Documented additive `ai_workflow_tasks` table schema and indexes.
 ... [truncated for diff preview]
