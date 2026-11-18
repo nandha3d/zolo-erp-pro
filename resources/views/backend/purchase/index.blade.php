@@ -180,6 +180,15 @@
                                 <button type="button" class="segment-btn" data-nature="mixed">Mixed</button>
                             </div>
                         </div>
+                        <div class="field-compact-item doc-seg-item">
+                            <label data-help="GST Bill = full GST tax invoice with HSN and CGST/SGST/IGST. Non-GST Bill = zero tax, completely bypasses GST checks, and can be converted to GST any time.|GST Bill for tax invoice, Non-GST for cash slip or non-tax purchase">Bill Mode</label>
+                            <div class="pill-segmented-compact doc-segment" id="seg-bill-mode" role="group" aria-label="Bill Mode">
+                                <button type="button" class="segment-btn active" id="pill-bill-gst" data-bill-mode="gst">GST Bill</button>
+                                <button type="button" class="segment-btn" id="pill-bill-non-gst" data-bill-mode="non_gst">Non-GST</button>
+                            </div>
+                            <input type="hidden" name="is_non_gst" id="hidden-is-non-gst" value="0">
+                            <input type="hidden" name="bill_type" id="hidden-bill-type" value="gst">
+                        </div>
                         <div class="field-compact-item u-w-230px u-shrink-0">
                             <label for="purchase_type_id">Tax Classification *</label>
                             <select id="purchase_type_id" name="purchase_type_id" class="form-control">
@@ -1032,11 +1041,15 @@
                         </h4>
                         <div class="voucher-badges-strip">
                             <span id="purchase-details-status-badge" class="badge badge-success">Received</span>
+                            <span id="purchase-details-nongst-badge" class="badge badge-info" style="{{ 'display:none; background:#0284c7; color:#fff;' }}">Non-GST</span>
                             <span id="purchase-details-date-text" class="text-muted small"></span>
                         </div>
                     </div>
                 </div>
                 <div class="voucher-actions-toolbar">
+                    <button type="button" id="purchase-details-convert-gst-btn" class="btn btn-sm btn-outline-success mr-2 btn-convert-to-gst" style="{{ 'display:none;' }}" title="Convert Non-GST Bill to standard GST Bill">
+                        <i class="fa fa-refresh mr-1"></i> Convert to GST Bill
+                    </button>
                     <a href="#" id="purchase-details-edit-btn" class="voucher-edit-btn" title="Open Full Bill in Edit Mode">
                         <i class="dripicons-document-edit"></i> Edit Bill
                     </a>
@@ -3484,6 +3497,7 @@
 
     // --- Recalculate Table Summary Totals ---
     function recalcTableSummary() {
+        var isNonGst = $('#hidden-is-non-gst').val() === '1';
         var net = 0;
         var tax = 0;
         var grand = 0;
@@ -3494,9 +3508,9 @@
             count++;
             var rate = parseFloat($(this).find('.row-rate').val()) || 0;
             var qty = parseFloat($(this).find('.row-qty').val()) || 0;
-            var taxRate = parseFloat($(this).find('.row-tax-rate').val()) || 0;
+            var taxRate = isNonGst ? 0 : (parseFloat($(this).find('.row-tax-rate').val()) || 0);
             var amount = rate * qty;
-            var taxAmount = amount * (taxRate / 100);
+            var taxAmount = isNonGst ? 0 : (amount * (taxRate / 100));
 
             net += amount;
             tax += taxAmount;
@@ -3517,6 +3531,60 @@
         $('#hidden-total-tax').val(tax.toFixed(decimalPlaces));
         $('#hidden-grand-total').val(grand.toFixed(decimalPlaces));
     }
+
+    $(document).on('click', '#seg-bill-mode button', function () {
+        var mode = $(this).data('bill-mode');
+        $('#seg-bill-mode button').removeClass('active');
+        $(this).addClass('active');
+        var isNon = mode === 'non_gst';
+        $('#hidden-is-non-gst').val(isNon ? '1' : '0');
+        $('#hidden-bill-type').val(isNon ? 'non_gst' : 'gst');
+
+        $('#order-table-body tr.order-item-row').each(function () {
+            var $row = $(this);
+            if (isNon) {
+                $row.find('.row-tax-rate').val('0');
+                $row.find('.row-tax-amount-input').val('0.0000');
+            } else {
+                var id = $row.find('.row-product-id').val();
+                var prod = (allProducts || []).find(p => String(p.id) === String(id));
+                if (prod && prod.tax_rate !== undefined) {
+                    $row.find('.row-tax-rate').val(String(prod.tax_rate));
+                }
+            }
+        });
+        recalcTableSummary();
+    });
+
+    $(document).on('click', '.btn-convert-to-gst', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = $(this).data('id');
+        var ref = $(this).data('ref') || ('#' + id);
+        if (!confirm('Are you sure you want to convert Non-GST Bill ' + ref + ' to a GST Bill? Full GST tax determination and compliance checks will be applied.')) {
+            return;
+        }
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Converting...');
+        $.ajax({
+            url: '{{ url("commercial/purchase") }}/' + id + '/convert-to-gst',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            dataType: 'json',
+            success: function (res) {
+                alert(res.message || 'Bill converted to GST successfully.');
+                if ($.fn.DataTable.isDataTable('#purchase-table')) {
+                    $('#purchase-table').DataTable().ajax.reload(null, false);
+                } else {
+                    location.reload();
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="fa fa-refresh text-success"></i> Convert to GST Bill');
+                alert(xhr.responseJSON?.message || 'Failed to convert to GST bill. Check party GST details and product tax rates.');
+            }
+        });
+    });
 
     // --- Supplier Selection / Party Card Updates ---
     function updatePartyCard() {
@@ -4696,6 +4764,15 @@
                 $('#purchase-details-date-text').text(formattedDate);
                 var editUrl = "{{ url('purchases') }}/" + p.id + "/edit";
                 $('#purchase-details-edit-btn').attr('href', editUrl);
+
+                var isNon = p.is_non_gst || (p.attributes_json && p.attributes_json.is_non_gst) || (p.tax_snapshot_json && p.tax_snapshot_json.is_non_gst) || (p.attributes_json && p.attributes_json.bill_type === 'non_gst');
+                if (isNon && !p.reversed_at) {
+                    $('#purchase-details-nongst-badge').show();
+                    $('#purchase-details-convert-gst-btn').data('id', p.id).data('ref', p.reference_no).show();
+                } else {
+                    $('#purchase-details-nongst-badge').hide();
+                    $('#purchase-details-convert-gst-btn').hide();
+                }
 
                 // Supplier Card
                 var s = p.supplier || {};

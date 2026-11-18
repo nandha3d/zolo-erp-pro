@@ -115,6 +115,22 @@ class CommercialController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function convertToGst(Request $request, string $kind, int $id)
+    {
+        $context = $this->context($request);
+        $document = app(CommercialApplicationService::class)->convertToGst($kind, $id, $context, $request->user()->id);
+
+        $msg = 'Document converted to GST successfully. Tax total: ₹'.number_format((float)$document->total_tax, 2).', Grand total: ₹'.number_format((float)$document->grand_total, 2);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $document,
+                'message' => $msg,
+            ]);
+        }
+        return redirect($kind === 'sale' ? '/sales' : '/purchases')->with('message', $msg);
+    }
+
     public function replace(Request $request, string $kind, int $id)
     {
         $request->validate(['business_date' => 'required|date_format:Y-m-d', 'reason' => 'required|string|min:3|max:500']);

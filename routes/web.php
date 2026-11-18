@@ -484,6 +484,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
         Route::get('sales/get-sale/{id}', 'getSale');
         Route::get('sales/{id}/json', 'getSaleJson');
         Route::get('sales/{id}', 'show')->whereNumber('id')->name('sales.show');
+        Route::post('sales/{id}/convert-to-gst', [\App\Http\Controllers\CommercialController::class, 'convertToGst'])->defaults('kind', 'sale')->name('sales.convert-to-gst');
         Route::post('importsale', 'importSale')->name('sale.import');
         Route::get('pos/{id?}', 'posSale')->name('sale.pos');
         Route::get('sales/recent-sale', 'recentSale');
@@ -600,6 +601,7 @@ Route::group(['middleware' => ['common', 'auth', 'active', 'legacy.company']], f
                 ->name('purchases.forceDeleteSelected')
                 ->middleware('hasPermanentDeletePermission');
             Route::delete('{id}/force-delete', 'forceDelete')->name('purchases.forceDelete');
+            Route::post('{id}/convert-to-gst', [\App\Http\Controllers\CommercialController::class, 'convertToGst'])->defaults('kind', 'purchase')->name('purchases.convert-to-gst');
             Route::get('supplier/{supplier_id}', 'supplierPurchase')->name('purchase.supplier');
         });
         Route::post('importpurchase', 'importPurchase')->name('purchase.import');

@@ -889,7 +889,11 @@ class PurchaseController extends Controller
                 $nestedData['id'] = $purchase->id;
                 $nestedData['key'] = $key;
                 $nestedData['date'] = date(config('date_format'), strtotime($purchase->created_at->toDateString()));
-                $nestedData['reference_no'] = $purchase->reference_no;
+                $isNonGst = !empty($purchase->is_non_gst)
+                    || !empty($purchase->attributes_json['is_non_gst'])
+                    || (!empty($purchase->tax_snapshot_json['is_non_gst']))
+                    || (($purchase->attributes_json['bill_type'] ?? '') === 'non_gst');
+                $nestedData['reference_no'] = e($purchase->reference_no) . ($isNonGst ? ' <span class="badge badge-info" style="background:#0284c7;color:#fff;font-size:10px;">Non-GST</span>' : '');
                 $nestedData['created_by'] = $user->name ?? 'N/A';
 
                 if($purchase->supplier_id) {
@@ -978,6 +982,10 @@ class PurchaseController extends Controller
                                 <li>
                                     <button type="button" class="btn btn-link view btn-table-view" data-id="'.$purchase->id.'"><i class="fa fa-eye"></i> '.__('db.View').'</button>
                                 </li>';
+                if($isNonGst && !$purchase->reversed_at)
+                    $nestedData['options'] .= '<li>
+                        <button type="button" class="btn btn-link btn-convert-to-gst" data-id="'.$purchase->id.'" data-kind="purchase" data-ref="'.e($purchase->reference_no).'"><i class="fa fa-refresh text-success"></i> Convert to GST Bill</button>
+                    </li>';
                 if(in_array("purchases-add", $request['all_permission']))
                     $nestedData['options'] .= '<li>
                         <button type="button" class="btn btn-link duplicate btn-table-duplicate" data-id="'.$purchase->id.'"><i class="fa fa-copy"></i> '.__('db.Duplicate').'</button>
