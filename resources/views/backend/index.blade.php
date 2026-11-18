@@ -29,6 +29,7 @@
         ? route('accounting.profit-loss', ['start_date' => $start, 'end_date' => $end]) : null;
     $decimals = (int) $general_setting->decimal;
     $money = fn ($value) => $currency_symbol . number_format((float) $value, $decimals);
+    $currentCompany = $company ?? $activeCompany ?? (\App\Models\Company::with('group')->find(session('company_id')));
 
     // Dynamic SVG Sparkline generator
     $generateSparkline = function(array $values, int $w = 88, int $h = 34) {
@@ -245,15 +246,41 @@
     <header class="dash-card dash-command">
         <div class="dash-command-top">
             <div class="dash-heading">
-                <span class="dash-icon"><i class="dripicons-meter" aria-hidden="true"></i></span>
+                <div class="dash-company-logo-emblem" aria-hidden="true">
+                    @if($currentCompany && $currentCompany->logo && file_exists(public_path('logo/' . $currentCompany->logo)))
+                        <img src="{{ url('logo', $currentCompany->logo) }}" alt="{{ $currentCompany->trade_name ?: $currentCompany->legal_name }}" class="dash-company-logo-img">
+                    @else
+                        <span class="dash-company-monogram">{{ collect(preg_split('/\s+/', trim($currentCompany->trade_name ?? $currentCompany->legal_name ?? 'ZOLO')))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>
+                    @endif
+                    <span class="dash-company-star" title="Active Enterprise Workspace">★</span>
+                </div>
                 <div>
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <h1>Dashboard</h1>
+                    @if($currentCompany && $currentCompany->group)
+                        <div class="dash-company-breadcrumb">
+                            <i class="fa fa-sitemap" aria-hidden="true"></i>
+                            <span>{{ $currentCompany->group->name }}</span>
+                            <i class="fa fa-angle-right" aria-hidden="true"></i>
+                            <span>Enterprise Workspace</span>
+                        </div>
+                    @endif
+                    <div class="dash-company-title-row">
+                        <h1 class="dash-company-name">{{ $currentCompany ? ($currentCompany->trade_name ?: $currentCompany->legal_name) : 'Dashboard' }}</h1>
+                        @if($currentCompany && $currentCompany->code)
+                            <code class="dash-company-code">{{ $currentCompany->code }}</code>
+                        @endif
+                        <span class="dash-pill-badge is-dashboard"><i class="dripicons-meter mr-1" aria-hidden="true"></i> Dashboard</span>
                         <span class="dash-pulse-badge">
                             <span class="dash-pulse-dot"></span> Live Sync • Operational
                         </span>
                     </div>
-                    <p>Welcome back, {{ Auth::user()->name }} · FY {{ $general_setting->fiscal_year ?? date('Y') }} · All systems operational</p>
+                    <p class="dash-company-submeta">
+                        @if($currentCompany && $currentCompany->legal_name && $currentCompany->trade_name && $currentCompany->legal_name !== $currentCompany->trade_name)
+                            <span class="dash-legal-name">{{ $currentCompany->legal_name }}</span> ·
+                        @endif
+                        <span>Welcome back, <strong>{{ Auth::user()->name }}</strong></span> ·
+                        <span>FY {{ $general_setting->fiscal_year ?? date('Y') }}</span> ·
+                        <span>All systems operational</span>
+                    </p>
                 </div>
             </div>
 
