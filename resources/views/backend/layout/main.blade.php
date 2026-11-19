@@ -338,7 +338,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
             }
           @endphp
           <li class="nav-item company-switch dropdown" id="topCompanySwitchItem">
-            <a class="company-switch-link dropdown-toggle" href="{{ route('company.select', request()->is('workspace*') ? ['manage' => 1, 'return' => 'workspace'] : ['manage' => 1]) }}" id="topCompanySwitchDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Switch company" aria-label="Switch company">
+            <a class="company-switch-link dropdown-toggle" href="javascript:void(0)" id="topCompanySwitchDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Switch company" aria-label="Switch company">
               @if($activeCompanyLogoUrl)
                 <span class="company-switch-logo-wrap" aria-hidden="true">
                   <img src="{{ $activeCompanyLogoUrl }}" alt="{{ $activeCompany->trade_name ?: $activeCompany->legal_name }}" class="company-switch-logo-img">
@@ -370,6 +370,7 @@ $activeYear = $companyContext ? \Illuminate\Support\Facades\DB::table('fiscal_ye
                     <form method="post" action="{{ route('company.choose') }}" class="top-company-item-form" data-search="{{ strtolower($tc['name'].' '.$tc['legal_name'].' '.$tc['code'].' '.($tc['group_name'] ?? '')) }}">
                       @csrf
                       <input type="hidden" name="company_id" value="{{ $tc['id'] }}">
+                      <input type="hidden" name="branch_id" value="{{ !empty($tc['branches']) ? $tc['branches'][0]['id'] : '' }}">
                       <input type="hidden" name="return" value="{{ request()->is('workspace*') ? 'workspace' : 'dashboard' }}">
                       <button type="submit" class="top-company-item-btn {{ $tc['id'] === $activeCompany->id ? 'is-active' : '' }}">
                         <span class="top-company-item-mark">{{ collect(preg_split('/\s+/', trim($tc['name'])))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') }}</span>

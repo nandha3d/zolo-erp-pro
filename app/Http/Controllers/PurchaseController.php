@@ -1025,11 +1025,16 @@ class PurchaseController extends Controller
                     }
                 }
                 if(in_array("purchases-delete", $request['all_permission'])) {
-                    $nestedData['options'] .= '<li>
-                        <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="'.($purchase->reversed_at ? 1 : 0).'"><i class="dripicons-trash text-danger"></i> '.__("db.delete").' / Options</button>
-                    </li>
-                    </ul>
-                </div>';
+                    if ($purchase->reversed_at) {
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-secondary" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="1" data-reversed-at="'.e($purchase->reversed_at).'" data-reversal-reason="'.e($purchase->reversal_reason ?? '').'"><i class="dripicons-history text-secondary"></i> '.__("db.Reversal History").'</button>
+                        </li>';
+                    } else {
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="0" data-doc-date="'.substr($purchase->created_at ?? '', 0, 10).'" data-paid="'.(float)($purchase->paid_amount ?? 0).'" data-total="'.(float)($purchase->grand_total ?? 0).'"><i class="dripicons-return text-danger"></i> '.__("db.Reverse Bill").'</button>
+                        </li>';
+                    }
+                    $nestedData['options'] .= '</ul></div>';
                 } else {
                     $nestedData['options'] .= '</ul></div>';
                 }
@@ -1122,25 +1127,35 @@ class PurchaseController extends Controller
 
     }
 
-    public function productWithoutVariant()
+    public function productWithoutVariant(?int $limit = null)
     {
-        return Product::forBill('purchase')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
+        $query = Product::forBill('purchase')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
-            ->get();
+            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false));
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        } elseif ($limit === null && config('commercial.enabled')) {
+            $query->latest('products.id')->limit(40);
+        }
+        return $query->get();
     }
 
-    public function productWithVariant()
+    public function productWithVariant(?int $limit = null)
     {
-        return Product::join('product_variants', 'products.id', 'product_variants.product_id')
+        $query = Product::join('product_variants', 'products.id', 'product_variants.product_id')
             ->forBill('purchase')
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
             ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->orderBy('position')
-            ->get();
+            ->orderBy('position');
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        } elseif ($limit === null && config('commercial.enabled')) {
+            $query->latest('products.id')->limit(40);
+        }
+        return $query->get();
     }
 
     public function newProductWithVariant()

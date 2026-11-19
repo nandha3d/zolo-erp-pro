@@ -211,17 +211,22 @@ class SaleController extends Controller
         return $this->getSaleJson($id);
     }
 
-    public function productWithoutVariant()
+    public function productWithoutVariant(?int $limit = null)
     {
         $query = Product::forBill('sale')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false));
         if ($this->salesCatalogCostVisible()) $query->addSelect('products.cost');
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        } elseif ($limit === null && config('commercial.enabled')) {
+            $query->latest('products.id')->limit(40);
+        }
         return $query->get();
     }
 
-    public function productWithVariant()
+    public function productWithVariant(?int $limit = null)
     {
         $query = Product::join('product_variants', 'products.id', 'product_variants.product_id')
             ->forBill('sale')
@@ -231,6 +236,11 @@ class SaleController extends Controller
             ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
             ->orderBy('position');
         if ($this->salesCatalogCostVisible()) $query->addSelect('products.cost', 'product_variants.additional_cost');
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        } elseif ($limit === null && config('commercial.enabled')) {
+            $query->latest('products.id')->limit(40);
+        }
         return $query->get();
     }
 
@@ -736,11 +746,17 @@ class SaleController extends Controller
                         <button type="button" class="add-delivery btn btn-link" data-id = "'.$sale->id.'"><i class="fa fa-truck"></i> '.__('db.Add Delivery').'</button>
                     </li>';
                 if(in_array("sales-delete", $request['all_permission'])) {
-                    $nestedData['options'] .= '<li>
-                        <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="'.($sale->reversed_at ? 1 : 0).'"><i class="dripicons-trash text-danger"></i> '.__("db.delete").' / Options</button>
-                    </li>
-                    </ul>
-                </div>';
+                    if ($sale->reversed_at) {
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-secondary" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="1" data-reversed-at="'.e($sale->reversed_at).'" data-reversal-reason="'.e($sale->reversal_reason ?? '').'"><i class="dripicons-history text-secondary"></i> '.__("db.Reversal History").'</button>
+                        </li>';
+                    } else {
+                        $hasEinvoice = (!empty($sale->irn_no) || !empty($sale->attributes_json['irn'])) ? 1 : 0;
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="0" data-doc-date="'.substr($sale->created_at ?? '', 0, 10).'" data-paid="'.(float)($sale->paid_amount ?? 0).'" data-total="'.(float)($sale->grand_total ?? 0).'" data-einvoice="'.$hasEinvoice.'"><i class="dripicons-return text-danger"></i> '.__("db.Reverse Invoice").'</button>
+                        </li>';
+                    }
+                    $nestedData['options'] .= '</ul></div>';
                 } else {
                     $nestedData['options'] .= '</ul></div>';
                 }
