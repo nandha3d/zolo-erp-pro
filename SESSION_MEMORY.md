@@ -1,3 +1,48 @@
+## Production Deployment Diagnosis & VPS PHP 8.5 Cutover Gate — 2026-11-19 (`main` / `ui`)
+
+- **Context & User Inquiry:**
+  - *"i still dont see the main where the deploy to production site, it does not have the updated UI"*
+  - Branch `ui` was merged into `main` via PR #20 (commit `56f8883`) and PR #21 (commit `a1985d9`).
+  - PR #19 was undrafted and merged into `feature/ai-unified-input-clarification` (commit `104158b`).
+  - `origin/main` is fully synchronized with `ui` at commit `a1985d9eabb279976ad3fdfeb6318a51ccc4b62c`.
+  - However, the live production site `https://erp.samuraibuiness.in` still runs pre-upgrade code from Nov 6 (`79a1d03`).
+
+- **Root Cause & Technical Investigation:**
+  1. **Manual Dispatch Requirement:**
+     - Commit `b682fce` deliberately updated `.github/workflows/deploy.yml` from automated `workflow_run` triggers to manual `workflow_dispatch` with gated approval checks to prevent premature deployment before full UAT.
+  2. **Acceptance Gate Verification:**
+     - Verified commit `a1985d9` passed all CI acceptance suites (`company-foundation.yml`, Run ID `44320847205`, `status: success`), satisfying the deployment gate requirement in `deploy.yml`.
+  3. **VPS Preflight Execution:**
+     - Executed workflow dispatch for `operation: preflight` (Run ID `44460312811`).
+     - Result: **100% SUCCESS**.
+     - Verified target VPS runtime: PHP 8.5.12 CLI, `pdo_mysql`, target socket `/run/php/zolo-erp-php85.sock` active, composer lock platform requirements satisfied, and passwordless reload permission for `php8.5-fpm` operational.
+  4. **Deploy Cutover Gate Diagnosis:**
+     - Executed workflow dispatch for `operation: deploy` (Run ID `44460479234`).
+     - Script halted at `deploy/deploy.sh:78`:
+       `grep -Fq "fastcgi_pass unix:$socket;" /etc/nginx/sites-enabled/zolo-erp.conf`
+     - Diagnosed via preflight probe: `/etc/nginx/sites-available/zolo-erp.conf` line 57 currently has:
+       `fastcgi_pass unix:/run/php/zolo-erp.sock;` (pointing to the legacy PHP 8.3 pool).
+     - Because `/etc/nginx/sites-available/zolo-erp.conf` is owned by `root:root` and the deploy user `zoloerp` has sudo access strictly scoped to `/usr/bin/systemctl reload php8.3-fpm` and `php8.5-fpm`, the automated script cannot mutate Nginx configurations directly.
+
+- **Action Required for Production Cutover:**
+  - On the VPS (`srv1731573`), as `root` (or with root privileges):
+    ```bash
+    # 1. Update Nginx vhost to pass to PHP 8.5 socket
+    sudo sed -i 's|fastcgi_pass unix:/run/php/zolo-erp.sock;|fastcgi_pass unix:/run/php/zolo-erp-php85.sock;|' /etc/nginx/sites-available/zolo-erp.conf
+
+    # 2. Test and reload Nginx
+    sudo nginx -t && sudo systemctl reload nginx
+    ```
+  - Once updated, dispatch `Deploy to VPS` with:
+    - `operation: deploy`
+    - `ref: a1985d9eabb279976ad3fdfeb6318a51ccc4b62c`
+    - `php_version: 8.5`
+    - `current_php_version: 8.3`
+    - `approved: true`
+  - The deployment script will checkout `a1985d9`, run migrations, compile view cache, reload `php8.5-fpm`, verify `https://erp.samuraibuiness.in/login`, and bring the updated UI live.
+
+---
+
 ## Bill Header Alignment, Company Switching Fix, Outstanding Draft Bar & Performance Caching — 2026-11-19 (`ui`)
 
 - **Context & Objectives:**
@@ -38,8 +83,6 @@
   - Compiled view cache cleared: `php artisan view:clear`.
 
 ---
-
-## Revert Dynamic Hover-Expansion on Left Sidebar — 2026-11-18 (`ui`)
 
 - **Context & Objectives:**
   - In response to user directive:
