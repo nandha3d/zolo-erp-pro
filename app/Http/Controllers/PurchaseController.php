@@ -1127,25 +1127,35 @@ class PurchaseController extends Controller
 
     }
 
-    public function productWithoutVariant()
+    public function productWithoutVariant(?int $limit = null)
     {
-        return Product::forBill('purchase')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
+        $query = Product::forBill('purchase')->where('products.is_active', true)->whereIn('products.type', ['standard', 'service', 'digital'])
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->select('products.id', 'products.type', 'products.name', 'products.code', 'products.price', 'products.cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false))
-            ->get();
+            ->where(fn ($query) => $query->whereNull('products.is_variant')->orWhere('products.is_variant', false));
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        } elseif ($limit === null && config('commercial.enabled')) {
+            $query->latest('products.id')->limit(40);
+        }
+        return $query->get();
     }
 
-    public function productWithVariant()
+    public function productWithVariant(?int $limit = null)
     {
-        return Product::join('product_variants', 'products.id', 'product_variants.product_id')
+        $query = Product::join('product_variants', 'products.id', 'product_variants.product_id')
             ->forBill('purchase')
             ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
             ->select('products.id', 'products.name', 'product_variants.item_code', 'products.code', 'products.price', 'product_variants.additional_price', 'products.cost', 'product_variants.additional_cost', 'products.tax_id', 'products.tax_category_id', 'products.tax_method', 'products.unit_id', 'units.unit_name', 'units.unit_code')
-            ->orderBy('position')
-            ->get();
+            ->orderBy('position');
+        if ($limit !== null && $limit > 0) {
+            $query->limit($limit);
+        } elseif ($limit === null && config('commercial.enabled')) {
+            $query->latest('products.id')->limit(40);
+        }
+        return $query->get();
     }
 
     public function newProductWithVariant()

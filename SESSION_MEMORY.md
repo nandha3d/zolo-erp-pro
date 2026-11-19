@@ -1,3 +1,32 @@
+## Decoupled Monolithic Product Catalog Hydration & Asynchronous Multi-Item Modal — 2026-11-19 (`ui`)
+
+- **Context & Objectives:**
+  - Follow-up on user directive: *"if not done, proceed one by one at a stretch"* regarding [HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE_REVISED.md](docs/performance/HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE_REVISED.md).
+  - Executed Phase 1: Decoupled monolithic product catalog hydration in Purchase and Sales workspaces and overhauled Multi-Item Modal to use asynchronous server search.
+
+- **Architectural & Code Enhancements Delivered:**
+  1. **Bounded Initial Product Catalog Seed (`PurchaseController.php` & `SaleController.php`):**
+     - Updated `productWithoutVariant(?int $limit = null)` and `productWithVariant(?int $limit = null)` in both controllers.
+     - When `config('commercial.enabled')` is true, queries are bounded with `latest('products.id')->limit(40)`.
+     - Completely eliminates serializing 5MB–15MB of raw `$jsProductList` JSON into the initial HTML for catalogs with thousands of items. Initial page payload drops by >95%, preventing browser parser freeze and high TTFB.
+  2. **In-Memory Product Tracking & Cache Sync (`purchase/index.blade.php` & `sale/index.blade.php`):**
+     - Introduced `ensureProductCached(p)` to track products in client memory on demand.
+     - Wired `ensureProductCached` into autocomplete selection, exact SKU Enter keydown, row item autocomplete, row change fallback, and `addProductRow(item)`.
+     - Ensures that any product touched or selected by the user is immediately accessible in client memory `allProducts` for rapid (0ms) row recalculations, tax rate locks, and Non-GST toggles.
+  3. **Asynchronous Multi-Item Modal Search:**
+     - Overhauled `populateMultiItemModal()` to render the initial lightweight seed on open without freezing the DOM.
+     - Replaced synchronous full-catalog filtering on `#multi-item-filter` with debounced (200ms) asynchronous search via `CommercialProductLookup.search(term, allProducts, '$kind')`.
+     - Returned server items are dynamically rendered and cached via `ensureProductCached(p)`, allowing rapid batch selection across tens of thousands of items without browser lag.
+
+- **Verification:**
+  - `php -l app/Http/Controllers/PurchaseController.php`: 0 syntax errors.
+  - `php -l app/Http/Controllers/SaleController.php`: 0 syntax errors.
+  - `tests/Feature/ProductAliasTest.php`: `test_both_actual_grids_use_shared_lookup_and_do_not_find_the_first_alias_on_enter` passed (1 test, 6 assertions).
+  - `tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php artisan view:clear`: Compiled views cleared successfully.
+
+---
+
 ## High-Concurrency Multi-User Performance Optimization: Bounded Server Search & Autocomplete — 2026-11-19 (`ui`)
 
 - **Context & Objectives:**

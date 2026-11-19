@@ -1841,6 +1841,17 @@
 
     CommercialProductLookup.enabled = @json(config('commercial.enabled'));
     var allProducts = @json($jsProductList);
+    function ensureProductCached(p) {
+        if (!p || !p.id) return;
+        var idStr = String(p.id);
+        var existingIdx = allProducts.findIndex(function(x) { return String(x.id) === idStr; });
+        if (existingIdx === -1) {
+            allProducts.push(p);
+        } else {
+            allProducts[existingIdx] = Object.assign({}, allProducts[existingIdx], p);
+        }
+    }
+    window.ensureProductCached = ensureProductCached;
     function matchesProductMode(product) {
         var mode = $('[data-nature].active').data('nature') || 'mixed';
         return mode === 'mixed' || (mode === 'service' ? ['service', 'digital'].includes(product.type) : !['service', 'digital'].includes(product.type));
@@ -1941,6 +1952,7 @@
                     }
                     return false;
                 }
+                ensureProductCached(ui.item);
                 addProductRow({
                     product_id: ui.item.id,
                     product_name: ui.item.name,
@@ -2018,6 +2030,7 @@
                         return;
                     }
                 if (exact) {
+                    ensureProductCached(exact);
                     addProductRow({
                         product_id: exact.id,
                         product_name: exact.name,
@@ -2088,6 +2101,7 @@
 
     // --- Apply Selected Product to an Existing Table Row ---
     function applyProductToRow(tr, p) {
+        ensureProductCached(p);
         if (String(tr.find('.row-product-id').val()) !== String(p.id)) {
             tr.removeAttr('data-tracking data-batch-id data-variant-id data-order-item-id data-order-batch-no data-material-item-id data-material-document-id data-material-unit-id data-material-base-factor');
             tr.find('.row-batch-val, .row-expire-val, .row-imei-val').val('');
@@ -2286,6 +2300,7 @@
                         }
                         return false;
                     }
+                    ensureProductCached(ui.item);
                     applyProductToRow(tr, ui.item);
                     setTimeout(function() {
                         tr.find('.row-qty').focus().select();
@@ -2394,6 +2409,7 @@
             }
 
             if (exact) {
+                ensureProductCached(exact);
                 applyProductToRow(tr, exact);
             } else {
                 // If not found in catalog, prompt to create new product directly
@@ -2467,6 +2483,17 @@
 
     // --- Add Row to Items Grid Table ---
     function addProductRow(item) {
+        if (item.product_id) {
+            ensureProductCached({
+                id: item.product_id,
+                name: item.product_name,
+                code: item.product_code,
+                cost: item.cost,
+                price: item.price,
+                tax_rate: item.tax_rate,
+                unit: item.unit
+            });
+        }
         // Remove empty placeholder row if exists
         $('#order-table-body .empty-placeholder-row').remove();
 
@@ -2654,10 +2681,18 @@
     });
 
     // Multi-Item Modal Batch Picker
-    function populateMultiItemModal() {
+    var multiItemSearchTimer = null;
+    function populateMultiItemModal(items) {
         var tbody = $('#multi-item-tbody');
         tbody.empty();
-        allProducts.filter(matchesProductMode).forEach(function(p) {
+        var list = items || allProducts.filter(matchesProductMode);
+        if (!list.length) {
+            tbody.append('<tr><td colspan="6" class="text-center text-muted py-4">No matching items found. Type above to search the product catalog.</td></tr>');
+            updateMultiItemCount();
+            return;
+        }
+        list.forEach(function(p) {
+            ensureProductCached(p);
             tbody.append(`
                 <tr class="multi-item-row" data-id="${p.id}" data-name="${escapeHtml((p.name || '').toLowerCase())}" data-code="${escapeHtml((p.code || '').toLowerCase())}">
                     <td class="u-ta-center">
@@ -2691,16 +2726,26 @@
     });
 
     $('#multi-item-filter').on('input', function() {
-        var term = $(this).val().toLowerCase().trim();
-        $('#multi-item-tbody tr').each(function() {
-            var name = $(this).data('name') || '';
-            var code = $(this).data('code') || '';
-            if (name.includes(term) || code.includes(term)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
+        var term = $(this).val().trim();
+        clearTimeout(multiItemSearchTimer);
+        if (!term) {
+            populateMultiItemModal();
+            return;
+        }
+        multiItemSearchTimer = setTimeout(function() {
+            CommercialProductLookup.search(term, allProducts, 'purchase').then(function(matches) {
+                var filtered = (matches || []).filter(matchesProductMode);
+                filtered.forEach(ensureProductCached);
+                populateMultiItemModal(filtered);
+            }).catch(function() {
+                var lowerTerm = term.toLowerCase();
+                $('#multi-item-tbody tr').each(function() {
+                    var name = $(this).data('name') || '';
+                    var code = $(this).data('code') || '';
+                    $(this).toggle(name.includes(lowerTerm) || code.includes(lowerTerm));
+                });
+            });
+        }, 200);
     });
 
     $('#multi-item-select-all').on('change', function() {
