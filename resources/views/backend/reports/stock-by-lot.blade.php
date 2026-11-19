@@ -228,9 +228,14 @@
     @else
     {{-- Standard Detailed Warehouse Ledger / Lot View --}}
     <div class="desk-card-wrapper lot-card" data-no-fit>
-        <p class="lot-note" title="Historical owned totals are unavailable. Owned now = warehouse now + customer custody now. GDNI is carried accrual value, not independent lot costing; inventory uses item weighted-average valuation.">
-            <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong> (no history). Quantities are in each product's base unit.
-        </p>
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+            <span class="small font-weight-bold text-dark">
+                <i class="dripicons-calendar"></i> Movement Period: <strong>{{ $filters['from'] }}</strong> to <strong>{{ $filters['to'] }}</strong>
+            </span>
+            <span class="small text-muted">
+                <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong>. Opening, Inward, Outward and Closing reflect this period.
+            </span>
+        </div>
         <div class="table-responsive" data-no-fit>
             <table class="table table-sm" data-no-fit>
                 <caption>

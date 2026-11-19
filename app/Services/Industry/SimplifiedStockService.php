@@ -544,6 +544,156 @@ class SimplifiedStockService
             ];
         }
 
+        // 7. Sales Returns from Customers (Inward Return)
+        $hasReturnsTable = \Illuminate\Support\Facades\Schema::hasTable('returns');
+        $hasCustomersTable = \Illuminate\Support\Facades\Schema::hasTable('customers');
+        $canJoinCustomer = $hasReturnsTable && $hasCustomersTable;
+
+        $salesReturnsQuery = DB::table('stock_movement_lines as l')
+            ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+            ->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id');
+
+        if ($hasReturnsTable) {
+            $salesReturnsQuery->leftJoin('returns as ret', function ($join) {
+                $join->on('ret.id', '=', 'm.source_id')->where('m.source_type', '=', 'return');
+            });
+            if ($canJoinCustomer) {
+                $salesReturnsQuery->leftJoin('customers as c', 'c.id', '=', 'ret.customer_id');
+            }
+        }
+
+        $salesReturns = $salesReturnsQuery
+            ->where('l.company_id', $context->companyId)
+            ->where('l.product_id', $productId)
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where(function ($q) {
+                $q->where('m.movement_type', 'sale_return')
+                  ->orWhere('m.source_type', 'return')
+                  ->orWhere('m.movement_type', 'return');
+            })
+            ->orderBy('m.movement_date')
+            ->get([
+                'm.movement_date', 'm.movement_no', 'm.source_no', 'l.qty_base', 'l.unit_cost', 'l.value',
+                'w.name as warehouse_name',
+                $canJoinCustomer ? 'c.name as customer_name' : DB::raw("NULL as customer_name"),
+                $hasReturnsTable ? 'ret.reference_no as return_ref' : DB::raw("NULL as return_ref"),
+            ]);
+
+        foreach ($salesReturns as $sr) {
+            $returnQty = abs((float) $sr->qty_base);
+            $events[] = [
+                'date' => substr($sr->movement_date, 0, 10),
+                'timestamp' => $sr->movement_date,
+                'stage' => 'return',
+                'badge' => 'Customer Return (+)',
+                'badge_class' => 'badge-returned',
+                'icon' => 'dripicons-backspace',
+                'title' => 'Customer Sales Return',
+                'ref_no' => $sr->return_ref ?: ($sr->source_no ?: $sr->movement_no),
+                'party' => $sr->customer_name ?: 'Customer Return',
+                'warehouse' => $sr->warehouse_name ?: 'Main Godown',
+                'inward_qty' => $returnQty,
+                'outward_qty' => 0.0,
+                'qty' => $returnQty,
+                'unit' => $unit,
+                'cost' => (float) $sr->unit_cost,
+                'total_value' => (float) $sr->value,
+                'description' => "Received {$returnQty} {$unit} back from customer " . ($sr->customer_name ?: 'Customer'),
+            ];
+        }
+
+        // 8. Purchase Returns to Suppliers (Outward Return)
+        $hasReturnPurchasesTable = \Illuminate\Support\Facades\Schema::hasTable('return_purchases');
+        $hasSuppliersTable = \Illuminate\Support\Facades\Schema::hasTable('suppliers');
+        $canJoinSupplier = $hasReturnPurchasesTable && $hasSuppliersTable;
+
+        $purchaseReturnsQuery = DB::table('stock_movement_lines as l')
+            ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+            ->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id');
+
+        if ($hasReturnPurchasesTable) {
+            $purchaseReturnsQuery->leftJoin('return_purchases as rp', function ($join) {
+                $join->on('rp.id', '=', 'm.source_id')->where('m.source_type', '=', 'return_purchase');
+            });
+            if ($canJoinSupplier) {
+                $purchaseReturnsQuery->leftJoin('suppliers as s', 's.id', '=', 'rp.supplier_id');
+            }
+        }
+
+        $purchaseReturns = $purchaseReturnsQuery
+            ->where('l.company_id', $context->companyId)
+            ->where('l.product_id', $productId)
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where(function ($q) {
+                $q->where('m.movement_type', 'purchase_return')
+                  ->orWhere('m.source_type', 'return_purchase');
+            })
+            ->orderBy('m.movement_date')
+            ->get([
+                'm.movement_date', 'm.movement_no', 'm.source_no', 'l.qty_base', 'l.unit_cost', 'l.value',
+                'w.name as warehouse_name',
+                $canJoinSupplier ? 's.name as supplier_name' : DB::raw("NULL as supplier_name"),
+                $hasReturnPurchasesTable ? 'rp.reference_no as pr_ref' : DB::raw("NULL as pr_ref"),
+            ]);
+
+        foreach ($purchaseReturns as $pr) {
+            $prQty = abs((float) $pr->qty_base);
+            $events[] = [
+                'date' => substr($pr->movement_date, 0, 10),
+                'timestamp' => $pr->movement_date,
+                'stage' => 'dispatch',
+                'badge' => 'Purchase Return (-)',
+                'badge_class' => 'badge-dispatch',
+                'icon' => 'dripicons-export',
+                'title' => 'Return to Supplier',
+                'ref_no' => $pr->pr_ref ?: ($pr->source_no ?: $pr->movement_no),
+                'party' => $pr->supplier_name ?: 'Supplier Return',
+                'warehouse' => $pr->warehouse_name ?: 'Main Godown',
+                'inward_qty' => 0.0,
+                'outward_qty' => $prQty,
+                'qty' => $prQty,
+                'unit' => $unit,
+                'cost' => (float) $pr->unit_cost,
+                'total_value' => (float) $pr->value,
+                'description' => "Returned {$prQty} {$unit} to supplier " . ($pr->supplier_name ?: 'Supplier'),
+            ];
+        }
+
+        // 9. Damage & Scrap Deductions
+        if (\Illuminate\Support\Facades\Schema::hasTable('damage_stocks')) {
+            $damages = DB::table('damage_stocks as ds')
+                ->leftJoin('warehouses as w', 'w.id', '=', 'ds.warehouse_id')
+                ->where('ds.company_id', $context->companyId)
+                ->where('ds.product_id', $productId)
+                ->orderBy('ds.created_at')
+                ->get(['ds.created_at', 'ds.reference_no', 'ds.qty', 'ds.unit_cost', 'ds.total_loss', 'ds.reason', 'ds.note', 'w.name as warehouse_name']);
+
+            foreach ($damages as $dmg) {
+                $dmgQty = abs((float) $dmg->qty);
+                $events[] = [
+                    'date' => substr($dmg->created_at, 0, 10),
+                    'timestamp' => $dmg->created_at,
+                    'stage' => 'adjustment',
+                    'badge' => 'Damage / Scrap (-)',
+                    'badge_class' => 'badge-adjustment-neg',
+                    'icon' => 'dripicons-warning',
+                    'title' => 'Damage / Scrap Written Off',
+                    'ref_no' => $dmg->reference_no,
+                    'party' => $dmg->reason ?: 'Damaged Goods',
+                    'warehouse' => $dmg->warehouse_name ?: 'Main Godown',
+                    'inward_qty' => 0.0,
+                    'outward_qty' => $dmgQty,
+                    'qty' => $dmgQty,
+                    'unit' => $unit,
+                    'cost' => (float) $dmg->unit_cost,
+                    'total_value' => (float) $dmg->total_loss,
+                    'description' => "Written off {$dmgQty} {$unit} as damage/scrap in {$dmg->warehouse_name}" . ($dmg->reason ? " ({$dmg->reason})" : ""),
+                ];
+            }
+        }
+
         // Filter events strictly within requested date window
         $events = array_values(array_filter($events, function ($e) use ($from, $to) {
             return $e['date'] >= $from && $e['date'] <= $to;

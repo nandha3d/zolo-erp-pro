@@ -26,7 +26,7 @@ class InventoryLotReportController extends Controller
 
         $filters['group_by'] = $filters['group_by'] ?? 'product';
         $today = now(\App\Models\Company::findOrFail($context->companyId)->timezone ?: 'Asia/Kolkata');
-        $filters['from'] = $filters['from'] ?? $today->copy()->startOfMonth()->toDateString();
+        $filters['from'] = $filters['from'] ?? $today->copy()->subMonths(3)->startOfMonth()->toDateString();
         $filters['to'] = $filters['to'] ?? $today->toDateString();
         validator($filters, ['to' => 'after_or_equal:from'])->validate();
 

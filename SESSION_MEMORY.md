@@ -1,3 +1,44 @@
+## Timeline Dot Precision Alignment, Unclamped Popover Headroom & Stock Table Date Sync — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - Directives & Feedback:
+    1. *"hiding inside the container, also the dots are not aligned in the line properly.."* (Ref: `media_1795092977437_cca6528e.jpg` showing the callout popover partially clipped at the bottom of `.combined-lifecycle-card`, with an internal scrollbar on the card, and the colored timeline line bar passing 8-10px above the milestone dots).
+    2. *"also the sales will be updated in this timeline? any returns and damage etc will be shown in the timeline?"*
+    3. *"update the stock date in the table."* (Ref: `media_1795093241527_14c5fb1d.jpg` showing Inward = 0 and Outward = 0 on all rows because `stock-by-lot` defaulted to `startOfMonth()` `2026-11-01` while sample transactions occurred in October 2026).
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Perfect Dot-to-Line Vertical Alignment (`inventory-timeline.css`):**
+     - Aligned `.interactive-axis-rail` and `.axis-nodes-container` geometry:
+       - `.interactive-axis-rail` padding: `padding: 16px 8px 165px;` (16px top padding, 165px bottom room for popover).
+       - `.axis-nodes-container` padding: `0 4px;` in normal flow.
+       - `.axis-node-dot`: `width: 22px; height: 22px; position: relative; z-index: 3;`. Center is located at `16px + (22px / 2) = 27px`.
+       - `.axis-line-bar`: `top: 27px; transform: translateY(-50%); height: 4px; z-index: 1;`. Exact center is at `27px`.
+     - The connecting multi-colored gradient line now passes directly and dead-center through the middle of all milestone dots.
+  2. **Zero Clipping & Unclamped Popover Headroom (`inventory-timeline.css`, `inventory-timeline.blade.php`):**
+     - Added high-specificity overrides extinguishing `overflow-y: auto !important` and `flex: 1 1 0 !important` from `app-shell.css`:
+       - `html.app-shell #inventory-timeline-page .desk-card-wrapper`, `html.app-shell .combined-lifecycle-card`, `.interactive-timeline-axis-wrap`, `.interactive-axis-rail`, `.axis-nodes-container` set to `overflow: visible !important; height: auto !important; flex: none !important;`.
+     - Set `min-height: 275px;` and `padding-bottom: 165px;` on `.interactive-axis-rail`. The in-place callout popover sits completely and comfortably inside `.combined-lifecycle-card`, eliminating all inner scrollbars, clipping, or bottom edge collisions.
+     - Added `removeTimelineClamps()` JS watchdog ensuring no legacy script clamps heights or injects `.shell-fit-scroll`.
+  3. **Main Stock Table Date Synchronization (`InventoryLotReportController.php`, `stock-by-lot.blade.php`):**
+     - Synchronized `$filters['from']` default in `InventoryLotReportController@stockByLot` from `startOfMonth()` (`2026-11-01`) to `$today->copy()->subMonths(3)->startOfMonth()->toDateString()` (`2026-08-01`), matching `timeline()`.
+     - When users view `/inventory-reports/stock-by-lot`, transactions from the preceding 3 months (August–November) are properly evaluated, displaying real non-zero Inward, Outward, and Closing stock balances across both the table and top movement charts.
+     - Added movement period banner above the table: `Movement Period: 2026-08-01 to 2026-11-19`.
+  4. **Comprehensive Commercial Sales, Returns & Damage Timeline Coverage (`SimplifiedStockService.php`):**
+     - Confirmed and expanded timeline event ingestion:
+       - **Commercial Sales:** Dispatched sales outward mapped to customer names with `badge-sale` and `-` quantity.
+       - **Customer Sales Returns:** Inward returns from `returns` table mapped to customer names with `badge-returned` and `+` quantity.
+       - **Supplier Purchase Returns:** Outward returns from `return_purchases` table mapped to vendor names with `badge-dispatch` and `-` quantity.
+       - **Damage & Scrap:** Stock written off from `damage_stocks` table with reason and `badge-adjustment-neg` `-` quantity.
+       - **Job Work Dispatches & Receipts:** Full multi-step processing, conversion, and ready stock.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Non-Zero Milestone Quantities, In-Place Popover Callouts & Dot Clipping Fixes — 2026-11-19 (`ui` & `main`)
 
 - **Context & User Directives:**

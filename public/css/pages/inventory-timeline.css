@@ -163,13 +163,31 @@ body.dark-mode #inventory-timeline-page .kpi-card .kpi-number {
 /* ==========================================================================
    3. COMBINED SLEEK PROCESS LIFECYCLE & MILESTONE GRID (Zero Horizontal Scroll)
    ========================================================================== */
+/* High-specificity container overflow overrides to prevent app-shell scrollbar trapping */
+html.app-shell #inventory-timeline-page .desk-card-wrapper,
+html.app-shell #inventory-timeline-page .combined-lifecycle-card,
+html.app-shell .combined-lifecycle-card,
+#inventory-timeline-page .combined-lifecycle-card,
+#inventory-timeline-page .desk-card-wrapper:not(:has(.dataTables_wrapper)),
+#inventory-timeline-page .interactive-timeline-axis-wrap,
+#inventory-timeline-page .interactive-axis-rail,
+#inventory-timeline-page .axis-nodes-container {
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    flex: none !important;
+}
+
 #inventory-timeline-page .combined-lifecycle-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 12px 16px;
+    padding: 12px 16px 18px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
     margin-bottom: 14px;
+    overflow: visible !important;
 }
 
 body.dark-mode #inventory-timeline-page .combined-lifecycle-card {
@@ -371,7 +389,8 @@ body.dark-mode #inventory-timeline-page .interactive-timeline-axis-wrap {
 
 #inventory-timeline-page .interactive-axis-rail {
     position: relative;
-    padding: 10px 8px 16px;
+    padding: 16px 8px 165px;
+    min-height: 275px;
     width: 100%;
     overflow: visible !important;
 }
@@ -379,6 +398,7 @@ body.dark-mode #inventory-timeline-page .interactive-timeline-axis-wrap {
 #inventory-timeline-page .axis-line-bar {
     position: absolute;
     top: 27px;
+    transform: translateY(-50%);
     left: 24px;
     right: 24px;
     height: 4px;
@@ -394,7 +414,8 @@ body.dark-mode #inventory-timeline-page .interactive-timeline-axis-wrap {
     z-index: 2;
     width: 100%;
     overflow: visible !important;
-    padding: 16px 4px 6px;
+    padding: 0 4px;
+    margin: 0;
 }
 
 #inventory-timeline-page .axis-milestone-node {
@@ -421,6 +442,8 @@ body.dark-mode #inventory-timeline-page .interactive-timeline-axis-wrap {
     margin-bottom: 6px;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    position: relative;
+    z-index: 3;
 }
 
 body.dark-mode #inventory-timeline-page .axis-node-dot {

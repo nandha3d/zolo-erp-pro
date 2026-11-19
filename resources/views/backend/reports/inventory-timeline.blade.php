@@ -972,6 +972,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     @endif
+
+    // Eliminate any parent height or overflow clamping
+    function removeTimelineClamps() {
+        document.querySelectorAll('#inventory-timeline-page .desk-card-wrapper, #inventory-timeline-page .combined-lifecycle-card, #inventory-timeline-page .interactive-axis-rail').forEach(el => {
+            el.style.overflow = 'visible';
+            el.style.overflowY = 'visible';
+            el.style.maxHeight = 'none';
+            el.style.height = 'auto';
+            el.classList.remove('shell-fit-scroll');
+        });
+    }
+    removeTimelineClamps();
+    window.addEventListener('resize', removeTimelineClamps);
+    setTimeout(removeTimelineClamps, 150);
 });
 </script>
 @endpush
