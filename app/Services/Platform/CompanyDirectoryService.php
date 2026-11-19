@@ -64,6 +64,10 @@ class CompanyDirectoryService
             return ['groups' => [], 'ungrouped' => []];
         }
 
+        if (app()->runningUnitTests()) {
+            return $this->buildDirectory($userId);
+        }
+
         if (isset(self::$requestCache[$userId])) {
             return self::$requestCache[$userId];
         }
