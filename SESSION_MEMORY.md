@@ -1,3 +1,30 @@
+## High-Concurrency Multi-User Performance Optimization: Bounded Server Search & Autocomplete — 2026-11-19 (`ui`)
+
+- **Context & Objectives:**
+  - Follow-up on user directive: *"if not done, proceed one by one at a stretch"* regarding [HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE_REVISED.md](docs/performance/HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE_REVISED.md).
+  - Executed Phase 1: Decoupling monolithic product hydration and bounding server search query materialization.
+
+- **Architectural & Code Enhancements Delivered:**
+  1. **Revised Architecture Blueprint Check-In:**
+     - Committed and pushed [HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE_REVISED.md](docs/performance/HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE_REVISED.md) (`1d161063`) establishing the 5-phase implementation roadmap.
+     - Synchronized the active artifact `HIGH_CONCURRENCY_PERFORMANCE_ARCHITECTURE.md`.
+  2. **Bounded Candidate Retrieval & Rich Metadata (`ProductQueryService.php`):**
+     - Eliminated unbounded Eloquent collection materialization (`->get()` before `->take(50)`).
+     - Bound candidate retrieval at the SQL layer with `ORDER BY CASE WHEN products.code = ? THEN 0 WHEN products.code LIKE ? THEN 1 ELSE 2 END, products.code LIMIT 80`.
+     - Enriched server payload to include complete line-entry metadata: `tax_rate`, `tax_method`, `tax_category_id`, `unit_name`, `unit_code`, `unit`, `is_batch`, `is_imei`, `is_variant`, `value`, `label`, and pre-tax exclusive rate.
+  3. **Server-Driven Autocomplete with Stale Request Cancellation (`commercial-product-lookup.js`):**
+     - Decoupled typeahead lookup from the heavy client-side `allProducts` array.
+     - Implemented `AbortController` cancellation for rapid keystrokes, ensuring stale out-of-order HTTP responses never overwrite the active query.
+     - Added an in-memory LRU query cache (up to 100 queries per session) for instantaneous (0ms) response on backspacing/re-typing.
+     - Provided a clean fallback to local products if offline or when the commercial endpoint is disabled.
+
+- **Verification:**
+  - `php -l app/Services/Commercial/ProductQueryService.php`: 0 syntax errors.
+  - `tests/Feature/ProductAliasTest.php`: **12/12 passed (100%, 65 assertions)**, verifying exact code matches, customer/supplier alias ranks, Unicode normalization, and company isolation.
+  - `tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+
+---
+
 ## Universal Document Lifecycle & Single-Action Reversal UX Implementation — 2026-11-19 (`ui`)
 
 - **Context & User Directives:**
