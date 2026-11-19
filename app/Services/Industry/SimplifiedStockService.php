@@ -86,6 +86,10 @@ class SimplifiedStockService
             ->selectRaw("SUM(CASE WHEN m.movement_date >= ? AND m.movement_date < ? AND l.qty_base > 0 
                 AND (m.movement_type = 'purchase' OR m.source_type = 'purchase') 
                 THEN l.qty_base ELSE 0 END) AS purchased_qty", [$from, $to])
+            // Sold outward to customers within date range
+            ->selectRaw("SUM(CASE WHEN m.movement_date >= ? AND m.movement_date < ? AND l.qty_base < 0 
+                AND (m.movement_type = 'sale' OR m.source_type = 'sale') 
+                THEN -l.qty_base ELSE 0 END) AS sold_qty", [$from, $to])
             // Current in godown (internal warehouses, all time)
             ->selectRaw("SUM(CASE WHEN " . ($internalWhIds ? "l.warehouse_id IN (" . implode(',', $internalWhIds) . ")" : "0=1") . " 
                 THEN l.qty_base ELSE 0 END) AS in_godown_qty")
@@ -194,6 +198,7 @@ class SimplifiedStockService
 
             $mRows = $movementByProduct->get($pid, collect());
             $purchased = (float) $mRows->sum('purchased_qty');
+            $sold = (float) $mRows->sum('sold_qty');
             $inGodown = (float) $mRows->sum('in_godown_qty');
             $inQuarantine = (float) $mRows->sum('in_quarantine_qty');
             $atJobWorker = (float) $mRows->sum('at_job_worker_qty');
@@ -221,6 +226,7 @@ class SimplifiedStockService
                 'lot' => $byLot ? ($mRows->first()?->lot ?: 'Unbatched') : 'Combined lots',
                 'base_unit' => $unit,
                 'purchased_qty' => $purchased,
+                'sold_qty' => $sold,
                 'given_to_job_work_qty' => $dispatched,
                 'returned_after_job_work_qty' => $returned,
                 'in_godown_qty' => $inGodown,
@@ -237,6 +243,7 @@ class SimplifiedStockService
         // Summary totals across all rows
         $totals = [
             'total_purchased' => array_sum(array_column($rows, 'purchased_qty')),
+            'total_sold' => array_sum(array_column($rows, 'sold_qty')),
             'total_given_to_job_work' => array_sum(array_column($rows, 'given_to_job_work_qty')),
             'total_returned' => array_sum(array_column($rows, 'returned_after_job_work_qty')),
             'total_in_godown' => array_sum(array_column($rows, 'in_godown_qty')),
@@ -383,8 +390,8 @@ class SimplifiedStockService
                 foreach ($change['items'] as $item) {
                     if ((int) $item['from_product_id'] === $productId) {
                         $convertedTo = $item['to_name'];
-                        $convertedToProducts[] = [
-                            'id' => $item['to_product_id'],
+                        $convertedToProducts[$item['to_product_id']] = [
+                            'id' => (int) $item['to_product_id'],
                             'name' => $item['to_name'],
                             'qty' => (float) $item['qty'],
                             'ref' => $r->grn_no,
@@ -421,6 +428,40 @@ class SimplifiedStockService
             ];
         }
 
+        // Discover converted output products from job work receipts via applied stock movements
+        $consumedReceiptIds = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('l.product_id', $productId)
+            ->where('l.qty_base', '<', 0)
+            ->pluck('m.source_id')
+            ->all();
+
+        if (!empty($consumedReceiptIds)) {
+            $producedRows = DB::table('stock_movements as m')
+                ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+                ->join('products as p', 'p.id', '=', 'l.product_id')
+                ->where('m.company_id', $context->companyId)
+                ->where('m.source_type', 'job_work_receipts')
+                ->whereIn('m.source_id', $consumedReceiptIds)
+                ->where('l.product_id', '!=', $productId)
+                ->where('l.qty_base', '>', 0)
+                ->get(['l.product_id', 'p.name as product_name', 'l.qty_base', 'm.source_no', 'm.movement_date']);
+
+            foreach ($producedRows as $pRow) {
+                if (!isset($convertedToProducts[$pRow->product_id])) {
+                    $convertedToProducts[$pRow->product_id] = [
+                        'id' => (int) $pRow->product_id,
+                        'name' => $pRow->product_name,
+                        'qty' => (float) $pRow->qty_base,
+                        'ref' => $pRow->source_no,
+                        'date' => substr($pRow->movement_date, 0, 10),
+                    ];
+                }
+            }
+        }
+
         // 4. Receipts where this product is the RESULT of a conversion (Converted Inward)
         $conversionInReceipts = DB::table('job_work_receipts')
             ->where('company_id', $context->companyId)
@@ -435,8 +476,8 @@ class SimplifiedStockService
             if (!$change || empty($change['items'])) continue;
             foreach ($change['items'] as $item) {
                 if ((int) $item['to_product_id'] === $productId) {
-                    $convertedFromProducts[] = [
-                        'id' => $item['from_product_id'],
+                    $convertedFromProducts[$item['from_product_id']] = [
+                        'id' => (int) $item['from_product_id'],
                         'name' => $item['from_name'],
                         'qty' => (float) $item['qty'],
                         'ref' => $cr->reference_no,
@@ -460,6 +501,40 @@ class SimplifiedStockService
                         'unit' => $unit,
                         'converted_from' => $item['from_name'],
                         'description' => "Created {$item['qty']} {$unit} from processing of {$item['from_name']} (Bill: {$change['purchase_no']})",
+                    ];
+                }
+            }
+        }
+
+        // Discover raw source materials from job work receipts via applied stock movements
+        $receivedReceiptIds = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('l.product_id', $productId)
+            ->where('l.qty_base', '>', 0)
+            ->pluck('m.source_id')
+            ->all();
+
+        if (!empty($receivedReceiptIds)) {
+            $rawRows = DB::table('stock_movements as m')
+                ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+                ->join('products as p', 'p.id', '=', 'l.product_id')
+                ->where('m.company_id', $context->companyId)
+                ->where('m.source_type', 'job_work_receipts')
+                ->whereIn('m.source_id', $receivedReceiptIds)
+                ->where('l.product_id', '!=', $productId)
+                ->where('l.qty_base', '<', 0)
+                ->get(['l.product_id', 'p.name as product_name', 'l.qty_base', 'm.source_no', 'm.movement_date']);
+
+            foreach ($rawRows as $rRow) {
+                if (!isset($convertedFromProducts[$rRow->product_id])) {
+                    $convertedFromProducts[$rRow->product_id] = [
+                        'id' => (int) $rRow->product_id,
+                        'name' => $rRow->product_name,
+                        'qty' => abs((float) $rRow->qty_base),
+                        'ref' => $rRow->source_no,
+                        'date' => substr($rRow->movement_date, 0, 10),
                     ];
                 }
             }
@@ -1062,8 +1137,8 @@ class SimplifiedStockService
             'dailySummary' => $dailySummary,
             'movementSummary' => $movementSummary,
             'lifecycleStages' => $lifecycleStages,
-            'convertedToProducts' => $convertedToProducts,
-            'convertedFromProducts' => $convertedFromProducts,
+            'convertedToProducts' => array_values($convertedToProducts),
+            'convertedFromProducts' => array_values($convertedFromProducts),
             'filters' => $filters,
         ];
     }

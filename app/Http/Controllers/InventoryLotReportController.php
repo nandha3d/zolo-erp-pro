@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\{Product, Warehouse};
 use App\Services\Industry\{IndustryStockQueries, SimplifiedStockService};
 use App\Services\Platform\{CompanyContext, CompanyContextResolver};
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class InventoryLotReportController extends Controller
 {
@@ -75,21 +77,23 @@ class InventoryLotReportController extends Controller
             ]);
 
             $topProducts = array_slice(
-                collect($allRows)->sortByDesc(fn ($r) => ($r->purchased_qty + $r->final_stock_qty))->values()->all(),
+                collect($allRows)->sortByDesc(fn ($r) => ($r->purchased_qty + $r->final_stock_qty + ($r->sold_qty ?? 0)))->values()->all(),
                 0, 8
             );
             $stockGraphData = [
                 'labels' => array_map(fn ($r) => mb_substr($r->product, 0, 18), $topProducts),
                 'purchased' => array_map(fn ($r) => round($r->purchased_qty, 2), $topProducts),
+                'sold' => array_map(fn ($r) => round($r->sold_qty ?? 0, 2), $topProducts),
                 'dispatched' => array_map(fn ($r) => round($r->given_to_job_work_qty, 2), $topProducts),
                 'returned' => array_map(fn ($r) => round($r->returned_after_job_work_qty, 2), $topProducts),
                 'final_stock' => array_map(fn ($r) => round($r->final_stock_qty, 2), $topProducts),
                 'doughnut' => [
-                    'labels' => ['In Godown', 'At Processors (WIP)', 'In Quarantine'],
+                    'labels' => ['Purchased Inward', 'Sold Out (Sales)', 'At Processors (WIP)', 'In Godown'],
                     'values' => [
-                        round($data['totals']['total_in_godown'] ?? 0, 2),
+                        round($data['totals']['total_purchased'] ?? 0, 2),
+                        round($data['totals']['total_sold'] ?? 0, 2),
                         round($data['totals']['total_at_job_workers'] ?? 0, 2),
-                        round($data['totals']['total_in_quarantine'] ?? 0, 2),
+                        round($data['totals']['total_in_godown'] ?? 0, 2),
                     ],
                 ],
             ];
@@ -128,20 +132,48 @@ class InventoryLotReportController extends Controller
         $rows = $query->paginate(50)->withQueryString();
 
         $topRows = array_slice(collect($rows->items())->sortByDesc(fn ($r) => (($r->inward_qty ?? 0) + ($r->closing_qty ?? 0)))->values()->all(), 0, 8);
+        $topProductIds = array_unique(array_filter(array_map(fn ($r) => (int) ($r->product_id ?? 0), $topRows)));
+
+        $soldByProduct = [];
+        if (!empty($topProductIds)) {
+            $toPlusOne = CarbonImmutable::parse($filters['to'])->addDay()->toDateString();
+            $soldRows = DB::table('stock_movement_lines as l')
+                ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+                ->where('l.company_id', $context->companyId)
+                ->where('m.company_id', $context->companyId)
+                ->where('m.projection_mode', 'applied')
+                ->whereIn('m.status', ['posted', 'reversed'])
+                ->where('m.movement_date', '>=', $filters['from'])
+                ->where('m.movement_date', '<', $toPlusOne)
+                ->whereIn('l.product_id', $topProductIds)
+                ->where(function ($q) {
+                    $q->where('m.movement_type', 'sale')->orWhere('m.source_type', 'sale');
+                })
+                ->where('l.qty_base', '<', 0)
+                ->groupBy('l.product_id')
+                ->selectRaw('l.product_id, SUM(-l.qty_base) as sold_qty')
+                ->pluck('sold_qty', 'product_id')
+                ->all();
+            $soldByProduct = $soldRows;
+        }
+
         $inwardVals = array_map(fn ($r) => round($r->inward_qty ?? 0, 2), $topRows);
+        $soldVals = array_map(fn ($r) => round((float) ($soldByProduct[$r->product_id] ?? 0), 2), $topRows);
         $outwardVals = array_map(fn ($r) => round($r->outward_qty ?? 0, 2), $topRows);
         $closingVals = array_map(fn ($r) => round($r->closing_qty ?? 0, 2), $topRows);
 
         $stockGraphData = [
             'labels' => array_map(fn ($r) => mb_substr($r->product, 0, 18), $topRows),
             'purchased' => $inwardVals,
+            'sold' => $soldVals,
             'dispatched' => $outwardVals,
             'returned' => array_fill(0, count($topRows), 0),
             'final_stock' => $closingVals,
             'doughnut' => [
-                'labels' => ['Total Inward (Come)', 'Total Outward (Gone)', 'Closing (In Hand)'],
+                'labels' => ['Total Inward (Come)', 'Sold Out (Sales)', 'Total Outward (Gone)', 'Closing (In Hand)'],
                 'values' => [
                     round(array_sum($inwardVals), 2),
+                    round(array_sum($soldVals), 2),
                     round(array_sum($outwardVals), 2),
                     round(array_sum($closingVals), 2),
                 ],

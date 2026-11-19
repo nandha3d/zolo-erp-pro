@@ -126,19 +126,16 @@
                 </div>
                 <div class="text-muted small">Sequential manufacturing flow and transaction milestones from purchase inward through processing, conversion, and ready stock.</div>
             </div>
-            @if(!empty($convertedToProducts))
-                <div class="mt-2 mt-md-0">
-                    @foreach($convertedToProducts as $cp)
-                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $cp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-primary">
-                            <i class="dripicons-arrow-thin-right"></i> Trace Converted: <strong>{{ $cp['name'] }}</strong>
+            @if(!empty($convertedToProducts) || !empty($convertedFromProducts))
+                <div class="mt-2 mt-md-0 d-flex flex-wrap align-items-center u-gap-6px">
+                    @foreach($convertedFromProducts as $fp)
+                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $fp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-info" title="Trace back to raw source material">
+                            <i class="dripicons-arrow-thin-left"></i> Trace Raw Source: <strong>{{ $fp['name'] }}</strong>
                         </a>
                     @endforeach
-                </div>
-            @elseif(!empty($convertedFromProducts))
-                <div class="mt-2 mt-md-0">
-                    @foreach($convertedFromProducts as $fp)
-                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $fp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-info">
-                            <i class="dripicons-arrow-thin-left"></i> Trace Raw Source: <strong>{{ $fp['name'] }}</strong>
+                    @foreach($convertedToProducts as $cp)
+                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $cp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-primary" title="Trace forward to converted finished goods">
+                            <i class="dripicons-arrow-thin-right"></i> Trace Converted: <strong>{{ $cp['name'] }}</strong>
                         </a>
                     @endforeach
                 </div>
@@ -957,7 +954,6 @@ document.addEventListener('DOMContentLoaded', function () {
             row.classList.remove('table-row-selected');
             if (row.textContent.includes(refNo)) {
                 row.classList.add('table-row-selected');
-                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         });
     }

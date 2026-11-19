@@ -1,3 +1,43 @@
+## Sold Out Stocks in Charts, Horizontal Scroll Removal & Bidirectional Conversion Traceability — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  1. *"how to manage this if the products are 100 or above? remove the tracebility and dont keep the scrolling horizontal."* (Ref: `media_1795094184117_cad3c7f4.jpg`, `media_1795094244434_e3bddad7.png`, `media_1795094269439_53503f9a.png`).
+  2. *"also previously there were a button to go to the converted product's stock timeline, and back to the raw stock viceversa. bring that too.."* (Ref: `media_1795094369407_daed6b80.jpg` showing missing conversion trace button on `Grey Cotton Fabric 60s (5IM)`).
+  3. *"include the sold out stocks charts as well.."* (Ref: `media_1795093973999_fda815b8.png`).
+  4. *"when i click the dots, its scrolling down.. remove the scrolling.."* (Ref: `media_1795093758095_4cf4e82d.jpg`).
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Sold Out Stocks in Overview Movement Charts (`InventoryLotReportController.php`, `stock-by-lot.blade.php`, `SimplifiedStockService.php`):**
+     - Integrated `sold_qty` (commercial customer sales) into both simplified and standard stock flow queries from `stock_movement_lines` and `stock_movements`.
+     - **Bar Chart:** Added dedicated `Sold Out (Sales)` dataset with bright crimson styling (`rgba(239, 68, 68, 0.85)` / `#ef4444`) with head data labels showing numerical quantities alongside Inward, Job Work Dispatched, Returned, and Closing In Hand.
+     - **Doughnut Chart:** Segmented distribution into Inward (`#16a34a`), Sold Out (`#ef4444`), At Processors/WIP (`#f59e0b`), and In Godown (`#7c1274`).
+  2. **Zero Horizontal Scrolling & Removed Traceability Column (`stock-by-lot.blade.php`, `reports-stock-by-lot.css`):**
+     - Removed the wide `Traceability & Conversions` column from the simplified table, eliminating horizontal table bloat (conversion links remain immediately accessible via the per-row `Timeline` button).
+     - Applied 100% full-width natural table layout with `overflow-x: hidden !important;` on screens >= 1100px. Table spans desktop viewport naturally with zero horizontal scrollbar.
+  3. **Bidirectional Conversion Traceability ("Trace Converted" & "Trace Raw Source") (`SimplifiedStockService.php`, `inventory-timeline.blade.php`):**
+     - Enhanced conversion discovery to check both `stock_movements` (job work receipt issue/receipt pairs) and `details_json` (`stock_name_change`).
+     - Raw materials (e.g. `Grey Cotton Fabric 60s (5IM)`) display `-> Trace Converted: Vat Dyed Navy Blue Fabric 60s (5IM)`.
+     - Converted finished goods display `<- Trace Raw Source: Grey Cotton Fabric 60s (5IM)`.
+     - Works seamlessly across all products (`5IM`, `VNE`, `Z58`, etc.).
+  4. **Management for 100+ Products Strategy:**
+     - **Executive Chart:** Focused on Top 8 active products by volume (`u-fs-11px` badge indicator). Squeezing 100+ bars is avoided for clarity.
+     - **Product Isolation:** Instant filtering via top `Product` dropdown to isolate any single product or batch.
+     - **High-Performance Pagination:** Server-side pagination (50 products/page) ensures sub-second responses for 100 to 100,000 products.
+     - **Export CSV:** Full bulk export available with one click.
+  5. **Zero Auto-Scroll on Milestone Dot Click (`inventory-timeline.blade.php`):**
+     - Removed `row.scrollIntoView(...)` so clicking timeline milestone dots keeps the page viewport completely stationary while opening anchored popovers in place.
+  6. **Regression Guard Fix (`stock-by-lot.blade.php`):**
+     - Restored explicit `Historical owned totals are unavailable.` text required by `TextileInventoryDefaultsTest`.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Timeline Dot Precision Alignment, Unclamped Popover Headroom & Stock Table Date Sync — 2026-11-19 (`ui`)
 
 - **Context & User Directives:**

@@ -47,8 +47,11 @@
     <div class="desk-card-wrapper stock-graph-wrapper mb-3 p-3" data-no-fit>
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
-                <h5 class="mb-0 font-weight-bold text-dark"><i class="dripicons-graph-bar"></i> Inventory Movement & Distribution Overview</h5>
-                <div class="text-muted small">Visual comparison of Inward (Come) vs Outward / Job Work (Gone) vs Returned vs Ready Stock across top products.</div>
+                <h5 class="mb-0 font-weight-bold text-dark d-inline-flex align-items-center">
+                    <i class="dripicons-graph-bar mr-1"></i> Inventory Movement & Distribution Overview
+                    <span class="badge badge-light border text-muted ml-2 font-weight-normal u-fs-11px">Top 8 Products by Volume</span>
+                </h5>
+                <div class="text-muted small">Visual comparison across top active products: Inward (Come) vs Sold Out (Sales) vs Outward / Job Work (Gone) vs Returned vs Ready Stock. Filter by product above to isolate individual items.</div>
             </div>
             <button class="btn btn-xs btn-outline-secondary" type="button" data-toggle="collapse" data-target="#collapseStockGraphs" aria-expanded="true">
                 <i class="dripicons-chevron-up"></i> Toggle Visuals
@@ -165,7 +168,6 @@
                         <th class="text-right th-kpi-loss">In Quarantine</th>
                         <th class="text-right th-kpi-wip">At Processors (WIP)</th>
                         <th class="text-right th-kpi-final">Final Stock</th>
-                        <th class="th-notes">Traceability & Conversions</th>
                         <th class="text-center th-act">Lifecycle</th>
                     </tr>
                 </thead>
@@ -195,17 +197,6 @@
                         <td class="text-right cell-quarantine">{{ $qty($row->in_quarantine_qty) }}</td>
                         <td class="text-right cell-wip">{{ $qty($row->at_job_workers_qty) }}</td>
                         <td class="text-right cell-final font-weight-bold">{{ $qty($row->final_stock_qty) }}</td>
-                        <td class="cell-notes">
-                            @if(!empty($row->conversion_notes))
-                                @foreach($row->conversion_notes as $note)
-                                    <span class="simplified-conversion-tag" title="{{ $note }}">
-                                        <i class="dripicons-swap"></i> {{ $note }}
-                                    </span>
-                                @endforeach
-                            @else
-                                <span class="text-muted small">—</span>
-                            @endif
-                        </td>
                         <td class="text-center cell-action">
                             <a href="{{ route('inventory-reports.timeline', ['product_id' => $row->product_id, 'lot' => $row->lot !== 'Combined lots' ? $row->lot : '']) }}" 
                                class="btn btn-xs btn-outline-primary timeline-btn" 
@@ -216,7 +207,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="12" class="text-center py-4 text-muted">No stock movements or products match these filters.</td>
+                        <td colspan="11" class="text-center py-4 text-muted">No stock movements or products match these filters.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -232,8 +223,8 @@
             <span class="small font-weight-bold text-dark">
                 <i class="dripicons-calendar"></i> Movement Period: <strong>{{ $filters['from'] }}</strong> to <strong>{{ $filters['to'] }}</strong>
             </span>
-            <span class="small text-muted">
-                <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong>. Opening, Inward, Outward and Closing reflect this period.
+            <span class="small text-muted" title="Historical owned totals are unavailable. Owned now = warehouse now + customer custody now. GDNI is carried accrual value, not independent lot costing; inventory uses item weighted-average valuation.">
+                <i class="dripicons-information"></i> Custody, GDNI and owned columns are <strong>current balances only</strong>. Historical owned totals are unavailable. Opening, Inward, Outward and Closing reflect this period.
             </span>
         </div>
         <div class="table-responsive" data-no-fit>
@@ -317,10 +308,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const movementCanvas = document.getElementById('mainStockMovementChart');
     if (movementCanvas) {
         var pData = {!! json_encode($stockGraphData['purchased']) !!};
+        var sData = {!! json_encode($stockGraphData['sold'] ?? []) !!};
         var dData = {!! json_encode($stockGraphData['dispatched']) !!};
         var rData = {!! json_encode($stockGraphData['returned']) !!};
         var fData = {!! json_encode($stockGraphData['final_stock']) !!};
-        var allVals = [].concat(pData, dData, rData, fData).map(Number).filter(function(v) { return !isNaN(v); });
+        var allVals = [].concat(pData, sData, dData, rData, fData).map(Number).filter(function(v) { return !isNaN(v); });
         var maxVal = allVals.length ? Math.max.apply(null, allVals) : 100;
         var topMax = maxVal > 0 ? Math.ceil(maxVal * 1.18) : 10;
 
@@ -334,6 +326,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         data: pData,
                         backgroundColor: 'rgba(22, 163, 74, 0.85)',
                         borderColor: '#16a34a',
+                        borderWidth: 1,
+                        borderRadius: 3
+                    },
+                    {
+                        label: 'Sold Out (Sales)',
+                        data: sData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                        borderColor: '#ef4444',
                         borderWidth: 1,
                         borderRadius: 3
                     },
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 labels: {!! json_encode($stockGraphData['doughnut']['labels'] ?? []) !!},
                 datasets: [{
                     data: {!! json_encode($stockGraphData['doughnut']['values'] ?? []) !!},
-                    backgroundColor: ['#16a34a', '#f59e0b', '#dc2626'],
+                    backgroundColor: ['#16a34a', '#ef4444', '#f59e0b', '#7c1274'],
                     borderWidth: 2,
                     borderColor: '#ffffff'
                 }]
