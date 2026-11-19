@@ -1025,11 +1025,16 @@ class PurchaseController extends Controller
                     }
                 }
                 if(in_array("purchases-delete", $request['all_permission'])) {
-                    $nestedData['options'] .= '<li>
-                        <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="'.($purchase->reversed_at ? 1 : 0).'"><i class="dripicons-trash text-danger"></i> '.__("db.delete").' / Options</button>
-                    </li>
-                    </ul>
-                </div>';
+                    if ($purchase->reversed_at) {
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-secondary" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="1" data-reversed-at="'.e($purchase->reversed_at).'" data-reversal-reason="'.e($purchase->reversal_reason ?? '').'"><i class="dripicons-history text-secondary"></i> '.__("db.Reversal History").'</button>
+                        </li>';
+                    } else {
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$purchase->id.'" data-ref="'.e($purchase->reference_no).'" data-status="'.$purchase->status.'" data-reversed="0" data-doc-date="'.substr($purchase->created_at ?? '', 0, 10).'" data-paid="'.(float)($purchase->paid_amount ?? 0).'" data-total="'.(float)($purchase->grand_total ?? 0).'"><i class="dripicons-return text-danger"></i> '.__("db.Reverse Bill").'</button>
+                        </li>';
+                    }
+                    $nestedData['options'] .= '</ul></div>';
                 } else {
                     $nestedData['options'] .= '</ul></div>';
                 }

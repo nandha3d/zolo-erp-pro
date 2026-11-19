@@ -561,9 +561,15 @@
                                 </a>
                                 @endif
                                 @if($canReverseBills && $bill->branch_id)
-                                <a href="javascript:void(0)" class="side-action-btn reverse btn-side-delete-options" data-id="{{ $bill->id }}" data-ref="{{ $bill->reference_no ?? ('#'.$bill->id) }}" data-status="{{ $bill->sale_status }}" data-reversed="{{ $bill->reversed_at ? 1 : 0 }}" title="Delete / Reverse Options">
-                                    <i class="dripicons-trash"></i>
-                                </a>
+                                    @if($bill->reversed_at)
+                                    <a href="javascript:void(0)" class="side-action-btn reverse btn-side-delete-options text-secondary" data-id="{{ $bill->id }}" data-ref="{{ $bill->reference_no ?? ('#'.$bill->id) }}" data-status="{{ $bill->sale_status }}" data-reversed="1" data-reversed-at="{{ $bill->reversed_at }}" data-reversal-reason="{{ $bill->reversal_reason ?? '' }}" title="View Reversal History">
+                                        <i class="dripicons-history text-secondary"></i>
+                                    </a>
+                                    @else
+                                    <a href="javascript:void(0)" class="side-action-btn reverse btn-side-delete-options text-danger" data-id="{{ $bill->id }}" data-ref="{{ $bill->reference_no ?? ('#'.$bill->id) }}" data-status="{{ $bill->sale_status }}" data-reversed="0" data-doc-date="{{ substr($bill->created_at ?? '', 0, 10) }}" data-paid="{{ (float)($bill->paid_amount ?? 0) }}" data-total="{{ (float)($bill->grand_total ?? 0) }}" data-einvoice="{{ !empty($bill->irn_no) || !empty($bill->attributes_json['irn']) ? 1 : 0 }}" title="Reverse Invoice">
+                                        <i class="dripicons-return text-danger"></i>
+                                    </a>
+                                    @endif
                                 @endif
                                 @if(!$bill->reversed_at && $bill->posted_at && $bill->grand_total > $bill->paid_amount)
                                 @can('sale-payment-add')
@@ -776,70 +782,117 @@
 
 </section>
 
-<!-- DOCUMENT DELETE & REVERSAL OPTIONS MODAL -->
-<div class="modal fade text-left" id="document-delete-modal" tabindex="-1" role="dialog" aria-labelledby="document-delete-title" aria-hidden="true">
+<!-- UNIVERSAL POSTED DOCUMENT REVERSAL MODAL (SALES) -->
+<div class="modal fade text-left" id="document-delete-modal" tabindex="-1" role="dialog" aria-labelledby="document-reversal-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title font-weight-bold" id="document-delete-title">
-                    <i class="dripicons-warning text-warning mr-1"></i> Manage Document: <span id="del-modal-ref" class="text-primary"></span>
+        <div class="modal-content border-0 shadow-lg reversal-modal-content">
+            <div class="modal-header border-bottom py-3 px-4 d-flex align-items-center justify-content-between bg-white">
+                <h5 class="modal-title font-weight-bold text-dark mb-0 d-flex align-items-center" id="document-reversal-title">
+                    <span id="reversal-modal-title"><i class="dripicons-return text-danger mr-2"></i> Reverse Sales Invoice</span>
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close p-0 m-0 reversal-close-btn" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body pt-2">
-                <p class="text-muted small mb-3">
-                    Choose how you want to handle this record. Select one of the options below:
-                </p>
-                <div class="list-group delete-options-list">
-                    <!-- Option 1: Soft Delete (Move to Trash) -->
-                    <a href="javascript:void(0)" class="list-group-item list-group-item-action del-opt-choice py-2" data-action="soft-delete">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <h6 class="mb-1 text-dark font-weight-bold"><i class="dripicons-trash text-warning mr-1"></i> Move to Trash (Soft Delete)</h6>
-                            <span class="badge badge-light border">Recoverable</span>
-                        </div>
-                        <p class="mb-0 small text-muted">Hides the invoice from active registers and reverses its inventory. Can be restored from Deleted Data if needed.</p>
-                    </a>
-
-                    <!-- Option 2: Delete Permanently -->
-                    <a href="javascript:void(0)" class="list-group-item list-group-item-action del-opt-choice py-2 mt-2" data-action="permanent-delete">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <h6 class="mb-1 text-danger font-weight-bold"><i class="dripicons-cross text-danger mr-1"></i> Delete Permanently</h6>
-                            <span class="badge badge-danger">Irreversible</span>
-                        </div>
-                        <p class="mb-0 small text-muted">Completely removes this document and its lines from the database and reverses all inventory movements.</p>
-                    </a>
-
-                    <!-- Option 3: Official Reverse Document -->
-                    <a href="javascript:void(0)" class="list-group-item list-group-item-action del-opt-choice py-2 mt-2" data-action="reverse-doc">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <h6 class="mb-1 text-secondary font-weight-bold"><i class="dripicons-return text-secondary mr-1"></i> Reverse Document (Audit Trail)</h6>
-                            <span class="badge badge-secondary">Accounting</span>
-                        </div>
-                        <p class="mb-0 small text-muted">Posts reversing journal entries, returns stock, and marks the invoice as <strong>Reversed</strong> while keeping history for tax &amp; audit.</p>
-                    </a>
+            
+            <!-- ACTIVE REVERSAL FORM VIEW (For posted, un-reversed invoices) -->
+            <div id="reversal-active-view" class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="text-muted small text-uppercase font-weight-bold reversal-doc-label">Document</span>
+                    <span id="del-modal-ref" class="font-weight-bold text-dark font-monospace u-fs-15px">POS-00000</span>
                 </div>
 
-                <!-- Reversal Form (Revealed when Option 3 is clicked) -->
-                <div id="del-reversal-form" class="mt-3 p-3 bg-light rounded border" style="display:none;">
-                    <h6 class="font-weight-bold text-dark small mb-2"><i class="dripicons-document-edit mr-1"></i> Reversal Details</h6>
-                    <div class="form-group mb-2">
-                        <label class="small text-muted font-weight-bold mb-1">Reversal Date *</label>
-                        <input type="date" id="del-reversal-date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                <p class="text-muted small mb-3 reversal-lead-text">
+                    This action will reverse the accounting and applicable stock transactions. The original invoice and reversal history will be retained.
+                </p>
+
+                <!-- GST E-Invoice Advisory -->
+                <div id="reversal-einvoice-notice" class="alert alert-info py-2 px-3 small mb-3 border-0 reversal-notice-box" style="display: none;">
+                    <i class="dripicons-information text-info mr-1"></i>
+                    <strong>GST Compliance Notice:</strong> If an E-Invoice IRN was generated over 24 hours ago, cancellation on the government portal is barred. An official Credit Note (Sales Return) must be issued for statutory tax reconciliation.
+                </div>
+
+                <!-- Dependency Notification: Paid Amount / Attached Receipts -->
+                <div id="reversal-payment-notice" class="alert alert-warning py-2 px-3 small mb-3 border-0 reversal-notice-box" style="display: none;">
+                    <i class="dripicons-warning text-warning mr-1"></i>
+                    <strong>Payment Settlements:</strong> This invoice has recorded payments (<span id="reversal-paid-amount" class="font-weight-bold"></span>). Associated payment settlement journals will be reversed while preserving original payment receipts in history.
+                </div>
+
+                <!-- Reversal Form Fields -->
+                <div class="form-group mb-3">
+                    <label class="small text-muted font-weight-bold mb-1" for="del-reversal-date">Reversal Date *</label>
+                    <input type="date" id="del-reversal-date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="small text-muted font-weight-bold mb-1" for="del-reversal-reason">Reason for Reversal *</label>
+                    <textarea id="del-reversal-reason" class="form-control form-control-sm" rows="3" placeholder="Enter the reason for reversing this invoice" maxlength="500"></textarea>
+                </div>
+
+                <!-- Reversal Requirements Preview Box (Toggled via button) -->
+                <div id="reversal-requirements-preview" class="p-3 bg-light rounded border mb-3 small" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-dark"><i class="dripicons-checklist text-primary mr-1"></i> Reversal Impact Checklist</strong>
+                        <span class="badge badge-success px-2 py-1">Ready</span>
                     </div>
-                    <div class="form-group mb-2">
-                        <label class="small text-muted font-weight-bold mb-1">Reason for Reversal *</label>
-                        <input type="text" id="del-reversal-reason" class="form-control form-control-sm" placeholder="e.g. Wrong quantity entered, order cancelled" maxlength="500">
+                    <ul class="list-unstyled mb-0 text-muted reversal-preview-list">
+                        <li><i class="dripicons-checkmark text-success mr-1"></i> <strong>General Ledger:</strong> Counterbalancing journal entries will be posted.</li>
+                        <li><i class="dripicons-checkmark text-success mr-1"></i> <strong>Inventory:</strong> Dispatched goods will be restored to warehouse stock.</li>
+                        <li><i class="dripicons-checkmark text-success mr-1"></i> <strong>Settlements:</strong> Customer payment receipts will be unlinked.</li>
+                        <li><i class="dripicons-checkmark text-success mr-1"></i> <strong>Audit Compliance:</strong> Document reference &amp; logs remain permanently in ledger.</li>
+                    </ul>
+                </div>
+
+                <!-- Modal Action Buttons matching Image 3 -->
+                <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="btn-reversal-clear">Clear</button>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-info mr-2" id="btn-preview-requirements">
+                            <i class="dripicons-preview mr-1"></i> Preview reversal requirements
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger px-3 font-weight-bold" id="btn-confirm-reversal">
+                            <i class="dripicons-return mr-1"></i> Confirm Reversal
+                        </button>
                     </div>
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-sm btn-secondary mr-2" id="btn-cancel-reversal">Back</button>
-                        <button type="button" class="btn btn-sm btn-danger" id="btn-confirm-reversal">Confirm Reversal</button>
-                    </div>
+                </div>
+
+                <div class="text-center mt-3 pt-1">
+                    <small class="text-muted reversal-disclaimer">
+                        Statutory Accounting Standard: Posted vouchers cannot be deleted. All adjustments are made via auditable reversals.
+                    </small>
                 </div>
             </div>
-            <div class="modal-footer border-top-0 pt-0">
-                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+
+            <!-- REVERSAL HISTORY VIEW (For already reversed invoices) -->
+            <div id="reversal-history-view" class="modal-body p-4" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="text-muted small text-uppercase font-weight-bold reversal-doc-label">Document</span>
+                    <span id="del-hist-ref" class="font-weight-bold text-dark font-monospace u-fs-15px">POS-00000</span>
+                </div>
+
+                <div class="alert alert-secondary py-2 px-3 small mb-3 border-0 d-flex align-items-center justify-content-between reversal-notice-box">
+                    <div><i class="dripicons-lock mr-1 text-secondary"></i> <strong>Status:</strong> Document has been reversed</div>
+                    <span class="badge badge-secondary px-2 py-1">REVERSED</span>
+                </div>
+
+                <div class="p-3 bg-light rounded border mb-3 small">
+                    <div class="mb-2">
+                        <span class="text-muted font-weight-bold">Reversed On:</span>
+                        <span id="del-hist-date" class="text-dark ml-1 font-weight-bold"></span>
+                    </div>
+                    <div>
+                        <span class="text-muted font-weight-bold">Reason for Reversal:</span>
+                        <div id="del-hist-reason" class="text-dark mt-1 p-2 bg-white rounded border font-italic"></div>
+                    </div>
+                </div>
+
+                <p class="text-muted small mb-0 reversal-lead-text">
+                    In accordance with accounting laws, the original voucher, reversing journal entries, and inventory restorations are preserved permanently in the audit trail.
+                </p>
+
+                <div class="d-flex justify-content-end pt-3 mt-3 border-top">
+                    <button type="button" class="btn btn-secondary btn-sm px-4" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -4171,7 +4224,7 @@
         }
     });
 
-    // --- Document Delete & Reversal Modal Handlers (Sales) ---
+    // --- Universal Document Reversal Modal Handlers (Sales) ---
     var activeDeleteDocId = null;
     var activeDeleteDocRef = '';
 
@@ -4181,71 +4234,59 @@
         activeDeleteDocId = $(this).data('id');
         activeDeleteDocRef = $(this).data('ref') || ('#' + activeDeleteDocId);
         var isReversed = $(this).data('reversed') == 1;
+        var paidAmount = parseFloat($(this).data('paid')) || 0;
+        var docDate = $(this).data('doc-date') || '';
+        var hasEinvoice = $(this).data('einvoice') == 1;
+        var reversedAt = $(this).data('reversed-at') || '';
+        var reversalReason = $(this).data('reversal-reason') || '';
 
         $('#del-modal-ref').text(activeDeleteDocRef);
-        $('#del-reversal-form').hide();
-        $('.delete-options-list').show();
+        $('#del-hist-ref').text(activeDeleteDocRef);
         $('#del-reversal-reason').val('');
+        $('#reversal-requirements-preview').hide();
+
+        var today = new Date().toISOString().split('T')[0];
+        $('#del-reversal-date').val(today);
+        if (docDate) {
+            $('#del-reversal-date').attr('min', docDate);
+        }
 
         if (isReversed) {
-            $('.del-opt-choice[data-action="reverse-doc"]').addClass('disabled').css('opacity', '0.5');
+            $('#reversal-modal-title').html('<i class="dripicons-history text-secondary mr-2"></i> Reversal History');
+            $('#del-hist-date').text(reversedAt || 'Recorded in system');
+            $('#del-hist-reason').text(reversalReason || 'No reason specified in record');
+            $('#reversal-active-view').hide();
+            $('#reversal-history-view').show();
         } else {
-            $('.del-opt-choice[data-action="reverse-doc"]').removeClass('disabled').css('opacity', '1');
+            $('#reversal-modal-title').html('<i class="dripicons-return text-danger mr-2"></i> Reverse Sales Invoice');
+            if (hasEinvoice) {
+                $('#reversal-einvoice-notice').show();
+            } else {
+                $('#reversal-einvoice-notice').hide();
+            }
+            if (paidAmount > 0) {
+                $('#reversal-paid-amount').text('₹ ' + paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                $('#reversal-payment-notice').show();
+            } else {
+                $('#reversal-payment-notice').hide();
+            }
+            $('#reversal-history-view').hide();
+            $('#reversal-active-view').show();
+            setTimeout(function() { $('#del-reversal-reason').focus(); }, 250);
         }
 
         $('#document-delete-modal').modal('show');
     });
 
-    $(document).on('click', '.del-opt-choice', function(e) {
-        e.preventDefault();
-        var action = $(this).data('action');
-        if (!activeDeleteDocId) return;
-
-        if (action === 'soft-delete') {
-            if (!confirm('Move ' + activeDeleteDocRef + ' to trash? This can be restored from Deleted Data.')) return;
-            $.ajax({
-                url: '{{ url("sales") }}/' + activeDeleteDocId,
-                type: 'DELETE',
-                data: { _token: '{{ csrf_token() }}' },
-                dataType: 'json',
-                success: function(res) {
-                    $('#document-delete-modal').modal('hide');
-                    if (window.toastr) toastr.success(res.message || 'Invoice moved to trash.');
-                    else alert(res.message || 'Invoice moved to trash.');
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert(xhr.responseJSON?.message || 'Delete failed.');
-                }
-            });
-        } else if (action === 'permanent-delete') {
-            if (!confirm('PERMANENT ACTION: Are you sure you want to permanently delete ' + activeDeleteDocRef + '? This action CANNOT be undone and purges all records and inventory.')) return;
-            $.ajax({
-                url: '{{ url("sales") }}/' + activeDeleteDocId + '/force-delete',
-                type: 'DELETE',
-                data: { _token: '{{ csrf_token() }}' },
-                dataType: 'json',
-                success: function(res) {
-                    $('#document-delete-modal').modal('hide');
-                    if (window.toastr) toastr.success(res.message || 'Invoice permanently deleted.');
-                    else alert(res.message || 'Invoice permanently deleted.');
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert(xhr.responseJSON?.message || 'Permanent delete failed.');
-                }
-            });
-        } else if (action === 'reverse-doc') {
-            if ($(this).hasClass('disabled')) return;
-            $('.delete-options-list').hide();
-            $('#del-reversal-form').slideDown(200);
-            $('#del-reversal-reason').focus();
-        }
+    $('#btn-reversal-clear').on('click', function() {
+        $('#del-reversal-reason').val('').focus();
+        var today = new Date().toISOString().split('T')[0];
+        $('#del-reversal-date').val(today);
+        $('#reversal-requirements-preview').slideUp(150);
     });
 
-    $('#btn-cancel-reversal').on('click', function() {
-        $('#del-reversal-form').hide();
-        $('.delete-options-list').show();
+    $('#btn-preview-requirements').on('click', function() {
+        $('#reversal-requirements-preview').slideToggle(200);
     });
 
     $('#btn-confirm-reversal').on('click', function() {
@@ -4257,7 +4298,8 @@
             return;
         }
 
-        $(this).prop('disabled', true).text('Reversing…');
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> Reversing…');
         $.ajax({
             url: '{{ url("commercial/sale") }}/' + activeDeleteDocId + '/reverse',
             type: 'POST',
@@ -4274,7 +4316,7 @@
                 location.reload();
             },
             error: function(xhr) {
-                $('#btn-confirm-reversal').prop('disabled', false).text('Confirm Reversal');
+                $btn.prop('disabled', false).html('<i class="dripicons-return mr-1"></i> Confirm Reversal');
                 alert(xhr.responseJSON?.message || 'Reversal failed. Check dates and permissions.');
             }
         });

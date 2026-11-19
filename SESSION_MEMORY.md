@@ -1,3 +1,41 @@
+## Universal Document Lifecycle & Single-Action Reversal UX Implementation — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - *"Apply the same lifecycle principles to Sales Bills, Purchase Returns, Sales Returns, and other posted financial vouchers, while respecting each document's own cancellation rules."*
+  - Reference attachments:
+    - `media_1795067612446_f73efa30.png`: Universal Document Lifecycle Matrix (Unsaved drafts = Discard; Saved drafts = Discard with permission; Posted bills = Reverse only; Paid bills = Reverse after resolving dependencies; Reversed bills = View history).
+    - `media_1795067624131_03e9e377.jpg`: Recommended Single-Action Reversal Modal UI (`Reverse Purchase Bill` with document reference, explanatory note, reversal date, reason, Clear, Preview reversal requirements, and Confirm Reversal).
+
+- **Architectural & UI Implementation:**
+  1. **Master Architecture Specification:**
+     - Published `docs/architecture/DOCUMENT_LIFECYCLE_AND_REVERSAL_ARCHITECTURE.md` establishing enterprise statutory rules:
+       - Posted vouchers are legally immutable; hard deletion and informal "trash" bins are strictly prohibited.
+       - Sales Bills respect Indian GST E-Invoice 24-hour portal window (beyond 24h, adjustment requires Credit Note/Sales Return).
+       - Purchase Bills enforce negative stock checks and Job Work GRN decoupling.
+       - Payment settlements and journal ledger impacts are counterbalanced deterministically.
+  2. **Purchase Bill Reversal UX (`resources/views/backend/purchase/index.blade.php`, `PurchaseController.php`):**
+     - Replaced obsolete 3-option modal (`#document-delete-modal`) with the dedicated single-action `Reverse Purchase Bill` modal matching `media_1795067624131_03e9e377.jpg`.
+     - Side list action button: updated from generic trash icon to `<i class="dripicons-return text-danger"></i>` with title `"Reverse Purchase Bill"` (or `<i class="dripicons-history text-secondary"></i>` with `"View Reversal History"` if reversed).
+     - DataTable options: updated from `Delete / Options` to `Reverse Bill` (or `Reversal History` for reversed bills).
+     - Interactive validation: added dynamic payment settlement notice when payments exist, date min constraint to document date, `[Preview reversal requirements]` validation checklist, and `[Clear]` button.
+     - Reversal History View: automatically displayed when opening an already-reversed bill, presenting recorded reversal date, reason, and regulatory audit permanence notice.
+  3. **Sales Invoice Reversal UX (`resources/views/backend/sale/index.blade.php`, `SaleController.php`):**
+     - Replaced obsolete 3-option modal with the dedicated single-action `Reverse Sales Invoice` modal.
+     - Side list action button: updated to `<i class="dripicons-return text-danger"></i>` (`"Reverse Invoice"`) or history icon.
+     - DataTable options: updated to `Reverse Invoice` or `Reversal History`.
+     - GST E-Invoice Advisory: dynamically displays 24-hour portal cancellation notice when an IRN is detected on the invoice.
+  4. **CSS Token & Component Design Compliance (`public/css/commercial-workspace.css`):**
+     - Introduced `.reversal-modal-content`, `.reversal-close-btn`, `.reversal-doc-label`, `.reversal-lead-text`, `.reversal-notice-box`, `.reversal-preview-list`, and `.reversal-disclaimer`.
+     - 100% compliant with Global UI Engine tokens. Zero inline styles (except standard `display: none;` toggles).
+     - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed**.
+
+- **Verification:**
+  - `php -l`: All modified PHP and Blade views passed with 0 syntax errors.
+  - `php artisan view:clear`: Compiled views cleared successfully.
+  - Test suites: `DesignTokensTest` green (4 assertions, 0 violations).
+
+---
+
 ## Production Deployment Diagnosis & VPS PHP 8.5 Cutover Gate — 2026-11-19 (`main` / `ui`)
 
 - **Context & User Inquiry:**

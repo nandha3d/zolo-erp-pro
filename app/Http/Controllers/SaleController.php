@@ -736,11 +736,17 @@ class SaleController extends Controller
                         <button type="button" class="add-delivery btn btn-link" data-id = "'.$sale->id.'"><i class="fa fa-truck"></i> '.__('db.Add Delivery').'</button>
                     </li>';
                 if(in_array("sales-delete", $request['all_permission'])) {
-                    $nestedData['options'] .= '<li>
-                        <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="'.($sale->reversed_at ? 1 : 0).'"><i class="dripicons-trash text-danger"></i> '.__("db.delete").' / Options</button>
-                    </li>
-                    </ul>
-                </div>';
+                    if ($sale->reversed_at) {
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-secondary" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="1" data-reversed-at="'.e($sale->reversed_at).'" data-reversal-reason="'.e($sale->reversal_reason ?? '').'"><i class="dripicons-history text-secondary"></i> '.__("db.Reversal History").'</button>
+                        </li>';
+                    } else {
+                        $hasEinvoice = (!empty($sale->irn_no) || !empty($sale->attributes_json['irn'])) ? 1 : 0;
+                        $nestedData['options'] .= '<li>
+                            <button type="button" class="btn btn-link btn-open-delete-modal text-danger" data-id="'.$sale->id.'" data-ref="'.e($sale->reference_no).'" data-status="'.$sale->sale_status.'" data-reversed="0" data-doc-date="'.substr($sale->created_at ?? '', 0, 10).'" data-paid="'.(float)($sale->paid_amount ?? 0).'" data-total="'.(float)($sale->grand_total ?? 0).'" data-einvoice="'.$hasEinvoice.'"><i class="dripicons-return text-danger"></i> '.__("db.Reverse Invoice").'</button>
+                        </li>';
+                    }
+                    $nestedData['options'] .= '</ul></div>';
                 } else {
                     $nestedData['options'] .= '</ul></div>';
                 }

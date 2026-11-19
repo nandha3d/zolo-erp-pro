@@ -4945,3 +4945,33 @@ tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]):hover .
         padding-right: 52px;
     }
 }
+
+/* Universal Document Reversal Modal */
+.reversal-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.reversal-close-btn {
+    line-height: 1;
+}
+
+.reversal-doc-label {
+    letter-spacing: 0.5px;
+}
+
+.reversal-lead-text {
+    line-height: 1.5;
+}
+
+.reversal-notice-box {
+    border-radius: 8px;
+}
+
+.reversal-preview-list {
+    line-height: 1.8;
+}
+
+.reversal-disclaimer {
+    font-size: 11px;
+}
