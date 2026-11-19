@@ -126,19 +126,16 @@
                 </div>
                 <div class="text-muted small">Sequential manufacturing flow and transaction milestones from purchase inward through processing, conversion, and ready stock.</div>
             </div>
-            @if(!empty($convertedToProducts))
-                <div class="mt-2 mt-md-0">
-                    @foreach($convertedToProducts as $cp)
-                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $cp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-primary">
-                            <i class="dripicons-arrow-thin-right"></i> Trace Converted: <strong>{{ $cp['name'] }}</strong>
+            @if(!empty($convertedToProducts) || !empty($convertedFromProducts))
+                <div class="mt-2 mt-md-0 d-flex flex-wrap align-items-center u-gap-6px">
+                    @foreach($convertedFromProducts as $fp)
+                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $fp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-info" title="Trace back to raw source material">
+                            <i class="dripicons-arrow-thin-left"></i> Trace Raw Source: <strong>{{ $fp['name'] }}</strong>
                         </a>
                     @endforeach
-                </div>
-            @elseif(!empty($convertedFromProducts))
-                <div class="mt-2 mt-md-0">
-                    @foreach($convertedFromProducts as $fp)
-                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $fp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-info">
-                            <i class="dripicons-arrow-thin-left"></i> Trace Raw Source: <strong>{{ $fp['name'] }}</strong>
+                    @foreach($convertedToProducts as $cp)
+                        <a href="{{ route('inventory-reports.timeline', ['product_id' => $cp['id'], 'from' => $filters['from'], 'to' => $filters['to']]) }}" class="btn btn-xs btn-outline-primary" title="Trace forward to converted finished goods">
+                            <i class="dripicons-arrow-thin-right"></i> Trace Converted: <strong>{{ $cp['name'] }}</strong>
                         </a>
                     @endforeach
                 </div>
@@ -918,6 +915,16 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.axis-milestone-node').forEach(n => n.classList.remove('is-active'));
         if (elem) elem.classList.add('is-active');
 
+        // Dynamically ensure callout stays 100% inside the card (zero "out of box" overflow)
+        if (elem) {
+            const callout = elem.querySelector('.axis-inplace-callout');
+            const rail = document.querySelector('.interactive-axis-rail');
+            if (callout && rail) {
+                const calloutHeight = callout.offsetHeight || 135;
+                rail.style.paddingBottom = Math.max(200, calloutHeight + 40) + 'px';
+            }
+        }
+
         // Update Spotlight Inspector
         const badge = document.getElementById('spotlightBadge');
         const title = document.getElementById('spotlightTitle');
@@ -957,7 +964,6 @@ document.addEventListener('DOMContentLoaded', function () {
             row.classList.remove('table-row-selected');
             if (row.textContent.includes(refNo)) {
                 row.classList.add('table-row-selected');
-                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         });
     }
@@ -972,6 +978,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
     @endif
+
+    // Eliminate any parent height or overflow clamping
+    function removeTimelineClamps() {
+        document.querySelectorAll('#inventory-timeline-page .desk-card-wrapper, #inventory-timeline-page .combined-lifecycle-card, #inventory-timeline-page .interactive-axis-rail').forEach(el => {
+            el.style.overflow = 'visible';
+            el.style.overflowY = 'visible';
+            el.style.maxHeight = 'none';
+            el.style.height = 'auto';
+            el.classList.remove('shell-fit-scroll');
+        });
+    }
+    removeTimelineClamps();
+    window.addEventListener('resize', removeTimelineClamps);
+    setTimeout(removeTimelineClamps, 150);
 });
 </script>
 @endpush

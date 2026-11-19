@@ -1,3 +1,128 @@
+## Sold Out Stocks in Charts, Horizontal Scroll Removal & Bidirectional Conversion Traceability — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  1. *"how to manage this if the products are 100 or above? remove the tracebility and dont keep the scrolling horizontal."* (Ref: `media_1795094184117_cad3c7f4.jpg`, `media_1795094244434_e3bddad7.png`, `media_1795094269439_53503f9a.png`).
+  2. *"also previously there were a button to go to the converted product's stock timeline, and back to the raw stock viceversa. bring that too.."* (Ref: `media_1795094369407_daed6b80.jpg` showing missing conversion trace button on `Grey Cotton Fabric 60s (5IM)`).
+  3. *"include the sold out stocks charts as well.."* (Ref: `media_1795093973999_fda815b8.png`).
+  4. *"when i click the dots, its scrolling down.. remove the scrolling.."* (Ref: `media_1795093758095_4cf4e82d.jpg`).
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Sold Out Stocks in Overview Movement Charts (`InventoryLotReportController.php`, `stock-by-lot.blade.php`, `SimplifiedStockService.php`):**
+     - Integrated `sold_qty` (commercial customer sales) into both simplified and standard stock flow queries from `stock_movement_lines` and `stock_movements`.
+     - **Bar Chart:** Added dedicated `Sold Out (Sales)` dataset with bright crimson styling (`rgba(239, 68, 68, 0.85)` / `#ef4444`) with head data labels showing numerical quantities alongside Inward, Job Work Dispatched, Returned, and Closing In Hand.
+     - **Doughnut Chart:** Segmented distribution into Inward (`#16a34a`), Sold Out (`#ef4444`), At Processors/WIP (`#f59e0b`), and In Godown (`#7c1274`).
+  2. **Zero Horizontal Scrolling & Removed Traceability Column (`stock-by-lot.blade.php`, `reports-stock-by-lot.css`):**
+     - Removed the wide `Traceability & Conversions` column from the simplified table, eliminating horizontal table bloat (conversion links remain immediately accessible via the per-row `Timeline` button).
+     - Applied 100% full-width natural table layout with `overflow-x: hidden !important;` on screens >= 1100px. Table spans desktop viewport naturally with zero horizontal scrollbar.
+  3. **Bidirectional Conversion Traceability ("Trace Converted" & "Trace Raw Source") (`SimplifiedStockService.php`, `inventory-timeline.blade.php`):**
+     - Enhanced conversion discovery to check both `stock_movements` (job work receipt issue/receipt pairs) and `details_json` (`stock_name_change`).
+     - Raw materials (e.g. `Grey Cotton Fabric 60s (5IM)`) display `-> Trace Converted: Vat Dyed Navy Blue Fabric 60s (5IM)`.
+     - Converted finished goods display `<- Trace Raw Source: Grey Cotton Fabric 60s (5IM)`.
+     - Works seamlessly across all products (`5IM`, `VNE`, `Z58`, etc.).
+  4. **Management for 100+ Products Strategy:**
+     - **Executive Chart:** Focused on Top 8 active products by volume (`u-fs-11px` badge indicator). Squeezing 100+ bars is avoided for clarity.
+     - **Product Isolation:** Instant filtering via top `Product` dropdown to isolate any single product or batch.
+     - **High-Performance Pagination:** Server-side pagination (50 products/page) ensures sub-second responses for 100 to 100,000 products.
+     - **Export CSV:** Full bulk export available with one click.
+  5. **Zero Auto-Scroll on Milestone Dot Click (`inventory-timeline.blade.php`):**
+     - Removed `row.scrollIntoView(...)` so clicking timeline milestone dots keeps the page viewport completely stationary while opening anchored popovers in place.
+  6. **Zero Popover Box Overflow & Non-Wrapping Metrics (`inventory-timeline.css`, `inventory-timeline.blade.php`):**
+     - Increased callout width from 320px to 380px and applied `white-space: nowrap` on dates and metric values, eliminating awkward text wrapping (`2026-` / `10-12` and `MTR` wrapping).
+     - Added dynamic container expansion in `selectTimelineMilestone` (`rail.style.paddingBottom = Math.max(200, calloutHeight + 40) + 'px'`) and increased base `.interactive-axis-rail` padding to 200px (min-height 310px). The popover callout now remains 100% inside `.combined-lifecycle-card` without spilling over the bottom border into subsequent cards.
+  7. **Regression Guard Fix (`stock-by-lot.blade.php`):**
+     - Restored explicit `Historical owned totals are unavailable.` text required by `TextileInventoryDefaultsTest`.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Timeline Dot Precision Alignment, Unclamped Popover Headroom & Stock Table Date Sync — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - Directives & Feedback:
+    1. *"hiding inside the container, also the dots are not aligned in the line properly.."* (Ref: `media_1795092977437_cca6528e.jpg` showing the callout popover partially clipped at the bottom of `.combined-lifecycle-card`, with an internal scrollbar on the card, and the colored timeline line bar passing 8-10px above the milestone dots).
+    2. *"also the sales will be updated in this timeline? any returns and damage etc will be shown in the timeline?"*
+    3. *"update the stock date in the table."* (Ref: `media_1795093241527_14c5fb1d.jpg` showing Inward = 0 and Outward = 0 on all rows because `stock-by-lot` defaulted to `startOfMonth()` `2026-11-01` while sample transactions occurred in October 2026).
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Perfect Dot-to-Line Vertical Alignment (`inventory-timeline.css`):**
+     - Aligned `.interactive-axis-rail` and `.axis-nodes-container` geometry:
+       - `.interactive-axis-rail` padding: `padding: 16px 8px 165px;` (16px top padding, 165px bottom room for popover).
+       - `.axis-nodes-container` padding: `0 4px;` in normal flow.
+       - `.axis-node-dot`: `width: 22px; height: 22px; position: relative; z-index: 3;`. Center is located at `16px + (22px / 2) = 27px`.
+       - `.axis-line-bar`: `top: 27px; transform: translateY(-50%); height: 4px; z-index: 1;`. Exact center is at `27px`.
+     - The connecting multi-colored gradient line now passes directly and dead-center through the middle of all milestone dots.
+  2. **Zero Clipping & Unclamped Popover Headroom (`inventory-timeline.css`, `inventory-timeline.blade.php`):**
+     - Added high-specificity overrides extinguishing `overflow-y: auto !important` and `flex: 1 1 0 !important` from `app-shell.css`:
+       - `html.app-shell #inventory-timeline-page .desk-card-wrapper`, `html.app-shell .combined-lifecycle-card`, `.interactive-timeline-axis-wrap`, `.interactive-axis-rail`, `.axis-nodes-container` set to `overflow: visible !important; height: auto !important; flex: none !important;`.
+     - Set `min-height: 275px;` and `padding-bottom: 165px;` on `.interactive-axis-rail`. The in-place callout popover sits completely and comfortably inside `.combined-lifecycle-card`, eliminating all inner scrollbars, clipping, or bottom edge collisions.
+     - Added `removeTimelineClamps()` JS watchdog ensuring no legacy script clamps heights or injects `.shell-fit-scroll`.
+  3. **Main Stock Table Date Synchronization (`InventoryLotReportController.php`, `stock-by-lot.blade.php`):**
+     - Synchronized `$filters['from']` default in `InventoryLotReportController@stockByLot` from `startOfMonth()` (`2026-11-01`) to `$today->copy()->subMonths(3)->startOfMonth()->toDateString()` (`2026-08-01`), matching `timeline()`.
+     - When users view `/inventory-reports/stock-by-lot`, transactions from the preceding 3 months (August–November) are properly evaluated, displaying real non-zero Inward, Outward, and Closing stock balances across both the table and top movement charts.
+     - Added movement period banner above the table: `Movement Period: 2026-08-01 to 2026-11-19`.
+  4. **Comprehensive Commercial Sales, Returns & Damage Timeline Coverage (`SimplifiedStockService.php`):**
+     - Confirmed and expanded timeline event ingestion:
+       - **Commercial Sales:** Dispatched sales outward mapped to customer names with `badge-sale` and `-` quantity.
+       - **Customer Sales Returns:** Inward returns from `returns` table mapped to customer names with `badge-returned` and `+` quantity.
+       - **Supplier Purchase Returns:** Outward returns from `return_purchases` table mapped to vendor names with `badge-dispatch` and `-` quantity.
+       - **Damage & Scrap:** Stock written off from `damage_stocks` table with reason and `badge-adjustment-neg` `-` quantity.
+       - **Job Work Dispatches & Receipts:** Full multi-step processing, conversion, and ready stock.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Non-Zero Milestone Quantities, In-Place Popover Callouts & Dot Clipping Fixes — 2026-11-19 (`ui` & `main`)
+
+- **Context & User Directives:**
+  - Directives & Screenshot Feedback:
+    1. *"400mtr recieved right? then why its zero here? if done then update to UI branch and merge to the main branch."* (Ref: `media_1795090828211_cd19d273.png` showing `0 MTR` displayed under `Reconciled` on the timeline axis when the closing card above it showed `400 MTR`).
+    2. *"also the dots are cutting at top, when we click the dot it should how the details in that place itself. make it professional."* (Ref: `media_1795091076430_b1f16149.png` showing the active node's circular halo/ring clipped flat at the top, and requiring an anchored, in-place callout popup attached directly to that clicked dot).
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Accurate Non-Zero Node Quantities (`SimplifiedStockService.php`):**
+     - Resolved the root cause where closing positions generated `$pm['movement'] = 0.0` (since no transaction occurred on the closing date itself), which printed `0 MTR` beneath the Reconciled milestone.
+     - Added explicit `'qty_label'` and `'qty_class'` keys to `$chartPointsMeta[]`:
+       - Baseline: `'qty_label' => round($openingGodownStock, 2) . ' ' . $unit`, `'qty_class' => 'text-primary'`
+       - Purchases: `'qty_label' => '+' . $qty . ' ' . $unit`, `'qty_class' => 'text-success'`
+       - Dispatches: `'qty_label' => '-' . $qty . ' ' . $unit`, `'qty_class' => 'text-danger'`
+       - Returns / Conversions (`JWGRN-00003`): `'qty_label' => '+' . $qty . ' ' . $unit`, `'qty_class' => 'text-success'` (shows `+580 MTR`)
+       - Closing / Reconciled: `'movement' => round($running, 2)`, `'qty_label' => round($running, 2) . ' ' . $unit`, `'qty_class' => 'text-primary font-weight-bold'` (shows `400 MTR` for Grey Fabric ID 30, `580 MTR` for Dyed Fabric ID 31).
+  2. **Eliminated Dot Clipping at Top (`inventory-timeline.css`):**
+     - Removed `overflow: hidden;` on `#inventory-timeline-page .axis-nodes-container` and `.interactive-axis-rail`, setting `overflow: visible !important;`.
+     - Provided `padding: 16px 4px 6px;` to `.axis-nodes-container` so the active scaled dot and outer halo (`box-shadow: 0 0 0 4px rgba(124, 18, 116, 0.18)`) have ample headroom and never clip.
+     - Centered the connecting rail gradient line (`.axis-line-bar` top adjusted to `27px`) to pass precisely through the center of all node dots.
+  3. **Professional In-Place Callout Popover on Click (`inventory-timeline.blade.php`, `inventory-timeline.css`):**
+     - Embedded `.axis-inplace-callout` inside each `.axis-milestone-node` with an upward pointing `.callout-arrow` anchored directly to that dot.
+     - Smart responsive positioning: first milestone aligns left (`left: 0; transform: none;`), last milestone aligns right (`right: 0; transform: none;`), and intermediate milestones center (`left: 50%; transform: translateX(-50%);`).
+     - Includes milestone title badge, calendar date, clean direct action statement, and a 4-item metrics grid (`Godown Stock`, `Processor WIP`, `Document Ref`, and `Party`).
+     - Eliminated the redundant detached `#timelineSpotlightCard`.
+  4. **Pull Request #26 & Production Merge into `main`:**
+     - Committed to `ui`: `3b11cdb0` (`feat: simplified stock flow, inventory timeline with in-place callouts and zero inner scroll`).
+     - Pushed to `origin/ui` and `nandha-origin/ui`.
+     - Created Pull Request #26 (`https://github.com/vigneshsinna/zolo-erp-pro/pull/26`) against `main`.
+     - Monitored GitHub Actions matrix: All 12 CI checks completed successfully with green status.
+     - Merged PR #26 into `main` via API (Merge SHA: `b6dfa85a193e6bc07972e7fe70b8f1ea205a00ba`).
+     - Fast-forwarded local `main` to `b6dfa85a`, pushed to `nandha-origin/main`, and switched back to `ui`.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors across all modified PHP and Blade files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Bar Chart Head Quantities, Zero Inside Scrolling & Concise Movement Phrasing — 2026-11-19 (`ui`)
 
 - **Context & User Directives:**

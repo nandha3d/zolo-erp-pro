@@ -86,6 +86,10 @@ class SimplifiedStockService
             ->selectRaw("SUM(CASE WHEN m.movement_date >= ? AND m.movement_date < ? AND l.qty_base > 0 
                 AND (m.movement_type = 'purchase' OR m.source_type = 'purchase') 
                 THEN l.qty_base ELSE 0 END) AS purchased_qty", [$from, $to])
+            // Sold outward to customers within date range
+            ->selectRaw("SUM(CASE WHEN m.movement_date >= ? AND m.movement_date < ? AND l.qty_base < 0 
+                AND (m.movement_type = 'sale' OR m.source_type = 'sale') 
+                THEN -l.qty_base ELSE 0 END) AS sold_qty", [$from, $to])
             // Current in godown (internal warehouses, all time)
             ->selectRaw("SUM(CASE WHEN " . ($internalWhIds ? "l.warehouse_id IN (" . implode(',', $internalWhIds) . ")" : "0=1") . " 
                 THEN l.qty_base ELSE 0 END) AS in_godown_qty")
@@ -194,6 +198,7 @@ class SimplifiedStockService
 
             $mRows = $movementByProduct->get($pid, collect());
             $purchased = (float) $mRows->sum('purchased_qty');
+            $sold = (float) $mRows->sum('sold_qty');
             $inGodown = (float) $mRows->sum('in_godown_qty');
             $inQuarantine = (float) $mRows->sum('in_quarantine_qty');
             $atJobWorker = (float) $mRows->sum('at_job_worker_qty');
@@ -221,6 +226,7 @@ class SimplifiedStockService
                 'lot' => $byLot ? ($mRows->first()?->lot ?: 'Unbatched') : 'Combined lots',
                 'base_unit' => $unit,
                 'purchased_qty' => $purchased,
+                'sold_qty' => $sold,
                 'given_to_job_work_qty' => $dispatched,
                 'returned_after_job_work_qty' => $returned,
                 'in_godown_qty' => $inGodown,
@@ -237,6 +243,7 @@ class SimplifiedStockService
         // Summary totals across all rows
         $totals = [
             'total_purchased' => array_sum(array_column($rows, 'purchased_qty')),
+            'total_sold' => array_sum(array_column($rows, 'sold_qty')),
             'total_given_to_job_work' => array_sum(array_column($rows, 'given_to_job_work_qty')),
             'total_returned' => array_sum(array_column($rows, 'returned_after_job_work_qty')),
             'total_in_godown' => array_sum(array_column($rows, 'in_godown_qty')),
@@ -383,8 +390,8 @@ class SimplifiedStockService
                 foreach ($change['items'] as $item) {
                     if ((int) $item['from_product_id'] === $productId) {
                         $convertedTo = $item['to_name'];
-                        $convertedToProducts[] = [
-                            'id' => $item['to_product_id'],
+                        $convertedToProducts[$item['to_product_id']] = [
+                            'id' => (int) $item['to_product_id'],
                             'name' => $item['to_name'],
                             'qty' => (float) $item['qty'],
                             'ref' => $r->grn_no,
@@ -421,6 +428,40 @@ class SimplifiedStockService
             ];
         }
 
+        // Discover converted output products from job work receipts via applied stock movements
+        $consumedReceiptIds = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('l.product_id', $productId)
+            ->where('l.qty_base', '<', 0)
+            ->pluck('m.source_id')
+            ->all();
+
+        if (!empty($consumedReceiptIds)) {
+            $producedRows = DB::table('stock_movements as m')
+                ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+                ->join('products as p', 'p.id', '=', 'l.product_id')
+                ->where('m.company_id', $context->companyId)
+                ->where('m.source_type', 'job_work_receipts')
+                ->whereIn('m.source_id', $consumedReceiptIds)
+                ->where('l.product_id', '!=', $productId)
+                ->where('l.qty_base', '>', 0)
+                ->get(['l.product_id', 'p.name as product_name', 'l.qty_base', 'm.source_no', 'm.movement_date']);
+
+            foreach ($producedRows as $pRow) {
+                if (!isset($convertedToProducts[$pRow->product_id])) {
+                    $convertedToProducts[$pRow->product_id] = [
+                        'id' => (int) $pRow->product_id,
+                        'name' => $pRow->product_name,
+                        'qty' => (float) $pRow->qty_base,
+                        'ref' => $pRow->source_no,
+                        'date' => substr($pRow->movement_date, 0, 10),
+                    ];
+                }
+            }
+        }
+
         // 4. Receipts where this product is the RESULT of a conversion (Converted Inward)
         $conversionInReceipts = DB::table('job_work_receipts')
             ->where('company_id', $context->companyId)
@@ -435,8 +476,8 @@ class SimplifiedStockService
             if (!$change || empty($change['items'])) continue;
             foreach ($change['items'] as $item) {
                 if ((int) $item['to_product_id'] === $productId) {
-                    $convertedFromProducts[] = [
-                        'id' => $item['from_product_id'],
+                    $convertedFromProducts[$item['from_product_id']] = [
+                        'id' => (int) $item['from_product_id'],
                         'name' => $item['from_name'],
                         'qty' => (float) $item['qty'],
                         'ref' => $cr->reference_no,
@@ -460,6 +501,40 @@ class SimplifiedStockService
                         'unit' => $unit,
                         'converted_from' => $item['from_name'],
                         'description' => "Created {$item['qty']} {$unit} from processing of {$item['from_name']} (Bill: {$change['purchase_no']})",
+                    ];
+                }
+            }
+        }
+
+        // Discover raw source materials from job work receipts via applied stock movements
+        $receivedReceiptIds = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('l.product_id', $productId)
+            ->where('l.qty_base', '>', 0)
+            ->pluck('m.source_id')
+            ->all();
+
+        if (!empty($receivedReceiptIds)) {
+            $rawRows = DB::table('stock_movements as m')
+                ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+                ->join('products as p', 'p.id', '=', 'l.product_id')
+                ->where('m.company_id', $context->companyId)
+                ->where('m.source_type', 'job_work_receipts')
+                ->whereIn('m.source_id', $receivedReceiptIds)
+                ->where('l.product_id', '!=', $productId)
+                ->where('l.qty_base', '<', 0)
+                ->get(['l.product_id', 'p.name as product_name', 'l.qty_base', 'm.source_no', 'm.movement_date']);
+
+            foreach ($rawRows as $rRow) {
+                if (!isset($convertedFromProducts[$rRow->product_id])) {
+                    $convertedFromProducts[$rRow->product_id] = [
+                        'id' => (int) $rRow->product_id,
+                        'name' => $rRow->product_name,
+                        'qty' => abs((float) $rRow->qty_base),
+                        'ref' => $rRow->source_no,
+                        'date' => substr($rRow->movement_date, 0, 10),
                     ];
                 }
             }
@@ -542,6 +617,156 @@ class SimplifiedStockService
                 'total_value' => (float) $adj->value,
                 'description' => "Audited stock balance adjustment of {$adjQty} {$unit} in {$adj->warehouse_name}",
             ];
+        }
+
+        // 7. Sales Returns from Customers (Inward Return)
+        $hasReturnsTable = \Illuminate\Support\Facades\Schema::hasTable('returns');
+        $hasCustomersTable = \Illuminate\Support\Facades\Schema::hasTable('customers');
+        $canJoinCustomer = $hasReturnsTable && $hasCustomersTable;
+
+        $salesReturnsQuery = DB::table('stock_movement_lines as l')
+            ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+            ->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id');
+
+        if ($hasReturnsTable) {
+            $salesReturnsQuery->leftJoin('returns as ret', function ($join) {
+                $join->on('ret.id', '=', 'm.source_id')->where('m.source_type', '=', 'return');
+            });
+            if ($canJoinCustomer) {
+                $salesReturnsQuery->leftJoin('customers as c', 'c.id', '=', 'ret.customer_id');
+            }
+        }
+
+        $salesReturns = $salesReturnsQuery
+            ->where('l.company_id', $context->companyId)
+            ->where('l.product_id', $productId)
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where(function ($q) {
+                $q->where('m.movement_type', 'sale_return')
+                  ->orWhere('m.source_type', 'return')
+                  ->orWhere('m.movement_type', 'return');
+            })
+            ->orderBy('m.movement_date')
+            ->get([
+                'm.movement_date', 'm.movement_no', 'm.source_no', 'l.qty_base', 'l.unit_cost', 'l.value',
+                'w.name as warehouse_name',
+                $canJoinCustomer ? 'c.name as customer_name' : DB::raw("NULL as customer_name"),
+                $hasReturnsTable ? 'ret.reference_no as return_ref' : DB::raw("NULL as return_ref"),
+            ]);
+
+        foreach ($salesReturns as $sr) {
+            $returnQty = abs((float) $sr->qty_base);
+            $events[] = [
+                'date' => substr($sr->movement_date, 0, 10),
+                'timestamp' => $sr->movement_date,
+                'stage' => 'return',
+                'badge' => 'Customer Return (+)',
+                'badge_class' => 'badge-returned',
+                'icon' => 'dripicons-backspace',
+                'title' => 'Customer Sales Return',
+                'ref_no' => $sr->return_ref ?: ($sr->source_no ?: $sr->movement_no),
+                'party' => $sr->customer_name ?: 'Customer Return',
+                'warehouse' => $sr->warehouse_name ?: 'Main Godown',
+                'inward_qty' => $returnQty,
+                'outward_qty' => 0.0,
+                'qty' => $returnQty,
+                'unit' => $unit,
+                'cost' => (float) $sr->unit_cost,
+                'total_value' => (float) $sr->value,
+                'description' => "Received {$returnQty} {$unit} back from customer " . ($sr->customer_name ?: 'Customer'),
+            ];
+        }
+
+        // 8. Purchase Returns to Suppliers (Outward Return)
+        $hasReturnPurchasesTable = \Illuminate\Support\Facades\Schema::hasTable('return_purchases');
+        $hasSuppliersTable = \Illuminate\Support\Facades\Schema::hasTable('suppliers');
+        $canJoinSupplier = $hasReturnPurchasesTable && $hasSuppliersTable;
+
+        $purchaseReturnsQuery = DB::table('stock_movement_lines as l')
+            ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+            ->leftJoin('warehouses as w', 'w.id', '=', 'l.warehouse_id');
+
+        if ($hasReturnPurchasesTable) {
+            $purchaseReturnsQuery->leftJoin('return_purchases as rp', function ($join) {
+                $join->on('rp.id', '=', 'm.source_id')->where('m.source_type', '=', 'return_purchase');
+            });
+            if ($canJoinSupplier) {
+                $purchaseReturnsQuery->leftJoin('suppliers as s', 's.id', '=', 'rp.supplier_id');
+            }
+        }
+
+        $purchaseReturns = $purchaseReturnsQuery
+            ->where('l.company_id', $context->companyId)
+            ->where('l.product_id', $productId)
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where(function ($q) {
+                $q->where('m.movement_type', 'purchase_return')
+                  ->orWhere('m.source_type', 'return_purchase');
+            })
+            ->orderBy('m.movement_date')
+            ->get([
+                'm.movement_date', 'm.movement_no', 'm.source_no', 'l.qty_base', 'l.unit_cost', 'l.value',
+                'w.name as warehouse_name',
+                $canJoinSupplier ? 's.name as supplier_name' : DB::raw("NULL as supplier_name"),
+                $hasReturnPurchasesTable ? 'rp.reference_no as pr_ref' : DB::raw("NULL as pr_ref"),
+            ]);
+
+        foreach ($purchaseReturns as $pr) {
+            $prQty = abs((float) $pr->qty_base);
+            $events[] = [
+                'date' => substr($pr->movement_date, 0, 10),
+                'timestamp' => $pr->movement_date,
+                'stage' => 'dispatch',
+                'badge' => 'Purchase Return (-)',
+                'badge_class' => 'badge-dispatch',
+                'icon' => 'dripicons-export',
+                'title' => 'Return to Supplier',
+                'ref_no' => $pr->pr_ref ?: ($pr->source_no ?: $pr->movement_no),
+                'party' => $pr->supplier_name ?: 'Supplier Return',
+                'warehouse' => $pr->warehouse_name ?: 'Main Godown',
+                'inward_qty' => 0.0,
+                'outward_qty' => $prQty,
+                'qty' => $prQty,
+                'unit' => $unit,
+                'cost' => (float) $pr->unit_cost,
+                'total_value' => (float) $pr->value,
+                'description' => "Returned {$prQty} {$unit} to supplier " . ($pr->supplier_name ?: 'Supplier'),
+            ];
+        }
+
+        // 9. Damage & Scrap Deductions
+        if (\Illuminate\Support\Facades\Schema::hasTable('damage_stocks')) {
+            $damages = DB::table('damage_stocks as ds')
+                ->leftJoin('warehouses as w', 'w.id', '=', 'ds.warehouse_id')
+                ->where('ds.company_id', $context->companyId)
+                ->where('ds.product_id', $productId)
+                ->orderBy('ds.created_at')
+                ->get(['ds.created_at', 'ds.reference_no', 'ds.qty', 'ds.unit_cost', 'ds.total_loss', 'ds.reason', 'ds.note', 'w.name as warehouse_name']);
+
+            foreach ($damages as $dmg) {
+                $dmgQty = abs((float) $dmg->qty);
+                $events[] = [
+                    'date' => substr($dmg->created_at, 0, 10),
+                    'timestamp' => $dmg->created_at,
+                    'stage' => 'adjustment',
+                    'badge' => 'Damage / Scrap (-)',
+                    'badge_class' => 'badge-adjustment-neg',
+                    'icon' => 'dripicons-warning',
+                    'title' => 'Damage / Scrap Written Off',
+                    'ref_no' => $dmg->reference_no,
+                    'party' => $dmg->reason ?: 'Damaged Goods',
+                    'warehouse' => $dmg->warehouse_name ?: 'Main Godown',
+                    'inward_qty' => 0.0,
+                    'outward_qty' => $dmgQty,
+                    'qty' => $dmgQty,
+                    'unit' => $unit,
+                    'cost' => (float) $dmg->unit_cost,
+                    'total_value' => (float) $dmg->total_loss,
+                    'description' => "Written off {$dmgQty} {$unit} as damage/scrap in {$dmg->warehouse_name}" . ($dmg->reason ? " ({$dmg->reason})" : ""),
+                ];
+            }
         }
 
         // Filter events strictly within requested date window
@@ -912,8 +1137,8 @@ class SimplifiedStockService
             'dailySummary' => $dailySummary,
             'movementSummary' => $movementSummary,
             'lifecycleStages' => $lifecycleStages,
-            'convertedToProducts' => $convertedToProducts,
-            'convertedFromProducts' => $convertedFromProducts,
+            'convertedToProducts' => array_values($convertedToProducts),
+            'convertedFromProducts' => array_values($convertedFromProducts),
             'filters' => $filters,
         ];
     }
