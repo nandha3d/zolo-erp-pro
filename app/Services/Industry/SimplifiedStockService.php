@@ -170,6 +170,60 @@ class SimplifiedStockService
             }
         }
 
+        // Also discover conversions recorded via paired applied stock movements on job work receipts
+        $consumedMovements = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->join('products as p', 'p.id', '=', 'l.product_id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where('l.qty_base', '<', 0)
+            ->where('m.movement_date', '<', $to)
+            ->select('m.source_id as receipt_id', 'l.product_id', 'p.name', 'l.qty_base', 'm.source_no', 'm.movement_date')
+            ->get()
+            ->groupBy('receipt_id');
+
+        $producedMovements = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->join('products as p', 'p.id', '=', 'l.product_id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where('l.qty_base', '>', 0)
+            ->where('m.movement_date', '<', $to)
+            ->select('m.source_id as receipt_id', 'l.product_id', 'p.name', 'l.qty_base', 'm.source_no', 'm.movement_date')
+            ->get()
+            ->groupBy('receipt_id');
+
+        foreach ($consumedMovements as $receiptId => $rawList) {
+            $convList = $producedMovements->get($receiptId);
+            if (!$convList) continue;
+            foreach ($rawList as $raw) {
+                foreach ($convList as $conv) {
+                    if ($raw->product_id == $conv->product_id) continue;
+                    $fromPid = (int) $raw->product_id;
+                    $toPid = (int) $conv->product_id;
+                    $qty = abs((float) $conv->qty_base);
+                    $qtyFormatted = rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.');
+                    $ref = ' (' . $raw->source_no . ')';
+
+                    $noteFrom = "{$qtyFormatted} returned as {$conv->name}{$ref}";
+                    if (!in_array($noteFrom, $notes[$fromPid] ?? [], true)) {
+                        $notes[$fromPid][] = $noteFrom;
+                        $convertedOut[$fromPid] = ($convertedOut[$fromPid] ?? 0) + $qty;
+                    }
+
+                    $noteTo = "{$qtyFormatted} received from {$raw->name}{$ref}";
+                    if (!in_array($noteTo, $notes[$toPid] ?? [], true)) {
+                        $notes[$toPid][] = $noteTo;
+                        $convertedIn[$toPid] = ($convertedIn[$toPid] ?? 0) + $qty;
+                    }
+                }
+            }
+        }
+
         // 5. Merge all distinct products touched
         $productIds = collect()
             ->merge($movementRows->pluck('product_id'))
@@ -219,10 +273,21 @@ class SimplifiedStockService
 
             $prodNotes = $notes[$pid] ?? [];
 
+            // Extract lifecycle handle / series keyword
+            $handle = '';
+            if (preg_match('/\(([^)]+)\)$/', $prod->name, $matches)) {
+                $handle = $matches[1];
+            } elseif (preg_match('/-([A-Z0-9]+)$/', $prod->code ?? '', $matches)) {
+                $handle = $matches[1];
+            } else {
+                $handle = $prod->code ?: 'MAIN';
+            }
+
             $rows[] = (object) [
                 'product_id' => $pid,
                 'product' => $prod->name,
                 'product_code' => $prod->code,
+                'handle' => $handle,
                 'lot' => $byLot ? ($mRows->first()?->lot ?: 'Unbatched') : 'Combined lots',
                 'base_unit' => $unit,
                 'purchased_qty' => $purchased,
@@ -235,6 +300,18 @@ class SimplifiedStockService
                 'final_stock_qty' => $owned,
                 'conversion_notes' => $prodNotes,
             ];
+        }
+
+        // Filter by keyword / handle if provided
+        if (!empty($filters['search'])) {
+            $term = mb_strtolower(trim($filters['search']));
+            $rows = array_values(array_filter($rows, function ($r) use ($term) {
+                return str_contains(mb_strtolower($r->product), $term)
+                    || str_contains(mb_strtolower($r->product_code ?? ''), $term)
+                    || str_contains(mb_strtolower($r->lot ?? ''), $term)
+                    || str_contains(mb_strtolower($r->handle ?? ''), $term)
+                    || collect($r->conversion_notes ?? [])->contains(fn ($n) => str_contains(mb_strtolower($n), $term));
+            }));
         }
 
         // Sort by product name
@@ -1139,6 +1216,341 @@ class SimplifiedStockService
             'lifecycleStages' => $lifecycleStages,
             'convertedToProducts' => array_values($convertedToProducts),
             'convertedFromProducts' => array_values($convertedFromProducts),
+            'filters' => $filters,
+        ];
+    }
+
+    /**
+     * Build rich interactive conversion and lifecycle tree nodes for products
+     */
+    public function conversionLifecycleTree(array $filters, CompanyContext $context, int $actor): array
+    {
+        $this->posting->authorize('core.inventory', 'products-index', $context, $actor);
+
+        $stockData = $this->simplifiedStock($filters, $context, $actor);
+        $rows = $stockData['rows'];
+        $to = CarbonImmutable::parse($filters['to'] ?? now()->toDateString())->addDay()->toDateString();
+
+        // 1. All conversions from job_work_receipts details_json (stock_name_change)
+        $convJsonReceipts = DB::table('job_work_receipts as r')
+            ->leftJoin('job_work_dispatches as d', 'd.id', '=', 'r.dispatch_id')
+            ->leftJoin('job_work_orders as o', 'o.id', '=', 'd.job_work_order_id')
+            ->leftJoin('suppliers as s', 's.id', '=', 'o.job_worker_party_id')
+            ->where('r.company_id', $context->companyId)
+            ->whereNull('r.reversed_at')
+            ->where('r.details_json', 'like', '%"stock_name_change"%')
+            ->get(['r.id', 'r.reference_no', 'r.details_json', 'r.business_date', 's.name as supplier_name']);
+
+        $conversionsTo = [];
+        $conversionsFrom = [];
+
+        foreach ($convJsonReceipts as $cr) {
+            $change = json_decode($cr->details_json ?? '{}', true)['stock_name_change'] ?? null;
+            if (!$change) continue;
+            foreach ($change['items'] ?? [] as $item) {
+                $fromPid = (int) $item['from_product_id'];
+                $toPid = (int) $item['to_product_id'];
+                $qty = (float) $item['qty'];
+                $date = $change['date'] ?? $cr->business_date;
+                $ref = $cr->reference_no . (!empty($change['purchase_no']) ? ' / ' . $change['purchase_no'] : '');
+                $processor = $cr->supplier_name ?: 'Cauvery Dyeing & Sizing Works';
+
+                $conversionsTo[$fromPid][] = [
+                    'to_id' => $toPid,
+                    'to_name' => $item['to_name'],
+                    'qty' => $qty,
+                    'ref' => $ref,
+                    'date' => $date,
+                    'processor' => $processor,
+                    'source' => 'stock_name_change',
+                ];
+
+                $conversionsFrom[$toPid][] = [
+                    'from_id' => $fromPid,
+                    'from_name' => $item['from_name'],
+                    'qty' => $qty,
+                    'ref' => $ref,
+                    'date' => $date,
+                    'processor' => $processor,
+                    'source' => 'stock_name_change',
+                ];
+            }
+        }
+
+        // 2. All conversions from paired stock_movements (source_type = 'job_work_receipts')
+        $consumed = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->join('products as p', 'p.id', '=', 'l.product_id')
+            ->leftJoin('job_work_receipts as r', 'r.id', '=', 'm.source_id')
+            ->leftJoin('job_work_dispatches as d', 'd.id', '=', 'r.dispatch_id')
+            ->leftJoin('job_work_orders as o', 'o.id', '=', 'd.job_work_order_id')
+            ->leftJoin('suppliers as s', 's.id', '=', 'o.job_worker_party_id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('l.qty_base', '<', 0)
+            ->select('m.source_id as receipt_id', 'l.product_id', 'p.name', 'p.code', 'l.qty_base', 'm.source_no', 'm.movement_date', 's.name as supplier_name')
+            ->get()
+            ->groupBy('receipt_id');
+
+        $produced = DB::table('stock_movements as m')
+            ->join('stock_movement_lines as l', 'l.stock_movement_id', '=', 'm.id')
+            ->join('products as p', 'p.id', '=', 'l.product_id')
+            ->where('m.company_id', $context->companyId)
+            ->where('m.source_type', 'job_work_receipts')
+            ->where('l.qty_base', '>', 0)
+            ->select('m.source_id as receipt_id', 'l.product_id', 'p.name', 'p.code', 'l.qty_base', 'm.source_no', 'm.movement_date')
+            ->get()
+            ->groupBy('receipt_id');
+
+        foreach ($consumed as $receiptId => $rawList) {
+            $convList = $produced->get($receiptId);
+            if (!$convList) continue;
+            foreach ($rawList as $raw) {
+                foreach ($convList as $conv) {
+                    if ($raw->product_id == $conv->product_id) continue;
+                    $fromPid = (int) $raw->product_id;
+                    $toPid = (int) $conv->product_id;
+                    $qty = abs((float) $conv->qty_base);
+                    $ref = $raw->source_no;
+                    $date = substr($raw->movement_date, 0, 10);
+                    $processor = $raw->supplier_name ?: 'Cauvery Dyeing & Sizing Works';
+
+                    $existingTo = collect($conversionsTo[$fromPid] ?? [])->firstWhere('to_id', $toPid);
+                    if (!$existingTo) {
+                        $conversionsTo[$fromPid][] = [
+                            'to_id' => $toPid,
+                            'to_name' => $conv->name,
+                            'qty' => $qty,
+                            'ref' => $ref,
+                            'date' => $date,
+                            'processor' => $processor,
+                            'source' => 'paired_movements',
+                        ];
+                    }
+
+                    $existingFrom = collect($conversionsFrom[$toPid] ?? [])->firstWhere('from_id', $fromPid);
+                    if (!$existingFrom) {
+                        $conversionsFrom[$toPid][] = [
+                            'from_id' => $fromPid,
+                            'from_name' => $raw->name,
+                            'qty' => $qty,
+                            'ref' => $ref,
+                            'date' => $date,
+                            'processor' => $processor,
+                            'source' => 'paired_movements',
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Transactions for branches (purchases, dispatches)
+        $purchasesByProduct = DB::table('stock_movement_lines as l')
+            ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
+            ->leftJoin('purchases as p', function ($join) {
+                $join->on('p.id', '=', 'm.source_id')->where('m.source_type', '=', 'purchase');
+            })
+            ->leftJoin('suppliers as s', 's.id', '=', 'p.supplier_id')
+            ->where('l.company_id', $context->companyId)
+            ->where('m.company_id', $context->companyId)
+            ->where('m.projection_mode', 'applied')
+            ->where('m.status', 'posted')
+            ->where('l.qty_base', '>', 0)
+            ->where(function ($q) {
+                $q->where('m.movement_type', 'purchase')->orWhere('m.source_type', 'purchase');
+            })
+            ->select([
+                'l.product_id',
+                'm.source_no as ref_no',
+                'm.movement_date',
+                'l.qty_base as qty',
+                's.name as supplier_name',
+            ])
+            ->get()
+            ->groupBy('product_id');
+
+        $dispatchesByProduct = DB::table('job_work_dispatch_lines as dl')
+            ->join('job_work_dispatches as d', 'd.id', '=', 'dl.dispatch_id')
+            ->join('job_work_orders as o', 'o.id', '=', 'd.job_work_order_id')
+            ->leftJoin('suppliers as s', 's.id', '=', 'o.job_worker_party_id')
+            ->where('d.company_id', $context->companyId)
+            ->whereNull('d.reversed_at')
+            ->select([
+                'dl.product_id',
+                'd.reference_no as dispatch_ref',
+                'o.reference_no as order_ref',
+                'd.business_date',
+                'dl.qty_base as qty',
+                's.name as processor_name',
+            ])
+            ->get()
+            ->groupBy('product_id');
+
+        $nodes = [];
+
+        foreach ($rows as $r) {
+            $pid = $r->product_id;
+            $handle = $r->handle ?? '';
+            if (!$handle) {
+                if (preg_match('/\(([^)]+)\)$/', $r->product, $matches)) {
+                    $handle = $matches[1];
+                } elseif (preg_match('/-([A-Z0-9]+)$/', $r->product_code ?? '', $matches)) {
+                    $handle = $matches[1];
+                } else {
+                    $handle = $r->product_code ?: 'MAIN';
+                }
+            }
+
+            $cTo = $conversionsTo[$pid] ?? [];
+            $cFrom = $conversionsFrom[$pid] ?? [];
+
+            $category = 'standard';
+            $statusBadge = 'In Godown Ready';
+            $statusClass = 'badge-primary';
+
+            if (!empty($cTo)) {
+                $category = 'converted_parent';
+                $statusBadge = 'Converted ➔ ' . $cTo[0]['to_name'];
+                $statusClass = 'badge-success';
+            } elseif (!empty($cFrom)) {
+                $category = 'converted_child';
+                $statusBadge = 'Produced from ➔ ' . $cFrom[0]['from_name'];
+                $statusClass = 'badge-info';
+            } elseif ($r->at_job_workers_qty > 0) {
+                $category = 'wip_processing';
+                $statusBadge = 'In Job Work (WIP)';
+                $statusClass = 'badge-warning';
+            }
+
+            // Build branches
+            $branches = [];
+
+            // Branch 1: Inward Purchases
+            $pList = $purchasesByProduct->get($pid, collect());
+            if ($pList->isNotEmpty() || $r->purchased_qty > 0) {
+                $firstP = $pList->first();
+                $branches[] = [
+                    'type' => 'inward',
+                    'icon' => 'dripicons-download',
+                    'tone' => 'z-tone-primary',
+                    'title' => 'Purchased Inward',
+                    'qty' => $r->purchased_qty,
+                    'summary' => $firstP ? "Purchased {$firstP->qty} {$r->base_unit} from " . ($firstP->supplier_name ?: 'Supplier') . " ({$firstP->ref_no}) on " . substr($firstP->movement_date, 0, 10) : "Total Purchased: {$r->purchased_qty} {$r->base_unit}",
+                    'items' => $pList->map(fn($p) => [
+                        'ref' => $p->ref_no,
+                        'party' => $p->supplier_name ?: 'Supplier',
+                        'date' => substr($p->movement_date, 0, 10),
+                        'qty' => (float) $p->qty,
+                    ])->all(),
+                ];
+            }
+
+            // Branch 2: Dispatched to Job Work
+            $dList = $dispatchesByProduct->get($pid, collect());
+            if ($dList->isNotEmpty() || $r->given_to_job_work_qty > 0) {
+                $firstD = $dList->first();
+                $branches[] = [
+                    'type' => 'dispatch',
+                    'icon' => 'dripicons-export',
+                    'tone' => 'z-tone-warning',
+                    'title' => 'Dispatched to Processor (DC)',
+                    'qty' => $r->given_to_job_work_qty,
+                    'summary' => $firstD ? "Dispatched {$firstD->qty} {$r->base_unit} to " . ($firstD->processor_name ?: 'Job Worker') . " via {$firstD->dispatch_ref} ({$firstD->order_ref}) on {$firstD->business_date}" : "Total Sent to Processors: {$r->given_to_job_work_qty} {$r->base_unit}",
+                    'items' => $dList->map(fn($d) => [
+                        'ref' => $d->dispatch_ref,
+                        'order' => $d->order_ref,
+                        'party' => $d->processor_name ?: 'Job Worker',
+                        'date' => $d->business_date,
+                        'qty' => (float) $d->qty,
+                    ])->all(),
+                ];
+            }
+
+            // Branch 3: Conversion Transformation
+            if (!empty($cTo)) {
+                $firstC = $cTo[0];
+                $branches[] = [
+                    'type' => 'conversion_out',
+                    'icon' => 'dripicons-swap',
+                    'tone' => 'z-tone-success',
+                    'title' => 'Converted to Finished Good',
+                    'qty' => $firstC['qty'],
+                    'summary' => "Transformed into {$firstC['to_name']} ({$firstC['qty']} {$r->base_unit}) at {$firstC['processor']} via {$firstC['ref']} on {$firstC['date']}",
+                    'target_id' => $firstC['to_id'],
+                    'target_name' => $firstC['to_name'],
+                    'items' => $cTo,
+                ];
+            } elseif (!empty($cFrom)) {
+                $firstC = $cFrom[0];
+                $branches[] = [
+                    'type' => 'conversion_in',
+                    'icon' => 'dripicons-swap',
+                    'tone' => 'z-tone-info',
+                    'title' => 'Produced from Raw Material',
+                    'qty' => $firstC['qty'],
+                    'summary' => "Received from raw material {$firstC['from_name']} ({$firstC['qty']} {$r->base_unit}) via {$firstC['ref']} on {$firstC['date']}",
+                    'target_id' => $firstC['from_id'],
+                    'target_name' => $firstC['from_name'],
+                    'items' => $cFrom,
+                ];
+            }
+
+            // Branch 4: Live Godown Stock & Sales
+            $branches[] = [
+                'type' => 'balance_sales',
+                'icon' => 'dripicons-home',
+                'tone' => 'z-tone-info',
+                'title' => 'Current Status & Output',
+                'qty' => $r->final_stock_qty,
+                'summary' => "Godown In-Hand: {$r->in_godown_qty} {$r->base_unit} · Processor WIP: {$r->at_job_workers_qty} {$r->base_unit} · Sold: {$r->sold_qty} {$r->base_unit}",
+                'in_godown' => $r->in_godown_qty,
+                'at_processors' => $r->at_job_workers_qty,
+                'sold' => $r->sold_qty,
+            ];
+
+            $nodes[] = [
+                'product_id' => $pid,
+                'product_name' => $r->product,
+                'product_code' => $r->product_code,
+                'handle' => $handle,
+                'base_unit' => $r->base_unit,
+                'category' => $category,
+                'status_badge' => $statusBadge,
+                'status_class' => $statusClass,
+                'purchased_qty' => $r->purchased_qty,
+                'dispatched_qty' => $r->given_to_job_work_qty,
+                'returned_qty' => $r->returned_after_job_work_qty,
+                'in_godown_qty' => $r->in_godown_qty,
+                'at_job_workers_qty' => $r->at_job_workers_qty,
+                'sold_qty' => $r->sold_qty,
+                'final_stock_qty' => $r->final_stock_qty,
+                'conversions_to' => $cTo,
+                'conversions_from' => $cFrom,
+                'branches' => $branches,
+            ];
+        }
+
+        // Sort: Converted parents and WIP first, then by activity volume descending
+        usort($nodes, function ($a, $b) {
+            $scoreA = ($a['category'] === 'converted_parent' ? 1000 : ($a['category'] === 'wip_processing' ? 500 : 0)) + $a['purchased_qty'] + $a['dispatched_qty'] + $a['final_stock_qty'];
+            $scoreB = ($b['category'] === 'converted_parent' ? 1000 : ($b['category'] === 'wip_processing' ? 500 : 0)) + $b['purchased_qty'] + $b['dispatched_qty'] + $b['final_stock_qty'];
+            return $scoreB <=> $scoreA;
+        });
+
+        $recentNodes = array_slice($nodes, 0, 10);
+        $distinctHandles = array_values(array_unique(array_filter(array_column($nodes, 'handle'))));
+
+        return [
+            'nodes' => $nodes,
+            'recent_nodes' => $recentNodes,
+            'total_count' => count($nodes),
+            'categories' => [
+                'all' => count($nodes),
+                'converted' => count(array_filter($nodes, fn ($n) => $n['category'] === 'converted_parent' || $n['category'] === 'converted_child')),
+                'wip' => count(array_filter($nodes, fn ($n) => $n['category'] === 'wip_processing')),
+                'ready' => count(array_filter($nodes, fn ($n) => $n['in_godown_qty'] > 0)),
+            ],
+            'distinct_handles' => $distinctHandles,
             'filters' => $filters,
         ];
     }
