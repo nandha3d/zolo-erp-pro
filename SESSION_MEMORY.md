@@ -1,4 +1,9 @@
-## Product Lifecycle & Conversion Tree Graph, Expandable Nodes & Lifecycle Handle Filtering — 2026-11-19 (`ui`)
+## Product Lifecycle & Conversion Tree Graph, Expandable Nodes & Lifecycle Handle Filtering — 2026-11-19 (`ui` & `main`)
+
+- **Merge Status & Production Release:**
+  - **PR #28:** Merged into `main` via commit `5d16a057aa3e243072049e4b6339c542a9a7a75f`.
+  - **Checks:** All 14 GitHub Actions CI suites and the required `ERP acceptance gate` passed with 100% green status.
+  - **Remotes Synchronized:** `origin/main`, `nandha-origin/main`, `origin/ui`, and `nandha-origin/ui` are all synchronized at `5d16a057`.
 
 - **Context & User Directives:**
   1. *"give a handle or common name or number or keyword for product lifecycle to filter the product's stock and details."*
