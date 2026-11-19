@@ -4261,7 +4261,7 @@ body.dark-mode #quick-create-party-modal .compact-field-block .form-control:focu
     }
 
     .doc-primary-fields .fields-compact-row.doc-row-b {
-        grid-template-columns: max-content max-content max-content minmax(180px, 1.3fr) minmax(120px, .9fr) minmax(140px, 1.1fr) minmax(210px, 1.6fr);
+        grid-template-columns: max-content max-content max-content minmax(240px, 1.6fr) minmax(120px, .9fr) minmax(180px, 1.5fr);
     }
 
     .doc-primary-fields .fields-compact-row.doc-row-b.has-biller {
@@ -4693,19 +4693,28 @@ table.desk-grid-table td .bootstrap-select>.btn.dropdown-toggle {
 
 /* GST place of supply + RCM: the wrapper is a control row, not a label line, so it keeps full control height
    (the 10px label-line rule hid the "GST · Place of supply" label behind the select). */
+.doc-primary-fields #gst-entry-field {
+    min-width: 220px;
+}
+
 .doc-primary-fields #gst-entry-field>.d-flex {
     height: var(--doc-h) !important;
     margin-bottom: 0 !important;
+    gap: 8px !important;
 }
 
 .doc-primary-fields #gst-entry-field>.d-flex>select {
     flex: 1 1 auto;
-    min-width: 0;
+    min-width: 140px;
 }
 
 .doc-primary-fields #gst-entry-field>.d-flex>label {
     flex: 0 0 auto;
     margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
 }
 
 .doc-primary-fields #gst-entry-field>label {
@@ -4717,9 +4726,9 @@ table.desk-grid-table td .bootstrap-select>.btn.dropdown-toggle {
 
 @container billhead (max-width: 1180px) {
     .doc-primary-fields .doc-row-b>#gst-entry-field {
-        flex: 1.2 1 160px !important;
-        min-width: 155px !important;
-        max-width: 210px !important;
+        flex: 1.5 1 220px !important;
+        min-width: 210px !important;
+        max-width: none !important;
     }
 }
 

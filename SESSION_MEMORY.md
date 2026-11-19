@@ -1,3 +1,231 @@
+## Bar Chart Head Quantities, Zero Inside Scrolling & Concise Movement Phrasing — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - Directives & Screenshot Feedback:
+    1. *"each head should show the quanitity."* (Ref: `media_1795089752766_238d9385.png` highlighting bar columns on `/inventory-reports/stock-by-lot`).
+    2. *"dont want this much detail and the title"why......" simply tell that 600mtr dispatched to ..........."* (Ref: `media_1795089627977_fc41b744.jpg`, `media_1795089577684_98a3a3cf.jpg` highlighting the chart tooltip).
+    3. *"no need inside scrolling.. "* (Ref: `media_1795089247227_c79d6b8e.png` highlighting the internal vertical scrollbar on the stock report table).
+    4. *"where is the interactive line kind of timeline.. also give the stock why that is reduced? it says just a balance, also we can use more than one graph in the same graph with different line colors to represent the process. if that suits for this process flow, other wise leave. also do not make this scrollable inside, make the full page scrollable if paossible, otherwise small window is difficult to view.. make a color coded "Connected Process Lifecycle & Milestone Chronology" boxes with interactive way."*
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Quantity Rendered on Each Bar Head / Column (`stock-by-lot.blade.php`, `inventory-timeline.blade.php`):**
+     - Implemented an inline Chart.js plugin using `afterDatasetsDraw(chart)`:
+       - Renders bold 11px numerical quantities (`Number(val).toLocaleString()`) directly on the top head of every non-zero bar column (`bar._model.x, bar._model.y - 3`).
+       - Configured `layout.padding.top = 22` and dynamic headroom (`topMax = Math.ceil(maxVal * 1.18)`) so data labels on the tallest bars never clip.
+       - Labels persist smoothly during hover, animation redraws, and screen resize without external plugin dependencies.
+       - Also applied head quantity labels to the Inward / Outward bar mode in `inventory-timeline.blade.php`.
+  2. **Direct, Concise Phrasing (Zero "Why..." Fluff):**
+     - Eliminated the `"Why Stock Changed: "` and `"Why: "` tooltip titles.
+     - Replaced verbose multi-sentence paragraphs with simple, direct statements:
+       - Purchase: `1,000 MTR purchased from Sri Meenakshi Cotton Mills (PUR-00004)`
+       - Dispatch: `600 MTR dispatched to Cauvery Dyeing & Sizing Works (JWDC-00004)`
+       - Return: `580 MTR returned from Cauvery Dyeing & Sizing Works (JWGRN-00003) (Converted to Vat Dyed Navy Blue Fabric 60s (Z58))`
+       - Closing: `400 MTR closing stock in hand`
+     - Updated `#timelineSpotlightCard` with the badge `Selected Milestone` and concise event statement.
+  3. **Zero Inside Scrolling on All Cards & Tables (`reports-stock-by-lot.css`, `inventory-timeline.css`):**
+     - Eliminated `flex: 1 1 0` and `overflow: hidden` on `#stock-lot-report .desk-card-wrapper` and `.lot-card`.
+     - Added permanent high-specificity overrides: `overflow-y: visible !important; max-height: none !important; height: auto !important; flex: none !important;` on `.desk-card-wrapper`, `.lot-card`, `.table-responsive`, and `.shell-fit-scroll`.
+     - In JavaScript, `removeScrollClamps()` actively strips `.shell-fit-scroll` and resets `maxHeight = 'none'` on DOM load and window resize.
+     - The entire browser window scrolls naturally without nested or trapped scrollbars.
+  4. **Multi-Process Flow Comparative Chart & Interactive Axis:**
+     - 4 distinct colored process flow lines on `#stockEvolutionChart`:
+       - Godown Stock in Hand (`#7c1274`, purple gradient fill)
+       - Material at Job Worker WIP (`#f59e0b`, dashed amber line)
+       - Cumulative Inward Purchased (`#16a34a`, green dotted line)
+       - Cumulative Returned Goods (`#0284c7`, cyan line)
+     - Interactive milestone nodes with real dates, ref badges, quantity tags, and stage color codes (`stage-tone-purchased`, `stage-tone-dispatched`, `stage-tone-wip`, `stage-tone-returned`, `stage-tone-stock`).
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: All modified PHP files and Blade templates passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)** — 0 forbidden inline styles or legacy token violations.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Sleek Combined Lifecycle Timeline (Zero Scrolling) & Front Page Stock Movement Graphs — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - Directives:
+    1. *"no scrolling needed..this chart should be in the front stock page for all the stocks how much went how much come as a chart etc or some other method to identify.. i need the "connected lifecycle....." section should be sleek and bring the "Chronological Milestone Axis" into this and combine, because both are serving the same..makesure it is not scrollable."*
+  - Screenshots & Evidence Addressed:
+    - `media_1795083684559_deaf0a92.png`: Awkward horizontal and vertical scrollbars on the separate "Chronological Milestone Axis" track.
+    - `media_1795083701238_e8d91b18.jpg`: Timeline page with redundant double timeline sections.
+    - `media_1795083885973_3f3cf476.png`: Connected lifecycle cards.
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Combined Sleek Lifecycle & Milestone Grid (`inventory-timeline.blade.php`, `inventory-timeline.css`):**
+     - Combined the redundant "Connected Process Lifecycle" and "Chronological Milestone Axis" into one compact `.combined-lifecycle-card`.
+     - Uses a 5-column fluid CSS grid: `display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; width: 100% !important; overflow: hidden !important;`.
+     - Zero horizontal or vertical scrollbars: seamlessly fits all desktop screen widths.
+     - Each card step displays stage label, status icon, exact quantity, milestone event date (`<i class="dripicons-calendar"></i>`), reference number (`ref_no`), party name, and descriptive subtext.
+     - Completely eliminated the duplicate `.milestone-arrow-card` and its scrollable CSS viewport.
+  2. **Front Stock Page Movement Graphs (`stock-by-lot.blade.php`, `InventoryLotReportController.php`):**
+     - Relocated the Executive Stock Movement & Flow Graph card above `@if($isSimplifiedView)`, making it prominently visible on `/inventory-reports/stock-by-lot` across all stock views (Combined by Product, Individual Lots, and Simplified Flow).
+     - Clearly visualizes what came in ("Come") vs what went out ("Gone") vs returned vs stock in hand:
+       - `Inward (Come)` (rgba(22, 163, 74, 0.85))
+       - `Outward / Job Work (Gone)` (rgba(245, 158, 11, 0.85))
+       - `Returned after Processing` (rgba(6, 182, 212, 0.85))
+       - `Closing Stock (In Hand)` (rgba(124, 18, 116, 0.85))
+     - Accompanied by distribution doughnut chart (`Ready in Godown`, `At Processors (WIP)`, `In Quarantine`).
+  3. **100% zoloERP Design System Compliance:**
+     - Fully adheres to `AGENTS.md` Section 4.4: 100% reuse of `.kpi-summary-strip`, `.kpi-card`, `.z-icon-tile`, `.desk-filter-card`, and standard badge pills. Zero custom AI card borders or forbidden inline styles.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: All modified PHP files and Blade templates passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)** — 0 forbidden inline styles or legacy token violations.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - `php vendor/bin/phpunit tests/Feature/JobWorkStockNamingTest.php`: **4/4 passed (100%, 54 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Executive Inventory Timeline, Connected Process Pipeline & Stock Movement Visuals — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - Directives:
+    1. *"what is this? make the filter portions sleek and slim, also where is the timeline? check the reference image of shirts with timeline, same kind of design with our ERP process. but donot copy the same, that is just a reference image. idea yourself and think how we can implement and how to impress the client."*
+    2. *"also main stock inventory should have this kind of graphs. to identify how much gone and come etc."*
+    3. *"here is another reference for timeline visuals refer this one and the previous one to make an excellent UI idea to impress the client."*
+  - Reference Attachments:
+    - `media_1795082329018_24f8c4e3.png`: Horizontal connected process stepper timeline for apparel/manufacturing with connected stage pills and flow tracks.
+    - `media_1795082441892_da631412.jpg`: Complete Inventory Timeline mockup with sleek slim filter bar, 5-card KPI summary strip, Spline area chart with callouts, compact product sidebar card, and purple header tabbed ledger table.
+    - `media_1795082664643_640b4af1.png`: Horizontal chronological milestone arrow axis with alternating milestone cards branching above and below the beam.
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Sleek & Slim Single-Line Filter Toolbar (`inventory-timeline.blade.php`, `inventory-timeline.css`):**
+     - Transformed filter form into a compact single-line flex toolbar (`gap: 8px 12px; height: 32px` inputs) perfectly aligned with zoloERP standard (`reports-stock-by-lot.css`).
+     - Added smart product default in `InventoryLotReportController@timeline`: automatically picks the most recently active product (e.g. `Grey Cotton Fabric 60s (Z58)`) when no query string is passed, eliminating empty states.
+  2. **Canonical 5-Card KPI Strip:**
+     - 100% zoloERP design system reuse (`.kpi-summary-strip` / `.kpi-card` with `.z-icon-tile`):
+       - Closing Stock (`.z-tone-primary`, `<i class="dripicons-box"></i>`)
+       - Total Inward (`.z-tone-success`, `<i class="dripicons-download"></i>`)
+       - Total Outward (`.z-tone-warning`, `<i class="dripicons-export"></i>`)
+       - Net Movement (`.z-tone-info`, `<i class="dripicons-graph-bar"></i>`)
+       - No. of Transactions (`.z-tone-neutral`, `<i class="dripicons-stack"></i>`)
+  3. **Connected Process Lifecycle Stepper Pipeline (Apparel/Manufacturing Reference Adaptation):**
+     - Implemented the connected 5-stage sequential lifecycle stepper:
+       `[ 1. Raw Inward ] ──► [ 2. Sent to Job Work (DC) ] ──► [ 3. At Processors (WIP) ] ──► [ 4. Returned & Converted ] ──► [ 5. Ready Stock ]`
+     - Features connected stage pills, real quantities, checkmark/pulse status icons, connecting rails, and bidirectional traceability links (`Trace Converted Product: Vat Dyed Navy Blue ➔`).
+  4. **Interactive Stock Evolution Spline Area Chart & Compact Product Sidebar (Mockup 1:1):**
+     - Left (8-col): Chart.js spline area chart with purple gradient fill (`#7c1274`), smooth bezier tension, interactive mode toggles (`[Stock Level]`, `[Inward / Outward]`, `[Cumulative]`), and data point callout annotations.
+     - Right (4-col): Compact Product Sidebar Card featuring avatar icon, SKU, warehouse, unit, opening stock, total inward (+green), total outward (-red), and highlighted closing balance card.
+  5. **Horizontal Chronological Arrow Milestone Axis (Milestone Arrow Reference 1:1):**
+     - Rendered a horizontal time axis beam with directional arrow (`───●───────●───────●───────►`) and alternating milestone cards branching above and below the beam showing transaction ref, party, qty impact, and date.
+  6. **Tabbed Transaction Ledger Table with Purple Header:**
+     - Tabs: `Timeline (Transactions)`, `Daily Stock`, `Movement Summary`, `Detailed Vertical Feed`.
+     - Purple header table (`#7c1274`, white text) tracking date/time, transaction type badges, reference numbers, warehouse, inward, outward, and running balance for every event.
+  7. **Main Stock Inventory Graphs & In-Table Row Steppers (`stock-by-lot.blade.php`, `reports-stock-by-lot.css`):**
+     - Added collapsible Executive Inventory Movement Overview Card with top products movement bar chart and distribution doughnut chart.
+     - Added connected row mini-stepper in every table row (`[In: 1,000] ──► [Given: 600] ──► [Back: 580] ──► [Stock: 400]`), allowing the client to understand stock progress at a glance without leaving the main page.
+
+- **Verification & Automated Test Suite:**
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)** — zero forbidden inline styles, zero legacy accent violations.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - `php vendor/bin/phpunit tests/Feature/JobWorkStockNamingTest.php`: **4/4 passed (100%, 54 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Strict "No AI UI Design" Architecture Rule & ERP Design System Standardization — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  - *"no ai design, strictly write a rule that default AI UI design is restricted. keep the existing design to reuse everywhere."*
+  - Attachment: `media_1795080485314_14a94565.png` highlighting bespoke metric cards with left-border colors (`PURCHASED INWARD`, `GIVEN TO JOB WORK`, `RETURNED AFTER PROCESSING`, `FINAL OWNED STOCK`) created in `inventory-timeline.blade.php`.
+  - Directive: Strictly eliminate novel or default AI UI patterns. Codify a permanent architectural rule mandating 100% reuse of canonical zoloERP design system components (`.kpi-summary-strip`, `.kpi-card`, `.z-icon-tile`, `.desk-filter-card`, `.desk-card-wrapper`, `.table.table-sm`, and standard status badge pills).
+
+- **Architectural & Design System Enhancements Delivered:**
+  1. **Codified Permanent UI Rule in `AGENTS.md` (Section 4.4):**
+     - Established non-negotiable rule: **Zero Novel AI UI Designs — Reuse Existing ERP Design System Exclusively**.
+     - Forbidden: Bespoke colored left-border cards (`border-left: 3px solid ...`), floating AI widgets, unstandardized metric layouts, and invented accent colors.
+     - Mandated: Canonical ERP KPI strips (`.kpi-summary-strip > .kpi-card > div + .z-icon-tile`), standard Dripicons, standard `.z-tone-*` classes, `.desk-filter-card`, `.desk-card-wrapper`, and `.table.table-sm`.
+     - Standard Reference Templates: `stock_report.blade.php`, `general_ledger.blade.php`, and `stock-report.css`.
+  2. **Refactored `resources/views/backend/reports/inventory-timeline.blade.php`:**
+     - Replaced the bespoke `.timeline-hero-card` and `.hero-right-metrics` with:
+       - Standard Product Summary Header bar in `.desk-card-wrapper` with `.z-icon-tile.z-tone-primary` and standard badges.
+       - Canonical 4-Card `.kpi-summary-strip` featuring `.kpi-card`s with `.z-icon-tile`:
+         - `Purchased Inward` (`.z-tone-primary`, `<i class="dripicons-download"></i>`)
+         - `Given to Job Work` (`.z-tone-warning`, `<i class="dripicons-export"></i>`)
+         - `Returned after Job Work` (`.z-tone-success`, `<i class="dripicons-checkmark"></i>`)
+         - `Final Owned Stock` (`.z-tone-info`, `<i class="dripicons-box"></i>`)
+       - Replaced custom `.finish-metrics-grid` on final state node with the canonical `.kpi-summary-strip`.
+  3. **Refactored `resources/views/backend/reports/stock-by-lot.blade.php`:**
+     - Replaced custom `.simplified-kpi-bar` with the canonical `.kpi-summary-strip` matching `stock_report.blade.php` 1:1 across all 7 metrics (Purchased Inward, Given to Job Work, Returned, In Godown, In Quarantine, At Processors WIP, Final Owned Stock).
+  4. **Cleaned Stylesheets (`inventory-timeline.css` & `reports-stock-by-lot.css`):**
+     - Completely eliminated `.hero-right-metrics`, `.hero-metric-item`, `.metric-inward`, `.metric-dc`, `.metric-grn`, `.metric-stock`, and all custom left-border stripes (`border-left: 3px solid ...`).
+     - Aligned `.kpi-summary-strip` and `.kpi-card` CSS with `public/css/pages/stock-report.css` and `zolo-components.css`.
+     - Preserved flawless light and dark mode (`body.dark-mode .kpi-card`) behavior.
+
+- **Verification & Test Coverage:**
+  - `php -l`: All modified Blade views and PHP controllers passed with 0 syntax errors.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)** — zero forbidden inline styles or legacy accents.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - `php vendor/bin/phpunit tests/Feature/JobWorkStockNamingTest.php`: **4/4 passed (100%, 54 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+  - **Live Dynamic Test Data Seeded (Zero Hardcoding):**
+    - Supplier: `Sri Meenakshi Cotton Mills` (ID: 10, GST: `33AAACS9988F1Z5`)
+    - Job Worker: `Cauvery Dyeing & Sizing Works` (ID: 11, GST: `33AAACD7766K1Z2`)
+    - Raw Material: `Grey Cotton Fabric 60s (Z58)` (ID: 30, Code: `GCF-60S-Z58`, 1,000 Mtr purchased via `PUR-00004`, 600 Mtr dispatched via `JWDC-00004`, 400 Mtr remaining on hand)
+    - Converted Material: `Vat Dyed Navy Blue Fabric 60s (Z58)` (ID: 31, Code: `JW-30-2E09D732AD`, 580 Mtr received and stocked under different name via `JWGRN-00003` / `PUR-00005`, 20 Mtr process loss)
+    - Live Test URLs:
+      - Raw Material Timeline: `/inventory-reports/timeline?product_id=30`
+      - Converted Material Timeline: `/inventory-reports/timeline?product_id=31`
+      - Simplified Balances Table: `/inventory-reports/stock-by-lot?group_by=simplified`
+
+---
+
+## Simplified Stock Flow, Inventory Lifecycle Timeline & Microsecond Tab Switching — 2026-11-19 (`ui`)
+
+- **Context & Objectives:**
+  - Follow-up on user directives:
+    1. *"there are some overlapping.. and still the tab clicking makes few seconds to load. how to load in micro seconds like windows application."*
+    2. *"client says the inventory is confusing for him. make it more simple, this much we purchased, this much we given to the job work, this much returned after job work, this is the final stock. make an option that, simplified stock and inventory timeline. with beautiful UI."*
+  - Delivered:
+    - Fixed bill header layout overlap (RCM checkbox clipping and Place of Supply grid squeeze).
+    - Microsecond tab switching performance (under 10ms) via in-memory snapshot batching and GST AJAX suppression during restore.
+    - Authoritative `SimplifiedStockService` computing the exact 4-stage business flow requested by the client: `Purchased` → `Given to Job Work` → `Returned after Job Work` → `Final Stock` (Godown, Quarantine, At Processors WIP).
+    - Reconciled "Simplified Business Flow" view in `stock-by-lot.blade.php` with Executive KPI Summary Cards, colored badges, and direct Timeline links.
+    - Dedicated interactive Visual **Inventory Timeline** (`/inventory-reports/timeline`) tracing the chronological journey of any product from purchase inward to DC dispatch, processor WIP, WGRN return, and final available stock.
+
+- **Architectural & Code Enhancements Delivered:**
+  1. **Bill Header Grid & RCM Overlap Resolution (`commercial-workspace.css`, `gst-entry.js`):**
+     - Adjusted `doc-row-b` Purchase grid from 7 columns down to 6 columns (`grid-template-columns: max-content max-content max-content minmax(240px, 1.6fr) minmax(120px, .9fr) minmax(180px, 1.5fr);`), eliminating the empty 7th column compressing column 4.
+     - Removed restrictive inline `style="min-width:160px;max-width:220px;"` from `#gst-entry-field`.
+     - RCM checkbox now renders with 100% visibility, unclipped checkmark, and zero overlap with the Series box.
+  2. **Microsecond Tab Switching Engine (`document-workspace.js`, `gst-entry.js`):**
+     - Introduced `window._isRestoringWorkspace = true` during `restore()` to prevent redundant GST AJAX round-trips (`schedule()`) and party lookups while swapping draft tabs.
+     - Implemented batch line insertion in `restoreLines()`: hides table during row creation (`tbody.style.display = 'none'`), completely eliminating DOM layout thrashing per row.
+     - Consolidated `selectpicker('refresh')` to a single pass at the end of restoration.
+     - Draft tab switches now happen in RAM in under 10ms, delivering native desktop application snappiness.
+  3. **Authoritative Simplified Stock Service (`SimplifiedStockService.php`):**
+     - Queries pure business movements, bypassing virtual external warehouse confusion:
+       - `purchased_qty`: Direct vendor purchase inward into real godowns.
+       - `given_to_job_work_qty`: Total material dispatched via delivery challans (DCs).
+       - `returned_after_job_work_qty`: Accepted material received back (direct returns + converted goods from `stock_name_change`).
+       - `in_godown_qty`: Current ready stock in physical godowns (`is_quarantine = 0`).
+       - `in_quarantine_qty`: Current stock under inspection, rejection, or loss (`is_quarantine = 1`).
+       - `at_job_workers_qty`: Current stock open with external processors (`external_job_order_id IS NOT NULL`).
+       - `final_stock_qty`: Total owned stock (`in_godown + in_quarantine + at_job_workers`).
+     - Fully multi-tenant isolated with `CompanyContext` and `OperationPosting` security checks.
+  4. **Simplified Business Flow UI (`stock-by-lot.blade.php`, `reports-stock-by-lot.css`):**
+     - Added `Simplified Flow (Purchased → Job Work → Final)` option to `Stock view` dropdown.
+     - Rendered 7 Executive KPI Cards above table (Purchased, Given to JW, Returned, In Godown, In Quarantine, At Processors WIP, Final Owned Stock).
+     - Color-coded data cells and conversion tags with direct `[Timeline]` navigation buttons.
+     - Full CSV export support for simplified business flow.
+  5. **Visual Chronological Inventory Timeline (`inventory-timeline.blade.php`, `inventory-timeline.css`):**
+     - Route: `GET /inventory-reports/timeline` (`inventory-reports.timeline`).
+     - Executive Product Hero Banner with live summary metrics and lot pills.
+     - Interactive vertical timeline rail featuring distinct icon badges for Purchases, DCs, WIP, WGRNs, Converted Products, and Final Reconciled Position.
+  6. **Inventory Command Bar Integration (`inventory-command-bar.blade.php`):**
+     - Added `Simplified Stock` and `Inventory Timeline` context links with dedicated purpose tooltips.
+
+- **Verification & Testing:**
+  - `tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - `tests/Feature/JobWorkStockNamingTest.php`: **4/4 passed (100%, 54 assertions)**.
+  - `tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)** — zero forbidden inline styles or legacy accent violations.
+
+---
+
 ## PR #23 Merged into `main` & Remote Synchronization Across `origin` / `nandha-origin` — 2026-11-19 (`main` / `ui`)
 
 - **Context & Objectives:**

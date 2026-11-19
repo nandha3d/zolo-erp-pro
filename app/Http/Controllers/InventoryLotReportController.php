@@ -3,23 +3,110 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Product, Warehouse};
-use App\Services\Industry\IndustryStockQueries;
+use App\Services\Industry\{IndustryStockQueries, SimplifiedStockService};
 use App\Services\Platform\{CompanyContext, CompanyContextResolver};
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class InventoryLotReportController extends Controller
 {
-    public function index(Request $request, IndustryStockQueries $queries)
+    public function index(Request $request, IndustryStockQueries $queries, SimplifiedStockService $simplifiedService)
     {
         $context = $request->attributes->get(CompanyContext::class) ?? app(CompanyContextResolver::class)->forActor();
-        $filters = $request->validate(['from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
-            'product_id' => 'nullable|integer|min:1', 'warehouse_id' => 'nullable|integer|min:1', 'lot' => 'nullable|string|max:100',
-            'page' => 'nullable|integer|min:1', 'export' => 'nullable|in:csv', 'group_by' => 'nullable|in:product,lot']);
+        $filters = $request->validate([
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+            'product_id' => 'nullable|integer|min:1',
+            'warehouse_id' => 'nullable|integer|min:1',
+            'lot' => 'nullable|string|max:100',
+            'page' => 'nullable|integer|min:1',
+            'export' => 'nullable|in:csv',
+            'group_by' => 'nullable|in:simplified,product,lot',
+        ]);
+
         $filters['group_by'] = $filters['group_by'] ?? 'product';
         $today = now(\App\Models\Company::findOrFail($context->companyId)->timezone ?: 'Asia/Kolkata');
         $filters['from'] = $filters['from'] ?? $today->copy()->startOfMonth()->toDateString();
         $filters['to'] = $filters['to'] ?? $today->toDateString();
         validator($filters, ['to' => 'after_or_equal:from'])->validate();
+
+        // 1. Simplified Stock View (Purchased -> Given to Job Work -> Returned -> Final Stock)
+        if ($filters['group_by'] === 'simplified') {
+            $data = $simplifiedService->simplifiedStock($filters, $context, (int) auth()->id());
+            $allRows = $data['rows'];
+
+            if (($filters['export'] ?? null) === 'csv') {
+                return response()->streamDownload(function () use ($allRows, $filters) {
+                    $file = fopen('php://output', 'w');
+                    fputcsv($file, [
+                        'Product', 'Code', 'Lot', 'Unit', 'Purchased Inward', 'Given to Job Work',
+                        'Returned after Job Work', 'In Godown', 'In Quarantine', 'At Processors (WIP)',
+                        'Final Total Stock', 'From Date', 'To Date', 'Traceability / Converted Stock',
+                    ]);
+                    foreach ($allRows as $row) {
+                        $name = static fn ($value) => preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : $value;
+                        fputcsv($file, [
+                            $name($row->product),
+                            $name($row->product_code),
+                            $name($row->lot),
+                            $name($row->base_unit),
+                            $row->purchased_qty,
+                            $row->given_to_job_work_qty,
+                            $row->returned_after_job_work_qty,
+                            $row->in_godown_qty,
+                            $row->in_quarantine_qty,
+                            $row->at_job_workers_qty,
+                            $row->final_stock_qty,
+                            $filters['from'],
+                            $filters['to'],
+                            $name(implode('; ', $row->conversion_notes ?? [])),
+                        ]);
+                    }
+                    fclose($file);
+                }, 'simplified-stock-report.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+            }
+
+            $page = (int) ($filters['page'] ?? 1);
+            $perPage = 50;
+            $sliced = array_slice($allRows, ($page - 1) * $perPage, $perPage);
+            $paginated = new LengthAwarePaginator($sliced, count($allRows), $perPage, $page, [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]);
+
+            $topProducts = array_slice(
+                collect($allRows)->sortByDesc(fn ($r) => ($r->purchased_qty + $r->final_stock_qty))->values()->all(),
+                0, 8
+            );
+            $stockGraphData = [
+                'labels' => array_map(fn ($r) => mb_substr($r->product, 0, 18), $topProducts),
+                'purchased' => array_map(fn ($r) => round($r->purchased_qty, 2), $topProducts),
+                'dispatched' => array_map(fn ($r) => round($r->given_to_job_work_qty, 2), $topProducts),
+                'returned' => array_map(fn ($r) => round($r->returned_after_job_work_qty, 2), $topProducts),
+                'final_stock' => array_map(fn ($r) => round($r->final_stock_qty, 2), $topProducts),
+                'doughnut' => [
+                    'labels' => ['In Godown', 'At Processors (WIP)', 'In Quarantine'],
+                    'values' => [
+                        round($data['totals']['total_in_godown'] ?? 0, 2),
+                        round($data['totals']['total_at_job_workers'] ?? 0, 2),
+                        round($data['totals']['total_in_quarantine'] ?? 0, 2),
+                    ],
+                ],
+            ];
+
+            return view('backend.reports.stock-by-lot', [
+                'isSimplified' => true,
+                'rows' => $paginated,
+                'totals' => $data['totals'],
+                'stockGraphData' => $stockGraphData,
+                'filters' => $filters,
+                'stockNameNotes' => [],
+                'products' => Product::forCompany($context)->orderBy('name')->get(['id', 'name']),
+                'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->orderBy('name')->get(['id', 'name']),
+            ]);
+        }
+
+        // 2. Standard Detailed Warehouse Ledger / Lot View
         $query = $queries->stockByLot($filters, $context, (int) auth()->id());
         if (($filters['export'] ?? null) === 'csv') {
             $stockNameNotes = $this->stockNameNotes($context, $filters);
@@ -37,11 +124,110 @@ class InventoryLotReportController extends Controller
                 fclose($file);
             }, 'stock-by-lot.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
+
         $rows = $query->paginate(50)->withQueryString();
+
+        $topRows = array_slice(collect($rows->items())->sortByDesc(fn ($r) => (($r->inward_qty ?? 0) + ($r->closing_qty ?? 0)))->values()->all(), 0, 8);
+        $inwardVals = array_map(fn ($r) => round($r->inward_qty ?? 0, 2), $topRows);
+        $outwardVals = array_map(fn ($r) => round($r->outward_qty ?? 0, 2), $topRows);
+        $closingVals = array_map(fn ($r) => round($r->closing_qty ?? 0, 2), $topRows);
+
+        $stockGraphData = [
+            'labels' => array_map(fn ($r) => mb_substr($r->product, 0, 18), $topRows),
+            'purchased' => $inwardVals,
+            'dispatched' => $outwardVals,
+            'returned' => array_fill(0, count($topRows), 0),
+            'final_stock' => $closingVals,
+            'doughnut' => [
+                'labels' => ['Total Inward (Come)', 'Total Outward (Gone)', 'Closing (In Hand)'],
+                'values' => [
+                    round(array_sum($inwardVals), 2),
+                    round(array_sum($outwardVals), 2),
+                    round(array_sum($closingVals), 2),
+                ],
+            ],
+        ];
+
         return view('backend.reports.stock-by-lot', [
-            'rows' => $rows, 'filters' => $filters, 'stockNameNotes' => $this->stockNameNotes($context, $filters),
+            'isSimplified' => false,
+            'rows' => $rows,
+            'stockGraphData' => $stockGraphData,
+            'filters' => $filters,
+            'stockNameNotes' => $this->stockNameNotes($context, $filters),
             'products' => Product::forCompany($context)->orderBy('name')->get(['id', 'name']),
             'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function timeline(Request $request, SimplifiedStockService $simplifiedService)
+    {
+        $context = $request->attributes->get(CompanyContext::class) ?? app(CompanyContextResolver::class)->forActor();
+        $filters = $request->validate([
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+            'product_id' => 'nullable|integer|min:1',
+            'warehouse_id' => 'nullable|integer|min:1',
+            'lot' => 'nullable|string|max:100',
+        ]);
+
+        $today = now(\App\Models\Company::findOrFail($context->companyId)->timezone ?: 'Asia/Kolkata');
+        $filters['from'] = $filters['from'] ?? $today->copy()->subMonths(3)->startOfMonth()->toDateString();
+        $filters['to'] = $filters['to'] ?? $today->toDateString();
+
+        $allProducts = Product::forCompany($context)->orderBy('name')->get(['id', 'name', 'code']);
+        $warehouses = Warehouse::forCompany($context)->where('branch_id', $context->branchId)->orderBy('name')->get(['id', 'name']);
+
+        if (empty($filters['product_id'])) {
+            $activeId = \Illuminate\Support\Facades\DB::table('stock_movement_lines')
+                ->where('company_id', $context->companyId)
+                ->orderByDesc('id')
+                ->value('product_id');
+            if (!$activeId) {
+                $activeId = \Illuminate\Support\Facades\DB::table('job_work_dispatch_lines as dl')
+                    ->join('job_work_dispatches as d', 'd.id', '=', 'dl.dispatch_id')
+                    ->where('d.company_id', $context->companyId)
+                    ->orderByDesc('dl.id')
+                    ->value('dl.product_id');
+            }
+            $productId = $activeId ?: $allProducts->first()?->id;
+        } else {
+            $productId = (int) $filters['product_id'];
+        }
+
+        if (!$productId) {
+            return view('backend.reports.inventory-timeline', [
+                'hasProduct' => false,
+                'product' => null,
+                'events' => [],
+                'summary' => [],
+                'chart' => [],
+                'dailySummary' => [],
+                'movementSummary' => [],
+                'lifecycleStages' => [],
+                'convertedToProducts' => [],
+                'convertedFromProducts' => [],
+                'products' => $allProducts,
+                'warehouses' => $warehouses,
+                'filters' => $filters,
+            ]);
+        }
+
+        $timelineData = $simplifiedService->inventoryTimeline((int) $productId, $filters['lot'] ?? null, $filters, $context, (int) auth()->id());
+
+        return view('backend.reports.inventory-timeline', [
+            'hasProduct' => true,
+            'product' => $timelineData['product'],
+            'events' => $timelineData['events'],
+            'summary' => $timelineData['summary'],
+            'chart' => $timelineData['chart'],
+            'dailySummary' => $timelineData['dailySummary'],
+            'movementSummary' => $timelineData['movementSummary'],
+            'lifecycleStages' => $timelineData['lifecycleStages'],
+            'convertedToProducts' => $timelineData['convertedToProducts'],
+            'convertedFromProducts' => $timelineData['convertedFromProducts'],
+            'products' => $allProducts,
+            'warehouses' => $warehouses,
+            'filters' => $filters,
         ]);
     }
 
