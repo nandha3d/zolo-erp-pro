@@ -1,3 +1,44 @@
+## Non-Zero Milestone Quantities, In-Place Popover Callouts & Dot Clipping Fixes — 2026-11-19 (`ui` & `main`)
+
+- **Context & User Directives:**
+  - Directives & Screenshot Feedback:
+    1. *"400mtr recieved right? then why its zero here? if done then update to UI branch and merge to the main branch."* (Ref: `media_1795090828211_cd19d273.png` showing `0 MTR` displayed under `Reconciled` on the timeline axis when the closing card above it showed `400 MTR`).
+    2. *"also the dots are cutting at top, when we click the dot it should how the details in that place itself. make it professional."* (Ref: `media_1795091076430_b1f16149.png` showing the active node's circular halo/ring clipped flat at the top, and requiring an anchored, in-place callout popup attached directly to that clicked dot).
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Accurate Non-Zero Node Quantities (`SimplifiedStockService.php`):**
+     - Resolved the root cause where closing positions generated `$pm['movement'] = 0.0` (since no transaction occurred on the closing date itself), which printed `0 MTR` beneath the Reconciled milestone.
+     - Added explicit `'qty_label'` and `'qty_class'` keys to `$chartPointsMeta[]`:
+       - Baseline: `'qty_label' => round($openingGodownStock, 2) . ' ' . $unit`, `'qty_class' => 'text-primary'`
+       - Purchases: `'qty_label' => '+' . $qty . ' ' . $unit`, `'qty_class' => 'text-success'`
+       - Dispatches: `'qty_label' => '-' . $qty . ' ' . $unit`, `'qty_class' => 'text-danger'`
+       - Returns / Conversions (`JWGRN-00003`): `'qty_label' => '+' . $qty . ' ' . $unit`, `'qty_class' => 'text-success'` (shows `+580 MTR`)
+       - Closing / Reconciled: `'movement' => round($running, 2)`, `'qty_label' => round($running, 2) . ' ' . $unit`, `'qty_class' => 'text-primary font-weight-bold'` (shows `400 MTR` for Grey Fabric ID 30, `580 MTR` for Dyed Fabric ID 31).
+  2. **Eliminated Dot Clipping at Top (`inventory-timeline.css`):**
+     - Removed `overflow: hidden;` on `#inventory-timeline-page .axis-nodes-container` and `.interactive-axis-rail`, setting `overflow: visible !important;`.
+     - Provided `padding: 16px 4px 6px;` to `.axis-nodes-container` so the active scaled dot and outer halo (`box-shadow: 0 0 0 4px rgba(124, 18, 116, 0.18)`) have ample headroom and never clip.
+     - Centered the connecting rail gradient line (`.axis-line-bar` top adjusted to `27px`) to pass precisely through the center of all node dots.
+  3. **Professional In-Place Callout Popover on Click (`inventory-timeline.blade.php`, `inventory-timeline.css`):**
+     - Embedded `.axis-inplace-callout` inside each `.axis-milestone-node` with an upward pointing `.callout-arrow` anchored directly to that dot.
+     - Smart responsive positioning: first milestone aligns left (`left: 0; transform: none;`), last milestone aligns right (`right: 0; transform: none;`), and intermediate milestones center (`left: 50%; transform: translateX(-50%);`).
+     - Includes milestone title badge, calendar date, clean direct action statement, and a 4-item metrics grid (`Godown Stock`, `Processor WIP`, `Document Ref`, and `Party`).
+     - Eliminated the redundant detached `#timelineSpotlightCard`.
+  4. **Pull Request #26 & Production Merge into `main`:**
+     - Committed to `ui`: `3b11cdb0` (`feat: simplified stock flow, inventory timeline with in-place callouts and zero inner scroll`).
+     - Pushed to `origin/ui` and `nandha-origin/ui`.
+     - Created Pull Request #26 (`https://github.com/vigneshsinna/zolo-erp-pro/pull/26`) against `main`.
+     - Monitored GitHub Actions matrix: All 12 CI checks completed successfully with green status.
+     - Merged PR #26 into `main` via API (Merge SHA: `b6dfa85a193e6bc07972e7fe70b8f1ea205a00ba`).
+     - Fast-forwarded local `main` to `b6dfa85a`, pushed to `nandha-origin/main`, and switched back to `ui`.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors across all modified PHP and Blade files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **3/3 passed (100%, 30 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Bar Chart Head Quantities, Zero Inside Scrolling & Concise Movement Phrasing — 2026-11-19 (`ui`)
 
 - **Context & User Directives:**
