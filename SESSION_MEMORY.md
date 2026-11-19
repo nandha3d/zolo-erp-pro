@@ -26,7 +26,10 @@
      - **Export CSV:** Full bulk export available with one click.
   5. **Zero Auto-Scroll on Milestone Dot Click (`inventory-timeline.blade.php`):**
      - Removed `row.scrollIntoView(...)` so clicking timeline milestone dots keeps the page viewport completely stationary while opening anchored popovers in place.
-  6. **Regression Guard Fix (`stock-by-lot.blade.php`):**
+  6. **Zero Popover Box Overflow & Non-Wrapping Metrics (`inventory-timeline.css`, `inventory-timeline.blade.php`):**
+     - Increased callout width from 320px to 380px and applied `white-space: nowrap` on dates and metric values, eliminating awkward text wrapping (`2026-` / `10-12` and `MTR` wrapping).
+     - Added dynamic container expansion in `selectTimelineMilestone` (`rail.style.paddingBottom = Math.max(200, calloutHeight + 40) + 'px'`) and increased base `.interactive-axis-rail` padding to 200px (min-height 310px). The popover callout now remains 100% inside `.combined-lifecycle-card` without spilling over the bottom border into subsequent cards.
+  7. **Regression Guard Fix (`stock-by-lot.blade.php`):**
      - Restored explicit `Historical owned totals are unavailable.` text required by `TextileInventoryDefaultsTest`.
 
 - **Verification & Automated Test Suite:**

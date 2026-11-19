@@ -389,8 +389,8 @@ body.dark-mode #inventory-timeline-page .interactive-timeline-axis-wrap {
 
 #inventory-timeline-page .interactive-axis-rail {
     position: relative;
-    padding: 16px 8px 165px;
-    min-height: 275px;
+    padding: 16px 8px 200px;
+    min-height: 310px;
     width: 100%;
     overflow: visible !important;
 }
@@ -531,13 +531,13 @@ body.dark-mode #inventory-timeline-page .axis-node-badge {
 /* In-Place Milestone Callout Popover (Opens directly at the clicked dot) */
 #inventory-timeline-page .axis-inplace-callout {
     position: absolute;
-    top: calc(100% + 10px);
-    width: 320px;
+    top: calc(100% + 6px);
+    width: 380px;
     max-width: 88vw;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     box-shadow: 0 10px 25px -3px rgba(15, 23, 42, 0.18), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
     z-index: 100;
     display: none;
@@ -608,26 +608,40 @@ body.dark-mode #inventory-timeline-page .axis-node-badge {
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 4px;
+    max-width: 250px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 #inventory-timeline-page .callout-date {
     font-size: 11px;
     color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 8px;
 }
 
 #inventory-timeline-page .callout-statement {
-    font-size: 12.5px;
+    font-size: 12px;
     color: #0f172a;
-    line-height: 1.4;
+    line-height: 1.35;
     border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 6px;
+    padding-bottom: 5px;
+    margin-bottom: 5px !important;
 }
 
 #inventory-timeline-page .callout-metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 10px;
+    gap: 3px 8px;
     font-size: 11.5px;
+}
+
+#inventory-timeline-page .cm-item {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 #inventory-timeline-page .cm-lbl {
@@ -637,6 +651,7 @@ body.dark-mode #inventory-timeline-page .axis-node-badge {
 
 #inventory-timeline-page .cm-val {
     color: #0f172a;
+    white-space: nowrap;
 }
 
 /* Dark Mode Callout Support */

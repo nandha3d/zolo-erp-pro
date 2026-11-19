@@ -915,6 +915,16 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.axis-milestone-node').forEach(n => n.classList.remove('is-active'));
         if (elem) elem.classList.add('is-active');
 
+        // Dynamically ensure callout stays 100% inside the card (zero "out of box" overflow)
+        if (elem) {
+            const callout = elem.querySelector('.axis-inplace-callout');
+            const rail = document.querySelector('.interactive-axis-rail');
+            if (callout && rail) {
+                const calloutHeight = callout.offsetHeight || 135;
+                rail.style.paddingBottom = Math.max(200, calloutHeight + 40) + 'px';
+            }
+        }
+
         // Update Spotlight Inspector
         const badge = document.getElementById('spotlightBadge');
         const title = document.getElementById('spotlightTitle');
