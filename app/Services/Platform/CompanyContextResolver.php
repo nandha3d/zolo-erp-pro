@@ -25,14 +25,38 @@ class CompanyContextResolver
         $branches = $company->branches()->where('is_active', true)
             ->whereIn('id', DB::table('company_user_branches')->select('branch_id')
                 ->where('company_id', $companyId)->where('user_id', $userId));
+        $isInstallationAdmin = app(CompanyDirectoryService::class)->isInstallationAdmin($userId);
         if ($branchId === null) {
             $authorized = (clone $branches)->get();
-            if ($authorized->count() !== 1) {
+            if ($authorized->count() === 1) {
+                $branchId = $authorized->sole()->id;
+            } elseif ($authorized->count() > 1) {
+                $branchId = $authorized->first()->id;
+            } elseif ($isInstallationAdmin) {
+                $firstActiveBranch = $company->branches()->where('is_active', true)->first();
+                if ($firstActiveBranch) {
+                    DB::table('company_user_branches')->insertOrIgnore([
+                        'company_id' => $companyId,
+                        'user_id' => $userId,
+                        'branch_id' => $firstActiveBranch->id,
+                    ]);
+                    $branchId = $firstActiveBranch->id;
+                } else {
+                    throw ValidationException::withMessages(['branch_id' => 'This company has no active branches.']);
+                }
+            } else {
                 throw ValidationException::withMessages(['branch_id' => 'Select an authorized branch.']);
             }
-            $branchId = $authorized->sole()->id;
         } elseif (!(clone $branches)->whereKey($branchId)->exists()) {
-            throw new AuthorizationException('Branch access denied.');
+            if ($isInstallationAdmin && $company->branches()->where('is_active', true)->whereKey($branchId)->exists()) {
+                DB::table('company_user_branches')->insertOrIgnore([
+                    'company_id' => $companyId,
+                    'user_id' => $userId,
+                    'branch_id' => $branchId,
+                ]);
+            } else {
+                throw new AuthorizationException('Branch access denied.');
+            }
         }
 
         $years = $company->fiscalYears();

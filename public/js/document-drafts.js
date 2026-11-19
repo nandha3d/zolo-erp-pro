@@ -102,15 +102,26 @@
                 const item = document.createElement('div');
                 item.className = 'document-tab' + (tab.id === activeId ? ' is-active' : '') + (tab.conflict ? ' has-conflict' : '');
                 item.setAttribute('role', 'presentation');
+                item.setAttribute('data-tab-id', tab.id);
                 const open = document.createElement('button');
                 open.type = 'button'; open.className = 'document-tab-open'; open.setAttribute('role', 'tab');
                 open.setAttribute('aria-selected', tab.id === activeId ? 'true' : 'false');
-                open.textContent = label(tab); open.title = label(tab);
+                
+                const dot = document.createElement('span');
+                dot.className = 'document-tab-indicator';
+                open.appendChild(dot);
+
+                const txt = document.createElement('span');
+                txt.className = 'document-tab-text';
+                txt.textContent = label(tab);
+                open.appendChild(txt);
+                open.title = label(tab);
+
                 open.addEventListener('click', () => { workspace.openTab(tab.id); });
                 const close = document.createElement('button');
                 close.type = 'button'; close.className = 'document-tab-close';
-                close.setAttribute('aria-label', 'Discard ' + (tab.title || 'draft')); close.title = 'Discard this draft'; close.textContent = '×';
-                close.addEventListener('click', () => { workspace.discardTab(tab.id); });
+                close.setAttribute('aria-label', 'Discard ' + (tab.title || 'draft')); close.title = 'Discard this draft'; close.innerHTML = '&times;';
+                close.addEventListener('click', (e) => { e.stopPropagation(); workspace.discardTab(tab.id); });
                 item.append(open, close);
                 list.appendChild(item);
             });
@@ -248,6 +259,9 @@
         async function leaveActive() {
             if (!enabled || listOnly) return true;
             const tab = current();
+            if (tab) {
+                tab.snapshot = snapshot();
+            }
             const dirty = isDirty();
             const unused = tab && !tab.draftId && (!dirty || (adapter.empty && adapter.empty(snapshot())));
             if (unused) { tabs.splice(tabs.indexOf(tab), 1); activeId = null; render(); return true; }
@@ -260,19 +274,49 @@
         workspace.openTab = async id => {
             const tab = byId(id);
             if (!tab || id === activeId) return;
-            if (!(await leaveActive())) return;
+            const currentTab = current();
+            if (currentTab) {
+                currentTab.snapshot = snapshot();
+            }
             const target = byId(id);
             if (!target) return;
+
+            // Optimistic immediate UI feedback on click
+            if (list) {
+                const prevEl = list.querySelector('.document-tab.is-active');
+                if (prevEl) prevEl.classList.remove('is-active');
+                const targetEl = list.querySelector(`[data-tab-id="${id}"]`);
+                if (targetEl) {
+                    targetEl.classList.add('is-active');
+                    if (!target.snapshot) targetEl.classList.add('is-loading');
+                }
+            }
+
+            // If target already cached in memory, save dirty active tab in background without blocking UI switch
+            if (currentTab && isDirty()) {
+                if (target.snapshot && !target.conflict) {
+                    saveActive(); // Fire and forget in background
+                } else {
+                    if (!(await leaveActive())) {
+                        render();
+                        return;
+                    }
+                }
+            } else {
+                const unused = currentTab && !currentTab.draftId && (!isDirty() || (adapter.empty && adapter.empty(snapshot())));
+                if (unused) { tabs.splice(tabs.indexOf(currentTab), 1); activeId = null; }
+            }
+
             try {
                 const data = target.snapshot && !target.conflict ? {payload: target.snapshot, draft: {version: target.version, title: target.title, party_name_snapshot: target.partyName}, blocking: target.blocking, warnings: target.warnings}
                     : await fetchDraft(target);
                 const elsewhere = adapter.foreign && adapter.foreign(data.payload || {});
                 if (elsewhere) { go(elsewhere + (elsewhere.includes('?') ? '&' : '?') + 'draft=' + target.draftId); return; }
                 await applyDraft(target, data);
-                target.snapshot = null;
             } catch (xhr) {
                 showBanner(xhr && xhr.status === 404 ? 'This draft no longer exists.' : messageOf(xhr));
-                if (xhr && xhr.status === 404) { tabs.splice(tabs.indexOf(target), 1); render(); }
+                if (xhr && xhr.status === 404) { tabs.splice(tabs.indexOf(target), 1); }
+                render();
             }
         };
 
