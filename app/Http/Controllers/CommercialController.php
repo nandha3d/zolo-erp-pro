@@ -252,14 +252,14 @@ class CommercialController extends Controller
         return response()->json(['data' => $result['draft'], 'warnings' => $result['warnings']]);
     }
 
-    /** Tab strip metadata only; the payload is fetched one draft at a time. */
+    /** Tab strip metadata and preloaded payload for instant client-side switching. */
     public function drafts(Request $request, string $kind)
     {
         $context = $this->context($request);
         app(CommercialPermission::class)->assert(CommercialDraftService::permission($kind), $context, $request->user()->id);
         $drafts = app(CommercialDraftService::class);
         $drafts->prune($kind, $context, $request->user()->id);
-        return response()->json(['data' => $drafts->meta($drafts->query($kind, $context, $request->user()->id)),
+        return response()->json(['data' => $drafts->metaWithPayload($drafts->query($kind, $context, $request->user()->id)),
             'limit' => CommercialDraftService::MAX_OPEN, 'open' => $drafts->owned($kind, $context, $request->user()->id)->count()]);
     }
 

@@ -1689,7 +1689,7 @@ body.commercial-screen-lock.topbar-hidden .reveal-topbar-strip {
     flex: 1;
 }
 
-.desk-bill-list-panel .side-filter-group .bootstrap-select > .btn.dropdown-toggle {
+.desk-bill-list-panel .side-filter-group .bootstrap-select>.btn.dropdown-toggle {
     height: 24px !important;
     font-size: 11px !important;
     padding: 1px 6px !important;
@@ -4627,9 +4627,10 @@ table.desk-grid-table td .bootstrap-select {
     min-height: 0 !important;
     width: 100% !important;
 }
-.desk-grid-table .bootstrap-select > .btn.dropdown-toggle,
-.order-item-row .bootstrap-select > .btn.dropdown-toggle,
-table.desk-grid-table td .bootstrap-select > .btn.dropdown-toggle {
+
+.desk-grid-table .bootstrap-select>.btn.dropdown-toggle,
+.order-item-row .bootstrap-select>.btn.dropdown-toggle,
+table.desk-grid-table td .bootstrap-select>.btn.dropdown-toggle {
     height: 28px !important;
     font-size: 12px !important;
     padding: 3px 8px !important;
@@ -4932,12 +4933,14 @@ tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]):hover .
 }
 
 @media (hover: none) {
+
     .row-item-input-wrap.has-product .btn-quick-edit-product,
     tr[data-product-id]:not([data-product-id=""]):not([data-product-id="0"]) .row-item-input-wrap .btn-quick-edit-product {
         opacity: 1;
         pointer-events: auto;
         transform: translateY(-50%) scale(1);
     }
+
     .row-item-input-wrap.has-product .row-item-name {
         padding-right: 52px;
     }

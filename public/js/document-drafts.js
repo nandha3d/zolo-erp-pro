@@ -23,7 +23,7 @@
         const enabled = adapter.enabled !== false;
         const listOnly = !!adapter.listOnly;
         const form = adapter.form || null;
-        const workspace = {kind: adapter.kind, adapter};
+        const workspace = { kind: adapter.kind, adapter };
         const snapshot = () => adapter.snapshot();
         const stable = adapter.stable || (state => JSON.stringify([state.form.fields, state.form.lines]));
         const hash = () => (listOnly ? '' : stable(snapshot()));
@@ -42,8 +42,10 @@
         let edited = false;
         const byId = id => tabs.find(tab => tab.id === id) || null;
         const current = () => byId(activeId);
-        const blankTab = () => ({id: 'tab-' + (++counter), draftId: null, version: 0, title: '', partyName: '', snapshot: null, baseline: '',
-            conflict: false, blocking: [], warnings: []});
+        const blankTab = () => ({
+            id: 'tab-' + (++counter), draftId: null, version: 0, title: '', partyName: '', snapshot: null, baseline: '',
+            conflict: false, blocking: [], warnings: []
+        });
         // Row changes made while muted (restore, reset) are dropped from the observer queue, so only user-driven ones count.
         let rowObserver = null;
         const unmute = () => { muted = false; if (rowObserver) rowObserver.takeRecords(); };
@@ -106,7 +108,7 @@
                 const open = document.createElement('button');
                 open.type = 'button'; open.className = 'document-tab-open'; open.setAttribute('role', 'tab');
                 open.setAttribute('aria-selected', tab.id === activeId ? 'true' : 'false');
-                
+
                 const dot = document.createElement('span');
                 dot.className = 'document-tab-indicator';
                 open.appendChild(dot);
@@ -143,10 +145,10 @@
 
         const token = () => $('meta[name="csrf-token"]').attr('content') || (form && $(form).find('[name="_token"]').val()) || '';
         function request(method, path, body) {
-            const options = {url: adapter.baseUrl + path, method, dataType: 'json', headers: {'X-CSRF-TOKEN': token()}};
+            const options = { url: adapter.baseUrl + path, method, dataType: 'json', headers: { 'X-CSRF-TOKEN': token() } };
             if (body !== undefined) {
                 options.contentType = 'application/json';
-                options.data = JSON.stringify({...body, _token: token()});
+                options.data = JSON.stringify({ ...body, _token: token() });
             }
             return $.ajax(options);
         }
@@ -163,7 +165,7 @@
         }
 
         /** Persist the active tab. Returns true when the server holds what is on screen (or there is nothing to keep). */
-        function saveActive({explicit = false} = {}) {
+        function saveActive({ explicit = false } = {}) {
             if (!enabled || listOnly) return Promise.resolve(false);
             inflight = inflight.catch(() => false).then(() => persist(explicit));
             return inflight;
@@ -187,7 +189,7 @@
             // Autosave never creates a draft for a form holding only its defaults (no party, no item).
             if (!tab.draftId && !explicit && adapter.empty && adapter.empty(sent)) { tab.baseline = stable(sent); edited = false; return Promise.resolve(true); }
             return new Promise(resolve => {
-                request('POST', '/drafts', {payload: sent, id: tab.draftId, version: tab.version || 0, ...adapter.party()}).done(response => {
+                request('POST', '/drafts', { payload: sent, id: tab.draftId, version: tab.version || 0, ...adapter.party() }).done(response => {
                     const saved = response.data;
                     tab.draftId = saved.id; tab.version = saved.version; tab.title = saved.title;
                     tab.partyName = saved.party_name_snapshot || ''; tab.baseline = stable(sent);
@@ -231,19 +233,21 @@
                 return;
             }
             const sent = snapshot();
-            request('POST', '/drafts', {payload: sent, id: null, version: 0, ...adapter.party()}).done(response => {
+            request('POST', '/drafts', { payload: sent, id: null, version: 0, ...adapter.party() }).done(response => {
                 const saved = response.data;
                 // The conflicting draft stays exactly as the other window saved it; this tab becomes a new draft.
-                const original = {...tab, id: 'tab-' + (++counter), snapshot: null, baseline: '', conflict: false};
+                const original = { ...tab, id: 'tab-' + (++counter), snapshot: null, baseline: '', conflict: false };
                 tabs.splice(tabs.indexOf(tab), 0, original);
-                Object.assign(tab, {draftId: saved.id, version: saved.version, title: saved.title, partyName: saved.party_name_snapshot || '',
-                    conflict: false, baseline: stable(sent)});
+                Object.assign(tab, {
+                    draftId: saved.id, version: saved.version, title: saved.title, partyName: saved.party_name_snapshot || '',
+                    conflict: false, baseline: stable(sent)
+                });
                 setDraftId(tab.draftId); showBanner('Your copy was kept as ' + tab.title + '. The other window\'s draft is unchanged.', [], false); render();
             }).fail(xhr => showBanner(messageOf(xhr)));
         }
 
         async function applyDraft(tab, data) {
-            if (data.legacy && adapter.legacy) data = {...data, payload: adapter.legacy(data.payload || {})};
+            if (data.legacy && adapter.legacy) data = { ...data, payload: adapter.legacy(data.payload || {}) };
             tab.snapshot = data.payload; tab.version = data.draft.version; tab.title = data.draft.title;
             tab.partyName = data.draft.party_name_snapshot || ''; tab.blocking = data.blocking || []; tab.warnings = data.warnings || [];
             muted = true;
@@ -308,7 +312,7 @@
             }
 
             try {
-                const data = target.snapshot && !target.conflict ? {payload: target.snapshot, draft: {version: target.version, title: target.title, party_name_snapshot: target.partyName}, blocking: target.blocking, warnings: target.warnings}
+                const data = target.snapshot && !target.conflict ? { payload: target.snapshot, draft: { version: target.version, title: target.title, party_name_snapshot: target.partyName }, blocking: target.blocking, warnings: target.warnings }
                     : await fetchDraft(target);
                 const elsewhere = adapter.foreign && adapter.foreign(data.payload || {});
                 if (elsewhere) { go(elsewhere + (elsewhere.includes('?') ? '&' : '?') + 'draft=' + target.draftId); return; }
@@ -413,7 +417,7 @@
             // A never-saved form holding only defaults is simply dropped, not kept as an empty draft.
             const emptyNew = !(tab && tab.draftId) && !!adapter.empty && !listOnly && adapter.empty(snapshot());
             if (isDirty() && !emptyNew) {
-                if (!(await saveActive({explicit: true}))) {
+                if (!(await saveActive({ explicit: true }))) {
                     const choice = await ask();
                     if (choice === 'cancel') return false;
                     if (tab && tab.draftId) await new Promise(resolve => request('DELETE', '/drafts/' + tab.draftId).always(resolve));
@@ -442,10 +446,10 @@
         workspace.markClean = markClean;
         workspace.start = start;
         workspace.mute = mute;
-        workspace.saveDraft = options => saveActive({explicit: true, ...options});
+        workspace.saveDraft = options => saveActive({ explicit: true, ...options });
         workspace.canSaveDraft = () => enabled && !listOnly;
         workspace.activeDraftId = () => (current() || {}).draftId || null;
-        workspace.activeBlocking = () => (current() || {blocking: []}).blocking;
+        workspace.activeBlocking = () => (current() || { blocking: [] }).blocking;
         workspace.leaveActive = leaveActive;
         workspace.tabs = tabs;
         workspace.ask = ask;
@@ -478,7 +482,7 @@
             // Rows added from the item search or the multi-item picker (whose menus sit outside the form) are edits too.
             if (adapter.rows && window.MutationObserver) {
                 rowObserver = new MutationObserver(() => { if (!muted) { edited = true; scheduleAutosave(); } });
-                rowObserver.observe(adapter.rows, {childList: true});
+                rowObserver.observe(adapter.rows, { childList: true });
             }
         }
 
@@ -493,9 +497,11 @@
             if (!(tab && tab.draftId) && adapter.empty && adapter.empty(snapshot())) return;
             const target = tab || ensureTab();
             try {
-                fetch(adapter.baseUrl + '/drafts', {method: 'POST', keepalive: true, credentials: 'same-origin',
-                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token()},
-                    body: JSON.stringify({payload: snapshot(), id: target.draftId, version: target.version || 0, ...adapter.party()})});
+                fetch(adapter.baseUrl + '/drafts', {
+                    method: 'POST', keepalive: true, credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token() },
+                    body: JSON.stringify({ payload: snapshot(), id: target.draftId, version: target.version || 0, ...adapter.party() })
+                });
             } catch (error) { /* nothing to report while the page is going away */ }
         }
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushOnHide(); });
@@ -520,8 +526,11 @@
             return new Promise(resolve => {
                 request('GET', '/drafts').done(response => {
                     limit = response.limit || limit;
-                    (response.data || []).forEach(row => tabs.push({...blankTab(), draftId: row.id, version: row.version, title: row.title,
-                        partyName: row.party_name_snapshot || ''}));
+                    (response.data || []).forEach(row => tabs.push({
+                        ...blankTab(), draftId: row.id, version: row.version, title: row.title,
+                        partyName: row.party_name_snapshot || '',
+                        snapshot: row.payload || null,
+                    }));
                     render(); resolve();
                 }).fail(xhr => { status(messageOf(xhr), true); resolve(); });
             });
@@ -553,5 +562,5 @@
         return workspace;
     }
 
-    window.ZoloDocumentDrafts = {attach};
+    window.ZoloDocumentDrafts = { attach };
 })();
