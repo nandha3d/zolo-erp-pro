@@ -24,6 +24,7 @@ class InventoryLotReportController extends Controller
             'page' => 'nullable|integer|min:1',
             'export' => 'nullable|in:csv',
             'group_by' => 'nullable|in:simplified,product,lot',
+            'search' => 'nullable|string|max:100',
         ]);
 
         $filters['group_by'] = $filters['group_by'] ?? 'product';
@@ -98,11 +99,14 @@ class InventoryLotReportController extends Controller
                 ],
             ];
 
+            $lifecycleTreeData = $simplifiedService->conversionLifecycleTree($filters, $context, (int) auth()->id());
+
             return view('backend.reports.stock-by-lot', [
                 'isSimplified' => true,
                 'rows' => $paginated,
                 'totals' => $data['totals'],
                 'stockGraphData' => $stockGraphData,
+                'lifecycleTreeData' => $lifecycleTreeData,
                 'filters' => $filters,
                 'stockNameNotes' => [],
                 'products' => Product::forCompany($context)->orderBy('name')->get(['id', 'name']),
@@ -112,6 +116,14 @@ class InventoryLotReportController extends Controller
 
         // 2. Standard Detailed Warehouse Ledger / Lot View
         $query = $queries->stockByLot($filters, $context, (int) auth()->id());
+        if (!empty($filters['search'])) {
+            $term = '%' . $filters['search'] . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('p.name', 'like', $term)
+                  ->orWhere('p.code', 'like', $term)
+                  ->orWhere('b.batch_no', 'like', $term);
+            });
+        }
         if (($filters['export'] ?? null) === 'csv') {
             $stockNameNotes = $this->stockNameNotes($context, $filters);
             return response()->streamDownload(function () use ($query, $filters, $stockNameNotes) {
@@ -180,10 +192,13 @@ class InventoryLotReportController extends Controller
             ],
         ];
 
+        $lifecycleTreeData = $simplifiedService->conversionLifecycleTree($filters, $context, (int) auth()->id());
+
         return view('backend.reports.stock-by-lot', [
             'isSimplified' => false,
             'rows' => $rows,
             'stockGraphData' => $stockGraphData,
+            'lifecycleTreeData' => $lifecycleTreeData,
             'filters' => $filters,
             'stockNameNotes' => $this->stockNameNotes($context, $filters),
             'products' => Product::forCompany($context)->orderBy('name')->get(['id', 'name']),

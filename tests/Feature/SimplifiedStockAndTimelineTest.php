@@ -128,4 +128,31 @@ class SimplifiedStockAndTimelineTest extends OperationsTestCase
             'group_by' => 'simplified',
         ], $foreignContext, 1);
     }
+
+    public function test_conversion_lifecycle_tree_builds_nodes_handles_and_branches(): void
+    {
+        $this->withoutExceptionHandling();
+        [$rawMaterial] = $this->setupJobWorkFlow(200, 100);
+
+        $service = app(SimplifiedStockService::class);
+        $treeData = $service->conversionLifecycleTree([
+            'from' => '2026-10-01',
+            'to' => '2026-10-05',
+            'group_by' => 'simplified',
+        ], $this->context(), 1);
+
+        $this->assertNotEmpty($treeData['nodes']);
+        $rawNode = collect($treeData['nodes'])->firstWhere('product_id', $rawMaterial->id);
+        $this->assertNotNull($rawNode);
+        $this->assertNotEmpty($rawNode['handle']);
+        $this->assertNotEmpty($rawNode['branches']);
+        $this->assertGreaterThan(0, count($rawNode['branches']));
+
+        // Verify HTTP endpoint renders Product Lifecycle & Conversion Tree Graph
+        $response = $this->get('/inventory-reports/stock-by-lot?group_by=simplified&from=2026-10-01&to=2026-10-05');
+        $response->assertOk();
+        $response->assertSee('Product Lifecycle & Conversion Tree Graph', false);
+        $response->assertSee('All Products', false);
+        $response->assertSee('Handle:', false);
+    }
 }

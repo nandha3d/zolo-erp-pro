@@ -643,4 +643,263 @@ html.app-shell body.natural-scroll-page #content {
     height: auto !important;
 }
 
+/* ==========================================================================
+   INTERACTIVE PRODUCT LIFECYCLE & CONVERSION TREE GRAPH
+   ========================================================================== */
+#stock-lot-report .lifecycle-tree-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+#stock-lot-report .tree-controls-toolbar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    gap: 8px;
+}
+
+#stock-lot-report .tree-filter-pill {
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 3px 10px;
+    transition: all 0.15s ease-in-out;
+}
+
+#stock-lot-report .tree-instant-search-group {
+    width: 280px;
+    max-width: 100%;
+}
+
+#stock-lot-report .tree-handles-strip {
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 6px 10px;
+    gap: 4px;
+}
+
+#stock-lot-report .handle-quick-filter-btn {
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: var(--z-primary, #7c1274);
+    transition: all 0.15s ease;
+}
+
+#stock-lot-report .handle-quick-filter-btn:hover {
+    background: var(--z-primary, #7c1274);
+    color: #ffffff;
+    border-color: var(--z-primary, #7c1274);
+}
+
+#stock-lot-report .lifecycle-handle-badge {
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--z-primary, #7c1274);
+    color: #ffffff;
+    transition: opacity 0.15s;
+}
+
+#stock-lot-report .lifecycle-handle-badge:hover {
+    opacity: 0.85;
+}
+
+/* Individual Tree Node Card */
+#stock-lot-report .tree-node-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    margin-bottom: 8px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+#stock-lot-report .tree-node-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+#stock-lot-report .tree-node-card.tree-expanded {
+    border-color: var(--z-primary, #7c1274);
+    box-shadow: 0 3px 10px rgba(124, 18, 116, 0.08);
+}
+
+#stock-lot-report .tree-node-header {
+    background: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+}
+
+#stock-lot-report .tree-node-card.tree-expanded .tree-node-header {
+    background: #faf5f9;
+    border-bottom: 1px solid #f1e6f0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#stock-lot-report .tree-chevron {
+    font-size: 14px;
+    color: #64748b;
+    transition: transform 0.2s ease-in-out;
+}
+
+#stock-lot-report .tree-node-card.tree-expanded .tree-chevron {
+    transform: rotate(180deg);
+    color: var(--z-primary, #7c1274);
+}
+
+#stock-lot-report .tree-node-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+#stock-lot-report .tree-quick-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+#stock-lot-report .tree-stat-pill {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+}
+
+#stock-lot-report .tree-stat-pill.pill-inward { background: #dcfce7; color: #166534; }
+#stock-lot-report .tree-stat-pill.pill-dispatched { background: #fef3c7; color: #92400e; }
+#stock-lot-report .tree-stat-pill.pill-returned { background: #ccfbf1; color: #115e59; }
+#stock-lot-report .tree-stat-pill.pill-godown { background: #f3e8ff; color: #6b21a8; font-weight: 700; }
+#stock-lot-report .tree-stat-pill.pill-sold { background: #fee2e2; color: #991b1b; }
+
+/* Tree Branches Container & Visual Trunk */
+#stock-lot-report .tree-node-branches {
+    padding: 12px 16px 16px 28px;
+    position: relative;
+    background: #fafafa;
+}
+
+#stock-lot-report .tree-trunk-line {
+    position: absolute;
+    left: 42px;
+    top: 18px;
+    bottom: 24px;
+    width: 2px;
+    background: #cbd5e1;
+    z-index: 1;
+}
+
+#stock-lot-report .tree-branch-item {
+    position: relative;
+    padding-left: 36px;
+    margin-bottom: 12px;
+    z-index: 2;
+}
+
+#stock-lot-report .tree-branch-item:last-child {
+    margin-bottom: 0;
+}
+
+#stock-lot-report .tree-branch-dot {
+    position: absolute;
+    left: 7px;
+    top: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--z-primary, #7c1274);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+}
+
+#stock-lot-report .tree-branch-item.branch-inward .tree-branch-dot { border-color: #16a34a; background: #dcfce7; }
+#stock-lot-report .tree-branch-item.branch-dispatch .tree-branch-dot { border-color: #f59e0b; background: #fef3c7; }
+#stock-lot-report .tree-branch-item.branch-conversion_out .tree-branch-dot { border-color: #0d9488; background: #ccfbf1; }
+#stock-lot-report .tree-branch-item.branch-conversion_in .tree-branch-dot { border-color: #0284c7; background: #e0f2fe; }
+#stock-lot-report .tree-branch-item.branch-balance_sales .tree-branch-dot { border-color: #7c1274; background: #f3e8ff; }
+
+#stock-lot-report .tree-branch-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+#stock-lot-report .tree-branch-card:hover {
+    border-color: #cbd5e1;
+}
+
+#stock-lot-report .tree-branch-heading {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+#stock-lot-report .tree-branch-desc {
+    font-size: 12px;
+    color: #475569;
+}
+
+#stock-lot-report .tree-branch-sublist {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+#stock-lot-report .tree-branch-subitem {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 12px;
+}
+
+/* Dark Mode Overrides */
+body.dark-mode #stock-lot-report .lifecycle-tree-card,
+body.dark-mode #stock-lot-report .tree-node-card,
+body.dark-mode #stock-lot-report .tree-node-header,
+body.dark-mode #stock-lot-report .tree-branch-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+body.dark-mode #stock-lot-report .tree-controls-toolbar,
+body.dark-mode #stock-lot-report .tree-handles-strip,
+body.dark-mode #stock-lot-report .tree-node-branches {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark-mode #stock-lot-report .tree-node-title,
+body.dark-mode #stock-lot-report .tree-branch-heading {
+    color: #f1f5f9;
+}
+
+body.dark-mode #stock-lot-report .tree-branch-desc {
+    color: #cbd5e1;
+}
+
+
 

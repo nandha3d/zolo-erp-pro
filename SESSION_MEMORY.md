@@ -1,3 +1,47 @@
+## Product Lifecycle & Conversion Tree Graph, Expandable Nodes & Lifecycle Handle Filtering — 2026-11-19 (`ui`)
+
+- **Context & User Directives:**
+  1. *"give a handle or common name or number or keyword for product lifecycle to filter the product's stock and details."*
+  2. *"instead of this bar chart, the client wants to know which product is converted to which product, so we need to list a products like a node, when we clicked that node, it expands like a tree to show its lifecycle, if there are multiple projects then show the most recent products and give as many filters to filter."* (Ref: `media_1795096910870_9bd51d0b.jpg`, `media_1795097011833_92068952.jpg`).
+  3. *"once done update this to main branch to make it live.."*
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Lifecycle Handle & Keyword Filter System (`SimplifiedStockService.php`, `stock-by-lot.blade.php`, `reports-stock-by-lot.css`):**
+     - Automatically parses intuitive lifecycle handles from product codes, bracketed suffixes (e.g. `(5IM)` -> `5IM`, `(RJ1)` -> `RJ1`, `(VNE)` -> `VNE`, `(Z58)` -> `Z58`), or SKU identifiers.
+     - Added `Keyword / Handle` search box directly to the main `.desk-filter-card` with debounced search and enter-key submission.
+     - Added interactive purple handle badges (`.lifecycle-handle-badge`) in both the tree headers and table rows; clicking any handle badge instantly isolates that product series across both the tree graph and stock balance tables.
+     - Added horizontal handle filter pill strip (`.tree-handles-strip`) with active pill states for one-click handle filtering.
+  2. **Interactive Product Lifecycle & Conversion Tree Graph (`stock-by-lot.blade.php`, `reports-stock-by-lot.css`, `SimplifiedStockService.php`):**
+     - Replaced the static bar chart in `stock-by-lot.blade.php` with an interactive tree graph that shows exactly which product is converted to which product.
+     - Each product renders as an interactive node card (`.tree-node-card`) with:
+       - Header displaying product title, SKU code, category badge (`Converted Goods`, `In Job Work (WIP)`, `Ready Godown Stock`), lifecycle handle badge, closing stock badge, conversion summary count, and interactive chevron.
+       - Smooth expandable tree container (`.tree-branches-container`) that animates open/close on click.
+       - 4 sequential lifecycle stages along a continuous vertical trunk line (`.tree-trunk-line`):
+         - **Branch 1: Raw Material Inward** (Vendor purchases, invoices, dates, and received quantities).
+         - **Branch 2: Dispatched to Job Worker** (Delivery challans, processors, dates, and sent quantities).
+         - **Branch 3: Conversion in Job Work** (Exact paired source and target products, receipt refs, and direct bidirectional links: `Trace Raw Material` and `Trace Converted Finished Goods`).
+         - **Branch 4: Current Ready Stock & Sales** (Godown ready stock, processor WIP, damage, and customer sales).
+  3. **High-Density Scalability for 100+ Products:**
+     - Defaults to the Top 10 most recent active products to prevent DOM overwhelm.
+     - Includes a `Show All N Products` button to load all items dynamically without page reload.
+     - Features instant real-time client-side live search filtering by name, code, lot, or handle with zero lag.
+     - Category filter pills (`All Products`, `Converted Goods`, `In Job Work (WIP)`, `Ready Godown Stock`).
+     - Global `Expand All` and `Collapse All` toolbar buttons.
+     - Movement charts retained inside a collapsible container (`#collapseStockGraphs`) accessible via `Toggle Graphs`.
+  4. **Strict ERP Design System Parity (AGENTS.md Section 4.4):**
+     - Reused canonical ERP design tokens (`var(--z-primary)`, `var(--neo-surface)`, `var(--neo-border)`, `var(--z-ink)`).
+     - Standard Dripicons (`dripicons-chevron-down`, `dripicons-search`, `dripicons-cross`, `dripicons-box`, `dripicons-download`, `dripicons-export`, `dripicons-graph-bar`).
+     - 100% compliant with `tests/Unit/DesignTokensTest.php` (zero forbidden inline styles; zero hardcoded accent hex codes).
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors across all modified PHP and Blade files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **4/4 passed (100%, 39 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Sold Out Stocks in Charts, Horizontal Scroll Removal, Traceability & PR #27 Merge to Main — 2026-11-19 (`ui` & `main`)
 
 - **Merge Status & Production Release:**
