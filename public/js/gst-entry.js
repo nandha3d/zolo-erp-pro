@@ -23,7 +23,7 @@
         return '<option value="' + code + '">' + code + ' · ' + $('<span>').text(config.states[code]).html() + '</option>';
     }).join('');
     var $gstField = $(
-        '<div class="field-compact-item" id="gst-entry-field" style="min-width:160px;max-width:220px;">' +
+        '<div class="field-compact-item" id="gst-entry-field">' +
             '<label for="gst-place-of-supply" data-help="State where the supply takes place. Same state as your company' +
                 ' = CGST+SGST, another state = IGST. Auto works it out from the GSTINs.|33 · Tamil Nadu">Place of supply <span id="gst-mode-badge" class="badge badge-light" style="font-size:10px;"></span></label>' +
             '<div class="d-flex align-items-center" style="gap:6px;">' +
@@ -148,6 +148,7 @@
     }
 
     function schedule() {
+        if (window._isRestoringWorkspace) return;
         clearTimeout(timer);
         timer = setTimeout(refresh, 350);
     }
