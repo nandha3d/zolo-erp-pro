@@ -1,4 +1,9 @@
-## Sold Out Stocks in Charts, Horizontal Scroll Removal & Bidirectional Conversion Traceability — 2026-11-19 (`ui`)
+## Sold Out Stocks in Charts, Horizontal Scroll Removal, Traceability & PR #27 Merge to Main — 2026-11-19 (`ui` & `main`)
+
+- **Merge Status & Production Release:**
+  - **PR #27:** Merged into `main` via commit `e5c2cbafddea42099723f7169124b36e7c8bce12`.
+  - **Checks:** All 14 GitHub Actions CI suites and the required `ERP acceptance gate` passed with 100% green status.
+  - **Remotes Synchronized:** `origin/main`, `nandha-origin/main`, `origin/ui`, and `nandha-origin/ui` are all synchronized at `e5c2cbaf`.
 
 - **Context & User Directives:**
   1. *"how to manage this if the products are 100 or above? remove the tracebility and dont keep the scrolling horizontal."* (Ref: `media_1795094184117_cad3c7f4.jpg`, `media_1795094244434_e3bddad7.png`, `media_1795094269439_53503f9a.png`).
