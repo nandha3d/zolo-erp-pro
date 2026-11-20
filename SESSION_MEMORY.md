@@ -1,4 +1,11 @@
-## Auto-Scrollable Catalog Bar with Slim Pill Design & Clean Tree Canvas — 2026-11-20 (`ui` & `main`)
+## Auto-Scrollable Catalog Bar with Slim Pill Design, PR #32 Merge & VPS Live Deployment — 2026-11-20 (`ui` & `main`)
+
+- **Merge & Production VPS Deployment:**
+  - **PR #32:** Merged into `main` via commit `d604650cfa512fb3a562769c47039415d43189cf`.
+  - **Acceptance Gate:** `ERP completion acceptance` (Run `44684213143`) on `main` passed with 100% green status across all 10 matrix test jobs.
+  - **Deploy to VPS:** Automated deployment workflow (`deploy.yml`, Run `44686332845`) completed successfully with status `completed / success` on PHP 8.5.
+  - **Live Verification:** `https://erp.samuraibuiness.in/login` verified returning HTTP 200 OK.
+  - **Remotes Synchronized:** `origin/main`, `nandha-origin/main`, `origin/ui`, and `nandha-origin/ui` are completely updated.
 
 - **Context & User Clarification:**
   1. *"actually i mean this is the auto scrollable with new pill design.. not the tree type below.."* (Ref: `media_1795152618172_da4106ca.png` pointing to the top Lifecycle Product Catalog row, and `media_1795151752345_5368026e.png`).
@@ -91,7 +98,14 @@
 
 ---
 
-## Auto-Scrollable Catalog Bar with Slim Pill Design & Clean Tree Canvas — 2026-11-20 (`ui` & `main`)
+## Auto-Scrollable Catalog Bar with Slim Pill Design, PR #32 Merge & VPS Live Deployment — 2026-11-20 (`ui` & `main`)
+
+- **Merge & Production VPS Deployment:**
+  - **PR #32:** Merged into `main` via commit `d604650cfa512fb3a562769c47039415d43189cf`.
+  - **Acceptance Gate:** `ERP completion acceptance` (Run `44684213143`) on `main` passed with 100% green status across all 10 matrix test jobs.
+  - **Deploy to VPS:** Automated deployment workflow (`deploy.yml`, Run `44686332845`) completed successfully with status `completed / success` on PHP 8.5.
+  - **Live Verification:** `https://erp.samuraibuiness.in/login` verified returning HTTP 200 OK.
+  - **Remotes Synchronized:** `origin/main`, `nandha-origin/main`, `origin/ui`, and `nandha-origin/ui` are completely updated.
 
 - **Context & User Clarification:**
   1. *"actually i mean this is the auto scrollable with new pill design.. not the tree type below.."* (Ref: `media_1795152618172_da4106ca.png` pointing to the top Lifecycle Product Catalog row, and `media_1795151752345_5368026e.png`).
