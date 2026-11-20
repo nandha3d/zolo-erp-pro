@@ -106,44 +106,52 @@
             </button>
         </div>
 
-        {{-- Horizontal Catalog Node Selector Grid --}}
-        <div class="lifecycle-product-cards-grid" id="catalogCardsGrid">
-            @foreach($catalog as $item)
-            @php
-                $isActiveItem = ($activeProduct['product_id'] ?? 0) === $item['product_id'];
-            @endphp
-            <a href="{{ route('inventory-reports.lifecycle', ['product_id' => $item['product_id'], 'from' => $filters['from'], 'to' => $filters['to'], 'warehouse_id' => $filters['warehouse_id'] ?? '']) }}" 
-               class="product-catalog-card @if($isActiveItem) active-product @endif"
-               data-pid="{{ $item['product_id'] }}"
-               data-plc="{{ strtoupper($item['plc']) }}"
-               data-category="{{ $item['category'] }}"
-               data-name="{{ strtolower($item['product_name']) }}"
-               data-code="{{ strtolower($item['product_code']) }}"
-               title="Select {{ $item['product_name'] }} to view full tree">
-                <div>
-                    <div class="catalog-card-header">
-                        <span class="catalog-card-title" title="{{ $item['product_name'] }}">{{ $item['product_name'] }}</span>
-                        <span class="badge badge-primary px-2 py-1 font-weight-bold u-fs-10px" title="Product Lifecycle Code (PLC)">PLC: {{ $item['plc'] }}</span>
-                    </div>
-                    <div class="catalog-card-code">{{ $item['product_code'] }}</div>
-                </div>
-                <div>
-                    <div class="catalog-card-metrics">
-                        <span>Bought: <strong>{{ $qty($item['purchased_qty']) }}</strong></span>
-                        <span>Sent: <strong>{{ $qty($item['dispatched_qty']) }}</strong></span>
-                        <span>Stock: <strong>{{ $qty($item['in_godown_qty']) }}</strong></span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge @if($item['category'] === 'converted') badge-success @elseif($item['category'] === 'wip') badge-warning @else badge-info @endif font-weight-normal u-fs-10px">
-                            {{ $item['status_label'] }}
-                        </span>
-                        @if($isActiveItem)
-                        <span class="text-primary font-weight-bold u-fs-11px"><i class="dripicons-checkmark mr-1"></i> Active</span>
+        {{-- Horizontal Auto-Scrollable Catalog Track (Slim Pill Design) --}}
+        <div class="lifecycle-catalog-track-wrap" id="catalogTrackWrapper">
+            <div class="lifecycle-product-cards-grid" id="catalogCardsGrid">
+                @foreach($catalog as $item)
+                @php
+                    $isActiveItem = ($activeProduct['product_id'] ?? 0) === $item['product_id'];
+                @endphp
+                <a href="{{ route('inventory-reports.lifecycle', ['product_id' => $item['product_id'], 'from' => $filters['from'], 'to' => $filters['to'], 'warehouse_id' => $filters['warehouse_id'] ?? '']) }}" 
+                   class="product-catalog-card catalog-pill-card @if($isActiveItem) active-product @endif"
+                   data-pid="{{ $item['product_id'] }}"
+                   data-plc="{{ strtoupper($item['plc']) }}"
+                   data-category="{{ $item['category'] }}"
+                   data-name="{{ strtolower($item['product_name']) }}"
+                   data-code="{{ strtolower($item['product_code']) }}"
+                   title="Select {{ $item['product_name'] }} [PLC: {{ $item['plc'] }}] to view full tree">
+                    <div class="catalog-pill-icon">
+                        @if($item['category'] === 'converted')
+                            <i class="dripicons-swap"></i>
+                        @elseif($item['category'] === 'wip')
+                            <i class="dripicons-gear"></i>
+                        @else
+                            <i class="dripicons-download"></i>
                         @endif
                     </div>
-                </div>
-            </a>
-            @endforeach
+                    <div class="catalog-pill-body">
+                        <div class="catalog-pill-top">
+                            <span class="catalog-pill-tag">PLC: {{ $item['plc'] }}</span>
+                            <span class="catalog-pill-code">{{ $item['product_code'] }}</span>
+                        </div>
+                        <div class="catalog-pill-title" title="{{ $item['product_name'] }}">{{ $item['product_name'] }}</div>
+                        <div class="catalog-pill-subtext">
+                            <span>Bought: <strong>{{ $qty($item['purchased_qty']) }}</strong></span>
+                            <span>· Sent: <strong>{{ $qty($item['dispatched_qty']) }}</strong></span>
+                        </div>
+                    </div>
+                    <div class="catalog-pill-qty">
+                        <span class="catalog-pill-badge" title="Physical Godown Stock">
+                            {{ $qty($item['in_godown_qty']) }}
+                        </span>
+                        <span class="catalog-pill-status @if($item['category'] === 'wip') status-wip @elseif($item['category'] === 'converted') status-converted @else status-ready @endif">
+                            {{ $item['status_label'] }}
+                        </span>
+                    </div>
+                </a>
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -410,7 +418,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     drawTreeConnections();
-    initCanvasHoverAutoScroll();
+    initCatalogHoverAutoScroll();
 
     // Re-draw on window resize or canvas resize
     window.addEventListener('resize', debounce(drawTreeConnections, 100));
@@ -421,8 +429,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-function initCanvasHoverAutoScroll() {
-    const wrapper = document.getElementById('lifecycleCanvasWrapper');
+function initCatalogHoverAutoScroll() {
+    const wrapper = document.getElementById('catalogTrackWrapper');
     if (!wrapper) return;
 
     let targetScrollLeft = wrapper.scrollLeft;
@@ -467,17 +475,17 @@ function initCanvasHoverAutoScroll() {
         const maxScroll = wrapper.scrollWidth - width;
         if (maxScroll <= 0) return;
 
-        // Ratio from 0 to 1 across the canvas width
+        // Ratio from 0 to 1 across the catalog track width
         const ratio = Math.max(0, Math.min(1, mouseX / width));
 
-        // Edge deadzones (first 10% stays at 0, last 10% reaches 100%)
+        // Smooth gradual response with edge deadzone buffers
         let adjustedRatio = ratio;
-        if (ratio < 0.10) {
+        if (ratio < 0.12) {
             adjustedRatio = 0;
-        } else if (ratio > 0.90) {
+        } else if (ratio > 0.88) {
             adjustedRatio = 1;
         } else {
-            adjustedRatio = (ratio - 0.10) / 0.80;
+            adjustedRatio = (ratio - 0.12) / 0.76;
         }
 
         targetScrollLeft = adjustedRatio * maxScroll;

@@ -1,3 +1,50 @@
+## Auto-Scrollable Catalog Bar with Slim Pill Design & Clean Tree Canvas — 2026-11-20 (`ui` & `main`)
+
+- **Context & User Clarification:**
+  1. *"actually i mean this is the auto scrollable with new pill design.. not the tree type below.."* (Ref: `media_1795152618172_da4106ca.png` pointing to the top Lifecycle Product Catalog row, and `media_1795151752345_5368026e.png`).
+  2. *"keep this as a auto scrollable pill type element, when i hover the mouse, it should gradually scroll accross the width. make a slim card like in the screenshot, anyway we have the auto scrolling, so we can extend the pills width if needed."*
+  3. *"dont make the user to scroll."* (Ref: `media_1795150594521_25748a5a.png`).
+  4. *"there is a box has light colored text not visible"* (Ref: `media_1795149393234_6a09f920.png`).
+  5. *"and why the warehouse showing 1000 even if we have sent to job work?"* (Ref: `media_1795149534219_5b7d3f0c.jpg`).
+  6. *"once done update this to main branch to make it live.."*
+
+- **Architectural & UI Solutions Delivered:**
+  1. **Slim Pill Catalog Design (`product-lifecycle.blade.php`, `product-lifecycle.css`):**
+     - Replaced bulky multiline catalog cards with slim horizontal capsule pills (`.catalog-pill-card`):
+       - Rounded capsule shape (`border-radius: 28px !important; min-height: 50px !important;`).
+       - Extended width (`320px` per card) so full product names (e.g. `Grey Cotton Fabric 60s (5IM)`) never truncate!
+       - Left stage icon circle (`.catalog-pill-icon`): download icon for raw purchases, swap icon for converted goods, gear icon for WIP.
+       - Body: `PLC: {{ $item['plc'] }} · {{ $item['product_code'] }}`, bold product name, and bought/sent metrics.
+       - Right-aligned quantity pill badge (`.catalog-pill-badge`) with physical godown stock and status label.
+       - Active state: brand purple border, subtle purple shadow glow, and purple icon highlight.
+  2. **Hover-Based Smooth Horizontal Auto-Scrolling on Catalog Track:**
+     - Enclosed catalog in `.lifecycle-catalog-track-wrap` with hidden scrollbars (`scrollbar-width: none !important; ::-webkit-scrollbar: { display: none !important; }`).
+     - Implemented `initCatalogHoverAutoScroll()` inside `product-lifecycle.blade.php`:
+       - Tracks mouse position over `#catalogTrackWrapper`. Moving the cursor towards the right gradually and smoothly glides `#catalogTrackWrapper.scrollLeft` right; moving left glides left.
+       - Smooth easing factor `diff * 0.08` via `requestAnimationFrame` with 12% edge resting deadzones.
+       - Also supports seamless mouse wheel horizontal panning (`wheel` event).
+  3. **Clean, Rock-Solid Tree Canvas Below (No Scroll Traps):**
+     - The tree canvas below (`#lifecycleCanvasWrapper`) remains stationary and rock-solid with no hover drift.
+     - The 3 columns (Root, Branches, Sub-branches) span naturally across the canvas width (`justify-content: space-between !important; width: 100% !important;`).
+     - Dynamic SVG bezier paths connect output ports to input ports accurately with scroll-invariant coordinate math.
+  4. **Physical Godown Stock Balance Accuracy (`SimplifiedStockService.php`):**
+     - Filtered `warehouse_id` queries strictly to internal godowns (`$internalWhIds`), displaying true in-hand stock (`400.00 Meter`, NOT 1,000.00).
+     - Fixed Step 1 purchases & fallback opening stock: recognizes `opening`, `initial_stock`, and `purchase` while excluding transfer/receipt lines.
+     - Removed redundant Level 3 sub-branch from `godown_stock` leaf (`'sub_branches' => []`).
+  5. **High-Contrast Badges & App-Shell Override (`product-lifecycle.css`):**
+     - Added `.catalog-count-badge` (dark slate `#334155` on light slate `#f1f5f9` with border) and `.tree-active-product-badge` (pure white `#ffffff` on brand purple `var(--z-primary)`).
+     - Fully defeated `html.app-shell` flex-clamping on `#product-lifecycle-page` with `height: auto !important; max-height: none !important; flex: none !important; overflow: visible !important;`.
+     - Defined `#product-lifecycle-page .kpi-summary-strip` as a sleek single-row 5-column grid (`display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 10px !important;`).
+
+- **Verification & Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Hover-Based Auto-Scrolling, Slim Pill Capsule Nodes & PR #32 Integration — 2026-11-20 (`ui` & `main`)
 
 - **Context & User Directives:**

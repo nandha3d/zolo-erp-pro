@@ -142,96 +142,221 @@ body.dark-mode .tree-active-product-badge {
     border-color: var(--z-primary, #7c1274) !important;
 }
 
-/* Responsive Root Product Cards Grid (Zero Horizontal Scrolling) */
+/* Auto-Scrollable Horizontal Catalog Track (Slim Pill Design) */
+.lifecycle-catalog-track-wrap {
+    position: relative;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 6px 2px 10px 2px;
+    box-sizing: border-box !important;
+    scrollbar-width: none !important; /* Hide Firefox scrollbar */
+    -ms-overflow-style: none !important; /* Hide IE/Edge scrollbar */
+}
+
+.lifecycle-catalog-track-wrap::-webkit-scrollbar {
+    display: none !important; /* Hide Chrome/Safari scrollbar */
+    width: 0 !important;
+    height: 0 !important;
+}
+
 .lifecycle-product-cards-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 4px 2px;
-    overflow: visible !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    padding: 4px 2px !important;
+    width: max-content !important;
+    min-width: 100% !important;
+    align-items: center !important;
 }
 
-.product-catalog-card {
-    flex: 1 1 240px;
-    max-width: 320px;
-    min-width: 220px;
+.catalog-pill-card {
+    flex: 0 0 320px !important;
+    width: 320px !important;
+    min-width: 320px !important;
+    min-height: 50px !important;
     background: #ffffff;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 10px 14px;
-    cursor: pointer;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 28px !important;
+    padding: 6px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
     text-decoration: none !important;
-    color: inherit;
+    color: #0f172a !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
     transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    box-sizing: border-box !important;
+    cursor: pointer;
 }
 
-body.dark-mode .product-catalog-card {
+body.dark-mode .catalog-pill-card {
     background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
+    border-color: #475569;
+    color: #f8fafc !important;
 }
 
-.product-catalog-card:hover {
+.catalog-pill-card:hover {
     border-color: var(--z-primary, #7c1274);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(124, 18, 116, 0.12);
+    box-shadow: 0 6px 16px rgba(124, 18, 116, 0.12);
 }
 
-.product-catalog-card.active-product {
+.catalog-pill-card.active-product {
     border-color: var(--z-primary, #7c1274) !important;
-    background: linear-gradient(135deg, rgba(124, 18, 116, 0.04) 0%, rgba(255, 255, 255, 0.95) 100%);
-    box-shadow: 0 0 0 2px var(--z-primary, #7c1274), 0 4px 12px rgba(124, 18, 116, 0.15);
+    background: #ffffff !important;
+    box-shadow: 0 0 0 2.5px var(--z-primary, #7c1274), 0 6px 18px rgba(124, 18, 116, 0.18) !important;
 }
 
-body.dark-mode .product-catalog-card.active-product {
-    background: linear-gradient(135deg, rgba(124, 18, 116, 0.2) 0%, #1e293b 100%);
+body.dark-mode .catalog-pill-card.active-product {
+    background: #1e293b !important;
+    border-color: #c084fc !important;
+    box-shadow: 0 0 0 2.5px #c084fc, 0 6px 18px rgba(192, 132, 252, 0.25) !important;
 }
 
-.catalog-card-header {
+.catalog-pill-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(124, 18, 116, 0.1);
+    color: var(--z-primary, #7c1274);
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 6px;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
 }
 
-.catalog-card-title {
-    font-size: 13px;
-    font-weight: 700;
+.catalog-pill-card.active-product .catalog-pill-icon {
+    background: var(--z-primary, #7c1274);
+    color: #ffffff;
+}
+
+body.dark-mode .catalog-pill-icon {
+    background: rgba(192, 132, 252, 0.15);
+    color: #c084fc;
+}
+
+body.dark-mode .catalog-pill-card.active-product .catalog-pill-icon {
+    background: #c084fc;
     color: #0f172a;
-    line-height: 1.3;
+}
+
+.catalog-pill-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.catalog-pill-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+
+.catalog-pill-tag {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--z-primary, #7c1274);
+}
+
+body.dark-mode .catalog-pill-tag {
+    color: #c084fc;
+}
+
+.catalog-pill-code {
+    font-size: 9.5px;
+    color: #64748b;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 190px;
 }
 
-body.dark-mode .catalog-card-title {
+.catalog-pill-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.25;
+}
+
+body.dark-mode .catalog-pill-title {
     color: #f8fafc;
 }
 
-.catalog-card-code {
-    font-size: 10px;
+.catalog-pill-subtext {
+    font-size: 9.5px;
     color: #64748b;
-    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+    margin-top: 1px;
 }
 
-.catalog-card-metrics {
-    font-size: 11px;
-    color: #475569;
-    background: #f1f5f9;
-    border-radius: 4px;
-    padding: 4px 8px;
-    margin-bottom: 6px;
+body.dark-mode .catalog-pill-subtext {
+    color: #94a3b8;
+}
+
+.catalog-pill-qty {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
 }
 
-body.dark-mode .catalog-card-metrics {
+.catalog-pill-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+body.dark-mode .catalog-pill-badge {
     background: #0f172a;
-    color: #cbd5e1;
+    color: #e2e8f0;
+    border-color: #334155;
+}
+
+.catalog-pill-card.active-product .catalog-pill-badge {
+    background: rgba(124, 18, 116, 0.1);
+    color: var(--z-primary, #7c1274);
+    border-color: rgba(124, 18, 116, 0.25);
+}
+
+body.dark-mode .catalog-pill-card.active-product .catalog-pill-badge {
+    background: rgba(192, 132, 252, 0.2);
+    color: #f8fafc;
+    border-color: #c084fc;
+}
+
+.catalog-pill-status {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #10b981;
+    margin-top: 2px;
+}
+
+.catalog-pill-status.status-wip {
+    color: #f59e0b;
+}
+
+.catalog-pill-status.status-ready {
+    color: #0284c7;
 }
 
 /* --- Canonical KPI Strip Reuse (AGENTS.md 4.4) --- */
@@ -294,7 +419,7 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     text-overflow: ellipsis !important;
 }
 
-/* --- The Full Picture Tree Canvas (Auto-Scroll on Hover, Hidden Scrollbars) --- */
+/* --- The Full Picture Tree Canvas (Clean, Natural Fitting, No Scroll Traps) --- */
 .lifecycle-canvas-wrapper {
     position: relative;
     background: #0f172a; /* Deep Slate Canvas */
@@ -302,22 +427,21 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     background-size: 20px 20px;
     border: 1px solid #334155;
     border-radius: 12px;
-    padding: 24px 28px;
+    padding: 24px 20px;
     margin-bottom: 16px;
     min-height: 140px;
     height: auto !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    scrollbar-width: none !important; /* Hide Firefox scrollbar */
-    -ms-overflow-style: none !important; /* Hide IE/Edge scrollbar */
 }
 
-.lifecycle-canvas-wrapper::-webkit-scrollbar {
-    display: none !important; /* Hide Chrome/Safari scrollbar */
-    width: 0 !important;
-    height: 0 !important;
+@media (max-width: 992px) {
+    .lifecycle-canvas-wrapper {
+        overflow-x: auto !important;
+    }
 }
 
 .lifecycle-svg-canvas {
@@ -357,34 +481,43 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     position: relative;
     z-index: 2;
     display: flex !important;
-    justify-content: flex-start !important;
-    gap: 60px !important;
-    width: max-content !important;
-    min-width: 100% !important;
+    justify-content: space-between !important;
+    gap: 28px !important;
+    width: 100% !important;
+    min-width: 0 !important;
     align-items: center !important;
     padding: 6px 4px;
+}
+
+@media (max-width: 992px) {
+    .tree-columns-container {
+        min-width: 860px !important;
+    }
 }
 
 .tree-column {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     justify-content: center;
 }
 
 .tree-col-root {
-    flex: 0 0 370px !important;
-    width: 370px !important;
+    flex: 1 1 28% !important;
+    max-width: 30% !important;
+    min-width: 250px !important;
 }
 
 .tree-col-branches {
-    flex: 0 0 370px !important;
-    width: 370px !important;
+    flex: 1 1 35% !important;
+    max-width: 36% !important;
+    min-width: 280px !important;
 }
 
 .tree-col-subbranches {
-    flex: 0 0 370px !important;
-    width: 370px !important;
+    flex: 1 1 35% !important;
+    max-width: 36% !important;
+    min-width: 280px !important;
 }
 
 /* --- Slim Pill Capsule Styles (Matching User's Screenshot media_1795151752345_5368026e.png) --- */
