@@ -1,3 +1,82 @@
+## Hover-Based Auto-Scrolling, Slim Pill Capsule Nodes & PR #32 Integration — 2026-11-20 (`ui` & `main`)
+
+- **Context & User Directives:**
+  1. *"keep this as a auto scrollable pill type element, when i hover the mouse, it should gradually scroll accross the width. make a slim card like in the screenshot, anyway we have the auto scrolling, so we can extend the pills width if needed."* (Ref: `media_1795151752345_5368026e.png`).
+  2. *"dont make the user to scroll."* (Ref: `media_1795150594521_25748a5a.png` showing nested vertical and horizontal scrollbars inside the canvas box).
+  3. *"there is a box has light colored text not visible"* (Ref: `media_1795149393234_6a09f920.png` showing unreadable white-on-light-pink text in catalog badge and tree header).
+  4. *"and why the warehouse showing 1000 even if we have sent to job work?"* (Ref: `media_1795149534219_5b7d3f0c.jpg` and `media_1795149691239_f8dd98ea.png` where purchased 1,000 MTR with 600 MTR dispatched showed 1,000 MTR Godown stock instead of 400 MTR).
+  5. *"also make the height is adjustable depending on the nodes, why the 4 screenshot looks like this? make it more sleek design so that the user can get a whole picture of what has been done."* (Ref: `media_1795149691239_f8dd98ea.png` showing KPI metric cards stacked vertically down the screen).
+  6. *"once done update this to main branch to make it live.."*
+
+- **Architectural & UI Solutions Delivered:**
+  1. **Hover-Based Smooth Horizontal Auto-Scrolling (`product-lifecycle.blade.php`, `product-lifecycle.css`):**
+     - Completely hid browser scrollbars (`scrollbar-width: none !important; -ms-overflow-style: none !important; ::-webkit-scrollbar { display: none !important; }`).
+     - Implemented `initCanvasHoverAutoScroll()` inside `product-lifecycle.blade.php` running a `requestAnimationFrame` interpolation loop:
+       - Mouse horizontal position (`mouseX / width`) smoothly maps target scroll position across the canvas with deadzone buffers at edges (0-10% rests at start, 90-100% rests at end).
+       - Canvas glides smoothly with ease factor `diff * 0.08` as the user moves their cursor over the canvas.
+       - Also supports seamless mouse wheel panning (`wheel` event with delta mapping).
+  2. **Extended Slim Pill Capsule Design (`product-lifecycle.css`):**
+     - Matches `media_1795151752345_5368026e.png` exactly:
+       - Extended width: `370px` per column (`flex: 0 0 370px !important; width: 370px !important;`).
+       - Slim capsule shape: `border-radius: 28px; padding: 6px 14px; min-height: 48px;`.
+       - Right-aligned quantity capsule badge (`.node-qty-badge`).
+       - Circular stage icon circle (`.node-icon-circle`).
+       - Terminal connector port dot at card edge (`.node-port`).
+  3. **Scroll-Invariant SVG Connector Vector Geometry (`product-lifecycle.blade.php`):**
+     - Added `scrollLeft` and `scrollTop` to port bounding client rect calculations in `drawTreeConnections()`.
+     - Connecting bezier lines remain 100% pixel-perfect and aligned to node ports regardless of whether the canvas is scrolled or resized.
+  4. **Godown Stock Accuracy & Tenancy Filter (`SimplifiedStockService.php`):**
+     - Scoped `warehouse_id` queries by `$internalWhIds` (excluding quarantine and external job work virtual warehouses).
+     - Fixed `currentGodownStock` calculation to accurately reflect physical in-godown stock (`400.00 Meter`, NOT 1,000.00).
+     - Fixed Step 1 purchases & fallback opening stock: recognizes `opening`, `initial_stock`, and `purchase` while excluding transfer/receipt lines.
+     - Removed redundant Level 3 sub-branch from `godown_stock` leaf (`'sub_branches' => []`).
+  5. **High-Contrast Badges & App-Shell Override (`product-lifecycle.css`):**
+     - Added `.catalog-count-badge` (dark slate `#334155` on light slate `#f1f5f9` with border) and `.tree-active-product-badge` (pure white `#ffffff` on brand purple `var(--z-primary)`).
+     - Fully defeated `html.app-shell` flex-clamping on `#product-lifecycle-page` with `height: auto !important; max-height: none !important; flex: none !important; overflow: visible !important;`.
+     - Defined `#product-lifecycle-page .kpi-summary-strip` as a sleek single-row 5-column grid (`display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 10px !important;`).
+
+- **Verification & Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Product Lifecycle Page: Zero Nested Scrollbars, 100% Visibility, Accurate Godown Balances & PR #32 — 2026-11-20 (`ui` & `main`)
+
+- **Context & User Feedback:**
+  1. *"there is a box has light colored text not visible"* (Ref: `media_1795149393234_6a09f920.png` showing unreadable white-on-light-pink text in catalog badge and tree header).
+  2. *"and why the warehouse showing 1000 even if we have sent to job work?"* (Ref: `media_1795149534219_5b7d3f0c.jpg` and `media_1795149691239_f8dd98ea.png` where purchased 1,000 MTR with 600 MTR dispatched showed 1,000 MTR Godown stock instead of 400 MTR).
+  3. *"also make the height is adjustable depending on the nodes, why the 4 screenshot looks like this? make it more sleek design so that the user can get a whole picture of what has been done."* (Ref: `media_1795149691239_f8dd98ea.png` showing KPI metric cards stacked vertically down the screen).
+  4. *"dont make the user to scroll."* (Ref: `media_1795150594521_25748a5a.png` showing canvas height clamped to ~100px with both vertical and horizontal scrollbars inside the box).
+
+- **Root Causes & Solutions:**
+  1. **Nested Scrollbars & Height Clamping (`html.app-shell`):**
+     - *Root Cause:* `public/css/app-shell.css` applied `html.app-shell .desk-card-wrapper { flex: 1 1 0 !important; }` and `.desk-card-wrapper:not(:has(.dataTables_wrapper)) { overflow-y: auto !important; }`, forcing `#product-lifecycle-page .desk-card-wrapper` to shrink to ~100px residual screen height with vertical scrolling. In addition, fixed column widths with `min-width: 880px` caused horizontal scrolling.
+     - *Solution:* Fully overrode app-shell height clamping for `#product-lifecycle-page` with `height: auto !important; min-height: 0 !important; max-height: none !important; flex: none !important; overflow: visible !important; overflow-y: visible !important; overflow-x: visible !important;`. Set `.tree-columns-container` to `width: 100% !important; min-width: 0 !important;` with responsive percentage columns (`28%`, `35%`, `35%`) and wrapped catalog cards. The page breathes naturally with zero nested scrollbars in either direction.
+  2. **Warehouse Stock Showing 1,000 Instead of 400 (`SimplifiedStockService.php`):**
+     - *Root Cause:* The query summed all `stock_movement_lines.qty_base` without filtering `warehouse_id` to internal godowns. When 600 MTR was dispatched to an external job worker warehouse (`External JWO-...`), the overall sum remained `+1000 - 600 + 600 = 1000 MTR`.
+     - *Solution:* Filtered `warehouse_id` strictly by `$internalWhIds` (standard active warehouses excluding quarantine and external JWO warehouses). Stock now accurately calculates `1000 - 600 = 400.00 MTR`.
+  3. **Duplicate/Redundant Leaf in Level 3:**
+     - *Root Cause:* `godown_stock` branch in Level 2 had an identical duplicate sub-branch in Level 3.
+     - *Solution:* Godown stock terminates cleanly in Level 2 (`'sub_branches' => []`). Level 3 is reserved strictly for Job Work outputs (converted finished goods, process shrinkage, or WIP).
+  4. **KPI Cards Stacking Vertically in Screenshot 4:**
+     - *Root Cause:* `product-lifecycle.css` lacked CSS grid layout for `.kpi-summary-strip`.
+     - *Solution:* Defined `#product-lifecycle-page .kpi-summary-strip` as a sleek 5-column grid (`display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 10px !important;`) matching AGENTS.md Section 4.4.
+  5. **Light Colored Invisible Text on Badges:**
+     - *Root Cause:* `badge-primary` has a soft tint background (`var(--z-primary-soft)`), and `text-white` created unreadable white-on-light-pink text.
+     - *Solution:* Introduced `.catalog-count-badge` (dark slate `#334155` on light slate `#f1f5f9` with border) and `.tree-active-product-badge` (pure white `#ffffff` on solid brand purple `var(--z-primary)`), achieving 100% crystal-clear contrast.
+
+- **Verification:**
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - `php artisan view:clear`: OK.
+
+---
+
 ## Dedicated Product Lifecycle Page, "The Full Picture" Branching Tree & PR #29 Merge to Main — 2026-11-20 (`ui` & `main`)
 
 - **Merge Status & Production Release:**
