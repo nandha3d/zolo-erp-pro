@@ -1,3 +1,53 @@
+## Dedicated Product Lifecycle Page, "The Full Picture" Branching Tree & Root Catalog — 2026-11-20 (`ui`)
+
+- **Context & User Directives:**
+  1. *"make a full picture, i dont want all the trees at the same time,"*
+  2. *"list all the nodes first whichever product has lifecycle, give an highlight to identiify that has the plc,"*
+  3. *"when we click the node, it expands and shows that we bought 1000 cotton fabric, 500 given for coloring, 400 given for chambering, the 100 is remaining, so the root product is cotton fabric, that has 3 branches and expanding like a tree or whichever best way to represent, the sub branches expands if jobwork done, and what the name of the product after processed."*
+  4. *"so we can make this as a separate product lifecycle, page. and keeping the current page without this, in inventory itself we can name it as product life cycle and bring all the features we discussed."*
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Dedicated Page & Routing (`routes/inventory-reports.php`, `InventoryLotReportController.php`):**
+     - Registered `GET /inventory-reports/lifecycle` (`inventory-reports.lifecycle`).
+     - Added `lifecycle()` action in `InventoryLotReportController` supporting `product_id`, `plc`, date ranges (`from`/`to`), and live keyword filtering.
+     - Cleaned up `stock-by-lot.blade.php`: removed the heavy inline transformation canvas (-477 lines), restoring `stock-by-lot` as a clean, fast tabular stock balance view with row mini-steppers, collapsible movement graphs, and a prominent navigation link to the dedicated lifecycle page.
+  2. **Root Product Catalog Bar ("List all the nodes first whichever product has lifecycle, give an highlight to identify that has the plc"):**
+     - Renders an interactive catalog gallery of root products having an active lifecycle.
+     - Highlights each product with its Product Lifecycle Code (PLC) badge (e.g. `[PLC: 5IM]`, `[PLC: Z58]`, `[PLC: RJ1]`, `[PLC: VNE]`).
+     - Features quick PLC filter buttons (`[ ALL ]`, `[ 5IM ]`, `[ RJ1 ]`, `[ VNE ]`, `[ Z58 ]`), category pills (`All`, `Converted`, `In WIP`, `Ready Stock`), and instant live search.
+     - Clicking any card dynamically sets that product as active and loads "The Full Picture" tree!
+  3. **"The Full Picture" 3-Level Branching Tree Canvas (`product-lifecycle.blade.php`, `product-lifecycle.css`):**
+     - Matches the node-link graph reference image (`media_1795145299408_2b908584.png`):
+       - **Level 1 (Column 1 - Root Input):** Root Raw Material Inward (e.g. `1,000 MTR Grey Cotton Fabric 60s (Z58)` purchased via `PUR-00004` from `Sri Meenakshi Cotton Mills`). Terminal port on the right.
+       - **Level 2 (Column 2 - Operational Branches & Godown Stock):**
+         - Multiple dispatch branches (e.g. `600 MTR Cauvery Dyeing & Sizing Works` via `JWDC-00004`, or multiple branches e.g. 500 for coloring, 400 for chambering).
+         - Remaining Godown Stock branch (`400 MTR Remaining in Godown` in `zoloERP Textiles - Main`).
+       - **Level 3 (Column 3 - Sub-Branches / Job Work Outputs & Shrinkage):**
+         - Converted Finished Good Node showing the exact transformed product name (e.g. `580 MTR Vat Dyed Navy Blue Fabric 60s (Z58)` via `JWGRN-00003` / `PUR-00005`), date, and ready godown balance (`580 MTR`).
+         - Process Shrinkage Node showing exact loss (`20 MTR (3.3%)`).
+         - Direct one-click navigation links to stock timelines.
+     - Dynamic SVG vector connector overlay (`<svg class="lifecycle-svg-canvas">`) rendering smooth cubic bezier paths connecting parent output ports to child input ports with color-coded process rails.
+  4. **Canonical 5-Card KPI Strip (AGENTS.md Section 4.4):**
+     - 100% zoloERP design system reuse: `.kpi-summary-strip` with `.kpi-card` and `.z-icon-tile`:
+       - `Purchased Inward` (`.z-tone-primary`, `<i class="dripicons-download"></i>`)
+       - `Given to Job Work` (`.z-tone-warning`, `<i class="dripicons-export"></i>`)
+       - `Returned / Converted` (`.z-tone-success`, `<i class="dripicons-checkmark"></i>`)
+       - `Process Shrinkage` (`.z-tone-danger`, `<i class="dripicons-warning"></i>`)
+       - `Current Godown Stock` (`.z-tone-info`, `<i class="dripicons-home"></i>`)
+  5. **Global Navigation Integration:**
+     - Added `Product Lifecycle` under Inventory in `app/Services/Platform/InventoryNavigation.php`.
+     - Added `Product Lifecycle` in `resources/views/backend/layout/sidebar.blade.php` under both Inventory and Reporting.
+     - Added `Product Lifecycle` in `resources/views/components/inventory-command-bar.blade.php`.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 49 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Transformation Node Canvas, Product Lifecycle Codes (PLC) & Distinct Chart Series — 2026-11-20 (`ui`)
 
 - **Context & User Directives:**
