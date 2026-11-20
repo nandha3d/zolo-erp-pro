@@ -410,6 +410,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     drawTreeConnections();
+    initCanvasHoverAutoScroll();
 
     // Re-draw on window resize or canvas resize
     window.addEventListener('resize', debounce(drawTreeConnections, 100));
@@ -419,6 +420,86 @@ document.addEventListener('DOMContentLoaded', function () {
         new ResizeObserver(debounce(drawTreeConnections, 80)).observe(canvasWrapper);
     }
 });
+
+function initCanvasHoverAutoScroll() {
+    const wrapper = document.getElementById('lifecycleCanvasWrapper');
+    if (!wrapper) return;
+
+    let targetScrollLeft = wrapper.scrollLeft;
+    let isHovering = false;
+    let animFrame = null;
+
+    function step() {
+        const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+        if (maxScroll > 0) {
+            const diff = targetScrollLeft - wrapper.scrollLeft;
+            if (Math.abs(diff) > 0.5) {
+                wrapper.scrollLeft += diff * 0.08;
+            } else {
+                wrapper.scrollLeft = targetScrollLeft;
+            }
+        }
+        if (isHovering || Math.abs(targetScrollLeft - wrapper.scrollLeft) > 1) {
+            animFrame = requestAnimationFrame(step);
+        } else {
+            animFrame = null;
+        }
+    }
+
+    function ensureLoop() {
+        if (!animFrame) animFrame = requestAnimationFrame(step);
+    }
+
+    wrapper.addEventListener('mouseenter', () => {
+        isHovering = true;
+        targetScrollLeft = wrapper.scrollLeft;
+        ensureLoop();
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+        isHovering = false;
+    });
+
+    wrapper.addEventListener('mousemove', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const width = rect.width;
+        const maxScroll = wrapper.scrollWidth - width;
+        if (maxScroll <= 0) return;
+
+        // Ratio from 0 to 1 across the canvas width
+        const ratio = Math.max(0, Math.min(1, mouseX / width));
+
+        // Edge deadzones (first 10% stays at 0, last 10% reaches 100%)
+        let adjustedRatio = ratio;
+        if (ratio < 0.10) {
+            adjustedRatio = 0;
+        } else if (ratio > 0.90) {
+            adjustedRatio = 1;
+        } else {
+            adjustedRatio = (ratio - 0.10) / 0.80;
+        }
+
+        targetScrollLeft = adjustedRatio * maxScroll;
+        ensureLoop();
+    });
+
+    // Seamless mouse wheel horizontal panning without visible scrollbar
+    wrapper.addEventListener('wheel', (e) => {
+        const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+        if (maxScroll <= 0) return;
+
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            e.preventDefault();
+            targetScrollLeft = Math.max(0, Math.min(maxScroll, targetScrollLeft + (e.deltaY * 1.5)));
+            ensureLoop();
+        } else if (Math.abs(e.deltaX) > 0) {
+            e.preventDefault();
+            targetScrollLeft = Math.max(0, Math.min(maxScroll, targetScrollLeft + (e.deltaX * 1.5)));
+            ensureLoop();
+        }
+    }, { passive: false });
+}
 
 function debounce(func, wait) {
     let timeout;
@@ -435,8 +516,8 @@ function drawTreeConnections() {
     if (!svg || !container || !columnsContainer) return;
 
     // Dynamically adjust SVG canvas dimensions to exact content dimensions
-    const cWidth = Math.max(container.scrollWidth, columnsContainer.offsetWidth + 48);
-    const cHeight = Math.max(container.scrollHeight, columnsContainer.offsetHeight + 44);
+    const cWidth = Math.max(container.scrollWidth, columnsContainer.offsetWidth + 64);
+    const cHeight = Math.max(container.scrollHeight, columnsContainer.offsetHeight + 48);
     svg.setAttribute('width', cWidth);
     svg.setAttribute('height', cHeight);
     svg.style.width = cWidth + 'px';
@@ -445,20 +526,22 @@ function drawTreeConnections() {
     // Reset SVG paths
     svg.innerHTML = '';
     const containerRect = container.getBoundingClientRect();
+    const scrollLeft = container.scrollLeft || 0;
+    const scrollTop = container.scrollTop || 0;
 
     // 1. Connect Root Node -> Each Level 2 Branch
     const rootPortOut = document.getElementById('port-root-out');
     if (!rootPortOut) return;
 
     const rootRect = rootPortOut.getBoundingClientRect();
-    const x1 = rootRect.left - containerRect.left + (rootRect.width / 2);
-    const y1 = rootRect.top - containerRect.top + (rootRect.height / 2);
+    const x1 = rootRect.left - containerRect.left + scrollLeft + (rootRect.width / 2);
+    const y1 = rootRect.top - containerRect.top + scrollTop + (rootRect.height / 2);
 
     const level2PortsIn = document.querySelectorAll('.tree-col-branches .node-port.port-in');
     level2PortsIn.forEach(portIn => {
         const inRect = portIn.getBoundingClientRect();
-        const x2 = inRect.left - containerRect.left + (inRect.width / 2);
-        const y2 = inRect.top - containerRect.top + (inRect.height / 2);
+        const x2 = inRect.left - containerRect.left + scrollLeft + (inRect.width / 2);
+        const y2 = inRect.top - containerRect.top + scrollTop + (inRect.height / 2);
 
         const isGodown = portIn.closest('.node-godown') !== null;
         const lineClass = isGodown ? 'line-godown' : 'line-primary';
@@ -471,15 +554,15 @@ function drawTreeConnections() {
     level2PortsOut.forEach(portOut => {
         const branchId = portOut.id.replace('port-out-', '');
         const outRect = portOut.getBoundingClientRect();
-        const bx1 = outRect.left - containerRect.left + (outRect.width / 2);
-        const by1 = outRect.top - containerRect.top + (outRect.height / 2);
+        const bx1 = outRect.left - containerRect.left + scrollLeft + (outRect.width / 2);
+        const by1 = outRect.top - containerRect.top + scrollTop + (outRect.height / 2);
 
         // Find Level 3 ports matching this branch
         const matchingSubPorts = document.querySelectorAll(`.tree-col-subbranches .node-port[data-parent-branch="${branchId}"]`);
         matchingSubPorts.forEach(subPort => {
             const subRect = subPort.getBoundingClientRect();
-            const bx2 = subRect.left - containerRect.left + (subRect.width / 2);
-            const by2 = subRect.top - containerRect.top + (subRect.height / 2);
+            const bx2 = subRect.left - containerRect.left + scrollLeft + (subRect.width / 2);
+            const by2 = subRect.top - containerRect.top + scrollTop + (subRect.height / 2);
 
             let lineClass = 'line-success';
             if (subPort.closest('.node-shrinkage')) lineClass = 'line-warning';

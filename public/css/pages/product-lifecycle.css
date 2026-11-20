@@ -294,7 +294,7 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     text-overflow: ellipsis !important;
 }
 
-/* --- The Full Picture Tree Canvas (Zero Nested Scrollbars) --- */
+/* --- The Full Picture Tree Canvas (Auto-Scroll on Hover, Hidden Scrollbars) --- */
 .lifecycle-canvas-wrapper {
     position: relative;
     background: #0f172a; /* Deep Slate Canvas */
@@ -302,15 +302,22 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     background-size: 20px 20px;
     border: 1px solid #334155;
     border-radius: 12px;
-    padding: 24px 20px;
+    padding: 24px 28px;
     margin-bottom: 16px;
     min-height: 140px;
     height: auto !important;
-    overflow: visible !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    scrollbar-width: none !important; /* Hide Firefox scrollbar */
+    -ms-overflow-style: none !important; /* Hide IE/Edge scrollbar */
+}
+
+.lifecycle-canvas-wrapper::-webkit-scrollbar {
+    display: none !important; /* Hide Chrome/Safari scrollbar */
+    width: 0 !important;
+    height: 0 !important;
 }
 
 .lifecycle-svg-canvas {
@@ -350,56 +357,45 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     position: relative;
     z-index: 2;
     display: flex !important;
-    justify-content: space-between !important;
-    gap: 24px !important;
-    width: 100% !important;
-    min-width: 0 !important;
+    justify-content: flex-start !important;
+    gap: 60px !important;
+    width: max-content !important;
+    min-width: 100% !important;
     align-items: center !important;
+    padding: 6px 4px;
 }
 
 .tree-column {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     justify-content: center;
 }
 
 .tree-col-root {
-    flex: 1 1 28% !important;
-    max-width: 30% !important;
-    min-width: 0 !important;
+    flex: 0 0 370px !important;
+    width: 370px !important;
 }
 
 .tree-col-branches {
-    flex: 1 1 35% !important;
-    max-width: 36% !important;
-    min-width: 0 !important;
+    flex: 0 0 370px !important;
+    width: 370px !important;
 }
 
 .tree-col-subbranches {
-    flex: 1 1 35% !important;
-    max-width: 36% !important;
-    min-width: 0 !important;
+    flex: 0 0 370px !important;
+    width: 370px !important;
 }
 
-/* --- Capsule Node Styles (Matching Reference) --- */
+/* --- Slim Pill Capsule Styles (Matching User's Screenshot media_1795151752345_5368026e.png) --- */
 .node-capsule {
     position: relative;
     background: rgba(30, 41, 59, 0.95);
     border: 1.5px solid #475569;
-    border-radius: 24px;
-    padding: 7px 12px;
+    border-radius: 28px;
+    padding: 6px 14px;
+    min-height: 48px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ffffff;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    backdrop-filter: blur(6px);
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
     align-items: center;
     gap: 10px;
     color: #ffffff;
@@ -407,6 +403,8 @@ body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     backdrop-filter: blur(6px);
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .node-capsule:hover {
