@@ -1,0 +1,551 @@
+/* zoloERP Pro - Dedicated Product Lifecycle & Transformation Tree Page Stylesheet */
+/* Strict adherence to AGENTS.md Section 4.4 and DesignTokensTest */
+
+#product-lifecycle-page {
+    width: 100%;
+    margin-bottom: 30px;
+    overflow-y: visible !important;
+}
+
+#product-lifecycle-page .desk-card-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--neo-border, #e2e8f0);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+body.dark-mode #product-lifecycle-page .desk-card-wrapper {
+    background: var(--neo-surface, #1e293b);
+    border-color: #334155;
+}
+
+/* --- Catalog Selector Bar --- */
+.lifecycle-catalog-bar {
+    background: #f8fafc;
+    border: 1px solid var(--neo-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+body.dark-mode .lifecycle-catalog-bar {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.catalog-pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.catalog-filter-btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.catalog-filter-btn:hover {
+    border-color: var(--z-primary, #7c1274);
+    color: var(--z-primary, #7c1274);
+}
+
+.catalog-filter-btn.active {
+    background: var(--z-primary, #7c1274) !important;
+    color: #ffffff !important;
+    border-color: var(--z-primary, #7c1274) !important;
+}
+
+.catalog-filter-btn .badge {
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+.catalog-filter-btn.active .badge {
+    background: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+}
+
+.catalog-divider {
+    display: inline-block;
+    width: 1px;
+    height: 16px;
+    background: #cbd5e1;
+}
+
+body.dark-mode .catalog-divider {
+    background: #475569;
+}
+
+/* Horizontal Root Product Cards Scroll / Grid */
+.lifecycle-product-cards-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 4px 2px 10px;
+    scrollbar-width: thin;
+}
+
+.product-catalog-card {
+    flex: 0 0 280px;
+    max-width: 280px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-decoration: none !important;
+    color: inherit;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+body.dark-mode .product-catalog-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.product-catalog-card:hover {
+    border-color: var(--z-primary, #7c1274);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 18, 116, 0.12);
+}
+
+.product-catalog-card.active-product {
+    border-color: var(--z-primary, #7c1274) !important;
+    background: linear-gradient(135deg, rgba(124, 18, 116, 0.04) 0%, rgba(255, 255, 255, 0.95) 100%);
+    box-shadow: 0 0 0 2px var(--z-primary, #7c1274), 0 4px 12px rgba(124, 18, 116, 0.15);
+}
+
+body.dark-mode .product-catalog-card.active-product {
+    background: linear-gradient(135deg, rgba(124, 18, 116, 0.2) 0%, #1e293b 100%);
+}
+
+.catalog-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.catalog-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 190px;
+}
+
+body.dark-mode .catalog-card-title {
+    color: #f8fafc;
+}
+
+.catalog-card-code {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.catalog-card-metrics {
+    font-size: 11px;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+body.dark-mode .catalog-card-metrics {
+    background: #0f172a;
+    color: #cbd5e1;
+}
+
+/* --- Canonical KPI Strip Reuse (AGENTS.md 4.4) --- */
+.lifecycle-kpi-wrap {
+    margin-bottom: 16px;
+}
+
+/* --- The Full Picture Tree Canvas --- */
+.lifecycle-canvas-wrapper {
+    position: relative;
+    background: #0f172a; /* Deep Slate Canvas */
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1.2px, transparent 1.2px);
+    background-size: 20px 20px;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 30px 24px;
+    margin-bottom: 20px;
+    min-height: 420px;
+    overflow-x: auto;
+    overflow-y: visible !important;
+}
+
+.lifecycle-svg-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.tree-svg-line {
+    fill: none;
+    stroke-width: 2.5px;
+    stroke-linecap: round;
+    transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.tree-svg-line.line-primary {
+    stroke: #38bdf8; /* Cyan blue rail */
+}
+
+.tree-svg-line.line-success {
+    stroke: #34d399; /* Emerald green rail */
+}
+
+.tree-svg-line.line-warning {
+    stroke: #fbbf24; /* Amber rail */
+}
+
+.tree-svg-line.line-godown {
+    stroke: #c084fc; /* Violet purple rail */
+}
+
+.tree-columns-container {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    min-width: 900px;
+    align-items: center;
+}
+
+.tree-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    justify-content: center;
+}
+
+.tree-col-root {
+    flex: 0 0 280px;
+}
+
+.tree-col-branches {
+    flex: 0 0 310px;
+}
+
+.tree-col-subbranches {
+    flex: 0 0 310px;
+}
+
+/* --- Capsule Node Styles (Matching Reference) --- */
+.node-capsule {
+    position: relative;
+    background: rgba(30, 41, 59, 0.95);
+    border: 1.5px solid #475569;
+    border-radius: 28px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    backdrop-filter: blur(6px);
+}
+
+.node-capsule:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.node-capsule.active-node {
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Level Themes */
+.node-capsule.node-raw {
+    border-color: #38bdf8;
+}
+
+.node-capsule.node-raw.active-node {
+    border-color: #38bdf8;
+    background: rgba(14, 116, 144, 0.35);
+}
+
+.node-capsule.node-dispatch {
+    border-color: #fbbf24;
+}
+
+.node-capsule.node-dispatch.active-node {
+    border-color: #fbbf24;
+    background: rgba(180, 83, 9, 0.35);
+}
+
+.node-capsule.node-converted {
+    border-color: #34d399;
+}
+
+.node-capsule.node-converted.active-node {
+    border-color: #34d399;
+    background: rgba(6, 95, 70, 0.35);
+}
+
+.node-capsule.node-godown {
+    border-color: #c084fc;
+}
+
+.node-capsule.node-godown.active-node {
+    border-color: #c084fc;
+    background: rgba(107, 33, 168, 0.35);
+}
+
+.node-capsule.node-shrinkage {
+    border-color: #f87171;
+}
+
+.node-capsule.node-shrinkage.active-node {
+    border-color: #f87171;
+    background: rgba(153, 27, 27, 0.35);
+}
+
+.node-capsule.node-wip {
+    border-color: #94a3b8;
+    border-style: dashed;
+}
+
+/* Ports */
+.node-port {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #0f172a;
+    border: 2.5px solid #38bdf8;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.node-port.port-in {
+    left: -7px;
+}
+
+.node-port.port-out {
+    right: -7px;
+}
+
+.node-raw .node-port {
+    border-color: #38bdf8;
+}
+
+.node-dispatch .node-port {
+    border-color: #fbbf24;
+}
+
+.node-converted .node-port {
+    border-color: #34d399;
+}
+
+.node-godown .node-port {
+    border-color: #c084fc;
+}
+
+.node-shrinkage .node-port {
+    border-color: #f87171;
+}
+
+/* Node Contents */
+.node-icon-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.node-raw .node-icon-circle {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+}
+
+.node-dispatch .node-icon-circle {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.15);
+}
+
+.node-converted .node-icon-circle {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.15);
+}
+
+.node-godown .node-icon-circle {
+    color: #c084fc;
+    background: rgba(192, 132, 252, 0.15);
+}
+
+.node-shrinkage .node-icon-circle {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.15);
+}
+
+.node-wip .node-icon-circle {
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.node-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.node-stage-tag {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    line-height: 1.2;
+}
+
+.node-raw .node-stage-tag {
+    color: #38bdf8;
+}
+
+.node-dispatch .node-stage-tag {
+    color: #fbbf24;
+}
+
+.node-converted .node-stage-tag {
+    color: #34d399;
+}
+
+.node-godown .node-stage-tag {
+    color: #c084fc;
+}
+
+.node-shrinkage .node-stage-tag {
+    color: #f87171;
+}
+
+.node-wip .node-stage-tag {
+    color: #94a3b8;
+}
+
+.node-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #f8fafc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    line-height: 1.3;
+}
+
+.node-subtext {
+    font-size: 10px;
+    color: #94a3b8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+.node-qty-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* --- Inspection Spotlight Drawer --- */
+.lifecycle-spotlight-drawer {
+    background: #ffffff;
+    border: 1px solid var(--neo-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+body.dark-mode .lifecycle-spotlight-drawer {
+    background: var(--neo-surface, #1e293b);
+    border-color: #334155;
+}
+
+.spotlight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.spotlight-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+}
+
+body.dark-mode .spotlight-box {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.spotlight-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.spotlight-value {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.spotlight-sub {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+}

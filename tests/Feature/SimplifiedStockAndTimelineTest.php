@@ -148,11 +148,29 @@ class SimplifiedStockAndTimelineTest extends OperationsTestCase
         $this->assertNotEmpty($rawNode['branches']);
         $this->assertGreaterThan(0, count($rawNode['branches']));
 
-        // Verify HTTP endpoint renders Product Lifecycle & Conversion Tree Graph
+        // Verify stock-by-lot renders clean navigation link to dedicated Product Lifecycle page
         $response = $this->get('/inventory-reports/stock-by-lot?group_by=simplified&from=2026-10-01&to=2026-10-05');
         $response->assertOk();
-        $response->assertSee('Product Lifecycle & Conversion Tree Graph', false);
-        $response->assertSee('All Products', false);
-        $response->assertSee('Handle:', false);
+        $response->assertSee('Product Lifecycle', false);
+        $response->assertSee(route('inventory-reports.lifecycle'), false);
+    }
+
+    public function test_dedicated_product_lifecycle_page_renders_branching_tree_and_catalog(): void
+    {
+        $this->withoutExceptionHandling();
+        [$rawMaterial] = $this->setupJobWorkFlow(200, 100);
+
+        $response = $this->get('/inventory-reports/lifecycle?product_id='.$rawMaterial->id.'&from=2026-10-01&to=2026-10-05');
+        $response->assertOk();
+        $response->assertSee('Lifecycle Product Catalog', false);
+        $response->assertSee('Lifecycle & Transformation Branching Tree', false);
+        $response->assertSee('PURCHASED INWARD', false);
+        $response->assertSee('GIVEN TO JOB WORK', false);
+        $response->assertSee('RETURNED / CONVERTED', false);
+        $response->assertSee('PROCESS SHRINKAGE', false);
+        $response->assertSee('CURRENT GODOWN STOCK', false);
+        $response->assertSee('Raw Yarn 40s', false);
+        $response->assertSee('Dyed Yarn 40s', false);
+        $response->assertSee('PLC:', false);
     }
 }

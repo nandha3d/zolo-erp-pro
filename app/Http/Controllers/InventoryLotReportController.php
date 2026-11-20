@@ -81,8 +81,9 @@ class InventoryLotReportController extends Controller
                 collect($allRows)->sortByDesc(fn ($r) => ($r->purchased_qty + $r->final_stock_qty + ($r->sold_qty ?? 0)))->values()->all(),
                 0, 8
             );
+
             $stockGraphData = [
-                'labels' => array_map(fn ($r) => mb_substr($r->product, 0, 18), $topProducts),
+                'labels' => array_map(fn ($r) => $this->formatChartLabel($r->product, $r->product_code ?? '', $r->handle ?? ''), $topProducts),
                 'purchased' => array_map(fn ($r) => round($r->purchased_qty, 2), $topProducts),
                 'sold' => array_map(fn ($r) => round($r->sold_qty ?? 0, 2), $topProducts),
                 'dispatched' => array_map(fn ($r) => round($r->given_to_job_work_qty, 2), $topProducts),
@@ -99,14 +100,11 @@ class InventoryLotReportController extends Controller
                 ],
             ];
 
-            $lifecycleTreeData = $simplifiedService->conversionLifecycleTree($filters, $context, (int) auth()->id());
-
             return view('backend.reports.stock-by-lot', [
                 'isSimplified' => true,
                 'rows' => $paginated,
                 'totals' => $data['totals'],
                 'stockGraphData' => $stockGraphData,
-                'lifecycleTreeData' => $lifecycleTreeData,
                 'filters' => $filters,
                 'stockNameNotes' => [],
                 'products' => Product::forCompany($context)->orderBy('name')->get(['id', 'name']),
@@ -175,7 +173,7 @@ class InventoryLotReportController extends Controller
         $closingVals = array_map(fn ($r) => round($r->closing_qty ?? 0, 2), $topRows);
 
         $stockGraphData = [
-            'labels' => array_map(fn ($r) => mb_substr($r->product, 0, 18), $topRows),
+            'labels' => array_map(fn ($r) => $this->formatChartLabel($r->product, $r->code ?? '', ''), $topRows),
             'purchased' => $inwardVals,
             'sold' => $soldVals,
             'dispatched' => $outwardVals,
@@ -192,17 +190,82 @@ class InventoryLotReportController extends Controller
             ],
         ];
 
-        $lifecycleTreeData = $simplifiedService->conversionLifecycleTree($filters, $context, (int) auth()->id());
-
         return view('backend.reports.stock-by-lot', [
             'isSimplified' => false,
             'rows' => $rows,
             'stockGraphData' => $stockGraphData,
-            'lifecycleTreeData' => $lifecycleTreeData,
             'filters' => $filters,
             'stockNameNotes' => $this->stockNameNotes($context, $filters),
             'products' => Product::forCompany($context)->orderBy('name')->get(['id', 'name']),
             'warehouses' => Warehouse::forCompany($context)->where('branch_id', $context->branchId)->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function lifecycle(Request $request, SimplifiedStockService $simplifiedService)
+    {
+        $context = $request->attributes->get(CompanyContext::class) ?? app(CompanyContextResolver::class)->forActor();
+        $filters = $request->validate([
+            'from' => 'nullable|date_format:Y-m-d',
+            'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+            'product_id' => 'nullable|integer|min:1',
+            'warehouse_id' => 'nullable|integer|min:1',
+            'plc' => 'nullable|string|max:100',
+            'search' => 'nullable|string|max:100',
+        ]);
+
+        $today = now(\App\Models\Company::findOrFail($context->companyId)->timezone ?: 'Asia/Kolkata');
+        $filters['from'] = $filters['from'] ?? $today->copy()->subMonths(3)->startOfMonth()->toDateString();
+        $filters['to'] = $filters['to'] ?? $today->toDateString();
+
+        $catalogData = $simplifiedService->productsWithLifecycle($filters, $context, (int) auth()->id());
+        $products = $catalogData['products'];
+        $distinctPlcs = $catalogData['distinct_plcs'];
+
+        // Determine active product
+        $activeProductId = null;
+        if (!empty($filters['product_id'])) {
+            $activeProductId = (int) $filters['product_id'];
+        } elseif (!empty($filters['plc'])) {
+            $targetPlc = strtoupper(trim($filters['plc']));
+            foreach ($products as $p) {
+                if (strtoupper($p['plc']) === $targetPlc) {
+                    $activeProductId = $p['product_id'];
+                    break;
+                }
+            }
+        }
+
+        if (!$activeProductId && !empty($products)) {
+            $activeProductId = $products[0]['product_id'];
+        }
+
+        $allProducts = Product::forCompany($context)->orderBy('name')->get(['id', 'name', 'code']);
+        $warehouses = Warehouse::forCompany($context)->where('branch_id', $context->branchId)->orderBy('name')->get(['id', 'name']);
+
+        if (!$activeProductId) {
+            return view('backend.reports.product-lifecycle', [
+                'hasProduct' => false,
+                'catalog' => $products,
+                'distinctPlcs' => $distinctPlcs,
+                'activeProduct' => null,
+                'tree' => null,
+                'filters' => $filters,
+                'products' => $allProducts,
+                'warehouses' => $warehouses,
+            ]);
+        }
+
+        $treeData = $simplifiedService->productLifecycleTree($activeProductId, $filters, $context, (int) auth()->id());
+
+        return view('backend.reports.product-lifecycle', [
+            'hasProduct' => true,
+            'catalog' => $products,
+            'distinctPlcs' => $distinctPlcs,
+            'activeProduct' => $treeData['root'],
+            'tree' => $treeData,
+            'filters' => $filters,
+            'products' => $allProducts,
+            'warehouses' => $warehouses,
         ]);
     }
 
@@ -298,5 +361,21 @@ class InventoryLotReportController extends Controller
             }
         }
         return $notes;
+    }
+
+    private function formatChartLabel(string $productName, string $code = '', string $plc = ''): string
+    {
+        if (!$plc) {
+            if (preg_match('/\(([^)]+)\)$/', $productName, $m)) {
+                $plc = $m[1];
+            } elseif ($code && preg_match('/-([A-Z0-9]+)$/', $code, $m)) {
+                $plc = $m[1];
+            }
+        }
+        $base = trim(preg_replace('/\s*\([^)]*\)$/', '', $productName));
+        if (mb_strlen($base) > 15) {
+            $base = mb_substr($base, 0, 15);
+        }
+        return $plc ? "{$base} ({$plc})" : $base;
     }
 }

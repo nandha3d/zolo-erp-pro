@@ -1,4 +1,99 @@
-## Product Lifecycle & Conversion Tree Graph, Expandable Nodes & Lifecycle Handle Filtering — 2026-11-19 (`ui`)
+## Dedicated Product Lifecycle Page, "The Full Picture" Branching Tree & Root Catalog — 2026-11-20 (`ui`)
+
+- **Context & User Directives:**
+  1. *"make a full picture, i dont want all the trees at the same time,"*
+  2. *"list all the nodes first whichever product has lifecycle, give an highlight to identiify that has the plc,"*
+  3. *"when we click the node, it expands and shows that we bought 1000 cotton fabric, 500 given for coloring, 400 given for chambering, the 100 is remaining, so the root product is cotton fabric, that has 3 branches and expanding like a tree or whichever best way to represent, the sub branches expands if jobwork done, and what the name of the product after processed."*
+  4. *"so we can make this as a separate product lifecycle, page. and keeping the current page without this, in inventory itself we can name it as product life cycle and bring all the features we discussed."*
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Dedicated Page & Routing (`routes/inventory-reports.php`, `InventoryLotReportController.php`):**
+     - Registered `GET /inventory-reports/lifecycle` (`inventory-reports.lifecycle`).
+     - Added `lifecycle()` action in `InventoryLotReportController` supporting `product_id`, `plc`, date ranges (`from`/`to`), and live keyword filtering.
+     - Cleaned up `stock-by-lot.blade.php`: removed the heavy inline transformation canvas (-477 lines), restoring `stock-by-lot` as a clean, fast tabular stock balance view with row mini-steppers, collapsible movement graphs, and a prominent navigation link to the dedicated lifecycle page.
+  2. **Root Product Catalog Bar ("List all the nodes first whichever product has lifecycle, give an highlight to identify that has the plc"):**
+     - Renders an interactive catalog gallery of root products having an active lifecycle.
+     - Highlights each product with its Product Lifecycle Code (PLC) badge (e.g. `[PLC: 5IM]`, `[PLC: Z58]`, `[PLC: RJ1]`, `[PLC: VNE]`).
+     - Features quick PLC filter buttons (`[ ALL ]`, `[ 5IM ]`, `[ RJ1 ]`, `[ VNE ]`, `[ Z58 ]`), category pills (`All`, `Converted`, `In WIP`, `Ready Stock`), and instant live search.
+     - Clicking any card dynamically sets that product as active and loads "The Full Picture" tree!
+  3. **"The Full Picture" 3-Level Branching Tree Canvas (`product-lifecycle.blade.php`, `product-lifecycle.css`):**
+     - Matches the node-link graph reference image (`media_1795145299408_2b908584.png`):
+       - **Level 1 (Column 1 - Root Input):** Root Raw Material Inward (e.g. `1,000 MTR Grey Cotton Fabric 60s (Z58)` purchased via `PUR-00004` from `Sri Meenakshi Cotton Mills`). Terminal port on the right.
+       - **Level 2 (Column 2 - Operational Branches & Godown Stock):**
+         - Multiple dispatch branches (e.g. `600 MTR Cauvery Dyeing & Sizing Works` via `JWDC-00004`, or multiple branches e.g. 500 for coloring, 400 for chambering).
+         - Remaining Godown Stock branch (`400 MTR Remaining in Godown` in `zoloERP Textiles - Main`).
+       - **Level 3 (Column 3 - Sub-Branches / Job Work Outputs & Shrinkage):**
+         - Converted Finished Good Node showing the exact transformed product name (e.g. `580 MTR Vat Dyed Navy Blue Fabric 60s (Z58)` via `JWGRN-00003` / `PUR-00005`), date, and ready godown balance (`580 MTR`).
+         - Process Shrinkage Node showing exact loss (`20 MTR (3.3%)`).
+         - Direct one-click navigation links to stock timelines.
+     - Dynamic SVG vector connector overlay (`<svg class="lifecycle-svg-canvas">`) rendering smooth cubic bezier paths connecting parent output ports to child input ports with color-coded process rails.
+  4. **Canonical 5-Card KPI Strip (AGENTS.md Section 4.4):**
+     - 100% zoloERP design system reuse: `.kpi-summary-strip` with `.kpi-card` and `.z-icon-tile`:
+       - `Purchased Inward` (`.z-tone-primary`, `<i class="dripicons-download"></i>`)
+       - `Given to Job Work` (`.z-tone-warning`, `<i class="dripicons-export"></i>`)
+       - `Returned / Converted` (`.z-tone-success`, `<i class="dripicons-checkmark"></i>`)
+       - `Process Shrinkage` (`.z-tone-danger`, `<i class="dripicons-warning"></i>`)
+       - `Current Godown Stock` (`.z-tone-info`, `<i class="dripicons-home"></i>`)
+  5. **Global Navigation Integration:**
+     - Added `Product Lifecycle` under Inventory in `app/Services/Platform/InventoryNavigation.php`.
+     - Added `Product Lifecycle` in `resources/views/backend/layout/sidebar.blade.php` under both Inventory and Reporting.
+     - Added `Product Lifecycle` in `resources/views/components/inventory-command-bar.blade.php`.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 49 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Transformation Node Canvas, Product Lifecycle Codes (PLC) & Distinct Chart Series — 2026-11-20 (`ui`)
+
+- **Context & User Directives:**
+  1. *"1. not visible in the button."* (Ref: `media_1795145250264_0e0e57f5.png` showing button text invisible on `.tree-filter-pill.active`).
+  2. *"2. instead of accordion kind of expand is not good, make a node type as attached, even if it straight thats good,"* (Ref: `media_1795145299408_2b908584.png` showing interconnected pill/capsule node network flow with connector ports).
+  3. *"3. in bar chart the product names are looking same?"* (Ref: `media_1795145385374_7d9441b7.png` showing truncated 18-character labels like `Grey Cotton Fabric` repeated across all columns).
+  4. *"4. also dont mention it as a handle, give a name for that code for example, product lifecycle code etc. but i am not aware of what is in industry terms, so make a common code for that lifecycle of that product, and when we click which product turned into which product."*
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Fixed Filter Pill Text Visibility (`reports-stock-by-lot.css`, `stock-by-lot.blade.php`):**
+     - Resolved the root cause where active button text color inherited identical purple tone as background.
+     - Added explicit contrast rules: `.tree-filter-pill` has dark slate text (`#334155`) on white background with grey badge; `.tree-filter-pill.active` has bright white text (`#ffffff !important`) on brand purple (`var(--z-primary)`) with translucent white badge (`rgba(255, 255, 255, 0.28)`).
+  2. **Interconnected Transformation Node Canvas (Matching Reference Image):**
+     - Completely eliminated the vertical accordion dropdown list.
+     - Implemented the **Interactive Product Transformation & Lifecycle Node Canvas** (`.transformation-node-canvas`) with a subtle grid background.
+     - Visual flow structure across 3 connected stages:
+       `[ Raw Material Input Node ]` ──► `[ Job Work Transformation Node ]` ──► `[ Converted Finished Good Node ]`
+     - Each node is an interactive capsule pill (`.node-capsule`) with circular terminal ports (`.node-port.port-in`, `.node-port.port-out`), stage icons, product names, and exact quantity pills.
+  3. **Interactive Lineage Tracing ("When we click which product turned into which product"):**
+     - Clicking any node or flow chain triggers `selectTransformationFlow(...)`:
+       - Highlights the active transformation flow while gracefully dimming other chains.
+       - Immediately updates the **Transformation Lineage Inspection Spotlight Drawer** below the canvas with exact yield, supplier purchase voucher, delivery challans (`JWDC`), job work receipt (`JWGRN`), process shrinkage/loss, remaining raw godown stock, and converted ready stock.
+       - Direct one-click navigation buttons to `[ Raw Timeline ]` and `[ Converted Timeline ]`.
+  4. **Adoption of Industry-Standard "Product Lifecycle Code (PLC)":**
+     - Replaced informal "handle" terminology across the entire UI with **"Product Lifecycle Code (PLC)"** and **"Lifecycle Code"**.
+     - Added **Lifecycle Codes (PLC)** filter pill strip: `[ ALL ]`, `[ 5IM ]`, `[ RJ1 ]`, `[ VNE ]`, `[ Z58 ]`. Clicking any PLC pill immediately isolates that exact transformation node graph!
+     - Table rows display `<span class="badge badge-primary lifecycle-code-badge">PLC: {{ $row->handle }}</span>`.
+  5. **Distinct & Descriptive Bar Chart Labels (`InventoryLotReportController.php`):**
+     - Eliminated the destructive `mb_substr($r->product, 0, 18)` truncation that stripped series suffixes.
+     - Implemented `$this->formatChartLabel(...)` combining recognizable base product name + Product Lifecycle Code (e.g. `Grey Cotton 60s (5IM)`, `Grey Cotton 60s (RJ1)`, `Grey Cotton 60s (VNE)`, `Grey Cotton 60s (Z58)`, `Vat Dyed Navy (5IM)`, `Vat Dyed Navy (Z58)`). No two bar columns look the same.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **4/4 passed (100%, 39 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Product Lifecycle & Conversion Tree Graph, Expandable Nodes & Lifecycle Handle Filtering — 2026-11-19 (`ui` & `main`)
+
+- **Merge Status & Production Release:**
+  - **PR #28:** Merged into `main` via commit `5d16a057aa3e243072049e4b6339c542a9a7a75f`.
+  - **Checks:** All 14 GitHub Actions CI suites and the required `ERP acceptance gate` passed with 100% green status.
+  - **Remotes Synchronized:** `origin/main`, `nandha-origin/main`, `origin/ui`, and `nandha-origin/ui` are all synchronized at `5d16a057`.
 
 - **Context & User Directives:**
   1. *"give a handle or common name or number or keyword for product lifecycle to filter the product's stock and details."*

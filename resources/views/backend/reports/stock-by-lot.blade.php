@@ -32,10 +32,11 @@
             <div class="filter-field"><label for="lot-warehouse">Warehouse / Godown</label><select id="lot-warehouse" name="warehouse_id" class="form-control f-pick"><option value="">All branch warehouses</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected(($filters['warehouse_id'] ?? '') == $warehouse->id)>{{ $warehouse->name }}</option>@endforeach</select></div>
             @endunless
             <div class="filter-field"><label for="lot-number">Lot (exact)</label><input id="lot-number" name="lot" maxlength="100" class="form-control f-pick" value="{{ $filters['lot'] ?? '' }}" placeholder="__unbatched__ for no lot"></div>
-            <div class="filter-field"><label for="lot-search" title="Filter by product lifecycle handle, series code, SKU, or party">Keyword / Handle</label><input id="lot-search" type="text" name="search" class="form-control f-pick" value="{{ $filters['search'] ?? '' }}" placeholder="e.g. 5IM, Z58, Cotton..."></div>
+            <div class="filter-field"><label for="lot-search" title="Filter by Product Lifecycle Code (PLC) / Handle, series code, SKU, or party">Search / Lifecycle Code (PLC)</label><input id="lot-search" type="text" name="search" class="form-control f-pick" value="{{ $filters['search'] ?? '' }}" placeholder="e.g. 5IM, Z58, Cotton..."></div>
             <div class="filter-actions d-flex u-gap-6px">
                 <button type="submit" class="btn btn-primary"><i class="dripicons-experiment"></i> Apply</button>
                 <button type="submit" name="export" value="csv" class="btn btn-outline-primary"><i class="dripicons-export"></i> Export CSV</button>
+                <a href="{{ route('inventory-reports.lifecycle', ['plc' => $filters['search'] ?? '']) }}" class="btn btn-outline-primary" title="Open Dedicated Product Lifecycle & Conversion Tree"><i class="dripicons-network mr-1"></i> Product Lifecycle</a>
                 <a href="{{ route('inventory-reports.timeline', ['product_id' => $filters['product_id'] ?? '']) }}" class="btn btn-outline-secondary" title="View step-by-step visual lifecycle timeline"><i class="dripicons-time-reverse"></i> Visual Timeline</a>
             </div>
         </form>
@@ -43,181 +44,22 @@
 
     @if($errors->any())<div class="alert alert-danger py-1 mb-2" role="alert">{{ $errors->first() }}</div>@endif
 
-    {{-- Interactive Product Lifecycle & Conversion Tree Card --}}
-    @if(!empty($lifecycleTreeData['nodes']))
-    <div class="desk-card-wrapper lifecycle-tree-card mb-3 p-3" data-no-fit>
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-            <div>
-                <h5 class="mb-0 font-weight-bold text-dark d-inline-flex align-items-center">
-                    <i class="dripicons-network mr-2 text-primary"></i> Product Lifecycle & Conversion Tree Graph
-                    <span class="badge badge-primary text-white ml-2 font-weight-normal u-fs-11px" id="treeVisibleCountBadge">Showing {{ count($lifecycleTreeData['recent_nodes']) }} of {{ $lifecycleTreeData['total_count'] }} Products</span>
-                </h5>
-                <div class="text-muted small mt-1">
-                    Visual product transformation tracking: Click any node to expand its complete manufacturing lifecycle, processor dispatches, and conversion connections.
-                </div>
-            </div>
-            <div class="d-flex align-items-center u-gap-6px mt-2 mt-md-0">
-                <button type="button" class="btn btn-xs btn-outline-secondary" id="btnExpandAllTrees" onclick="toggleAllTrees(true)">
-                    <i class="dripicons-expand"></i> Expand All
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-secondary" id="btnCollapseAllTrees" onclick="toggleAllTrees(false)">
-                    <i class="dripicons-contract"></i> Collapse All
-                </button>
-                @if(!empty($stockGraphData['labels']))
-                <button class="btn btn-xs btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseStockGraphs" aria-expanded="false" id="btnToggleChartModal">
-                    <i class="dripicons-graph-bar mr-1"></i> Movement Charts
-                </button>
-                @endif
-            </div>
+    {{-- Dedicated Product Lifecycle Link Strip --}}
+    <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+        <div class="d-flex align-items-center u-gap-6px">
+            <span class="text-muted small font-weight-bold"><i class="dripicons-network mr-1 text-primary"></i> Product Lifecycle:</span>
+            <a href="{{ route('inventory-reports.lifecycle') }}" class="badge badge-light border text-primary px-2 py-1" title="Open full visual branching tree for all products">
+                <i class="dripicons-network mr-1"></i> Open Product Lifecycle Tree ➔
+            </a>
         </div>
-
-        {{-- Tree Interactive Filter Controls Toolbar --}}
-        <div class="tree-controls-toolbar d-flex flex-wrap align-items-center justify-content-between p-2 mb-2 rounded border bg-light">
-            {{-- Category Filter Tabs --}}
-            <div class="tree-category-pills d-flex flex-wrap u-gap-4px mb-2 mb-lg-0">
-                <button type="button" class="btn btn-xs btn-primary tree-filter-pill active" data-filter="all" onclick="filterTreeCategory('all', this)">
-                    All Products <span class="badge badge-light ml-1">{{ $lifecycleTreeData['categories']['all'] ?? 0 }}</span>
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-success tree-filter-pill" data-filter="converted" onclick="filterTreeCategory('converted', this)">
-                    <i class="dripicons-swap mr-1"></i> Converted Goods <span class="badge badge-success text-white ml-1">{{ $lifecycleTreeData['categories']['converted'] ?? 0 }}</span>
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-warning tree-filter-pill" data-filter="wip" onclick="filterTreeCategory('wip', this)">
-                    <i class="dripicons-gear mr-1"></i> In Job Work (WIP) <span class="badge badge-warning text-dark ml-1">{{ $lifecycleTreeData['categories']['wip'] ?? 0 }}</span>
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-info tree-filter-pill" data-filter="ready" onclick="filterTreeCategory('ready', this)">
-                    <i class="dripicons-home mr-1"></i> Ready Godown Stock <span class="badge badge-info text-white ml-1">{{ $lifecycleTreeData['categories']['ready'] ?? 0 }}</span>
-                </button>
-            </div>
-
-            {{-- Instant Search Input --}}
-            <div class="tree-search-wrap d-flex align-items-center u-gap-6px">
-                <div class="input-group input-group-sm tree-instant-search-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-white"><i class="dripicons-search text-muted"></i></span>
-                    </div>
-                    <input type="text" id="treeInstantSearch" class="form-control form-control-sm" placeholder="Search: 5IM, Z58, Cotton, Meenakshi..." oninput="handleTreeSearch(this.value)">
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearTreeSearch()" title="Clear search"><i class="dripicons-cross"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Distinct Handles Quick-Bar --}}
-        @if(!empty($lifecycleTreeData['distinct_handles']))
-        <div class="tree-handles-strip d-flex flex-wrap align-items-center mb-2 px-2">
-            <span class="text-muted small mr-2 font-weight-bold"><i class="dripicons-tag mr-1"></i> Quick Handles:</span>
-            @foreach($lifecycleTreeData['distinct_handles'] as $h)
-            <button type="button" class="badge badge-light border text-primary mr-1 mb-1 handle-quick-filter-btn" onclick="applyHandleSearch('{{ $h }}')">
-                {{ $h }}
-            </button>
-            @endforeach
-            <button type="button" class="badge badge-secondary ml-1 mb-1" onclick="clearTreeSearch()" title="Show all handles">
-                Reset
+        @if(!empty($stockGraphData['labels']))
+        <div>
+            <button class="btn btn-xs btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseStockGraphs" aria-expanded="false" id="btnToggleChartModal">
+                <i class="dripicons-graph-bar mr-1"></i> Toggle Movement Charts
             </button>
         </div>
-        @endif
-
-        {{-- Tree Nodes Container --}}
-        <div class="tree-nodes-container" id="treeNodesContainer">
-            @foreach($lifecycleTreeData['nodes'] as $idx => $node)
-            <div class="tree-node-card mb-2 border rounded bg-white shadow-xs @if($idx >= 10) d-none tree-overflow-node @endif" 
-                 id="tree-node-{{ $node['product_id'] }}"
-                 data-node-id="{{ $node['product_id'] }}"
-                 data-product-name="{{ strtolower($node['product_name']) }}"
-                 data-product-code="{{ strtolower($node['product_code']) }}"
-                 data-handle="{{ strtolower($node['handle']) }}"
-                 data-category="{{ $node['category'] }}"
-                 data-has-conversions="{{ (!empty($node['conversions_to']) || !empty($node['conversions_from'])) ? '1' : '0' }}">
-                 
-                {{-- Node Header (Click to expand) --}}
-                <div class="tree-node-header p-2 px-3 d-flex flex-wrap align-items-center justify-content-between cursor-pointer" onclick="toggleTreeNode({{ $node['product_id'] }})">
-                    <div class="d-flex align-items-center u-gap-8px flex-wrap">
-                        <i class="dripicons-chevron-down tree-chevron mr-1"></i>
-                        <span class="tree-node-title">{{ $node['product_name'] }}</span>
-                        @if(!empty($node['handle']))
-                        <span class="badge badge-primary lifecycle-handle-badge" onclick="event.stopPropagation(); setHandleFilter('{{ $node['handle'] }}')" title="Filter stock report by handle: {{ $node['handle'] }}">
-                            Handle: {{ $node['handle'] }}
-                        </span>
-                        @endif
-                        <span class="badge badge-light border text-muted u-fs-11px">{{ $node['product_code'] }}</span>
-                        <span class="badge {{ $node['status_class'] }} px-2 py-1 u-fs-11px">
-                            @if(!empty($node['conversions_to']) || !empty($node['conversions_from']))
-                                <i class="dripicons-swap mr-1"></i>
-                            @elseif($node['category'] === 'wip_processing')
-                                <i class="dripicons-gear mr-1"></i>
-                            @else
-                                <i class="dripicons-home mr-1"></i>
-                            @endif
-                            {{ $node['status_badge'] }}
-                        </span>
-                    </div>
-                    <div class="tree-quick-stats mt-2 mt-md-0">
-                        <span class="tree-stat-pill pill-inward" title="Purchased Inward"><i class="dripicons-download"></i> In: {{ $qty($node['purchased_qty']) }} {{ $node['base_unit'] }}</span>
-                        <span class="tree-stat-pill pill-dispatched" title="Dispatched to Job Workers"><i class="dripicons-export"></i> Sent: {{ $qty($node['dispatched_qty']) }} {{ $node['base_unit'] }}</span>
-                        <span class="tree-stat-pill pill-returned" title="Returned / Converted Output"><i class="dripicons-checkmark"></i> Ret: {{ $qty($node['returned_qty']) }} {{ $node['base_unit'] }}</span>
-                        <span class="tree-stat-pill pill-godown" title="Live Ready Stock in Godown"><i class="dripicons-home"></i> Godown: {{ $qty($node['in_godown_qty']) }} {{ $node['base_unit'] }}</span>
-                        @if($node['sold_qty'] > 0)
-                        <span class="tree-stat-pill pill-sold" title="Sold to Customers"><i class="dripicons-cart"></i> Sold: {{ $qty($node['sold_qty']) }} {{ $node['base_unit'] }}</span>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Node Branches (Collapsible Tree Hierarchy) --}}
-                <div class="tree-node-branches d-none" id="tree-branches-{{ $node['product_id'] }}">
-                    <div class="tree-trunk-line"></div>
-                    @foreach($node['branches'] as $b)
-                    <div class="tree-branch-item branch-{{ $b['type'] }}">
-                        <div class="tree-branch-dot">
-                            <i class="{{ $b['icon'] }}"></i>
-                        </div>
-                        <div class="tree-branch-card">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <div class="tree-branch-heading">
-                                    <i class="{{ $b['icon'] }} mr-1"></i> {{ $b['title'] }}
-                                </div>
-                                <div class="tree-branch-badge">
-                                    @if(isset($b['target_id']))
-                                    <a href="{{ route('inventory-reports.timeline', ['product_id' => $b['target_id']]) }}" class="btn btn-xs btn-outline-primary" onclick="event.stopPropagation()">
-                                        <i class="dripicons-time-reverse"></i> View {{ $b['target_name'] }} Timeline ➔
-                                    </a>
-                                    @elseif($b['type'] === 'balance_sales')
-                                    <a href="{{ route('inventory-reports.timeline', ['product_id' => $node['product_id']]) }}" class="btn btn-xs btn-primary text-white" onclick="event.stopPropagation()">
-                                        <i class="dripicons-time-reverse"></i> Open Full Chronological Timeline
-                                    </a>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="tree-branch-desc mt-1">
-                                {{ $b['summary'] }}
-                            </div>
-                            @if(!empty($b['items']) && count($b['items']) > 1)
-                            <div class="tree-branch-sublist">
-                                @foreach($b['items'] as $it)
-                                <div class="tree-branch-subitem">
-                                    <span class="font-weight-bold">{{ $it['ref'] ?? '' }}</span>
-                                    <span>({{ $it['date'] ?? '' }})</span>
-                                    <span>{{ $it['party'] ?? ($it['processor'] ?? '') }}:</span>
-                                    <span class="text-dark font-weight-bold">{{ $qty($it['qty'] ?? 0) }} {{ $node['base_unit'] }}</span>
-                                </div>
-                                @endforeach
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            @endforeach
-        </div>
-
-        @if(count($lifecycleTreeData['nodes']) > 10)
-        <button type="button" class="btn btn-sm btn-outline-primary btn-block mt-2" id="btnShowAllTreeNodes" onclick="showAllTreeNodes()">
-            <i class="dripicons-arrow-down"></i> Show All {{ $lifecycleTreeData['total_count'] }} Product Lifecycles
-        </button>
         @endif
     </div>
-    @endif
 
     {{-- Optional Movement Charts Collapse (Available via Toggle) --}}
     @if(!empty($stockGraphData['labels']))
@@ -352,8 +194,8 @@
                         <td class="lot-product" title="{{ $row->product }} {{ $row->product_code }}">
                             <div class="d-flex align-items-center flex-wrap">
                                 @if(!empty($row->handle))
-                                <span class="badge badge-primary lifecycle-handle-badge mr-1 cursor-pointer" onclick="setHandleFilter('{{ $row->handle }}')" title="Filter by lifecycle handle: {{ $row->handle }}">
-                                    Handle: {{ $row->handle }}
+                                <span class="badge badge-primary lifecycle-code-badge mr-1 cursor-pointer" onclick="filterByLifecycleCode('{{ $row->handle }}')" title="Product Lifecycle Code (PLC) / Handle: {{ $row->handle }}">
+                                    PLC: {{ $row->handle }}
                                 </span>
                                 @endif
                                 <span class="product-name-title">{{ $row->product }}</span>
@@ -621,137 +463,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     @endif
 });
-
-function setHandleFilter(handle) {
-    const input = document.getElementById('lot-search');
-    if (input) {
-        input.value = handle;
-        const form = document.querySelector('form.lot-filters');
-        if (form) form.submit();
-    }
-}
-
-function toggleTreeNode(productId) {
-    const card = document.getElementById('tree-node-' + productId);
-    const branches = document.getElementById('tree-branches-' + productId);
-    if (!card || !branches) return;
-    
-    const isExpanded = card.classList.contains('tree-expanded');
-    if (isExpanded) {
-        card.classList.remove('tree-expanded');
-        branches.classList.add('d-none');
-    } else {
-        card.classList.add('tree-expanded');
-        branches.classList.remove('d-none');
-    }
-}
-
-function toggleAllTrees(expand) {
-    const cards = document.querySelectorAll('.tree-node-card');
-    cards.forEach(card => {
-        if (card.classList.contains('d-none')) return;
-        const pid = card.getAttribute('data-node-id');
-        const branches = document.getElementById('tree-branches-' + pid);
-        if (expand) {
-            card.classList.add('tree-expanded');
-            if (branches) branches.classList.remove('d-none');
-        } else {
-            card.classList.remove('tree-expanded');
-            if (branches) branches.classList.add('d-none');
-        }
-    });
-}
-
-let activeTreeCategory = 'all';
-
-function filterTreeCategory(category, btn) {
-    activeTreeCategory = category;
-    document.querySelectorAll('.tree-filter-pill').forEach(b => {
-        b.classList.remove('active', 'btn-primary', 'btn-success', 'btn-warning', 'btn-info');
-        const f = b.getAttribute('data-filter');
-        if (f === 'converted') b.classList.add('btn-outline-success');
-        else if (f === 'wip') b.classList.add('btn-outline-warning');
-        else if (f === 'ready') b.classList.add('btn-outline-info');
-        else b.classList.add('btn-outline-primary');
-    });
-
-    if (btn) {
-        btn.classList.add('active');
-        if (category === 'converted') { btn.classList.remove('btn-outline-success'); btn.classList.add('btn-success'); }
-        else if (category === 'wip') { btn.classList.remove('btn-outline-warning'); btn.classList.add('btn-warning'); }
-        else if (category === 'ready') { btn.classList.remove('btn-outline-info'); btn.classList.add('btn-info'); }
-        else { btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary'); }
-    }
-
-    applyTreeFilters();
-}
-
-function handleTreeSearch(query) {
-    applyTreeFilters();
-}
-
-function clearTreeSearch() {
-    const input = document.getElementById('treeInstantSearch');
-    if (input) input.value = '';
-    applyTreeFilters();
-}
-
-function applyHandleSearch(handle) {
-    const input = document.getElementById('treeInstantSearch');
-    if (input) {
-        input.value = handle;
-        applyTreeFilters();
-    }
-}
-
-function showAllTreeNodes() {
-    document.querySelectorAll('.tree-overflow-node').forEach(node => {
-        node.classList.remove('tree-overflow-node');
-    });
-    const btn = document.getElementById('btnShowAllTreeNodes');
-    if (btn) btn.classList.add('d-none');
-    applyTreeFilters();
-}
-
-function applyTreeFilters() {
-    const query = (document.getElementById('treeInstantSearch')?.value || '').toLowerCase().trim();
-    const cards = document.querySelectorAll('.tree-node-card');
-    let visibleCount = 0;
-
-    cards.forEach(card => {
-        const name = card.dataset.productName || '';
-        const code = card.dataset.productCode || '';
-        const handle = card.dataset.handle || '';
-        const category = card.dataset.category || '';
-        const hasConversions = card.dataset.hasConversions === '1';
-
-        let matchesCat = true;
-        if (activeTreeCategory === 'converted') {
-            matchesCat = category === 'converted_parent' || category === 'converted_child' || hasConversions;
-        } else if (activeTreeCategory === 'wip') {
-            matchesCat = category === 'wip_processing';
-        } else if (activeTreeCategory === 'ready') {
-            matchesCat = category === 'standard' || card.querySelector('.pill-godown') !== null;
-        }
-
-        let matchesSearch = true;
-        if (query.length > 0) {
-            matchesSearch = name.includes(query) || code.includes(query) || handle.includes(query) || card.textContent.toLowerCase().includes(query);
-        }
-
-        if (matchesCat && matchesSearch) {
-            card.classList.remove('d-none');
-            visibleCount++;
-        } else {
-            card.classList.add('d-none');
-        }
-    });
-
-    const badge = document.getElementById('treeVisibleCountBadge');
-    if (badge) {
-        badge.textContent = `Showing ${visibleCount} of ${cards.length} Products`;
-    }
-}
 </script>
 @endpush
 
