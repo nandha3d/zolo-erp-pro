@@ -1512,6 +1512,7 @@ class SimplifiedStockService
                 'product_id' => $pid,
                 'product_name' => $r->product,
                 'product_code' => $r->product_code,
+                'plc' => $handle,
                 'handle' => $handle,
                 'base_unit' => $r->base_unit,
                 'category' => $category,
@@ -1530,6 +1531,68 @@ class SimplifiedStockService
             ];
         }
 
+        // Build distinct connected transformation flows (Raw Material ➔ Job Work Process ➔ Converted Good)
+        $flowsByPlc = [];
+        $nodesByPlc = collect($nodes)->groupBy('plc');
+
+        foreach ($nodesByPlc as $plc => $groupNodes) {
+            $rawNode = $groupNodes->first(fn ($n) => !empty($n['conversions_to']) || $n['purchased_qty'] > 0 || $n['dispatched_qty'] > 0) ?: $groupNodes->first();
+            $convertedNode = $groupNodes->first(fn ($n) => !empty($n['conversions_from']) || $n['category'] === 'converted_child');
+
+            $convDetails = !empty($rawNode['conversions_to']) ? $rawNode['conversions_to'][0] : (!empty($convertedNode['conversions_from']) ? $convertedNode['conversions_from'][0] : null);
+
+            $inwardBranch = collect($rawNode['branches'] ?? [])->firstWhere('type', 'inward');
+            $dispatchBranch = collect($rawNode['branches'] ?? [])->firstWhere('type', 'dispatch');
+
+            $firstInwardItem = !empty($inwardBranch['items']) ? $inwardBranch['items'][0] : null;
+            $firstDispatchItem = !empty($dispatchBranch['items']) ? $dispatchBranch['items'][0] : null;
+
+            $dispatchedQty = (float) ($rawNode['dispatched_qty'] ?? 0);
+            $convertedQty = $convDetails ? (float) $convDetails['qty'] : 0.0;
+            $lossQty = max(0.0, $dispatchedQty - $convertedQty);
+            $lossPct = $dispatchedQty > 0 ? round(($lossQty / $dispatchedQty) * 100, 1) : 0.0;
+
+            $isConverted = $convertedNode !== null || $convDetails !== null;
+            $isWip = !$isConverted && ($rawNode['at_job_workers_qty'] ?? 0) > 0;
+
+            $category = $isConverted ? 'converted' : ($isWip ? 'wip' : 'ready');
+
+            $flowsByPlc[] = [
+                'id' => 'flow-' . preg_replace('/[^a-zA-Z0-9_-]/', '', strtolower($plc)),
+                'plc' => $plc,
+                'category' => $category,
+                'title' => $isConverted ? ($rawNode['product_name'] . ' ➔ ' . ($convertedNode ? $convertedNode['product_name'] : $convDetails['to_name'])) : $rawNode['product_name'],
+                'unit' => $rawNode['base_unit'],
+                'is_converted' => $isConverted,
+                'is_wip' => $isWip,
+                // Node 1: Input / Raw Material
+                'raw_id' => $rawNode['product_id'],
+                'raw_name' => $rawNode['product_name'],
+                'raw_code' => $rawNode['product_code'],
+                'raw_inward_qty' => (float) ($rawNode['purchased_qty'] ?? 0),
+                'raw_godown_qty' => (float) ($rawNode['in_godown_qty'] ?? 0),
+                'raw_doc' => $firstInwardItem['ref'] ?? 'Direct Inward',
+                'raw_date' => $firstInwardItem['date'] ?? null,
+                'raw_supplier' => $firstInwardItem['party'] ?? 'Supplier',
+                // Node 2: Transformation / Job Work Process
+                'process_party' => $convDetails['processor'] ?? ($firstDispatchItem['party'] ?? ($isWip ? 'Cauvery Dyeing & Sizing Works' : 'In-House Warehouse')),
+                'process_dispatch_ref' => $firstDispatchItem['ref'] ?? ($convDetails['ref'] ?? 'JWDC-00000'),
+                'process_receipt_ref' => $convDetails['ref'] ?? null,
+                'process_date' => $convDetails['date'] ?? ($firstDispatchItem['date'] ?? null),
+                'dispatched_qty' => $dispatchedQty,
+                'converted_qty' => $convertedQty,
+                'loss_qty' => $lossQty,
+                'loss_pct' => $lossPct,
+                // Node 3: Output / Converted Finished Good
+                'converted_id' => $convertedNode['product_id'] ?? ($convDetails['to_id'] ?? null),
+                'converted_name' => $convertedNode['product_name'] ?? ($convDetails['to_name'] ?? 'Ready Stock'),
+                'converted_code' => $convertedNode['product_code'] ?? null,
+                'converted_inward_qty' => $convertedQty,
+                'converted_godown_qty' => (float) ($convertedNode['in_godown_qty'] ?? $convertedQty),
+                'converted_sold_qty' => (float) ($convertedNode['sold_qty'] ?? 0),
+            ];
+        }
+
         // Sort: Converted parents and WIP first, then by activity volume descending
         usort($nodes, function ($a, $b) {
             $scoreA = ($a['category'] === 'converted_parent' ? 1000 : ($a['category'] === 'wip_processing' ? 500 : 0)) + $a['purchased_qty'] + $a['dispatched_qty'] + $a['final_stock_qty'];
@@ -1537,19 +1600,30 @@ class SimplifiedStockService
             return $scoreB <=> $scoreA;
         });
 
+        // Sort flows: Converted first, then WIP, then volume
+        usort($flowsByPlc, function ($a, $b) {
+            $scoreA = ($a['is_converted'] ? 1000 : ($a['is_wip'] ? 500 : 0)) + $a['raw_inward_qty'] + $a['dispatched_qty'] + $a['converted_godown_qty'];
+            $scoreB = ($b['is_converted'] ? 1000 : ($b['is_wip'] ? 500 : 0)) + $b['raw_inward_qty'] + $b['dispatched_qty'] + $b['converted_godown_qty'];
+            return $scoreB <=> $scoreA;
+        });
+
         $recentNodes = array_slice($nodes, 0, 10);
+        $recentFlows = array_slice($flowsByPlc, 0, 10);
         $distinctHandles = array_values(array_unique(array_filter(array_column($nodes, 'handle'))));
 
         return [
             'nodes' => $nodes,
             'recent_nodes' => $recentNodes,
+            'transformation_flows' => $flowsByPlc,
+            'recent_flows' => $recentFlows,
             'total_count' => count($nodes),
             'categories' => [
-                'all' => count($nodes),
-                'converted' => count(array_filter($nodes, fn ($n) => $n['category'] === 'converted_parent' || $n['category'] === 'converted_child')),
-                'wip' => count(array_filter($nodes, fn ($n) => $n['category'] === 'wip_processing')),
-                'ready' => count(array_filter($nodes, fn ($n) => $n['in_godown_qty'] > 0)),
+                'all' => count($flowsByPlc),
+                'converted' => count(array_filter($flowsByPlc, fn ($f) => $f['is_converted'])),
+                'wip' => count(array_filter($flowsByPlc, fn ($f) => $f['is_wip'])),
+                'ready' => count(array_filter($flowsByPlc, fn ($f) => !$f['is_converted'] && !$f['is_wip'])),
             ],
+            'distinct_plcs' => $distinctHandles,
             'distinct_handles' => $distinctHandles,
             'filters' => $filters,
         ];

@@ -1,3 +1,43 @@
+## Transformation Node Canvas, Product Lifecycle Codes (PLC) & Distinct Chart Series — 2026-11-20 (`ui`)
+
+- **Context & User Directives:**
+  1. *"1. not visible in the button."* (Ref: `media_1795145250264_0e0e57f5.png` showing button text invisible on `.tree-filter-pill.active`).
+  2. *"2. instead of accordion kind of expand is not good, make a node type as attached, even if it straight thats good,"* (Ref: `media_1795145299408_2b908584.png` showing interconnected pill/capsule node network flow with connector ports).
+  3. *"3. in bar chart the product names are looking same?"* (Ref: `media_1795145385374_7d9441b7.png` showing truncated 18-character labels like `Grey Cotton Fabric` repeated across all columns).
+  4. *"4. also dont mention it as a handle, give a name for that code for example, product lifecycle code etc. but i am not aware of what is in industry terms, so make a common code for that lifecycle of that product, and when we click which product turned into which product."*
+
+- **Architectural & UI Enhancements Delivered:**
+  1. **Fixed Filter Pill Text Visibility (`reports-stock-by-lot.css`, `stock-by-lot.blade.php`):**
+     - Resolved the root cause where active button text color inherited identical purple tone as background.
+     - Added explicit contrast rules: `.tree-filter-pill` has dark slate text (`#334155`) on white background with grey badge; `.tree-filter-pill.active` has bright white text (`#ffffff !important`) on brand purple (`var(--z-primary)`) with translucent white badge (`rgba(255, 255, 255, 0.28)`).
+  2. **Interconnected Transformation Node Canvas (Matching Reference Image):**
+     - Completely eliminated the vertical accordion dropdown list.
+     - Implemented the **Interactive Product Transformation & Lifecycle Node Canvas** (`.transformation-node-canvas`) with a subtle grid background.
+     - Visual flow structure across 3 connected stages:
+       `[ Raw Material Input Node ]` ──► `[ Job Work Transformation Node ]` ──► `[ Converted Finished Good Node ]`
+     - Each node is an interactive capsule pill (`.node-capsule`) with circular terminal ports (`.node-port.port-in`, `.node-port.port-out`), stage icons, product names, and exact quantity pills.
+  3. **Interactive Lineage Tracing ("When we click which product turned into which product"):**
+     - Clicking any node or flow chain triggers `selectTransformationFlow(...)`:
+       - Highlights the active transformation flow while gracefully dimming other chains.
+       - Immediately updates the **Transformation Lineage Inspection Spotlight Drawer** below the canvas with exact yield, supplier purchase voucher, delivery challans (`JWDC`), job work receipt (`JWGRN`), process shrinkage/loss, remaining raw godown stock, and converted ready stock.
+       - Direct one-click navigation buttons to `[ Raw Timeline ]` and `[ Converted Timeline ]`.
+  4. **Adoption of Industry-Standard "Product Lifecycle Code (PLC)":**
+     - Replaced informal "handle" terminology across the entire UI with **"Product Lifecycle Code (PLC)"** and **"Lifecycle Code"**.
+     - Added **Lifecycle Codes (PLC)** filter pill strip: `[ ALL ]`, `[ 5IM ]`, `[ RJ1 ]`, `[ VNE ]`, `[ Z58 ]`. Clicking any PLC pill immediately isolates that exact transformation node graph!
+     - Table rows display `<span class="badge badge-primary lifecycle-code-badge">PLC: {{ $row->handle }}</span>`.
+  5. **Distinct & Descriptive Bar Chart Labels (`InventoryLotReportController.php`):**
+     - Eliminated the destructive `mb_substr($r->product, 0, 18)` truncation that stripped series suffixes.
+     - Implemented `$this->formatChartLabel(...)` combining recognizable base product name + Product Lifecycle Code (e.g. `Grey Cotton 60s (5IM)`, `Grey Cotton 60s (RJ1)`, `Grey Cotton 60s (VNE)`, `Grey Cotton 60s (Z58)`, `Vat Dyed Navy (5IM)`, `Vat Dyed Navy (Z58)`). No two bar columns look the same.
+
+- **Verification & Automated Test Suite:**
+  - `php -l`: 0 syntax errors on all modified files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **4/4 passed (100%, 39 assertions)**.
+  - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
+  - View cache cleared: `php artisan view:clear`.
+
+---
+
 ## Product Lifecycle & Conversion Tree Graph, Expandable Nodes & Lifecycle Handle Filtering — 2026-11-19 (`ui` & `main`)
 
 - **Merge Status & Production Release:**

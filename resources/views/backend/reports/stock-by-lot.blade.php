@@ -32,7 +32,7 @@
             <div class="filter-field"><label for="lot-warehouse">Warehouse / Godown</label><select id="lot-warehouse" name="warehouse_id" class="form-control f-pick"><option value="">All branch warehouses</option>@foreach($warehouses as $warehouse)<option value="{{ $warehouse->id }}" @selected(($filters['warehouse_id'] ?? '') == $warehouse->id)>{{ $warehouse->name }}</option>@endforeach</select></div>
             @endunless
             <div class="filter-field"><label for="lot-number">Lot (exact)</label><input id="lot-number" name="lot" maxlength="100" class="form-control f-pick" value="{{ $filters['lot'] ?? '' }}" placeholder="__unbatched__ for no lot"></div>
-            <div class="filter-field"><label for="lot-search" title="Filter by product lifecycle handle, series code, SKU, or party">Keyword / Handle</label><input id="lot-search" type="text" name="search" class="form-control f-pick" value="{{ $filters['search'] ?? '' }}" placeholder="e.g. 5IM, Z58, Cotton..."></div>
+            <div class="filter-field"><label for="lot-search" title="Filter by Product Lifecycle Code (PLC) / Handle, series code, SKU, or party">Search / Lifecycle Code (PLC)</label><input id="lot-search" type="text" name="search" class="form-control f-pick" value="{{ $filters['search'] ?? '' }}" placeholder="e.g. 5IM, Z58, Cotton..."></div>
             <div class="filter-actions d-flex u-gap-6px">
                 <button type="submit" class="btn btn-primary"><i class="dripicons-experiment"></i> Apply</button>
                 <button type="submit" name="export" value="csv" class="btn btn-outline-primary"><i class="dripicons-export"></i> Export CSV</button>
@@ -43,26 +43,20 @@
 
     @if($errors->any())<div class="alert alert-danger py-1 mb-2" role="alert">{{ $errors->first() }}</div>@endif
 
-    {{-- Interactive Product Lifecycle & Conversion Tree Card --}}
-    @if(!empty($lifecycleTreeData['nodes']))
+    {{-- Interactive Product Transformation & Lifecycle Node Graph Card --}}
+    @if(!empty($lifecycleTreeData['transformation_flows']) || !empty($lifecycleTreeData['nodes']))
     <div class="desk-card-wrapper lifecycle-tree-card mb-3 p-3" data-no-fit>
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
             <div>
                 <h5 class="mb-0 font-weight-bold text-dark d-inline-flex align-items-center">
                     <i class="dripicons-network mr-2 text-primary"></i> Product Lifecycle & Conversion Tree Graph
-                    <span class="badge badge-primary text-white ml-2 font-weight-normal u-fs-11px" id="treeVisibleCountBadge">Showing {{ count($lifecycleTreeData['recent_nodes']) }} of {{ $lifecycleTreeData['total_count'] }} Products</span>
+                    <span class="badge badge-primary text-white ml-2 font-weight-normal u-fs-11px" id="treeVisibleCountBadge">Showing {{ count($lifecycleTreeData['recent_flows'] ?? $lifecycleTreeData['transformation_flows']) }} Transformation Flows</span>
                 </h5>
                 <div class="text-muted small mt-1">
-                    Visual product transformation tracking: Click any node to expand its complete manufacturing lifecycle, processor dispatches, and conversion connections.
+                    Visual transformation pipeline: Click any product or transformation node to trace which product converted into which product, along with processing loss, supplier invoices, and ready godown balances.
                 </div>
             </div>
             <div class="d-flex align-items-center u-gap-6px mt-2 mt-md-0">
-                <button type="button" class="btn btn-xs btn-outline-secondary" id="btnExpandAllTrees" onclick="toggleAllTrees(true)">
-                    <i class="dripicons-expand"></i> Expand All
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-secondary" id="btnCollapseAllTrees" onclick="toggleAllTrees(false)">
-                    <i class="dripicons-contract"></i> Collapse All
-                </button>
                 @if(!empty($stockGraphData['labels']))
                 <button class="btn btn-xs btn-outline-primary" type="button" data-toggle="collapse" data-target="#collapseStockGraphs" aria-expanded="false" id="btnToggleChartModal">
                     <i class="dripicons-graph-bar mr-1"></i> Movement Charts
@@ -75,17 +69,17 @@
         <div class="tree-controls-toolbar d-flex flex-wrap align-items-center justify-content-between p-2 mb-2 rounded border bg-light">
             {{-- Category Filter Tabs --}}
             <div class="tree-category-pills d-flex flex-wrap u-gap-4px mb-2 mb-lg-0">
-                <button type="button" class="btn btn-xs btn-primary tree-filter-pill active" data-filter="all" onclick="filterTreeCategory('all', this)">
-                    All Products <span class="badge badge-light ml-1">{{ $lifecycleTreeData['categories']['all'] ?? 0 }}</span>
+                <button type="button" class="btn btn-xs tree-filter-pill active" data-filter="all" onclick="filterTreeCategory('all', this)">
+                    All Products <span class="badge ml-1">{{ $lifecycleTreeData['categories']['all'] ?? count($lifecycleTreeData['transformation_flows'] ?? []) }}</span>
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-success tree-filter-pill" data-filter="converted" onclick="filterTreeCategory('converted', this)">
-                    <i class="dripicons-swap mr-1"></i> Converted Goods <span class="badge badge-success text-white ml-1">{{ $lifecycleTreeData['categories']['converted'] ?? 0 }}</span>
+                <button type="button" class="btn btn-xs tree-filter-pill" data-filter="converted" onclick="filterTreeCategory('converted', this)">
+                    <i class="dripicons-swap mr-1"></i> Converted Goods <span class="badge ml-1">{{ $lifecycleTreeData['categories']['converted'] ?? 0 }}</span>
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-warning tree-filter-pill" data-filter="wip" onclick="filterTreeCategory('wip', this)">
-                    <i class="dripicons-gear mr-1"></i> In Job Work (WIP) <span class="badge badge-warning text-dark ml-1">{{ $lifecycleTreeData['categories']['wip'] ?? 0 }}</span>
+                <button type="button" class="btn btn-xs tree-filter-pill" data-filter="wip" onclick="filterTreeCategory('wip', this)">
+                    <i class="dripicons-gear mr-1"></i> In Job Work (WIP) <span class="badge ml-1">{{ $lifecycleTreeData['categories']['wip'] ?? 0 }}</span>
                 </button>
-                <button type="button" class="btn btn-xs btn-outline-info tree-filter-pill" data-filter="ready" onclick="filterTreeCategory('ready', this)">
-                    <i class="dripicons-home mr-1"></i> Ready Godown Stock <span class="badge badge-info text-white ml-1">{{ $lifecycleTreeData['categories']['ready'] ?? 0 }}</span>
+                <button type="button" class="btn btn-xs tree-filter-pill" data-filter="ready" onclick="filterTreeCategory('ready', this)">
+                    <i class="dripicons-home mr-1"></i> Ready Godown Stock <span class="badge ml-1">{{ $lifecycleTreeData['categories']['ready'] ?? 0 }}</span>
                 </button>
             </div>
 
@@ -95,7 +89,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text bg-white"><i class="dripicons-search text-muted"></i></span>
                     </div>
-                    <input type="text" id="treeInstantSearch" class="form-control form-control-sm" placeholder="Search: 5IM, Z58, Cotton, Meenakshi..." oninput="handleTreeSearch(this.value)">
+                    <input type="text" id="treeInstantSearch" class="form-control form-control-sm" placeholder="Search PLC or product: 5IM, Z58, Cotton..." oninput="handleTreeSearch(this.value)">
                     <div class="input-group-append">
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearTreeSearch()" title="Clear search"><i class="dripicons-cross"></i></button>
                     </div>
@@ -103,118 +97,192 @@
             </div>
         </div>
 
-        {{-- Distinct Handles Quick-Bar --}}
-        @if(!empty($lifecycleTreeData['distinct_handles']))
+        {{-- Distinct Product Lifecycle Code (PLC) Filter Strip --}}
+        @if(!empty($lifecycleTreeData['distinct_plcs'] ?? $lifecycleTreeData['distinct_handles']))
+        @php
+            $plcs = $lifecycleTreeData['distinct_plcs'] ?? $lifecycleTreeData['distinct_handles'];
+        @endphp
         <div class="tree-handles-strip d-flex flex-wrap align-items-center mb-2 px-2">
-            <span class="text-muted small mr-2 font-weight-bold"><i class="dripicons-tag mr-1"></i> Quick Handles:</span>
-            @foreach($lifecycleTreeData['distinct_handles'] as $h)
-            <button type="button" class="badge badge-light border text-primary mr-1 mb-1 handle-quick-filter-btn" onclick="applyHandleSearch('{{ $h }}')">
-                {{ $h }}
+            <span class="text-muted small mr-2 font-weight-bold" title="Product Lifecycle Code (PLC) / Handle:"><i class="dripicons-tags mr-1"></i> Lifecycle Codes (PLC):</span>
+            <button type="button" class="badge badge-light border text-primary mr-1 mb-1 plc-quick-filter-btn active" id="btnPlcAll" onclick="applyPlcFilter('ALL', this)">
+                ALL
+            </button>
+            @foreach($plcs as $plc)
+            <button type="button" class="badge badge-light border text-primary mr-1 mb-1 plc-quick-filter-btn" data-plc="{{ $plc }}" onclick="applyPlcFilter('{{ $plc }}', this)">
+                {{ $plc }}
             </button>
             @endforeach
-            <button type="button" class="badge badge-secondary ml-1 mb-1" onclick="clearTreeSearch()" title="Show all handles">
+            <button type="button" class="badge badge-secondary ml-1 mb-1" onclick="clearTreeSearch()" title="Show all products and codes">
                 Reset
             </button>
         </div>
         @endif
 
-        {{-- Tree Nodes Container --}}
-        <div class="tree-nodes-container" id="treeNodesContainer">
-            @foreach($lifecycleTreeData['nodes'] as $idx => $node)
-            <div class="tree-node-card mb-2 border rounded bg-white shadow-xs @if($idx >= 10) d-none tree-overflow-node @endif" 
-                 id="tree-node-{{ $node['product_id'] }}"
-                 data-node-id="{{ $node['product_id'] }}"
-                 data-product-name="{{ strtolower($node['product_name']) }}"
-                 data-product-code="{{ strtolower($node['product_code']) }}"
-                 data-handle="{{ strtolower($node['handle']) }}"
-                 data-category="{{ $node['category'] }}"
-                 data-has-conversions="{{ (!empty($node['conversions_to']) || !empty($node['conversions_from'])) ? '1' : '0' }}">
-                 
-                {{-- Node Header (Click to expand) --}}
-                <div class="tree-node-header p-2 px-3 d-flex flex-wrap align-items-center justify-content-between cursor-pointer" onclick="toggleTreeNode({{ $node['product_id'] }})">
-                    <div class="d-flex align-items-center u-gap-8px flex-wrap">
-                        <i class="dripicons-chevron-down tree-chevron mr-1"></i>
-                        <span class="tree-node-title">{{ $node['product_name'] }}</span>
-                        @if(!empty($node['handle']))
-                        <span class="badge badge-primary lifecycle-handle-badge" onclick="event.stopPropagation(); setHandleFilter('{{ $node['handle'] }}')" title="Filter stock report by handle: {{ $node['handle'] }}">
-                            Handle: {{ $node['handle'] }}
-                        </span>
-                        @endif
-                        <span class="badge badge-light border text-muted u-fs-11px">{{ $node['product_code'] }}</span>
-                        <span class="badge {{ $node['status_class'] }} px-2 py-1 u-fs-11px">
-                            @if(!empty($node['conversions_to']) || !empty($node['conversions_from']))
-                                <i class="dripicons-swap mr-1"></i>
-                            @elseif($node['category'] === 'wip_processing')
-                                <i class="dripicons-gear mr-1"></i>
-                            @else
-                                <i class="dripicons-home mr-1"></i>
-                            @endif
-                            {{ $node['status_badge'] }}
-                        </span>
+        {{-- Interactive Node Graph Canvas (Matching Flow Wire Reference) --}}
+        <div class="transformation-node-canvas" id="transformationNodeCanvas">
+            <div class="transformation-flows-wrapper" id="transformationFlowsWrapper">
+                @foreach(($lifecycleTreeData['transformation_flows'] ?? []) as $idx => $flow)
+                <div class="transformation-flow-chain @if($idx === 0) selected @endif @if($idx >= 10) d-none tree-overflow-node @endif" 
+                     id="{{ $flow['id'] }}"
+                     data-flow-id="{{ $flow['id'] }}"
+                     data-plc="{{ strtolower($flow['plc']) }}"
+                     data-category="{{ $flow['category'] }}"
+                     data-raw-name="{{ strtolower($flow['raw_name']) }}"
+                     data-conv-name="{{ strtolower($flow['converted_name']) }}"
+                     onclick="selectTransformationFlow('{{ $flow['plc'] }}', '{{ $flow['id'] }}')">
+                     
+                    {{-- Node 1: Raw Material Input Node --}}
+                    <div class="node-capsule node-raw" title="Input Raw Material Inward: {{ $flow['raw_name'] }}">
+                        <div class="node-port port-out"></div>
+                        <div class="node-icon-circle"><i class="dripicons-download"></i></div>
+                        <div class="node-content">
+                            <span class="node-stage-label">Raw Material</span>
+                            <span class="node-title-text">{{ $flow['raw_name'] }}</span>
+                        </div>
+                        <span class="node-qty-pill">{{ $qty($flow['raw_inward_qty']) }} {{ $flow['unit'] }}</span>
                     </div>
-                    <div class="tree-quick-stats mt-2 mt-md-0">
-                        <span class="tree-stat-pill pill-inward" title="Purchased Inward"><i class="dripicons-download"></i> In: {{ $qty($node['purchased_qty']) }} {{ $node['base_unit'] }}</span>
-                        <span class="tree-stat-pill pill-dispatched" title="Dispatched to Job Workers"><i class="dripicons-export"></i> Sent: {{ $qty($node['dispatched_qty']) }} {{ $node['base_unit'] }}</span>
-                        <span class="tree-stat-pill pill-returned" title="Returned / Converted Output"><i class="dripicons-checkmark"></i> Ret: {{ $qty($node['returned_qty']) }} {{ $node['base_unit'] }}</span>
-                        <span class="tree-stat-pill pill-godown" title="Live Ready Stock in Godown"><i class="dripicons-home"></i> Godown: {{ $qty($node['in_godown_qty']) }} {{ $node['base_unit'] }}</span>
-                        @if($node['sold_qty'] > 0)
-                        <span class="tree-stat-pill pill-sold" title="Sold to Customers"><i class="dripicons-cart"></i> Sold: {{ $qty($node['sold_qty']) }} {{ $node['base_unit'] }}</span>
-                        @endif
-                    </div>
-                </div>
 
-                {{-- Node Branches (Collapsible Tree Hierarchy) --}}
-                <div class="tree-node-branches d-none" id="tree-branches-{{ $node['product_id'] }}">
-                    <div class="tree-trunk-line"></div>
-                    @foreach($node['branches'] as $b)
-                    <div class="tree-branch-item branch-{{ $b['type'] }}">
-                        <div class="tree-branch-dot">
-                            <i class="{{ $b['icon'] }}"></i>
-                        </div>
-                        <div class="tree-branch-card">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <div class="tree-branch-heading">
-                                    <i class="{{ $b['icon'] }} mr-1"></i> {{ $b['title'] }}
-                                </div>
-                                <div class="tree-branch-badge">
-                                    @if(isset($b['target_id']))
-                                    <a href="{{ route('inventory-reports.timeline', ['product_id' => $b['target_id']]) }}" class="btn btn-xs btn-outline-primary" onclick="event.stopPropagation()">
-                                        <i class="dripicons-time-reverse"></i> View {{ $b['target_name'] }} Timeline ➔
-                                    </a>
-                                    @elseif($b['type'] === 'balance_sales')
-                                    <a href="{{ route('inventory-reports.timeline', ['product_id' => $node['product_id']]) }}" class="btn btn-xs btn-primary text-white" onclick="event.stopPropagation()">
-                                        <i class="dripicons-time-reverse"></i> Open Full Chronological Timeline
-                                    </a>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="tree-branch-desc mt-1">
-                                {{ $b['summary'] }}
-                            </div>
-                            @if(!empty($b['items']) && count($b['items']) > 1)
-                            <div class="tree-branch-sublist">
-                                @foreach($b['items'] as $it)
-                                <div class="tree-branch-subitem">
-                                    <span class="font-weight-bold">{{ $it['ref'] ?? '' }}</span>
-                                    <span>({{ $it['date'] ?? '' }})</span>
-                                    <span>{{ $it['party'] ?? ($it['processor'] ?? '') }}:</span>
-                                    <span class="text-dark font-weight-bold">{{ $qty($it['qty'] ?? 0) }} {{ $node['base_unit'] }}</span>
-                                </div>
-                                @endforeach
-                            </div>
-                            @endif
-                        </div>
+                    {{-- Connector Arrow Beam --}}
+                    <div class="flow-arrow-beam">
+                        <i class="dripicons-arrow-thin-right"></i>
                     </div>
-                    @endforeach
+
+                    {{-- Node 2: Transformation / Job Work Processing Node --}}
+                    <div class="node-capsule node-process" title="Processing by {{ $flow['process_party'] }}">
+                        <div class="node-port port-in"></div>
+                        <div class="node-port port-out"></div>
+                        <div class="node-icon-circle"><i class="dripicons-gear"></i></div>
+                        <div class="node-content">
+                            <span class="node-stage-label">{{ $flow['is_wip'] ? 'Processor WIP' : 'Job Work Transformation' }}</span>
+                            <span class="node-title-text">{{ $flow['process_party'] }}</span>
+                        </div>
+                        <span class="node-qty-pill">
+                            @if($flow['is_converted'])
+                                {{ $qty($flow['converted_qty']) }} {{ $flow['unit'] }}
+                            @else
+                                {{ $qty($flow['dispatched_qty']) }} {{ $flow['unit'] }}
+                            @endif
+                        </span>
+                    </div>
+
+                    {{-- Connector Arrow Beam --}}
+                    <div class="flow-arrow-beam">
+                        <i class="dripicons-arrow-thin-right"></i>
+                    </div>
+
+                    {{-- Node 3: Output / Converted Finished Good Node --}}
+                    @if($flow['is_converted'])
+                    <div class="node-capsule node-converted" title="Converted Finished Good: {{ $flow['converted_name'] }}">
+                        <div class="node-port port-in"></div>
+                        <div class="node-icon-circle"><i class="dripicons-swap"></i></div>
+                        <div class="node-content">
+                            <span class="node-stage-label">Converted Finished Good</span>
+                            <span class="node-title-text">{{ $flow['converted_name'] }}</span>
+                        </div>
+                        <span class="node-qty-pill">{{ $qty($flow['converted_godown_qty']) }} {{ $flow['unit'] }}</span>
+                    </div>
+                    @elseif($flow['is_wip'])
+                    <div class="node-capsule node-wip" title="In Job Work (WIP) - Awaiting return">
+                        <div class="node-port port-in"></div>
+                        <div class="node-icon-circle"><i class="dripicons-hourglass"></i></div>
+                        <div class="node-content">
+                            <span class="node-stage-label">Status</span>
+                            <span class="node-title-text">Awaiting Processing & Return</span>
+                        </div>
+                        <span class="node-qty-pill">Pending</span>
+                    </div>
+                    @else
+                    <div class="node-capsule node-godown" title="Ready in Physical Godown">
+                        <div class="node-port port-in"></div>
+                        <div class="node-icon-circle"><i class="dripicons-home"></i></div>
+                        <div class="node-content">
+                            <span class="node-stage-label">Godown Balance</span>
+                            <span class="node-title-text">Ready in Godown</span>
+                        </div>
+                        <span class="node-qty-pill">{{ $qty($flow['raw_godown_qty']) }} {{ $flow['unit'] }}</span>
+                    </div>
+                    @endif
                 </div>
+                @endforeach
             </div>
-            @endforeach
         </div>
 
-        @if(count($lifecycleTreeData['nodes']) > 10)
-        <button type="button" class="btn btn-sm btn-outline-primary btn-block mt-2" id="btnShowAllTreeNodes" onclick="showAllTreeNodes()">
-            <i class="dripicons-arrow-down"></i> Show All {{ $lifecycleTreeData['total_count'] }} Product Lifecycles
-        </button>
+        {{-- Transformation Lineage Inspection Spotlight Drawer (Below Canvas) --}}
+        @php
+            $firstFlow = ($lifecycleTreeData['transformation_flows'] ?? [])[0] ?? null;
+        @endphp
+        @if($firstFlow)
+        <div class="transformation-spotlight-drawer mt-3" id="transformationSpotlightDrawer">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div>
+                    <span class="spotlight-header-title d-inline-flex align-items-center" id="spotlightTitle">
+                        <i class="dripicons-swap mr-2 text-primary"></i> 
+                        <span id="spotlightTitleText">{{ $firstFlow['title'] }}</span>
+                    </span>
+                    <span class="badge badge-primary ml-2 px-2 py-1" id="spotlightPlcBadge" title="Product Lifecycle Code (PLC) / Handle: {{ $firstFlow['plc'] }}">
+                        PLC: {{ $firstFlow['plc'] }}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center u-gap-6px mt-2 mt-md-0" id="spotlightActions">
+                    <a href="{{ route('inventory-reports.timeline', ['product_id' => $firstFlow['raw_id']]) }}" class="btn btn-xs btn-outline-primary" id="btnSpotlightRawTimeline">
+                        <i class="dripicons-time-reverse mr-1"></i> Raw Timeline
+                    </a>
+                    @if($firstFlow['converted_id'])
+                    <a href="{{ route('inventory-reports.timeline', ['product_id' => $firstFlow['converted_id']]) }}" class="btn btn-xs btn-outline-success" id="btnSpotlightConvTimeline">
+                        <i class="dripicons-time-reverse mr-1"></i> Converted Timeline
+                    </a>
+                    @endif
+                </div>
+            </div>
+
+            <div class="spotlight-metrics-grid">
+                <div class="spotlight-metric-box">
+                    <div class="spotlight-metric-label">Purchased Inward</div>
+                    <div class="spotlight-metric-value text-success" id="spotlightPurchasedVal">{{ $qty($firstFlow['raw_inward_qty']) }} {{ $firstFlow['unit'] }}</div>
+                    <div class="spotlight-metric-sub" id="spotlightPurchasedSub">{{ $firstFlow['raw_doc'] }}</div>
+                </div>
+                <div class="spotlight-metric-box">
+                    <div class="spotlight-metric-label">Dispatched (DC)</div>
+                    <div class="spotlight-metric-value text-warning" id="spotlightDispatchedVal">{{ $qty($firstFlow['dispatched_qty']) }} {{ $firstFlow['unit'] }}</div>
+                    <div class="spotlight-metric-sub" id="spotlightDispatchedSub">{{ $firstFlow['process_party'] }}</div>
+                </div>
+                <div class="spotlight-metric-box">
+                    <div class="spotlight-metric-label">Received / Converted</div>
+                    <div class="spotlight-metric-value text-primary" id="spotlightConvertedVal">{{ $qty($firstFlow['converted_qty']) }} {{ $firstFlow['unit'] }}</div>
+                    <div class="spotlight-metric-sub" id="spotlightConvertedSub">{{ $firstFlow['process_receipt_ref'] ?: 'Direct Godown' }}</div>
+                </div>
+                <div class="spotlight-metric-box">
+                    <div class="spotlight-metric-label">Process Shrinkage</div>
+                    <div class="spotlight-metric-value text-danger" id="spotlightLossVal">{{ $qty($firstFlow['loss_qty']) }} {{ $firstFlow['unit'] }}</div>
+                    <div class="spotlight-metric-sub" id="spotlightLossSub">({{ $firstFlow['loss_pct'] }}% shrinkage)</div>
+                </div>
+                <div class="spotlight-metric-box">
+                    <div class="spotlight-metric-label">Ready in Godown</div>
+                    <div class="spotlight-metric-value text-success" id="spotlightGodownVal">
+                        @if($firstFlow['is_converted'])
+                            {{ $qty($firstFlow['converted_godown_qty']) }} {{ $firstFlow['unit'] }}
+                        @else
+                            {{ $qty($firstFlow['raw_godown_qty']) }} {{ $firstFlow['unit'] }}
+                        @endif
+                    </div>
+                    <div class="spotlight-metric-sub" id="spotlightGodownSub">
+                        @if($firstFlow['is_converted'])
+                            + {{ $qty($firstFlow['raw_godown_qty']) }} {{ $firstFlow['unit'] }} Raw
+                        @else
+                            Physical Owned Stock
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(count($lifecycleTreeData['transformation_flows'] ?? []) > 10)
+        <div class="text-center pt-2" id="divShowAllTreeNodes">
+            <button type="button" class="btn btn-xs btn-outline-primary" id="btnShowAllTreeNodes" onclick="showAllTreeNodes()">
+                <i class="dripicons-plus mr-1"></i> Show All {{ count($lifecycleTreeData['transformation_flows']) }} Transformation Flows
+            </button>
+        </div>
         @endif
     </div>
     @endif
@@ -352,8 +420,8 @@
                         <td class="lot-product" title="{{ $row->product }} {{ $row->product_code }}">
                             <div class="d-flex align-items-center flex-wrap">
                                 @if(!empty($row->handle))
-                                <span class="badge badge-primary lifecycle-handle-badge mr-1 cursor-pointer" onclick="setHandleFilter('{{ $row->handle }}')" title="Filter by lifecycle handle: {{ $row->handle }}">
-                                    Handle: {{ $row->handle }}
+                                <span class="badge badge-primary lifecycle-code-badge mr-1 cursor-pointer" onclick="filterByLifecycleCode('{{ $row->handle }}')" title="Product Lifecycle Code (PLC) / Handle: {{ $row->handle }}">
+                                    PLC: {{ $row->handle }}
                                 </span>
                                 @endif
                                 <span class="product-name-title">{{ $row->product }}</span>
@@ -622,66 +690,155 @@ document.addEventListener('DOMContentLoaded', function () {
     @endif
 });
 
-function setHandleFilter(handle) {
-    const input = document.getElementById('lot-search');
-    if (input) {
-        input.value = handle;
-        const form = document.querySelector('form.lot-filters');
-        if (form) form.submit();
-    }
+window._transformationFlows = {!! json_encode($lifecycleTreeData['transformation_flows'] ?? []) !!};
+
+function formatQtyVal(val) {
+    var n = parseFloat(val);
+    if (isNaN(n)) return '0';
+    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-function toggleTreeNode(productId) {
-    const card = document.getElementById('tree-node-' + productId);
-    const branches = document.getElementById('tree-branches-' + productId);
-    if (!card || !branches) return;
-    
-    const isExpanded = card.classList.contains('tree-expanded');
-    if (isExpanded) {
-        card.classList.remove('tree-expanded');
-        branches.classList.add('d-none');
-    } else {
-        card.classList.add('tree-expanded');
-        branches.classList.remove('d-none');
-    }
-}
+function selectTransformationFlow(plc, flowId) {
+    const chains = document.querySelectorAll('.transformation-flow-chain');
+    let targetFlow = null;
 
-function toggleAllTrees(expand) {
-    const cards = document.querySelectorAll('.tree-node-card');
-    cards.forEach(card => {
-        if (card.classList.contains('d-none')) return;
-        const pid = card.getAttribute('data-node-id');
-        const branches = document.getElementById('tree-branches-' + pid);
-        if (expand) {
-            card.classList.add('tree-expanded');
-            if (branches) branches.classList.remove('d-none');
+    if (window._transformationFlows && window._transformationFlows.length) {
+        targetFlow = window._transformationFlows.find(f => f.id === flowId || (f.plc && f.plc.toLowerCase() === plc.toLowerCase()));
+    }
+
+    chains.forEach(c => {
+        if (c.id === flowId) {
+            c.classList.add('selected');
+            c.classList.remove('dimmed');
         } else {
-            card.classList.remove('tree-expanded');
-            if (branches) branches.classList.add('d-none');
+            c.classList.remove('selected');
+            c.classList.add('dimmed');
         }
     });
+
+    if (targetFlow) {
+        const titleEl = document.getElementById('spotlightTitleText');
+        if (titleEl) titleEl.textContent = targetFlow.title;
+
+        const plcBadge = document.getElementById('spotlightPlcBadge');
+        if (plcBadge) {
+            plcBadge.textContent = 'PLC: ' + targetFlow.plc;
+            plcBadge.title = 'Product Lifecycle Code (PLC) / Handle: ' + targetFlow.plc;
+        }
+
+        const purVal = document.getElementById('spotlightPurchasedVal');
+        if (purVal) purVal.textContent = formatQtyVal(targetFlow.raw_inward_qty) + ' ' + targetFlow.unit;
+
+        const purSub = document.getElementById('spotlightPurchasedSub');
+        if (purSub) purSub.textContent = targetFlow.raw_doc || targetFlow.raw_supplier || 'Supplier Inward';
+
+        const dispVal = document.getElementById('spotlightDispatchedVal');
+        if (dispVal) dispVal.textContent = formatQtyVal(targetFlow.dispatched_qty) + ' ' + targetFlow.unit;
+
+        const dispSub = document.getElementById('spotlightDispatchedSub');
+        if (dispSub) dispSub.textContent = targetFlow.process_party || 'Job Worker';
+
+        const convVal = document.getElementById('spotlightConvertedVal');
+        if (convVal) convVal.textContent = formatQtyVal(targetFlow.converted_qty) + ' ' + targetFlow.unit;
+
+        const convSub = document.getElementById('spotlightConvertedSub');
+        if (convSub) convSub.textContent = targetFlow.process_receipt_ref || (targetFlow.is_wip ? 'Pending with Worker' : 'Direct Godown');
+
+        const lossVal = document.getElementById('spotlightLossVal');
+        if (lossVal) lossVal.textContent = formatQtyVal(targetFlow.loss_qty) + ' ' + targetFlow.unit;
+
+        const lossSub = document.getElementById('spotlightLossSub');
+        if (lossSub) lossSub.textContent = '(' + (targetFlow.loss_pct || 0) + '% shrinkage)';
+
+        const godownVal = document.getElementById('spotlightGodownVal');
+        if (godownVal) {
+            godownVal.textContent = targetFlow.is_converted ? (formatQtyVal(targetFlow.converted_godown_qty) + ' ' + targetFlow.unit) : (formatQtyVal(targetFlow.raw_godown_qty) + ' ' + targetFlow.unit);
+        }
+
+        const godownSub = document.getElementById('spotlightGodownSub');
+        if (godownSub) {
+            godownSub.textContent = targetFlow.is_converted ? ('+ ' + formatQtyVal(targetFlow.raw_godown_qty) + ' ' + targetFlow.unit + ' Raw') : 'Physical Ready Stock';
+        }
+
+        const btnRaw = document.getElementById('btnSpotlightRawTimeline');
+        if (btnRaw && targetFlow.raw_id) {
+            btnRaw.href = '{{ route("inventory-reports.timeline") }}?product_id=' + targetFlow.raw_id;
+        }
+
+        const btnConv = document.getElementById('btnSpotlightConvTimeline');
+        if (btnConv) {
+            if (targetFlow.converted_id) {
+                btnConv.classList.remove('d-none');
+                btnConv.href = '{{ route("inventory-reports.timeline") }}?product_id=' + targetFlow.converted_id;
+            } else {
+                btnConv.classList.add('d-none');
+            }
+        }
+    }
 }
 
 let activeTreeCategory = 'all';
+let activePlcFilter = 'ALL';
+
+function applyPlcFilter(plc, btn) {
+    activePlcFilter = plc.toUpperCase();
+    
+    document.querySelectorAll('.plc-quick-filter-btn').forEach(b => {
+        b.classList.remove('active');
+    });
+    if (btn) btn.classList.add('active');
+
+    const chains = document.querySelectorAll('.transformation-flow-chain');
+    let visibleCount = 0;
+    let firstVisible = null;
+
+    chains.forEach(chain => {
+        const chainPlc = (chain.dataset.plc || '').toUpperCase();
+        let matchesPlc = (activePlcFilter === 'ALL' || chainPlc === activePlcFilter);
+        
+        let matchesCat = true;
+        if (activeTreeCategory === 'converted') matchesCat = chain.dataset.category === 'converted';
+        else if (activeTreeCategory === 'wip') matchesCat = chain.dataset.category === 'wip';
+        else if (activeTreeCategory === 'ready') matchesCat = chain.dataset.category === 'ready';
+
+        if (matchesPlc && matchesCat) {
+            chain.classList.remove('d-none');
+            if (!firstVisible) firstVisible = chain;
+            visibleCount++;
+        } else {
+            chain.classList.add('d-none');
+        }
+    });
+
+    if (firstVisible) {
+        selectTransformationFlow(firstVisible.dataset.plc, firstVisible.id);
+    }
+
+    const badge = document.getElementById('treeVisibleCountBadge');
+    if (badge) {
+        badge.textContent = `Showing ${visibleCount} Transformation Flows`;
+    }
+}
+
+function filterByLifecycleCode(plc) {
+    const canvas = document.getElementById('transformationNodeCanvas');
+    if (canvas) {
+        canvas.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    const btn = document.querySelector(`.plc-quick-filter-btn[data-plc="${plc}"]`);
+    applyPlcFilter(plc, btn);
+}
+
+function setHandleFilter(handle) {
+    filterByLifecycleCode(handle);
+}
 
 function filterTreeCategory(category, btn) {
     activeTreeCategory = category;
     document.querySelectorAll('.tree-filter-pill').forEach(b => {
-        b.classList.remove('active', 'btn-primary', 'btn-success', 'btn-warning', 'btn-info');
-        const f = b.getAttribute('data-filter');
-        if (f === 'converted') b.classList.add('btn-outline-success');
-        else if (f === 'wip') b.classList.add('btn-outline-warning');
-        else if (f === 'ready') b.classList.add('btn-outline-info');
-        else b.classList.add('btn-outline-primary');
+        b.classList.remove('active');
     });
-
-    if (btn) {
-        btn.classList.add('active');
-        if (category === 'converted') { btn.classList.remove('btn-outline-success'); btn.classList.add('btn-success'); }
-        else if (category === 'wip') { btn.classList.remove('btn-outline-warning'); btn.classList.add('btn-warning'); }
-        else if (category === 'ready') { btn.classList.remove('btn-outline-info'); btn.classList.add('btn-info'); }
-        else { btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary'); }
-    }
+    if (btn) btn.classList.add('active');
 
     applyTreeFilters();
 }
@@ -693,63 +850,70 @@ function handleTreeSearch(query) {
 function clearTreeSearch() {
     const input = document.getElementById('treeInstantSearch');
     if (input) input.value = '';
-    applyTreeFilters();
-}
+    activeTreeCategory = 'all';
+    activePlcFilter = 'ALL';
+    
+    document.querySelectorAll('.tree-filter-pill').forEach(b => {
+        b.classList.remove('active');
+        if (b.dataset.filter === 'all') b.classList.add('active');
+    });
+    document.querySelectorAll('.plc-quick-filter-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.id === 'btnPlcAll') b.classList.add('active');
+    });
 
-function applyHandleSearch(handle) {
-    const input = document.getElementById('treeInstantSearch');
-    if (input) {
-        input.value = handle;
-        applyTreeFilters();
-    }
+    applyTreeFilters();
 }
 
 function showAllTreeNodes() {
     document.querySelectorAll('.tree-overflow-node').forEach(node => {
         node.classList.remove('tree-overflow-node');
     });
-    const btn = document.getElementById('btnShowAllTreeNodes');
+    const btn = document.getElementById('divShowAllTreeNodes');
     if (btn) btn.classList.add('d-none');
     applyTreeFilters();
 }
 
 function applyTreeFilters() {
     const query = (document.getElementById('treeInstantSearch')?.value || '').toLowerCase().trim();
-    const cards = document.querySelectorAll('.tree-node-card');
+    const chains = document.querySelectorAll('.transformation-flow-chain');
     let visibleCount = 0;
+    let firstVisible = null;
 
-    cards.forEach(card => {
-        const name = card.dataset.productName || '';
-        const code = card.dataset.productCode || '';
-        const handle = card.dataset.handle || '';
-        const category = card.dataset.category || '';
-        const hasConversions = card.dataset.hasConversions === '1';
+    chains.forEach(chain => {
+        const rawName = chain.dataset.rawName || '';
+        const convName = chain.dataset.convName || '';
+        const plc = chain.dataset.plc || '';
+        const category = chain.dataset.category || '';
 
         let matchesCat = true;
-        if (activeTreeCategory === 'converted') {
-            matchesCat = category === 'converted_parent' || category === 'converted_child' || hasConversions;
-        } else if (activeTreeCategory === 'wip') {
-            matchesCat = category === 'wip_processing';
-        } else if (activeTreeCategory === 'ready') {
-            matchesCat = category === 'standard' || card.querySelector('.pill-godown') !== null;
-        }
+        if (activeTreeCategory === 'converted') matchesCat = category === 'converted';
+        else if (activeTreeCategory === 'wip') matchesCat = category === 'wip';
+        else if (activeTreeCategory === 'ready') matchesCat = category === 'ready';
+
+        let matchesPlc = (activePlcFilter === 'ALL' || plc.toUpperCase() === activePlcFilter);
 
         let matchesSearch = true;
         if (query.length > 0) {
-            matchesSearch = name.includes(query) || code.includes(query) || handle.includes(query) || card.textContent.toLowerCase().includes(query);
+            matchesSearch = rawName.includes(query) || convName.includes(query) || plc.includes(query) || chain.textContent.toLowerCase().includes(query);
         }
 
-        if (matchesCat && matchesSearch) {
-            card.classList.remove('d-none');
+        if (matchesCat && matchesPlc && matchesSearch) {
+            chain.classList.remove('d-none');
+            if (!firstVisible) firstVisible = chain;
             visibleCount++;
         } else {
-            card.classList.add('d-none');
+            chain.classList.add('d-none');
         }
     });
 
+    if (firstVisible) {
+        selectTransformationFlow(firstVisible.dataset.plc, firstVisible.id);
+    }
+
     const badge = document.getElementById('treeVisibleCountBadge');
     if (badge) {
-        badge.textContent = `Showing ${visibleCount} of ${cards.length} Products`;
+        badge.textContent = `Showing ${visibleCount} Transformation Flows`;
     }
 }
 </script>
