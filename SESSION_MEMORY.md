@@ -1,10 +1,16 @@
-## Dedicated Product Lifecycle Page, "The Full Picture" Branching Tree & Root Catalog — 2026-11-20 (`ui`)
+## Dedicated Product Lifecycle Page, "The Full Picture" Branching Tree & PR #29 Merge to Main — 2026-11-20 (`ui` & `main`)
+
+- **Merge Status & Production Release:**
+  - **PR #29:** Merged into `main` via commit `049e7b1618d30e2b5ac8f7d087a4df95dcde72c3`.
+  - **Checks:** All 13 GitHub Actions CI suites and the required `ERP acceptance gate` passed with 100% green status.
+  - **Remotes Synchronized:** `origin/main`, `nandha-origin/main`, `origin/ui`, and `nandha-origin/ui` are all synchronized at `049e7b16`.
 
 - **Context & User Directives:**
   1. *"make a full picture, i dont want all the trees at the same time,"*
   2. *"list all the nodes first whichever product has lifecycle, give an highlight to identiify that has the plc,"*
   3. *"when we click the node, it expands and shows that we bought 1000 cotton fabric, 500 given for coloring, 400 given for chambering, the 100 is remaining, so the root product is cotton fabric, that has 3 branches and expanding like a tree or whichever best way to represent, the sub branches expands if jobwork done, and what the name of the product after processed."*
   4. *"so we can make this as a separate product lifecycle, page. and keeping the current page without this, in inventory itself we can name it as product life cycle and bring all the features we discussed."*
+  5. *"once done update this to main branch to make it live.."*
 
 - **Architectural & UI Enhancements Delivered:**
   1. **Dedicated Page & Routing (`routes/inventory-reports.php`, `InventoryLotReportController.php`):**
