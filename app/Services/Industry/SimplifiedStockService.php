@@ -1829,7 +1829,32 @@ class SimplifiedStockService
             $plc = $product->code ?: 'MAIN';
         }
 
-        // 1. Inward Purchases
+        // 0. Warehouses (Internal Godowns for accurate stock)
+        $whSchema = Schema::getColumnListing('warehouses');
+        $hasQuarantine = in_array('is_quarantine', $whSchema);
+        $hasExtJwo = in_array('external_job_order_id', $whSchema);
+        $whColumns = ['id', 'name'];
+        if ($hasQuarantine) $whColumns[] = 'is_quarantine';
+        if ($hasExtJwo) $whColumns[] = 'external_job_order_id';
+
+        $warehouses = DB::table('warehouses')
+            ->where('company_id', $context->companyId);
+        if ($context->branchId) {
+            $warehouses->where(function ($q) use ($context) {
+                $q->where('branch_id', $context->branchId)
+                  ->orWhereNull('branch_id');
+            });
+        }
+        if (in_array('is_active', $whSchema)) {
+            $warehouses->where(fn ($q) => $q->where('is_active', 1)->orWhereNull('is_active'));
+        }
+        $warehouses = $warehouses->get($whColumns);
+
+        $internalWhIds = $warehouses->filter(fn ($w) => empty($w->is_quarantine ?? null) && empty($w->external_job_order_id ?? null))->pluck('id')->all();
+        $defaultWarehouseObj = $warehouses->first(fn ($w) => empty($w->is_quarantine ?? null) && empty($w->external_job_order_id ?? null));
+        $defaultWarehouse = $defaultWarehouseObj ? $defaultWarehouseObj->name : 'Main Godown';
+
+        // 1. Inward Purchases / Inward Opening
         $purchases = DB::table('stock_movement_lines as l')
             ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
             ->leftJoin('purchases as p', function ($join) {
@@ -1839,13 +1864,16 @@ class SimplifiedStockService
             ->where('l.company_id', $context->companyId)
             ->where('m.company_id', $context->companyId)
             ->where('m.projection_mode', 'applied')
-            ->where('m.status', 'posted')
+            ->whereIn('m.status', ['posted', 'reversed'])
             ->where('l.product_id', $productId)
             ->where('l.qty_base', '>', 0)
+            ->when(!empty($internalWhIds), function ($q) use ($internalWhIds) {
+                $q->whereIn('l.warehouse_id', $internalWhIds);
+            })
             ->where(function ($q) {
                 $q->where('m.movement_type', 'purchase')
                   ->orWhere('m.source_type', 'purchase')
-                  ->orWhere('m.movement_type', 'initial_stock');
+                  ->orWhereIn('m.movement_type', ['opening', 'initial_stock']);
             })
             ->orderBy('m.movement_date')
             ->select([
@@ -1863,9 +1891,17 @@ class SimplifiedStockService
                 ->where('l.company_id', $context->companyId)
                 ->where('m.company_id', $context->companyId)
                 ->where('m.projection_mode', 'applied')
-                ->where('m.status', 'posted')
+                ->whereIn('m.status', ['posted', 'reversed'])
                 ->where('l.product_id', $productId)
                 ->where('l.qty_base', '>', 0)
+                ->when(!empty($internalWhIds), function ($q) use ($internalWhIds) {
+                    $q->whereIn('l.warehouse_id', $internalWhIds);
+                })
+                ->where(function ($q) {
+                    $q->whereNull('m.source_type')
+                      ->orWhereNotIn('m.source_type', ['job_work_receipts', 'job_work_dispatches']);
+                })
+                ->whereNotIn('m.movement_type', ['transfer', 'job_work_receipt', 'job_work_dispatch'])
                 ->sum('l.qty_base');
             $totalPurchased = max(0.0, $openingStock);
         }
@@ -1910,7 +1946,7 @@ class SimplifiedStockService
             ->get()
             ->groupBy('receipt_id');
 
-        // Current Godown Stock
+        // 4. Current Godown Stock (Internal Physical Warehouses only)
         $currentGodownStock = (float) DB::table('stock_movement_lines as l')
             ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
             ->where('l.company_id', $context->companyId)
@@ -1918,13 +1954,11 @@ class SimplifiedStockService
             ->where('m.projection_mode', 'applied')
             ->whereIn('m.status', ['posted', 'reversed'])
             ->where('l.product_id', $productId)
+            ->when(!empty($internalWhIds), function ($q) use ($internalWhIds) {
+                $q->whereIn('l.warehouse_id', $internalWhIds);
+            })
             ->sum('l.qty_base');
         $currentGodownStock = max(0.0, $currentGodownStock);
-
-        $defaultWarehouse = DB::table('warehouses')
-            ->where('company_id', $context->companyId)
-            ->where('branch_id', $context->branchId)
-            ->value('name') ?: 'Main Godown';
 
         $branches = [];
         $totalGivenToJobWork = 0.0;
@@ -1957,7 +1991,13 @@ class SimplifiedStockService
                             $outStock = (float) DB::table('stock_movement_lines as l')
                                 ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
                                 ->where('l.company_id', $context->companyId)
+                                ->where('m.company_id', $context->companyId)
+                                ->where('m.projection_mode', 'applied')
+                                ->whereIn('m.status', ['posted', 'reversed'])
                                 ->where('l.product_id', $outPid)
+                                ->when(!empty($internalWhIds), function ($q) use ($internalWhIds) {
+                                    $q->whereIn('l.warehouse_id', $internalWhIds);
+                                })
                                 ->sum('l.qty_base');
                             $convertedGodownStock += max(0.0, $outStock);
 
@@ -1993,7 +2033,13 @@ class SimplifiedStockService
                         $outStock = (float) DB::table('stock_movement_lines as l')
                             ->join('stock_movements as m', 'm.id', '=', 'l.stock_movement_id')
                             ->where('l.company_id', $context->companyId)
+                            ->where('m.company_id', $context->companyId)
+                            ->where('m.projection_mode', 'applied')
+                            ->whereIn('m.status', ['posted', 'reversed'])
                             ->where('l.product_id', $outPid)
+                            ->when(!empty($internalWhIds), function ($q) use ($internalWhIds) {
+                                $q->whereIn('l.warehouse_id', $internalWhIds);
+                            })
                             ->sum('l.qty_base');
                         $convertedGodownStock += max(0.0, $outStock);
 
@@ -2058,17 +2104,7 @@ class SimplifiedStockService
                 'unit' => $baseUnit,
                 'subtext' => 'Available physical raw fabric in warehouse',
                 'timeline_url' => route('inventory-reports.timeline', ['product_id' => $productId]),
-                'sub_branches' => [
-                    [
-                        'sub_branch_id' => 'sub-godown-ready',
-                        'type' => 'godown_leaf',
-                        'title' => 'Ready in Physical Warehouse',
-                        'qty' => $currentGodownStock,
-                        'unit' => $baseUnit,
-                        'warehouse_name' => $defaultWarehouse,
-                        'timeline_url' => route('inventory-reports.timeline', ['product_id' => $productId]),
-                    ],
-                ],
+                'sub_branches' => [],
             ];
         }
 

@@ -160,9 +160,27 @@ class SimplifiedStockAndTimelineTest extends OperationsTestCase
         $this->withoutExceptionHandling();
         [$rawMaterial] = $this->setupJobWorkFlow(200, 100);
 
+        $service = app(SimplifiedStockService::class);
+        $tree = $service->productLifecycleTree($rawMaterial->id, [
+            'from' => '2026-10-01',
+            'to' => '2026-10-05',
+        ], $this->context(), 1);
+
+        $this->assertEquals(200, $tree['totals']['purchased_inward']);
+        $this->assertEquals(100, $tree['totals']['given_to_jobwork']);
+        $this->assertEquals(100, $tree['totals']['current_godown_stock']);
+
+        // Verify remaining godown stock branch is a clean terminal leaf in Level 2
+        $godownBranch = collect($tree['branches'])->firstWhere('type', 'godown_stock');
+        $this->assertNotNull($godownBranch);
+        $this->assertEquals(100, $godownBranch['qty']);
+        $this->assertEmpty($godownBranch['sub_branches']);
+
         $response = $this->get('/inventory-reports/lifecycle?product_id='.$rawMaterial->id.'&from=2026-10-01&to=2026-10-05');
         $response->assertOk();
         $response->assertSee('Lifecycle Product Catalog', false);
+        $response->assertSee('catalog-count-badge', false);
+        $response->assertSee('tree-active-product-badge', false);
         $response->assertSee('Lifecycle & Transformation Branching Tree', false);
         $response->assertSee('PURCHASED INWARD', false);
         $response->assertSee('GIVEN TO JOB WORK', false);

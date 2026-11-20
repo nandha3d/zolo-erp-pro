@@ -1,10 +1,28 @@
 /* zoloERP Pro - Dedicated Product Lifecycle & Transformation Tree Page Stylesheet */
 /* Strict adherence to AGENTS.md Section 4.4 and DesignTokensTest */
 
+/* Defeat app-shell vertical flex-shrink and forced scrollbars so page is 100% visible at a glance */
+html.app-shell body:has(#product-lifecycle-page) #content,
+html.app-shell body:has(#product-lifecycle-page) #content > *,
+html.app-shell body:has(#product-lifecycle-page) #content > :has(> .desk-card-wrapper),
+body:has(#product-lifecycle-page) #content,
+body:has(#product-lifecycle-page) #content > *,
+body:has(#product-lifecycle-page) #content > :has(> .desk-card-wrapper),
+html.app-shell #product-lifecycle-page .desk-card-wrapper,
+#product-lifecycle-page .desk-card-wrapper,
 #product-lifecycle-page {
-    width: 100%;
-    margin-bottom: 30px;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: none !important;
+    overflow: visible !important;
     overflow-y: visible !important;
+    overflow-x: visible !important;
+    width: 100%;
+}
+
+#product-lifecycle-page {
+    margin-bottom: 30px;
 }
 
 #product-lifecycle-page .desk-card-wrapper {
@@ -12,9 +30,7 @@
     border: 1px solid var(--neo-border, #e2e8f0);
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    overflow: visible !important;
-    max-height: none !important;
-    height: auto !important;
+    display: block !important;
 }
 
 body.dark-mode #product-lifecycle-page .desk-card-wrapper {
@@ -92,19 +108,53 @@ body.dark-mode .catalog-divider {
     background: #475569;
 }
 
-/* Horizontal Root Product Cards Scroll / Grid */
+/* High-Contrast Badge System */
+.catalog-count-badge {
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+    border-radius: 12px !important;
+    letter-spacing: 0.02em !important;
+}
+
+body.dark-mode .catalog-count-badge {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+.tree-active-product-badge {
+    background-color: var(--z-primary, #7c1274) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--z-primary, #7c1274) !important;
+    font-weight: 600 !important;
+    font-size: 11px !important;
+    padding: 3px 10px !important;
+    border-radius: 12px !important;
+}
+
+body.dark-mode .tree-active-product-badge {
+    background-color: var(--zp-800, #4d0046) !important;
+    color: #ffffff !important;
+    border-color: var(--z-primary, #7c1274) !important;
+}
+
+/* Responsive Root Product Cards Grid (Zero Horizontal Scrolling) */
 .lifecycle-product-cards-grid {
     display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 12px;
-    padding: 4px 2px 10px;
-    scrollbar-width: thin;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 4px 2px;
+    overflow: visible !important;
 }
 
 .product-catalog-card {
-    flex: 0 0 280px;
-    max-width: 280px;
+    flex: 1 1 240px;
+    max-width: 320px;
+    min-width: 220px;
     background: #ffffff;
     border: 1.5px solid #e2e8f0;
     border-radius: 8px;
@@ -185,11 +235,66 @@ body.dark-mode .catalog-card-metrics {
 }
 
 /* --- Canonical KPI Strip Reuse (AGENTS.md 4.4) --- */
-.lifecycle-kpi-wrap {
-    margin-bottom: 16px;
+#product-lifecycle-page .kpi-summary-strip {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
 }
 
-/* --- The Full Picture Tree Canvas --- */
+@media (max-width: 1200px) {
+    #product-lifecycle-page .kpi-summary-strip {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+    }
+}
+
+#product-lifecycle-page .kpi-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+    min-height: 56px !important;
+}
+
+body.dark-mode #product-lifecycle-page .kpi-card {
+    background: #141c2e !important;
+    border-color: #334155 !important;
+}
+
+#product-lifecycle-page .kpi-card .kpi-label {
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    margin-bottom: 2px !important;
+}
+
+#product-lifecycle-page .kpi-card .kpi-number {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    line-height: 1.2 !important;
+}
+
+body.dark-mode #product-lifecycle-page .kpi-card .kpi-number {
+    color: #f8fafc !important;
+}
+
+#product-lifecycle-page .kpi-subtext {
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+    margin-top: 2px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* --- The Full Picture Tree Canvas (Zero Nested Scrollbars) --- */
 .lifecycle-canvas-wrapper {
     position: relative;
     background: #0f172a; /* Deep Slate Canvas */
@@ -197,11 +302,15 @@ body.dark-mode .catalog-card-metrics {
     background-size: 20px 20px;
     border: 1px solid #334155;
     border-radius: 12px;
-    padding: 30px 24px;
-    margin-bottom: 20px;
-    min-height: 420px;
-    overflow-x: auto;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+    min-height: 140px;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
     overflow-y: visible !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .lifecycle-svg-canvas {
@@ -240,30 +349,37 @@ body.dark-mode .catalog-card-metrics {
 .tree-columns-container {
     position: relative;
     z-index: 2;
-    display: flex;
-    justify-content: space-between;
-    gap: 40px;
-    min-width: 900px;
-    align-items: center;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 24px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    align-items: center !important;
 }
 
 .tree-column {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 14px;
     justify-content: center;
 }
 
 .tree-col-root {
-    flex: 0 0 280px;
+    flex: 1 1 28% !important;
+    max-width: 30% !important;
+    min-width: 0 !important;
 }
 
 .tree-col-branches {
-    flex: 0 0 310px;
+    flex: 1 1 35% !important;
+    max-width: 36% !important;
+    min-width: 0 !important;
 }
 
 .tree-col-subbranches {
-    flex: 0 0 310px;
+    flex: 1 1 35% !important;
+    max-width: 36% !important;
+    min-width: 0 !important;
 }
 
 /* --- Capsule Node Styles (Matching Reference) --- */
@@ -271,9 +387,19 @@ body.dark-mode .catalog-card-metrics {
     position: relative;
     background: rgba(30, 41, 59, 0.95);
     border: 1.5px solid #475569;
-    border-radius: 28px;
-    padding: 8px 16px;
+    border-radius: 24px;
+    padding: 7px 12px;
     display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    backdrop-filter: blur(6px);
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
     align-items: center;
     gap: 10px;
     color: #ffffff;
@@ -387,14 +513,14 @@ body.dark-mode .catalog-card-metrics {
 
 /* Node Contents */
 .node-icon-circle {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    font-size: 13px;
     flex-shrink: 0;
 }
 
@@ -467,7 +593,7 @@ body.dark-mode .catalog-card-metrics {
 }
 
 .node-title {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     color: #f8fafc;
     overflow: hidden;
@@ -478,7 +604,7 @@ body.dark-mode .catalog-card-metrics {
 }
 
 .node-subtext {
-    font-size: 10px;
+    font-size: 9.5px;
     color: #94a3b8;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -487,9 +613,9 @@ body.dark-mode .catalog-card-metrics {
 }
 
 .node-qty-badge {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.12);
     color: #ffffff;

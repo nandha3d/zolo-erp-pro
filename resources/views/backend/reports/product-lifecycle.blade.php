@@ -62,7 +62,7 @@
             <div>
                 <h6 class="mb-0 font-weight-bold text-dark d-inline-flex align-items-center">
                     <i class="dripicons-network mr-2 text-primary"></i> Lifecycle Product Catalog
-                    <span class="badge badge-primary text-white ml-2 font-weight-normal u-fs-11px" id="catalogVisibleBadge">
+                    <span class="badge catalog-count-badge ml-2" id="catalogVisibleBadge">
                         {{ count($catalog) }} Active Products
                     </span>
                 </h6>
@@ -223,7 +223,7 @@
             <div>
                 <h5 class="mb-0 font-weight-bold text-dark d-inline-flex align-items-center">
                     <i class="dripicons-network mr-2 text-primary"></i> Lifecycle & Transformation Branching Tree
-                    <span class="badge badge-primary text-white ml-2 font-weight-normal u-fs-11px">
+                    <span class="badge tree-active-product-badge ml-2">
                         {{ $activeProduct['product_name'] }} [PLC: {{ $activeProduct['plc'] }}]
                     </span>
                 </h5>
@@ -431,7 +431,16 @@ function debounce(func, wait) {
 function drawTreeConnections() {
     const svg = document.getElementById('lifecycleSvgCanvas');
     const container = document.getElementById('lifecycleCanvasWrapper');
-    if (!svg || !container) return;
+    const columnsContainer = document.getElementById('treeColumnsContainer');
+    if (!svg || !container || !columnsContainer) return;
+
+    // Dynamically adjust SVG canvas dimensions to exact content dimensions
+    const cWidth = Math.max(container.scrollWidth, columnsContainer.offsetWidth + 48);
+    const cHeight = Math.max(container.scrollHeight, columnsContainer.offsetHeight + 44);
+    svg.setAttribute('width', cWidth);
+    svg.setAttribute('height', cHeight);
+    svg.style.width = cWidth + 'px';
+    svg.style.height = cHeight + 'px';
 
     // Reset SVG paths
     svg.innerHTML = '';
