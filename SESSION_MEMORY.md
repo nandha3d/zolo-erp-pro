@@ -1,3 +1,53 @@
+## Product Update Fix, Edited Order Reversal Suppression & Tenant Override, Clean Stock Totals, and Company Creation — 2026-11-21 (`ui`)
+
+- **Context & User Inquiries:**
+  1. *"why these errors coming? check and fix"* (Ref: `media_1795163077921_1c1bbb42.png` showing VS Code error: *"Failed to save 'index.blade.php': The content of the file is newer. Please compare your version with the file contents or overwrite the content of the file with your changes."* and *'document-drafts.css'*).
+  2. *"1. product update not working"*
+  3. *"2. Inventory > stock - UI change for reveresed (dont show reverse option if edited orders, tenant based over ride option) which means never show the edited stocks, it confuses the client"*
+  4. *"3. company creation not working properly."*
+
+- **Technical Analysis & Solutions Delivered:**
+  1. **VS Code "Failed to save: The content of the file is newer" Explanation:**
+     - **Cause:** When an agent, Git checkout/pull, or external process writes or edits a file on disk while the user has an unsaved/dirty buffer open in VS Code / IDE, VS Code detects the disk file timestamp is newer than the editor's loaded version. Auto-save or `Ctrl+S` triggers this warning to prevent accidental overwrite of external edits.
+     - **Action:** Clicking **"Overwrite"** applies the editor's version; clicking **"Compare"** displays a side-by-side diff. If the external file contains desired updates, closing the tab and reopening it reloads the fresh disk version cleanly.
+  2. **Product Edit/Update Resolution (`product/edit.blade.php`, `ProductController.php`, `routes/web.php`):**
+     - Added `@csrf` token inside `#product-form` and passed `headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }` in AJAX fallback to prevent 419 Page Expired errors.
+     - Registered named route `products.update` (`->name('products.update')`) and replaced brittle relative URL `'../update'` with `route('products.update')`.
+     - Guarded `explode(',', $general_setting->modules ?? '')` in `ProductController` (lines 433 and 1478) to avoid PHP 8.5 fatal TypeErrors when `general_settings.modules` is NULL.
+     - Allowed products with `company_id IS NULL` to be claimed and updated under the active company context rather than throwing a 404 model not found exception.
+  3. **Reversal Suppression for Edited Orders & Tenant Override (`Sale.php`, `Purchase.php`, `sale/index.blade.php`, `purchase/index.blade.php`, `CommercialReversalService.php`, `Company.php`, `CompanyProfileService.php`, `company/profile.blade.php`):**
+     - Implemented `isEditedOrder(): bool` on `Sale` and `Purchase` models inspecting `replaces_id`, `attributes_json['is_edited']`, `attributes_json['edited_at']`, and timestamp discrepancies.
+     - Added `allowReverseEditedOrders(): bool` to `Company` model reading `$this->settings_json['allow_reverse_edited_orders']`.
+     - Added tenant override checkbox in **Company Profile** (`allow_reverse_edited_orders`).
+     - Wrapped the "Reverse" button in `sale/index.blade.php` and `purchase/index.blade.php` with:
+       ```php
+       $canShowReversal = !$bill->isEditedOrder() || ($company->allowReverseEditedOrders() ?? false);
+       ```
+     - Enforced server-side guard in `CommercialReversalService::reverse()` rejecting reversal attempts on edited orders when the tenant override is disabled.
+  4. **Never Show Reversed/Edited Stocks in Stock Totals (`SimplifiedStockService.php`, `IndustryStockQueries.php`, `MaterialDocumentService.php`, `InventoryLotReportController.php`):**
+     - Replaced all `whereIn('m.status', ['posted', 'reversed'])` queries with:
+       ```php
+       where('m.projection_mode', 'applied')
+           ->where('m.status', 'posted')
+           ->where('m.movement_type', '!=', 'reversal')
+           ->whereNull('m.reversal_of_id')
+       ```
+     - Fully prevents client confusion: reversed stock movements and their offsetting lines are completely excluded from inward, outward, and in-hand godown stock sums.
+  5. **Company Creation & Onboarding Streamlining (`CompanySelectorController.php`, `CompanyDirectoryService.php`):**
+     - Defaulted `registration_type => 'regular'` if missing from requests.
+     - Allowed admin role detection by name (`['admin', 'owner', 'super admin', 'superadmin']`) beyond hardcoded IDs `[1, 2]`.
+     - Pre-normalized `fy_start` and `fy_end` dates via Carbon.
+     - Auto-populated fallback address if GSTIN provided without street address.
+     - Seamless session entry: upon successful creation, invokes `$this->enter($request, $company->id)` to immediately switch the user's workspace to the new company.
+
+- **Verification & Test Suite:**
+  - `php -l`: 0 syntax errors across all modified PHP and Blade files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
+  - `php vendor/bin/phpunit tests/Feature/CompanyGroupDirectoryTest.php`: **11/11 passed (100%, 50 assertions)**.
+
+---
+
 ## Auto-Scrollable Catalog Bar with Slim Pill Design, PR #32 Merge & VPS Live Deployment — 2026-11-20 (`ui` & `main`)
 
 - **Merge & Production VPS Deployment:**
@@ -95,6 +145,56 @@
   - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
   - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
   - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Product Update Fix, Edited Order Reversal Suppression & Tenant Override, Clean Stock Totals, and Company Creation — 2026-11-21 (`ui`)
+
+- **Context & User Inquiries:**
+  1. *"why these errors coming? check and fix"* (Ref: `media_1795163077921_1c1bbb42.png` showing VS Code error: *"Failed to save 'index.blade.php': The content of the file is newer. Please compare your version with the file contents or overwrite the content of the file with your changes."* and *'document-drafts.css'*).
+  2. *"1. product update not working"*
+  3. *"2. Inventory > stock - UI change for reveresed (dont show reverse option if edited orders, tenant based over ride option) which means never show the edited stocks, it confuses the client"*
+  4. *"3. company creation not working properly."*
+
+- **Technical Analysis & Solutions Delivered:**
+  1. **VS Code "Failed to save: The content of the file is newer" Explanation:**
+     - **Cause:** When an agent, Git checkout/pull, or external process writes or edits a file on disk while the user has an unsaved/dirty buffer open in VS Code / IDE, VS Code detects the disk file timestamp is newer than the editor's loaded version. Auto-save or `Ctrl+S` triggers this warning to prevent accidental overwrite of external edits.
+     - **Action:** Clicking **"Overwrite"** applies the editor's version; clicking **"Compare"** displays a side-by-side diff. If the external file contains desired updates, closing the tab and reopening it reloads the fresh disk version cleanly.
+  2. **Product Edit/Update Resolution (`product/edit.blade.php`, `ProductController.php`, `routes/web.php`):**
+     - Added `@csrf` token inside `#product-form` and passed `headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }` in AJAX fallback to prevent 419 Page Expired errors.
+     - Registered named route `products.update` (`->name('products.update')`) and replaced brittle relative URL `'../update'` with `route('products.update')`.
+     - Guarded `explode(',', $general_setting->modules ?? '')` in `ProductController` (lines 433 and 1478) to avoid PHP 8.5 fatal TypeErrors when `general_settings.modules` is NULL.
+     - Allowed products with `company_id IS NULL` to be claimed and updated under the active company context rather than throwing a 404 model not found exception.
+  3. **Reversal Suppression for Edited Orders & Tenant Override (`Sale.php`, `Purchase.php`, `sale/index.blade.php`, `purchase/index.blade.php`, `CommercialReversalService.php`, `Company.php`, `CompanyProfileService.php`, `company/profile.blade.php`):**
+     - Implemented `isEditedOrder(): bool` on `Sale` and `Purchase` models inspecting `replaces_id`, `attributes_json['is_edited']`, `attributes_json['edited_at']`, and timestamp discrepancies.
+     - Added `allowReverseEditedOrders(): bool` to `Company` model reading `$this->settings_json['allow_reverse_edited_orders']`.
+     - Added tenant override checkbox in **Company Profile** (`allow_reverse_edited_orders`).
+     - Wrapped the "Reverse" button in `sale/index.blade.php` and `purchase/index.blade.php` with:
+       ```php
+       $canShowReversal = !$bill->isEditedOrder() || ($company->allowReverseEditedOrders() ?? false);
+       ```
+     - Enforced server-side guard in `CommercialReversalService::reverse()` rejecting reversal attempts on edited orders when the tenant override is disabled.
+  4. **Never Show Reversed/Edited Stocks in Stock Totals (`SimplifiedStockService.php`, `IndustryStockQueries.php`, `MaterialDocumentService.php`, `InventoryLotReportController.php`):**
+     - Replaced all `whereIn('m.status', ['posted', 'reversed'])` queries with:
+       ```php
+       where('m.projection_mode', 'applied')
+           ->where('m.status', 'posted')
+           ->where('m.movement_type', '!=', 'reversal')
+           ->whereNull('m.reversal_of_id')
+       ```
+     - Fully prevents client confusion: reversed stock movements and their offsetting lines are completely excluded from inward, outward, and in-hand godown stock sums.
+  5. **Company Creation & Onboarding Streamlining (`CompanySelectorController.php`, `CompanyDirectoryService.php`):**
+     - Defaulted `registration_type => 'regular'` if missing from requests.
+     - Allowed admin role detection by name (`['admin', 'owner', 'super admin', 'superadmin']`) beyond hardcoded IDs `[1, 2]`.
+     - Pre-normalized `fy_start` and `fy_end` dates via Carbon.
+     - Auto-populated fallback address if GSTIN provided without street address.
+     - Seamless session entry: upon successful creation, invokes `$this->enter($request, $company->id)` to immediately switch the user's workspace to the new company.
+
+- **Verification & Test Suite:**
+  - `php -l`: 0 syntax errors across all modified PHP and Blade files.
+  - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+  - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
+  - `php vendor/bin/phpunit tests/Feature/CompanyGroupDirectoryTest.php`: **11/11 passed (100%, 50 assertions)**.
 
 ---
 
