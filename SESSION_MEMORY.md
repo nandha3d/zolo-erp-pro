@@ -1,3 +1,21 @@
+## Route Cache Serialization Fix & PR #47 Gate Readiness — 2026-11-26 (`ui`)
+
+- **Context & CI Diagnostics:**
+  - In PR #47 check runs, `Clean database / MySQL 8.0` and `MySQL 8.4` failed during `php artisan route:cache`:
+    ```
+    LogicException: Unable to prepare route [products/update] for serialization. Another route has already been assigned name [products.update].
+    ```
+  - **Root Cause:** `Route::resource('products', ProductController::class)` natively reserves name `products.update` for `PUT/PATCH products/{product}`. Defining `Route::post('products/update', 'updateProduct')->name('products.update')` created a duplicate name collision that blocks route serialization.
+  - **Resolution:**
+    - Renamed custom POST action route to `products.updateProduct` in `routes/web.php`.
+    - Updated AJAX Dropzone and fallback URL targets in `resources/views/backend/product/edit.blade.php` to `{{ route('products.updateProduct') }}`.
+    - Verified `php artisan route:cache` passes with `INFO Routes cached successfully.`.
+  - **Remotes & Branch State:**
+    - Fetched all upstream branches from `origin` and `nandha-origin`.
+    - Local branch `ui` is up to date with remote tracking.
+
+---
+
 ## Product Update Fix, Edited Order Reversal Suppression & Tenant Override, Clean Stock Totals, and Company Creation — 2026-11-21 (`ui`)
 
 - **Context & User Inquiries:**
@@ -145,6 +163,24 @@
   - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
   - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
   - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Route Cache Serialization Fix & PR #47 Gate Readiness — 2026-11-26 (`ui`)
+
+- **Context & CI Diagnostics:**
+  - In PR #47 check runs, `Clean database / MySQL 8.0` and `MySQL 8.4` failed during `php artisan route:cache`:
+    ```
+    LogicException: Unable to prepare route [products/update] for serialization. Another route has already been assigned name [products.update].
+    ```
+  - **Root Cause:** `Route::resource('products', ProductController::class)` natively reserves name `products.update` for `PUT/PATCH products/{product}`. Defining `Route::post('products/update', 'updateProduct')->name('products.update')` created a duplicate name collision that blocks route serialization.
+  - **Resolution:**
+    - Renamed custom POST action route to `products.updateProduct` in `routes/web.php`.
+    - Updated AJAX Dropzone and fallback URL targets in `resources/views/backend/product/edit.blade.php` to `{{ route('products.updateProduct') }}`.
+    - Verified `php artisan route:cache` passes with `INFO Routes cached successfully.`.
+  - **Remotes & Branch State:**
+    - Fetched all upstream branches from `origin` and `nandha-origin`.
+    - Local branch `ui` is up to date with remote tracking.
 
 ---
 

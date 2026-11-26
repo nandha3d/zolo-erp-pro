@@ -2250,7 +2250,7 @@
         paramName: 'image',
         clickable: true,
         method: 'POST',
-        url: "{{ route('products.update') }}",
+        url: "{{ route('products.updateProduct') }}",
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
@@ -2287,7 +2287,7 @@
                             }
                             $.ajax({
                                 type: 'POST',
-                                url: "{{ route('products.update') }}",
+                                url: "{{ route('products.updateProduct') }}",
                                 headers: {
                                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                                 },
