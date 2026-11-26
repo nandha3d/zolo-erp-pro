@@ -1,3 +1,19 @@
+## CI Acceptance Gate Clean Pass & Order Reversal Refinement — 2026-11-26 (`ui`)
+
+- **Context & CI Diagnostics:**
+  - In PR #47 check runs on commit `1626d394`, `MySQL / operations` reported failures in `TextileInventoryDefaultsTest` and `ManufacturingJobWorkTest`:
+    1. `ManufacturingJobWorkTest::test_a_wrong_service_bill_is_corrected_by_reversal_and_rebooking` failed with `ValidationException: Reversal of edited orders is disabled for this company`.
+    2. `TextileInventoryDefaultsTest::test_lot_report_has_opening_inward_outward_closing_reversal_and_branch_scope_without_expiry` failed asserting outward_qty `0` matches `3`.
+  - **Root Causes & Resolutions:**
+    - **False Positive in `isEditedOrder()`:** Heuristic `abs(updated_at - created_at) > 5` incorrectly flagged newly billed service bills (which attach expense items shortly after creation) as "edited orders". Removed timestamp heuristic so `isEditedOrder()` strictly inspects explicit edit indicators (`replaces_id`, `attributes_json['is_edited']`, `attributes_json['edited_at']`).
+    - **Ledger Query vs. Simplified Stock Separation:** Restored `whereIn('m.status', ['posted', 'reversed'])` in `IndustryStockQueries.php` and `MaterialDocumentService.php` to preserve historical date-scoped audit ledgers. Reversed/edited movements remain properly suppressed in `SimplifiedStockService.php` (which powers the simplified client-facing stock report).
+  - **Verification:**
+    - `php vendor/bin/phpunit tests/Feature/TextileInventoryDefaultsTest.php`: **11/11 passed (100%, 85 assertions)**.
+    - `php vendor/bin/phpunit tests/Feature/ManufacturingJobWorkTest.php tests/Feature/IndustryFlowIntegrationTest.php`: **17/17 passed (100%, 176 assertions)**.
+    - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
+
+---
+
 ## Route Cache Serialization Fix & PR #47 Gate Readiness — 2026-11-26 (`ui`)
 
 - **Context & CI Diagnostics:**
@@ -163,6 +179,22 @@
   - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
   - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
   - View cache cleared: `php artisan view:clear`.
+
+---
+
+## CI Acceptance Gate Clean Pass & Order Reversal Refinement — 2026-11-26 (`ui`)
+
+- **Context & CI Diagnostics:**
+  - In PR #47 check runs on commit `1626d394`, `MySQL / operations` reported failures in `TextileInventoryDefaultsTest` and `ManufacturingJobWorkTest`:
+    1. `ManufacturingJobWorkTest::test_a_wrong_service_bill_is_corrected_by_reversal_and_rebooking` failed with `ValidationException: Reversal of edited orders is disabled for this company`.
+    2. `TextileInventoryDefaultsTest::test_lot_report_has_opening_inward_outward_closing_reversal_and_branch_scope_without_expiry` failed asserting outward_qty `0` matches `3`.
+  - **Root Causes & Resolutions:**
+    - **False Positive in `isEditedOrder()`:** Heuristic `abs(updated_at - created_at) > 5` incorrectly flagged newly billed service bills (which attach expense items shortly after creation) as "edited orders". Removed timestamp heuristic so `isEditedOrder()` strictly inspects explicit edit indicators (`replaces_id`, `attributes_json['is_edited']`, `attributes_json['edited_at']`).
+    - **Ledger Query vs. Simplified Stock Separation:** Restored `whereIn('m.status', ['posted', 'reversed'])` in `IndustryStockQueries.php` and `MaterialDocumentService.php` to preserve historical date-scoped audit ledgers. Reversed/edited movements remain properly suppressed in `SimplifiedStockService.php` (which powers the simplified client-facing stock report).
+  - **Verification:**
+    - `php vendor/bin/phpunit tests/Feature/TextileInventoryDefaultsTest.php`: **11/11 passed (100%, 85 assertions)**.
+    - `php vendor/bin/phpunit tests/Feature/ManufacturingJobWorkTest.php tests/Feature/IndustryFlowIntegrationTest.php`: **17/17 passed (100%, 176 assertions)**.
+    - `php vendor/bin/phpunit tests/Unit/DesignTokensTest.php`: **4/4 passed (100%)**.
 
 ---
 
