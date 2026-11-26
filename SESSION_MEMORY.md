@@ -1,3 +1,17 @@
+## Schema Column Guard in CompanyDirectoryService & PR #47 Gate Readiness — 2026-11-26 (`ui`)
+
+- **Context & CI Diagnostics:**
+  - In `MySQL / company` on PR #47, `CompanyGroupDirectoryTest::test_staff_cannot_create_groups_or_companies` failed with:
+    ```
+    QueryException: Unknown column 'name' in 'field list' (select `name` from `roles` where `id` = 4 and `is_active` = 1)
+    ```
+  - **Root Cause:** In test environments (`CompanyContextTestCase`), the minimal `roles` fixture is provisioned with only `id` and `is_active` (no `name` column). Calling `->value('name')` when `user->role_id` is non-1/2 threw an SQL error instead of returning `AuthorizationException`.
+  - **Resolution:**
+    - Added `Schema::hasTable('roles') && Schema::hasColumn('roles', 'name')` guard in `CompanyDirectoryService::isInstallationAdmin()`.
+    - Verified `CompanyGroupDirectoryTest`: **11/11 passed (100%, 50 assertions)**.
+
+---
+
 ## CI Acceptance Gate Clean Pass & Order Reversal Refinement — 2026-11-26 (`ui`)
 
 - **Context & CI Diagnostics:**
@@ -179,6 +193,20 @@
   - `php vendor/bin/phpunit tests/Feature/SimplifiedStockAndTimelineTest.php`: **5/5 passed (100%, 57 assertions)**.
   - `php vendor/bin/phpunit --filter test_lot_http_view_export_and_filters_keep_current_balances_explicit tests/Feature/TextileInventoryDefaultsTest.php`: **1/1 passed (100%, 11 assertions)**.
   - View cache cleared: `php artisan view:clear`.
+
+---
+
+## Schema Column Guard in CompanyDirectoryService & PR #47 Gate Readiness — 2026-11-26 (`ui`)
+
+- **Context & CI Diagnostics:**
+  - In `MySQL / company` on PR #47, `CompanyGroupDirectoryTest::test_staff_cannot_create_groups_or_companies` failed with:
+    ```
+    QueryException: Unknown column 'name' in 'field list' (select `name` from `roles` where `id` = 4 and `is_active` = 1)
+    ```
+  - **Root Cause:** In test environments (`CompanyContextTestCase`), the minimal `roles` fixture is provisioned with only `id` and `is_active` (no `name` column). Calling `->value('name')` when `user->role_id` is non-1/2 threw an SQL error instead of returning `AuthorizationException`.
+  - **Resolution:**
+    - Added `Schema::hasTable('roles') && Schema::hasColumn('roles', 'name')` guard in `CompanyDirectoryService::isInstallationAdmin()`.
+    - Verified `CompanyGroupDirectoryTest`: **11/11 passed (100%, 50 assertions)**.
 
 ---
 

@@ -49,8 +49,12 @@ class CompanyDirectoryService
             return DB::table('roles')->where('id', $user->role_id)->where('is_active', true)->exists();
         }
 
-        $roleName = strtolower(trim((string) DB::table('roles')->where('id', $user->role_id)->where('is_active', true)->value('name')));
-        return in_array($roleName, ['admin', 'owner', 'super admin', 'superadmin'], true);
+        if (Schema::hasTable('roles') && Schema::hasColumn('roles', 'name')) {
+            $roleName = strtolower(trim((string) DB::table('roles')->where('id', $user->role_id)->where('is_active', true)->value('name')));
+            return in_array($roleName, ['admin', 'owner', 'super admin', 'superadmin'], true);
+        }
+
+        return false;
     }
 
     public function canManageGroup(int $userId, ?int $groupId): bool
